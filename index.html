@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>님비레일 시간표</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="nimbi_rail.css">
+</head>
+<body>
+<header>
+  <div class="logo"><div class="logo-icon">🚆</div>님비레일 시간표</div>
+  <span class="header-sub">경부선 · 호남선 · 중앙선 · 동해선</span>
+</header>
+<div class="container">
+  <div class="tabs">
+    <button class="tab active" onclick="switchTab('train')" id="tab-train">🔢 열차번호</button>
+    <button class="tab" onclick="switchTab('station')" id="tab-station">🏢 역별 시간표</button>
+    <button class="tab" onclick="switchTab('route')" id="tab-route">🔍 출발→도착</button>
+    <button class="tab" onclick="switchTab('map')" id="tab-map">🗺️ 노선도</button>
+  </div>
+ 
+  <div class="panel active" id="panel-train">
+    <div class="search-card">
+      <div class="form-row">
+        <div class="form-group"><label>노선</label>
+          <select id="sel-line-train" onchange="selectTrainLine()">
+            <option value="">노선 선택</option>
+            <option value="경부선">경부선</option>
+            <option value="경부고속선">경부고속선</option>
+            <option value="호남선">호남선</option>
+            <option value="전라선">전라선</option>
+            <option value="경전선">경전선</option>
+            <option value="중앙선">중앙선</option>
+            <option value="동해선">동해선</option>
+          </select>
+        </div>
+        <div class="form-group"><label>열차번호</label>
+          <input type="text" id="input-trainno" placeholder="번호 직접 검색" onkeydown="if(event.key==='Enter')searchByTrain()">
+        </div>
+        <button class="btn btn-primary" onclick="searchByTrain()">🔍 조회</button>
+      </div>
+    </div>
+    <div id="train-line-list"></div>
+    <div id="result-train"></div>
+  </div>
+ 
+  <div class="panel" id="panel-station">
+    <div class="search-card">
+      <div class="form-row">
+        <div class="form-group"><label>역 이름</label>
+          <div class="autocomplete-wrap">
+            <input type="text" id="input-station" placeholder="역명 입력 (예: 대전)" autocomplete="off"
+              oninput="acShow('input-station','ac-station')"
+              onkeydown="acKey(event,'input-station','ac-station')"
+              onblur="setTimeout(()=>acHide('ac-station'),150)">
+            <div class="ac-dropdown" id="ac-station"></div>
+          </div>
+        </div>
+        <button class="btn btn-primary" onclick="searchByStation()">🔍 조회</button>
+        <button class="btn-filter-toggle" id="btn-filter-station" onclick="toggleStationFilter()">필터 ▾</button>
+      </div>
+      <div class="filter-row" id="filter-row-station">
+        <div class="form-group"><label>방향</label>
+          <select id="sel-dir-station">
+            <option value="all">전체</option><option value="down">하행</option><option value="up">상행</option>
+          </select>
+        </div>
+        <div class="form-group"><label>통과 열차</label>
+          <select id="sel-pass-station">
+            <option value="all">포함</option>
+            <option value="stop">정차만</option>
+          </select>
+        </div>
+        <div class="form-group"><label>등급</label>
+          <select id="sel-grade-station">
+            <option value="all">전체</option>
+            <option value="KTX">KTX</option>
+            <option value="SRT">SRT</option>
+            <option value="ITX-새마을">ITX-새마을</option>
+            <option value="ITX-청춘">ITX-청춘</option>
+            <option value="무궁화호">무궁화호</option>
+          </select>
+        </div>
+        <div class="form-group"><label>노선</label>
+          <select id="sel-line-station">
+            <option value="all">전체</option>
+            <option value="경부선">경부선</option>
+            <option value="경부고속선">경부고속선</option>
+            <option value="호남선">호남선</option>
+            <option value="전라선">전라선</option>
+            <option value="경전선">경전선</option>
+            <option value="중앙선">중앙선</option>
+            <option value="동해선">동해선</option>
+          </select>
+        </div>
+        <div class="form-group"><label>시간 이후</label>
+          <input type="text" id="input-after-time" placeholder="예: 9:00" style="width:80px"
+            onkeydown="if(event.key==='Enter')searchByStation()">
+        </div>
+      </div>
+    </div>
+    <div id="result-station"></div>
+  </div>
+ 
+  <div class="panel" id="panel-route">
+    <div class="search-card">
+      <div class="form-row">
+        <div class="form-group"><label>출발역</label>
+          <div class="autocomplete-wrap">
+            <input type="text" id="input-from" placeholder="출발역 입력" autocomplete="off"
+              oninput="acShow('input-from','ac-from')"
+              onkeydown="acKey(event,'input-from','ac-from')"
+              onblur="setTimeout(()=>acHide('ac-from'),150)">
+            <div class="ac-dropdown" id="ac-from"></div>
+          </div>
+        </div>
+        <div class="form-group"><label>도착역</label>
+          <div class="autocomplete-wrap">
+            <input type="text" id="input-to" placeholder="도착역 입력" autocomplete="off"
+              oninput="acShow('input-to','ac-to')"
+              onkeydown="acKey(event,'input-to','ac-to')"
+              onblur="setTimeout(()=>acHide('ac-to'),150)">
+            <div class="ac-dropdown" id="ac-to"></div>
+          </div>
+        </div>
+        <div class="form-group"><label>시간 이후</label>
+          <input type="text" id="input-after-route" placeholder="예: 9:00" style="width:80px"
+            onkeydown="if(event.key==='Enter')searchByRoute()">
+        </div>
+        <button class="btn btn-primary" onclick="searchByRoute()">🔍 조회</button>
+      </div>
+    </div>
+    <div id="result-route"></div>
+  </div>
+  <div class="panel" id="panel-map">
+    <div class="map-line-tabs" id="map-line-tabs">
+      <button class="map-line-tab active" onclick="showMapLine('gyeongbu',this)">경부선</button>
+      <button class="map-line-tab" onclick="showMapLine('gyeongbuhs',this)">경부고속선</button>
+      <button class="map-line-tab" onclick="showMapLine('honam',this)">호남선</button>
+      <button class="map-line-tab" onclick="showMapLine('jungang',this)">중앙선</button>
+      <button class="map-line-tab" onclick="showMapLine('donghae',this)">동해선</button>
+    </div>
+    <div class="map-legend" id="map-legend"></div>
+    <div class="map-svg-wrap" id="map-svg-wrap"></div>
+  </div>
+</div>
+ 
+<div class="map-popup-backdrop" id="map-backdrop" style="display:none" onclick="closeMapPopup()"></div>
+<div class="map-popup" id="map-popup" style="display:none">
+  <div class="map-popup-title" id="map-popup-name"></div>
+  <div class="map-popup-sub" id="map-popup-sub"></div>
+  <div class="map-popup-trains" id="map-popup-trains"></div>
+  <button class="btn btn-primary" style="width:100%;margin-bottom:8px" onclick="goToMapStation()">🏢 시간표 보기</button>
+  <button class="map-popup-close" onclick="closeMapPopup()">닫기</button>
+</div>
+ 
+<script src="nimbi_rail_data.js"></script>
+  <script src="nimbi_rail.js"></script>
+</body>
+</html>
