@@ -1,4 +1,3 @@
-
 const GC={'KTX':'KTX','SRT':'SRT','ITX-새마을':'ITX','ITX-청춘':'ITXCC','무궁화호':'MGH'};
 const GL={'KTX':'KTX','SRT':'SRT','ITX-새마을':'ITX-새마을','ITX-청춘':'ITX-청춘','무궁화호':'무궁화'};
 function gc(g){return GC[g]||'MGH';}
@@ -41,6 +40,7 @@ function switchTab(n){
   if(n==='map'&&!document.getElementById('map-svg-wrap').innerHTML.trim()){
     showMapLine('gyeongbu', document.querySelector('.map-line-tab'));
   }
+  if(n==='alarm') renderAlarms();
 }
  
 // ── 통과 판별 ──
@@ -175,7 +175,40 @@ function renderDetail(t){
     const arrCell=hasTime(arr)?`<span class="t-arr">${arr}</span>`:isOrigin?'<span style="color:var(--text3);font-size:11px">출발역</span>':'';
     const depCell=hasTime(dep)?`<span class="t-dep">${dep}</span>`:isTerm?'<span style="color:var(--text3);font-size:11px">종착역</span>':'';
     const trainIcon=hlClass?' <span class="current-train-icon"></span>':'';
-    rows+=`<div class="${rc}"><div class="stn-idx">${seq}</div><div class="stn-name">${s.s}${trainIcon}</div><div>${arrCell}</div><div>${depCell}</div></div>`;
+    // 알람 버튼 (통과역은 도착알람/전역출발 비활성, 승차알람은 모든 정차역)
+    let alarmCell='<div class="alarm-btn-wrap">';
+    const tno=t.no, tstn=s.s;
+    const hasArr=hasTime(arr), hasDep=hasTime(dep);
+    // 도착 알람 (통과역 제외)
+    const arrAlarmId=`arr:${tno}:${tstn}`;
+    const arrActive=hasAlarm(arrAlarmId);
+    if(!isPass&&hasArr){
+      alarmCell+=`<button class="alarm-btn${arrActive?' active':''}" onclick="toggleAlarm('${arrAlarmId}','${tno}','${tstn}','arr','${arr}','${t.grade}','${t.dest}')" title="도착 알람">착</button>`;
+    } else {
+      alarmCell+='<button class="alarm-btn disabled" title="통과역">착</button>';
+    }
+    // 전역 출발 알람 (통과역 포함, 단 시발역 제외)
+    const prevAlarmId=`prev:${tno}:${tstn}`;
+    const prevActive=hasAlarm(prevAlarmId);
+    // 이 역 앞 역의 출발 시각 찾기
+    const sIdx=t.stops.findIndex(x=>x.s===tstn);
+    const prevStop=sIdx>0?t.stops.slice(0,sIdx).reverse().find(x=>hasTime(x.dep)||hasTime(x.arr)):null;
+    const prevTime=prevStop?(hasTime(prevStop.dep)?prevStop.dep:prevStop.arr):null;
+    if(prevTime&&(hasArr||hasTime(arr))){
+      alarmCell+=`<button class="alarm-btn${prevActive?' active':''}" onclick="toggleAlarm('${prevAlarmId}','${tno}','${tstn}','prev','${prevTime}','${t.grade}','${t.dest}')" title="전역 출발 알람">전역</button>`;
+    } else {
+      alarmCell+='<button class="alarm-btn disabled" title="해당없음">전역</button>';
+    }
+    // 승차 알람 (정차역+출발 시각 있는 역, 1분 전)
+    const boardAlarmId=`board:${tno}:${tstn}`;
+    const boardActive=hasAlarm(boardAlarmId);
+    if(!isPass&&hasDep){
+      alarmCell+=`<button class="alarm-btn${boardActive?' active':''}" onclick="toggleAlarm('${boardAlarmId}','${tno}','${tstn}','board','${dep}','${t.grade}','${t.dest}')" title="승차 알람 (1분 전)">승차</button>`;
+    } else {
+      alarmCell+='<button class="alarm-btn disabled" title="해당없음">승차</button>';
+    }
+    alarmCell+='</div>';
+    rows+=`<div class="${rc}"><div class="stn-idx">${seq}</div><div class="stn-name">${tstn}${trainIcon}</div><div>${arrCell}</div><div>${depCell}</div>${alarmCell}</div>`;
   });
   const c=gc(t.grade);
   const cardId='dc-'+t.no;
@@ -208,6 +241,7 @@ function renderDetail(t){
     <div class="stn-grid">
       <div class="stn-gh">#</div><div class="stn-gh">역명</div>
       <div class="stn-gh green">도착</div><div class="stn-gh blue">출발</div>
+      <div class="stn-gh alarm-col">알람</div>
       ${rows}
     </div>
   </div>`;
@@ -473,6 +507,164 @@ function togglePass(cardId){
   const hiding=card.classList.toggle('hide-pass');
   btn.textContent=hiding?'통과역 보기':'통과역 숨기기';
 }
+ 
+// ── 알람 시스템 ──
+const ALARM_KEY = 'nimbi_alarms';
+ 
+function loadAlarms(){
+  try{ return JSON.parse(localStorage.getItem(ALARM_KEY))||[]; }
+  catch(e){ return []; }
+}
+function saveAlarms(alarms){
+  localStorage.setItem(ALARM_KEY, JSON.stringify(alarms));
+}
+function hasAlarm(id){
+  return loadAlarms().some(a=>a.id===id&&!a.fired);
+}
+function toggleAlarm(id, trainNo, stn, type, baseTime, grade, dest){
+  const alarms = loadAlarms();
+  const idx = alarms.findIndex(a=>a.id===id);
+  if(idx>=0){
+    // 이미 있으면 제거
+    alarms.splice(idx,1);
+    saveAlarms(alarms);
+    renderAlarmIfOpen();
+    refreshDetailAlarmBtns(trainNo);
+    return;
+  }
+  // 알람 시각 계산
+  const toM=v=>{if(!v)return null;const m=String(v).match(/(\d+):(\d+)/);return m?+m[1]*60+ +m[2]:null;};
+  const baseM = toM(baseTime);
+  if(baseM===null){ alert('알람 시각을 설정할 수 없습니다.'); return; }
+  let alarmM = baseM;
+  let label = '';
+  if(type==='arr'){
+    label=`${trainNo} · ${stn}역 도착`;
+  } else if(type==='prev'){
+    label=`${trainNo} · ${stn}역 전역 출발`;
+  } else if(type==='board'){
+    alarmM = baseM - 1;
+    if(alarmM < 0) alarmM += 24*60;
+    label=`${trainNo} · ${stn}역 승차 (1분 전)`;
+  }
+  // 알림 권한 요청
+  requestNotifPermission(()=>{
+    const h=Math.floor(alarmM/60), mn=alarmM%60;
+    const timeStr=`${h}:${mn.toString().padStart(2,'0')}`;
+    alarms.push({id, trainNo, stn, type, alarmM, timeStr, label, grade, dest, fired:false});
+    saveAlarms(alarms);
+    alert(`알람 설정: ${label} (${timeStr})`);
+    renderAlarmIfOpen();
+    refreshDetailAlarmBtns(trainNo);
+  });
+}
+ 
+function requestNotifPermission(cb){
+  if(!('Notification' in window)){
+    alert('이 브라우저는 알림을 지원하지 않습니다.');
+    return;
+  }
+  if(Notification.permission==='granted'){ cb(); return; }
+  if(Notification.permission==='denied'){
+    alert('알림이 차단되어 있습니다. 브라우저 설정에서 알림을 허용해주세요.');
+    return;
+  }
+  Notification.requestPermission().then(p=>{
+    if(p==='granted') cb();
+    else alert('알림 권한이 거부되었습니다.');
+  });
+}
+ 
+function renderAlarmIfOpen(){
+  const panel = document.getElementById('panel-alarm');
+  if(panel && panel.classList.contains('active')) renderAlarms();
+}
+ 
+function refreshDetailAlarmBtns(trainNo){
+  // 열차 상세 카드가 열려있으면 재렌더
+  const card = document.getElementById('dc-'+trainNo);
+  if(!card) return;
+  const trains = ALL_TRAINS.filter(t=>t.no===trainNo);
+  const el = document.getElementById('result-train');
+  if(el && trains.length) el.innerHTML = trains.map(renderDetail).join('');
+}
+ 
+function deleteAlarm(id){
+  const alarms = loadAlarms().filter(a=>a.id!==id);
+  saveAlarms(alarms);
+  renderAlarms();
+}
+function clearFiredAlarms(){
+  const alarms = loadAlarms().filter(a=>!a.fired);
+  saveAlarms(alarms);
+  renderAlarms();
+}
+ 
+function renderAlarms(){
+  const el = document.getElementById('result-alarm');
+  if(!el) return;
+  const alarms = loadAlarms();
+  if(!alarms.length){
+    el.innerHTML=`<div class="alarm-empty"><div style="font-size:36px;margin-bottom:12px">🔔</div><p>설정된 알람이 없습니다.<br>열차 상세 화면에서 알람을 설정해보세요.</p></div>`;
+    return;
+  }
+  const typeLabel={arr:'도착',prev:'전역출발',board:'승차'};
+  const typeBadge={arr:'alarm-type-arr',prev:'alarm-type-prev',board:'alarm-type-board'};
+  const sorted=[...alarms].sort((a,b)=>a.alarmM-b.alarmM);
+  const hasFired = alarms.some(a=>a.fired);
+  const cards = sorted.map(a=>`
+    <div class="alarm-card${a.fired?' fired':''}">
+      <div class="alarm-card-info">
+        <div class="alarm-card-title">
+          <span class="alarm-type-badge ${typeBadge[a.type]}">${typeLabel[a.type]}</span>
+          ${a.label}
+        </div>
+        <div class="alarm-card-sub">${a.fired?'✅ 알람 완료':'⏰ 대기 중'}</div>
+      </div>
+      <div class="alarm-card-time">${a.timeStr}</div>
+      <button class="alarm-del-btn" onclick="deleteAlarm('${a.id}')">✕</button>
+    </div>`).join('');
+  el.innerHTML=`
+    <div class="result-header">
+      <div class="result-title">🔔 알람 목록</div>
+      <span class="badge blue">${alarms.filter(a=>!a.fired).length}개 대기</span>
+      ${hasFired?`<button class="btn" style="font-size:12px;padding:4px 10px" onclick="clearFiredAlarms()">완료 알람 지우기</button>`:''}
+    </div>
+    ${cards}
+    <p class="hint">※ 브라우저 탭이 열려있어야 알람이 작동합니다</p>`;
+}
+ 
+// 알람 체크 인터벌 (30초마다)
+function checkAlarms(){
+  const alarms = loadAlarms();
+  if(!alarms.length) return;
+  const now = new Date();
+  const nowM = now.getHours()*60+now.getMinutes();
+  let changed = false;
+  alarms.forEach(a=>{
+    if(a.fired) return;
+    if(a.alarmM===nowM){
+      a.fired=true; changed=true;
+      fireAlarm(a);
+    }
+  });
+  if(changed){
+    saveAlarms(alarms);
+    renderAlarmIfOpen();
+  }
+}
+function fireAlarm(a){
+  const typeLabel={arr:'도착',prev:'전역 출발',board:'승차'};
+  const body = {
+    arr:`${a.trainNo}번 열차가 ${a.stn}역에 도착합니다`,
+    prev:`${a.trainNo}번 열차가 ${a.stn}역 전역에서 출발했습니다`,
+    board:`1분 후 ${a.trainNo}번 열차가 ${a.stn}역에서 출발합니다`,
+  }[a.type]||a.label;
+  if(Notification.permission==='granted'){
+    new Notification('🔔 님비레일 알람', {body, icon:'', badge:''});
+  }
+}
+setInterval(checkAlarms, 30000);
  
 function jumpToTrain(no){
   document.getElementById('input-trainno').value=no;
