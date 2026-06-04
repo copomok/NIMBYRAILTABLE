@@ -811,8 +811,7 @@ function getFavInfo(fav){
 
   if(fav.type==='station'){
     const stn=fav.data.stn;
-    // 상행/하행 각각 다음 열차
-    const result=[];
+    const lines=[];
     for(const dir of ['down','up']){
       const candidates=[];
       ALL_TRAINS.forEach(t=>{
@@ -823,20 +822,21 @@ function getFavInfo(fav){
         if(!timeV)return;
         const m=toMin(timeV);
         if(m===null)return;
-        // 자정 넘는 열차 대응
         const adjM=m<nowMin-30?m+1440:m;
-        if(adjM>=nowMin)candidates.push({t,stop,m:adjM,timeV});
+        if(adjM>=nowMin)candidates.push({t,m:adjM,timeV});
       });
       candidates.sort((a,b)=>a.m-b.m);
       const next=candidates[0];
+      const dirLbl=dir==='down'?'하행 ↓':'상행 ↑';
       if(next){
         const diff=next.m-nowMin;
-        const dirLbl=dir==='down'?'하행':'상행';
-        const diffStr=diff===0?'지금':diff+'분 후';
-        result.push(`${dirLbl} ${next.timeV} ${next.t.dest}행 ${next.t.no} (${diffStr})`);
+        const diffStr=diff===0?'지금':`${diff}분 후`;
+        lines.push(`${dirLbl}  ${next.timeV} ${next.t.dest}행 ${next.t.no} · ${diffStr}`);
+      } else {
+        lines.push(`${dirLbl}  운행 열차 없음`);
       }
     }
-    return{main:stn+'역',sub:result.join(' / ')||'운행 열차 없음'};
+    return{main:stn+'역',lines};
   }
 
   if(fav.type==='route'){
@@ -879,11 +879,15 @@ function renderFavs(){
   const typeIcon={train:'🚆',station:'🏢',route:'🔍'};
   const cards=favs.map(f=>{
     const info=getFavInfo(f);
+    // station은 두 줄(lines), 나머지는 한 줄(sub)
+    const subHtml=info.lines
+      ? info.lines.map(l=>`<div class="fav-sub">${l}</div>`).join('')
+      : `<div class="fav-sub">${info.sub||''}</div>`;
     return `<div class="fav-card" onclick="runFav(${JSON.stringify(f).replace(/"/g,'&quot;')})">
       <div class="fav-icon">${typeIcon[f.type]||'⭐'}</div>
       <div class="fav-info">
         <div class="fav-label">${info.main}</div>
-        <div class="fav-sub">${info.sub}</div>
+        ${subHtml}
       </div>
       <button class="fav-del-btn" onclick="event.stopPropagation();removeFav('${f.id}')" title="삭제">✕</button>
     </div>`;
