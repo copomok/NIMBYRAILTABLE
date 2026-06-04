@@ -107,6 +107,8 @@ function searchByTrain(){
   const trains=ALL_TRAINS.filter(t=>t.no===no);
   if(!trains.length){el.innerHTML=`<div class="empty"><div class="empty-icon">🚫</div><p><b>${no}</b>번 열차를 찾을 수 없습니다</p></div>`;return;}
   el.innerHTML=trains.map(renderDetail).join('');
+  const fb=document.getElementById('fav-btn-train');
+  if(fb)fb.style.display='';
 }
 
 function getCurrentStatus(t){
@@ -303,6 +305,8 @@ function searchByStation(){
       <td>${dirLabel(t.dir)}</td><td style="font-weight:500">${t.dest}</td>
       <td>${aC}</td><td>${dC}</td></tr>`;
   }).join('');
+  const fb=document.getElementById('fav-btn-station');
+  if(fb)fb.style.display='';
   const afterLabel=afterMin!==null?` · ${afterRaw} 이후`:'';
   el.innerHTML=`<div class="result-header"><div class="result-title">🏢 ${stn} 시간표${afterLabel}</div><span class="badge blue">${results.length}편</span></div>
   <div class="table-wrap"><table><thead><tr><th>열차</th><th>등급</th><th>노선</th><th>방향</th><th>행선지</th><th>도착</th><th>출발</th></tr></thead><tbody>${rows}</tbody></table></div>
@@ -384,6 +388,8 @@ function searchByRoute(){
         <td style="font-family:var(--mono);font-size:11px;color:var(--text2)">${dur}</td>
       </tr>`
     ).join('');
+    const fb=document.getElementById('fav-btn-route');
+    if(fb)fb.style.display='';
     el.innerHTML=`<div class="result-header"><div class="result-title">🔍 ${from} → ${to}${afterLabel}</div><span class="badge blue">${directs.length}편</span></div>
     <div class="table-wrap"><table><thead><tr><th>열차</th><th>등급</th><th>노선</th><th>방향</th><th>행선지</th><th>출발</th><th>도착</th><th>소요</th></tr></thead><tbody>${rows}</tbody></table></div>
     <p class="hint">※ 열차번호 클릭 시 전체 운행 정보 조회</p>`;
@@ -505,6 +511,8 @@ function searchByRoute(){
     </div>`;
   }).join('');
 
+  const fb2=document.getElementById('fav-btn-route');
+  if(fb2)fb2.style.display='';
   el.innerHTML=`<div class="result-header">
     <div class="result-title">🔄 ${from} → ${to}${afterLabel} · 환승</div>
     <span class="badge yellow">${transfers.length}건</span>
@@ -750,7 +758,6 @@ function addFav(type){
   favs.push({id,type,label,data,addedAt:Date.now()});
   saveFavs(favs);
   alert('"'+label+'"을 즐겨찾기에 추가했습니다.');
-  // 즐겨찾기 탭이 열려있으면 새로고침
   if(document.getElementById('panel-fav').classList.contains('active'))renderFavs();
 }
 
@@ -762,23 +769,103 @@ function removeFav(id){
 function runFav(fav){
   if(fav.type==='train'){
     document.getElementById('input-trainno').value=fav.data.no;
-    // 노선 선택 초기화
     const sel=document.getElementById('sel-line-train');
     if(sel)sel.value='';
     document.getElementById('train-line-list').innerHTML='';
-    switchTab('train');
-    searchByTrain();
+    switchTab('train'); searchByTrain();
   } else if(fav.type==='station'){
     document.getElementById('input-station').value=fav.data.stn;
-    switchTab('station');
-    searchByStation();
+    switchTab('station'); searchByStation();
   } else if(fav.type==='route'){
     document.getElementById('input-from').value=fav.data.from;
     document.getElementById('input-to').value=fav.data.to;
-    switchTab('route');
-    searchByRoute();
+    switchTab('route'); searchByRoute();
   }
   window.scrollTo({top:0,behavior:'smooth'});
+}
+
+// ── 즐겨찾기 실시간 정보 계산 ──
+function getFavInfo(fav){
+  const now=new Date();
+  const nowMin=now.getHours()*60+now.getMinutes();
+
+  if(fav.type==='train'){
+    const trains=ALL_TRAINS.filter(t=>t.no===fav.data.no);
+    if(!trains.length)return{main:'열차 정보 없음',sub:''};
+    const t=trains[0];
+    const status=getCurrentStatus(t);
+    const gradeLbl=GL[t.grade]||t.grade;
+    let main=`${gradeLbl} ${t.no}`;
+    let sub='';
+    if(!status)sub='정보 없음';
+    else if(status.status==='before')sub='운행을 준비 중';
+    else if(status.status==='done')sub='운행 종료';
+    else{
+      if(status.atStn)sub=`${status.atStn}역 정차 중`;
+      else if(status.passStn)sub=`${status.passStn}역 통과 중`;
+      else if(status.nextStn)sub=`${status.prevStn||''}→${status.nextStn} 운행 중`;
+      else sub='운행 중';
+    }
+    return{main,sub};
+  }
+
+  if(fav.type==='station'){
+    const stn=fav.data.stn;
+    // 상행/하행 각각 다음 열차
+    const result=[];
+    for(const dir of ['down','up']){
+      const candidates=[];
+      ALL_TRAINS.forEach(t=>{
+        if(t.dir!==dir)return;
+        const stop=t.stops.find(s=>s.s===stn);
+        if(!stop||isPassStop(t,stn))return;
+        const timeV=hasTime(stop.dep)?stop.dep:hasTime(stop.arr)?stop.arr:null;
+        if(!timeV)return;
+        const m=toMin(timeV);
+        if(m===null)return;
+        // 자정 넘는 열차 대응
+        const adjM=m<nowMin-30?m+1440:m;
+        if(adjM>=nowMin)candidates.push({t,stop,m:adjM,timeV});
+      });
+      candidates.sort((a,b)=>a.m-b.m);
+      const next=candidates[0];
+      if(next){
+        const diff=next.m-nowMin;
+        const dirLbl=dir==='down'?'하행':'상행';
+        const diffStr=diff===0?'지금':diff+'분 후';
+        result.push(`${dirLbl} ${next.timeV} ${next.t.dest}행 ${next.t.no} (${diffStr})`);
+      }
+    }
+    return{main:stn+'역',sub:result.join(' / ')||'운행 열차 없음'};
+  }
+
+  if(fav.type==='route'){
+    const {from,to}=fav.data;
+    // 직통 다음 열차
+    let best=null;
+    ALL_TRAINS.forEach(t=>{
+      const stops=t.stops;
+      const fi=stops.findIndex(s=>s.s===from);
+      const ti=stops.findIndex(s=>s.s===to);
+      if(fi===-1||ti===-1||fi>=ti)return;
+      if(isPassStop(t,from)||isPassStop(t,to))return;
+      const depStop=stops[fi];
+      const arrStop=stops[ti];
+      const depV=hasTime(depStop.dep)?depStop.dep:hasTime(depStop.arr)?depStop.arr:null;
+      const arrV=hasTime(arrStop.arr)?arrStop.arr:hasTime(arrStop.dep)?arrStop.dep:null;
+      if(!depV)return;
+      const depM=toMin(depV);
+      const adjM=depM<nowMin-30?depM+1440:depM;
+      if(adjM<nowMin)return;
+      if(!best||adjM<best.adjM)best={t,depV,arrV,adjM};
+    });
+    if(!best)return{main:`${from} → ${to}`,sub:'다음 열차 없음'};
+    const diff=best.adjM-nowMin;
+    const diffStr=diff===0?'지금 출발':diff+'분 후 출발';
+    return{main:`${from} → ${to}`,sub:`${best.t.no} ${best.depV}→${best.arrV||'?'} (${diffStr})`};
+  }
+
+  return{main:fav.label,sub:''};
 }
 
 function renderFavs(){
@@ -789,24 +876,25 @@ function renderFavs(){
     el.innerHTML='<div class="empty"><div class="empty-icon">⭐</div><p>즐겨찾기가 비어있습니다.<br>각 탭의 ⭐ 버튼으로 추가해보세요.</p></div>';
     return;
   }
-  const typeIcon={train:'🔢',station:'🏢',route:'🔍'};
-  const typeLabel={train:'열차번호',station:'역 시간표',route:'출발→도착'};
-  const cards=favs.map(f=>`
-    <div class="fav-card" onclick="runFav(${JSON.stringify(f).replace(/"/g,'&quot;')})">
+  const typeIcon={train:'🚆',station:'🏢',route:'🔍'};
+  const cards=favs.map(f=>{
+    const info=getFavInfo(f);
+    return `<div class="fav-card" onclick="runFav(${JSON.stringify(f).replace(/"/g,'&quot;')})">
       <div class="fav-icon">${typeIcon[f.type]||'⭐'}</div>
       <div class="fav-info">
-        <div class="fav-label">${f.label}</div>
-        <div class="fav-type">${typeLabel[f.type]||''}</div>
+        <div class="fav-label">${info.main}</div>
+        <div class="fav-sub">${info.sub}</div>
       </div>
       <button class="fav-del-btn" onclick="event.stopPropagation();removeFav('${f.id}')" title="삭제">✕</button>
-    </div>`).join('');
+    </div>`;
+  }).join('');
   el.innerHTML=`
     <div class="result-header">
       <div class="result-title">⭐ 즐겨찾기</div>
       <span class="badge blue">${favs.length}개</span>
     </div>
     <div class="fav-list">${cards}</div>
-    <p class="hint">※ 항목 클릭 시 해당 탭으로 이동해 바로 조회합니다</p>`;
+    <p class="hint">※ 클릭 시 해당 탭으로 이동해 바로 조회합니다</p>`;
 }
 
 function jumpToTrain(no){

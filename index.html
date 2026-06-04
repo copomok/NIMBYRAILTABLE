@@ -42,7 +42,7 @@
           <input type="text" id="input-trainno" placeholder="번호 직접 검색" onkeydown="if(event.key==='Enter')searchByTrain()">
         </div>
         <button class="btn btn-primary" onclick="searchByTrain()">🔍 조회</button>
-        <button class="btn-fav-add" onclick="addFav('train')" title="즐겨찾기 추가">⭐</button>
+        <button class="btn-fav-add" id="fav-btn-train" onclick="addFav('train')" title="즐겨찾기 추가" style="display:none">⭐</button>
       </div>
     </div>
     <div id="train-line-list"></div>
@@ -62,7 +62,7 @@
           </div>
         </div>
         <button class="btn btn-primary" onclick="searchByStation()">🔍 조회</button>
-        <button class="btn-fav-add" onclick="addFav('station')" title="즐겨찾기 추가">⭐</button>
+        <button class="btn-fav-add" id="fav-btn-station" onclick="addFav('station')" title="즐겨찾기 추가" style="display:none">⭐</button>
         <button class="btn-filter-toggle" id="btn-filter-station" onclick="toggleStationFilter()">필터 ▾</button>
       </div>
       <div class="filter-row" id="filter-row-station">
@@ -134,7 +134,7 @@
             onkeydown="if(event.key==='Enter')searchByRoute()">
         </div>
         <button class="btn btn-primary" onclick="searchByRoute()">🔍 조회</button>
-        <button class="btn-fav-add" onclick="addFav('route')" title="즐겨찾기 추가">⭐</button>
+        <button class="btn-fav-add" id="fav-btn-route" onclick="addFav('route')" title="즐겨찾기 추가" style="display:none">⭐</button>
       </div>
     </div>
     <div id="result-route"></div>
