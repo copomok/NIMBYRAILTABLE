@@ -1,4 +1,3 @@
- 
 
  
 :root{
@@ -176,3 +175,25 @@ tbody td{padding:10px 14px;font-size:13px;white-space:nowrap}
 .map-popup-trains{font-size:12px;color:var(--text2);margin-bottom:14px;line-height:1.9}
 .map-popup-close{display:block;width:100%;padding:7px;background:transparent;color:var(--text2);border:1px solid var(--border);border-radius:8px;font-size:12px;cursor:pointer;font-family:inherit}
 .map-popup-close:hover{background:var(--bg3)}
+/* 알람 */
+.stn-grid{grid-template-columns:32px 1fr 100px 100px 80px}
+.stn-gh.alarm-col{color:var(--orange)}
+.alarm-btn-wrap{display:flex;gap:4px;align-items:center;justify-content:center}
+.alarm-btn{padding:3px 7px;font-size:11px;border-radius:5px;border:1px solid var(--border);background:transparent;color:var(--text3);cursor:pointer;transition:all .15s;white-space:nowrap;font-family:inherit}
+.alarm-btn:hover{background:var(--bg3);color:var(--text1)}
+.alarm-btn.active{background:rgba(249,115,22,.15);color:var(--orange);border-color:rgba(249,115,22,.4)}
+.alarm-btn.disabled{opacity:.3;cursor:default;pointer-events:none}
+/* 알람 목록 */
+.alarm-empty{text-align:center;padding:60px 24px;color:var(--text3)}
+.alarm-card{background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:14px 16px;margin-bottom:10px;display:flex;align-items:center;gap:12px}
+.alarm-card.fired{opacity:.5}
+.alarm-card-info{flex:1;min-width:0}
+.alarm-card-title{font-size:14px;font-weight:600;margin-bottom:3px}
+.alarm-card-sub{font-size:12px;color:var(--text2)}
+.alarm-card-time{font-family:var(--mono);font-size:13px;font-weight:600;color:var(--orange);white-space:nowrap}
+.alarm-del-btn{flex-shrink:0;padding:4px 8px;font-size:12px;border:1px solid var(--border);border-radius:6px;background:transparent;color:var(--text3);cursor:pointer;transition:all .15s}
+.alarm-del-btn:hover{background:rgba(248,81,73,.15);color:#f85149;border-color:#f85149}
+.alarm-type-badge{display:inline-flex;align-items:center;padding:1px 7px;border-radius:8px;font-size:11px;font-weight:600;margin-right:6px}
+.alarm-type-arr{background:rgba(63,185,80,.15);color:#3fb950;border:1px solid rgba(63,185,80,.3)}
+.alarm-type-prev{background:rgba(56,139,253,.15);color:var(--accent);border:1px solid rgba(56,139,253,.3)}
+.alarm-type-board{background:rgba(249,115,22,.15);color:var(--orange);border:1px solid rgba(249,115,22,.3)}
