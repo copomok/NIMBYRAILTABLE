@@ -76,8 +76,8 @@ tbody td{padding:10px 14px;font-size:13px;white-space:nowrap}
 .detail-no{font-family:var(--mono);font-size:24px;font-weight:700}
 .detail-dest{font-size:15px;font-weight:700}
 .detail-meta{color:var(--text2);font-size:12px;display:flex;gap:14px;flex-wrap:wrap;margin-top:4px}
-.stn-grid{display:grid;grid-template-columns:32px 1fr 100px 100px}
-.stn-gh{padding:7px 14px;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;background:var(--bg3);border-bottom:1px solid var(--border);color:var(--text2)}
+.stn-grid{display:grid;grid-template-columns:32px 1fr 100px 100px 52px}
+.stn-gh{padding:7px 14px;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;background:var(--bg3);border-bottom:1px solid var(--border);color:var(--text2);white-space:nowrap}
 .stn-gh.green{color:var(--green)}.stn-gh.blue{color:var(--accent2)}
 .sr{display:contents}
 .sr>div{padding:9px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;font-size:13px;transition:background .1s}
@@ -127,7 +127,7 @@ tbody td{padding:10px 14px;font-size:13px;white-space:nowrap}
   .form-row{flex-direction:column;align-items:stretch}
   input[type="text"],select{width:100%}
   .tabs{max-width:100%}
-  .stn-grid{grid-template-columns:26px 1fr 80px 80px}
+  .stn-grid{grid-template-columns:26px 1fr 80px 80px 44px}
 }
  
 /* 현재 운행 구간 */
@@ -253,8 +253,8 @@ tbody td{padding:10px 14px;font-size:13px;white-space:nowrap}
 .detail-no{font-family:var(--mono);font-size:24px;font-weight:700}
 .detail-dest{font-size:15px;font-weight:700}
 .detail-meta{color:var(--text2);font-size:12px;display:flex;gap:14px;flex-wrap:wrap;margin-top:4px}
-.stn-grid{display:grid;grid-template-columns:32px 1fr 100px 100px}
-.stn-gh{padding:7px 14px;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;background:var(--bg3);border-bottom:1px solid var(--border);color:var(--text2)}
+.stn-grid{display:grid;grid-template-columns:32px 1fr 100px 100px 52px}
+.stn-gh{padding:7px 14px;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;background:var(--bg3);border-bottom:1px solid var(--border);color:var(--text2);white-space:nowrap}
 .stn-gh.green{color:var(--green)}.stn-gh.blue{color:var(--accent2)}
 .sr{display:contents}
 .sr>div{padding:9px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;font-size:13px;transition:background .1s}
@@ -303,7 +303,7 @@ tbody td{padding:10px 14px;font-size:13px;white-space:nowrap}
 @media(max-width:640px){
   .form-row{flex-direction:column;align-items:stretch}
   input[type="text"],select{width:100%}
-  .stn-grid{grid-template-columns:26px 1fr 80px 80px}
+  .stn-grid{grid-template-columns:26px 1fr 80px 80px 44px}
 }
 
 /* 현재 운행 구간 */
@@ -354,7 +354,7 @@ tbody td{padding:10px 14px;font-size:13px;white-space:nowrap}
 .map-popup-close{display:block;width:100%;padding:7px;background:transparent;color:var(--text2);border:1px solid var(--border);border-radius:8px;font-size:12px;cursor:pointer;font-family:inherit}
 .map-popup-close:hover{background:var(--bg3)}
 /* 알람 */
-.stn-grid{grid-template-columns:32px 1fr 100px 100px 44px}
+.stn-grid{grid-template-columns:32px 1fr 100px 100px 52px}
 .stn-gh.alarm-col{color:var(--orange);text-align:center}
 .alarm-bell-btn{width:28px;height:28px;border-radius:6px;border:1px solid var(--border);background:transparent;color:var(--text3);cursor:pointer;transition:all .15s;display:flex;align-items:center;justify-content:center;font-size:14px;margin:auto}
 .alarm-bell-btn:hover{background:var(--bg3);color:var(--orange)}

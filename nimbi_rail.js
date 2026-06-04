@@ -222,11 +222,13 @@ function renderDetail(t){
       <button class="btn-pass-toggle" onclick="togglePass('${cardId}')" title="통과역 표시/숨김">통과역 숨기기</button>
     </div>
     ${statusBanner}
-    <div class="stn-grid">
-      <div class="stn-gh">#</div><div class="stn-gh">역명</div>
-      <div class="stn-gh green">도착</div><div class="stn-gh blue">출발</div>
-      <div class="stn-gh alarm-col">알람</div>
-      ${rows}
+    <div style="overflow-x:auto;-webkit-overflow-scrolling:touch">
+      <div class="stn-grid" style="min-width:420px">
+        <div class="stn-gh">#</div><div class="stn-gh">역명</div>
+        <div class="stn-gh green">도착</div><div class="stn-gh blue">출발</div>
+        <div class="stn-gh alarm-col">알람</div>
+        ${rows}
+      </div>
     </div>
   </div>`;
 }
@@ -662,19 +664,30 @@ function checkAlarms(){
   let changed=false;
   alarms.forEach(a=>{
     if(a.fired)return;
-    if(a.alarmM===nowM){
+    // 알람 시각이 됐거나 지났으면 울림 (놓침 방지: alarmM <= nowM)
+    // 단 너무 오래 지난 것(10분 초과)은 조용히 fired 처리
+    const diff=nowM-a.alarmM;
+    if(diff>=0&&diff<=10){
       a.fired=true;changed=true;
-      const body={
-        'board-5':`${a.trainNo}번 열차가 ${a.stn}역에서 5분 후 출발합니다`,
-        'board-prev':`${a.trainNo}번 열차가 곧 ${a.stn}역에 도착합니다`,
-        'arr':`${a.trainNo}번 열차가 곧 ${a.stn}역에 도착합니다`,
-      }[a.type]||a.label;
-      if(Notification.permission==='granted')new Notification('🔔 님비레일 알람',{body});
+      if(diff<=2){
+        // 2분 이내는 실제 알림 발송
+        const body={
+          'board-5':`${a.trainNo}번 열차가 ${a.stn}역에서 5분 후 출발합니다`,
+          'board-prev':`${a.trainNo}번 열차가 곧 ${a.stn}역에 도착합니다`,
+          'arr':`${a.trainNo}번 열차가 곧 ${a.stn}역에 도착합니다`,
+        }[a.type]||a.label;
+        if(Notification.permission==='granted'){
+          new Notification('🔔 님비레일 알람',{body,icon:'',requireInteraction:false});
+        }
+      }
     }
   });
   if(changed){saveAlarms(alarms);renderAlarmIfOpen();}
 }
-setInterval(checkAlarms,30000);
+// 10초마다 체크 (30초는 너무 길어 알람을 놓칠 수 있음)
+setInterval(checkAlarms,10000);
+// 페이지 로드 시 즉시 1회 체크
+setTimeout(checkAlarms,1000);
 
 
 function jumpToTrain(no){
