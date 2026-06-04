@@ -21,7 +21,7 @@
     <button class="tab" onclick="switchTab('map')" id="tab-map">🗺️ 노선도</button>
     <button class="tab" onclick="switchTab('alarm')" id="tab-alarm">🔔 알람</button>
   </div>
- 
+
   <div class="panel active" id="panel-train">
     <div class="search-card">
       <div class="form-row">
@@ -46,7 +46,7 @@
     <div id="train-line-list"></div>
     <div id="result-train"></div>
   </div>
- 
+
   <div class="panel" id="panel-station">
     <div class="search-card">
       <div class="form-row">
@@ -104,7 +104,7 @@
     </div>
     <div id="result-station"></div>
   </div>
- 
+
   <div class="panel" id="panel-route">
     <div class="search-card">
       <div class="form-row">
@@ -147,12 +147,23 @@
     <div class="map-svg-wrap" id="map-svg-wrap"></div>
   </div>
 </div>
- 
+
   <div class="panel" id="panel-alarm">
     <div id="result-alarm"></div>
   </div>
 </div>
- 
+
+<div class="alarm-popup-backdrop" id="alarm-popup-backdrop" style="display:none" onclick="closeAlarmPopup()"></div>
+<div class="alarm-popup" id="alarm-popup" style="display:none">
+  <div class="alarm-popup-title" id="alarm-popup-title"></div>
+  <div class="alarm-popup-train" id="alarm-popup-train"></div>
+  <div class="alarm-popup-btns">
+    <button class="alarm-popup-btn" id="alarm-popup-board" onclick="setAlarmFromPopup('board')">🚉 승차 알람 설정</button>
+    <button class="alarm-popup-btn" id="alarm-popup-alight" onclick="setAlarmFromPopup('alight')">🚪 하차 알람 설정</button>
+  </div>
+  <button class="alarm-popup-close" onclick="closeAlarmPopup()">닫기</button>
+</div>
+
 <div class="map-popup-backdrop" id="map-backdrop" style="display:none" onclick="closeMapPopup()"></div>
 <div class="map-popup" id="map-popup" style="display:none">
   <div class="map-popup-title" id="map-popup-name"></div>
@@ -161,7 +172,7 @@
   <button class="btn btn-primary" style="width:100%;margin-bottom:8px" onclick="goToMapStation()">🏢 시간표 보기</button>
   <button class="map-popup-close" onclick="closeMapPopup()">닫기</button>
 </div>
- 
+
 <script src="nimbi_rail_data.js"></script>
   <script src="nimbi_rail.js"></script>
 </body>
