@@ -117,30 +117,63 @@ function getCurrentStatus(t){
     if(hasTime(s.arr)||hasTime(s.dep))all.push({s,idx});
   });
   if(!all.length)return null;
-  const firstDep=toMin(all[0].s.dep||all[0].s.arr);
-  const lastArr=toMin(all[all.length-1].s.arr||all[all.length-1].s.dep);
-  if(nowMin<firstDep)return{status:'before'};
-  if(nowMin>lastArr)return{status:'done'};
-  for(let i=0;i<all.length;i++){
-    const {s,idx}=all[i];
-    const arrM=toMin(s.arr);
-    const depM=toMin(s.dep);
-    const leaveM=depM??arrM;
-    // 정차 중: arrM <= now <= depM
-    if(arrM!==null&&depM!==null&&nowMin>=arrM&&nowMin<=depM){
-      return{status:'running',atStn:s.s,prevStn:i>0?all[i-1].s.s:null,nowMin};
+
+  // 자정 넘는 열차 대응: 시각이 역순으로 줄어드는 구간에서 +1440 보정
+  // 각 stop의 시각을 연속된 분 값으로 정규화
+  function normalizeMinutes(stops){
+    const result=[];
+    let offset=0;
+    let prevM=-1;
+    for(const item of stops){
+      const s=item.s;
+      const rawArr=toMin(s.arr);
+      const rawDep=toMin(s.dep);
+      const rawM=rawArr??rawDep;
+      if(rawM===null){result.push({...item,normArr:null,normDep:null});continue;}
+      // 이전 시각보다 크게 줄었으면 자정 넘긴 것
+      if(prevM>=0&&rawM<prevM-60) offset+=1440;
+      const normArr=rawArr!==null?rawArr+offset:null;
+      const normDep=rawDep!==null?rawDep+offset:null;
+      result.push({...item,normArr,normDep});
+      prevM=rawM;
     }
-    // 이동 중: leaveM < now < 다음 정차역 arrM
-    if(i+1<all.length){
-      const {s:nextS,idx:nextIdx}=all[i+1];
-      const nextArrM=toMin(nextS.arr)||toMin(nextS.dep);
-      if(leaveM!==null&&nextArrM!==null&&nowMin>leaveM&&nowMin<nextArrM){
-        // 두 정차역 사이 통과역 확인 (원본 인덱스 사용)
+    return result;
+  }
+
+  const normalized=normalizeMinutes(all);
+  const firstDep=normalized[0].normDep??normalized[0].normArr;
+  const lastItem=normalized[normalized.length-1];
+  const lastArr=lastItem.normArr??lastItem.normDep;
+
+  // nowMin도 열차 운행 범위에 맞게 보정
+  // 열차가 자정을 넘겨 운행 중이면 nowMin에 1440 더해서 비교
+  let nowM=nowMin;
+  if(lastArr>1440&&nowMin<firstDep) nowM=nowMin+1440;
+
+  if(nowM<firstDep)return{status:'before'};
+  if(nowM>lastArr)return{status:'done'};
+
+  for(let i=0;i<normalized.length;i++){
+    const {s,idx,normArr,normDep}=normalized[i];
+    const leaveM=normDep??normArr;
+    // 정차 중: arrM <= now <= depM
+    if(normArr!==null&&normDep!==null&&nowM>=normArr&&nowM<=normDep){
+      return{status:'running',atStn:s.s,prevStn:i>0?normalized[i-1].s.s:null,nowMin};
+    }
+    // 이동 중: leaveM < now < 다음 역 arrM
+    if(i+1<normalized.length){
+      const {s:nextS,idx:nextIdx,normArr:nextArrM}=normalized[i+1];
+      const nextM=nextArrM??normalized[i+1].normDep;
+      if(leaveM!==null&&nextM!==null&&nowM>leaveM&&nowM<nextM){
+        // 사이 통과역 확인
         for(let j=idx+1;j<nextIdx;j++){
           const mid=t.stops[j];
           if(!isPassStop(t,mid.s))continue;
-          const midM=toMin(mid.arr)||toMin(mid.dep);
-          if(midM!==null&&midM===nowMin){
+          const midRaw=toMin(mid.arr)||toMin(mid.dep);
+          if(midRaw===null)continue;
+          // 통과역도 offset 적용 근사
+          const midM=midRaw+(leaveM>=1440?1440:0);
+          if(midM===nowM){
             return{status:'running',passStn:mid.s,prevStn:s.s,nowMin};
           }
         }
@@ -148,7 +181,7 @@ function getCurrentStatus(t){
       }
     }
   }
-  return{status:'running',nextStn:all[all.length-1].s.s,nowMin};
+  return{status:'running',nextStn:normalized[normalized.length-1].s.s,nowMin};
 }
 
 function renderDetail(t){
