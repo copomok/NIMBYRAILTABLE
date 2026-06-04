@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="ko">
 <head>
@@ -7,7 +6,7 @@
 <title>님비레일 시간표</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="nimbi_rail.css">
 </head>
 <body>
 <header>
@@ -20,6 +19,7 @@
     <button class="tab" onclick="switchTab('station')" id="tab-station">🏢 역별 시간표</button>
     <button class="tab" onclick="switchTab('route')" id="tab-route">🔍 출발→도착</button>
     <button class="tab" onclick="switchTab('map')" id="tab-map">🗺️ 노선도</button>
+    <button class="tab" onclick="switchTab('alarm')" id="tab-alarm">🔔 알람</button>
   </div>
  
   <div class="panel active" id="panel-train">
@@ -148,6 +148,11 @@
   </div>
 </div>
  
+  <div class="panel" id="panel-alarm">
+    <div id="result-alarm"></div>
+  </div>
+</div>
+ 
 <div class="map-popup-backdrop" id="map-backdrop" style="display:none" onclick="closeMapPopup()"></div>
 <div class="map-popup" id="map-popup" style="display:none">
   <div class="map-popup-title" id="map-popup-name"></div>
@@ -157,7 +162,7 @@
   <button class="map-popup-close" onclick="closeMapPopup()">닫기</button>
 </div>
  
-<script src="trains.js"></script>
-  <script src="script.js"></script>
+<script src="nimbi_rail_data.js"></script>
+  <script src="nimbi_rail.js"></script>
 </body>
 </html>
