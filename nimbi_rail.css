@@ -388,3 +388,16 @@ tbody td{padding:10px 14px;font-size:13px;white-space:nowrap}
 .alarm-type-badge{display:inline-flex;align-items:center;padding:1px 7px;border-radius:8px;font-size:11px;font-weight:600;margin-right:6px}
 .alarm-type-board{background:rgba(249,115,22,.15);color:var(--orange);border:1px solid rgba(249,115,22,.3)}
 .alarm-type-arr{background:rgba(63,185,80,.15);color:#3fb950;border:1px solid rgba(63,185,80,.3)}
+
+/* 즐겨찾기 */
+.btn-fav-add{padding:6px 10px;font-size:15px;border:1px solid var(--border);border-radius:8px;background:var(--bg2);cursor:pointer;transition:all .15s;line-height:1;color:var(--text2)}
+.btn-fav-add:hover{background:rgba(210,153,34,.15);color:#d29922;border-color:rgba(210,153,34,.4)}
+.fav-list{display:flex;flex-direction:column;gap:8px}
+.fav-card{display:flex;align-items:center;gap:12px;background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:14px 16px;cursor:pointer;transition:border-color .15s}
+.fav-card:hover{border-color:var(--accent)}
+.fav-icon{font-size:20px;flex-shrink:0}
+.fav-info{flex:1;min-width:0}
+.fav-label{font-size:14px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.fav-type{font-size:11px;color:var(--text2);margin-top:2px}
+.fav-del-btn{flex-shrink:0;padding:4px 8px;font-size:12px;border:1px solid var(--border);border-radius:6px;background:transparent;color:var(--text3);cursor:pointer;transition:all .15s}
+.fav-del-btn:hover{background:rgba(248,81,73,.15);color:#f85149;border-color:#f85149}

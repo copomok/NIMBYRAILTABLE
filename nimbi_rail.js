@@ -43,6 +43,7 @@ function switchTab(n){
     showMapLine('gyeongbu', document.querySelector('.map-line-tab'));
   }
   if(n==='alarm') renderAlarms();
+  if(n==='fav') renderFavs();
 }
 
 // ── 통과 판별 ──
@@ -722,6 +723,91 @@ setInterval(checkAlarms,10000);
 // 페이지 로드 시 즉시 1회 체크
 setTimeout(checkAlarms,1000);
 
+
+// ── 즐겨찾기 ──
+const FAV_KEY='nimbi_favs';
+function loadFavs(){try{return JSON.parse(localStorage.getItem(FAV_KEY))||[];}catch(e){return[];}}
+function saveFavs(favs){localStorage.setItem(FAV_KEY,JSON.stringify(favs));}
+
+function addFav(type){
+  let id,label,data={};
+  if(type==='train'){
+    const no=document.getElementById('input-trainno').value.trim();
+    if(!no){alert('열차번호를 입력 후 추가해주세요.');return;}
+    id='train:'+no; label='열차 '+no; data={no};
+  } else if(type==='station'){
+    const stn=document.getElementById('input-station').value.trim();
+    if(!stn){alert('역 이름을 입력 후 추가해주세요.');return;}
+    id='station:'+stn; label=stn+'역 시간표'; data={stn};
+  } else if(type==='route'){
+    const from=document.getElementById('input-from').value.trim();
+    const to=document.getElementById('input-to').value.trim();
+    if(!from||!to){alert('출발역과 도착역을 입력 후 추가해주세요.');return;}
+    id='route:'+from+':'+to; label=from+' → '+to; data={from,to};
+  }
+  const favs=loadFavs();
+  if(favs.some(f=>f.id===id)){alert('이미 즐겨찾기에 추가된 항목입니다.');return;}
+  favs.push({id,type,label,data,addedAt:Date.now()});
+  saveFavs(favs);
+  alert('"'+label+'"을 즐겨찾기에 추가했습니다.');
+  // 즐겨찾기 탭이 열려있으면 새로고침
+  if(document.getElementById('panel-fav').classList.contains('active'))renderFavs();
+}
+
+function removeFav(id){
+  saveFavs(loadFavs().filter(f=>f.id!==id));
+  renderFavs();
+}
+
+function runFav(fav){
+  if(fav.type==='train'){
+    document.getElementById('input-trainno').value=fav.data.no;
+    // 노선 선택 초기화
+    const sel=document.getElementById('sel-line-train');
+    if(sel)sel.value='';
+    document.getElementById('train-line-list').innerHTML='';
+    switchTab('train');
+    searchByTrain();
+  } else if(fav.type==='station'){
+    document.getElementById('input-station').value=fav.data.stn;
+    switchTab('station');
+    searchByStation();
+  } else if(fav.type==='route'){
+    document.getElementById('input-from').value=fav.data.from;
+    document.getElementById('input-to').value=fav.data.to;
+    switchTab('route');
+    searchByRoute();
+  }
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+function renderFavs(){
+  const el=document.getElementById('result-fav');
+  if(!el)return;
+  const favs=loadFavs();
+  if(!favs.length){
+    el.innerHTML='<div class="empty"><div class="empty-icon">⭐</div><p>즐겨찾기가 비어있습니다.<br>각 탭의 ⭐ 버튼으로 추가해보세요.</p></div>';
+    return;
+  }
+  const typeIcon={train:'🔢',station:'🏢',route:'🔍'};
+  const typeLabel={train:'열차번호',station:'역 시간표',route:'출발→도착'};
+  const cards=favs.map(f=>`
+    <div class="fav-card" onclick="runFav(${JSON.stringify(f).replace(/"/g,'&quot;')})">
+      <div class="fav-icon">${typeIcon[f.type]||'⭐'}</div>
+      <div class="fav-info">
+        <div class="fav-label">${f.label}</div>
+        <div class="fav-type">${typeLabel[f.type]||''}</div>
+      </div>
+      <button class="fav-del-btn" onclick="event.stopPropagation();removeFav('${f.id}')" title="삭제">✕</button>
+    </div>`).join('');
+  el.innerHTML=`
+    <div class="result-header">
+      <div class="result-title">⭐ 즐겨찾기</div>
+      <span class="badge blue">${favs.length}개</span>
+    </div>
+    <div class="fav-list">${cards}</div>
+    <p class="hint">※ 항목 클릭 시 해당 탭으로 이동해 바로 조회합니다</p>`;
+}
 
 function jumpToTrain(no){
   document.getElementById('input-trainno').value=no;
