@@ -1287,11 +1287,37 @@ function showMapLine(lineKey, btn){
   }));
   _mapStnPos=stnPos;
 
-  // 선 그리기
+  // 선 그리기 (곡선 path)
+  function smoothPath(stations, ox, oy){
+    if(stations.length<2)return '';
+    const pts=stations.map(s=>({x:s.x+ox,y:s.y+oy}));
+    let d=`M${pts[0].x},${pts[0].y}`;
+    for(let i=1;i<pts.length;i++){
+      const prev=pts[i-1], cur=pts[i];
+      const next=pts[i+1];
+      if(i===pts.length-1||!next){
+        d+=` L${cur.x},${cur.y}`;
+      } else {
+        // 꺾임 각도 계산
+        const dx1=cur.x-prev.x, dy1=cur.y-prev.y;
+        const dx2=next.x-cur.x, dy2=next.y-cur.y;
+        const len1=Math.sqrt(dx1*dx1+dy1*dy1);
+        const len2=Math.sqrt(dx2*dx2+dy2*dy2);
+        // 곡선 반경: 선분 길이의 25%, 최대 20px
+        const r=Math.min(len1*0.25, len2*0.25, 20);
+        // 꺾임 직전/직후 지점
+        const bx=cur.x-dx1/len1*r, by=cur.y-dy1/len1*r;
+        const ax=cur.x+dx2/len2*r, ay=cur.y+dy2/len2*r;
+        d+=` L${bx.toFixed(2)},${by.toFixed(2)} Q${cur.x},${cur.y} ${ax.toFixed(2)},${ay.toFixed(2)}`;
+      }
+    }
+    return d;
+  }
+
   line.routes.forEach(r=>{
-    const pts=r.stations.map(s=>`${s.x+ox},${s.y+oy}`).join(' ');
     const isDash=r.dash||false;
-    parts.push(`<polyline points="${pts}" fill="none" stroke="${r.color}" stroke-width="${isDash?3:5}" stroke-linecap="round" stroke-linejoin="round" ${isDash?'stroke-dasharray="8,5"':''} opacity="${isDash?0.65:1}"/>`);
+    const d=smoothPath(r.stations, ox, oy);
+    parts.push(`<path d="${d}" fill="none" stroke="${r.color}" stroke-width="${isDash?3:5}" stroke-linecap="round" stroke-linejoin="round" ${isDash?'stroke-dasharray="8,5"':''} opacity="${isDash?0.65:1}"/>`);
   });
 
   // 역 점 + 이름 (중복 없이)
@@ -1309,9 +1335,35 @@ function showMapLine(lineKey, btn){
       // 역 점
       parts.push(`<circle cx="${x}" cy="${y}" r="${r2}" fill="#161b22" stroke="${r.color}" stroke-width="${sw}" pointer-events="none"/>`);
       // 역명
-      const anchor=x>svgW/2?'end':'start';
-      const tx=x+(anchor==='start'?13:-13);
-      parts.push(`<text x="${tx}" y="${y+4}" fill="#e6edf3" font-size="${isEnd?12:11}" font-weight="${isEnd?700:400}" text-anchor="${anchor}" pointer-events="none" font-family="Noto Sans KR,sans-serif">${s.n}</text>`);
+      // 인접 역 방향 기반 텍스트 위치 결정
+      // 이전/다음 역의 x 평균으로 텍스트를 반대쪽에 배치
+      const allStnList=line.routes.flatMap(r=>r.stations);
+      const sIdx=allStnList.findIndex(q=>q.n===s.n);
+      const prevS=sIdx>0?allStnList[sIdx-1]:null;
+      const nextS=sIdx<allStnList.length-1?allStnList[sIdx+1]:null;
+      const neighborX=prevS&&nextS?(prevS.x+nextS.x)/2:prevS?prevS.x:nextS?nextS.x:null;
+      // 이웃 역보다 오른쪽이면 오른쪽, 왼쪽이면 왼쪽 → 노선에서 멀어지는 방향
+      let anchor, tx, ty=y+4;
+      if(neighborX!==null){
+        // 노선이 수직에 가까우면(dx 작음) 좌우로, 수평에 가까우면 위아래로
+        const dx=Math.abs((prevS?prevS.x:nextS.x)-(nextS?nextS.x:prevS.x));
+        const dy=Math.abs((prevS?prevS.y:nextS.y)-(nextS?nextS.y:prevS.y));
+        if(dy>dx*1.5){
+          // 수직 구간: x 기준 좌우 배치
+          anchor=x>svgW/2?'end':'start';
+          tx=x+(anchor==='start'?13:-13);
+        } else {
+          // 수평/대각 구간: 노선 위아래 배치
+          const isAbove=neighborX<x;
+          anchor='middle';
+          tx=x;
+          ty=isAbove?y-10:y+16;
+        }
+      } else {
+        anchor=x>svgW/2?'end':'start';
+        tx=x+(anchor==='start'?13:-13);
+      }
+      parts.push(`<text x="${tx}" y="${ty}" fill="#e6edf3" font-size="${isEnd?12:11}" font-weight="${isEnd?700:400}" text-anchor="${anchor}" pointer-events="none" font-family="Noto Sans KR,sans-serif">${s.n}</text>`);
     });
   });
 
