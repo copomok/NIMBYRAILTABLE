@@ -195,12 +195,27 @@
 <script src="nimbi_rail_data.js"></script>
   <script src="nimbi_rail.js"></script>
   <script>
-    // Service Worker 등록
     if('serviceWorker' in navigator){
       window.addEventListener('load', ()=>{
-        navigator.serviceWorker.register('sw.js')
-          .then(reg => console.log('SW 등록 완료:', reg.scope))
-          .catch(err => console.log('SW 등록 실패:', err));
+        navigator.serviceWorker.register('sw.js').then(reg => {
+          // 새 SW 대기 중이면 즉시 활성화 요청
+          if(reg.waiting){
+            reg.waiting.postMessage('skipWaiting');
+          }
+          reg.addEventListener('updatefound', () => {
+            const newSW = reg.installing;
+            newSW.addEventListener('statechange', () => {
+              if(newSW.state === 'installed' && navigator.serviceWorker.controller){
+                // 새 버전 발견 시 자동 새로고침
+                newSW.postMessage('skipWaiting');
+              }
+            });
+          });
+        });
+        // SW 교체 시 페이지 자동 새로고침
+        navigator.serviceWorker.addEventListener('controllerchange', () => {
+          window.location.reload();
+        });
       });
     }
   </script>
