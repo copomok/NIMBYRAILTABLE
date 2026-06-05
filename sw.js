@@ -1,4 +1,4 @@
-const CACHE_NAME = 'nimbirail-v2';
+const CACHE_NAME = 'nimbirail-6b7b5f46';
 const ASSETS = [
   '/NIMBYRAILTABLE/',
   '/NIMBYRAILTABLE/index.html',
@@ -26,32 +26,16 @@ self.addEventListener('activate', e => {
   self.clients.claim();
 });
 
-// 요청 처리: 캐시 우선, 없으면 네트워크
+// 요청 처리: 네트워크 우선, 실패 시 캐시 (항상 최신 반영)
 self.addEventListener('fetch', e => {
   e.respondWith(
-    caches.match(e.request).then(cached => {
-      if (cached) return cached;
-      return fetch(e.request).then(res => {
-        // 성공한 응답은 캐시에 저장
-        if (res && res.status === 200 && res.type === 'basic') {
-          const clone = res.clone();
-          caches.open(CACHE_NAME).then(cache => cache.put(e.request, clone));
-        }
-        return res;
-      }).catch(() => cached);
-    })
-  );
-});
-
-// 푸시 알림 (백그라운드)
-self.addEventListener('push', e => {
-  const data = e.data ? e.data.json() : {};
-  e.waitUntil(
-    self.registration.showNotification(data.title || '🔔 님비레일 알람', {
-      body: data.body || '',
-      icon: '/NIMBYRAILTABLE/icon-192.png',
-      badge: '/NIMBYRAILTABLE/icon-192.png',
-    })
+    fetch(e.request).then(res => {
+      if (res && res.status === 200 && res.type === 'basic') {
+        const clone = res.clone();
+        caches.open(CACHE_NAME).then(cache => cache.put(e.request, clone));
+      }
+      return res;
+    }).catch(() => caches.match(e.request))
   );
 });
 

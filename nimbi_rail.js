@@ -1313,7 +1313,7 @@ function showMapLine(lineKey, btn){
 
   const parts=[];
   // viewBox는 원본 좌표 그대로, width는 컨테이너에 맞게 100%
-  parts.push(`<svg viewBox="0 0 ${svgW} ${svgH}" width="100%" style="min-width:${Math.min(svgW,400)}px;display:block" xmlns="http://www.w3.org/2000/svg">`);
+  parts.push(`<svg viewBox="0 0 ${svgW} ${svgH}" width="100%" style="min-width:${Math.min(svgW,400)}px;display:block;overflow:hidden" xmlns="http://www.w3.org/2000/svg">`);
   parts.push(`<rect width="${svgW}" height="${svgH}" fill="var(--bg1)"/>`);
   // 격자
   for(let x=0;x<svgW;x+=50)parts.push(`<line x1="${x}" y1="0" x2="${x}" y2="${svgH}" stroke="#21262d" stroke-width="1"/>`);
