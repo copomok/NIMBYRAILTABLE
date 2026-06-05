@@ -44,6 +44,7 @@
             <option value="경전선">경전선</option>
             <option value="중앙선">중앙선</option>
             <option value="동해선">동해선</option>
+            <option value="강릉선">강릉선</option>
           </select>
         </div>
         <div class="form-group"><label>열차번호</label>
@@ -105,6 +106,7 @@
             <option value="경전선">경전선</option>
             <option value="중앙선">중앙선</option>
             <option value="동해선">동해선</option>
+            <option value="강릉선">강릉선</option>
           </select>
         </div>
         <div class="form-group"><label>시간 이후</label>
@@ -155,11 +157,12 @@
       <button class="map-line-tab" onclick="showMapLine('honam',this)">호남선</button>
       <button class="map-line-tab" onclick="showMapLine('jungang',this)">중앙선</button>
       <button class="map-line-tab" onclick="showMapLine('donghae',this)">동해선</button>
+      <button class="map-line-tab" onclick="showMapLine('gangreung',this)">강릉선</button>
     </div>
       </div>
       <span id="map-train-count" class="badge blue" style="white-space:nowrap"></span>
     </div>
-    <div id="map-content">
+    <div id="map-content" style="display:none">
       <div class="map-legend" id="map-legend"></div>
       <div class="map-svg-wrap" id="map-svg-wrap"><div style="padding:40px;text-align:center;color:var(--text3)">노선을 선택하세요</div></div>
     </div>

@@ -40,12 +40,12 @@ function switchTab(n){
   document.getElementById('tab-'+n).classList.add('active');
   document.getElementById('panel-'+n).classList.add('active');
   if(n==='map'){
-    // 노선도 탭 진입 시 콘텐츠 보이게 + 노선 표시
     const content=document.getElementById('map-content');
     if(content) content.style.display='';
+    // 항상 현재 활성 노선 탭 렌더링 (초기엔 경부선)
     const activeMapTab=document.querySelector('.map-line-tab.active')||document.querySelector('.map-line-tab');
-    const lineKey=activeMapTab?activeMapTab.getAttribute('onclick').match(/'(\w+)'/)?.[1]:'gyeongbu';
-    showMapLine(lineKey||'gyeongbu', activeMapTab);
+    const lineKey=(activeMapTab&&activeMapTab.getAttribute('onclick').match(/['"]([\w]+)['"]/)?.[1])||'gyeongbu';
+    showMapLine(lineKey, activeMapTab||document.querySelector('.map-line-tab'));
   } else {
     // 다른 탭으로 이동 시 노선도 콘텐츠 숨기기
     _mapCurrentLine=null;
@@ -1017,6 +1017,9 @@ function updateMapTrains(){
     const entry=running.find(r=>r.t.no===no);
     if(entry) dot.addEventListener('click',()=>openMapTrainPopup(entry.t, entry.status));
   });
+  // 역 히트 영역을 맨 위 레이어로 이동 (역 클릭 우선)
+  const hitCircles=[...svgEl.querySelectorAll('circle[fill="transparent"]')];
+  hitCircles.forEach(c=>svgEl.appendChild(c));
 
   // 운행 열차 수 업데이트
   const countEl=document.getElementById('map-train-count');
@@ -1043,17 +1046,27 @@ function openMapTrainPopup(t, status){
   document.getElementById('map-popup-trains').innerHTML=
     `<div>현재위치: <b>${posText}</b></div>
      <div style="margin-top:4px">${t.line} · ${t.dest}행</div>`;
-  // 버튼을 시간표 보기 → 열차 조회로 변경
+  // 버튼을 열차 조회로 변경
   const popupBtn=document.querySelector('#map-popup .btn.btn-primary');
   if(popupBtn){
     popupBtn.textContent='🔢 열차 조회';
-    popupBtn.onclick=()=>{
-      jumpToTrain(t.no);
-      closeMapPopup();
-    };
+    popupBtn.onclick=(e)=>{e.preventDefault();jumpToTrain(t.no);closeMapPopup();};
   }
   document.getElementById('map-popup').style.display='block';
   document.getElementById('map-backdrop').style.display='block';
+}
+
+// 역 팝업 닫힐 때 버튼 원상복구
+function closeMapPopup(){
+  document.getElementById('map-popup').style.display='none';
+  document.getElementById('map-backdrop').style.display='none';
+  // 버튼 원래대로 복구 (역 시간표 보기)
+  const popupBtn=document.querySelector('#map-popup .btn.btn-primary');
+  if(popupBtn){
+    popupBtn.textContent='🏢 시간표 보기';
+    popupBtn.onclick=()=>goToMapStation();
+  }
+  _mapCurrentStn=null;
 }
 
 // 60초마다 열차 위치 갱신
@@ -1254,15 +1267,34 @@ donghae:{
   ],
 },
 
+gangreung:{
+  name:'강릉선', color:'#a855f7',
+  routes:[
+    // 청량리→원주 (중앙선 경유, 점선)
+    {color:'#a855f7', dash:true, stations:[
+      {n:'청량리',x:243,y:312},
+      {n:'덕소',  x:306,y:363},
+      {n:'양평',  x:354,y:393},
+      {n:'원주',  x:413,y:441},
+    ]},
+    // 원주→강릉 본선
+    {color:'#a855f7', stations:[
+      {n:'원주',  x:413,y:441},
+      {n:'남횡성',x:446,y:426},
+      {n:'방림',  x:464,y:414},
+      {n:'평창',  x:491,y:402},
+      {n:'진부',  x:515,y:381},
+      {n:'대관령',x:536,y:360},
+      {n:'강릉',  x:569,y:342},
+    ]},
+  ],
+},
+
 };
 
 let _mapCurrentStn=null;
 
-function closeMapPopup(){
-  document.getElementById('map-popup').style.display='none';
-  document.getElementById('map-backdrop').style.display='none';
-  _mapCurrentStn=null;
-}
+
 
 function goToMapStation(){
   if(!_mapCurrentStn)return;
