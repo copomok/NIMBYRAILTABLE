@@ -1013,8 +1013,10 @@ function openMapTrainPopup(t, status){
   _mapCurrentStn=null;
   const valid=t.stops.filter(s=>s.arr||s.dep);
   const originStn=valid[0]?.s, terminusStn=valid[valid.length-1]?.s;
-  const depTime=valid[0]?.(hasTime(valid[0].dep)?valid[0].dep:valid[0].arr)||'-':'-';
-  const arrTime=valid[valid.length-1]?.(hasTime(valid[valid.length-1].arr)?valid[valid.length-1].arr:valid[valid.length-1].dep)||'-':'-';
+  const first=valid[0];
+  const last=valid[valid.length-1];
+  const depTime=first?(hasTime(first.dep)?first.dep:hasTime(first.arr)?first.arr:'-'):'-';
+  const arrTime=last?(hasTime(last.arr)?last.arr:hasTime(last.dep)?last.dep:'-'):'-';
   let posText='운행 중';
   if(status.atStn)posText=`${status.atStn}역 정차 중`;
   else if(status.passStn)posText=`${status.passStn}역 통과 중`;
