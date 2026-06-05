@@ -983,13 +983,12 @@ function updateMapTrains(){
     running.push({t,px,py,status});
   });
 
-  // 열차 레이어를 SVG 문자열로 생성 (innerHTML 방식 - 크로스브라우저 호환)
+  // 열차 레이어를 SVG 문자열로 생성
   const r=Math.max(6, _mapSvgSize.w*0.018);
   const fs=Math.max(9, _mapSvgSize.w*0.016);
   let layerHtml='<g id="train-layer">';
   running.forEach(({t,px,py,status})=>{
     const color=GRADE_COLORS[t.grade]||'#888';
-    // 클릭 이벤트는 data 속성으로 전달
     layerHtml+=`<circle cx="${px.toFixed(1)}" cy="${py.toFixed(1)}" r="${r}"
       fill="${color}" stroke="#0d1117" stroke-width="2"
       style="cursor:pointer" class="train-dot" data-no="${t.no}"/>`;
@@ -1000,11 +999,17 @@ function updateMapTrains(){
   });
   layerHtml+='</g>';
 
-  // SVG에 레이어 삽입
+  // 열차 레이어를 역 히트 영역보다 아래에 삽입
+  // (역 클릭이 열차 클릭보다 우선되도록)
   const tempDiv=document.createElement('div');
   tempDiv.innerHTML=`<svg>${layerHtml}</svg>`;
   const newLayer=tempDiv.querySelector('g');
-  if(newLayer) svgEl.appendChild(newLayer);
+  if(newLayer){
+    // 첫 번째 circle(역 히트 영역) 앞에 삽입
+    const firstHit=svgEl.querySelector('circle[fill="transparent"]');
+    if(firstHit) svgEl.insertBefore(newLayer, firstHit);
+    else svgEl.appendChild(newLayer);
+  }
 
   // 클릭 이벤트 등록
   svgEl.querySelectorAll('.train-dot').forEach(dot=>{
