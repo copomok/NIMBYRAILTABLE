@@ -148,12 +148,16 @@
     <div id="result-route"></div>
   </div>
   <div class="panel" id="panel-map">
-    <div class="map-line-tabs" id="map-line-tabs">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;flex-wrap:wrap;gap:8px">
+      <div class="map-line-tabs" id="map-line-tabs" style="margin-bottom:0">
       <button class="map-line-tab active" onclick="showMapLine('gyeongbu',this)">경부선</button>
       <button class="map-line-tab" onclick="showMapLine('gyeongbuhs',this)">경부고속선</button>
       <button class="map-line-tab" onclick="showMapLine('honam',this)">호남선</button>
       <button class="map-line-tab" onclick="showMapLine('jungang',this)">중앙선</button>
       <button class="map-line-tab" onclick="showMapLine('donghae',this)">동해선</button>
+    </div>
+      </div>
+      <span id="map-train-count" class="badge blue" style="white-space:nowrap"></span>
     </div>
     <div class="map-legend" id="map-legend"></div>
     <div class="map-svg-wrap" id="map-svg-wrap"></div>

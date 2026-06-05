@@ -909,6 +909,144 @@ function jumpToTrain(no){
 
 
 // ── 노선도 ──
+let _mapCurrentLine = null;
+let _mapStnPos = {};
+let _mapSvgSize = {w:0,h:0,ox:0,oy:0};
+let _mapTrainInterval = null;
+
+// 등급별 색상
+const GRADE_COLORS = {
+  'KTX':'#3b82f6','SRT':'#a855f7',
+  'ITX-새마을':'#ef4444','ITX-청춘':'#22c55e','무궁화호':'#f97316'
+};
+
+function updateMapTrains(){
+  if(!_mapCurrentLine)return;
+  const svgEl=document.querySelector('#map-svg-wrap svg');
+  if(!svgEl)return;
+
+  // 기존 열차 레이어 제거
+  const old=svgEl.querySelector('#train-layer');
+  if(old)old.remove();
+
+  const now=new Date();
+  const nowMin=now.getHours()*60+now.getMinutes();
+  const line=MAP_LINES[_mapCurrentLine];
+  if(!line)return;
+
+  // 이 노선에 속하는 운행 중 열차 수집
+  const running=[];
+  ALL_TRAINS.forEach(t=>{
+    if(!t.line.includes(line.name))return;
+    const status=getCurrentStatus(t);
+    if(!status||status.status!=='running')return;
+    // prevStn 또는 nextStn 또는 atStn의 좌표 구하기
+    const stnA=status.atStn||status.prevStn;
+    const stnB=status.atStn?null:status.nextStn;
+    const posA=_mapStnPos[stnA];
+    const posB=stnB?_mapStnPos[stnB]:null;
+    if(!posA)return;
+    // 위치: atStn이면 그 역에, 이동 중이면 두 역 사이 중간
+    let px,py;
+    if(posB){
+      // 두 역 사이 진행률 계산
+      const all=t.stops.filter(s=>hasTime(s.arr)||hasTime(s.dep));
+      const iA=all.findIndex(s=>s.s===stnA);
+      const iB=all.findIndex(s=>s.s===stnB);
+      let progress=0.5;
+      if(iA>=0&&iB>=0){
+        const depA=toMin(all[iA].dep||all[iA].arr);
+        const arrB=toMin(all[iB].arr||all[iB].dep);
+        if(depA!==null&&arrB!==null&&arrB>depA){
+          let nM=nowMin;
+          if(depA>nowMin+60)nM+=1440; // 자정 보정
+          progress=Math.min(1,Math.max(0,(nM-depA)/(arrB-depA)));
+        }
+      }
+      px=posA.x+(posB.x-posA.x)*progress;
+      py=posA.y+(posB.y-posA.y)*progress;
+    } else {
+      px=posA.x; py=posA.y;
+    }
+    running.push({t,px,py,status});
+  });
+
+  // SVG 레이어 생성
+  const ns='http://www.w3.org/2000/svg';
+  const layer=document.createElementNS(ns,'g');
+  layer.id='train-layer';
+
+  running.forEach(({t,px,py,status})=>{
+    const color=GRADE_COLORS[t.grade]||'#888';
+    const r=_mapSvgSize.w*0.018;
+    // 외곽 원
+    const circle=document.createElementNS(ns,'circle');
+    circle.setAttribute('cx',px); circle.setAttribute('cy',py);
+    circle.setAttribute('r',r);
+    circle.setAttribute('fill',color);
+    circle.setAttribute('stroke','#0d1117');
+    circle.setAttribute('stroke-width','2');
+    circle.style.cursor='pointer';
+    circle.addEventListener('click',()=>openMapTrainPopup(t,status));
+    // 열차번호 텍스트
+    const text=document.createElementNS(ns,'text');
+    text.setAttribute('x',px); text.setAttribute('y',py-r-3);
+    text.setAttribute('text-anchor','middle');
+    text.setAttribute('font-size',Math.max(9,_mapSvgSize.w*0.016));
+    text.setAttribute('fill',color);
+    text.setAttribute('font-family','Noto Sans KR,sans-serif');
+    text.setAttribute('font-weight','600');
+    text.setAttribute('pointer-events','none');
+    text.textContent=t.no;
+    layer.appendChild(circle);
+    layer.appendChild(text);
+  });
+
+  svgEl.appendChild(layer);
+
+  // 운행 열차 수 업데이트
+  const countEl=document.getElementById('map-train-count');
+  if(countEl)countEl.textContent=`운행 중 ${running.length}편`;
+}
+
+function openMapTrainPopup(t, status){
+  _mapCurrentStn=null;
+  const valid=t.stops.filter(s=>s.arr||s.dep);
+  const originStn=valid[0]?.s, terminusStn=valid[valid.length-1]?.s;
+  const depTime=valid[0]?.(hasTime(valid[0].dep)?valid[0].dep:valid[0].arr)||'-':'-';
+  const arrTime=valid[valid.length-1]?.(hasTime(valid[valid.length-1].arr)?valid[valid.length-1].arr:valid[valid.length-1].dep)||'-':'-';
+  let posText='운행 중';
+  if(status.atStn)posText=`${status.atStn}역 정차 중`;
+  else if(status.passStn)posText=`${status.passStn}역 통과 중`;
+  else if(status.prevStn&&status.nextStn)posText=`${status.prevStn} → ${status.nextStn}`;
+  const color=GRADE_COLORS[t.grade]||'#888';
+  document.getElementById('map-popup-name').innerHTML=
+    `<span style="color:${color}">${t.grade} ${t.no}</span>`;
+  document.getElementById('map-popup-sub').textContent=
+    `${originStn}(${depTime}) → ${terminusStn}(${arrTime})`;
+  document.getElementById('map-popup-trains').innerHTML=
+    `<div>현재위치: <b>${posText}</b></div>
+     <div style="margin-top:4px">${t.line} · ${t.dest}행</div>`;
+  // 버튼을 시간표 보기 → 열차 조회로 변경
+  const popupBtn=document.querySelector('#map-popup .btn.btn-primary');
+  if(popupBtn){
+    popupBtn.textContent='🔢 열차 조회';
+    popupBtn.onclick=()=>{
+      jumpToTrain(t.no);
+      closeMapPopup();
+    };
+  }
+  document.getElementById('map-popup').style.display='block';
+  document.getElementById('map-backdrop').style.display='block';
+}
+
+// 60초마다 열차 위치 갱신
+setInterval(()=>{
+  if(_mapCurrentLine&&document.getElementById('panel-map').classList.contains('active')){
+    updateMapTrains();
+  }
+},60000);
+
 const MAP_LINES = {
 
 // 경부선(빨강): 서울(북) → 수원 → 대전(중앙 약간 서) → 대구(동쪽) → 부산(남동)
@@ -1191,6 +1329,7 @@ function showMapLine(lineKey, btn){
   line.routes.forEach(r=>r.stations.forEach(s=>{
     if(!stnPos[s.n])stnPos[s.n]={x:s.x+ox,y:s.y+oy};
   }));
+  _mapStnPos=stnPos;
 
   // 선 그리기
   line.routes.forEach(r=>{
@@ -1230,7 +1369,19 @@ function showMapLine(lineKey, btn){
     <div class="map-legend-item"><div class="map-legend-line" style="background:${line.color}"></div><span>${line.name} 본선</span></div>
     <div class="map-legend-item"><div class="map-legend-line" style="background:${line.color};opacity:.5"></div><span>지선 / 경유</span></div>
     <div class="map-legend-item" style="gap:8px"><svg width="12" height="12"><circle cx="6" cy="6" r="5" fill="#161b22" stroke="${line.color}" stroke-width="2"/></svg><span>역 (클릭하여 정보 확인)</span></div>
+    <div class="map-legend-item" style="gap:8px;margin-left:8px">
+      <svg width="10" height="10"><circle cx="5" cy="5" r="5" fill="#3b82f6"/></svg><span style="font-size:11px">KTX</span>
+      <svg width="10" height="10"><circle cx="5" cy="5" r="5" fill="#a855f7"/></svg><span style="font-size:11px">SRT</span>
+      <svg width="10" height="10"><circle cx="5" cy="5" r="5" fill="#ef4444"/></svg><span style="font-size:11px">ITX-새마을</span>
+      <svg width="10" height="10"><circle cx="5" cy="5" r="5" fill="#22c55e"/></svg><span style="font-size:11px">ITX-청춘</span>
+      <svg width="10" height="10"><circle cx="5" cy="5" r="5" fill="#f97316"/></svg><span style="font-size:11px">무궁화</span>
+    </div>
   `;
+  // 현재 노선 저장 후 열차 오버레이 시작
+  _mapCurrentLine = lineKey;
+  _mapStnPos = stnPos;
+  _mapSvgSize = {w:svgW, h:svgH, ox, oy};
+  updateMapTrains();
 }
 
 
