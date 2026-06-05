@@ -40,13 +40,15 @@ function switchTab(n){
   document.getElementById('tab-'+n).classList.add('active');
   document.getElementById('panel-'+n).classList.add('active');
   if(n==='map'){
-    // 노선도 탭 진입 시만 렌더링
-    if(!document.getElementById('map-svg-wrap').innerHTML.trim()){
-      showMapLine('gyeongbu', document.querySelector('.map-line-tab'));
-    }
+    // 노선도 탭 진입 시 경부선 기본 표시
+    const activeMapTab=document.querySelector('.map-line-tab.active')||document.querySelector('.map-line-tab');
+    const lineKey=activeMapTab?activeMapTab.getAttribute('onclick').match(/'(\w+)'/)?.[1]:'gyeongbu';
+    showMapLine(lineKey||'gyeongbu', activeMapTab);
   } else {
-    // 다른 탭으로 이동 시 열차 오버레이 인터벌 정지
+    // 다른 탭으로 이동 시 SVG 완전히 비우기
     _mapCurrentLine=null;
+    const wrap=document.getElementById('map-svg-wrap');
+    if(wrap) wrap.innerHTML='';
   }
   if(n==='alarm') renderAlarms();
   if(n==='fav') renderFavs();
