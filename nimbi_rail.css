@@ -21,7 +21,7 @@ header{background:var(--bg2);border-bottom:1px solid var(--border);padding:0 24p
 .tab{padding:8px 18px;border-radius:6px;border:none;background:transparent;color:var(--text2);font-family:var(--sans);font-size:13px;font-weight:500;cursor:pointer;transition:all .15s;display:flex;align-items:center;gap:6px}
 .tab:hover{color:var(--text);background:var(--bg3)}
 .tab.active{background:var(--accent);color:#fff}
-.panel{display:none}.panel.active{display:block}
+.panel{display:none;overflow:hidden}.panel.active{display:block;overflow:visible}
 .search-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:20px;margin-bottom:20px}
 .form-row{display:flex;gap:12px;align-items:flex-end;flex-wrap:wrap}
 .form-group{display:flex;flex-direction:column;gap:6px}
