@@ -7,7 +7,23 @@ function gradeHtml(g){return `<span class="grade g-${gc(g)}">${GL[g]||g}</span>`
 function lineChipHtml(line){
   const parts=line.split('·');
   if(parts.length<=1)return `<span class="line-chip">${line}</span>`;
-  return `<span class="line-chip" title="${line}">${parts[0]} <span style="color:var(--text3);font-size:10px">외 ${parts.length-1}개</span></span>`;
+  return `<span class="line-chip line-chip-multi" onclick="showLineTooltip(this,'${line}')">${parts[0]} <span style="color:var(--text3);font-size:10px">외 ${parts.length-1}개</span></span>`;
+}
+
+function showLineTooltip(el, line){
+  // 기존 툴팁 제거
+  document.querySelectorAll('.line-tooltip-popup').forEach(t=>t.remove());
+  const popup=document.createElement('div');
+  popup.className='line-tooltip-popup';
+  popup.textContent=line.split('·').join(' · ');
+  popup.onclick=e=>{e.stopPropagation();popup.remove();};
+  const rect=el.getBoundingClientRect();
+  popup.style.cssText=`position:fixed;top:${rect.bottom+4}px;left:${rect.left}px;z-index:9999;background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:6px 10px;font-size:12px;color:var(--text1);white-space:nowrap;box-shadow:0 4px 16px rgba(0,0,0,.4)`;
+  document.body.appendChild(popup);
+  // 바깥 클릭 시 닫기
+  setTimeout(()=>{
+    document.addEventListener('click',()=>popup.remove(),{once:true});
+  },0);
 }
 function trainChip(no,g,fn){return `<span class="tc tc-${gc(g)}" onclick="${fn}">${no}</span>`;}
 function dirLabel(d){return d==='down'?'<span class="dir down"><span class="dir-dot"></span>하행</span>':'<span class="dir up"><span class="dir-dot"></span>상행</span>';}

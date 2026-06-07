@@ -240,3 +240,7 @@ tbody td{padding:10px 14px;font-size:13px;white-space:nowrap}
 /* stn-grid 알람 컬럼 추가 */
 
 @media(max-width:640px){.stn-grid{grid-template-columns:26px 1fr 80px 80px 44px}}
+
+/* 노선 칩 멀티 */
+.line-chip-multi{cursor:pointer}
+.line-chip-multi:hover{border-color:var(--accent);color:var(--text1)}
