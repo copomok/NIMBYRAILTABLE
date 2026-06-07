@@ -946,6 +946,15 @@ let _mapCurrentLine = null;
 let _mapStnPos = {};
 let _mapSvgSize = {w:0,h:0,ox:0,oy:0};
 let _mapTrainInterval = null;
+let _mapLayerMode = 'station'; // 'station': 역 우선, 'train': 열차 우선
+
+function toggleMapLayer(){
+  _mapLayerMode = _mapLayerMode==='station'?'train':'station';
+  const btn=document.getElementById('map-layer-btn');
+  if(btn) btn.textContent=_mapLayerMode==='station'?'🚉 역 우선':'🚆 열차 우선';
+  // 현재 노선도 다시 렌더링
+  if(_mapCurrentLine) updateMapTrains();
+}
 
 // 등급별 색상
 const GRADE_COLORS = {
@@ -1038,9 +1047,16 @@ function updateMapTrains(){
     const entry=running.find(r=>r.t.no===no);
     if(entry) dot.addEventListener('click',()=>openMapTrainPopup(entry.t, entry.status));
   });
-  // 역 히트 영역을 맨 위 레이어로 이동 (역 클릭 우선)
-  const hitCircles=[...svgEl.querySelectorAll('circle[fill="transparent"]')];
-  hitCircles.forEach(c=>svgEl.appendChild(c));
+  // 레이어 모드에 따라 역/열차 우선순위 결정
+  if(_mapLayerMode==='station'){
+    // 역 우선: 역 히트 영역을 맨 위로
+    const hitCircles=[...svgEl.querySelectorAll('circle[fill="transparent"]')];
+    hitCircles.forEach(c=>svgEl.appendChild(c));
+  } else {
+    // 열차 우선: 열차 레이어를 맨 위로
+    const trainLayer=svgEl.querySelector('#train-layer');
+    if(trainLayer) svgEl.appendChild(trainLayer);
+  }
 
   // 운행 열차 수 업데이트
   const countEl=document.getElementById('map-train-count');
@@ -1127,7 +1143,7 @@ gyeongbuhs:{
       {n:'병목안',x:159,y:357},{n:'수영',  x:171,y:379},
       {n:'천안',  x:207,y:484},{n:'정안',  x:192,y:526},
       {n:'세종',  x:207,y:558},{n:'대전',  x:259,y:621},
-      {n:'산내',  x:229,y:638},{n:'영동',  x:305,y:705},
+      {n:'산내',  x:268,y:648},{n:'영동',  x:305,y:705},
       {n:'구미',  x:413,y:734},{n:'남대구',x:484,y:810},
       {n:'청도',  x:516,y:824},{n:'부산',  x:531,y:914},
     ]},
@@ -1237,7 +1253,7 @@ jungnaelyuk:{
       {n:'북문경', x:347, y:511},
       {n:'문경',   x:343, y:544},
       {n:'상주',   x:364, y:580},
-      {n:'청리',   x:372, y:611},
+      {n:'청리',   x:382, y:680},
       {n:'김천',   x:388, y:736},
     ]},
   ],

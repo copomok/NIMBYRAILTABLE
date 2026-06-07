@@ -245,3 +245,6 @@ tbody td{padding:10px 14px;font-size:13px;white-space:nowrap}
 /* 노선 칩 멀티 */
 .line-chip-multi{cursor:pointer}
 .line-chip-multi:hover{border-color:var(--accent);color:var(--text1)}
+/* 노선도 레이어 토글 */
+.map-layer-btn{padding:5px 12px;font-size:12px;border:1px solid var(--border);border-radius:20px;background:var(--bg2);color:var(--text2);cursor:pointer;transition:all .15s;white-space:nowrap;font-family:inherit}
+.map-layer-btn:hover{background:var(--bg3);color:var(--text1);border-color:var(--accent)}
