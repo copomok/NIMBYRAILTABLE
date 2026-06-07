@@ -4,6 +4,11 @@ const GC={'KTX':'KTX','SRT':'SRT','ITX-새마을':'ITX','ITX-청춘':'ITXCC','�
 const GL={'KTX':'KTX','SRT':'SRT','ITX-새마을':'ITX-새마을','ITX-청춘':'ITX-청춘','무궁화호':'무궁화'};
 function gc(g){return GC[g]||'MGH';}
 function gradeHtml(g){return `<span class="grade g-${gc(g)}">${GL[g]||g}</span>`;}
+function lineChipHtml(line){
+  const parts=line.split('·');
+  if(parts.length<=1)return `<span class="line-chip">${line}</span>`;
+  return `<span class="line-chip" title="${line}">${parts[0]} <span style="color:var(--text3);font-size:10px">외 ${parts.length-1}개</span></span>`;
+}
 function trainChip(no,g,fn){return `<span class="tc tc-${gc(g)}" onclick="${fn}">${no}</span>`;}
 function dirLabel(d){return d==='down'?'<span class="dir down"><span class="dir-dot"></span>하행</span>':'<span class="dir up"><span class="dir-dot"></span>상행</span>';}
 function toMin(v){if(!v)return null;const m=v.match(/(\d+):(\d+)/);return m?+m[1]*60+ +m[2]:null;}
@@ -92,7 +97,7 @@ function selectTrainLine(){
     return `<tr onclick="showTrainDetail('${t.no}')">
       <td>${trainChip(t.no,t.grade,`event.stopPropagation();showTrainDetail('${t.no}')`)}</td>
       <td>${gradeHtml(t.grade)}</td>
-      <td><span class="line-chip">${t.line}</span></td>
+      <td>${lineChipHtml(t.line)}</td>
       <td>${dirLabel(t.dir)}</td>
       <td style="font-weight:500">${t.dest}행</td>
       <td><span class="time-dep">${depT}</span></td>
@@ -264,7 +269,7 @@ function renderDetail(t){
     <div class="detail-head">
       <div class="detail-no" style="color:var(--c-${c.toLowerCase()})">${t.no}</div>
       <div style="flex:1">
-        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">${gradeHtml(t.grade)}<span class="line-chip">${t.line}</span><span class="detail-dest">${t.dest}행</span></div>
+        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">${gradeHtml(t.grade)}${lineChipHtml(t.line)}<span class="detail-dest">${t.dest}행</span></div>
         <div class="detail-meta"><span>${dirLabel(t.dir)}</span><span>첫 출발 ${depTime}</span><span>${originStn} → ${terminusStn}</span></div>
       </div>
       <button class="btn-pass-toggle" onclick="togglePass('${cardId}')" title="통과역 표시/숨김">통과역 숨기기</button>
@@ -313,7 +318,7 @@ function searchByStation(){
     const rs=isPass?'style="opacity:.6;font-style:italic"':'';
     return `<tr ${rs} data-sort="${sortT}" onclick="jumpToTrain('${t.no}')">
       <td>${trainChip(t.no,t.grade,`event.stopPropagation();jumpToTrain('${t.no}')`)}</td>
-      <td>${gradeHtml(t.grade)}</td><td><span class="line-chip">${t.line}</span></td>
+      <td>${gradeHtml(t.grade)}</td><td>${lineChipHtml(t.line)}</td>
       <td>${dirLabel(t.dir)}</td><td style="font-weight:500">${t.dest}</td>
       <td>${aC}</td><td>${dC}</td></tr>`;
   }).join('');
@@ -393,7 +398,7 @@ function searchByRoute(){
     const rows=directs.map(({t,depT,arrT,dur})=>
       `<tr onclick="jumpToTrain('${t.no}')">
         <td>${trainChip(t.no,t.grade,`event.stopPropagation();jumpToTrain('${t.no}')`)}</td>
-        <td>${gradeHtml(t.grade)}</td><td><span class="line-chip">${t.line}</span></td>
+        <td>${gradeHtml(t.grade)}</td><td>${lineChipHtml(t.line)}</td>
         <td>${dirLabel(t.dir)}</td><td style="font-weight:500">${t.dest}</td>
         <td><span class="time-dep">${depT||'-'}</span></td>
         <td><span class="time-arr">${arrT||'-'}</span></td>
@@ -501,7 +506,7 @@ function searchByRoute(){
         <div class="xfer-leg-head">
           ${trainChip(l.t.no,l.t.grade,`jumpToTrain('${l.t.no}')`)}
           ${gradeHtml(l.t.grade)}
-          <span class="line-chip">${l.t.line}</span>
+          ${lineChipHtml(l.t.line)}
           <span style="color:var(--text2);font-size:12px">${dirLabel(l.t.dir)} · ${l.t.dest}행</span>
         </div>
         <div class="xfer-leg-route">
