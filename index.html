@@ -145,6 +145,13 @@
           <input type="text" id="input-after-route" placeholder="예: 9:00" style="width:80px"
             onkeydown="if(event.key==='Enter')searchByRoute()">
         </div>
+        <div class="form-group"><label>정렬</label>
+          <select id="sel-sort-route">
+            <option value="duration">소요시간순</option>
+            <option value="depart">출발시각순</option>
+            <option value="arrive">도착시각순</option>
+          </select>
+        </div>
         <button class="btn btn-primary" onclick="searchByRoute()">🔍 조회</button>
         <button class="btn-fav-add" id="fav-btn-route" onclick="addFav('route')" title="즐겨찾기 추가" style="display:none">⭐</button>
       </div>

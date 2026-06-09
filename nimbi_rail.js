@@ -376,6 +376,7 @@ function searchByRoute(){
   const to=document.getElementById('input-to').value.trim();
   const afterRaw=document.getElementById('input-after-route').value.trim();
   const afterMin=afterRaw?toMin(afterRaw):null;
+  const sortMode=document.getElementById('sel-sort-route')?.value||'duration';
   const el=document.getElementById('result-route');
   if(!from||!to){el.innerHTML='<div class="empty"><div class="empty-icon">🔍</div><p>출발역과 도착역을 입력하세요</p></div>';return;}
   if(from===to){el.innerHTML='<div class="empty"><div class="empty-icon">⚠️</div><p>출발역과 도착역이 같습니다</p></div>';return;}
@@ -406,11 +407,18 @@ function searchByRoute(){
     if(afterMin!==null&&toMin(depT)<afterMin)return;
     directs.push({t,depT,arrT,dur:durStr(depT,arrT),sortT:toMin(depT)??9999});
   });
-  directs.sort((a,b)=>a.sortT-b.sortT);
+  // 정렬
+  if(sortMode==='depart') directs.sort((a,b)=>a.sortT-b.sortT);
+  else if(sortMode==='arrive') directs.sort((a,b)=>(toMin(a.arrT)??9999)-(toMin(b.arrT)??9999));
+  else directs.sort((a,b)=>{
+    const dA=toMin(a.arrT)-toMin(a.depT), dB=toMin(b.arrT)-toMin(b.depT);
+    return (dA||9999)-(dB||9999);
+  });
 
   // 직통 있으면 직통만 표시
   if(directs.length){
     const afterLabel=afterMin!==null?` · ${afterRaw} 이후`:'';
+    const sortLabel={'duration':'소요시간순','depart':'출발시각순','arrive':'도착시각순'}[sortMode]||'';
     const rows=directs.map(({t,depT,arrT,dur})=>
       `<tr onclick="jumpToTrain('${t.no}')">
         <td>${trainChip(t.no,t.grade,`event.stopPropagation();jumpToTrain('${t.no}')`)}</td>
@@ -423,7 +431,7 @@ function searchByRoute(){
     ).join('');
     const fb=document.getElementById('fav-btn-route');
     if(fb)fb.style.display='';
-    el.innerHTML=`<div class="result-header"><div class="result-title">🔍 ${from} → ${to}${afterLabel}</div><span class="badge blue">${directs.length}편</span></div>
+    el.innerHTML=`<div class="result-header"><div class="result-title">🔍 ${from} → ${to}${afterLabel}</div><span class="badge blue">${directs.length}편</span><span class="badge" style="background:var(--bg3)">${sortLabel}</span></div>
     <div class="table-wrap"><table><thead><tr><th>열차</th><th>등급</th><th>노선</th><th>방향</th><th>행선지</th><th>출발</th><th>도착</th><th>소요</th></tr></thead><tbody>${rows}</tbody></table></div>
     <p class="hint">※ 열차번호 클릭 시 전체 운행 정보 조회</p>`;
     return;
@@ -492,6 +500,8 @@ function searchByRoute(){
         ],
         totalDur:durStr(l1.depT,arr2T),
         totalM,
+        depM:l1.depM,
+        arrM:toMin(arr2T)||9999,
         sortT:l1.depM
       });
     });
@@ -505,7 +515,10 @@ function searchByRoute(){
     seen.add(key);return true;
   });
   // 총 소요시간 기준 정렬 후 5건만
-  transfers.sort((a,b)=>a.totalM-b.totalM);
+  // 정렬 적용
+  if(sortMode==='depart') transfers.sort((a,b)=>a.depM-b.depM);
+  else if(sortMode==='arrive') transfers.sort((a,b)=>a.arrM-b.arrM);
+  else transfers.sort((a,b)=>a.totalM-b.totalM);
   transfers=transfers.slice(0,5);
 
   if(!transfers.length){
@@ -548,6 +561,7 @@ function searchByRoute(){
   if(fb2)fb2.style.display='';
   el.innerHTML=`<div class="result-header">
     <div class="result-title">🔄 ${from} → ${to}${afterLabel} · 환승</div>
+    <span class="badge" style="background:var(--bg3)">${sortLabel}</span>
     <span class="badge yellow">${transfers.length}건</span>
   </div>
   ${cards}
