@@ -141,16 +141,22 @@
             <div class="ac-dropdown" id="ac-to"></div>
           </div>
         </div>
-        <div class="form-group"><label>시간 이후</label>
-          <input type="text" id="input-after-route" placeholder="예: 9:00" style="width:80px"
-            onkeydown="if(event.key==='Enter')searchByRoute()">
-        </div>
-        <div class="form-group"><label>정렬</label>
-          <select id="sel-sort-route">
-            <option value="duration">소요시간순</option>
-            <option value="depart">출발시각순</option>
-            <option value="arrive">도착시각순</option>
-          </select>
+        <div class="form-group route-time-sort-row">
+          <div style="display:flex;gap:8px;align-items:flex-end;flex-wrap:nowrap">
+            <div>
+              <label>시간 이후</label>
+              <input type="text" id="input-after-route" placeholder="예: 9:00" style="width:80px"
+                onkeydown="if(event.key==='Enter')searchByRoute()">
+            </div>
+            <div>
+              <label>정렬</label>
+              <select id="sel-sort-route">
+                <option value="duration">소요시간순</option>
+                <option value="depart">출발시각순</option>
+                <option value="arrive">도착시각순</option>
+              </select>
+            </div>
+          </div>
         </div>
         <button class="btn btn-primary" onclick="searchByRoute()">🔍 조회</button>
         <button class="btn-fav-add" id="fav-btn-route" onclick="addFav('route')" title="즐겨찾기 추가" style="display:none">⭐</button>
@@ -170,8 +176,8 @@
       <button class="map-line-tab" onclick="showMapLine('jungnaelyuk',this)">중부내륙선</button>
     </div>
       </div>
-      <span id="map-train-count" class="badge blue" style="white-space:nowrap"></span>
       <div style="display:flex;gap:4px;align-items:center;flex-wrap:wrap">
+        <span id="map-train-count" class="badge blue" style="white-space:nowrap"></span>
         <button class="map-layer-btn" id="map-layer-btn" onclick="toggleMapLayer()" title="레이어 전환">🚉 역 우선</button>
         <button class="map-dir-btn active" id="map-dir-down" onclick="setMapDir('down')">하행 ↓</button>
         <button class="map-dir-btn active" id="map-dir-up" onclick="setMapDir('up')">상행 ↑</button>

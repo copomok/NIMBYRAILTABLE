@@ -254,3 +254,8 @@ tbody td{padding:10px 14px;font-size:13px;white-space:nowrap}
 .map-dir-btn.active[id="map-dir-down"]{background:rgba(56,139,253,.15);color:var(--accent);border-color:rgba(56,139,253,.4)}
 .map-dir-btn.active[id="map-dir-up"]{background:rgba(248,81,73,.15);color:#f85149;border-color:rgba(248,81,73,.4)}
 .map-dir-btn.active[id="map-dir-all"]{background:var(--bg3);color:var(--text1);border-color:var(--accent)}
+/* 출도착 시간이후+정렬 한 행 (모바일 전용) */
+@media(max-width:640px){
+  .route-time-sort-row > div{flex-wrap:nowrap!important}
+  .route-time-sort-row input{width:72px!important}
+}
