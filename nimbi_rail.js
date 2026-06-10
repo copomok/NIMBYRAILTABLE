@@ -377,6 +377,7 @@ function searchByRoute(){
   const afterRaw=document.getElementById('input-after-route').value.trim();
   const afterMin=afterRaw?toMin(afterRaw):null;
   const sortMode=document.getElementById('sel-sort-route')?.value||'duration';
+  const sortLabel={'duration':'소요시간순','depart':'출발시각순','arrive':'도착시각순'}[sortMode]||'';
   const el=document.getElementById('result-route');
   if(!from||!to){el.innerHTML='<div class="empty"><div class="empty-icon">🔍</div><p>출발역과 도착역을 입력하세요</p></div>';return;}
   if(from===to){el.innerHTML='<div class="empty"><div class="empty-icon">⚠️</div><p>출발역과 도착역이 같습니다</p></div>';return;}
@@ -418,7 +419,6 @@ function searchByRoute(){
   // 직통 있으면 직통만 표시
   if(directs.length){
     const afterLabel=afterMin!==null?` · ${afterRaw} 이후`:'';
-    const sortLabel={'duration':'소요시간순','depart':'출발시각순','arrive':'도착시각순'}[sortMode]||'';
     const rows=directs.map(({t,depT,arrT,dur})=>
       `<tr onclick="jumpToTrain('${t.no}')">
         <td>${trainChip(t.no,t.grade,`event.stopPropagation();jumpToTrain('${t.no}')`)}</td>
@@ -961,12 +961,68 @@ let _mapStnPos = {};
 let _mapSvgSize = {w:0,h:0,ox:0,oy:0};
 let _mapTrainInterval = null;
 let _mapLayerMode = 'station'; // 'station': 역 우선, 'train': 열차 우선
+let _mapDirFilter = 'both'; // 'both': 전체, 'down': 하행만, 'up': 상행만
 
 function toggleMapLayer(){
   _mapLayerMode = _mapLayerMode==='station'?'train':'station';
   const btn=document.getElementById('map-layer-btn');
   if(btn) btn.textContent=_mapLayerMode==='station'?'🚉 역 우선':'🚆 열차 우선';
-  // 현재 노선도 다시 렌더링
+  if(_mapCurrentLine) updateMapTrains();
+}
+
+function setMapDir(dir){
+  // 버튼 상태 업데이트
+  const btnDown=document.getElementById('map-dir-down');
+  const btnUp=document.getElementById('map-dir-up');
+  const btnAll=document.getElementById('map-dir-all');
+
+  if(dir==='all'){
+    // 전체: 둘 다 활성
+    _mapDirFilter='both';
+    if(btnDown)btnDown.classList.add('active');
+    if(btnUp)btnUp.classList.add('active');
+    if(btnAll)btnAll.classList.add('active');
+  } else if(dir==='down'){
+    // 하행 토글
+    const isActive=btnDown&&btnDown.classList.contains('active');
+    if(isActive&&_mapDirFilter!=='down'){
+      // 하행만
+      _mapDirFilter='down';
+      if(btnDown)btnDown.classList.add('active');
+      if(btnUp)btnUp.classList.remove('active');
+      if(btnAll)btnAll.classList.remove('active');
+    } else if(isActive){
+      // 다시 전체로
+      _mapDirFilter='both';
+      if(btnDown)btnDown.classList.add('active');
+      if(btnUp)btnUp.classList.add('active');
+      if(btnAll)btnAll.classList.add('active');
+    } else {
+      _mapDirFilter='down';
+      if(btnDown)btnDown.classList.add('active');
+      if(btnUp)btnUp.classList.remove('active');
+      if(btnAll)btnAll.classList.remove('active');
+    }
+  } else {
+    // 상행 토글
+    const isActive=btnUp&&btnUp.classList.contains('active');
+    if(isActive&&_mapDirFilter!=='up'){
+      _mapDirFilter='up';
+      if(btnDown)btnDown.classList.remove('active');
+      if(btnUp)btnUp.classList.add('active');
+      if(btnAll)btnAll.classList.remove('active');
+    } else if(isActive){
+      _mapDirFilter='both';
+      if(btnDown)btnDown.classList.add('active');
+      if(btnUp)btnUp.classList.add('active');
+      if(btnAll)btnAll.classList.add('active');
+    } else {
+      _mapDirFilter='up';
+      if(btnDown)btnDown.classList.remove('active');
+      if(btnUp)btnUp.classList.add('active');
+      if(btnAll)btnAll.classList.remove('active');
+    }
+  }
   if(_mapCurrentLine) updateMapTrains();
 }
 
@@ -996,6 +1052,9 @@ function updateMapTrains(){
     if(!t.line.includes(line.name))return;
     const status=getCurrentStatus(t);
     if(!status||status.status!=='running')return;
+    // 방향 필터
+    if(_mapDirFilter==='down'&&t.dir!=='down')return;
+    if(_mapDirFilter==='up'&&t.dir!=='up')return;
     // prevStn 또는 nextStn 또는 atStn의 좌표 구하기
     const stnA=status.atStn||status.prevStn;
     const stnB=status.atStn?null:status.nextStn;
