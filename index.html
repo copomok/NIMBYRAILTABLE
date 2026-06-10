@@ -142,13 +142,13 @@
           </div>
         </div>
         <div class="form-group route-time-sort-row">
-          <div style="display:flex;gap:8px;align-items:flex-end;flex-wrap:nowrap">
-            <div>
+          <div style="display:flex;gap:8px;align-items:flex-start;flex-wrap:nowrap">
+            <div style="display:flex;flex-direction:column;gap:4px">
               <label>시간 이후</label>
               <input type="text" id="input-after-route" placeholder="예: 9:00" style="width:80px"
                 onkeydown="if(event.key==='Enter')searchByRoute()">
             </div>
-            <div>
+            <div style="display:flex;flex-direction:column;gap:4px">
               <label>정렬</label>
               <select id="sel-sort-route">
                 <option value="duration">소요시간순</option>
