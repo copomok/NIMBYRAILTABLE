@@ -55,6 +55,77 @@ function acKey(e,iid,did){
   items.forEach((el,i)=>el.classList.toggle('selected',i===acIdxMap[did]));
   if(acIdxMap[did]>=0)items[acIdxMap[did]].scrollIntoView({block:'nearest'});
 }
+// ── 현재 시각 표시 ──
+function updateClock(){
+  const now=new Date();
+  const h=String(now.getHours()).padStart(2,'0');
+  const m=String(now.getMinutes()).padStart(2,'0');
+  const s=String(now.getSeconds()).padStart(2,'0');
+  const el=document.getElementById('header-clock');
+  if(el) el.textContent=`${h}:${m}:${s}`;
+}
+setInterval(updateClock,1000);
+updateClock();
+
+// ── 다음 역까지 남은 시간 계산 ──
+function getNextStopEta(t, status){
+  if(!status||status.status!=='running')return null;
+  const now=new Date();
+  const nowM=now.getHours()*60+now.getMinutes();
+  // 다음 정차역 찾기
+  const nextStn=status.nextStn||(status.atStn?null:null);
+  if(!nextStn)return null;
+  const stop=t.stops.find(s=>s.s===nextStn);
+  if(!stop)return null;
+  const arrM=toMin(stop.arr||stop.dep);
+  if(arrM===null)return null;
+  // 자정 보정
+  let adj=arrM;
+  if(arrM<nowM-30) adj+=1440;
+  const diff=adj-nowM;
+  if(diff<0||diff>120)return null;
+  return {stn:nextStn, min:diff, timeStr:stop.arr||stop.dep};
+}
+
+
+// ── 노선도 미니맵 ──
+function updateMinimap(){
+  const wrap=document.getElementById('map-svg-wrap');
+  const miniEl=document.getElementById('map-minimap');
+  if(!wrap||!miniEl) return;
+
+  const svgEl=wrap.querySelector('svg');
+  if(!svgEl) return;
+
+  // 미니맵 SVG viewBox 가져오기
+  const vb=svgEl.getAttribute('viewBox');
+  if(!vb) return;
+
+  // 현재 스크롤 위치/크기
+  const scrollTop=wrap.scrollTop;
+  const scrollLeft=wrap.scrollLeft;
+  const visH=wrap.clientHeight;
+  const visW=wrap.clientWidth;
+  const totalH=wrap.scrollHeight;
+  const totalW=wrap.scrollWidth;
+
+  // 미니맵 높이 비율
+  const miniH=120;
+  const ratio=miniH/totalH;
+  const thumbH=Math.max(16, visH*ratio);
+  const thumbTop=scrollTop*ratio;
+
+  miniEl.style.height=miniH+'px';
+  miniEl.innerHTML=`<div class="map-minimap-thumb" style="height:${thumbH.toFixed(1)}px;top:${thumbTop.toFixed(1)}px"></div>`;
+
+  // 미니맵 클릭으로 스크롤
+  miniEl.onclick=e=>{
+    const rect=miniEl.getBoundingClientRect();
+    const clickY=e.clientY-rect.top;
+    wrap.scrollTop=clickY/ratio;
+  };
+}
+
 function switchTab(n){
   document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
   document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
@@ -274,7 +345,10 @@ function renderDetail(t){
       else if(status.atStn) msg=`${status.atStn}역에 정차 중입니다`;
       else if(status.nextStn) msg=`${status.nextStn}역으로 이동 중입니다`;
       else msg='운행 중입니다';
-      statusBanner=`<div class="train-status-banner running">🚆 ${msg}</div>`;
+      // 다음 역까지 남은 시간
+      const eta=getNextStopEta(t,status);
+      const etaTxt=eta?(eta.min===0?` · <b>${eta.stn}</b>역 곧 도착`:(` · <b>${eta.stn}</b>역까지 약 ${eta.min}분`)):'';
+      statusBanner=`<div class="train-status-banner running">🚆 ${msg}${etaTxt}</div>`;
     } else if(status.status==='before'){
       statusBanner=`<div class="train-status-banner before">운행 전 열차입니다</div>`;
     } else {
@@ -745,6 +819,28 @@ function renderAlarms(){
   </div>${cards}<p class="hint">※ 브라우저 탭이 열려있어야 알람이 작동합니다</p>`;
 }
 
+function sendNotification(title, body){
+  if(Notification.permission!=='granted') return;
+  // SW ready 방식 (가장 신뢰성 높음 - 백그라운드 포함)
+  if(navigator.serviceWorker){
+    navigator.serviceWorker.ready.then(reg=>{
+      reg.showNotification(title,{
+        body,
+        icon:'/NIMBYRAILTABLE/icon-192.png',
+        badge:'/NIMBYRAILTABLE/icon-192.png',
+        vibrate:[200,100,200],
+        requireInteraction:false,
+        tag:'nimbirail-alarm-'+Date.now(),
+      });
+    }).catch(()=>{
+      // SW 실패 시 기본 Notification 폴백
+      new Notification(title,{body,icon:'/NIMBYRAILTABLE/icon-192.png'});
+    });
+  } else {
+    new Notification(title,{body,icon:'/NIMBYRAILTABLE/icon-192.png'});
+  }
+}
+
 function checkAlarms(){
   const alarms=loadAlarms();
   if(!alarms.length)return;
@@ -766,7 +862,8 @@ function checkAlarms(){
           'arr':`${a.trainNo}번 열차가 곧 ${a.stn}역에 도착합니다`,
         }[a.type]||a.label;
         if(Notification.permission==='granted'){
-          new Notification('🔔 님비레일 알람',{body,icon:'',requireInteraction:false});
+          // SW를 통해 알림 발송 (백그라운드에서도 작동)
+          sendNotification('🔔 님비레일 알람', body);
         }
       }
     }
@@ -1520,6 +1617,10 @@ function showMapLine(lineKey, btn){
   _mapStnPos = stnPos;
   _mapSvgSize = {w:svgW, h:svgH, ox, oy};
   updateMapTrains();
+  // 미니맵 초기화
+  setTimeout(updateMinimap, 100);
+  const wrap=document.getElementById('map-svg-wrap');
+  if(wrap) wrap.onscroll=updateMinimap;
 }
 
 

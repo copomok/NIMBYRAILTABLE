@@ -19,7 +19,10 @@
 <body>
 <header>
   <div class="logo"><div class="logo-icon">🚆</div>님비레일 시간표</div>
-  <span class="header-sub">경부선 · 호남선 · 중앙선 · 동해선</span>
+  <div style="display:flex;align-items:center;gap:12px">
+    <span class="header-sub">경부선 · 호남선 · 중앙선 · 동해선</span>
+    <span id="header-clock" style="font-family:var(--mono);font-size:14px;font-weight:600;color:var(--text1);letter-spacing:1px"></span>
+  </div>
 </header>
 <div class="container">
   <div class="tabs">
@@ -186,6 +189,7 @@
     </div>
     <div id="map-content" style="display:none">
       <div class="map-legend" id="map-legend"></div>
+      <div style="position:relative">
       <div class="map-svg-wrap" id="map-svg-wrap"><div style="padding:40px;text-align:center;color:var(--text3)">노선을 선택하세요</div></div>
     </div>
   </div>
