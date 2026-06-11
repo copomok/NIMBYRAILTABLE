@@ -33,18 +33,49 @@ function hasTime(v){return v&&/\d+:\d+/.test(v);}
 const ALL_STATIONS=[...new Set(ALL_TRAINS.flatMap(t=>t.stops.map(s=>s.s)))].sort((a,b)=>a.localeCompare(b,'ko'));
 
 const acIdxMap={};
+// ── 초성 검색 ──
+const CHO=['ㄱ','ㄲ','ㄴ','ㄷ','ㄸ','ㄹ','ㅁ','ㅂ','ㅃ','ㅅ','ㅆ','ㅇ','ㅈ','ㅉ','ㅊ','ㅋ','ㅌ','ㅍ','ㅎ'];
+function getChoseong(str){
+  return str.split('').map(c=>{
+    const code=c.charCodeAt(0);
+    if(code>=44032&&code<=55203){
+      return CHO[Math.floor((code-44032)/588)];
+    }
+    return c;
+  }).join('');
+}
+function matchesQuery(name,query){
+  if(!query)return true;
+  if(name.includes(query))return true;
+  // 초성 검색
+  const cho=getChoseong(name);
+  const qCho=query.split('').every(c=>CHO.includes(c))?query:null;
+  if(qCho&&cho.includes(qCho))return true;
+  return false;
+}
+
 function acShow(iid,did){
   const inp=document.getElementById(iid),drop=document.getElementById(did);
+  if(!inp||!drop)return;
   const q=inp.value.trim();
-  if(!q){drop.className='ac-dropdown';return;}
-  const hits=ALL_STATIONS.filter(s=>s.includes(q)).slice(0,12);
-  if(!hits.length){drop.className='ac-dropdown';return;}
-  const re=new RegExp(q.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'),'g');
-  drop.innerHTML=hits.map(s=>`<div class="ac-item" onmousedown="acSel('${iid}','${did}','${s}')">${s.replace(re,m=>`<mark>${m}</mark>`)}</div>`).join('');
-  drop.className='ac-dropdown show'; acIdxMap[did]=-1;
+  if(!q){drop.className='ac-dropdown';drop.style.display='none';return;}
+  // 초성 검색 포함
+  const hits=ALL_STATIONS.filter(s=>matchesQuery(s,q)).slice(0,12);
+  if(!hits.length){drop.className='ac-dropdown';drop.style.display='none';return;}
+  // 하이라이트
+  drop.innerHTML=hits.map(s=>{
+    let display=s;
+    if(!CHO.includes(q[0])){
+      const i=s.indexOf(q);
+      if(i>=0) display=s.slice(0,i)+`<span style="color:var(--accent)">${s.slice(i,i+q.length)}</span>`+s.slice(i+q.length);
+    }
+    return `<div class="ac-item" onmousedown="event.preventDefault();acSel('${iid}','${did}','${s}')">${display}</div>`;
+  }).join('');
+  drop.className='ac-dropdown open';
+  drop.style.display='block';
 }
-function acHide(did){document.getElementById(did).className='ac-dropdown';}
-function acSel(iid,did,val){document.getElementById(iid).value=val;acHide(did);}
+function acHide(did){const el=document.getElementById(did);if(el){el.className='ac-dropdown';el.style.display='none';}}
+function acSel(iid,did,val){const el=document.getElementById(iid);if(el)el.value=val;acHide(did);}
 function acKey(e,iid,did){
   const drop=document.getElementById(did),items=drop.querySelectorAll('.ac-item');
   if(!items.length)return;
@@ -382,6 +413,8 @@ function renderDetail(t){
 }
 
 function searchByStation(){
+  // 드롭다운 닫기
+  acHide('ac-station');
   const stn=document.getElementById('input-station').value.trim();
   const dir=document.getElementById('sel-dir-station').value;
   const lineF=document.getElementById('sel-line-station').value;
@@ -469,6 +502,8 @@ function toggleXferSettings(){
 }
 
 function searchByRoute(){
+  acHide('ac-from');
+  acHide('ac-to');
   const from=document.getElementById('input-from').value.trim();
   const to=document.getElementById('input-to').value.trim();
   const afterRaw=document.getElementById('input-after-route').value.trim();
@@ -1706,49 +1741,11 @@ searchByRoute=function(){
   _origSearchByRoute();
 };
 
-// ── 초성 검색 ──
-const CHO=['ㄱ','ㄲ','ㄴ','ㄷ','ㄸ','ㄹ','ㅁ','ㅂ','ㅃ','ㅅ','ㅆ','ㅇ','ㅈ','ㅉ','ㅊ','ㅋ','ㅌ','ㅍ','ㅎ'];
-function getChoseong(str){
-  return str.split('').map(c=>{
-    const code=c.charCodeAt(0);
-    if(code>=44032&&code<=55203){
-      return CHO[Math.floor((code-44032)/588)];
-    }
-    return c;
-  }).join('');
-}
-function matchesQuery(name,query){
-  if(!query)return true;
-  if(name.includes(query))return true;
-  // 초성 검색
-  const cho=getChoseong(name);
-  const qCho=query.split('').every(c=>CHO.includes(c))?query:null;
-  if(qCho&&cho.includes(qCho))return true;
-  return false;
-}
+
 
 // acShow 함수 오버라이드 - 초성 검색 지원
 const _origAcShow=typeof acShow==='function'?acShow:null;
-function acShow(inputId,listId){
-  const val=document.getElementById(inputId)?.value||'';
-  const el=document.getElementById(listId);
-  if(!el)return;
-  if(!val){el.style.display='none';return;}
-  // 모든 역명에서 초성 매칭
-  const allStns=[...new Set(ALL_TRAINS.flatMap(t=>t.stops.map(s=>s.s)))].sort();
-  const matched=allStns.filter(s=>matchesQuery(s,val)).slice(0,10);
-  if(!matched.length){el.style.display='none';return;}
-  el.innerHTML=matched.map(s=>{
-    // 검색어와 일치하는 부분 파란색 하이라이트
-    let display=s;
-    if(val&&!CHO.includes(val[0])){
-      const idx=s.indexOf(val);
-      if(idx>=0) display=s.slice(0,idx)+`<span style="color:var(--accent)">${s.slice(idx,idx+val.length)}</span>`+s.slice(idx+val.length);
-    }
-    return `<div class="ac-item" onmousedown="event.preventDefault();document.getElementById('${inputId}').value='${s}';document.getElementById('${listId}').style.display='none';document.getElementById('${inputId}').blur()">${display}</div>`;
-  }).join('');
-  el.style.display='block';
-}
+
 
 // ── 열차 공유 ──
 function shareTrainLink(no){
