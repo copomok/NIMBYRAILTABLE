@@ -149,7 +149,7 @@ function switchTab(n){
   if(n==='alarm') renderAlarms();
   if(n==='fav') renderFavs();
   if(n==='stats') renderStats();
-  if(n==='stats') renderStats();
+  
 }
 
 // ── 통과 판별 ──
@@ -326,7 +326,7 @@ function renderDetail(t){
     const prevStop=sIdx>0?t.stops.slice(0,sIdx).reverse().find(x=>hasTime(x.dep)||hasTime(x.arr)):null;
     const prevTime=prevStop?(hasTime(prevStop.dep)?prevStop.dep:prevStop.arr):null;
     // 알람: 통과역은 버튼 없음
-    let alarmCell='<div style="display:flex;align-items:center;justify-content:center">';
+    let alarmCell='<div class="stn-alarm-cell">';
     if(!isPass){
       const boardSet=hasAlarm(`board:${tno}:${tstn}`);
       const arrSet=hasAlarm(`arr:${tno}:${tstn}`);
@@ -371,7 +371,7 @@ function renderDetail(t){
     </div>
     ${statusBanner}
     <div style="overflow-x:auto;-webkit-overflow-scrolling:touch">
-      <div class="stn-grid" style="min-width:420px">
+      <div class="stn-grid" style="min-width:460px">
         <div class="stn-gh">#</div><div class="stn-gh">역명</div>
         <div class="stn-gh green">도착</div><div class="stn-gh blue">출발</div>
         <div class="stn-gh alarm-col">알람</div>
@@ -410,7 +410,8 @@ function searchByStation(){
     const arr=stop.arr,dep=stop.dep;
     const aC=hasTime(arr)?`<span class="time-arr">${arr}</span>`:'<span style="color:var(--text3)">-</span>';
     const dC=hasTime(dep)?`<span class="time-dep">${dep}</span>`:'<span style="color:var(--text3)">-</span>';
-    const rs=isPass?'style="opacity:.6;font-style:italic"':'';
+    const nightCls=(nightF==='highlight'&&r.isNight)?' class="night-train-row"':'';
+    const rs=isPass?'style="opacity:.6;font-style:italic"'+nightCls:nightCls;
     return `<tr ${rs} data-sort="${sortT}" onclick="jumpToTrain('${t.no}')">
       <td>${trainChip(t.no,t.grade,`event.stopPropagation();jumpToTrain('${t.no}')`)}</td>
       <td>${gradeHtml(t.grade)}</td><td>${lineChipHtml(t.line)}</td>
@@ -463,6 +464,7 @@ function searchByRoute(){
   const afterMin=afterRaw?toMin(afterRaw):null;
   const sortMode=document.getElementById('sel-sort-route')?.value||'duration';
   const sortLabel={'duration':'소요시간순','depart':'출발시각순','arrive':'도착시각순'}[sortMode]||'';
+  const maxDur=parseInt(document.getElementById('sel-max-duration')?.value||'0');
   const el=document.getElementById('result-route');
   if(!from||!to){el.innerHTML='<div class="empty"><div class="empty-icon">🔍</div><p>출발역과 도착역을 입력하세요</p></div>';return;}
   if(from===to){el.innerHTML='<div class="empty"><div class="empty-icon">⚠️</div><p>출발역과 도착역이 같습니다</p></div>';return;}
@@ -491,6 +493,8 @@ function searchByRoute(){
     const arrT=hasTime(stops[ti].arr)?stops[ti].arr:hasTime(stops[ti].dep)?stops[ti].dep:null;
     if(!depT)return;
     if(afterMin!==null&&toMin(depT)<afterMin)return;
+    const durM=(toMin(arrT)||0)-(toMin(depT)||0);
+    if(maxDur>0&&durM>maxDur)return;
     directs.push({t,depT,arrT,dur:durStr(depT,arrT),sortT:toMin(depT)??9999});
   });
   // 정렬
@@ -579,6 +583,7 @@ function searchByRoute(){
       if(!arr2T)return;
       const totalM=toMin(arr2T)-toMin(l1.depT);
       if(totalM<=0)return;
+      if(maxDur>0&&totalM>maxDur)return;
       transfers.push({
         legs:[
           {t:l1.t,from,to:xStn,depT:l1.depT,arrT:l1.arrT},
@@ -884,6 +889,11 @@ function checkAlarms(){
 }
 // 10초마다 체크 (30초는 너무 길어 알람을 놓칠 수 있음)
 setInterval(checkAlarms,10000);
+// 즐겨찾기 자동 갱신 (30초마다)
+setInterval(()=>{
+  const panel=document.getElementById('panel-fav');
+  if(panel&&panel.classList.contains('active')) renderFavs();
+},30000);
 // 페이지 로드 시 즉시 1회 체크
 setTimeout(checkAlarms,1000);
 
@@ -1057,6 +1067,11 @@ function renderFavs(){
     <p class="hint">※ 클릭 시 해당 탭으로 이동해 바로 조회합니다</p>`;
 }
 
+function isNightTrain(timeStr){
+  const m=toMin(timeStr);
+  if(m===null)return false;
+  return m>=1320||m<=300; // 22:00 이후 또는 05:00 이전
+}
 function jumpToTrain(no){
   document.getElementById('input-trainno').value=no;
   switchTab('train');searchByTrain();
@@ -1702,18 +1717,19 @@ function matchesQuery(name,query){
 }
 
 // acShow 함수 오버라이드 - 초성 검색 지원
-const _origAcShow=acShow;
-acShow=function(inputId,listId){
+const _origAcShow=typeof acShow==='function'?acShow:null;
+function acShow(inputId,listId){
   const val=document.getElementById(inputId)?.value||'';
   const el=document.getElementById(listId);
   if(!el)return;
+  if(!val){el.style.display='none';return;}
   // 모든 역명에서 초성 매칭
   const allStns=[...new Set(ALL_TRAINS.flatMap(t=>t.stops.map(s=>s.s)))].sort();
   const matched=allStns.filter(s=>matchesQuery(s,val)).slice(0,10);
   if(!matched.length){el.style.display='none';return;}
-  el.innerHTML=matched.map(s=>`<div class="ac-item" onmousedown="document.getElementById('${inputId}').value='${s}';acHide('${listId}')">${s}</div>`).join('');
+  el.innerHTML=matched.map(s=>`<div class="ac-item" onmousedown="document.getElementById('${inputId}').value='${s}';document.getElementById('${listId}').style.display='none'">${s}</div>`).join('');
   el.style.display='block';
-};
+}
 
 // ── 열차 공유 ──
 function shareTrainLink(no){
@@ -1790,10 +1806,15 @@ function renderStats(){
   });
 
   // 현재 운행 중
-  const running=ALL_TRAINS.filter(t=>{
+  const runningTrains=ALL_TRAINS.filter(t=>{
     const st=getCurrentStatus(t);
     return st&&st.status==='running';
-  }).length;
+  });
+  const running=runningTrains.length;
+  const runningChips=runningTrains.slice(0,30).map(t=>{
+    const c=GRADE_COLORS[t.grade]||'var(--accent)';
+    return `<span onclick="jumpToTrain('${t.no}')" style="cursor:pointer;padding:2px 8px;border-radius:10px;border:1px solid ${c};color:${c};font-size:11px;background:rgba(0,0,0,.2)">${t.no}</span>`;
+  }).join('')+(runningTrains.length>30?`<span style="font-size:11px;color:var(--text3)">외 ${runningTrains.length-30}편</span>`:'');
 
   // 운행 전/종료
   const before=ALL_TRAINS.filter(t=>{const st=getCurrentStatus(t);return st&&st.status==='before';}).length;
@@ -1825,12 +1846,13 @@ function renderStats(){
 
   const hourlyBars=hourly.map((v,h)=>`
     <div class="hourly-col">
-      <div class="hourly-bar" style="height:${maxHourly?Math.round(v/maxHourly*60):0}px" title="${h}시: ${v}회"></div>
+      <div class="hourly-val">${v>0?v:''}</div>
+      <div class="hourly-bar" style="height:${maxHourly?Math.round(v/maxHourly*50):0}px" title="${h}시: ${v}회"></div>
       <div class="hourly-label">${h%3===0?h:''}</div>
     </div>`).join('');
 
   el.innerHTML=`
-    <div class="result-header"><div class="result-title">📊 운행 통계</div></div>
+    <div class="result-header"><div class="result-title">📊 운행 통계</div><button class="btn" style="font-size:12px;padding:4px 8px" onclick="renderStats()">🔄</button></div>
 
     <div class="stat-cards">
       <div class="stat-card"><div class="stat-card-num">${total}</div><div class="stat-card-label">전체 열차</div></div>
@@ -1845,8 +1867,12 @@ function renderStats(){
     </div>
 
     <div class="stat-section">
-      <div class="stat-section-title">노선별</div>
+      <div class="stat-section-title">노선별 운행 현황</div>
       ${lineRows}
+    </div>
+    <div class="stat-section">
+      <div class="stat-section-title">현재 운행 중 열차</div>
+      <div style="display:flex;flex-wrap:wrap;gap:6px">${runningChips}</div>
     </div>
 
     <div class="stat-section">

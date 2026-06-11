@@ -30,7 +30,7 @@
     <button class="tab" onclick="switchTab('alarm')" id="tab-alarm">🔔 알람</button>
     <button class="tab" onclick="switchTab('fav')" id="tab-fav">⭐ 즐겨찾기</button>
     <button class="tab" onclick="switchTab('stats')" id="tab-stats">📊 통계</button>
-    <button class="tab" onclick="switchTab('stats')" id="tab-stats">📊 통계</button>
+    
   </div>
 
   <div class="panel active" id="panel-train">
@@ -74,6 +74,7 @@
           </div>
         </div>
         <button class="btn btn-primary" onclick="searchByStation()">🔍 조회</button>
+        <button class="btn" onclick="searchByStation()" title="새로고침" style="padding:6px 10px">🔄</button>
         <button class="btn-fav-add" id="fav-btn-station" onclick="addFav('station')" title="즐겨찾기 추가" style="display:none">⭐</button>
         <button class="btn-filter-toggle" id="btn-filter-station" onclick="toggleStationFilter()">필터 ▾</button>
       </div>
@@ -117,6 +118,13 @@
           <input type="text" id="input-after-time" placeholder="예: 9:00" style="width:80px"
             onkeydown="if(event.key==='Enter')searchByStation()">
         </div>
+        <div class="form-group"><label>심야 열차</label>
+          <select id="sel-night-station">
+            <option value="all">전체</option>
+            <option value="only">심야만</option>
+            <option value="highlight">하이라이트</option>
+          </select>
+        </div>
       </div>
     </div>
     <div id="result-station"></div>
@@ -124,6 +132,7 @@
 
   <div class="panel" id="panel-route">
     <div class="search-card">
+      <!-- 출발/도착역 -->
       <div class="form-row">
         <div class="form-group"><label>출발역</label>
           <div class="autocomplete-wrap">
@@ -143,26 +152,38 @@
             <div class="ac-dropdown" id="ac-to"></div>
           </div>
         </div>
-        <div class="form-group route-time-sort-row">
-          <div style="display:flex;gap:8px;align-items:flex-start;flex-wrap:nowrap">
-            <div style="display:flex;flex-direction:column;gap:4px">
-              <label>시간 이후</label>
-              <input type="text" id="input-after-route" placeholder="예: 9:00" style="width:80px"
-                onkeydown="if(event.key==='Enter')searchByRoute()">
-            </div>
-            <div style="display:flex;flex-direction:column;gap:4px">
-              <label>정렬</label>
-              <select id="sel-sort-route">
-                <option value="duration">소요시간순</option>
-                <option value="depart">출발시각순</option>
-                <option value="arrive">도착시각순</option>
-              </select>
-            </div>
-          </div>
+      </div>
+      <!-- 시간이후 + 정렬 + 조회 한 줄 -->
+      <div class="route-bottom-row">
+        <div class="form-group" style="flex:0 0 auto">
+          <label>시간 이후</label>
+          <input type="text" id="input-after-route" placeholder="예: 9:00" style="width:72px"
+            onkeydown="if(event.key==='Enter')searchByRoute()">
         </div>
-        <button class="btn btn-primary" onclick="searchByRoute()">🔍 조회</button>
-        <button class="btn" onclick="toggleXferSettings()" style="font-size:12px;padding:6px 10px">⚙️ 환승 설정</button>
-        <button class="btn-fav-add" id="fav-btn-route" onclick="addFav('route')" title="즐겨찾기 추가" style="display:none">⭐</button>
+        <div class="form-group" style="flex:1;min-width:90px">
+          <label>정렬</label>
+          <select id="sel-sort-route">
+            <option value="duration">소요시간순</option>
+            <option value="depart">출발시각순</option>
+            <option value="arrive">도착시각순</option>
+          </select>
+        </div>
+        <div class="form-group" style="flex:0 0 auto">
+          <label>최대 소요</label>
+          <select id="sel-max-duration" style="width:80px">
+            <option value="0">제한없음</option>
+            <option value="60">1시간</option>
+            <option value="90">1.5시간</option>
+            <option value="120">2시간</option>
+            <option value="180">3시간</option>
+            <option value="240">4시간</option>
+          </select>
+        </div>
+        <div style="align-self:flex-end;display:flex;gap:4px">
+          <button class="btn btn-primary" onclick="searchByRoute()" style="white-space:nowrap;padding:8px 14px">🔍</button>
+          <button class="btn" onclick="toggleXferSettings()" style="font-size:12px;padding:8px 10px;white-space:nowrap" title="환승 설정">⚙️</button>
+          <button class="btn-fav-add" id="fav-btn-route" onclick="addFav('route')" title="즐겨찾기" style="display:none">⭐</button>
+        </div>
       </div>
     </div>
     <div id="xfer-settings" style="display:none;background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:12px 16px;margin-bottom:12px">
@@ -217,14 +238,7 @@
   <div class="panel" id="panel-stats">
     <div id="result-stats"></div>
   </div>
-  <div class="panel" id="panel-stats">
-    <div id="result-stats"></div>
-  </div>
-</div>
-
-<div class="alarm-popup-backdrop" id="alarm-popup-backdrop" style="display:none" onclick="closeAlarmPopup()"></div>
-<div class="alarm-popup" id="alarm-popup" style="display:none">
-  <div class="alarm-popup-title" id="alarm-popup-title"></div>
+  
   <div class="alarm-popup-train" id="alarm-popup-train"></div>
   <div class="alarm-popup-btns">
     <button class="alarm-popup-btn" id="alarm-popup-board" onclick="setAlarmFromPopup('board')">🚉 승차 알람 설정</button>

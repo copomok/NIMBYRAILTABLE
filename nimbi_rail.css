@@ -76,7 +76,7 @@ tbody td{padding:10px 14px;font-size:13px;white-space:nowrap}
 .detail-no{font-family:var(--mono);font-size:24px;font-weight:700}
 .detail-dest{font-size:15px;font-weight:700}
 .detail-meta{color:var(--text2);font-size:12px;display:flex;gap:14px;flex-wrap:wrap;margin-top:4px}
-.stn-grid{display:grid;grid-template-columns:28px 1fr auto auto 44px;align-items:center}
+.stn-grid{display:grid;grid-template-columns:28px 1fr 88px 88px 44px;align-items:center}
 .stn-gh{padding:7px 14px;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;background:var(--bg3);border-bottom:1px solid var(--border);color:var(--text2)}
 .stn-gh.green{color:var(--green)}.stn-gh.blue{color:var(--accent2)}
 .sr{display:contents}
@@ -310,3 +310,32 @@ tbody td{padding:10px 14px;font-size:13px;white-space:nowrap}
 .hourly-col{display:flex;flex-direction:column;align-items:center;flex:1}
 .hourly-bar{width:100%;background:var(--accent);border-radius:2px 2px 0 0;min-height:1px;opacity:.7;transition:height .3s}
 .hourly-label{font-size:9px;color:var(--text3);margin-top:2px;height:12px}
+
+/* 출도착 하단 한 줄 */
+.route-bottom-row{display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap;margin-top:4px}
+.route-bottom-row .form-group{display:flex;flex-direction:column;gap:4px}
+@media(max-width:640px){
+  .route-bottom-row{flex-wrap:nowrap}
+  .route-bottom-row .form-group:nth-child(2){flex:1}
+}
+
+/* 출도착 하단 행 */
+.route-bottom-row{display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap}
+@media(min-width:641px){.route-bottom-row{flex-wrap:nowrap}}
+
+/* 시간대별 그래프 수치 */
+.hourly-val{font-size:9px;color:var(--text2);text-align:center;height:14px;line-height:14px;font-family:var(--mono)}
+.hourly-chart{display:flex;align-items:flex-end;gap:2px;padding-bottom:18px;position:relative}
+.hourly-col{display:flex;flex-direction:column;align-items:center;flex:1}
+.hourly-bar{width:100%;background:var(--accent);border-radius:2px 2px 0 0;min-height:1px;opacity:.7}
+.hourly-label{font-size:9px;color:var(--text3);margin-top:2px;height:12px}
+
+/* stn-grid 알람 셀 */
+.stn-alarm-cell{display:flex;align-items:center;justify-content:center}
+
+/* 심야 열차 하이라이트 */
+.night-train-row td{background:rgba(99,102,241,.08)!important}
+.night-train-row td:first-child::after{content:" 🌙";font-size:10px}
+
+/* 통계 새 섹션 */
+.stat-section+.stat-section{margin-top:0}
