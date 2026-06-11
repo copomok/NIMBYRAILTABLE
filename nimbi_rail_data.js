@@ -505,5 +505,3 @@ const ALL_TRAINS=[
 {no:"2081",dest:"부산",dir:"down",line:"동해선",grade:"ITX-청춘",boundary:["경주","부산","영덕"],stops:[{s:"영덕",arr:null,dep:"21:43"},{s:"강구",arr:"21:46",dep:null},{s:"청하",arr:"21:51",dep:null},{s:"포항",arr:"21:57",dep:"21:58"},{s:"안강",arr:"22:06",dep:"22:07"},{s:"경주",arr:"22:15",dep:"22:16"},{s:"불국사",arr:"22:20",dep:null},{s:"입실",arr:"22:24",dep:"22:25"},{s:"북울산",arr:"22:29",dep:null},{s:"태화강",arr:"22:34",dep:"22:35"},{s:"울주",arr:"22:43",dep:"22:44"},{s:"좌천",arr:"22:48",dep:null},{s:"기장",arr:"22:53",dep:"22:54"},{s:"해운대",arr:"22:59",dep:null},{s:"부산",arr:"23:05",dep:null}]},
 {no:"2082",dest:"영덕",dir:"up",line:"동해선",grade:"ITX-청춘",boundary:["경주","부산","영덕"],stops:[{s:"부산",arr:null,dep:"22:40"},{s:"해운대",arr:"22:46",dep:null},{s:"기장",arr:"22:51",dep:"22:52"},{s:"좌천",arr:"22:57",dep:null},{s:"울주",arr:"23:01",dep:"23:02"},{s:"태화강",arr:"23:10",dep:"23:11"},{s:"북울산",arr:"23:16",dep:null},{s:"입실",arr:"23:20",dep:"23:21"},{s:"불국사",arr:"23:25",dep:null},{s:"경주",arr:"23:29",dep:"23:30"},{s:"안강",arr:"23:38",dep:"23:39"},{s:"포항",arr:"23:47",dep:"23:48"},{s:"청하",arr:"23:53",dep:null},{s:"강구",arr:"23:59",dep:null},{s:"영덕",arr:"0:02",dep:null}]}
 ];
- 
- 
