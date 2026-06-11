@@ -389,6 +389,7 @@ function searchByStation(){
   const afterRaw=document.getElementById('input-after-time').value.trim();
   const afterMin=afterRaw?toMin(afterRaw):null;
   const gradeF=document.getElementById('sel-grade-station').value;
+  const nightF=document.getElementById('sel-night-station')?.value||'all';
   const el=document.getElementById('result-station');
   if(!stn){el.innerHTML='<div class="empty"><div class="empty-icon">🏢</div><p>역 이름을 입력하세요</p></div>';return;}
   let results=[];
@@ -402,7 +403,8 @@ function searchByStation(){
     if(passF==='stop'&&isPass)return;
     const sortT=toMin(hasTime(stop.dep)?stop.dep:null)??toMin(hasTime(stop.arr)?stop.arr:null)??9999;
     if(afterMin!==null&&sortT!==9999&&sortT<afterMin)return;
-    results.push({t,stop,isPass,sortT});
+    if(nightF==='only'&&!isNightTrain(timeV))return;
+    results.push({t,stop,isPass,sortT,isNight:isNightTrain(timeV)});
   });
   results.sort((a,b)=>a.sortT-b.sortT);
   if(!results.length){el.innerHTML=`<div class="empty"><div class="empty-icon">🚫</div><p><b>${stn}</b>에 정차하는 열차가 없습니다</p></div>`;return;}
@@ -1944,7 +1946,7 @@ function renderStats(){
       <div class="stat-section-title">노선별 첫차 · 막차</div>
       <div class="first-last-stats">${firstLastStatRows}</div>
     </div>
-    <p class="hint">※ 현재 시각(\${String(now.getHours()).padStart(2,'0')}:\${String(now.getMinutes()).padStart(2,'0')}) 기준 · AM 4:00 기준일</p>`;
+    <p class="hint">※ ${String(now.getHours()).padStart(2,"0")}:${String(now.getMinutes()).padStart(2,"0")} 현재 기준 · AM 4:00 기준일</p>`;
 }
 
 
