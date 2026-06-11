@@ -81,7 +81,7 @@ tbody td{padding:10px 14px;font-size:13px;white-space:nowrap}
 .stn-gh{padding:7px 14px;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;background:var(--bg3);border-bottom:1px solid var(--border);color:var(--text2)}
 .stn-gh.green{color:var(--green)}.stn-gh.blue{color:var(--accent2)}
 .sr{display:contents}
-.sr>div{padding:9px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;font-size:13px;transition:background .1s}
+.sr>div{padding:6px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;font-size:13px;transition:background .1s}
 .sr:last-child>div{border-bottom:none}
 .sr:hover>div{background:rgba(56,139,253,.06)}
 .sr.origin>div{background:rgba(63,185,80,.08)}.sr.origin:hover>div{background:rgba(63,185,80,.14)}
@@ -362,3 +362,18 @@ tbody td{padding:10px 14px;font-size:13px;white-space:nowrap}
 .fl-stat-item{display:flex;align-items:center;gap:4px;font-size:12px;background:var(--bg3);padding:3px 8px;border-radius:6px}
 .fl-stat-dir{color:var(--text3);font-size:11px;min-width:28px}
 .fl-stat-time{font-family:var(--mono);color:var(--accent);font-weight:600}
+
+/* 출도착 탭 입력폼 */
+.route-inputs{display:flex;gap:12px;align-items:flex-end;flex-wrap:wrap}
+.route-inputs .form-group{flex:1;min-width:120px}
+.route-btn-group{display:flex;gap:6px;align-items:center;flex-shrink:0}
+/* PC: 버튼을 입력창과 같은 줄 */
+@media(min-width:641px){
+  .route-inputs{flex-wrap:nowrap}
+  .route-btn-group{padding-bottom:1px}
+}
+/* 모바일: 버튼을 아래로 */
+@media(max-width:640px){
+  .route-inputs{flex-wrap:wrap}
+  .route-btn-group{width:100%}
+}

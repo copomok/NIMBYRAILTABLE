@@ -457,8 +457,7 @@ function searchByStation(){
   const fb=document.getElementById('fav-btn-station');
   if(fb)fb.style.display='';
   const afterLabel=afterMin!==null?` · ${afterRaw} 이후`:'';
-  const firstLastHtml=renderFirstLastTrains(stn);
-  el.innerHTML=`<div class="result-header"><div class="result-title">🏢 ${stn} 시간표${afterLabel}</div><span class="badge blue">${results.length}편</span><button class="btn" style="font-size:12px;padding:4px 8px" onclick="searchByStation()">🔄</button></div>${firstLastHtml}
+  el.innerHTML=`<div class="result-header"><div class="result-title">🏢 ${stn} 시간표${afterLabel}</div><span class="badge blue">${results.length}편</span><button class="btn" style="font-size:12px;padding:4px 8px" onclick="searchByStation()">🔄</button></div>
   <div class="table-wrap"><table><thead><tr><th>열차</th><th>등급</th><th>노선</th><th>방향</th><th>행선지</th><th>도착</th><th>출발</th></tr></thead><tbody>${rows}</tbody></table></div>
   <p class="hint">※ 열차번호 클릭 시 전체 운행 정보 · 흐린 행 = 통과</p>`;
   // 다음 열차 버튼 삽입
@@ -1119,6 +1118,72 @@ function isNightTrain(timeStr){
   if(m===null)return false;
   return m>=1320||m<240; // 22:00 이후 또는 04:00 이전
 }
+
+// ── 구간별 운행 열차 수 조회 ──
+function calcSectionTrains(){
+  const from=document.getElementById('stat-from')?.value.trim();
+  const to=document.getElementById('stat-to')?.value.trim();
+  const el=document.getElementById('stat-section-result');
+  if(!el)return;
+  if(!from||!to){el.innerHTML='<p style="font-size:12px;color:var(--text3)">출발역과 도착역을 입력하세요</p>';return;}
+
+  const results=[];
+  ALL_TRAINS.forEach(t=>{
+    const stops=t.stops;
+    const fi=stops.findIndex(s=>s.s===from);
+    const ti=stops.findIndex(s=>s.s===to);
+    if(fi===-1||ti===-1)return;
+    if(fi>=ti)return; // 방향 일치 확인
+    results.push(t);
+  });
+
+  if(!results.length){
+    el.innerHTML=`<p style="font-size:12px;color:var(--text3)">${from} → ${to} 구간을 운행하는 열차가 없습니다</p>`;
+    return;
+  }
+
+  // 등급별 집계
+  const gradeCount={};
+  results.forEach(t=>{gradeCount[t.grade]=(gradeCount[t.grade]||0)+1;});
+  const gradeRows=Object.entries(gradeCount).sort((a,b)=>b[1]-a[1]).map(([g,c])=>
+    `<span style="display:inline-flex;align-items:center;gap:4px;padding:3px 8px;border-radius:6px;background:var(--bg3);font-size:12px;margin:2px">
+      ${gradeHtml(g)} <span style="font-family:var(--mono)">${c}편</span>
+    </span>`
+  ).join('');
+
+  el.innerHTML=`
+    <div style="margin-bottom:8px">
+      <span style="font-size:14px;font-weight:600">${from} → ${to}</span>
+      <span class="badge blue" style="margin-left:8px">${results.length}편</span>
+    </div>
+    <div style="display:flex;flex-wrap:wrap;gap:4px">${gradeRows}</div>`;
+}
+
+
+// ── 역별 첫차/막차 조회 (통계 탭) ──
+function calcStationFirstLast(){
+  const stn=document.getElementById('stat-stn-input')?.value.trim();
+  const el=document.getElementById('stat-stn-fl-result');
+  if(!el)return;
+  if(!stn){el.innerHTML='<p style="font-size:12px;color:var(--text3)">역명을 입력하세요</p>';return;}
+  const data=getStationFirstLast(stn);
+  if(!data.length){
+    el.innerHTML=`<p style="font-size:12px;color:var(--text3)">${stn}역 정보를 찾을 수 없습니다</p>`;
+    return;
+  }
+  const rows=data.map(d=>{
+    const dirLbl=d.dir==='down'?'하행 ↓':'상행 ↑';
+    return `<div class="fl-stat-row">
+      <span class="fl-stat-name">${d.dest}행 ${dirLbl}</span>
+      <div class="fl-stat-times">
+        <span class="fl-stat-item"><span class="fl-stat-dir">첫차</span><span class="fl-stat-time">${d.firstT}</span></span>
+        <span class="fl-stat-item"><span class="fl-stat-dir">막차</span><span class="fl-stat-time">${d.lastT}</span></span>
+      </div>
+    </div>`;
+  }).join('');
+  el.innerHTML=`<div class="first-last-stats">${rows}</div>`;
+}
+
 function jumpToTrain(no){
   document.getElementById('input-trainno').value=no;
   switchTab('train');searchByTrain();
@@ -1865,6 +1930,62 @@ function renderStats(){
     });
   });
 
+  // ── 역별 정차 횟수 TOP 10 ──
+  const stnCount={};
+  ALL_TRAINS.forEach(t=>{
+    t.stops.forEach(s=>{
+      if(!isPassStop(t,s.s)&&(hasTime(s.arr)||hasTime(s.dep))){
+        stnCount[s.s]=(stnCount[s.s]||0)+1;
+      }
+    });
+  });
+  const topStns=Object.entries(stnCount).sort((a,b)=>b[1]-a[1]).slice(0,10);
+  const maxStnCount=topStns[0]?.[1]||1;
+  const topStationsRows=topStns.map(([stn,cnt],i)=>`
+    <div class="stat-row">
+      <span style="min-width:20px;color:var(--text3);font-size:11px">${i+1}</span>
+      <span style="min-width:60px">${stn}</span>
+      <div class="stat-bar-wrap"><div class="stat-bar" style="width:${Math.round(cnt/maxStnCount*100)}%"></div></div>
+      <span class="stat-num">${cnt}회</span>
+    </div>`).join('');
+
+  // ── 노선별 운행 밀도 ──
+  const peakHours=[7,8,9,17,18,19]; // 피크: 출퇴근
+  const offHours=[10,11,13,14,15];  // 한산: 낮
+  const densityData={};
+  LINE_NAMES.forEach(ln=>{ densityData[ln]={peak:0,off:0}; });
+  ALL_TRAINS.forEach(t=>{
+    const lines=t.line.split('·').map(l=>l.trim());
+    t.stops.forEach(s=>{
+      const m=toMin(s.dep||s.arr);
+      if(m===null)return;
+      const h=Math.floor(m/60)%24;
+      lines.forEach(ln=>{
+        if(!densityData[ln])return;
+        if(peakHours.includes(h)) densityData[ln].peak++;
+        if(offHours.includes(h)) densityData[ln].off++;
+      });
+    });
+  });
+  const densityRows=LINE_NAMES.map(ln=>{
+    const d=densityData[ln];
+    if(!d||(!d.peak&&!d.off))return '';
+    const maxD=Math.max(d.peak,d.off)||1;
+    return `<div style="margin-bottom:10px">
+      <div style="font-size:12px;font-weight:600;margin-bottom:4px">${ln}</div>
+      <div class="stat-row">
+        <span style="min-width:36px;font-size:11px;color:#f97316">피크</span>
+        <div class="stat-bar-wrap"><div class="stat-bar" style="width:${Math.round(d.peak/maxD*100)}%;background:#f97316"></div></div>
+        <span class="stat-num">${d.peak}</span>
+      </div>
+      <div class="stat-row">
+        <span style="min-width:36px;font-size:11px;color:var(--accent)">한산</span>
+        <div class="stat-bar-wrap"><div class="stat-bar" style="width:${Math.round(d.off/maxD*100)}%"></div></div>
+        <span class="stat-num">${d.off}</span>
+      </div>
+    </div>`;
+  }).filter(Boolean).join('');
+
   const firstLastStatRows=LINE_NAMES.map(ln=>{
     const d=lineFirstLast[ln];
     if(!d.downFirst&&!d.upFirst)return '';
@@ -1943,6 +2064,39 @@ function renderStats(){
     <div class="stat-section">
       <div class="stat-section-title">노선별 첫차 · 막차</div>
       <div class="first-last-stats">${firstLastStatRows}</div>
+    </div>
+    <div class="stat-section">
+      <div class="stat-section-title">역별 정차 횟수 TOP 10</div>
+      <div>${topStationsRows}</div>
+    </div>
+    <div class="stat-section">
+      <div class="stat-section-title">역별 첫차 · 막차</div>
+      <div style="display:flex;gap:8px;align-items:center;margin-bottom:10px;flex-wrap:wrap">
+        <div class="autocomplete-wrap" style="position:relative">
+          <input type="text" id="stat-stn-input" placeholder="역명 입력" style="width:120px"
+            oninput="acShow('stat-stn-input','ac-stat-stn')"
+            onblur="setTimeout(()=>acHide('ac-stat-stn'),150)">
+          <div class="ac-dropdown" id="ac-stat-stn"></div>
+        </div>
+        <button class="btn" style="font-size:12px;padding:6px 12px" onclick="calcStationFirstLast()">조회</button>
+      </div>
+      <div id="stat-stn-fl-result"></div>
+    </div>
+    <div class="stat-section">
+      <div class="stat-section-title">구간별 운행 열차 수</div>
+      <div style="display:flex;gap:8px;align-items:center;margin-bottom:10px;flex-wrap:wrap">
+        <input type="text" id="stat-from" placeholder="출발역" style="width:90px" oninput="acShow('stat-from','ac-stat-from')" onblur="setTimeout(()=>acHide('ac-stat-from'),150)">
+        <div class="ac-dropdown" id="ac-stat-from" style="position:relative;top:0;width:120px"></div>
+        <span style="color:var(--text3)">→</span>
+        <input type="text" id="stat-to" placeholder="도착역" style="width:90px" oninput="acShow('stat-to','ac-stat-to')" onblur="setTimeout(()=>acHide('ac-stat-to'),150)">
+        <div class="ac-dropdown" id="ac-stat-to" style="position:relative;top:0;width:120px"></div>
+        <button class="btn" style="font-size:12px;padding:6px 12px" onclick="calcSectionTrains()">조회</button>
+      </div>
+      <div id="stat-section-result"></div>
+    </div>
+    <div class="stat-section">
+      <div class="stat-section-title">노선별 운행 밀도 (피크 vs 한산)</div>
+      <div>${densityRows}</div>
     </div>
     <p class="hint">※ ${String(now.getHours()).padStart(2,"0")}:${String(now.getMinutes()).padStart(2,"0")} 현재 기준 · AM 4:00 기준일</p>`;
 }
