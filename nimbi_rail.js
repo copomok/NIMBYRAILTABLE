@@ -436,8 +436,9 @@ function searchByStation(){
     if(passF==='stop'&&isPass)return;
     const sortT=toMin(hasTime(stop.dep)?stop.dep:null)??toMin(hasTime(stop.arr)?stop.arr:null)??9999;
     if(afterMin!==null&&sortT!==9999&&sortT<afterMin)return;
-    if(nightF==='only'&&!isNightTrain(timeV))return;
-    results.push({t,stop,isPass,sortT,isNight:isNightTrain(timeV)});
+    const timeV2=hasTime(stop.dep)?stop.dep:hasTime(stop.arr)?stop.arr:null;
+    if(nightF==='only'&&!isNightTrain(timeV2))return;
+    results.push({t,stop,isPass,sortT,isNight:isNightTrain(timeV2)});
   });
   results.sort((a,b)=>a.sortT-b.sortT);
   if(!results.length){el.innerHTML=`<div class="empty"><div class="empty-icon">🚫</div><p><b>${stn}</b>에 정차하는 열차가 없습니다</p></div>`;return;}
