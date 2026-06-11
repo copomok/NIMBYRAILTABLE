@@ -131,8 +131,8 @@
 
   <div class="panel" id="panel-route">
     <div class="search-card">
-      <!-- 출발/도착역 -->
-      <div class="form-row">
+      <!-- 출발/도착역 + 검색버튼 같은 행 -->
+      <div class="form-row" style="align-items:flex-end">
         <div class="form-group"><label>출발역</label>
           <div class="autocomplete-wrap">
             <input type="text" id="input-from" placeholder="출발역 입력" autocomplete="off"
@@ -151,12 +151,14 @@
             <div class="ac-dropdown" id="ac-to"></div>
           </div>
         </div>
-      </div>
-      <!-- 조회/필터 버튼 행 (좌측 정렬) -->
-      <div style="display:flex;gap:6px;align-items:center;margin-top:4px">
-        <button class="btn btn-primary" onclick="searchByRoute()" style="white-space:nowrap">🔍 검색</button>
-        <button class="btn-filter-toggle" id="btn-filter-route" onclick="toggleRouteFilter()">필터 ▾</button>
-        <button class="btn-fav-add" id="fav-btn-route" onclick="addFav('route')" title="즐겨찾기" style="display:none">⭐</button>
+        <div class="form-group" style="flex:0 0 auto">
+          <label style="visibility:hidden">검색</label>
+          <div style="display:flex;gap:6px">
+            <button class="btn btn-primary" onclick="searchByRoute()" style="white-space:nowrap">🔍 검색</button>
+            <button class="btn-filter-toggle" id="btn-filter-route" onclick="toggleRouteFilter()">필터 ▾</button>
+            <button class="btn-fav-add" id="fav-btn-route" onclick="addFav('route')" title="즐겨찾기" style="display:none">⭐</button>
+          </div>
+        </div>
       </div>
       <!-- 접기/펼치기 필터 (시간이후 포함) -->
       <div class="filter-row" id="filter-row-route">
