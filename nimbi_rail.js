@@ -360,8 +360,8 @@ function renderDetail(t){
     }
   }
   return `<div class="detail-card" id="${cardId}">
-    <div class="detail-head">
-      <button class="share-btn" onclick="shareTrainLink('${t.no}')" title="링크 복사">🔗</button>
+    <div class="detail-head" style="position:relative;padding-right:36px">
+      <button class="share-btn" onclick="shareTrainLink('${t.no}')" title="링크 복사" style="position:absolute;right:0;top:0">🔗</button>
       <div class="detail-no" style="color:var(--c-${c.toLowerCase()})">${t.no}</div>
       <div style="flex:1">
         <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">${gradeHtml(t.grade)}${lineChipHtml(t.line)}<span class="detail-dest">${t.dest}행</span></div>
@@ -371,7 +371,7 @@ function renderDetail(t){
     </div>
     ${statusBanner}
     <div style="overflow-x:auto;-webkit-overflow-scrolling:touch">
-      <div class="stn-grid" style="min-width:460px">
+      <div class="stn-grid" style="min-width:500px">
         <div class="stn-gh">#</div><div class="stn-gh">역명</div>
         <div class="stn-gh green">도착</div><div class="stn-gh blue">출발</div>
         <div class="stn-gh alarm-col">알람</div>
@@ -422,7 +422,7 @@ function searchByStation(){
   if(fb)fb.style.display='';
   const afterLabel=afterMin!==null?` · ${afterRaw} 이후`:'';
   const firstLastHtml=renderFirstLastTrains(stn);
-  el.innerHTML=`<div class="result-header"><div class="result-title">🏢 ${stn} 시간표${afterLabel}</div><span class="badge blue">${results.length}편</span></div>${firstLastHtml}
+  el.innerHTML=`<div class="result-header"><div class="result-title">🏢 ${stn} 시간표${afterLabel}</div><span class="badge blue">${results.length}편</span><button class="btn" style="font-size:12px;padding:4px 8px" onclick="searchByStation()">🔄</button></div>${firstLastHtml}
   <div class="table-wrap"><table><thead><tr><th>열차</th><th>등급</th><th>노선</th><th>방향</th><th>행선지</th><th>도착</th><th>출발</th></tr></thead><tbody>${rows}</tbody></table></div>
   <p class="hint">※ 열차번호 클릭 시 전체 운행 정보 · 흐린 행 = 통과</p>`;
   // 다음 열차 버튼 삽입
@@ -450,6 +450,15 @@ function insertNextTrainBtn(el){
     setTimeout(()=>target.scrollIntoView({behavior:'smooth',block:'center'}),50);
   };
   filterBtn.insertAdjacentElement('afterend',btn);
+}
+
+function toggleRouteFilter(){
+  const row=document.getElementById('filter-row-route');
+  const btn=document.getElementById('btn-filter-route');
+  if(!row||!btn)return;
+  const open=row.classList.toggle('open');
+  btn.textContent=open?'필터 ▴':'필터 ▾';
+  btn.classList.toggle('active',open);
 }
 
 function toggleXferSettings(){
@@ -802,7 +811,7 @@ function renderAlarms(){
   if(!el)return;
   const alarms=loadAlarms();
   if(!alarms.length){
-    el.innerHTML='<div class="alarm-empty"><div style="font-size:36px;margin-bottom:12px">🔔</div><p>설정된 알람이 없습니다.<br>열차 상세에서 🔔 버튼으로 추가하세요.</p><button class="btn" style="margin-top:12px;font-size:12px" onclick="testAlarm()">🧪 알람 테스트</button></div>';
+    el.innerHTML='<div class="alarm-empty"><div style="font-size:36px;margin-bottom:12px">🔔</div><p>설정된 알람이 없습니다.<br>열차 상세에서 🔔 버튼으로 추가하세요.</p><p class="hint" style="margin-top:16px"><button class="btn" style="font-size:12px;padding:6px 14px" onclick="testAlarm()">🧪 알람 테스트</button></p></div>';
     return;
   }
   const now=new Date();
@@ -1727,7 +1736,7 @@ function acShow(inputId,listId){
   const allStns=[...new Set(ALL_TRAINS.flatMap(t=>t.stops.map(s=>s.s)))].sort();
   const matched=allStns.filter(s=>matchesQuery(s,val)).slice(0,10);
   if(!matched.length){el.style.display='none';return;}
-  el.innerHTML=matched.map(s=>`<div class="ac-item" onmousedown="document.getElementById('${inputId}').value='${s}';document.getElementById('${listId}').style.display='none'">${s}</div>`).join('');
+  el.innerHTML=matched.map(s=>`<div class="ac-item" onmousedown="event.preventDefault();document.getElementById('${inputId}').value='${s}';document.getElementById('${listId}').style.display='none';document.getElementById('${inputId}').blur()">${s}</div>`).join('');
   el.style.display='block';
 }
 
