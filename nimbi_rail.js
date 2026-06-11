@@ -406,11 +406,11 @@ function searchByStation(){
   });
   results.sort((a,b)=>a.sortT-b.sortT);
   if(!results.length){el.innerHTML=`<div class="empty"><div class="empty-icon">🚫</div><p><b>${stn}</b>에 정차하는 열차가 없습니다</p></div>`;return;}
-  const rows=results.map(({t,stop,isPass,sortT})=>{
+  const rows=results.map(({t,stop,isPass,sortT,isNight})=>{
     const arr=stop.arr,dep=stop.dep;
     const aC=hasTime(arr)?`<span class="time-arr">${arr}</span>`:'<span style="color:var(--text3)">-</span>';
     const dC=hasTime(dep)?`<span class="time-dep">${dep}</span>`:'<span style="color:var(--text3)">-</span>';
-    const nightCls=(nightF==='highlight'&&r.isNight)?' class="night-train-row"':'';
+    const nightCls=(nightF==='highlight'&&isNight)?' class="night-train-row"':'';
     const rs=isPass?'style="opacity:.6;font-style:italic"'+nightCls:nightCls;
     return `<tr ${rs} data-sort="${sortT}" onclick="jumpToTrain('${t.no}')">
       <td>${trainChip(t.no,t.grade,`event.stopPropagation();jumpToTrain('${t.no}')`)}</td>
@@ -1831,6 +1831,47 @@ function renderStats(){
     return st&&st.status==='running';
   });
   const running=runningTrains.length;
+
+  // 노선별 첫차/막차 계산
+  const lineFirstLast={};
+  const LINE_NAMES=['경부선','경부고속선','호남선','중앙선','동해선','강릉선','중부내륙선'];
+  LINE_NAMES.forEach(ln=>{
+    lineFirstLast[ln]={name:ln,downFirst:null,downLast:null,upFirst:null,upLast:null};
+  });
+  ALL_TRAINS.forEach(t=>{
+    const lines=t.line.split('·').map(l=>l.trim());
+    lines.forEach(ln=>{
+      if(!lineFirstLast[ln])return;
+      const valid=t.stops.filter(s=>hasTime(s.dep)||hasTime(s.arr));
+      if(!valid.length)return;
+      const firstStop=valid[0];
+      const lastStop=valid[valid.length-1];
+      const depT=hasTime(firstStop.dep)?firstStop.dep:firstStop.arr;
+      const arrT=hasTime(lastStop.arr)?lastStop.arr:lastStop.dep;
+      const depM=toMin(depT);
+      const arrM=toMin(arrT);
+      if(depM===null)return;
+      // AM 4:00 기준 보정
+      const adjDepM=depM<240?depM+1440:depM;
+      const adjArrM=arrM!==null?(arrM<240?arrM+1440:arrM):adjDepM;
+      const obj=lineFirstLast[ln];
+      if(t.dir==='down'){
+        if(!obj.downFirst||adjDepM<obj.downFirstM){obj.downFirst=depT;obj.downFirstM=adjDepM;}
+        if(!obj.downLast||adjDepM>obj.downLastM){obj.downLast=depT;obj.downLastM=adjDepM;}
+      } else {
+        if(!obj.upFirst||adjDepM<obj.upFirstM){obj.upFirst=depT;obj.upFirstM=adjDepM;}
+        if(!obj.upLast||adjDepM>obj.upLastM){obj.upLast=depT;obj.upLastM=adjDepM;}
+      }
+    });
+  });
+
+  const firstLastStatRows=LINE_NAMES.map(ln=>{
+    const d=lineFirstLast[ln];
+    if(!d.downFirst&&!d.upFirst)return '';
+    const downPart=d.downFirst?`<span class="fl-stat-item"><span class="fl-stat-dir">하행↓</span><span class="fl-stat-time">${d.downFirst}</span><span style="color:var(--text3)">~</span><span class="fl-stat-time">${d.downLast||'-'}</span></span>`:'';
+    const upPart=d.upFirst?`<span class="fl-stat-item"><span class="fl-stat-dir">상행↑</span><span class="fl-stat-time">${d.upFirst}</span><span style="color:var(--text3)">~</span><span class="fl-stat-time">${d.upLast||'-'}</span></span>`:'';
+    return `<div class="fl-stat-row"><span class="fl-stat-name">${ln}</span><div class="fl-stat-times">${downPart}${upPart}</div></div>`;
+  }).filter(Boolean).join('');
   const runningChips=runningTrains.slice(0,30).map(t=>{
     const c=GRADE_COLORS[t.grade]||'var(--accent)';
     return `<span onclick="jumpToTrain('${t.no}')" style="cursor:pointer;padding:2px 8px;border-radius:10px;border:1px solid ${c};color:${c};font-size:11px;background:rgba(0,0,0,.2)">${t.no}</span>`;
@@ -1899,7 +1940,11 @@ function renderStats(){
       <div class="stat-section-title">시간대별 운행량</div>
       <div class="hourly-scroll"><div class="hourly-chart">${hourlyBars}</div></div>
     </div>
-    <p class="hint">※ 현재 시각(${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}) 기준</p>`;
+    <div class="stat-section">
+      <div class="stat-section-title">노선별 첫차 · 막차</div>
+      <div class="first-last-stats">${firstLastStatRows}</div>
+    </div>
+    <p class="hint">※ 현재 시각(\${String(now.getHours()).padStart(2,'0')}:\${String(now.getMinutes()).padStart(2,'0')}) 기준 · AM 4:00 기준일</p>`;
 }
 
 

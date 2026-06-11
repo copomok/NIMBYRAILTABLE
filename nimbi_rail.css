@@ -351,3 +351,13 @@ tbody td{padding:10px 14px;font-size:13px;white-space:nowrap}
 .hourly-val{font-size:9px;color:var(--text2);text-align:center;height:14px;line-height:14px;font-family:var(--mono);white-space:nowrap}
 .hourly-bar{width:100%;background:var(--accent);border-radius:2px 2px 0 0;min-height:1px;opacity:.8}
 .hourly-label{font-size:9px;color:var(--text3);margin-top:2px;height:12px;white-space:nowrap}
+
+/* 통계 노선별 첫차/막차 */
+.first-last-stats{display:flex;flex-direction:column;gap:8px}
+.fl-stat-row{display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;padding:6px 0;border-bottom:1px solid var(--border)}
+.fl-stat-row:last-child{border-bottom:none}
+.fl-stat-name{font-size:12px;font-weight:600;color:var(--text1);min-width:72px;padding-top:2px}
+.fl-stat-times{display:flex;flex-wrap:wrap;gap:6px;flex:1}
+.fl-stat-item{display:flex;align-items:center;gap:4px;font-size:12px;background:var(--bg3);padding:3px 8px;border-radius:6px}
+.fl-stat-dir{color:var(--text3);font-size:11px;min-width:28px}
+.fl-stat-time{font-family:var(--mono);color:var(--accent);font-weight:600}
