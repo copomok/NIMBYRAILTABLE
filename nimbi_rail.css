@@ -76,7 +76,7 @@ tbody td{padding:10px 14px;font-size:13px;white-space:nowrap}
 .detail-no{font-family:var(--mono);font-size:24px;font-weight:700}
 .detail-dest{font-size:15px;font-weight:700}
 .detail-meta{color:var(--text2);font-size:12px;display:flex;gap:14px;flex-wrap:wrap;margin-top:4px}
-.stn-grid{display:grid;grid-template-columns:28px 1fr 88px 88px 44px;align-items:center}
+.stn-grid{display:grid;grid-template-columns:28px 1fr 88px 88px 44px}
 .stn-gh{padding:7px 14px;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;background:var(--bg3);border-bottom:1px solid var(--border);color:var(--text2)}
 .stn-gh.green{color:var(--green)}.stn-gh.blue{color:var(--accent2)}
 .sr{display:contents}
@@ -128,7 +128,7 @@ tbody td{padding:10px 14px;font-size:13px;white-space:nowrap}
   input[type="text"],select{width:100%}
   .tabs{max-width:100%}
   .tab{padding:7px 12px;font-size:12px;gap:4px}
-  .stn-grid{grid-template-columns:26px 1fr 80px 80px}
+  
 }
  
 /* 현재 운행 구간 */
@@ -240,7 +240,7 @@ tbody td{padding:10px 14px;font-size:13px;white-space:nowrap}
 .fav-del-btn:hover{background:rgba(248,81,73,.15);color:#f85149;border-color:#f85149}
 /* stn-grid 알람 컬럼 추가 */
 
-@media(max-width:640px){.stn-grid{grid-template-columns:24px 1fr auto auto 40px}}
+@media(max-width:640px){.stn-grid{grid-template-columns:24px 1fr 72px 72px 40px}}
 
 /* 노선 칩 멀티 */
 .line-chip-multi{cursor:pointer}
@@ -339,3 +339,15 @@ tbody td{padding:10px 14px;font-size:13px;white-space:nowrap}
 
 /* 통계 새 섹션 */
 .stat-section+.stat-section{margin-top:0}
+
+/* stn-grid 시간 셀 */
+.stn-time{display:flex;align-items:center;justify-content:center;min-width:0}
+.t-arr,.t-dep{font-family:var(--mono);font-size:13px}
+
+/* 시간대별 그래프 스크롤 */
+.hourly-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:thin}
+.hourly-chart{display:flex;align-items:flex-end;gap:3px;padding-bottom:18px;min-width:480px}
+.hourly-col{display:flex;flex-direction:column;align-items:center;flex:0 0 auto;width:18px}
+.hourly-val{font-size:9px;color:var(--text2);text-align:center;height:14px;line-height:14px;font-family:var(--mono);white-space:nowrap}
+.hourly-bar{width:100%;background:var(--accent);border-radius:2px 2px 0 0;min-height:1px;opacity:.8}
+.hourly-label{font-size:9px;color:var(--text3);margin-top:2px;height:12px;white-space:nowrap}

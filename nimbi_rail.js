@@ -334,7 +334,7 @@ function renderDetail(t){
       alarmCell+=`<button class="alarm-bell-btn${anySet?' has-alarm':''}" onclick="openAlarmPopup('${tno}','${tstn}','${arr||''}','${dep||''}','${prevTime||''}')" title="알람 설정">🔔</button>`;
     }
     alarmCell+='</div>';
-    rows+=`<div class="${rc}"><div class="stn-idx">${seq}</div><div class="stn-name">${tstn}${trainIcon}</div><div>${arrCell}</div><div>${depCell}</div>${alarmCell}</div>`;
+    rows+=`<div class="${rc}"><div class="stn-idx">${seq}</div><div class="stn-name">${tstn}${trainIcon}</div><div class="stn-time">${arrCell}</div><div class="stn-time">${depCell}</div>${alarmCell}</div>`;
   });
   const c=gc(t.grade);
   const cardId='dc-'+t.no;
@@ -1079,7 +1079,7 @@ function renderFavs(){
 function isNightTrain(timeStr){
   const m=toMin(timeStr);
   if(m===null)return false;
-  return m>=1320||m<=300; // 22:00 이후 또는 05:00 이전
+  return m>=1320||m<240; // 22:00 이후 또는 04:00 이전
 }
 function jumpToTrain(no){
   document.getElementById('input-trainno').value=no;
@@ -1736,7 +1736,15 @@ function acShow(inputId,listId){
   const allStns=[...new Set(ALL_TRAINS.flatMap(t=>t.stops.map(s=>s.s)))].sort();
   const matched=allStns.filter(s=>matchesQuery(s,val)).slice(0,10);
   if(!matched.length){el.style.display='none';return;}
-  el.innerHTML=matched.map(s=>`<div class="ac-item" onmousedown="event.preventDefault();document.getElementById('${inputId}').value='${s}';document.getElementById('${listId}').style.display='none';document.getElementById('${inputId}').blur()">${s}</div>`).join('');
+  el.innerHTML=matched.map(s=>{
+    // 검색어와 일치하는 부분 파란색 하이라이트
+    let display=s;
+    if(val&&!CHO.includes(val[0])){
+      const idx=s.indexOf(val);
+      if(idx>=0) display=s.slice(0,idx)+`<span style="color:var(--accent)">${s.slice(idx,idx+val.length)}</span>`+s.slice(idx+val.length);
+    }
+    return `<div class="ac-item" onmousedown="event.preventDefault();document.getElementById('${inputId}').value='${s}';document.getElementById('${listId}').style.display='none';document.getElementById('${inputId}').blur()">${display}</div>`;
+  }).join('');
   el.style.display='block';
 }
 
@@ -1771,11 +1779,14 @@ function getStationFirstLast(stn){
     const m=toMin(timeV);
     if(m===null)return;
     const key=t.dest+'_'+t.dir;
-    if(!result[key]||m<result[key].firstM)result[key]={dest:t.dest,dir:t.dir,firstM:m,firstT:timeV,lastM:m,lastT:timeV};
-    if(m>result[key].lastM){result[key].lastM=m;result[key].lastT=timeV;}
-    // 자정 넘는 열차
-    const adjM=m<60?m+1440:m;
-    if(adjM>result[key].lastM){result[key].lastM=adjM;result[key].lastT=timeV;}
+    // AM 4:00(240분) 기준: 240분 미만은 익일로 처리 (+1440)
+    const adjM=m<240?m+1440:m;
+    if(!result[key]){
+      result[key]={dest:t.dest,dir:t.dir,firstM:adjM,firstT:timeV,lastM:adjM,lastT:timeV};
+    } else {
+      if(adjM<result[key].firstM){result[key].firstM=adjM;result[key].firstT=timeV;}
+      if(adjM>result[key].lastM){result[key].lastM=adjM;result[key].lastT=timeV;}
+    }
   });
   return Object.values(result);
 }
@@ -1886,7 +1897,7 @@ function renderStats(){
 
     <div class="stat-section">
       <div class="stat-section-title">시간대별 운행량</div>
-      <div class="hourly-chart">${hourlyBars}</div>
+      <div class="hourly-scroll"><div class="hourly-chart">${hourlyBars}</div></div>
     </div>
     <p class="hint">※ 현재 시각(${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}) 기준</p>`;
 }
