@@ -76,7 +76,7 @@ tbody td{padding:10px 14px;font-size:13px;white-space:nowrap}
 .detail-no{font-family:var(--mono);font-size:24px;font-weight:700}
 .detail-dest{font-size:15px;font-weight:700}
 .detail-meta{color:var(--text2);font-size:12px;display:flex;gap:14px;flex-wrap:wrap;margin-top:4px}
-.stn-grid{display:grid;grid-template-columns:32px 1fr 100px 100px 52px}
+.stn-grid{display:grid;grid-template-columns:28px 1fr auto auto 44px;align-items:center}
 .stn-gh{padding:7px 14px;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;background:var(--bg3);border-bottom:1px solid var(--border);color:var(--text2)}
 .stn-gh.green{color:var(--green)}.stn-gh.blue{color:var(--accent2)}
 .sr{display:contents}
@@ -240,7 +240,7 @@ tbody td{padding:10px 14px;font-size:13px;white-space:nowrap}
 .fav-del-btn:hover{background:rgba(248,81,73,.15);color:#f85149;border-color:#f85149}
 /* stn-grid 알람 컬럼 추가 */
 
-@media(max-width:640px){.stn-grid{grid-template-columns:26px 1fr 80px 80px 44px}}
+@media(max-width:640px){.stn-grid{grid-template-columns:24px 1fr auto auto 40px}}
 
 /* 노선 칩 멀티 */
 .line-chip-multi{cursor:pointer}
@@ -266,3 +266,47 @@ tbody td{padding:10px 14px;font-size:13px;white-space:nowrap}
 /* 노선도 미니맵 */
 .map-minimap{position:absolute;right:4px;top:0;width:6px;height:120px;background:rgba(255,255,255,.06);border-radius:3px;cursor:pointer;z-index:10}
 .map-minimap-thumb{position:absolute;left:0;right:0;background:var(--accent);border-radius:3px;opacity:.7;transition:top .1s}
+
+/* ETA 작은 글씨 */
+.eta-sub{font-size:11px;opacity:.8;font-weight:400}
+
+.sr>div{align-items:center}
+
+.t-arr,.t-dep{min-width:52px;text-align:center}
+.stn-idx{text-align:center;justify-content:center!important}
+.stn-name{align-items:center!important}
+.eta-sub{font-size:11px;opacity:.75;font-weight:400}
+
+/* 공유 버튼 */
+.share-btn{position:absolute;right:14px;top:14px;padding:4px 8px;font-size:13px;border:1px solid var(--border);border-radius:6px;background:var(--bg3);cursor:pointer;transition:all .15s}
+.share-btn:hover{border-color:var(--accent)}
+.detail-head{position:relative}
+
+/* 첫차/막차 */
+.first-last-wrap{display:flex;flex-wrap:wrap;gap:6px;padding:8px 14px;background:var(--bg2);border:1px solid var(--border);border-radius:8px;margin-bottom:10px}
+.first-last-item{display:flex;align-items:center;gap:4px;font-size:12px;padding:3px 8px;background:var(--bg3);border-radius:6px;white-space:nowrap}
+.fl-dest{font-weight:600;color:var(--text1)}
+.fl-dir{color:var(--text3);font-size:11px}
+.fl-time{font-family:var(--mono);color:var(--accent);font-size:12px}
+.fl-sep{color:var(--text3)}
+
+/* 통계 */
+.stat-cards{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:16px}
+@media(max-width:480px){.stat-cards{grid-template-columns:repeat(2,1fr)}}
+.stat-card{background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:12px;text-align:center}
+.stat-card.running{border-color:rgba(56,139,253,.4);background:rgba(56,139,253,.08)}
+.stat-card.before{border-color:rgba(210,153,34,.4);background:rgba(210,153,34,.08)}
+.stat-card.done{border-color:var(--border)}
+.stat-card-num{font-size:24px;font-weight:700;font-family:var(--mono);color:var(--text1)}
+.stat-card-label{font-size:11px;color:var(--text2);margin-top:2px}
+.stat-section{background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:14px 16px;margin-bottom:12px}
+.stat-section-title{font-size:13px;font-weight:600;color:var(--text2);margin-bottom:10px}
+.stat-row{display:flex;align-items:center;gap:8px;margin-bottom:6px;font-size:12px}
+.stat-row>span:first-child{min-width:60px;color:var(--text1)}
+.stat-bar-wrap{flex:1;height:8px;background:var(--bg3);border-radius:4px;overflow:hidden}
+.stat-bar{height:100%;background:var(--accent);border-radius:4px;transition:width .3s}
+.stat-num{min-width:36px;text-align:right;color:var(--text2);font-family:var(--mono);font-size:11px}
+.hourly-chart{display:flex;align-items:flex-end;gap:2px;height:80px;padding-bottom:18px;position:relative}
+.hourly-col{display:flex;flex-direction:column;align-items:center;flex:1}
+.hourly-bar{width:100%;background:var(--accent);border-radius:2px 2px 0 0;min-height:1px;opacity:.7;transition:height .3s}
+.hourly-label{font-size:9px;color:var(--text3);margin-top:2px;height:12px}

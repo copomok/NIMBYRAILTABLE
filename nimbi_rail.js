@@ -148,6 +148,8 @@ function switchTab(n){
   }
   if(n==='alarm') renderAlarms();
   if(n==='fav') renderFavs();
+  if(n==='stats') renderStats();
+  if(n==='stats') renderStats();
 }
 
 // ── 통과 판별 ──
@@ -347,16 +349,19 @@ function renderDetail(t){
       else msg='운행 중입니다';
       // 다음 역까지 남은 시간
       const eta=getNextStopEta(t,status);
-      const etaTxt=eta?(eta.min===0?` · <b>${eta.stn}</b>역 곧 도착`:(` · <b>${eta.stn}</b>역까지 약 ${eta.min}분`)):'';
+      const etaTxt=eta?(eta.min===0
+        ?`<br><span class="eta-sub">곧 <b>${eta.stn}</b>역 도착 예정</span>`
+        :`<br><span class="eta-sub">약 ${eta.min}분 뒤 <b>${eta.stn}</b>역 도착 예정</span>`):'';
       statusBanner=`<div class="train-status-banner running">🚆 ${msg}${etaTxt}</div>`;
     } else if(status.status==='before'){
-      statusBanner=`<div class="train-status-banner before">운행 전 열차입니다</div>`;
+      statusBanner=`<div class="train-status-banner before">운행을 준비중인 열차입니다</div>`;
     } else {
       statusBanner=`<div class="train-status-banner done">운행이 종료된 열차입니다</div>`;
     }
   }
   return `<div class="detail-card" id="${cardId}">
     <div class="detail-head">
+      <button class="share-btn" onclick="shareTrainLink('${t.no}')" title="링크 복사">🔗</button>
       <div class="detail-no" style="color:var(--c-${c.toLowerCase()})">${t.no}</div>
       <div style="flex:1">
         <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">${gradeHtml(t.grade)}${lineChipHtml(t.line)}<span class="detail-dest">${t.dest}행</span></div>
@@ -415,7 +420,8 @@ function searchByStation(){
   const fb=document.getElementById('fav-btn-station');
   if(fb)fb.style.display='';
   const afterLabel=afterMin!==null?` · ${afterRaw} 이후`:'';
-  el.innerHTML=`<div class="result-header"><div class="result-title">🏢 ${stn} 시간표${afterLabel}</div><span class="badge blue">${results.length}편</span></div>
+  const firstLastHtml=renderFirstLastTrains(stn);
+  el.innerHTML=`<div class="result-header"><div class="result-title">🏢 ${stn} 시간표${afterLabel}</div><span class="badge blue">${results.length}편</span></div>${firstLastHtml}
   <div class="table-wrap"><table><thead><tr><th>열차</th><th>등급</th><th>노선</th><th>방향</th><th>행선지</th><th>도착</th><th>출발</th></tr></thead><tbody>${rows}</tbody></table></div>
   <p class="hint">※ 열차번호 클릭 시 전체 운행 정보 · 흐린 행 = 통과</p>`;
   // 다음 열차 버튼 삽입
@@ -443,6 +449,11 @@ function insertNextTrainBtn(el){
     setTimeout(()=>target.scrollIntoView({behavior:'smooth',block:'center'}),50);
   };
   filterBtn.insertAdjacentElement('afterend',btn);
+}
+
+function toggleXferSettings(){
+  const el=document.getElementById('xfer-settings');
+  if(el) el.style.display=el.style.display==='none'?'block':'none';
 }
 
 function searchByRoute(){
@@ -514,7 +525,8 @@ function searchByRoute(){
   // ── 직통 없음 → 환승 탐색 ──
   // 1회 환승: from → 환승역(t1) → to(t2)
   // 2회 환승: from → 환승역1(t1) → 환승역2(t2) → to(t3)
-  const MIN_WAIT=3, MAX_WAIT=60;
+  const MIN_WAIT=Math.max(1,parseInt(document.getElementById('xfer-min')?.value)||3);
+  const MAX_WAIT=Math.min(120,parseInt(document.getElementById('xfer-max')?.value)||60);
 
   // from에서 탈 수 있는 열차 미리 수집
   function getLegs(depStn, minDepMin){
@@ -785,7 +797,7 @@ function renderAlarms(){
   if(!el)return;
   const alarms=loadAlarms();
   if(!alarms.length){
-    el.innerHTML='<div class="alarm-empty"><div style="font-size:36px;margin-bottom:12px">🔔</div><p>설정된 알람이 없습니다.<br>열차 상세에서 🔔 버튼으로 추가하세요.</p></div>';
+    el.innerHTML='<div class="alarm-empty"><div style="font-size:36px;margin-bottom:12px">🔔</div><p>설정된 알람이 없습니다.<br>열차 상세에서 🔔 버튼으로 추가하세요.</p><button class="btn" style="margin-top:12px;font-size:12px" onclick="testAlarm()">🧪 알람 테스트</button></div>';
     return;
   }
   const now=new Date();
@@ -1623,4 +1635,232 @@ function showMapLine(lineKey, btn){
   if(wrap) wrap.onscroll=updateMinimap;
 }
 
+
+
+// ── 검색 히스토리 ──
+const HISTORY_KEY='nimbi_history';
+function loadHistory(type){try{return JSON.parse(localStorage.getItem(HISTORY_KEY+'_'+type))||[];}catch(e){return[];}}
+function saveHistory(type,val){
+  if(!val)return;
+  let h=loadHistory(type).filter(x=>x!==val);
+  h.unshift(val);
+  h=h.slice(0,8);
+  localStorage.setItem(HISTORY_KEY+'_'+type,JSON.stringify(h));
+}
+function showHistory(inputId,listId,type){
+  const h=loadHistory(type);
+  const el=document.getElementById(listId);
+  if(!el||!h.length)return;
+  const val=document.getElementById(inputId).value;
+  el.innerHTML=h.filter(x=>!val||x.includes(val)).map(x=>
+    `<div class="ac-item" onmousedown="document.getElementById('${inputId}').value='${x}';acHide('${listId}')">${x}</div>`
+  ).join('');
+  el.style.display=el.innerHTML?'block':'none';
+}
+
+// searchByTrain, searchByStation, searchByRoute에 히스토리 저장
+const _origSearchByTrain=searchByTrain;
+searchByTrain=function(){
+  const no=document.getElementById('input-trainno').value.trim();
+  if(no)saveHistory('train',no);
+  _origSearchByTrain();
+};
+const _origSearchByStation=searchByStation;
+searchByStation=function(){
+  const stn=document.getElementById('input-station').value.trim();
+  if(stn)saveHistory('station',stn);
+  _origSearchByStation();
+};
+const _origSearchByRoute=searchByRoute;
+searchByRoute=function(){
+  const from=document.getElementById('input-from').value.trim();
+  const to=document.getElementById('input-to').value.trim();
+  if(from)saveHistory('route_from',from);
+  if(to)saveHistory('route_to',to);
+  _origSearchByRoute();
+};
+
+// ── 초성 검색 ──
+const CHO=['ㄱ','ㄲ','ㄴ','ㄷ','ㄸ','ㄹ','ㅁ','ㅂ','ㅃ','ㅅ','ㅆ','ㅇ','ㅈ','ㅉ','ㅊ','ㅋ','ㅌ','ㅍ','ㅎ'];
+function getChoseong(str){
+  return str.split('').map(c=>{
+    const code=c.charCodeAt(0);
+    if(code>=44032&&code<=55203){
+      return CHO[Math.floor((code-44032)/588)];
+    }
+    return c;
+  }).join('');
+}
+function matchesQuery(name,query){
+  if(!query)return true;
+  if(name.includes(query))return true;
+  // 초성 검색
+  const cho=getChoseong(name);
+  const qCho=query.split('').every(c=>CHO.includes(c))?query:null;
+  if(qCho&&cho.includes(qCho))return true;
+  return false;
+}
+
+// acShow 함수 오버라이드 - 초성 검색 지원
+const _origAcShow=acShow;
+acShow=function(inputId,listId){
+  const val=document.getElementById(inputId)?.value||'';
+  const el=document.getElementById(listId);
+  if(!el)return;
+  // 모든 역명에서 초성 매칭
+  const allStns=[...new Set(ALL_TRAINS.flatMap(t=>t.stops.map(s=>s.s)))].sort();
+  const matched=allStns.filter(s=>matchesQuery(s,val)).slice(0,10);
+  if(!matched.length){el.style.display='none';return;}
+  el.innerHTML=matched.map(s=>`<div class="ac-item" onmousedown="document.getElementById('${inputId}').value='${s}';acHide('${listId}')">${s}</div>`).join('');
+  el.style.display='block';
+};
+
+// ── 열차 공유 ──
+function shareTrainLink(no){
+  const url=`${location.origin}${location.pathname}?train=${no}`;
+  if(navigator.clipboard){
+    navigator.clipboard.writeText(url).then(()=>alert('링크가 복사됐습니다!\n'+url));
+  } else {
+    prompt('아래 링크를 복사하세요:',url);
+  }
+}
+
+// URL 파라미터로 열차 바로 조회
+window.addEventListener('load',()=>{
+  const params=new URLSearchParams(location.search);
+  const trainNo=params.get('train');
+  if(trainNo){
+    document.getElementById('input-trainno').value=trainNo;
+    setTimeout(()=>searchByTrain(),500);
+  }
+});
+
+// ── 역별 시간표 첫차/막차 ──
+function getStationFirstLast(stn){
+  const result={};
+  ALL_TRAINS.forEach(t=>{
+    const stop=t.stops.find(s=>s.s===stn);
+    if(!stop||isPassStop(t,stn))return;
+    const timeV=hasTime(stop.dep)?stop.dep:hasTime(stop.arr)?stop.arr:null;
+    if(!timeV)return;
+    const m=toMin(timeV);
+    if(m===null)return;
+    const key=t.dest+'_'+t.dir;
+    if(!result[key]||m<result[key].firstM)result[key]={dest:t.dest,dir:t.dir,firstM:m,firstT:timeV,lastM:m,lastT:timeV};
+    if(m>result[key].lastM){result[key].lastM=m;result[key].lastT=timeV;}
+    // 자정 넘는 열차
+    const adjM=m<60?m+1440:m;
+    if(adjM>result[key].lastM){result[key].lastM=adjM;result[key].lastT=timeV;}
+  });
+  return Object.values(result);
+}
+
+// ── 막차 시각 표시 함수 (searchByStation에서 호출) ──
+function renderFirstLastTrains(stn){
+  const data=getStationFirstLast(stn);
+  if(!data.length)return '';
+  // dest별로 첫차/막차 표시
+  const rows=data.map(d=>{
+    const dirLbl=d.dir==='down'?'하행':'상행';
+    return `<span class="first-last-item"><span class="fl-dest">${d.dest}행</span><span class="fl-dir">${dirLbl}</span><span class="fl-time">첫 ${d.firstT}</span><span class="fl-sep">·</span><span class="fl-time">막 ${d.lastT}</span></span>`;
+  }).join('');
+  return `<div class="first-last-wrap">${rows}</div>`;
+}
+
+// ── 통계 탭 ──
+function renderStats(){
+  const el=document.getElementById('result-stats');
+  if(!el)return;
+
+  const now=new Date();
+  const nowM=now.getHours()*60+now.getMinutes();
+
+  // 전체 열차 수
+  const total=ALL_TRAINS.length;
+
+  // 등급별 통계
+  const gradeCount={};
+  ALL_TRAINS.forEach(t=>{gradeCount[t.grade]=(gradeCount[t.grade]||0)+1;});
+
+  // 노선별 통계
+  const lineCount={};
+  ALL_TRAINS.forEach(t=>{
+    const lines=t.line.split('·');
+    lines.forEach(l=>{const ll=l.trim();lineCount[ll]=(lineCount[ll]||0)+1;});
+  });
+
+  // 현재 운행 중
+  const running=ALL_TRAINS.filter(t=>{
+    const st=getCurrentStatus(t);
+    return st&&st.status==='running';
+  }).length;
+
+  // 운행 전/종료
+  const before=ALL_TRAINS.filter(t=>{const st=getCurrentStatus(t);return st&&st.status==='before';}).length;
+  const done=ALL_TRAINS.filter(t=>{const st=getCurrentStatus(t);return st&&st.status==='done';}).length;
+
+  // 시간대별 운행량 (1시간 단위)
+  const hourly=Array(24).fill(0);
+  ALL_TRAINS.forEach(t=>{
+    t.stops.forEach(s=>{
+      const m=toMin(s.dep||s.arr);
+      if(m!==null) hourly[Math.floor(m/60)%24]++;
+    });
+  });
+  const maxHourly=Math.max(...hourly);
+
+  const gradeRows=Object.entries(gradeCount).sort((a,b)=>b[1]-a[1]).map(([g,c])=>`
+    <div class="stat-row">
+      <span>${GL[g]||g}</span>
+      <div class="stat-bar-wrap"><div class="stat-bar" style="width:${Math.round(c/total*100)}%;background:${GRADE_COLORS[g]||'var(--accent)'}"></div></div>
+      <span class="stat-num">${c}편</span>
+    </div>`).join('');
+
+  const lineRows=Object.entries(lineCount).sort((a,b)=>b[1]-a[1]).map(([l,c])=>`
+    <div class="stat-row">
+      <span style="min-width:80px">${l}</span>
+      <div class="stat-bar-wrap"><div class="stat-bar" style="width:${Math.round(c/total*100)}%"></div></div>
+      <span class="stat-num">${c}편</span>
+    </div>`).join('');
+
+  const hourlyBars=hourly.map((v,h)=>`
+    <div class="hourly-col">
+      <div class="hourly-bar" style="height:${maxHourly?Math.round(v/maxHourly*60):0}px" title="${h}시: ${v}회"></div>
+      <div class="hourly-label">${h%3===0?h:''}</div>
+    </div>`).join('');
+
+  el.innerHTML=`
+    <div class="result-header"><div class="result-title">📊 운행 통계</div></div>
+
+    <div class="stat-cards">
+      <div class="stat-card"><div class="stat-card-num">${total}</div><div class="stat-card-label">전체 열차</div></div>
+      <div class="stat-card running"><div class="stat-card-num">${running}</div><div class="stat-card-label">운행 중</div></div>
+      <div class="stat-card before"><div class="stat-card-num">${before}</div><div class="stat-card-label">운행 전</div></div>
+      <div class="stat-card done"><div class="stat-card-num">${done}</div><div class="stat-card-label">운행 종료</div></div>
+    </div>
+
+    <div class="stat-section">
+      <div class="stat-section-title">등급별</div>
+      ${gradeRows}
+    </div>
+
+    <div class="stat-section">
+      <div class="stat-section-title">노선별</div>
+      ${lineRows}
+    </div>
+
+    <div class="stat-section">
+      <div class="stat-section-title">시간대별 운행량</div>
+      <div class="hourly-chart">${hourlyBars}</div>
+    </div>
+    <p class="hint">※ 현재 시각(${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}) 기준</p>`;
+}
+
+
+// ── 알람 테스트 ──
+function testAlarm(){
+  requestNotifPermission(()=>{
+    sendNotification('🔔 님비레일 알람 테스트','알람이 정상적으로 작동합니다!');
+  });
+}
 

@@ -19,10 +19,7 @@
 <body>
 <header>
   <div class="logo"><div class="logo-icon">🚆</div>님비레일 시간표</div>
-  <div style="display:flex;align-items:center;gap:12px">
-    <span class="header-sub">경부선 · 호남선 · 중앙선 · 동해선</span>
-    <span id="header-clock" style="font-family:var(--mono);font-size:14px;font-weight:600;color:var(--text1);letter-spacing:1px"></span>
-  </div>
+  <span id="header-clock" style="font-family:var(--mono);font-size:14px;font-weight:600;color:var(--text1);letter-spacing:1px"></span>
 </header>
 <div class="container">
   <div class="tabs">
@@ -32,6 +29,8 @@
     <button class="tab" onclick="switchTab('map')" id="tab-map">🗺️ 노선도</button>
     <button class="tab" onclick="switchTab('alarm')" id="tab-alarm">🔔 알람</button>
     <button class="tab" onclick="switchTab('fav')" id="tab-fav">⭐ 즐겨찾기</button>
+    <button class="tab" onclick="switchTab('stats')" id="tab-stats">📊 통계</button>
+    <button class="tab" onclick="switchTab('stats')" id="tab-stats">📊 통계</button>
   </div>
 
   <div class="panel active" id="panel-train">
@@ -162,7 +161,21 @@
           </div>
         </div>
         <button class="btn btn-primary" onclick="searchByRoute()">🔍 조회</button>
+        <button class="btn" onclick="toggleXferSettings()" style="font-size:12px;padding:6px 10px">⚙️ 환승 설정</button>
         <button class="btn-fav-add" id="fav-btn-route" onclick="addFav('route')" title="즐겨찾기 추가" style="display:none">⭐</button>
+      </div>
+    </div>
+    <div id="xfer-settings" style="display:none;background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:12px 16px;margin-bottom:12px">
+      <div style="font-size:13px;font-weight:600;margin-bottom:10px">⚙️ 환승 대기 시간 설정</div>
+      <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap">
+        <div class="form-group" style="margin:0">
+          <label>최소 대기 (분)</label>
+          <input type="number" id="xfer-min" value="3" min="1" max="30" style="width:70px">
+        </div>
+        <div class="form-group" style="margin:0">
+          <label>최대 대기 (분)</label>
+          <input type="number" id="xfer-max" value="60" min="10" max="120" style="width:70px">
+        </div>
       </div>
     </div>
     <div id="result-route"></div>
@@ -200,6 +213,12 @@
   </div>
   <div class="panel" id="panel-fav">
     <div id="result-fav"></div>
+  </div>
+  <div class="panel" id="panel-stats">
+    <div id="result-stats"></div>
+  </div>
+  <div class="panel" id="panel-stats">
+    <div id="result-stats"></div>
   </div>
 </div>
 
