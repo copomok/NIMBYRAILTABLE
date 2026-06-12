@@ -1184,6 +1184,22 @@ function calcStationFirstLast(){
   el.innerHTML=`<div class="first-last-stats">${rows}</div>`;
 }
 
+
+// ── 운행 중 열차 전체 보기 ──
+function showAllRunningTrains(){
+  const el=document.querySelector('#result-stats .running-chips-wrap');
+  if(!el)return;
+  const runningTrains=ALL_TRAINS.filter(t=>{
+    const st=getCurrentStatus(t);
+    return st&&st.status==='running';
+  });
+  const chips=runningTrains.map(t=>{
+    const c=GRADE_COLORS[t.grade]||'var(--accent)';
+    return `<span onclick="jumpToTrain('${t.no}')" style="cursor:pointer;padding:2px 8px;border-radius:10px;border:1px solid ${c};color:${c};font-size:11px;background:rgba(0,0,0,.2)">${t.no}</span>`;
+  }).join('');
+  el.innerHTML=chips+`<button class="btn" style="font-size:11px;padding:2px 8px;margin-left:4px" onclick="renderStats()">접기</button>`;
+}
+
 function jumpToTrain(no){
   document.getElementById('input-trainno').value=no;
   switchTab('train');searchByTrain();
@@ -1993,10 +2009,15 @@ function renderStats(){
     const upPart=d.upFirst?`<span class="fl-stat-item"><span class="fl-stat-dir">상행↑</span><span class="fl-stat-time">${d.upFirst}</span><span style="color:var(--text3)">~</span><span class="fl-stat-time">${d.upLast||'-'}</span></span>`:'';
     return `<div class="fl-stat-row"><span class="fl-stat-name">${ln}</span><div class="fl-stat-times">${downPart}${upPart}</div></div>`;
   }).filter(Boolean).join('');
-  const runningChips=runningTrains.slice(0,30).map(t=>{
+  const makeChips=(trains)=>trains.map(t=>{
     const c=GRADE_COLORS[t.grade]||'var(--accent)';
     return `<span onclick="jumpToTrain('${t.no}')" style="cursor:pointer;padding:2px 8px;border-radius:10px;border:1px solid ${c};color:${c};font-size:11px;background:rgba(0,0,0,.2)">${t.no}</span>`;
-  }).join('')+(runningTrains.length>30?`<span style="font-size:11px;color:var(--text3)">외 ${runningTrains.length-30}편</span>`:'');
+  }).join('');
+  const CHIP_LIMIT=30;
+  const runningChips=makeChips(runningTrains.slice(0,CHIP_LIMIT))
+    +(runningTrains.length>CHIP_LIMIT
+      ? `<button id="btn-show-all-running" class="btn" style="font-size:11px;padding:2px 8px;margin-left:4px" onclick="showAllRunningTrains()">외 ${runningTrains.length-CHIP_LIMIT}편 더 보기</button>`
+      : '');
 
   // 운행 전/종료
   const before=ALL_TRAINS.filter(t=>{const st=getCurrentStatus(t);return st&&st.status==='before';}).length;
@@ -2054,7 +2075,7 @@ function renderStats(){
     </div>
     <div class="stat-section">
       <div class="stat-section-title">현재 운행 중 열차</div>
-      <div style="display:flex;flex-wrap:wrap;gap:6px">${runningChips}</div>
+      <div class="running-chips-wrap" style="display:flex;flex-wrap:wrap;gap:6px">${runningChips}</div>
     </div>
 
     <div class="stat-section">
