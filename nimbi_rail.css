@@ -364,8 +364,8 @@ tbody td{padding:10px 14px;font-size:13px;white-space:nowrap}
 .fl-stat-time{font-family:var(--mono);color:var(--accent);font-weight:600}
 
 /* 출도착 탭 입력폼 */
-.route-inputs{display:flex;gap:12px;align-items:flex-end;flex-wrap:wrap}
-.route-inputs .form-group{flex:1;min-width:120px}
+.route-inputs{display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap}
+.route-inputs .form-group{flex:1;min-width:100px}
 .route-btn-group{display:flex;gap:6px;align-items:center;flex-shrink:0}
 /* PC: 버튼을 입력창과 같은 줄 */
 @media(min-width:641px){

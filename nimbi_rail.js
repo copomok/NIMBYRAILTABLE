@@ -1197,7 +1197,7 @@ function showAllRunningTrains(){
     const c=GRADE_COLORS[t.grade]||'var(--accent)';
     return `<span onclick="jumpToTrain('${t.no}')" style="cursor:pointer;padding:2px 8px;border-radius:10px;border:1px solid ${c};color:${c};font-size:11px;background:rgba(0,0,0,.2)">${t.no}</span>`;
   }).join('');
-  el.innerHTML=chips+`<button class="btn" style="font-size:11px;padding:2px 8px;margin-left:4px" onclick="renderStats()">접기</button>`;
+  el.innerHTML=chips+`<span class="badge" style="cursor:pointer;margin-left:4px" onclick="renderStats()">접기 ▴</span>`;
 }
 
 function jumpToTrain(no){
@@ -2016,7 +2016,7 @@ function renderStats(){
   const CHIP_LIMIT=30;
   const runningChips=makeChips(runningTrains.slice(0,CHIP_LIMIT))
     +(runningTrains.length>CHIP_LIMIT
-      ? `<button id="btn-show-all-running" class="btn" style="font-size:11px;padding:2px 8px;margin-left:4px" onclick="showAllRunningTrains()">외 ${runningTrains.length-CHIP_LIMIT}편 더 보기</button>`
+      ? `<span class="badge" style="cursor:pointer;margin-left:4px" onclick="showAllRunningTrains()">외 ${runningTrains.length-CHIP_LIMIT}편 더 보기 ▾</span>`
       : '');
 
   // 운행 전/종료
