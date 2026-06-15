@@ -30,6 +30,7 @@ function dirLabel(d){return d==='down'?'<span class="dir down"><span class="dir-
 function toMin(v){if(!v)return null;const m=v.match(/(\d+):(\d+)/);return m?+m[1]*60+ +m[2]:null;}
 function hasTime(v){return v&&/\d+:\d+/.test(v);}
 
+let _detailViewMode='timeline';
 const ALL_STATIONS=[...new Set(ALL_TRAINS.flatMap(t=>t.stops.map(s=>s.s)))].sort((a,b)=>a.localeCompare(b,'ko'));
 
 const acIdxMap={};
@@ -1254,7 +1255,7 @@ function setDetailView(mode, trainNo){
 }
 
 function renderTableView(t, tlRows){
-  // 타임라인 rows에서 표 형태로 변환
+  const status=getCurrentStatus(t);
   let tableRows = '';
   let seq = 0;
   const valid = t.stops.filter(s => s.arr || s.dep);
@@ -1265,7 +1266,18 @@ function renderTableView(t, tlRows){
     const isOrigin = s.s === originStn, isTerm = s.s === terminusStn;
     const isPass = !isOrigin && !isTerm && isPassStop(t, s.s);
     seq++;
-    const rc = isPass ? 'sr pass-row' : 'sr';
+    // 현재 위치 하이라이트
+    let hlCls='';
+    if(status&&status.status==='running'){
+      if(status.atStn===s.s) hlCls=' hl-at';
+      else if(status.nextStn===s.s||status.prevStn===s.s) hlCls=' hl-next';
+    }
+    const rc = isPass ? 'sr pass-row' : `sr${hlCls}`;
+    const stnNameCls = isOrigin?'origin-n':isTerm?'term-n':'';
+    // 다음 역 뱃지
+    const nextBadge=status&&status.nextStn===s.s&&!isPass
+      ?'<span style="font-size:10px;padding:1px 5px;border-radius:8px;background:rgba(56,139,253,.2);color:var(--accent);border:1px solid rgba(56,139,253,.4);margin-left:4px;font-weight:600">다음</span>':
+      status&&status.atStn===s.s?'<span style="font-size:10px;padding:1px 5px;border-radius:8px;background:rgba(63,185,80,.2);color:var(--green);border:1px solid rgba(63,185,80,.4);margin-left:4px;font-weight:600">현재</span>':'';
     const arrCell = hasTime(arr) ? `<span class="t-arr">${arr}</span>` : isOrigin ? '<span style="color:var(--text3);font-size:11px">출발역</span>' : '';
     const depCell = hasTime(dep) ? `<span class="t-dep">${dep}</span>` : isTerm ? '<span style="color:var(--text3);font-size:11px">종착역</span>' : '';
     const tno = t.no, tstn = s.s;
@@ -1280,7 +1292,7 @@ function renderTableView(t, tlRows){
       alarmCell += `<button class="alarm-bell-btn${anySet?' has-alarm':''}" onclick="openAlarmPopup('${tno}','${tstn}','${arr||''}','${dep||''}','${prevTime||''}')" title="알람 설정">🔔</button>`;
     }
     alarmCell += '</div>';
-    tableRows += `<div class="${rc}"><div class="stn-idx">${seq}</div><div class="stn-name">${tstn}</div><div class="stn-time">${arrCell}</div><div class="stn-time">${depCell}</div>${alarmCell}</div>`;
+    tableRows += `<div class="${rc}"><div class="stn-idx">${seq}</div><div class="stn-name ${stnNameCls}">${tstn}${nextBadge}</div><div class="stn-time">${arrCell}</div><div class="stn-time">${depCell}</div>${alarmCell}</div>`;
   });
   return `<div style="overflow-x:auto;-webkit-overflow-scrolling:touch">
     <div class="stn-grid" style="min-width:500px">
@@ -1317,7 +1329,6 @@ function jumpToTrain(no){
 
 // ── 노선도 ──
 let _mapCurrentLine = null;
-let _detailViewMode = 'timeline'; // 'timeline' | 'table'
 let _mapStnPos = {};
 let _mapSvgSize = {w:0,h:0,ox:0,oy:0};
 let _mapTrainInterval = null;
