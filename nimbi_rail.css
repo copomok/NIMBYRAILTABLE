@@ -432,3 +432,11 @@ tbody td{padding:10px 14px;font-size:13px;white-space:nowrap}
 /* 표 뷰 다음 역 하이라이트 */
 .sr.hl-next>div{background:rgba(56,139,253,.1)!important}
 .sr.hl-at>div{background:rgba(63,185,80,.1)!important}
+
+/* ── 타임라인 툴바 (preview2 기준) ── */
+.tl-toolbar{padding:8px 14px;border-bottom:1px solid var(--border);display:flex;gap:8px;align-items:center;flex-wrap:wrap;background:var(--bg2)}
+/* 타임라인 하이라이트 */
+.tl-row-hl-at{background:rgba(63,185,80,.12)!important}
+.tl-row-hl-next{background:rgba(56,139,253,.1)!important}
+/* 통과역 숨기기 체크박스 */
+#hide-pass-checkbox{accent-color:var(--accent)}
