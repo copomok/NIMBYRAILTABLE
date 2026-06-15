@@ -28,6 +28,12 @@ function showLineTooltip(el, line){
 function trainChip(no,g,fn){return `<span class="tc tc-${gc(g)}" onclick="${fn}">${no}</span>`;}
 function dirLabel(d){return d==='down'?'<span class="dir down"><span class="dir-dot"></span>하행</span>':'<span class="dir up"><span class="dir-dot"></span>상행</span>';}
 function toMin(v){if(!v)return null;const m=v.match(/(\d+):(\d+)/);return m?+m[1]*60+ +m[2]:null;}
+function durStr(depT,arrT){
+  if(!depT||!arrT)return '-';
+  const d=toMin(arrT)-toMin(depT);
+  if(d<=0)return '-';
+  return d<60?`${d}m`:`${Math.floor(d/60)}h ${d%60}m`;
+}
 function hasTime(v){return v&&/\d+:\d+/.test(v);}
 
 let _detailViewMode='timeline';
@@ -562,12 +568,7 @@ function searchByRoute(){
     if(hasTime(stop.arr))return stop.arr;
     return null;
   }
-  function durStr(depT,arrT){
-    if(!depT||!arrT)return '-';
-    const d=toMin(arrT)-toMin(depT);
-    if(d<=0)return '-';
-    return d<60?`${d}m`:`${Math.floor(d/60)}h ${d%60}m`;
-  }
+  // durStr은 전역 함수 사용
 
   // ── 직통 탐색 ──
   let directs=[];
