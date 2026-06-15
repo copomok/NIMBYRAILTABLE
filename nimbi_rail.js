@@ -338,35 +338,56 @@ function renderDetail(t){
     seq++;
     // 현재 열차 위치 하이라이트
     let hlClass='';
-    if(status?.status==='running'){
-      if(status.passStn&&s.s===status.passStn) hlClass=' hl-pass';
-      else if(status.atStn&&s.s===status.atStn) hlClass=' hl-at';
-      // 정차 중일 땐 prevStn 하이라이트 없음
-      // 이동 중일 땐 prevStn, nextStn 둘 다 진한 파랑
-      else if(!status.atStn&&status.prevStn&&s.s===status.prevStn) hlClass=' hl-next';
-      else if(!status.atStn&&status.nextStn&&s.s===status.nextStn) hlClass=' hl-next';
+    if(status&&status.status==='running'){
+      if(status.atStn===s.s) hlClass='tl-at';
+      else if(status.passStn===s.s) hlClass='tl-pass';
+      else if(status.prevStn===s.s||status.nextStn===s.s) hlClass='tl-next';
     }
-    const rc=(isPass?'sr pass-row':isOrigin?'sr origin':isTerm?'sr terminus':'sr')+hlClass;
-    const arrCell=hasTime(arr)?`<span class="t-arr">${arr}</span>`:isOrigin?'<span style="color:var(--text3);font-size:11px">출발역</span>':'';
-    const depCell=hasTime(dep)?`<span class="t-dep">${dep}</span>`:isTerm?'<span style="color:var(--text3);font-size:11px">종착역</span>':'';
-    const trainIcon=hlClass?' <span class="current-train-icon"></span>':'';
-    // 통과역은 알람 버튼 없음
+    // 타임라인 dot 색상
+    const dotClass=isOrigin?'tl-dot origin':isTerm?'tl-dot term':isPass?'tl-dot pass':'tl-dot stop';
+    // 시간 표시
+    let timeHtml='';
+    if(isOrigin){
+      timeHtml=`<span class="tl-time dep">발 ${dep||''}</span>`;
+    } else if(isTerm){
+      timeHtml=`<span class="tl-time arr">착 ${arr||''}</span>`;
+    } else if(isPass){
+      timeHtml=`<span class="tl-time pass">통과 ${arr||dep||''}</span>`;
+    } else {
+      const arrPart=hasTime(arr)?`착 ${arr}`:'';
+      const depPart=hasTime(dep)?`발 ${dep}`:'';
+      timeHtml=arrPart&&depPart
+        ?`<span class="tl-time arr">${arrPart}</span><span class="tl-time dep">${depPart}</span>`
+        :`<span class="tl-time ${hasTime(arr)?'arr':'dep'}">${arrPart||depPart}</span>`;
+    }
+    // 알람 버튼
     const tno=t.no, tstn=s.s;
-    const hasArr=hasTime(arr), hasDep=hasTime(dep);
     const sIdx=t.stops.findIndex(x=>x.s===tstn);
     const prevStop=sIdx>0?t.stops.slice(0,sIdx).reverse().find(x=>hasTime(x.dep)||hasTime(x.arr)):null;
     const prevTime=prevStop?(hasTime(prevStop.dep)?prevStop.dep:prevStop.arr):null;
-    // 알람: 통과역은 버튼 없음
-    let alarmCell='<div class="stn-alarm-cell">';
+    let alarmBtn='';
     if(!isPass){
       const boardSet=hasAlarm(`board:${tno}:${tstn}`);
       const arrSet=hasAlarm(`arr:${tno}:${tstn}`);
       const anySet=boardSet||arrSet;
-      alarmCell+=`<button class="alarm-bell-btn${anySet?' has-alarm':''}" onclick="openAlarmPopup('${tno}','${tstn}','${arr||''}','${dep||''}','${prevTime||''}')" title="알람 설정">🔔</button>`;
+      alarmBtn=`<button class="alarm-bell-btn${anySet?' has-alarm':''}" onclick="openAlarmPopup('${tno}','${tstn}','${arr||''}','${dep||''}','${prevTime||''}')" title="알람 설정">🔔</button>`;
     }
-    alarmCell+='</div>';
-    rows+=`<div class="${rc}"><div class="stn-idx">${seq}</div><div class="stn-name">${tstn}${trainIcon}</div><div class="stn-time">${arrCell}</div><div class="stn-time">${depCell}</div>${alarmCell}</div>`;
+    const hlStyle=hlClass?` tl-row-${hlClass}`:'';
+    const passStyle=isPass?' tl-row-pass':'';
+    rows+=`<div class="tl-row${hlStyle}${passStyle}" data-seq="${seq}">
+      <div class="tl-time-col">${timeHtml}</div>
+      <div class="tl-line-col">
+        <div class="${dotClass}"></div>
+        ${isOrigin||isTerm?'':'<div class="tl-line"></div>'}
+      </div>
+      <div class="tl-stn-col">
+        <span class="tl-stn-name ${isOrigin?'origin':isTerm?'term':isPass?'pass':'stop'}">${s.s}</span>
+        ${hlClass==='tl-at'?'<span class="tl-badge now">현재</span>':hlClass==='tl-next'?'<span class="tl-badge next">근처</span>':''}
+      </div>
+      <div class="tl-alarm-col">${alarmBtn}</div>
+    </div>`;
   });
+
   const c=gc(t.grade);
   const cardId='dc-'+t.no;
   // 운행 상태 배너
@@ -378,11 +399,11 @@ function renderDetail(t){
       else if(status.atStn) msg=`${status.atStn}역에 정차 중입니다`;
       else if(status.nextStn) msg=`${status.nextStn}역으로 이동 중입니다`;
       else msg='운행 중입니다';
-      // 다음 역까지 남은 시간
       const eta=getNextStopEta(t,status);
       const etaTxt=eta?(eta.min===0
-        ?`<br><span class="eta-sub">곧 <b>${eta.stn}</b>역 도착 예정</span>`
-        :`<br><span class="eta-sub">약 ${eta.min}분 뒤 <b>${eta.stn}</b>역 도착 예정</span>`):'';
+        ?`<br><span class="eta-sub">곧 도착 예정</span>`
+        :`<br><span class="eta-sub">약 ${eta.min}분 뒤 도착 예정</span>`)
+        :'';
       statusBanner=`<div class="train-status-banner running">🚆 ${msg}${etaTxt}</div>`;
     } else if(status.status==='before'){
       statusBanner=`<div class="train-status-banner before">운행을 준비중인 열차입니다</div>`;
@@ -390,27 +411,43 @@ function renderDetail(t){
       statusBanner=`<div class="train-status-banner done">운행이 종료된 열차입니다</div>`;
     }
   }
+  const valid2=t.stops.filter(s=>hasTime(s.arr)||hasTime(s.dep));
+  const totalStops=valid2.filter(s=>!isPassStop(t,s.s)).length;
+  const durStr2=valid2.length>=2?durStr(
+    hasTime(valid2[0].dep)?valid2[0].dep:valid2[0].arr,
+    hasTime(valid2[valid2.length-1].arr)?valid2[valid2.length-1].arr:valid2[valid2.length-1].dep
+  ):'-';
+
   return `<div class="detail-card" id="${cardId}">
     <div class="detail-head" style="position:relative;padding-right:36px">
       <button class="share-btn" onclick="shareTrainLink('${t.no}')" title="링크 복사" style="position:absolute;right:0;top:0">🔗</button>
       <div class="detail-no" style="color:var(--c-${c.toLowerCase()})">${t.no}</div>
-      <div style="flex:1">
-        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">${gradeHtml(t.grade)}${lineChipHtml(t.line)}<span class="detail-dest">${t.dest}행</span></div>
-        <div class="detail-meta"><span>${dirLabel(t.dir)}</span><span>첫 출발 ${depTime}</span><span>${originStn} → ${terminusStn}</span></div>
+      <div class="detail-dest">${gradeHtml(t.grade)}${lineChipHtml(t.line)}<span class="detail-dest">${t.dest}행</span></div>
+      <div class="detail-meta">
+        ${valid2[0]?.s||''} ${hasTime(valid2[0]?.dep)?valid2[0].dep:valid2[0]?.arr||''} 발
+        → ${valid2[valid2.length-1]?.s||''} ${hasTime(valid2[valid2.length-1]?.arr)?valid2[valid2.length-1].arr:valid2[valid2.length-1]?.dep||''} 착
       </div>
-      <button class="btn-pass-toggle" onclick="togglePass('${cardId}')" title="통과역 표시/숨김">통과역 숨기기</button>
+      <div class="detail-meta" style="margin-top:2px">
+        정차역 ${totalStops}개 &nbsp;·&nbsp; 소요시간 ${durStr2}
+      </div>
     </div>
     ${statusBanner}
-    <div style="overflow-x:auto;-webkit-overflow-scrolling:touch">
-      <div class="stn-grid" style="min-width:500px">
-        <div class="stn-gh">#</div><div class="stn-gh">역명</div>
-        <div class="stn-gh green">도착</div><div class="stn-gh blue">출발</div>
-        <div class="stn-gh alarm-col">알람</div>
-        ${rows}
+    <div class="tl-wrap">
+      <div style="padding:6px 12px 8px;display:flex;gap:8px;align-items:center;border-bottom:1px solid var(--border);flex-wrap:wrap">
+        <label style="font-size:12px;color:var(--text2);display:flex;align-items:center;gap:4px;cursor:pointer">
+          <input type="checkbox" id="hide-pass-${t.no}" onchange="togglePassRows('${t.no}')" style="cursor:pointer">
+          통과역 숨기기
+        </label>
+        <div style="margin-left:auto;display:flex;gap:4px">
+          <button class="view-toggle-btn${_detailViewMode==='timeline'?' active':''}" onclick="setDetailView('timeline','${t.no}')" title="타임라인">⏱ 타임라인</button>
+          <button class="view-toggle-btn${_detailViewMode==='table'?' active':''}" onclick="setDetailView('table','${t.no}')" title="표 형태">📋 표</button>
+        </div>
       </div>
+      <div id="tl-${t.no}" class="${_detailViewMode==='table'?'tl-table-mode':''}">${_detailViewMode==='table'?renderTableView(t,rows):rows}</div>
     </div>
   </div>`;
 }
+
 
 function searchByStation(){
   // 드롭다운 닫기
@@ -1200,6 +1237,73 @@ function showAllRunningTrains(){
   el.innerHTML=chips+`<span class="badge" style="cursor:pointer;margin-left:4px" onclick="renderStats()">접기 ▴</span>`;
 }
 
+
+
+// ── 열차 상세 뷰 전환 ──
+function setDetailView(mode, trainNo){
+  _detailViewMode = mode;
+  // 해당 열차 카드만 다시 렌더링
+  const trains = ALL_TRAINS.filter(t => t.no === trainNo);
+  const el = document.getElementById('result-train');
+  if(el && trains.length) el.innerHTML = trains.map(renderDetail).join('');
+  // 통과역 숨기기 상태 유지
+}
+
+function renderTableView(t, tlRows){
+  // 타임라인 rows에서 표 형태로 변환
+  let tableRows = '';
+  let seq = 0;
+  const valid = t.stops.filter(s => s.arr || s.dep);
+  const originStn = valid[0]?.s, terminusStn = valid[valid.length-1]?.s;
+  t.stops.forEach(s => {
+    const arr = s.arr, dep = s.dep;
+    if(!arr && !dep) return;
+    const isOrigin = s.s === originStn, isTerm = s.s === terminusStn;
+    const isPass = !isOrigin && !isTerm && isPassStop(t, s.s);
+    seq++;
+    const rc = isPass ? 'sr pass-row' : 'sr';
+    const arrCell = hasTime(arr) ? `<span class="t-arr">${arr}</span>` : isOrigin ? '<span style="color:var(--text3);font-size:11px">출발역</span>' : '';
+    const depCell = hasTime(dep) ? `<span class="t-dep">${dep}</span>` : isTerm ? '<span style="color:var(--text3);font-size:11px">종착역</span>' : '';
+    const tno = t.no, tstn = s.s;
+    const sIdx = t.stops.findIndex(x => x.s === tstn);
+    const prevStop = sIdx > 0 ? t.stops.slice(0, sIdx).reverse().find(x => hasTime(x.dep) || hasTime(x.arr)) : null;
+    const prevTime = prevStop ? (hasTime(prevStop.dep) ? prevStop.dep : prevStop.arr) : null;
+    let alarmCell = '<div class="stn-alarm-cell">';
+    if(!isPass){
+      const boardSet = hasAlarm(`board:${tno}:${tstn}`);
+      const arrSet = hasAlarm(`arr:${tno}:${tstn}`);
+      const anySet = boardSet || arrSet;
+      alarmCell += `<button class="alarm-bell-btn${anySet?' has-alarm':''}" onclick="openAlarmPopup('${tno}','${tstn}','${arr||''}','${dep||''}','${prevTime||''}')" title="알람 설정">🔔</button>`;
+    }
+    alarmCell += '</div>';
+    tableRows += `<div class="${rc}"><div class="stn-idx">${seq}</div><div class="stn-name">${tstn}</div><div class="stn-time">${arrCell}</div><div class="stn-time">${depCell}</div>${alarmCell}</div>`;
+  });
+  return `<div style="overflow-x:auto;-webkit-overflow-scrolling:touch">
+    <div class="stn-grid" style="min-width:500px">
+      <div class="stn-gh">#</div><div class="stn-gh">역명</div>
+      <div class="stn-gh green">도착</div><div class="stn-gh blue">출발</div>
+      <div class="stn-gh alarm-col">알람</div>
+      ${tableRows}
+    </div>
+  </div>`;
+}
+
+// ── 타임라인 통과역 숨기기 토글 ──
+function togglePassRows(trainNo){
+  const cb=document.getElementById(`hide-pass-${trainNo}`);
+  const list=document.getElementById(`tl-${trainNo}`);
+  if(!cb||!list)return;
+  const hide=cb.checked;
+  // 타임라인 모드
+  list.querySelectorAll('.tl-row').forEach(row=>{
+    if(row.classList.contains('tl-row-pass')) row.style.display=hide?'none':'';
+  });
+  // 표 모드
+  list.querySelectorAll('.sr.pass-row').forEach(row=>{
+    row.style.display=hide?'none':'';
+  });
+}
+
 function jumpToTrain(no){
   document.getElementById('input-trainno').value=no;
   switchTab('train');searchByTrain();
@@ -1209,6 +1313,7 @@ function jumpToTrain(no){
 
 // ── 노선도 ──
 let _mapCurrentLine = null;
+let _detailViewMode = 'timeline'; // 'timeline' | 'table'
 let _mapStnPos = {};
 let _mapSvgSize = {w:0,h:0,ox:0,oy:0};
 let _mapTrainInterval = null;
@@ -2093,9 +2198,10 @@ function renderStats(){
     <div class="stat-section">
       <div class="stat-section-title">역별 첫차 · 막차</div>
       <div style="display:flex;gap:8px;align-items:center;margin-bottom:10px;flex-wrap:wrap">
-        <div class="autocomplete-wrap" style="position:relative">
-          <input type="text" id="stat-stn-input" placeholder="역명 입력" style="width:120px"
+        <div class="autocomplete-wrap" style="width:140px">
+          <input type="text" id="stat-stn-input" placeholder="역명 입력" autocomplete="off"
             oninput="acShow('stat-stn-input','ac-stat-stn')"
+            onkeydown="acKey(event,'stat-stn-input','ac-stat-stn')"
             onblur="setTimeout(()=>acHide('ac-stat-stn'),150)">
           <div class="ac-dropdown" id="ac-stat-stn"></div>
         </div>
@@ -2106,11 +2212,21 @@ function renderStats(){
     <div class="stat-section">
       <div class="stat-section-title">구간별 운행 열차 수</div>
       <div style="display:flex;gap:8px;align-items:center;margin-bottom:10px;flex-wrap:wrap">
-        <input type="text" id="stat-from" placeholder="출발역" style="width:90px" oninput="acShow('stat-from','ac-stat-from')" onblur="setTimeout(()=>acHide('ac-stat-from'),150)">
-        <div class="ac-dropdown" id="ac-stat-from" style="position:relative;top:0;width:120px"></div>
+        <div class="autocomplete-wrap" style="width:100px">
+          <input type="text" id="stat-from" placeholder="출발역" autocomplete="off"
+            oninput="acShow('stat-from','ac-stat-from')"
+            onkeydown="acKey(event,'stat-from','ac-stat-from')"
+            onblur="setTimeout(()=>acHide('ac-stat-from'),150)">
+          <div class="ac-dropdown" id="ac-stat-from"></div>
+        </div>
         <span style="color:var(--text3)">→</span>
-        <input type="text" id="stat-to" placeholder="도착역" style="width:90px" oninput="acShow('stat-to','ac-stat-to')" onblur="setTimeout(()=>acHide('ac-stat-to'),150)">
-        <div class="ac-dropdown" id="ac-stat-to" style="position:relative;top:0;width:120px"></div>
+        <div class="autocomplete-wrap" style="width:100px">
+          <input type="text" id="stat-to" placeholder="도착역" autocomplete="off"
+            oninput="acShow('stat-to','ac-stat-to')"
+            onkeydown="acKey(event,'stat-to','ac-stat-to')"
+            onblur="setTimeout(()=>acHide('ac-stat-to'),150)">
+          <div class="ac-dropdown" id="ac-stat-to"></div>
+        </div>
         <button class="btn" style="font-size:12px;padding:6px 12px" onclick="calcSectionTrains()">조회</button>
       </div>
       <div id="stat-section-result"></div>

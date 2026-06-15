@@ -377,3 +377,51 @@ tbody td{padding:10px 14px;font-size:13px;white-space:nowrap}
   .route-inputs{flex-wrap:wrap}
   .route-btn-group{width:100%}
 }
+
+/* ── 타임라인 열차 시간표 ── */
+.tl-wrap{padding:0}
+.tl-list{padding:8px 0}
+.tl-row{display:grid;grid-template-columns:90px 32px 1fr 36px;align-items:center;min-height:40px;transition:background .1s}
+.tl-row:hover{background:rgba(56,139,253,.05)}
+/* 통과역 */
+.tl-row-pass{opacity:.5}
+.tl-row-pass .tl-stn-name{font-style:italic}
+/* 하이라이트 */
+.tl-row-tl-at{background:rgba(63,185,80,.12)!important}
+.tl-row-tl-next{background:rgba(56,139,253,.1)!important}
+.tl-row-tl-pass{background:rgba(210,153,34,.08)!important}
+
+/* 시간 컬럼 */
+.tl-time-col{display:flex;flex-direction:column;align-items:flex-end;padding:4px 8px 4px 0;gap:2px}
+.tl-time{font-family:var(--mono);font-size:12px;white-space:nowrap}
+.tl-time.arr{color:var(--green)}
+.tl-time.dep{color:var(--accent)}
+.tl-time.pass{color:var(--text3);font-style:italic;font-size:11px}
+
+/* 라인 컬럼 */
+.tl-line-col{display:flex;flex-direction:column;align-items:center;position:relative;height:100%;min-height:40px}
+.tl-dot{width:12px;height:12px;border-radius:50%;border:2px solid var(--border);background:var(--bg1);flex-shrink:0;z-index:1;margin:auto}
+.tl-dot.origin{width:16px;height:16px;background:#f85149;border-color:#f85149}
+.tl-dot.term{width:16px;height:16px;background:#3fb950;border-color:#3fb950}
+.tl-dot.stop{background:var(--accent);border-color:var(--accent)}
+.tl-dot.pass{background:var(--bg2);border-color:var(--border)}
+.tl-line{position:absolute;top:0;bottom:0;left:50%;transform:translateX(-50%);width:2px;background:var(--border);z-index:0}
+
+/* 역명 컬럼 */
+.tl-stn-col{display:flex;align-items:center;gap:6px;padding:4px 0}
+.tl-stn-name{font-size:14px;font-weight:500}
+.tl-stn-name.origin{color:#f85149;font-weight:700;font-size:15px}
+.tl-stn-name.term{color:#3fb950;font-weight:700;font-size:15px}
+.tl-stn-name.stop{color:var(--text1)}
+.tl-stn-name.pass{color:var(--text3);font-size:13px}
+.tl-badge{font-size:10px;padding:1px 6px;border-radius:8px;font-weight:600}
+.tl-badge.now{background:rgba(63,185,80,.2);color:#3fb950;border:1px solid rgba(63,185,80,.4)}
+.tl-badge.next{background:rgba(56,139,253,.2);color:var(--accent);border:1px solid rgba(56,139,253,.4)}
+
+/* 알람 컬럼 */
+.tl-alarm-col{display:flex;align-items:center;justify-content:center}
+
+/* 뷰 토글 버튼 */
+.view-toggle-btn{padding:4px 10px;font-size:12px;border:1px solid var(--border);border-radius:6px;background:transparent;color:var(--text2);cursor:pointer;font-family:inherit;transition:all .15s}
+.view-toggle-btn:hover{background:var(--bg3);color:var(--text1)}
+.view-toggle-btn.active{background:var(--accent);color:#fff;border-color:var(--accent)}
