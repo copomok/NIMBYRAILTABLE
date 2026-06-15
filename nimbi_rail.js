@@ -241,6 +241,7 @@ function searchByTrain(){
   const no=document.getElementById('input-trainno').value.trim();
   const el=document.getElementById('result-train');
   if(!no){el.innerHTML='';return;}
+  saveHistory('train',no);
   const trains=ALL_TRAINS.filter(t=>t.no===no);
   if(!trains.length){el.innerHTML=`<div class="empty"><div class="empty-icon">🚫</div><p><b>${no}</b>번 열차를 찾을 수 없습니다</p></div>`;return;}
   el.innerHTML=trains.map(renderDetail).join('');
@@ -453,6 +454,7 @@ function searchByStation(){
   // 드롭다운 닫기
   acHide('ac-station');
   const stn=document.getElementById('input-station').value.trim();
+  if(stn)saveHistory('station',stn);
   const dir=document.getElementById('sel-dir-station').value;
   const lineF=document.getElementById('sel-line-station').value;
   const passF=document.getElementById('sel-pass-station').value;
@@ -543,6 +545,8 @@ function searchByRoute(){
   acHide('ac-to');
   const from=document.getElementById('input-from').value.trim();
   const to=document.getElementById('input-to').value.trim();
+  if(from)saveHistory('route_from',from);
+  if(to)saveHistory('route_to',to);
   const afterRaw=document.getElementById('input-after-route').value.trim();
   const afterMin=afterRaw?toMin(afterRaw):null;
   const sortMode=document.getElementById('sel-sort-route')?.value||'duration';
@@ -1906,32 +1910,10 @@ function showHistory(inputId,listId,type){
   el.style.display=el.innerHTML?'block':'none';
 }
 
-// searchByTrain, searchByStation, searchByRoute에 히스토리 저장
-const _origSearchByTrain=searchByTrain;
-searchByTrain=function(){
-  const no=document.getElementById('input-trainno').value.trim();
-  if(no)saveHistory('train',no);
-  _origSearchByTrain();
-};
-const _origSearchByStation=searchByStation;
-searchByStation=function(){
-  const stn=document.getElementById('input-station').value.trim();
-  if(stn)saveHistory('station',stn);
-  _origSearchByStation();
-};
-const _origSearchByRoute=searchByRoute;
-searchByRoute=function(){
-  const from=document.getElementById('input-from').value.trim();
-  const to=document.getElementById('input-to').value.trim();
-  if(from)saveHistory('route_from',from);
-  if(to)saveHistory('route_to',to);
-  _origSearchByRoute();
-};
+// 히스토리 저장은 각 함수 내부에서 처리
 
 
 
-// acShow 함수 오버라이드 - 초성 검색 지원
-const _origAcShow=typeof acShow==='function'?acShow:null;
 
 
 // ── 열차 공유 ──
