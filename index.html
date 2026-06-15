@@ -264,29 +264,30 @@
 <script src="nimbi_rail_data.js"></script>
   <script src="nimbi_rail.js"></script>
   <script>
-    if('serviceWorker' in navigator){
-      window.addEventListener('load', ()=>{
-        navigator.serviceWorker.register('sw.js').then(reg => {
-          // 새 SW 대기 중이면 즉시 활성화 요청
-          if(reg.waiting){
-            reg.waiting.postMessage('skipWaiting');
-          }
-          reg.addEventListener('updatefound', () => {
-            const newSW = reg.installing;
-            newSW.addEventListener('statechange', () => {
-              if(newSW.state === 'installed' && navigator.serviceWorker.controller){
-                // 새 버전 발견 시 자동 새로고침
-                newSW.postMessage('skipWaiting');
-              }
-            });
+  if('serviceWorker' in navigator){
+    window.addEventListener('load', ()=>{
+      navigator.serviceWorker.register('sw.js').then(reg => {
+        // 이미 대기 중인 SW 있으면 즉시 활성화
+        if(reg.waiting) reg.waiting.postMessage('skipWaiting');
+        reg.addEventListener('updatefound', () => {
+          const newSW = reg.installing;
+          newSW.addEventListener('statechange', () => {
+            if(newSW.state === 'installed' && navigator.serviceWorker.controller){
+              newSW.postMessage('skipWaiting');
+            }
           });
         });
-        // SW 교체 시 페이지 자동 새로고침
-        navigator.serviceWorker.addEventListener('controllerchange', () => {
-          window.location.reload();
-        });
       });
-    }
-  </script>
+      // SW에서 RELOAD 메시지 수신 시 새로고침
+      navigator.serviceWorker.addEventListener('message', e=>{
+        if(e.data && e.data.type==='RELOAD') location.reload();
+      });
+      // SW 교체되면 즉시 새로고침
+      navigator.serviceWorker.addEventListener('controllerchange', () => {
+        window.location.reload();
+      });
+    });
+  }
+</script>
 </body>
 </html>
