@@ -437,6 +437,7 @@ function renderDetail(t){
   return `<div class="detail-card" id="dc-${t.no}">
     <div class="detail-head" style="position:relative">
       <button class="share-btn" onclick="shareTrainLink('${t.no}')" title="링크 복사">🔗</button>
+      <button class="share-btn" style="right:44px" onclick="trackTrainOnMap('${t.no}')" title="노선도에서 보기">🗺️</button>
       <div class="detail-no" style="color:var(--c-${c.toLowerCase()})">${t.no}</div>
       <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px;flex-wrap:wrap">
         ${gradeHtml(t.grade)}${lineChipHtml(t.line)}
@@ -1142,7 +1143,7 @@ function renderFavs(){
     const subHtml=info.lines
       ? info.lines.map(l=>`<div class="fav-sub">${l}</div>`).join('')
       : `<div class="fav-sub">${info.sub||''}</div>`;
-    return `<div class="fav-card" onclick="runFav(${JSON.stringify(f).replace(/"/g,'&quot;')})">
+    return `<div class="fav-card" draggable="true" ondragstart="favDragStart(event,${i})" ondragend="favDragEnd(event)" ondragover="favDragOver(event,${i})" onclick="runFav(${JSON.stringify(f).replace(/"/g,'&quot;')})">
       <div class="fav-icon">${typeIcon[f.type]||'⭐'}</div>
       <div class="fav-info">
         <div class="fav-label">${info.main}</div>
@@ -1326,6 +1327,140 @@ function togglePassRows(trainNo){
   list.querySelectorAll('.sr.pass-row').forEach(row=>{
     row.style.display=hide?'none':'';
   });
+}
+
+
+// ── 노선도 확대/축소 ──
+let _mapZoom = 1;
+let _mapZoomOrigin = {x:0, y:0};
+
+function initMapZoom(){
+  const wrap = document.getElementById('map-svg-wrap');
+  if(!wrap) return;
+  _mapZoom = 1;
+
+  // 휠 줌
+  wrap.onwheel = e => {
+    e.preventDefault();
+    const delta = e.deltaY > 0 ? 0.9 : 1.1;
+    setMapZoom(_mapZoom * delta, e.clientX, e.clientY);
+  };
+
+  // 핀치 줌
+  let lastDist = 0;
+  wrap.ontouchstart = e => {
+    if(e.touches.length === 2){
+      lastDist = Math.hypot(
+        e.touches[0].clientX - e.touches[1].clientX,
+        e.touches[0].clientY - e.touches[1].clientY
+      );
+    }
+  };
+  wrap.ontouchmove = e => {
+    if(e.touches.length === 2){
+      e.preventDefault();
+      const dist = Math.hypot(
+        e.touches[0].clientX - e.touches[1].clientX,
+        e.touches[0].clientY - e.touches[1].clientY
+      );
+      if(lastDist > 0){
+        const cx = (e.touches[0].clientX + e.touches[1].clientX) / 2;
+        const cy = (e.touches[0].clientY + e.touches[1].clientY) / 2;
+        setMapZoom(_mapZoom * (dist / lastDist), cx, cy);
+      }
+      lastDist = dist;
+    }
+  };
+  wrap.ontouchend = () => { lastDist = 0; };
+}
+
+function setMapZoom(z, cx, cy){
+  _mapZoom = Math.max(0.5, Math.min(5, z));
+  const svg = document.querySelector('#map-svg-wrap svg');
+  if(!svg) return;
+  svg.style.transform = `scale(${_mapZoom})`;
+  svg.style.transformOrigin = cx && cy ? `${cx}px ${cy}px` : 'center center';
+  // 줌 버튼 업데이트
+  const zl = document.getElementById('map-zoom-label');
+  if(zl) zl.textContent = Math.round(_mapZoom*100) + '%';
+}
+
+function mapZoomIn(){ setMapZoom(_mapZoom * 1.2); }
+function mapZoomOut(){ setMapZoom(_mapZoom / 1.2); }
+function mapZoomReset(){ setMapZoom(1); }
+
+// ── 노선도에서 열차 위치 추적 ──
+function trackTrainOnMap(trainNo){
+  const t = ALL_TRAINS.find(t => t.no === trainNo);
+  if(!t) return;
+
+  // 경전선은 gyeongjeon, 경부선은 gyeongbu 등 노선 매핑
+  const lineMap = {
+    '경부선':'gyeongbu','경부고속선':'gyeongbuhs','호남선':'honam',
+    '중앙선':'jungang','동해선':'donghae','강릉선':'gangreung',
+    '중부내륙선':'jungnaelyuk','경전선':'gyeongjeon'
+  };
+  const lines = t.line.split('·').map(l=>l.trim());
+  const lineKey = lineMap[lines[0]];
+  if(!lineKey){ alert('해당 노선의 노선도가 없습니다'); return; }
+
+  // 노선도 탭으로 이동 후 해당 노선 표시
+  switchTab('map');
+  const btn = document.querySelector(`.map-line-tab[onclick*="${lineKey}"]`);
+  if(btn){ btn.click(); }
+  setTimeout(()=>{
+    const status = getCurrentStatus(t);
+    if(!status || status.status !== 'running') return;
+    const stn = status.atStn || status.nextStn || status.prevStn;
+    if(!stn || !_mapStnPos[stn]) return;
+    // 해당 역으로 스크롤
+    const wrap = document.getElementById('map-svg-wrap');
+    const pos = _mapStnPos[stn];
+    if(wrap && pos){
+      const {ox, oy} = _mapSvgSize;
+      wrap.scrollLeft = pos.x - ox - wrap.clientWidth/2;
+      wrap.scrollTop = pos.y - oy - wrap.clientHeight/2;
+    }
+  }, 400);
+}
+
+// ── 최근 검색 드롭다운 ──
+function showRecentSearches(inputId, listId, type){
+  const h = loadHistory(type);
+  if(!h.length) return;
+  const val = document.getElementById(inputId)?.value || '';
+  if(val) return; // 입력 중이면 히스토리 안 보임
+  const el = document.getElementById(listId);
+  if(!el) return;
+  el.innerHTML = h.map(v =>
+    `<div class="ac-item ac-history" onmousedown="event.preventDefault();document.getElementById('${inputId}').value='${v}';document.getElementById('${listId}').style.display='none'">
+      <span style="color:var(--text3);margin-right:6px;font-size:10px">🕐</span>${v}
+    </div>`
+  ).join('');
+  el.style.display = 'block';
+  el.className = 'ac-dropdown open';
+}
+
+// ── 즐겨찾기 드래그 순서 변경 ──
+let _favDragIdx = null;
+
+function favDragStart(e, idx){
+  _favDragIdx = idx;
+  e.dataTransfer.effectAllowed = 'move';
+  e.currentTarget.style.opacity = '0.5';
+}
+function favDragEnd(e){
+  e.currentTarget.style.opacity = '1';
+}
+function favDragOver(e, idx){
+  e.preventDefault();
+  if(_favDragIdx === null || _favDragIdx === idx) return;
+  const favs = JSON.parse(localStorage.getItem('nimbi_favs') || '[]');
+  const moved = favs.splice(_favDragIdx, 1)[0];
+  favs.splice(idx, 0, moved);
+  localStorage.setItem('nimbi_favs', JSON.stringify(favs));
+  _favDragIdx = idx;
+  renderFavs();
 }
 
 function jumpToTrain(no){
@@ -1710,14 +1845,14 @@ gyeongjeon:{
       {n:'별량',   x:314, y:1033},
       {n:'동강',   x:287, y:1050},
       {n:'조성',   x:260, y:1063},
-      {n:'보성',   x:284, y:1077},
-      {n:'장흥',   x:252, y:1095},
-      {n:'작천',   x:223, y:1109},
-      {n:'영암',   x:199, y:1100},
-      {n:'시종',   x:174, y:1085},
-      {n:'일로',   x:148, y:1075},
-      {n:'남악',   x:123, y:1065},
-      {n:'목포',   x:84,  y:1056},
+      {n:'보성',   x:234, y:1076},
+      {n:'장흥',   x:210, y:1090},
+      {n:'작천',   x:188, y:1102},
+      {n:'영암',   x:172, y:1098},
+      {n:'시종',   x:154, y:1088},
+      {n:'일로',   x:136, y:1078},
+      {n:'남악',   x:118, y:1068},
+      {n:'목포',   x:84,  y:1058},
     ]},
     {color:'#ef4444', dash:true, stations:[
       {n:'조성',   x:260, y:1063},
@@ -1914,6 +2049,13 @@ function showMapLine(lineKey, btn){
         anchor=x>svgW/2?'end':'start';
         tx=x+(anchor==='start'?13:-13);
       }
+      // 특정 역 텍스트 위치 수동 오버라이드
+      const manualOffset={'목포':[-16,0],'광주':[0,-14],'함평':[-14,0],'부산':[14,0]};
+      if(manualOffset[s.n]){
+        tx=x+manualOffset[s.n][0];
+        ty=y+manualOffset[s.n][1]+4;
+        anchor=manualOffset[s.n][0]<0?'end':manualOffset[s.n][0]>0?'start':'middle';
+      }
       parts.push(`<text x="${tx}" y="${ty}" fill="#e6edf3" font-size="${isEnd?12:11}" font-weight="${isEnd?700:400}" text-anchor="${anchor}" pointer-events="none" font-family="Noto Sans KR,sans-serif">${s.n}</text>`);
     });
   });
@@ -1945,6 +2087,8 @@ function showMapLine(lineKey, btn){
   setTimeout(updateMinimap, 100);
   const wrap=document.getElementById('map-svg-wrap');
   if(wrap) wrap.onscroll=updateMinimap;
+  // 확대/축소 초기화
+  initMapZoom();
 }
 
 

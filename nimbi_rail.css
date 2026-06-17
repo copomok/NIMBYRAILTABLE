@@ -440,3 +440,15 @@ tbody td{padding:10px 14px;font-size:13px;white-space:nowrap}
 .tl-row-hl-next{background:rgba(56,139,253,.1)!important}
 /* 통과역 숨기기 체크박스 */
 #hide-pass-checkbox{accent-color:var(--accent)}
+
+/* 즐겨찾기 드래그 */
+.fav-card{cursor:grab}
+.fav-card:active{cursor:grabbing}
+.fav-card[draggable=true]:hover{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent)}
+
+/* 최근 검색 히스토리 아이템 */
+.ac-history{color:var(--text2)!important}
+.ac-history:hover{background:var(--bg3);color:var(--text1)!important}
+
+/* 노선도 SVG 줌 transform */
+#map-svg-wrap svg{transform-origin:center center;transition:transform .15s}

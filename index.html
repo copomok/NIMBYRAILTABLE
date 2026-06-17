@@ -52,7 +52,14 @@
           </select>
         </div>
         <div class="form-group"><label>열차번호</label>
-          <input type="text" id="input-trainno" placeholder="번호 직접 검색" onkeydown="if(event.key==='Enter')searchByTrain()">
+          <div class="autocomplete-wrap">
+            <input type="text" id="input-trainno" placeholder="번호 직접 검색" autocomplete="off"
+              onfocus="showRecentSearches('input-trainno','ac-trainno','train')"
+              oninput="document.getElementById('ac-trainno').style.display='none'"
+              onblur="setTimeout(()=>acHide('ac-trainno'),150)"
+              onkeydown="if(event.key==='Enter')searchByTrain()">
+            <div class="ac-dropdown" id="ac-trainno"></div>
+          </div>
         </div>
         <button class="btn btn-primary" onclick="searchByTrain()">🔍 조회</button>
         <button class="btn-fav-add" id="fav-btn-train" onclick="addFav('train')" title="즐겨찾기 추가" style="display:none">⭐</button>
@@ -69,6 +76,7 @@
           <div class="autocomplete-wrap">
             <input type="text" id="input-station" placeholder="역명 입력 (예: 대전)" autocomplete="off"
               oninput="acShow('input-station','ac-station')"
+              onfocus="showRecentSearches('input-station','ac-station','station')"
               onkeydown="acKey(event,'input-station','ac-station')"
               onblur="setTimeout(()=>acHide('ac-station'),150)">
             <div class="ac-dropdown" id="ac-station"></div>
@@ -232,6 +240,12 @@
         <button class="map-dir-btn active" id="map-dir-down" onclick="setMapDir('down')">하행 ↓</button>
         <button class="map-dir-btn active" id="map-dir-up" onclick="setMapDir('up')">상행 ↑</button>
         <button class="map-dir-btn" id="map-dir-all" onclick="setMapDir('all')">전체</button>
+        <div style="display:flex;gap:2px;align-items:center;margin-left:4px">
+          <button class="map-dir-btn" onclick="mapZoomOut()" title="축소">－</button>
+          <span id="map-zoom-label" style="font-size:11px;color:var(--text2);min-width:32px;text-align:center">100%</span>
+          <button class="map-dir-btn" onclick="mapZoomIn()" title="확대">＋</button>
+          <button class="map-dir-btn" onclick="mapZoomReset()" title="초기화">↺</button>
+        </div>
       </div>
     </div>
     <div id="map-content" style="display:none">
