@@ -501,6 +501,9 @@ tbody td{padding:10px 14px;font-size:13px;white-space:nowrap}
   .stat-section{padding:16px 18px;margin-bottom:14px;border-radius:14px}
   .notice-list{padding:4px 16px;border-radius:14px}
   .notice-row{padding:14px 2px}
+  /* 노선별 첫차막차 모바일 줄바꿈 보정 (가로 배치 유지) */
+  .fl-stat-item{font-size:11px;padding:4px 7px;gap:3px}
+  .fl-stat-dir{min-width:auto}
 }
 
 /* 공지사항 본문 내 HTML 요소 스타일 */

@@ -1156,7 +1156,7 @@ function renderFavs(){
     return;
   }
   const typeIcon={train:'🚆',station:'🏢',route:'🔍'};
-  const cards=favs.map(f=>{
+  const cards=favs.map((f,i)=>{
     const info=getFavInfo(f);
     // station은 두 줄(lines), 나머지는 한 줄(sub)
     const subHtml=info.lines
