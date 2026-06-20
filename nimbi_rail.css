@@ -367,9 +367,10 @@ tbody td{padding:10px 14px;font-size:13px;white-space:nowrap}
 .route-inputs{display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap}
 .route-inputs .form-group{flex:1;min-width:100px}
 .route-btn-group{display:flex;gap:6px;align-items:center;flex-shrink:0}
-/* PC: 버튼을 입력창과 같은 줄 */
+/* PC: 버튼을 입력창과 같은 줄, 입력창 과도하게 늘어나지 않도록 제한 */
 @media(min-width:641px){
   .route-inputs{flex-wrap:nowrap}
+  .route-inputs .form-group{flex:1 1 0;min-width:160px;max-width:360px}
   .route-btn-group{padding-bottom:1px}
 }
 /* 모바일: 버튼을 아래로 */
