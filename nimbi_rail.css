@@ -494,11 +494,24 @@ tbody td{padding:10px 14px;font-size:13px;white-space:nowrap}
 
 /* 모바일 전용 여백 보정 (PC 레이아웃에는 영향 없음) */
 @media(max-width:640px){
-  .container{padding:16px 12px}
+  .container{padding:16px 16px}
   .stat-cards{gap:6px}
   .stat-card{padding:10px}
   .stat-card-num{font-size:20px}
-  .stat-section{padding:12px 14px}
-  .notice-list{padding:2px 12px}
-  .notice-row{padding:13px 2px}
+  .stat-section{padding:16px 18px;margin-bottom:14px;border-radius:14px}
+  .notice-list{padding:4px 16px;border-radius:14px}
+  .notice-row{padding:14px 2px}
 }
+
+/* 공지사항 본문 내 HTML 요소 스타일 */
+.notice-popup-body table{width:100%;border-collapse:collapse;margin:10px 0;font-size:13px}
+.notice-popup-body th{background:var(--bg3);padding:7px 10px;text-align:left;border:1px solid var(--border);font-weight:600;color:var(--text1)}
+.notice-popup-body td{padding:7px 10px;border:1px solid var(--border)}
+.notice-popup-body strong{color:var(--text1)}
+.notice-popup-body .n-highlight{background:rgba(56,139,253,.12);color:var(--accent);padding:2px 6px;border-radius:4px;font-weight:600}
+.notice-popup-body .n-warn{background:rgba(248,81,73,.12);color:#f85149;padding:2px 6px;border-radius:4px;font-weight:600}
+.notice-popup-body .n-box{background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:10px 12px;margin:10px 0}
+.notice-popup-body ul,.notice-popup-body ol{margin:8px 0 8px 20px}
+.notice-popup-body li{margin-bottom:4px}
+.notice-popup-body img{max-width:100%;border-radius:8px;margin:10px 0}
+.notice-popup-body hr{border:none;border-top:1px solid var(--border);margin:14px 0}

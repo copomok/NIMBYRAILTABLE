@@ -2507,7 +2507,7 @@ function openNoticeDetail(idx){
         <button class="notice-popup-close" onclick="closeNoticeDetail()">✕</button>
       </div>
       <div class="notice-popup-title">${n.title}</div>
-      <div class="notice-popup-body">${n.body.replace(/\\n/g,'<br>')}</div>
+      <div class="notice-popup-body">${n.body}</div>
     </div>`;
   document.body.appendChild(wrap);
 }
