@@ -99,12 +99,6 @@
             <option value="stop">정차만</option>
           </select>
         </div>
-        <div class="form-group"><label>당역 종착</label>
-          <select id="sel-terminus-station">
-            <option value="all">포함</option>
-            <option value="exclude">제외</option>
-          </select>
-        </div>
         <div class="form-group"><label>등급</label>
           <select id="sel-grade-station">
             <option value="all">전체</option>
@@ -127,12 +121,13 @@
             <option value="동해선">동해선</option>
             <option value="강릉선">강릉선</option>
             <option value="중부내륙선">중부내륙선</option>
-            <option value="경전선">경전선</option>
           </select>
         </div>
-        <div class="form-group"><label>시간 이후</label>
-          <input type="text" id="input-after-time" placeholder="예: 9:00" style="width:80px"
-            onkeydown="if(event.key==='Enter')searchByStation()">
+        <div class="form-group"><label>당역 종착</label>
+          <select id="sel-terminus-station">
+            <option value="all">포함</option>
+            <option value="exclude">제외</option>
+          </select>
         </div>
         <div class="form-group"><label>심야 열차</label>
           <select id="sel-night-station">
@@ -140,6 +135,10 @@
             <option value="only">심야만</option>
             <option value="highlight">하이라이트</option>
           </select>
+        </div>
+        <div class="form-group"><label>시간 이후</label>
+          <input type="text" id="input-after-time" placeholder="예: 9:00" style="width:80px"
+            onkeydown="if(event.key==='Enter')searchByStation()">
         </div>
       </div>
     </div>
