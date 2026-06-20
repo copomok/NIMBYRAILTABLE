@@ -2366,7 +2366,7 @@ function renderStats(){
   const hourlyBars=hourly.map((v,h)=>`
     <div class="hourly-col">
       <div class="hourly-val">${v>0?v:''}</div>
-      <div class="hourly-bar" style="height:${maxHourly?Math.round(v/maxHourly*50):0}px" title="${h}시: ${v}회"></div>
+      <div class="hourly-bar" style="height:${maxHourly?Math.round(v/maxHourly*70):0}px" title="${h}시: ${v}회"></div>
       <div class="hourly-label">${h%3===0?h:''}</div>
     </div>`).join('');
 
@@ -2408,37 +2408,37 @@ function renderStats(){
     </div>
     <div class="stat-section">
       <div class="stat-section-title">역별 첫차 · 막차</div>
-      <div style="display:flex;gap:8px;align-items:center;margin-bottom:10px;flex-wrap:wrap">
-        <div class="autocomplete-wrap" style="width:140px">
+      <div class="stat-search-row">
+        <div class="autocomplete-wrap stat-search-input">
           <input type="text" id="stat-stn-input" placeholder="역명 입력" autocomplete="off"
             oninput="acShow('stat-stn-input','ac-stat-stn')"
             onkeydown="acKey(event,'stat-stn-input','ac-stat-stn')"
             onblur="setTimeout(()=>acHide('ac-stat-stn'),150)">
           <div class="ac-dropdown" id="ac-stat-stn"></div>
         </div>
-        <button class="btn" style="font-size:12px;padding:6px 12px" onclick="calcStationFirstLast()">조회</button>
+        <button class="btn stat-search-btn" onclick="calcStationFirstLast()">조회</button>
       </div>
       <div id="stat-stn-fl-result"></div>
     </div>
     <div class="stat-section">
       <div class="stat-section-title">구간별 운행 열차 수</div>
-      <div style="display:flex;gap:8px;align-items:center;margin-bottom:10px;flex-wrap:wrap">
-        <div class="autocomplete-wrap" style="width:100px">
+      <div class="stat-search-row">
+        <div class="autocomplete-wrap stat-search-input">
           <input type="text" id="stat-from" placeholder="출발역" autocomplete="off"
             oninput="acShow('stat-from','ac-stat-from')"
             onkeydown="acKey(event,'stat-from','ac-stat-from')"
             onblur="setTimeout(()=>acHide('ac-stat-from'),150)">
           <div class="ac-dropdown" id="ac-stat-from"></div>
         </div>
-        <span style="color:var(--text3)">→</span>
-        <div class="autocomplete-wrap" style="width:100px">
+        <span class="stat-search-arrow">→</span>
+        <div class="autocomplete-wrap stat-search-input">
           <input type="text" id="stat-to" placeholder="도착역" autocomplete="off"
             oninput="acShow('stat-to','ac-stat-to')"
             onkeydown="acKey(event,'stat-to','ac-stat-to')"
             onblur="setTimeout(()=>acHide('ac-stat-to'),150)">
           <div class="ac-dropdown" id="ac-stat-to"></div>
         </div>
-        <button class="btn" style="font-size:12px;padding:6px 12px" onclick="calcSectionTrains()">조회</button>
+        <button class="btn stat-search-btn" onclick="calcSectionTrains()">조회</button>
       </div>
       <div id="stat-section-result"></div>
     </div>

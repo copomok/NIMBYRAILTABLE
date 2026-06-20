@@ -307,10 +307,6 @@ tbody td{padding:10px 14px;font-size:13px;white-space:nowrap}
 .stat-bar-wrap{flex:1;height:8px;background:var(--bg3);border-radius:4px;overflow:hidden}
 .stat-bar{height:100%;background:var(--accent);border-radius:4px;transition:width .3s}
 .stat-num{min-width:36px;text-align:right;color:var(--text2);font-family:var(--mono);font-size:11px}
-.hourly-chart{display:flex;align-items:flex-end;gap:2px;height:80px;padding-bottom:18px;position:relative}
-.hourly-col{display:flex;flex-direction:column;align-items:center;flex:1}
-.hourly-bar{width:100%;background:var(--accent);border-radius:2px 2px 0 0;min-height:1px;opacity:.7;transition:height .3s}
-.hourly-label{font-size:9px;color:var(--text3);margin-top:2px;height:12px}
 
 /* 출도착 하단 한 줄 */
 .route-bottom-row{display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap;margin-top:4px}
@@ -325,11 +321,6 @@ tbody td{padding:10px 14px;font-size:13px;white-space:nowrap}
 @media(min-width:641px){.route-bottom-row{flex-wrap:nowrap}}
 
 /* 시간대별 그래프 수치 */
-.hourly-val{font-size:9px;color:var(--text2);text-align:center;height:14px;line-height:14px;font-family:var(--mono)}
-.hourly-chart{display:flex;align-items:flex-end;gap:2px;padding-bottom:18px;position:relative}
-.hourly-col{display:flex;flex-direction:column;align-items:center;flex:1}
-.hourly-bar{width:100%;background:var(--accent);border-radius:2px 2px 0 0;min-height:1px;opacity:.7}
-.hourly-label{font-size:9px;color:var(--text3);margin-top:2px;height:12px}
 
 /* stn-grid 알람 셀 */
 .stn-alarm-cell{display:flex;align-items:center;justify-content:center}
@@ -346,12 +337,6 @@ tbody td{padding:10px 14px;font-size:13px;white-space:nowrap}
 .t-arr,.t-dep{font-family:var(--mono);font-size:13px}
 
 /* 시간대별 그래프 스크롤 */
-.hourly-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:thin}
-.hourly-chart{display:flex;align-items:flex-end;gap:3px;padding-bottom:18px;min-width:480px}
-.hourly-col{display:flex;flex-direction:column;align-items:center;flex:0 0 auto;width:18px}
-.hourly-val{font-size:9px;color:var(--text2);text-align:center;height:14px;line-height:14px;font-family:var(--mono);white-space:nowrap}
-.hourly-bar{width:100%;background:var(--accent);border-radius:2px 2px 0 0;min-height:1px;opacity:.8}
-.hourly-label{font-size:9px;color:var(--text3);margin-top:2px;height:12px;white-space:nowrap}
 
 /* 통계 노선별 첫차/막차 */
 .first-last-stats{display:flex;flex-direction:column;gap:8px}
@@ -364,13 +349,13 @@ tbody td{padding:10px 14px;font-size:13px;white-space:nowrap}
 .fl-stat-time{font-family:var(--mono);color:var(--accent);font-weight:600}
 
 /* 출도착 탭 입력폼 */
-.route-inputs{display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap}
+.route-inputs{display:flex;gap:12px;align-items:flex-end;flex-wrap:wrap}
 .route-inputs .form-group{flex:1;min-width:100px}
 .route-btn-group{display:flex;gap:6px;align-items:center;flex-shrink:0}
-/* PC: 버튼을 입력창과 같은 줄, 입력창 과도하게 늘어나지 않도록 제한 */
+/* PC: 버튼을 입력창과 같은 줄 */
 @media(min-width:641px){
   .route-inputs{flex-wrap:nowrap}
-  .route-inputs .form-group{flex:1 1 0;min-width:160px;max-width:360px}
+  .route-inputs .form-group{flex:1 1 0;min-width:160px}
   .route-btn-group{padding-bottom:1px}
 }
 /* 모바일: 버튼을 아래로 */
@@ -524,3 +509,33 @@ tbody td{padding:10px 14px;font-size:13px;white-space:nowrap}
 .notice-cat{display:inline-flex;align-items:center;gap:3px;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:600;border:1px solid;white-space:nowrap;flex-shrink:0}
 .notice-cat.sm{font-size:10px;padding:1px 7px}
 .notice-popup .notice-cat{margin-bottom:10px}
+
+/* 통계 탭 검색 영역 (역별 첫막차 / 구간별 운행) */
+.stat-search-row{display:flex;gap:8px;align-items:center;margin-bottom:10px;flex-wrap:wrap}
+.stat-search-input{flex:0 1 140px;min-width:90px}
+.stat-search-input input{width:100%}
+.stat-search-arrow{color:var(--text3);flex-shrink:0}
+.stat-search-btn{font-size:12px;padding:7px 14px;flex-shrink:0;white-space:nowrap;background:var(--accent);color:#fff}
+.stat-search-btn:hover{background:var(--accent2)}
+@media(max-width:480px){
+  .stat-search-input{flex:1 1 80px}
+}
+/* PC: 검색 박스가 너무 길게 늘어나지 않도록 명확히 고정 */
+@media(min-width:641px){
+  .stat-search-row{flex-wrap:nowrap}
+  .stat-search-input{flex:0 0 200px}
+}
+
+/* 시간대별 그래프 숫자 잘림 방지 */
+.hourly-val{overflow:visible;white-space:nowrap;position:relative;z-index:1}
+
+/* ── 시간대별 운행량 그래프 (통일 버전) ── */
+.hourly-scroll{overflow-x:auto;overflow-y:visible;-webkit-overflow-scrolling:touch;padding-top:4px}
+.hourly-chart{display:flex;align-items:flex-end;gap:3px;height:120px;padding-top:20px;padding-bottom:20px;position:relative;min-width:560px}
+.hourly-col{display:flex;flex-direction:column;align-items:center;justify-content:flex-end;flex:1;height:100%;min-width:16px}
+.hourly-val{font-size:10px;color:var(--text2);font-family:var(--mono);margin-bottom:3px;flex-shrink:0}
+.hourly-bar{width:100%;background:var(--accent);border-radius:2px 2px 0 0;min-height:1px;opacity:.85}
+.hourly-label{font-size:9px;color:var(--text3);margin-top:4px;flex-shrink:0;white-space:nowrap}
+@media(min-width:641px){
+  .hourly-chart{min-width:0}
+}
