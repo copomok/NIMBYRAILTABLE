@@ -518,3 +518,8 @@ tbody td{padding:10px 14px;font-size:13px;white-space:nowrap}
 .notice-popup-body li{margin-bottom:4px}
 .notice-popup-body img{max-width:100%;border-radius:8px;margin:10px 0}
 .notice-popup-body hr{border:none;border-top:1px solid var(--border);margin:14px 0}
+
+/* 공지 카테고리 뱃지 */
+.notice-cat{display:inline-flex;align-items:center;gap:3px;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:600;border:1px solid;white-space:nowrap;flex-shrink:0}
+.notice-cat.sm{font-size:10px;padding:1px 7px}
+.notice-popup .notice-cat{margin-bottom:10px}

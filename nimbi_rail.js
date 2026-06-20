@@ -2471,6 +2471,20 @@ function getUnreadNoticeCount(){
   return NOTICES.filter((_,i)=>!read.includes(i)).length;
 }
 
+// 공지 카테고리 정의 (색상/아이콘)
+const NOTICE_CATEGORIES={
+  update:  {label:'앱 업데이트', icon:'📱', color:'#388bfd'},
+  timetable:{label:'시간표 개정', icon:'🕐', color:'#f97316'},
+  route:   {label:'노선 정보',   icon:'🗺️', color:'#3fb950'},
+  service: {label:'운행 안내',   icon:'⚠️', color:'#f85149'},
+};
+function noticeCatBadge(catKey, size){
+  const c=NOTICE_CATEGORIES[catKey];
+  if(!c)return '';
+  const sm=size==='sm';
+  return `<span class="notice-cat${sm?' sm':''}" style="color:${c.color};border-color:${c.color}66;background:${c.color}1a">${c.icon} ${c.label}</span>`;
+}
+
 function renderNotice(){
   const el=document.getElementById('result-notice');
   if(!el)return;
@@ -2485,6 +2499,7 @@ function renderNotice(){
     return `<div class="notice-row${isUnread?' unread':''}" onclick="openNoticeDetail(${i})">
       <div class="notice-row-main">
         ${isUnread?'<span class="notice-dot"></span>':''}
+        ${noticeCatBadge(n.cat,'sm')}
         <span class="notice-title">${n.title}</span>
       </div>
       <div class="notice-meta">
@@ -2512,6 +2527,7 @@ function openNoticeDetail(idx){
         <div class="notice-popup-date">${n.date}</div>
         <button class="notice-popup-close" onclick="closeNoticeDetail()">✕</button>
       </div>
+      ${noticeCatBadge(n.cat)}
       <div class="notice-popup-title">${n.title}</div>
       <div class="notice-popup-body">${n.body}</div>
     </div>`;
