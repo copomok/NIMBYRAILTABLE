@@ -549,3 +549,21 @@ tbody td{padding:10px 14px;font-size:13px;white-space:nowrap}
 .alarm-group-card-name{font-size:14px;font-weight:600;color:var(--text1)}
 .alarm-group-card-desc{font-size:11px;color:var(--text3);margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .alarm-group-section .btn{margin-top:8px}
+
+/* ── 즐겨찾기 카테고리 ── */
+.fav-filter-tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}
+.fav-filter-tab{padding:6px 12px;font-size:12px;border:1px solid var(--border);border-radius:20px;background:var(--bg2);color:var(--text2);cursor:pointer;transition:all .15s;font-family:inherit}
+.fav-filter-tab:hover{background:var(--bg3)}
+.fav-filter-tab.active{background:var(--accent);color:#fff;border-color:var(--accent)}
+.fav-cat-tag{font-size:12px;margin-left:2px}
+
+/* 즐겨찾기 카테고리 선택 팝업 */
+.fav-cat-options{display:flex;flex-direction:column;gap:8px;margin:14px 0}
+.fav-cat-option{display:flex;align-items:center;gap:10px;padding:12px 14px;background:var(--bg3);border:1px solid var(--border);border-radius:10px;color:var(--text1);font-size:14px;font-weight:600;cursor:pointer;transition:all .15s;font-family:inherit}
+.fav-cat-option:hover{border-color:var(--accent);background:rgba(56,139,253,.08)}
+
+/* ── 공지사항 카테고리 필터 ── */
+.notice-filter-tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}
+.notice-filter-tab{padding:6px 12px;font-size:12px;border:1px solid var(--border);border-radius:20px;background:var(--bg2);color:var(--text2);cursor:pointer;transition:all .15s;font-family:inherit}
+.notice-filter-tab:hover{background:var(--bg3)}
+.notice-filter-tab.active{font-weight:600}

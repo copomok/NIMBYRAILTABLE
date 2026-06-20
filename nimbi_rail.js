@@ -1159,6 +1159,13 @@ const FAV_KEY='nimbi_favs';
 function loadFavs(){try{return JSON.parse(localStorage.getItem(FAV_KEY))||[];}catch(e){return[];}}
 function saveFavs(favs){localStorage.setItem(FAV_KEY,JSON.stringify(favs));}
 
+// 즐겨찾기 카테고리 정의
+const FAV_CATEGORIES={
+  commute:{label:'출퇴근',icon:'💼',color:'#388bfd'},
+  travel: {label:'여행',  icon:'✈️',color:'#3fb950'},
+  etc:    {label:'기타',  icon:'📌',color:'#8b949e'},
+};
+
 function addFav(type){
   let id,label,data={};
   if(type==='train'){
@@ -1177,8 +1184,43 @@ function addFav(type){
   }
   const favs=loadFavs();
   if(favs.some(f=>f.id===id)){alert('이미 즐겨찾기에 추가된 항목입니다.');return;}
-  favs.push({id,type,label,data,addedAt:Date.now()});
+  // 카테고리 선택 팝업 띄우고 그 안에서 최종 저장
+  openFavCategoryPicker(id,type,label,data);
+}
+
+// 즐겨찾기 추가 시 카테고리 선택 팝업
+function openFavCategoryPicker(id,type,label,data){
+  const old=document.getElementById('fav-cat-popup-wrap');
+  if(old)old.remove();
+  const wrap=document.createElement('div');
+  wrap.id='fav-cat-popup-wrap';
+  const opts=Object.entries(FAV_CATEGORIES).map(([key,c])=>
+    `<button class="fav-cat-option" onclick="confirmAddFav('${id}','${type}','${label.replace(/'/g,"\\'")}','${key}')">
+      <span style="font-size:18px">${c.icon}</span><span>${c.label}</span>
+    </button>`).join('');
+  wrap.innerHTML=`
+    <div class="alarm-popup-backdrop" onclick="closeFavCategoryPicker()"></div>
+    <div class="alarm-popup">
+      <div class="alarm-popup-title">⭐ ${label}</div>
+      <div class="alarm-popup-sub">카테고리를 선택하세요</div>
+      <div class="fav-cat-options">${opts}</div>
+      <button class="alarm-popup-close" onclick="closeFavCategoryPicker()">취소</button>
+    </div>`;
+  document.body.appendChild(wrap);
+  // data를 임시 보관 (confirmAddFav에서 사용)
+  window._pendingFavData=data;
+}
+function closeFavCategoryPicker(){
+  const w=document.getElementById('fav-cat-popup-wrap');
+  if(w)w.remove();
+  window._pendingFavData=null;
+}
+function confirmAddFav(id,type,label,cat){
+  const data=window._pendingFavData||{};
+  const favs=loadFavs();
+  favs.push({id,type,label,data,cat,addedAt:Date.now()});
   saveFavs(favs);
+  closeFavCategoryPicker();
   alert('"'+label+'"을 즐겨찾기에 추가했습니다.');
   if(document.getElementById('panel-fav').classList.contains('active'))renderFavs();
 }
@@ -1290,19 +1332,45 @@ function getFavInfo(fav){
   return{main:fav.label,sub:''};
 }
 
+// 현재 선택된 즐겨찾기 필터 카테고리
+let _favFilterCat='all';
+
+function setFavFilter(cat){
+  _favFilterCat=cat;
+  renderFavs();
+}
+
 function renderFavs(){
   const el=document.getElementById('result-fav');
   if(!el){console.warn('result-fav 엘리먼트 없음');return;}
   try{
-  const favs=loadFavs();
-  console.log('renderFavs: favs 개수 =', favs.length, favs);
-  if(!favs.length){
+  const allFavs=loadFavs();
+  if(!allFavs.length){
     el.innerHTML='<div class="empty"><div class="empty-icon">⭐</div><p>즐겨찾기가 비어있습니다.<br>각 탭의 ⭐ 버튼으로 추가해보세요.</p></div>';
     return;
   }
   const typeIcon={train:'🚆',station:'🏢',route:'🔍'};
+
+  // 카테고리 필터 탭
+  const catCounts={all:allFavs.length};
+  Object.keys(FAV_CATEGORIES).forEach(k=>{catCounts[k]=allFavs.filter(f=>(f.cat||'etc')===k).length;});
+  const filterTabs=`<div class="fav-filter-tabs">
+    <button class="fav-filter-tab${_favFilterCat==='all'?' active':''}" onclick="setFavFilter('all')">전체 ${catCounts.all}</button>
+    ${Object.entries(FAV_CATEGORIES).map(([k,c])=>
+      catCounts[k]>0?`<button class="fav-filter-tab${_favFilterCat===k?' active':''}" onclick="setFavFilter('${k}')">${c.icon} ${c.label} ${catCounts[k]}</button>`:''
+    ).join('')}
+  </div>`;
+
+  const favs=_favFilterCat==='all'?allFavs:allFavs.filter(f=>(f.cat||'etc')===_favFilterCat);
+
+  if(!favs.length){
+    el.innerHTML=`${filterTabs}<div class="empty"><div class="empty-icon">📭</div><p>해당 카테고리에 즐겨찾기가 없습니다.</p></div>`;
+    return;
+  }
+
   const cards=favs.map((f,i)=>{
     const info=getFavInfo(f);
+    const cat=FAV_CATEGORIES[f.cat]||FAV_CATEGORIES.etc;
     // station은 두 줄(lines), 나머지는 한 줄(sub)
     const subHtml=info.lines
       ? info.lines.map(l=>`<div class="fav-sub">${l}</div>`).join('')
@@ -1310,7 +1378,7 @@ function renderFavs(){
     return `<div class="fav-card" draggable="true" ondragstart="favDragStart(event,${i})" ondragend="favDragEnd(event)" ondragover="favDragOver(event,${i})" onclick="runFav(${JSON.stringify(f).replace(/"/g,'&quot;')})">
       <div class="fav-icon">${typeIcon[f.type]||'⭐'}</div>
       <div class="fav-info">
-        <div class="fav-label">${info.main}</div>
+        <div class="fav-label">${info.main} <span class="fav-cat-tag" style="color:${cat.color}">${cat.icon}</span></div>
         ${subHtml}
       </div>
       <button class="fav-del-btn" onclick="event.stopPropagation();removeFav('${f.id}')" title="삭제">✕</button>
@@ -1319,8 +1387,9 @@ function renderFavs(){
   el.innerHTML=`
     <div class="result-header">
       <div class="result-title">⭐ 즐겨찾기</div>
-      <span class="badge blue">${favs.length}개</span>
+      <span class="badge blue">${allFavs.length}개</span>
     </div>
+    ${filterTabs}
     <div class="fav-list">${cards}</div>
     <p class="hint">※ 클릭 시 해당 탭으로 이동해 바로 조회합니다</p>`;
   }catch(err){
@@ -1622,6 +1691,7 @@ function favDragEnd(e){
 }
 function favDragOver(e, idx){
   e.preventDefault();
+  if(_favFilterCat!=='all')return; // 필터링 중에는 순서 변경 비활성화 (인덱스 꼬임 방지)
   if(_favDragIdx === null || _favDragIdx === idx) return;
   const favs = JSON.parse(localStorage.getItem('nimbi_favs') || '[]');
   const moved = favs.splice(_favDragIdx, 1)[0];
@@ -2628,6 +2698,13 @@ function noticeCatBadge(catKey, size){
   return `<span class="notice-cat${sm?' sm':''}" style="color:${c.color};border-color:${c.color}66;background:${c.color}1a">${c.icon} ${c.label}</span>`;
 }
 
+// 현재 선택된 공지 필터 카테고리
+let _noticeFilterCat='all';
+function setNoticeFilter(cat){
+  _noticeFilterCat=cat;
+  renderNotice();
+}
+
 function renderNotice(){
   const el=document.getElementById('result-notice');
   if(!el)return;
@@ -2636,10 +2713,29 @@ function renderNotice(){
     return;
   }
   const read=getReadNotices();
-  // 최신순(배열 역순)
-  const rows=NOTICES.map((n,i)=>{
-    const isUnread=!read.includes(i);
-    return `<div class="notice-row${isUnread?' unread':''}" onclick="openNoticeDetail(${i})">
+
+  // 카테고리 필터 탭
+  const catCounts={all:NOTICES.length};
+  Object.keys(NOTICE_CATEGORIES).forEach(k=>{catCounts[k]=NOTICES.filter(n=>n.cat===k).length;});
+  const filterTabs=`<div class="notice-filter-tabs">
+    <button class="notice-filter-tab${_noticeFilterCat==='all'?' active':''}" onclick="setNoticeFilter('all')">전체 ${catCounts.all}</button>
+    ${Object.entries(NOTICE_CATEGORIES).map(([k,c])=>
+      catCounts[k]>0?`<button class="notice-filter-tab${_noticeFilterCat===k?' active':''}" style="${_noticeFilterCat===k?`background:${c.color}1a;color:${c.color};border-color:${c.color}66`:''}" onclick="setNoticeFilter('${k}')">${c.icon} ${c.label} ${catCounts[k]}</button>`:''
+    ).join('')}
+  </div>`;
+
+  const filtered=_noticeFilterCat==='all'?NOTICES:NOTICES.filter(n=>n.cat===_noticeFilterCat);
+
+  if(!filtered.length){
+    el.innerHTML=`<div class="result-header"><div class="result-title">📢 공지사항</div></div>${filterTabs}<div class="empty"><div class="empty-icon">📭</div><p>해당 카테고리에 공지가 없습니다.</p></div>`;
+    return;
+  }
+
+  // 최신순(배열 역순) - 원본 인덱스 유지해서 openNoticeDetail에 정확한 idx 전달
+  const indexed=filtered.map(n=>({n,idx:NOTICES.indexOf(n)})).reverse();
+  const rows=indexed.map(({n,idx})=>{
+    const isUnread=!read.includes(idx);
+    return `<div class="notice-row${isUnread?' unread':''}" onclick="openNoticeDetail(${idx})">
       <div class="notice-row-main">
         ${isUnread?'<span class="notice-dot"></span>':''}
         ${noticeCatBadge(n.cat,'sm')}
@@ -2650,10 +2746,11 @@ function renderNotice(){
         <span class="notice-arrow">›</span>
       </div>
     </div>`;
-  }).reverse().join('');
+  }).join('');
 
   el.innerHTML=`
     <div class="result-header"><div class="result-title">📢 공지사항</div><span class="badge blue">${NOTICES.length}건</span></div>
+    ${filterTabs}
     <div class="notice-list">${rows}</div>`;
 }
 
