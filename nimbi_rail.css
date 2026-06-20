@@ -539,3 +539,13 @@ tbody td{padding:10px 14px;font-size:13px;white-space:nowrap}
 @media(min-width:641px){
   .hourly-chart{min-width:0}
 }
+
+/* ── 알람 그룹 ── */
+.alarm-group-section{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:14px 16px;margin-bottom:14px}
+.alarm-group-title{font-size:13px;font-weight:600;color:var(--text2);margin-bottom:8px}
+.alarm-group-card{display:flex;align-items:center;gap:8px;padding:10px 0;border-bottom:1px solid var(--border)}
+.alarm-group-card:last-of-type{border-bottom:none}
+.alarm-group-card-info{flex:1;min-width:0}
+.alarm-group-card-name{font-size:14px;font-weight:600;color:var(--text1)}
+.alarm-group-card-desc{font-size:11px;color:var(--text3);margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.alarm-group-section .btn{margin-top:8px}

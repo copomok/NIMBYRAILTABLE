@@ -798,6 +798,77 @@ function togglePass(cardId){
 const ALARM_KEY='nimbi_alarms';
 function loadAlarms(){try{return JSON.parse(localStorage.getItem(ALARM_KEY))||[];}catch(e){return[];}}
 function saveAlarms(a){localStorage.setItem(ALARM_KEY,JSON.stringify(a));}
+
+// ── 알람 그룹 (출근/퇴근 세트) ──
+const ALARM_GROUP_KEY='nimbi_alarm_groups';
+function loadAlarmGroups(){try{return JSON.parse(localStorage.getItem(ALARM_GROUP_KEY))||[];}catch(e){return[];}}
+function saveAlarmGroups(g){localStorage.setItem(ALARM_GROUP_KEY,JSON.stringify(g));}
+
+// 현재 설정된 알람들을 그룹으로 저장 (열차+역+승하차 조합만 저장, 시각은 매번 재계산)
+function saveCurrentAsGroup(){
+  const alarms=loadAlarms();
+  if(!alarms.length){alert('저장할 알람이 없습니다. 먼저 알람을 설정해주세요.');return;}
+  const name=prompt('그룹 이름을 입력하세요 (예: 출근길, 퇴근길)');
+  if(!name||!name.trim())return;
+
+  // 열차번호+역명+승차/하차 단위로 묶기 (board-*, arr-* 계열을 각각 하나의 항목으로)
+  const seen=new Set();
+  const items=[];
+  alarms.forEach(a=>{
+    const kind=a.type.startsWith('board')?'board':'arr';
+    const key=`${a.trainNo}:${a.stn}:${kind}`;
+    if(seen.has(key))return;
+    seen.add(key);
+    items.push({trainNo:a.trainNo,stn:a.stn,kind});
+  });
+
+  const groups=loadAlarmGroups();
+  groups.push({id:'grp_'+Date.now(),name:name.trim(),items,createdAt:Date.now()});
+  saveAlarmGroups(groups);
+  alert(`'${name.trim()}' 그룹으로 저장되었습니다. (${items.length}개 알람)`);
+  renderAlarmIfOpen();
+}
+
+// 그룹에 저장된 항목들을 오늘 시각표 기준으로 다시 알람 설정
+function applyAlarmGroup(groupId){
+  const groups=loadAlarmGroups();
+  const g=groups.find(x=>x.id===groupId);
+  if(!g)return;
+
+  let okCount=0, failCount=0;
+  g.items.forEach(item=>{
+    const t=ALL_TRAINS.find(x=>x.no===item.trainNo);
+    if(!t){failCount++;return;}
+    const si=t.stops.findIndex(s=>s.s===item.stn);
+    if(si===-1){failCount++;return;}
+    const stop=t.stops[si];
+    const prevStop=si>0?t.stops.slice(0,si).reverse().find(x=>hasTime(x.dep)||hasTime(x.arr)):null;
+    const prevTime=prevStop?(hasTime(prevStop.dep)?prevStop.dep:prevStop.arr):null;
+
+    if(item.kind==='board'){
+      const depTime=hasTime(stop.dep)?stop.dep:null;
+      if(!depTime){failCount++;return;}
+      // 이미 같은 알람 있으면 건너뜀
+      if(hasAlarm(`board:${item.trainNo}:${item.stn}`)){okCount++;return;}
+      toggleAlarmType('board',item.trainNo,item.stn,depTime,prevTime);
+    } else {
+      const arrTime=hasTime(stop.arr)?stop.arr:hasTime(stop.dep)?stop.dep:null;
+      if(!arrTime){failCount++;return;}
+      if(hasAlarm(`arr:${item.trainNo}:${item.stn}`)){okCount++;return;}
+      toggleAlarmType('arr',item.trainNo,item.stn,arrTime,prevTime);
+    }
+    okCount++;
+  });
+  renderAlarmIfOpen();
+  if(failCount>0) alert(`'${g.name}' 그룹 적용 완료 (${okCount}개 성공, ${failCount}개 실패 - 오늘 운행하지 않는 열차일 수 있습니다)`);
+}
+
+function deleteAlarmGroup(groupId){
+  if(!confirm('이 그룹을 삭제하시겠습니까?'))return;
+  const groups=loadAlarmGroups().filter(g=>g.id!==groupId);
+  saveAlarmGroups(groups);
+  renderAlarmIfOpen();
+}
 function hasAlarm(id){return loadAlarms().some(a=>a.id===id&&!a.fired);}
 
 // 알람 팝업 열기
@@ -821,14 +892,14 @@ function openAlarmPopup(trainNo, stn, arrTime, depTime, prevTime){
       <button class="alarm-popup-option${boardSet?' active':''}" id="ap-board" onclick="toggleAlarmType('board','${trainNo}','${stn}','${depTime}','${prevTime}')">
         <div class="alarm-popup-option-text">
           <span class="alarm-popup-option-label">🚉 승차 알람</span>
-          <span class="alarm-popup-option-desc">출발 5분 전 + 전역 출발 시 알림</span>
+          <span class="alarm-popup-option-desc">전역 출발 · 5분 전 · 출발 시각 (3회)</span>
         </div>
         <span class="alarm-popup-option-icon">${boardSet?'✅':'○'}</span>
       </button>
       <button class="alarm-popup-option${arrSet?' active':''}" id="ap-arr" onclick="toggleAlarmType('arr','${trainNo}','${stn}','${arrTime}','${prevTime}')">
         <div class="alarm-popup-option-text">
           <span class="alarm-popup-option-label">🛬 하차 알람</span>
-          <span class="alarm-popup-option-desc">전역 출발 시 알림</span>
+          <span class="alarm-popup-option-desc">전역 출발 · 5분 전 · 도착 시각 (3회)</span>
         </div>
         <span class="alarm-popup-option-icon">${arrSet?'✅':'○'}</span>
       </button>
@@ -845,45 +916,62 @@ function closeAlarmPopup(){
 function toggleAlarmType(type, trainNo, stn, baseTime, prevTime){
   requestNotifPermission(()=>{
     if(type==='board'){
-      // 승차: 5분 전 + 전역 출발 (2개)
+      // 승차: 전역 출발 + 5분 전 + 역 도착(승차 시각) - 3단계
+      const idArr=`board-prev:${trainNo}:${stn}`;
       const id5=`board:${trainNo}:${stn}`;
-      const idPrev=`board-prev:${trainNo}:${stn}`;
+      const idNow=`board-now:${trainNo}:${stn}`;
       const alarms=loadAlarms();
       const already=alarms.some(a=>a.id===id5);
       if(already){
         // 취소
-        const filtered=alarms.filter(a=>a.id!==id5&&a.id!==idPrev);
+        const filtered=alarms.filter(a=>a.id!==id5&&a.id!==idArr&&a.id!==idNow);
         saveAlarms(filtered);
         alert(`승차 알람이 취소되었습니다.`);
       } else {
-        // 5분 전 알람
         const depM=toMin(baseTime);
         if(depM===null){alert('출발 시각이 없어 승차 알람을 설정할 수 없습니다.');return;}
-        const m5=depM-5<0?depM-5+1440:depM-5;
-        const h5=Math.floor(m5/60),mm5=m5%60;
-        alarms.push({id:id5,trainNo,stn,type:'board-5',alarmM:m5,timeStr:`${h5}:${mm5.toString().padStart(2,'0')}`,label:`${trainNo}번 · ${stn}역 승차`,fired:false});
-        // 전역 출발 알람
+        // 1) 전역 출발 알람
         const prevM=toMin(prevTime);
         if(prevM!==null){
           const hp=Math.floor(prevM/60),mp=prevM%60;
-          alarms.push({id:idPrev,trainNo,stn,type:'board-prev',alarmM:prevM,timeStr:`${hp}:${mp.toString().padStart(2,'0')}`,label:`${trainNo}번 · ${stn}역 승차 (전역출발)`,fired:false});
+          alarms.push({id:idArr,trainNo,stn,type:'board-prev',alarmM:prevM,timeStr:`${hp}:${mp.toString().padStart(2,'0')}`,label:`${trainNo}번 · ${stn}역 승차 (전역출발)`,fired:false});
         }
+        // 2) 5분 전 알람
+        const m5=depM-5<0?depM-5+1440:depM-5;
+        const h5=Math.floor(m5/60),mm5=m5%60;
+        alarms.push({id:id5,trainNo,stn,type:'board-5',alarmM:m5,timeStr:`${h5}:${mm5.toString().padStart(2,'0')}`,label:`${trainNo}번 · ${stn}역 승차 (5분 전)`,fired:false});
+        // 3) 역 도착(승차 시각) 알람
+        const hd=Math.floor(depM/60),md=depM%60;
+        alarms.push({id:idNow,trainNo,stn,type:'board-now',alarmM:depM,timeStr:`${hd}:${md.toString().padStart(2,'0')}`,label:`${trainNo}번 · ${stn}역 승차 (출발)`,fired:false});
         saveAlarms(alarms);
         alert(`승차 알람이 설정되었습니다.`);
       }
     } else {
-      // 하차: 전역 출발 1개
-      const id=`arr:${trainNo}:${stn}`;
+      // 하차: 전역 출발 + 5분 전(도착 예정) + 역 도착 - 3단계
+      const idPrev=`arr-prev:${trainNo}:${stn}`;
+      const id5=`arr:${trainNo}:${stn}`;
+      const idNow=`arr-now:${trainNo}:${stn}`;
       const alarms=loadAlarms();
-      const already=alarms.some(a=>a.id===id);
+      const already=alarms.some(a=>a.id===id5);
       if(already){
-        saveAlarms(alarms.filter(a=>a.id!==id));
+        saveAlarms(alarms.filter(a=>a.id!==id5&&a.id!==idPrev&&a.id!==idNow));
         alert(`하차 알람이 취소되었습니다.`);
       } else {
+        const arrM=toMin(baseTime);
+        if(arrM===null){alert('도착 시각이 없어 하차 알람을 설정할 수 없습니다.');return;}
+        // 1) 전역 출발 알람
         const prevM=toMin(prevTime);
-        if(prevM===null){alert('전역 시각이 없어 하차 알람을 설정할 수 없습니다.');return;}
-        const hp=Math.floor(prevM/60),mp=prevM%60;
-        alarms.push({id,trainNo,stn,type:'arr',alarmM:prevM,timeStr:`${hp}:${mp.toString().padStart(2,'0')}`,label:`${trainNo}번 · ${stn}역 하차`,fired:false});
+        if(prevM!==null){
+          const hp=Math.floor(prevM/60),mp=prevM%60;
+          alarms.push({id:idPrev,trainNo,stn,type:'arr-prev',alarmM:prevM,timeStr:`${hp}:${mp.toString().padStart(2,'0')}`,label:`${trainNo}번 · ${stn}역 하차 (전역출발)`,fired:false});
+        }
+        // 2) 5분 전 알람
+        const m5=arrM-5<0?arrM-5+1440:arrM-5;
+        const h5=Math.floor(m5/60),mm5=m5%60;
+        alarms.push({id:id5,trainNo,stn,type:'arr-5',alarmM:m5,timeStr:`${h5}:${mm5.toString().padStart(2,'0')}`,label:`${trainNo}번 · ${stn}역 하차 (5분 전)`,fired:false});
+        // 3) 역 도착 알람
+        const ha=Math.floor(arrM/60),ma=arrM%60;
+        alarms.push({id:idNow,trainNo,stn,type:'arr-now',alarmM:arrM,timeStr:`${ha}:${ma.toString().padStart(2,'0')}`,label:`${trainNo}번 · ${stn}역 하차 (도착)`,fired:false});
         saveAlarms(alarms);
         alert(`하차 알람이 설정되었습니다.`);
       }
@@ -922,17 +1010,22 @@ function renderAlarms(){
   if(!el)return;
   const alarms=loadAlarms();
   if(!alarms.length){
-    el.innerHTML='<div class="alarm-empty"><div style="font-size:36px;margin-bottom:12px">🔔</div><p>설정된 알람이 없습니다.<br>열차 상세에서 🔔 버튼으로 추가하세요.</p><p class="hint" style="margin-top:16px"><button class="btn" style="font-size:12px;padding:6px 14px" onclick="testAlarm()">🧪 알람 테스트</button></p></div>';
+    el.innerHTML=`<div class="alarm-empty"><div style="font-size:36px;margin-bottom:12px">🔔</div><p>설정된 알람이 없습니다.<br>열차 상세에서 🔔 버튼으로 추가하세요.</p><p class="hint" style="margin-top:16px"><button class="btn" style="font-size:12px;padding:6px 14px" onclick="testAlarm()">🧪 알람 테스트</button></p></div>
+    ${renderAlarmGroupsSection()}`;
     return;
   }
   const now=new Date();
   const nowMin=now.getHours()*60+now.getMinutes();
-  // board-prev는 목록에서 숨김 (승차 알람의 일부로 처리)
-  const visible=alarms.filter(a=>a.type!=='board-prev');
-  const sorted=[...visible].sort((a,b)=>a.alarmM-b.alarmM);
+  const sorted=[...alarms].sort((a,b)=>a.alarmM-b.alarmM);
   const hasFired=alarms.some(a=>a.fired);
-  const typeLabel={'board-5':'승차','arr':'하차'};
-  const typeBadgeClass={'board-5':'alarm-type-board','arr':'alarm-type-arr'};
+  const typeLabel={
+    'board-prev':'승차·전역출발','board-5':'승차·5분전','board-now':'승차·출발',
+    'arr-prev':'하차·전역출발','arr-5':'하차·5분전','arr-now':'하차·도착',
+  };
+  const typeBadgeClass={
+    'board-prev':'alarm-type-board','board-5':'alarm-type-board','board-now':'alarm-type-board',
+    'arr-prev':'alarm-type-arr','arr-5':'alarm-type-arr','arr-now':'alarm-type-arr',
+  };
   const cards=sorted.map(a=>{
     const diff=a.alarmM-nowMin;
     let subText,subClass='';
@@ -951,9 +1044,42 @@ function renderAlarms(){
   }).join('');
   el.innerHTML=`<div class="result-header">
     <div class="result-title">🔔 알람 목록</div>
-    <span class="badge blue">${alarms.filter(a=>!a.fired&&a.type!=='board-prev').length}개 대기</span>
+    <span class="badge blue">${alarms.filter(a=>!a.fired).length}개 대기</span>
     ${hasFired?'<button class="btn" style="font-size:12px;padding:4px 10px" onclick="clearFiredAlarms()">완료 지우기</button>':''}
-  </div>${cards}<p class="hint">※ 브라우저 탭이 열려있어야 알람이 작동합니다</p>`;
+  </div>
+  ${renderAlarmGroupsSection()}
+  ${cards}<p class="hint">※ 브라우저 탭이 열려있어야 알람이 작동합니다</p>`;
+}
+
+// 알람 그룹 섹션 렌더링
+function renderAlarmGroupsSection(){
+  const groups=loadAlarmGroups();
+  const alarms=loadAlarms();
+  const saveBtn=`<button class="btn" style="font-size:12px;padding:5px 12px" onclick="saveCurrentAsGroup()" ${!alarms.length?'disabled':''}>💾 현재 알람을 그룹으로 저장</button>`;
+
+  if(!groups.length){
+    return `<div class="alarm-group-section">
+      <div class="alarm-group-title">⏰ 알람 그룹</div>
+      <p class="hint" style="margin:4px 0 8px">자주 쓰는 알람 조합을 그룹으로 저장하면 한 번에 다시 설정할 수 있습니다.</p>
+      ${saveBtn}
+    </div>`;
+  }
+
+  const groupCards=groups.map(g=>`
+    <div class="alarm-group-card">
+      <div class="alarm-group-card-info">
+        <div class="alarm-group-card-name">${g.name}</div>
+        <div class="alarm-group-card-desc">${g.items.length}개 알람 (열차 ${[...new Set(g.items.map(i=>i.trainNo))].join(', ')})</div>
+      </div>
+      <button class="btn btn-primary" style="font-size:12px;padding:6px 12px" onclick="applyAlarmGroup('${g.id}')">▶ 적용</button>
+      <button class="alarm-del-btn" onclick="deleteAlarmGroup('${g.id}')">✕</button>
+    </div>`).join('');
+
+  return `<div class="alarm-group-section">
+    <div class="alarm-group-title">⏰ 알람 그룹</div>
+    ${groupCards}
+    ${saveBtn}
+  </div>`;
 }
 
 function sendNotification(title, body){
@@ -994,9 +1120,12 @@ function checkAlarms(){
       if(diff<=2){
         // 2분 이내는 실제 알림 발송
         const body={
+          'board-prev':`${a.trainNo}번 열차가 곧 ${a.stn}역에 도착합니다 (승차 준비)`,
           'board-5':`${a.trainNo}번 열차가 ${a.stn}역에서 5분 후 출발합니다`,
-          'board-prev':`${a.trainNo}번 열차가 곧 ${a.stn}역에 도착합니다`,
-          'arr':`${a.trainNo}번 열차가 곧 ${a.stn}역에 도착합니다`,
+          'board-now':`${a.trainNo}번 열차가 ${a.stn}역에서 곧 출발합니다`,
+          'arr-prev':`${a.trainNo}번 열차가 전역을 출발했습니다 (하차 준비)`,
+          'arr-5':`${a.trainNo}번 열차가 ${a.stn}역에 5분 후 도착합니다`,
+          'arr-now':`${a.trainNo}번 열차가 곧 ${a.stn}역에 도착합니다`,
         }[a.type]||a.label;
         if(Notification.permission==='granted'){
           // SW를 통해 알림 발송 (백그라운드에서도 작동)
