@@ -1,5 +1,4 @@
-// 캐시 완전 초기화 버전
-const CACHE_NAME = 'nimbirail-reset-' + Date.now();
+const CACHE_NAME = 'nimbirail-v1';
 const ASSETS = [
   '/NIMBYRAILTABLE/',
   '/NIMBYRAILTABLE/index.html',
@@ -14,10 +13,7 @@ const ASSETS = [
 
 self.addEventListener('install', e => {
   e.waitUntil(
-    // 기존 캐시 전부 삭제 후 새로 설치
-    caches.keys()
-      .then(keys => Promise.all(keys.map(k => caches.delete(k))))
-      .then(() => caches.open(CACHE_NAME).then(cache => cache.addAll(ASSETS)))
+    caches.open(CACHE_NAME).then(cache => cache.addAll(ASSETS))
   );
   self.skipWaiting();
 });
@@ -27,18 +23,24 @@ self.addEventListener('activate', e => {
     caches.keys()
       .then(keys => Promise.all(keys.filter(k => k !== CACHE_NAME).map(k => caches.delete(k))))
       .then(() => self.clients.claim())
-      .then(() => {
-        // 모든 클라이언트에 새로고침 요청
-        return self.clients.matchAll({type:'window'}).then(clients => {
-          clients.forEach(c => c.postMessage({type:'RELOAD'}));
-        });
-      })
   );
 });
 
-// 항상 네트워크 우선 (캐시 무효화)
+// 우리 앱 파일(ASSETS)만 네트워크 우선으로 캐싱.
+// 외부 리소스(구글 폰트 등)는 캐시에 절대 저장하지 않고 그대로 통과시켜
+// 캐시가 무한정 불어나는 것을 방지한다.
 self.addEventListener('fetch', e => {
   if (e.request.method !== 'GET') return;
+
+  const url = new URL(e.request.url);
+  const isOwnAsset = url.origin === self.location.origin
+    && ASSETS.some(a => url.pathname === a || url.pathname.endsWith(a.replace('/NIMBYRAILTABLE/', '/NIMBYRAILTABLE/')));
+
+  if (!isOwnAsset) {
+    // 외부 리소스(폰트 등): 캐시 저장 없이 그냥 네트워크로 패스
+    return;
+  }
+
   e.respondWith(
     fetch(e.request)
       .then(res => {

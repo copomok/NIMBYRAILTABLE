@@ -1149,8 +1149,10 @@ function getFavInfo(fav){
 
 function renderFavs(){
   const el=document.getElementById('result-fav');
-  if(!el)return;
+  if(!el){console.warn('result-fav 엘리먼트 없음');return;}
+  try{
   const favs=loadFavs();
+  console.log('renderFavs: favs 개수 =', favs.length, favs);
   if(!favs.length){
     el.innerHTML='<div class="empty"><div class="empty-icon">⭐</div><p>즐겨찾기가 비어있습니다.<br>각 탭의 ⭐ 버튼으로 추가해보세요.</p></div>';
     return;
@@ -1178,6 +1180,10 @@ function renderFavs(){
     </div>
     <div class="fav-list">${cards}</div>
     <p class="hint">※ 클릭 시 해당 탭으로 이동해 바로 조회합니다</p>`;
+  }catch(err){
+    console.error('renderFavs 오류:', err);
+    el.innerHTML=`<div class="empty"><div class="empty-icon">⚠️</div><p>즐겨찾기를 불러오는 중 오류가 발생했습니다.<br><span style="font-size:11px;color:var(--text3)">${err.message}</span></p></div>`;
+  }
 }
 
 function isNightTrain(timeStr){
