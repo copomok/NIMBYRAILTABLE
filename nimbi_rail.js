@@ -489,6 +489,7 @@ function searchByStation(){
   const dir=document.getElementById('sel-dir-station').value;
   const lineF=document.getElementById('sel-line-station').value;
   const passF=document.getElementById('sel-pass-station').value;
+  const terminusF=document.getElementById('sel-terminus-station')?.value||'all';
   const afterRaw=document.getElementById('input-after-time').value.trim();
   const afterMin=afterRaw?toMin(afterRaw):null;
   const gradeF=document.getElementById('sel-grade-station').value;
@@ -504,6 +505,12 @@ function searchByStation(){
     if(!stop||(!stop.arr&&!stop.dep))return;
     const isPass=isPassStop(t,stn);
     if(passF==='stop'&&isPass)return;
+    // 당역 종착 제외 필터
+    if(terminusF==='exclude'){
+      const valid=t.stops.filter(s=>s.arr||s.dep);
+      const terminus=valid.length?valid[valid.length-1].s:null;
+      if(terminus===stn)return;
+    }
     const sortT=toMin(hasTime(stop.dep)?stop.dep:null)??toMin(hasTime(stop.arr)?stop.arr:null)??9999;
     if(afterMin!==null&&sortT!==9999&&sortT<afterMin)return;
     const timeV2=hasTime(stop.dep)?stop.dep:hasTime(stop.arr)?stop.arr:null;
