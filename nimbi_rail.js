@@ -105,6 +105,24 @@ function updateClock(){
 setInterval(updateClock,1000);
 updateClock();
 
+// 공지 안읽음 뱃지 표시
+function updateNoticeBadge(){
+  const cnt=getUnreadNoticeCount();
+  const tab=document.getElementById('tab-notice');
+  if(!tab)return;
+  let dot=tab.querySelector('.notice-badge-dot');
+  if(cnt>0){
+    if(!dot){
+      dot=document.createElement('span');
+      dot.className='notice-badge-dot';
+      tab.appendChild(dot);
+    }
+  } else if(dot){
+    dot.remove();
+  }
+}
+window.addEventListener('load',()=>setTimeout(updateNoticeBadge,300));
+
 // ── 다음 역까지 남은 시간 계산 ──
 function getNextStopEta(t, status){
   if(!status||status.status!=='running')return null;
@@ -187,6 +205,7 @@ function switchTab(n){
   if(n==='alarm') renderAlarms();
   if(n==='fav') renderFavs();
   if(n==='stats') renderStats();
+  if(n==='notice') renderNotice();
   
 }
 
@@ -2432,3 +2451,71 @@ function testAlarm(){
   });
 }
 
+
+// ── 공지사항 데이터 (읽기 전용 - 코드에서만 추가) ──
+const NOTICES = [
+  {date:'2026-06-20', title:'경전선 노선도가 추가되었습니다', body:'노선도 탭에서 경전선(부산~목포)을 확인하실 수 있습니다.\n\n■ 본선\n부산 → 진주 → 순천 → 보성 → 목포\n\n■ 지선\n조성 → 춘양 → 빛가람 → 광주\n춘양 → 다시 → 함평\n\n노선도 탭에서 확대/축소 기능도 함께 추가되었습니다.'},
+];
+
+// ── 공지사항 렌더링 ──
+const NOTICE_READ_KEY='nimbi_notice_read';
+function getReadNotices(){try{return JSON.parse(localStorage.getItem(NOTICE_READ_KEY))||[];}catch(e){return[];}}
+function markNoticeRead(idx){
+  const read=getReadNotices();
+  if(!read.includes(idx)){read.push(idx);localStorage.setItem(NOTICE_READ_KEY,JSON.stringify(read));}
+}
+function getUnreadNoticeCount(){
+  const read=getReadNotices();
+  return NOTICES.filter((_,i)=>!read.includes(i)).length;
+}
+
+function renderNotice(){
+  const el=document.getElementById('result-notice');
+  if(!el)return;
+  if(!NOTICES.length){
+    el.innerHTML=`<div class="empty"><div class="empty-icon">📢</div><p>등록된 공지사항이 없습니다.</p></div>`;
+    return;
+  }
+  const read=getReadNotices();
+  // 최신순(배열 역순)
+  const rows=NOTICES.map((n,i)=>{
+    const isUnread=!read.includes(i);
+    return `<div class="notice-row${isUnread?' unread':''}" onclick="openNoticeDetail(${i})">
+      <div class="notice-row-main">
+        ${isUnread?'<span class="notice-dot"></span>':''}
+        <span class="notice-title">${n.title}</span>
+      </div>
+      <div class="notice-meta">
+        <span class="notice-date">${n.date}</span>
+        <span class="notice-arrow">›</span>
+      </div>
+    </div>`;
+  }).reverse().join('');
+
+  el.innerHTML=`
+    <div class="result-header"><div class="result-title">📢 공지사항</div><span class="badge blue">${NOTICES.length}건</span></div>
+    <div class="notice-list">${rows}</div>`;
+}
+
+function openNoticeDetail(idx){
+  const n=NOTICES[idx];
+  if(!n)return;
+  markNoticeRead(idx);
+  const wrap=document.createElement('div');
+  wrap.className='notice-popup-backdrop';
+  wrap.onclick=e=>{if(e.target===wrap)closeNoticeDetail();};
+  wrap.innerHTML=`
+    <div class="notice-popup">
+      <div class="notice-popup-head">
+        <div class="notice-popup-date">${n.date}</div>
+        <button class="notice-popup-close" onclick="closeNoticeDetail()">✕</button>
+      </div>
+      <div class="notice-popup-title">${n.title}</div>
+      <div class="notice-popup-body">${n.body.replace(/\\n/g,'<br>')}</div>
+    </div>`;
+  document.body.appendChild(wrap);
+}
+function closeNoticeDetail(){
+  document.querySelectorAll('.notice-popup-backdrop').forEach(e=>e.remove());
+  renderNotice(); // 읽음 상태 반영
+}
