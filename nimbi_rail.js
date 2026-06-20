@@ -997,7 +997,17 @@ function renderAlarmIfOpen(){
 }
 
 function deleteAlarm(id){
-  saveAlarms(loadAlarms().filter(a=>a.id!==id));
+  const alarms=loadAlarms();
+  const target=alarms.find(a=>a.id===id);
+  if(!target){renderAlarms();return;}
+  // 같은 열차+역+승차/하차 묶음을 한 번에 삭제 (전역출발/5분전/도착 3개 모두)
+  const kind=target.type.startsWith('board')?'board':'arr';
+  const filtered=alarms.filter(a=>{
+    const aKind=a.type.startsWith('board')?'board':'arr';
+    const sameGroup=a.trainNo===target.trainNo&&a.stn===target.stn&&aKind===kind;
+    return !sameGroup;
+  });
+  saveAlarms(filtered);
   renderAlarms();
 }
 function clearFiredAlarms(){
@@ -1016,16 +1026,13 @@ function renderAlarms(){
   }
   const now=new Date();
   const nowMin=now.getHours()*60+now.getMinutes();
-  const sorted=[...alarms].sort((a,b)=>a.alarmM-b.alarmM);
+  // 목록에는 대표 알람(승차=board-now, 하차=arr-now)만 표시.
+  // 나머지(전역출발/5분전)는 발송은 그대로 되지만 목록엔 안 보임.
+  const visible=alarms.filter(a=>a.type==='board-now'||a.type==='arr-now');
+  const sorted=[...visible].sort((a,b)=>a.alarmM-b.alarmM);
   const hasFired=alarms.some(a=>a.fired);
-  const typeLabel={
-    'board-prev':'승차·전역출발','board-5':'승차·5분전','board-now':'승차·출발',
-    'arr-prev':'하차·전역출발','arr-5':'하차·5분전','arr-now':'하차·도착',
-  };
-  const typeBadgeClass={
-    'board-prev':'alarm-type-board','board-5':'alarm-type-board','board-now':'alarm-type-board',
-    'arr-prev':'alarm-type-arr','arr-5':'alarm-type-arr','arr-now':'alarm-type-arr',
-  };
+  const typeLabel={'board-now':'승차','arr-now':'하차'};
+  const typeBadgeClass={'board-now':'alarm-type-board','arr-now':'alarm-type-arr'};
   const cards=sorted.map(a=>{
     const diff=a.alarmM-nowMin;
     let subText,subClass='';
@@ -1044,11 +1051,11 @@ function renderAlarms(){
   }).join('');
   el.innerHTML=`<div class="result-header">
     <div class="result-title">🔔 알람 목록</div>
-    <span class="badge blue">${alarms.filter(a=>!a.fired).length}개 대기</span>
+    <span class="badge blue">${visible.filter(a=>!a.fired).length}개 대기</span>
     ${hasFired?'<button class="btn" style="font-size:12px;padding:4px 10px" onclick="clearFiredAlarms()">완료 지우기</button>':''}
   </div>
   ${renderAlarmGroupsSection()}
-  ${cards}<p class="hint">※ 브라우저 탭이 열려있어야 알람이 작동합니다</p>`;
+  ${cards}<p class="hint">※ 브라우저 탭이 열려있어야 알람이 작동합니다 (출발/도착 전 총 3회 알림이 발송됩니다)</p>`;
 }
 
 // 알람 그룹 섹션 렌더링
