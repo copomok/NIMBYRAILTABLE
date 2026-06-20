@@ -2453,10 +2453,6 @@ function testAlarm(){
 
 
 // ── 공지사항 데이터 (읽기 전용 - 코드에서만 추가) ──
-const NOTICES = [
-  {date:'2026-06-20', title:'경전선 노선도가 추가되었습니다', body:'노선도 탭에서 경전선(부산~목포)을 확인하실 수 있습니다.\n\n■ 본선\n부산 → 진주 → 순천 → 보성 → 목포\n\n■ 지선\n조성 → 춘양 → 빛가람 → 광주\n춘양 → 다시 → 함평\n\n노선도 탭에서 확대/축소 기능도 함께 추가되었습니다.'},
-];
-
 // ── 공지사항 렌더링 ──
 const NOTICE_READ_KEY='nimbi_notice_read';
 function getReadNotices(){try{return JSON.parse(localStorage.getItem(NOTICE_READ_KEY))||[];}catch(e){return[];}}

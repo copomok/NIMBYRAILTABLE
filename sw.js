@@ -6,6 +6,7 @@ const ASSETS = [
   '/NIMBYRAILTABLE/nimbi_rail.css',
   '/NIMBYRAILTABLE/nimbi_rail.js',
   '/NIMBYRAILTABLE/nimbi_rail_data.js',
+  '/NIMBYRAILTABLE/nimbi_rail_notices.js',
   '/NIMBYRAILTABLE/manifest.json',
   '/NIMBYRAILTABLE/icon-192.png',
   '/NIMBYRAILTABLE/icon-512.png',
