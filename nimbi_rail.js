@@ -206,6 +206,7 @@ function switchTab(n){
   if(n==='fav') renderFavs();
   if(n==='stats') renderStats();
   if(n==='notice') renderNotice();
+  if(n==='ticket') renderTickets();
   
 }
 
@@ -477,6 +478,9 @@ function renderDetail(t){
       </div>
     </div>
     <div id="tl-${t.no}">${_detailViewMode==='table'?renderTableView(t):rows}</div>
+    <div class="ticket-cta-wrap">
+      <button class="btn btn-primary ticket-cta-btn" onclick="openBookingPopup('${t.no}','${first?.s||''}','${last?.s||''}','${depT}','${arrT}')">🎫 승차권 예매</button>
+    </div>
   </div>`;
 }
 
@@ -2777,3 +2781,237 @@ function closeNoticeDetail(){
   document.querySelectorAll('.notice-popup-backdrop').forEach(e=>e.remove());
   renderNotice(); // 읽음 상태 반영
 }
+
+// ══════════════════════════════════════════
+// 🎫 가상 승차권 예매 시스템
+// ══════════════════════════════════════════
+const TICKET_KEY='nimbi_tickets';
+function loadTickets(){try{return JSON.parse(localStorage.getItem(TICKET_KEY))||[];}catch(e){return[];}}
+function saveTickets(t){localStorage.setItem(TICKET_KEY,JSON.stringify(t));}
+
+// 좌석 등급 (열차 등급별로 제공 등급이 다름)
+const SEAT_CLASSES={
+  general:{label:'일반실',mult:1.0},
+  special:{label:'특실',mult:1.4},
+  standing:{label:'입석/자유석',mult:0.85},
+};
+function availableSeatClasses(grade){
+  if(grade==='무궁화호') return ['general','standing'];
+  return ['general','special','standing'];
+}
+
+// 가상 운임 계산: 등급 기본요금 + 정차역 1개당 거리요금 + 좌석등급 배율
+const GRADE_BASE_FARE={'KTX':8400,'SRT':8400,'ITX-새마을':4800,'ITX-청춘':4200,'무궁화호':2600};
+const FARE_PER_STOP=1450;
+function calcFare(t, fromStn, toStn, seatClass){
+  const stops=t.stops.filter(s=>hasTime(s.arr)||hasTime(s.dep));
+  const fi=stops.findIndex(s=>s.s===fromStn);
+  const ti=stops.findIndex(s=>s.s===toStn);
+  const stationCount=(fi>=0&&ti>=0)?Math.max(1,ti-fi):3;
+  const base=GRADE_BASE_FARE[t.grade]||3000;
+  const raw=base+stationCount*FARE_PER_STOP;
+  const mult=SEAT_CLASSES[seatClass]?.mult||1;
+  return Math.round(raw*mult/100)*100; // 100원 단위 반올림
+}
+
+// 좌석 자동 배정 (가상 - 좌석배치도 연동 전까지 임시)
+function randomSeat(seatClass){
+  if(seatClass==='standing') return '입석';
+  const car=Math.floor(Math.random()*8)+1;
+  const row=Math.floor(Math.random()*20)+1;
+  const col=['A','B','C','D'][Math.floor(Math.random()*4)];
+  return `${car}호차 ${row}${col}`;
+}
+
+function genTicketId(){
+  const d=new Date();
+  const ymd=`${d.getFullYear()}${String(d.getMonth()+1).padStart(2,'0')}${String(d.getDate()).padStart(2,'0')}`;
+  const rand=Math.random().toString(36).slice(2,7).toUpperCase();
+  return `NB${ymd}${rand}`;
+}
+
+// 예매 팝업 열기 (열차 상세/출도착 결과에서 호출)
+function openBookingPopup(trainNo, fromStn, toStn, depTime, arrTime){
+  const t=ALL_TRAINS.find(x=>x.no===trainNo);
+  if(!t){alert('열차 정보를 찾을 수 없습니다.');return;}
+  const classes=availableSeatClasses(t.grade);
+  const old=document.getElementById('booking-popup-wrap');
+  if(old)old.remove();
+
+  const wrap=document.createElement('div');
+  wrap.id='booking-popup-wrap';
+  const classOpts=classes.map(c=>{
+    const fare=calcFare(t,fromStn,toStn,c);
+    return `<button class="booking-seat-option" data-class="${c}" onclick="selectSeatClass(this,'${c}')">
+      <span class="booking-seat-label">${SEAT_CLASSES[c].label}</span>
+      <span class="booking-seat-fare">${fare.toLocaleString()}원</span>
+    </button>`;
+  }).join('');
+
+  wrap.innerHTML=`
+    <div class="alarm-popup-backdrop" onclick="closeBookingPopup()"></div>
+    <div class="alarm-popup booking-popup">
+      <div class="alarm-popup-title">🎫 ${t.grade} ${trainNo}</div>
+      <div class="alarm-popup-sub">${fromStn} ${depTime||''} → ${toStn} ${arrTime||''}</div>
+      <div class="booking-seat-section">
+        <div class="booking-section-label">좌석 등급</div>
+        <div class="booking-seat-options">${classOpts}</div>
+      </div>
+      <div class="booking-passenger-section">
+        <div class="booking-section-label">인원</div>
+        <div class="booking-passenger-control">
+          <button class="booking-stepper-btn" onclick="changePassengerCount(-1)">−</button>
+          <span id="booking-passenger-count">1</span>
+          <button class="booking-stepper-btn" onclick="changePassengerCount(1)">+</button>
+        </div>
+      </div>
+      <button class="btn btn-primary booking-confirm-btn" id="booking-confirm-btn" onclick="confirmBooking('${trainNo}','${fromStn}','${toStn}','${depTime||''}','${arrTime||''}')" disabled>좌석 등급을 선택하세요</button>
+      <button class="alarm-popup-close" onclick="closeBookingPopup()">취소</button>
+    </div>`;
+  document.body.appendChild(wrap);
+  window._bookingSeatClass=null;
+  window._bookingPassengerCount=1;
+}
+function closeBookingPopup(){
+  const w=document.getElementById('booking-popup-wrap');
+  if(w)w.remove();
+}
+function selectSeatClass(btn,cls){
+  document.querySelectorAll('.booking-seat-option').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  window._bookingSeatClass=cls;
+  const confirmBtn=document.getElementById('booking-confirm-btn');
+  if(confirmBtn){confirmBtn.disabled=false;confirmBtn.textContent='🎫 예매하기';}
+}
+function changePassengerCount(delta){
+  let n=(window._bookingPassengerCount||1)+delta;
+  n=Math.max(1,Math.min(6,n));
+  window._bookingPassengerCount=n;
+  const el=document.getElementById('booking-passenger-count');
+  if(el)el.textContent=n;
+}
+function confirmBooking(trainNo,fromStn,toStn,depTime,arrTime){
+  const t=ALL_TRAINS.find(x=>x.no===trainNo);
+  if(!t)return;
+  const seatClass=window._bookingSeatClass;
+  if(!seatClass){alert('좌석 등급을 선택해주세요.');return;}
+  const count=window._bookingPassengerCount||1;
+  const fare=calcFare(t,fromStn,toStn,seatClass);
+
+  const tickets=loadTickets();
+  const today=new Date().toISOString().slice(0,10);
+  const seats=Array.from({length:count},()=>randomSeat(seatClass));
+
+  tickets.push({
+    id:genTicketId(),
+    trainNo,grade:t.grade,line:t.line,
+    fromStn,toStn,depTime,arrTime,
+    seatClass,seatClassLabel:SEAT_CLASSES[seatClass].label,
+    seats,passengerCount:count,
+    farePerPerson:fare,totalFare:fare*count,
+    bookedAt:Date.now(),
+    travelDate:today,
+    status:'active', // active | used | cancelled
+  });
+  saveTickets(tickets);
+  closeBookingPopup();
+  alert(`예매가 완료되었습니다!\n${fromStn} → ${toStn}\n${SEAT_CLASSES[seatClass].label} ${count}명 · ${(fare*count).toLocaleString()}원`);
+  if(document.getElementById('panel-ticket')?.classList.contains('active')) renderTickets();
+}
+
+function cancelTicket(id){
+  if(!confirm('이 승차권을 취소하시겠습니까?'))return;
+  const tickets=loadTickets();
+  const idx=tickets.findIndex(tk=>tk.id===id);
+  if(idx<0)return;
+  tickets[idx].status='cancelled';
+  saveTickets(tickets);
+  renderTickets();
+}
+function deleteTicket(id){
+  if(!confirm('이 승차권 기록을 삭제하시겠습니까?'))return;
+  saveTickets(loadTickets().filter(tk=>tk.id!==id));
+  renderTickets();
+}
+
+// 승차권 탭 렌더링
+let _ticketFilterTab='upcoming'; // upcoming | past | cancelled
+function setTicketFilter(f){_ticketFilterTab=f;renderTickets();}
+
+function renderTickets(){
+  const el=document.getElementById('result-ticket');
+  if(!el)return;
+  const tickets=loadTickets();
+  if(!tickets.length){
+    el.innerHTML=`<div class="empty"><div class="empty-icon">🎫</div><p>예매한 승차권이 없습니다.<br>열차 상세에서 🎫 예매 버튼을 눌러보세요.</p></div>`;
+    return;
+  }
+
+  const now=new Date();
+  const nowMin=now.getHours()*60+now.getMinutes();
+
+  const isPast=tk=>{
+    if(tk.status==='cancelled')return false;
+    if(tk.travelDate<now.toISOString().slice(0,10))return true;
+    if(tk.travelDate>now.toISOString().slice(0,10))return false;
+    const arrM=toMin(tk.arrTime);
+    return arrM!==null&&arrM<nowMin;
+  };
+
+  const upcoming=tickets.filter(tk=>tk.status==='active'&&!isPast(tk));
+  const past=tickets.filter(tk=>tk.status==='active'&&isPast(tk));
+  const cancelled=tickets.filter(tk=>tk.status==='cancelled');
+
+  const tabs=`<div class="ticket-filter-tabs">
+    <button class="ticket-filter-tab${_ticketFilterTab==='upcoming'?' active':''}" onclick="setTicketFilter('upcoming')">예정 ${upcoming.length}</button>
+    <button class="ticket-filter-tab${_ticketFilterTab==='past'?' active':''}" onclick="setTicketFilter('past')">탑승완료 ${past.length}</button>
+    <button class="ticket-filter-tab${_ticketFilterTab==='cancelled'?' active':''}" onclick="setTicketFilter('cancelled')">취소 ${cancelled.length}</button>
+  </div>`;
+
+  const list=_ticketFilterTab==='upcoming'?upcoming:_ticketFilterTab==='past'?past:cancelled;
+  const sorted=[...list].sort((a,b)=>{
+    if(_ticketFilterTab==='upcoming') return (a.travelDate+a.depTime).localeCompare(b.travelDate+b.depTime);
+    return b.bookedAt-a.bookedAt;
+  });
+
+  if(!sorted.length){
+    el.innerHTML=`<div class="result-header"><div class="result-title">🎫 내 승차권</div></div>${tabs}<div class="empty"><div class="empty-icon">📭</div><p>해당하는 승차권이 없습니다.</p></div>`;
+    return;
+  }
+
+  const cards=sorted.map(tk=>{
+    const c=gc(tk.grade);
+    const cancelledCls=tk.status==='cancelled'?' ticket-cancelled':'';
+    const seatList=tk.seats.join(', ');
+    return `<div class="ticket-card${cancelledCls}">
+      <div class="ticket-card-top" style="border-color:var(--c-${c.toLowerCase()})">
+        <span class="ticket-grade" style="color:var(--c-${c.toLowerCase()})">${tk.grade}</span>
+        <span class="ticket-no">${tk.trainNo}</span>
+        ${tk.status==='cancelled'?'<span class="ticket-status-badge">취소됨</span>':''}
+      </div>
+      <div class="ticket-card-route">
+        <div class="ticket-station"><span class="ticket-station-name">${tk.fromStn}</span><span class="ticket-time">${tk.depTime||'-'}</span></div>
+        <div class="ticket-arrow">→</div>
+        <div class="ticket-station"><span class="ticket-station-name">${tk.toStn}</span><span class="ticket-time">${tk.arrTime||'-'}</span></div>
+      </div>
+      <div class="ticket-card-divider"></div>
+      <div class="ticket-card-info">
+        <div class="ticket-info-row"><span>탑승일</span><span>${tk.travelDate}</span></div>
+        <div class="ticket-info-row"><span>좌석</span><span>${tk.seatClassLabel} · ${seatList}</span></div>
+        <div class="ticket-info-row"><span>인원</span><span>${tk.passengerCount}명</span></div>
+        <div class="ticket-info-row"><span>운임</span><span class="ticket-fare">${tk.totalFare.toLocaleString()}원</span></div>
+      </div>
+      <div class="ticket-card-id">예매번호 ${tk.id}</div>
+      <div class="ticket-card-actions">
+        ${tk.status==='active'&&_ticketFilterTab==='upcoming'?`<button class="btn" style="font-size:12px;padding:6px 12px" onclick="cancelTicket('${tk.id}')">예매 취소</button>`:''}
+        <button class="btn" style="font-size:12px;padding:6px 12px" onclick="deleteTicket('${tk.id}')">기록 삭제</button>
+      </div>
+    </div>`;
+  }).join('');
+
+  el.innerHTML=`
+    <div class="result-header"><div class="result-title">🎫 내 승차권</div><span class="badge blue">${tickets.filter(t=>t.status==='active').length}건</span></div>
+    ${tabs}
+    <div class="ticket-list">${cards}</div>`;
+}
+
