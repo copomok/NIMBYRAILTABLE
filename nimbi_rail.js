@@ -479,7 +479,7 @@ function renderDetail(t){
     </div>
     <div id="tl-${t.no}">${_detailViewMode==='table'?renderTableView(t):rows}</div>
     <div class="ticket-cta-wrap">
-      <button class="btn btn-primary ticket-cta-btn" onclick="openBookingPopup('${t.no}','${first?.s||''}','${last?.s||''}','${depT}','${arrT}')">🎫 승차권 예매</button>
+      <button class="btn btn-primary ticket-cta-btn" onclick="openBookingPopup('${t.no}','${first?.s||''}','${last?.s||''}','${depT}','${arrT}')">🎫 승차권 예매 (전 구간)</button>
     </div>
   </div>`;
 }
@@ -640,12 +640,13 @@ function searchByRoute(){
         <td><span class="time-dep">${depT||'-'}</span></td>
         <td><span class="time-arr">${arrT||'-'}</span></td>
         <td style="font-family:var(--mono);font-size:11px;color:var(--text2)">${dur}</td>
+        <td><button class="btn btn-primary" style="font-size:11px;padding:5px 10px;white-space:nowrap" onclick="event.stopPropagation();openBookingPopup('${t.no}','${from}','${to}','${depT||''}','${arrT||''}')">🎫 예매</button></td>
       </tr>`
     ).join('');
     const fb=document.getElementById('fav-btn-route');
     if(fb)fb.style.display='';
     el.innerHTML=`<div class="result-header"><div class="result-title">🔍 ${from} → ${to}${afterLabel}</div><span class="badge blue">${directs.length}편</span><span class="badge" style="background:var(--bg3)">${sortLabel}</span></div>
-    <div class="table-wrap"><table><thead><tr><th>열차</th><th>등급</th><th>노선</th><th>방향</th><th>행선지</th><th>출발</th><th>도착</th><th>소요</th></tr></thead><tbody>${rows}</tbody></table></div>
+    <div class="table-wrap"><table><thead><tr><th>열차</th><th>등급</th><th>노선</th><th>방향</th><th>행선지</th><th>출발</th><th>도착</th><th>소요</th><th></th></tr></thead><tbody>${rows}</tbody></table></div>
     <p class="hint">※ 열차번호 클릭 시 전체 운행 정보 조회</p>`;
     return;
   }
@@ -759,6 +760,7 @@ function searchByRoute(){
           <span class="xfer-arrow">→</span>
           <span class="xfer-stn">${l.to}</span>
           <span class="xfer-arr time-arr">${l.arrT||'-'}</span>
+          <button class="btn btn-primary" style="font-size:11px;padding:4px 9px;margin-left:auto" onclick="openBookingPopup('${l.t.no}','${l.from}','${l.to}','${l.depT||''}','${l.arrT||''}')">🎫 예매</button>
         </div>
       </div>
       ${i<legs.length-1?`<div class="xfer-wait">🔄 환승 · 대기 ${toMin(legs[i+1].depT)-toMin(l.arrT)}분</div>`:''}
