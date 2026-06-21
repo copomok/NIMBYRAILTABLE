@@ -30,6 +30,12 @@ function showLineTooltip(el, line){
 }
 function trainChip(no,g,fn){return `<span class="tc tc-${gc(g)}" onclick="${fn}">${no}</span>`;}
 function dirLabel(d){return d==='down'?'<span class="dir down"><span class="dir-dot"></span>하행</span>':'<span class="dir up"><span class="dir-dot"></span>상행</span>';}
+// 로컬 시간 기준 YYYY-MM-DD 문자열 (toISOString의 UTC 변환으로 인한 날짜 밀림 방지)
+function todayLocalStr(d){
+  d=d||new Date();
+  const y=d.getFullYear(), m=String(d.getMonth()+1).padStart(2,'0'), day=String(d.getDate()).padStart(2,'0');
+  return `${y}-${m}-${day}`;
+}
 function toMin(v){if(!v)return null;const m=v.match(/(\d+):(\d+)/);return m?+m[1]*60+ +m[2]:null;}
 function durStr(depT,arrT){
   if(!depT||!arrT)return '-';
@@ -1140,7 +1146,7 @@ let _tripNotifInterval=null;
 function getActiveTripTicket(){
   const tickets=loadTickets();
   if(!tickets.length)return null;
-  const today=new Date().toISOString().slice(0,10);
+  const today=todayLocalStr();
   for(const tk of tickets){
     if(tk.status!=='active')continue;
     if(tk.travelDate!==today)continue;
@@ -3006,11 +3012,15 @@ function openBookingPopup(trainNo, fromStn, toStn, depTime, arrTime){
     </button>`;
   }).join('');
 
-  // 탑승일: 오늘 ~ 1개월 후
+  // 탑승일: 오늘 ~ 1개월 후 (로컬 시간 기준, UTC 변환으로 인한 날짜 밀림 방지)
+  const toLocalDateStr=d=>{
+    const y=d.getFullYear(), m=String(d.getMonth()+1).padStart(2,'0'), day=String(d.getDate()).padStart(2,'0');
+    return `${y}-${m}-${day}`;
+  };
   const today=new Date();
-  const minDate=today.toISOString().slice(0,10);
+  const minDate=toLocalDateStr(today);
   const maxD=new Date(today); maxD.setMonth(maxD.getMonth()+1);
-  const maxDate=maxD.toISOString().slice(0,10);
+  const maxDate=toLocalDateStr(maxD);
 
   wrap.innerHTML=`
     <div class="alarm-popup-backdrop" onclick="closeBookingPopup()"></div>
@@ -3067,7 +3077,7 @@ function confirmBooking(trainNo,fromStn,toStn,depTime,arrTime){
   const fare=calcFare(t,fromStn,toStn,seatClass);
 
   const dateInput=document.getElementById('booking-date');
-  const travelDate=dateInput&&dateInput.value?dateInput.value:new Date().toISOString().slice(0,10);
+  const travelDate=dateInput&&dateInput.value?dateInput.value:todayLocalStr();
 
   // 같은 날짜에 탑승 시간이 겹치는 다른 승차권이 이미 있는지 확인
   const newDepM=toMin(depTime), newArrM=toMin(arrTime);
@@ -3082,7 +3092,7 @@ function confirmBooking(trainNo,fromStn,toStn,depTime,arrTime){
       return aStart<bEnd && bStart<aEnd;
     });
     if(conflict){
-      alert(`같은 시간대에 이미 예매한 승차권이 있습니다.\\n\\n${conflict.trainNo}번 · ${conflict.fromStn}→${conflict.toStn}\\n${conflict.depTime}~${conflict.arrTime} (${conflict.travelDate})\\n\\n시간이 겹치는 승차권은 동시에 예매할 수 없습니다.`);
+      alert(`같은 시간대에 이미 예매한 승차권이 있습니다.\n\n${conflict.trainNo}번 · ${conflict.fromStn}→${conflict.toStn}\n${conflict.depTime}~${conflict.arrTime} (${conflict.travelDate})\n\n시간이 겹치는 승차권은 동시에 예매할 수 없습니다.`);
       return;
     }
   }
@@ -3230,8 +3240,8 @@ function renderTickets(){
 
   const isPast=tk=>{
     if(tk.status==='cancelled')return false;
-    if(tk.travelDate<now.toISOString().slice(0,10))return true;
-    if(tk.travelDate>now.toISOString().slice(0,10))return false;
+    if(tk.travelDate<todayLocalStr(now))return true;
+    if(tk.travelDate>todayLocalStr(now))return false;
     const arrM=toMin(tk.arrTime);
     return arrM!==null&&arrM<nowMin;
   };
