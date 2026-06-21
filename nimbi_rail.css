@@ -624,3 +624,8 @@ tbody td{padding:10px 14px;font-size:13px;white-space:nowrap}
 
 .ticket-card-id{font-size:11px;color:var(--text3);font-family:var(--mono);margin-bottom:10px}
 .ticket-card-actions{display:flex;gap:8px}
+
+/* 예매 팝업 - 탑승일 선택 */
+.booking-date-section{margin-bottom:6px}
+.booking-date-input{width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:9px 10px;color:var(--text1);font-family:inherit;font-size:13px;color-scheme:dark}
+.booking-date-input:focus{outline:none;border-color:var(--accent)}

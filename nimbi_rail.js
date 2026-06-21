@@ -3,6 +3,9 @@
 const GC={'KTX':'KTX','SRT':'SRT','ITX-새마을':'ITX','ITX-청춘':'ITXCC','무궁화호':'MGH'};
 const GL={'KTX':'KTX','SRT':'SRT','ITX-새마을':'ITX-새마을','ITX-청춘':'ITX-청춘','무궁화호':'무궁화'};
 function gc(g){return GC[g]||'MGH';}
+// gc()의 결과(KTX/SRT/ITX/ITXCC/MGH)를 실제 CSS 변수명(--c-ktx 등)으로 정확히 매핑
+const GC_CSS_VAR={'KTX':'ktx','SRT':'srt','ITX':'itxsm','ITXCC':'itxcc','MGH':'mgh'};
+function gcCssVar(g){return GC_CSS_VAR[gc(g)]||'mgh';}
 function gradeHtml(g){return `<span class="grade g-${gc(g)}">${GL[g]||g}</span>`;}
 function lineChipHtml(line){
   const parts=line.split('·');
@@ -458,7 +461,7 @@ function renderDetail(t){
     <div class="detail-head" style="position:relative">
       <button class="share-btn" onclick="shareTrainLink('${t.no}')" title="링크 복사">🔗</button>
       <button class="share-btn" style="right:44px" onclick="trackTrainOnMap('${t.no}')" title="노선도에서 보기">🗺️</button>
-      <div class="detail-no" style="color:var(--c-${c.toLowerCase()})">${t.no}</div>
+      <div class="detail-no" style="color:var(--c-${gcCssVar(t.grade)})">${t.no}</div>
       <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px;flex-wrap:wrap">
         ${gradeHtml(t.grade)}${lineChipHtml(t.line)}
         <span style="font-size:16px;font-weight:700">${t.dest}행</span>
@@ -1116,6 +1119,145 @@ function sendNotification(title, body){
     new Notification(title,{body,icon:'/NIMBYRAILTABLE/icon-192.png'});
   }
 }
+
+// ══════════════════════════════════════════
+// 🚆 탑승 중 승차권 - 진행 상태 지속 알림 (상단바 위젯)
+// ══════════════════════════════════════════
+// 같은 tag를 계속 재사용 → 새 알림이 쌓이지 않고 같은 자리에서 내용만 갱신됨
+const TRIP_NOTIF_TAG='nimbirail-trip-progress';
+let _tripNotifInterval=null;
+
+// 오늘 탑승하면서 "현재 운행 중"인 승차권 찾기
+function getActiveTripTicket(){
+  const tickets=loadTickets();
+  if(!tickets.length)return null;
+  const today=new Date().toISOString().slice(0,10);
+  for(const tk of tickets){
+    if(tk.status!=='active')continue;
+    if(tk.travelDate!==today)continue;
+    const t=ALL_TRAINS.find(x=>x.no===tk.trainNo);
+    if(!t)continue;
+    const status=getCurrentStatus(t);
+    if(!status||status.status!=='running')continue;
+    // 승차역을 이미 지났고 하차역에 아직 도착 안 했는지 확인
+    const fi=t.stops.findIndex(s=>s.s===tk.fromStn);
+    const ti=t.stops.findIndex(s=>s.s===tk.toStn);
+    if(fi===-1||ti===-1)continue;
+    const depM=toMin(tk.depTime);
+    const arrM=toMin(tk.arrTime);
+    const nowM=status.nowMin;
+    if(depM===null||arrM===null)continue;
+    // 자정 보정 단순 처리: 탑승구간 시각 범위 안에 있는지만 확인
+    const inRange = (depM<=arrM) ? (nowM>=depM-2 && nowM<=arrM+2)
+                                  : (nowM>=depM-2 || nowM<=arrM+2); // 자정 넘는 경우
+    if(!inRange)continue;
+    return {ticket:tk, train:t, status};
+  }
+  return null;
+}
+
+// 진행 상태 알림 내용 구성 및 발송 (같은 tag로 갱신)
+// 현재 위치 기준 이전역/현재(정차·통과)/다음역 3개를 시간순으로 추출
+// (통과역도 포함, 시간 흐름에 따라 매번 새로 계산됨)
+function getTripTimeline3(train, status){
+  const valid = train.stops.filter(s=>hasTime(s.arr)||hasTime(s.dep));
+  if(!valid.length) return null;
+
+  // 현재 정차 중인 역의 인덱스
+  let curIdx = -1;
+  if(status.atStn){
+    curIdx = valid.findIndex(s=>s.s===status.atStn);
+  } else if(status.passStn){
+    curIdx = valid.findIndex(s=>s.s===status.passStn);
+  }
+
+  let prev, cur, next;
+  if(curIdx >= 0){
+    prev = curIdx>0 ? valid[curIdx-1] : null;
+    cur  = valid[curIdx];
+    next = curIdx<valid.length-1 ? valid[curIdx+1] : null;
+  } else {
+    // 정차/통과 중이 아니라 역 사이를 달리는 중 → prevStn/nextStn 기준
+    const pi = valid.findIndex(s=>s.s===status.prevStn);
+    const ni = valid.findIndex(s=>s.s===status.nextStn);
+    if(pi===-1 && ni===-1) return null;
+    prev = pi>=0 ? valid[pi] : null;
+    cur  = null; // "이동 중" 표시용
+    next = ni>=0 ? valid[ni] : null;
+  }
+
+  const timeOf = s => s ? (hasTime(s.dep)?s.dep:s.arr) : null;
+  return {
+    prev: prev ? {name:prev.s, time:timeOf(prev)} : null,
+    cur:  cur  ? {name:cur.s,  time:timeOf(cur), isPass:isPassStop(train,cur.s)} : null,
+    next: next ? {name:next.s, time:timeOf(next)} : null,
+  };
+}
+
+function updateTripProgressNotif(){
+  if(Notification.permission!=='granted')return;
+  const active=getActiveTripTicket();
+  if(!active){
+    clearTripProgressNotif();
+    return;
+  }
+  const {ticket,train,status}=active;
+
+  const tl = getTripTimeline3(train, status);
+  let title, body;
+
+  if(tl){
+    // 타임라인: 전역 → 현재(정차/통과) → 다음역
+    const parts=[];
+    if(tl.prev) parts.push(`${tl.prev.name} ${tl.prev.time}`);
+    if(tl.cur)  parts.push(`${tl.cur.name}${tl.cur.isPass?'(통과)':''} ${tl.cur.time}`);
+    else        parts.push('이동 중');
+    if(tl.next) parts.push(`${tl.next.name} ${tl.next.time}`);
+    body = parts.join('  →  ');
+
+    if(status.atStn) title=`🚆 ${train.no} · ${status.atStn}역 정차 중`;
+    else if(status.passStn) title=`🚆 ${train.no} · ${status.passStn}역 통과 중`;
+    else title=`🚆 ${train.no} · ${ticket.fromStn}→${ticket.toStn} 이동 중`;
+  } else {
+    title=`🚆 ${train.no} ${GL[train.grade]||train.grade} 탑승 중`;
+    body=`${ticket.fromStn} → ${ticket.toStn} 운행 중`;
+  }
+
+  if(navigator.serviceWorker){
+    navigator.serviceWorker.ready.then(reg=>{
+      reg.showNotification(title,{
+        body,
+        icon:'/NIMBYRAILTABLE/icon-192.png',
+        badge:'/NIMBYRAILTABLE/icon-192.png',
+        tag:TRIP_NOTIF_TAG,       // 고정 tag → 새 알림 안 쌓이고 갱신만 됨
+        renotify:false,            // 갱신 시 재진동/재알림음 없음
+        silent:true,
+        requireInteraction:true,   // 사용자가 직접 닫기 전까지 유지
+        vibrate:[],
+      });
+    }).catch(()=>{});
+  }
+}
+
+function clearTripProgressNotif(){
+  if(navigator.serviceWorker){
+    navigator.serviceWorker.ready.then(reg=>{
+      reg.getNotifications({tag:TRIP_NOTIF_TAG}).then(list=>{
+        list.forEach(n=>n.close());
+      });
+    }).catch(()=>{});
+  }
+}
+
+// 탭이 열려있는 동안 1분마다 진행 상태 갱신 (SW가 살아있는 한 백그라운드에서도 유지됨)
+function startTripProgressTracking(){
+  if(_tripNotifInterval)return;
+  updateTripProgressNotif();
+  _tripNotifInterval=setInterval(updateTripProgressNotif,60000);
+}
+window.addEventListener('load',()=>{
+  setTimeout(startTripProgressTracking,1000);
+});
 
 function checkAlarms(){
   const alarms=loadAlarms();
@@ -2850,11 +2992,21 @@ function openBookingPopup(trainNo, fromStn, toStn, depTime, arrTime){
     </button>`;
   }).join('');
 
+  // 탑승일: 오늘 ~ 1개월 후
+  const today=new Date();
+  const minDate=today.toISOString().slice(0,10);
+  const maxD=new Date(today); maxD.setMonth(maxD.getMonth()+1);
+  const maxDate=maxD.toISOString().slice(0,10);
+
   wrap.innerHTML=`
     <div class="alarm-popup-backdrop" onclick="closeBookingPopup()"></div>
     <div class="alarm-popup booking-popup">
       <div class="alarm-popup-title">🎫 ${t.grade} ${trainNo}</div>
       <div class="alarm-popup-sub">${fromStn} ${depTime||''} → ${toStn} ${arrTime||''}</div>
+      <div class="booking-date-section">
+        <div class="booking-section-label">탑승일</div>
+        <input type="date" id="booking-date" value="${minDate}" min="${minDate}" max="${maxDate}" class="booking-date-input">
+      </div>
       <div class="booking-seat-section">
         <div class="booking-section-label">좌석 등급</div>
         <div class="booking-seat-options">${classOpts}</div>
@@ -2900,8 +3052,10 @@ function confirmBooking(trainNo,fromStn,toStn,depTime,arrTime){
   const count=window._bookingPassengerCount||1;
   const fare=calcFare(t,fromStn,toStn,seatClass);
 
+  const dateInput=document.getElementById('booking-date');
+  const travelDate=dateInput&&dateInput.value?dateInput.value:new Date().toISOString().slice(0,10);
+
   const tickets=loadTickets();
-  const today=new Date().toISOString().slice(0,10);
   const seats=Array.from({length:count},()=>randomSeat(seatClass));
 
   tickets.push({
@@ -2912,13 +3066,14 @@ function confirmBooking(trainNo,fromStn,toStn,depTime,arrTime){
     seats,passengerCount:count,
     farePerPerson:fare,totalFare:fare*count,
     bookedAt:Date.now(),
-    travelDate:today,
+    travelDate,
     status:'active', // active | used | cancelled
   });
   saveTickets(tickets);
   closeBookingPopup();
-  alert(`예매가 완료되었습니다!\n${fromStn} → ${toStn}\n${SEAT_CLASSES[seatClass].label} ${count}명 · ${(fare*count).toLocaleString()}원`);
+  alert(`예매가 완료되었습니다!\n${travelDate} · ${fromStn} → ${toStn}\n${SEAT_CLASSES[seatClass].label} ${count}명 · ${(fare*count).toLocaleString()}원`);
   if(document.getElementById('panel-ticket')?.classList.contains('active')) renderTickets();
+  updateTripProgressNotif();
 }
 
 function cancelTicket(id){
@@ -2929,6 +3084,7 @@ function cancelTicket(id){
   tickets[idx].status='cancelled';
   saveTickets(tickets);
   renderTickets();
+  updateTripProgressNotif();
 }
 function deleteTicket(id){
   if(!confirm('이 승차권 기록을 삭제하시겠습니까?'))return;
@@ -2986,8 +3142,8 @@ function renderTickets(){
     const cancelledCls=tk.status==='cancelled'?' ticket-cancelled':'';
     const seatList=tk.seats.join(', ');
     return `<div class="ticket-card${cancelledCls}">
-      <div class="ticket-card-top" style="border-color:var(--c-${c.toLowerCase()})">
-        <span class="ticket-grade" style="color:var(--c-${c.toLowerCase()})">${tk.grade}</span>
+      <div class="ticket-card-top" style="border-color:var(--c-${gcCssVar(tk.grade)})">
+        <span class="ticket-grade" style="color:var(--c-${gcCssVar(tk.grade)})">${tk.grade}</span>
         <span class="ticket-no">${tk.trainNo}</span>
         ${tk.status==='cancelled'?'<span class="ticket-status-badge">취소됨</span>':''}
       </div>
