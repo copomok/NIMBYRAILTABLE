@@ -1264,8 +1264,13 @@ function startTripProgressTracking(){
   updateTripProgressNotif();
   _tripNotifInterval=setInterval(updateTripProgressNotif,60000);
 }
+// 알림 대신 승차권 탭 내 위젯(trip-widget)으로 표시하므로 자동 알림 발송은 비활성화.
+// window.addEventListener('load',()=>{
+//   setTimeout(startTripProgressTracking,1000);
+// });
+// 기존에 떠 있던 진행 알림이 있다면 정리
 window.addEventListener('load',()=>{
-  setTimeout(startTripProgressTracking,1000);
+  setTimeout(()=>{ if(typeof clearTripProgressNotif==='function') clearTripProgressNotif(); },1000);
 });
 
 function checkAlarms(){
@@ -3125,7 +3130,6 @@ function confirmBooking(trainNo,fromStn,toStn,depTime,arrTime){
   closeBookingPopup();
   alert(`예매가 완료되었습니다!\n${travelDate} · ${fromStn} → ${toStn}\n${SEAT_CLASSES[seatClass].label} ${count}명 · ${(fare*count).toLocaleString()}원${alarmMsg}`);
   if(document.getElementById('panel-ticket')?.classList.contains('active')) renderTickets();
-  updateTripProgressNotif();
 }
 
 function cancelTicket(id){
@@ -3136,7 +3140,6 @@ function cancelTicket(id){
   tickets[idx].status='cancelled';
   saveTickets(tickets);
   renderTickets();
-  updateTripProgressNotif();
 }
 function deleteTicket(id){
   if(!confirm('이 승차권 기록을 삭제하시겠습니까?'))return;
