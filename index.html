@@ -35,6 +35,14 @@
     <button class="my-panel-close" onclick="closeMyPage()">✕</button>
   </div>
   <div class="my-menu-list">
+    <div class="my-menu-item" onclick="openMySection('book')">
+      <span class="my-menu-icon">🔍</span>
+      <div class="my-menu-info">
+        <div class="my-menu-name">열차 예매</div>
+        <div class="my-menu-desc">편도·왕복 열차 조회 및 예매</div>
+      </div>
+      <span class="my-menu-arrow">›</span>
+    </div>
     <div class="my-menu-item" onclick="openMySection('ticket')">
       <span class="my-menu-icon">🎫</span>
       <div class="my-menu-info">
@@ -100,8 +108,8 @@
     <button class="tab active" onclick="switchTab('train')" id="tab-train">🔢 열차</button>
     <button class="tab" onclick="switchTab('station')" id="tab-station">🏢 시간표</button>
     <button class="tab" onclick="switchTab('route')" id="tab-route">🔍 출도착</button>
-    <button class="tab" onclick="switchTab('book')" id="tab-book">🎫 열차 예매</button>
     <button class="tab" onclick="switchTab('map')" id="tab-map">🗺️ 노선도</button>
+    <button class="tab" id="tab-book" style="display:none" onclick="switchTab('book')">🎫 열차 예매</button>
     <!-- 알람·즐겨찾기·통계·공지·승차권은 마이페이지로 이동 -->
     <button class="tab" id="tab-alarm" style="display:none" onclick="switchTab('alarm')">🔔 알람</button>
     <button class="tab" id="tab-fav" style="display:none" onclick="switchTab('fav')">⭐ 즐겨찾기</button>

@@ -70,13 +70,56 @@ function matchesQuery(name,query){
   return false;
 }
 
+// 예매 가능한 역(출발역으로 직통+환승 경로가 하나라도 있는 역) 캐시
+let _bookableStations=null;
+function getBookableStations(){
+  if(_bookableStations)return _bookableStations;
+  const allStop=new Set();
+  ALL_TRAINS.forEach(t=>t.stops.forEach(s=>{
+    if((hasTime(s.arr)||hasTime(s.dep))&&!isPassStop(t,s.s))allStop.add(s.s);
+  }));
+  const valid=new Set();
+  allStop.forEach(from=>{
+    const depTrains=ALL_TRAINS.filter(t=>{
+      const fi=t.stops.findIndex(s=>s.s===from);
+      return fi>=0&&!isPassStop(t,from);
+    });
+    if(!depTrains.length)return;
+    // 직통 가능한 목적지가 있으면 OK
+    for(const t of depTrains){
+      const fi=t.stops.findIndex(s=>s.s===from);
+      if(t.stops.slice(fi+1).some(s=>(hasTime(s.arr)||hasTime(s.dep))&&!isPassStop(t,s.s))){
+        valid.add(from);return;
+      }
+    }
+    // 환승 가능한 경로가 있으면 OK
+    for(const t of depTrains){
+      const fi=t.stops.findIndex(s=>s.s===from);
+      const mids=t.stops.slice(fi+1).filter(s=>(hasTime(s.arr)||hasTime(s.dep))&&!isPassStop(t,s.s));
+      for(const mid of mids){
+        if(ALL_TRAINS.some(t2=>{
+          if(t2===t)return false;
+          const xi=t2.stops.findIndex(s=>s.s===mid.s);
+          if(xi<0||isPassStop(t2,mid.s))return false;
+          return t2.stops.slice(xi+1).some(s=>(hasTime(s.arr)||hasTime(s.dep))&&!isPassStop(t2,s.s));
+        })){valid.add(from);return;}
+      }
+    }
+  });
+  _bookableStations=[...valid].sort((a,b)=>a.localeCompare(b,'ko'));
+  return _bookableStations;
+}
+
 function acShow(iid,did){
   const inp=document.getElementById(iid),drop=document.getElementById(did);
   if(!inp||!drop)return;
   const q=inp.value.trim();
   if(!q){drop.className='ac-dropdown';drop.style.display='none';return;}
+  // 예매 역 입력 필드면 bookable 역만 표시
+  const isBookField=['book-stn-input','pass-from','pass-to'].includes(iid);
+  const pool=isBookField?getBookableStations():ALL_STATIONS;
   // 초성 검색 포함
-  const hits=ALL_STATIONS.filter(s=>matchesQuery(s,q)).slice(0,12);
+  const hits=pool.filter(s=>matchesQuery(s,q)).slice(0,12);
   if(!hits.length){drop.className='ac-dropdown';drop.style.display='none';return;}
   // 하이라이트
   drop.innerHTML=hits.map(s=>{
@@ -3877,7 +3920,8 @@ function closeMySubPanel(){
 }
 
 const MY_TITLES = {
-  ticket:'🎫 승차권 조회',
+  book:'🎫 열차 예매',
+  ticket:'🎟️ 승차권 조회',
   pass:'🎟️ 정기권 예매',
   alarm:'🔔 승하차 알람',
   fav:'⭐ 즐겨찾기',
@@ -3889,26 +3933,27 @@ function openMySection(section){
   const titleEl = document.getElementById('my-sub-title');
   const contentEl = document.getElementById('my-sub-content');
   if(titleEl) titleEl.textContent = MY_TITLES[section]||'';
-  // 패널 열기
   document.getElementById('my-sub-panel').classList.add('open');
-  // 콘텐츠 렌더링
   if(!contentEl) return;
   contentEl.innerHTML = '<div style="padding:20px;text-align:center;color:var(--text3)">불러오는 중...</div>';
   setTimeout(()=>{
-    if(section==='ticket'){
-      contentEl.innerHTML = '<div id="result-ticket" style="padding:12px 0"></div>';
+    if(section==='book'){
+      contentEl.innerHTML = '<div style="padding:12px 0"><div id="result-book"></div></div>';
+      renderBookTab();
+    } else if(section==='ticket'){
+      contentEl.innerHTML = '<div style="padding:12px 0" id="result-ticket"></div>';
       renderTickets();
     } else if(section==='alarm'){
-      contentEl.innerHTML = '<div id="result-alarm" style="padding:12px 0"></div>';
+      contentEl.innerHTML = '<div style="padding:12px 0" id="result-alarm"></div>';
       renderAlarms();
     } else if(section==='fav'){
-      contentEl.innerHTML = '<div id="result-fav" style="padding:12px 0"></div>';
+      contentEl.innerHTML = '<div style="padding:12px 0" id="result-fav"></div>';
       renderFavs();
     } else if(section==='stats'){
-      contentEl.innerHTML = '<div id="result-stats" style="padding:12px 0"></div>';
+      contentEl.innerHTML = '<div style="padding:12px 0" id="result-stats"></div>';
       renderStats();
     } else if(section==='notice'){
-      contentEl.innerHTML = '<div id="result-notice" style="padding:12px 0"></div>';
+      contentEl.innerHTML = '<div style="padding:12px 0" id="result-notice"></div>';
       updateNoticeBadge();
       renderNotice();
     } else if(section==='pass'){
@@ -4022,15 +4067,41 @@ function openBookStnPicker(type){
   document.body.appendChild(wrap);
   setTimeout(()=>{
     const inp = document.getElementById('book-stn-input');
-    if(inp) inp.focus();
-    // ac-item 클릭 시 역 선택
+    if(inp){
+      inp.focus();
+      inp.oninput = ()=>{
+        const q = inp.value.trim();
+        const drop = document.getElementById('ac-book-stn');
+        if(!drop) return;
+        if(!q){drop.style.display='none';return;}
+        // 유효 역만 필터 (해당 방향 열차 있는 역)
+        const validStns = type==='from'
+          ? ALL_STATIONS.filter(s=>ALL_TRAINS.some(t=>!isPassStop(t,s)&&t.stops.some(x=>x.s===s&&(hasTime(x.dep)||hasTime(x.arr)))))
+          : (window._bookFrom
+              ? ALL_STATIONS.filter(s=>ALL_TRAINS.some(t=>{
+                  const fi=t.stops.findIndex(x=>x.s===window._bookFrom);
+                  const ti=t.stops.findIndex(x=>x.s===s);
+                  return fi>=0&&ti>fi&&!isPassStop(t,window._bookFrom)&&!isPassStop(t,s);
+                }))
+              : ALL_STATIONS);
+        const hits = validStns.filter(s=>matchesQuery(s,q)).slice(0,12);
+        if(!hits.length){drop.style.display='none';return;}
+        drop.innerHTML = hits.map(s=>{
+          const i=s.indexOf(q);
+          let display=s;
+          if(i>=0&&!q.split('').every(c=>['ㄱ','ㄲ','ㄴ','ㄷ','ㄸ','ㄹ','ㅁ','ㅂ','ㅃ','ㅅ','ㅆ','ㅇ','ㅈ','ㅉ','ㅊ','ㅋ','ㅌ','ㅍ','ㅎ'].includes(c)))
+            display=s.slice(0,i)+`<span style="color:var(--accent)">${s.slice(i,i+q.length)}</span>`+s.slice(i+q.length);
+          return `<div class="ac-item" onmousedown="event.preventDefault();selectBookStn('${type}','${s}')">${display}</div>`;
+        }).join('');
+        drop.className='ac-dropdown open';
+        drop.style.display='block';
+      };
+    }
+    // acSel 오버라이드 (기존 방식 유지)
     const origAcSel = window.acSel;
     window.acSel = (iid, did, val) => {
       if(iid==='book-stn-input'){
-        if(type==='from') window._bookFrom=val;
-        else window._bookTo=val;
-        closeBookStnPicker();
-        renderBookTab();
+        selectBookStn(type, val);
       } else {
         origAcSel(iid, did, val);
       }
@@ -4040,6 +4111,12 @@ function openBookStnPicker(type){
 function closeBookStnPicker(){
   const el = document.getElementById('book-stn-picker-wrap');
   if(el) el.remove();
+}
+function selectBookStn(type, val){
+  if(type==='from') window._bookFrom=val;
+  else window._bookTo=val;
+  closeBookStnPicker();
+  renderBookTab();
 }
 
 // 인원 선택 팝업
@@ -4118,7 +4195,8 @@ function searchBookTrains(){
   trains.sort((a,b)=>(toMin(a.depT)||0)-(toMin(b.depT)||0));
 
   if(!trains.length){
-    el.innerHTML=`<div class="empty"><div class="empty-icon">🚫</div><p>${from} → ${to} 직통 열차가 없습니다</p></div>`;
+    // 직통 없으면 환승 탐색
+    searchBookTransfers(from, to, dateGo, el);
     return;
   }
 
@@ -4200,11 +4278,163 @@ function openBookTrainDetail(trainNo, from, to, depT, arrT, travelDate){
   setTimeout(()=>wrap.querySelector('.book-detail-panel').classList.add('open'), 10);
 }
 
+
+// ── 열차 예매 탭 환승 탐색 ──
+function searchBookTransfers(from, to, dateGo, el){
+  const MIN_WAIT=3, MAX_WAIT=60;
+  const nowForFilter=new Date();
+  const nowMFilter=nowForFilter.getHours()*60+nowForFilter.getMinutes();
+  const isToday=(dateGo===todayLocalStr());
+
+  function getStopT(s){ return hasTime(s.dep)?s.dep:hasTime(s.arr)?s.arr:null; }
+
+  // from에서 출발하는 모든 레그
+  const legs1=[];
+  ALL_TRAINS.forEach(t=>{
+    const stops=t.stops;
+    const fi=stops.findIndex(s=>s.s===from);
+    if(fi<0||isPassStop(t,from))return;
+    const depT=getStopT(stops[fi]);
+    if(!depT)return;
+    const depM=toMin(depT);
+    if(isToday&&depM!==null&&depM<nowMFilter)return;
+    for(let i=fi+1;i<stops.length;i++){
+      const s=stops[i];
+      if(!s.arr&&!s.dep)continue;
+      if(isPassStop(t,s.s))continue;
+      const arrT=hasTime(s.arr)?s.arr:hasTime(s.dep)?s.dep:null;
+      if(!arrT)continue;
+      legs1.push({t,depStn:from,depT,depM,arrStn:s.s,arrT,arrM:toMin(arrT)});
+    }
+  });
+
+  let transfers=[];
+  legs1.forEach(l1=>{
+    if(l1.arrStn===to)return;
+    ALL_TRAINS.forEach(t2=>{
+      if(t2===l1.t)return;
+      const stops=t2.stops;
+      const xi=stops.findIndex(s=>s.s===l1.arrStn);
+      const ti=stops.findIndex(s=>s.s===to);
+      if(xi<0||ti<0||xi>=ti)return;
+      if(isPassStop(t2,l1.arrStn)||isPassStop(t2,to))return;
+      const dep2T=getStopT(stops[xi]);
+      if(!dep2T)return;
+      const dep2M=toMin(dep2T);
+      const wait=dep2M-l1.arrM;
+      if(wait<MIN_WAIT||wait>MAX_WAIT)return;
+      const arr2T=hasTime(stops[ti].arr)?stops[ti].arr:hasTime(stops[ti].dep)?stops[ti].dep:null;
+      if(!arr2T)return;
+      const totalM=toMin(arr2T)-l1.depM;
+      if(totalM<=0)return;
+      transfers.push({
+        legs:[{t:l1.t,from,to:l1.arrStn,depT:l1.depT,arrT:l1.arrT},
+              {t:t2,from:l1.arrStn,to,depT:dep2T,arrT:arr2T}],
+        totalDur:durStr(l1.depT,arr2T), totalM,
+        depM:l1.depM, arrM:toMin(arr2T)||9999
+      });
+    });
+  });
+
+  // 중복 제거 & 정렬 & 최대 5건
+  const seen=new Set();
+  transfers=transfers.filter(r=>{
+    const key=r.legs.map(l=>l.t.no+l.depT).join('|');
+    if(seen.has(key))return false; seen.add(key); return true;
+  }).sort((a,b)=>a.totalM-b.totalM).slice(0,5);
+
+  if(!transfers.length){
+    el.innerHTML=`<div class="empty"><div class="empty-icon">🚫</div><p>${from} → ${to} 운행 가능한 경로가 없습니다</p></div>`;
+    return;
+  }
+
+  const cards=transfers.map(({legs,totalDur})=>{
+    const legsHtml=legs.map((l,i)=>`
+      <div class="book-xfer-leg">
+        <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px">
+          <span style="font-size:12px;font-weight:700;color:var(--c-${gcCssVar(l.t.grade)})">${l.t.grade}</span>
+          <span style="font-family:var(--mono);font-size:12px;color:var(--text2)">${l.t.no}</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px">
+          <span style="font-weight:600">${l.from}</span>
+          <span style="font-family:var(--mono);font-size:12px;color:var(--accent)">${l.depT}</span>
+          <span style="color:var(--text3)">→</span>
+          <span style="font-weight:600">${l.to}</span>
+          <span style="font-family:var(--mono);font-size:12px;color:var(--green)">${l.arrT||'-'}</span>
+        </div>
+      </div>
+      ${i<legs.length-1?`<div class="book-xfer-wait">🔄 환승 · 대기 ${toMin(legs[i+1].depT)-toMin(l.arrT)}분</div>`:''}`
+    ).join('');
+    const firstLeg=legs[0], lastLeg=legs[legs.length-1];
+    return `<div class="book-train-row book-xfer-card"
+      onclick="openBookTrainDetail('${firstLeg.t.no}','${firstLeg.from}','${firstLeg.to}','${firstLeg.depT}','${firstLeg.arrT||''}','${dateGo}')">
+      <div style="flex:1">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+          <span style="font-size:11px;font-weight:600;padding:2px 8px;border-radius:10px;background:rgba(210,153,34,.15);color:#d29922;border:1px solid rgba(210,153,34,.3)">1회 환승</span>
+          <span style="font-family:var(--mono);font-size:11px;color:var(--text2)">${firstLeg.depT} → ${lastLeg.arrT||'?'} · ${totalDur}</span>
+        </div>
+        ${legsHtml}
+      </div>
+      <div class="book-train-chevron">›</div>
+    </div>`;
+  }).join('');
+
+  const tripLabel=dateGo;
+  el.innerHTML=`
+    <div class="result-header" style="margin-top:16px">
+      <div class="result-title">${from} → ${to} · 환승</div>
+      <span class="badge blue">${transfers.length}건</span>
+      <span class="badge" style="background:var(--bg3)">${tripLabel}</span>
+    </div>
+    <div class="book-train-list">${cards}</div>`;
+}
+
 function closeBookTrainDetail(){
   const el = document.getElementById('book-detail-wrap');
   if(!el) return;
   el.querySelector('.book-detail-panel').classList.remove('open');
   setTimeout(()=>el.remove(), 300);
+}
+
+function openBookXferDetail(no1,no2,from,xStn,to,depT1,arrT1,depT2,arrT2,travelDate){
+  const t1=ALL_TRAINS.find(x=>x.no===no1),t2=ALL_TRAINS.find(x=>x.no===no2);
+  if(!t1||!t2)return;
+  const old=document.getElementById('book-detail-wrap');if(old)old.remove();
+  const wrap=document.createElement('div');
+  wrap.id='book-detail-wrap';
+  wrap.innerHTML=`
+    <div class="book-detail-backdrop" onclick="closeBookTrainDetail()"></div>
+    <div class="book-detail-panel">
+      <div class="book-detail-handle"></div>
+      <div class="book-detail-head">
+        <div style="font-size:14px;font-weight:600">1회 환승 · ${from} → ${to}</div>
+        <button class="my-panel-close" onclick="closeBookTrainDetail()">✕</button>
+      </div>
+      <div style="background:var(--bg3);border-radius:12px;padding:14px;margin-bottom:12px;display:flex;flex-direction:column;gap:10px">
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <span style="color:var(--c-${gcCssVar(t1.grade)});font-weight:700">${t1.grade} ${no1}</span>
+          <span style="font-family:var(--mono);font-size:13px">${depT1} → ${arrT1}</span>
+        </div>
+        <div style="text-align:center;font-size:12px;color:var(--text3);border-top:1px dashed var(--border);border-bottom:1px dashed var(--border);padding:5px 0">🔄 ${xStn} 환승</div>
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <span style="color:var(--c-${gcCssVar(t2.grade)});font-weight:700">${t2.grade} ${no2}</span>
+          <span style="font-family:var(--mono);font-size:13px">${depT2} → ${arrT2}</span>
+        </div>
+      </div>
+      <p class="hint" style="margin-bottom:14px">※ 환승 구간은 각각 별도로 예매됩니다</p>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-primary" style="flex:1;justify-content:center;font-size:12px;padding:10px 6px"
+          onclick="closeBookTrainDetail();window._bookingPassengerCount=${_bookPassengerCount};openBookingWithDate('${no1}','${from}','${xStn}','${depT1}','${arrT1}','${travelDate}')">
+          🎫 ${from}→${xStn}
+        </button>
+        <button class="btn btn-primary" style="flex:1;justify-content:center;font-size:12px;padding:10px 6px"
+          onclick="closeBookTrainDetail();window._bookingPassengerCount=${_bookPassengerCount};openBookingWithDate('${no2}','${xStn}','${to}','${depT2}','${arrT2}','${travelDate}')">
+          🎫 ${xStn}→${to}
+        </button>
+      </div>
+    </div>`;
+  document.body.appendChild(wrap);
+  setTimeout(()=>wrap.querySelector('.book-detail-panel').classList.add('open'),10);
 }
 
 // 날짜 지정 예매 (열차 예매 탭에서 호출)
@@ -4238,3 +4468,5 @@ function openBookingWithDate(trainNo, from, to, depT, arrT, travelDate, isRound,
     }
   }, 50);
 }
+
+
