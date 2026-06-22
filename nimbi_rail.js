@@ -3253,9 +3253,29 @@ function cancelTicket(id){
   const tickets=loadTickets();
   const idx=tickets.findIndex(tk=>tk.id===id);
   if(idx<0)return;
+  const tk=tickets[idx];
+
+  // 출발 이후 취소 불가
+  const now=new Date();
+  const nowM=now.getHours()*60+now.getMinutes();
+  const depM=toMin(tk.depTime);
+  if(tk.travelDate===todayLocalStr(now) && depM!==null && depM<=nowM){
+    alert(`이미 출발한 열차는 취소할 수 없습니다.\n\n${tk.fromStn} ${tk.depTime} 출발 → 현재 시각 ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`);
+    return;
+  }
+
   tickets[idx].status='cancelled';
   saveTickets(tickets);
+
+  // 승하차 알람 자동 해제
+  try{
+    const alarms=loadAlarms();
+    const filtered=alarms.filter(a=>!(a.trainNo===tk.trainNo&&(a.stn===tk.fromStn||a.stn===tk.toStn)));
+    saveAlarms(filtered);
+  }catch(e){console.warn('알람 해제 실패:',e);}
+
   renderTickets();
+  renderAlarmIfOpen();
 }
 function deleteTicket(id){
   if(!confirm('이 승차권 기록을 삭제하시겠습니까?'))return;
@@ -3684,20 +3704,22 @@ function renderTripWidget(active){
     }
   }
 
-  const _hasPrev = !!(tl&&tl.prev), _hasNext = !!(tl&&tl.next);
-  const _tlClass = `trip-widget-timeline${_hasPrev?' has-prev':''}${_hasNext?' has-next':''}`;
   const tlHtml = tl ? `
-    <div class="${_tlClass}">
-      ${_hasPrev?`<div class="trip-tl-dot-cell"><span class="trip-tl-dot small"></span></div>`:''}
-      ${_hasPrev?`<div class="trip-tl-line-cell"><div class="trip-tl-line" style="background:linear-gradient(90deg,${gradeColor}55,${gradeColor}cc)"></div></div>`:''}
-      <div class="trip-tl-dot-cell"><span class="trip-tl-dot current" style="background:${gradeColor};border-color:${gradeColor};box-shadow:0 0 0 4px ${gradeColor}33"></span></div>
-      ${_hasNext?`<div class="trip-tl-line-cell"><div class="trip-tl-line" style="background:linear-gradient(90deg,${gradeColor}cc,${gradeColor}44)"></div></div>`:''}
-      ${_hasNext?`<div class="trip-tl-dot-cell"><span class="trip-tl-dot small"></span></div>`:''}
-      ${_hasPrev?`<div class="trip-tl-name-cell"><span class="trip-tl-name">${tl.prev.name}</span><span class="trip-tl-time">${tl.prev.time||''}</span></div>`:''}
-      ${_hasPrev?`<div class="trip-tl-spacer"></div>`:''}
-      <div class="trip-tl-name-cell"><span class="trip-tl-name current" style="color:${gradeColor}">${tl.cur?tl.cur.name:'이동 중'}</span><span class="trip-tl-time current" style="color:${gradeColor}">${tl.cur?tl.cur.time:''}</span></div>
-      ${_hasNext?`<div class="trip-tl-spacer"></div>`:''}
-      ${_hasNext?`<div class="trip-tl-name-cell"><span class="trip-tl-name">${tl.next.name}</span><span class="trip-tl-time">${tl.next.time||''}</span></div>`:''}
+    <div class="trip-widget-timeline">
+      ${tl.prev?`<div class="trip-tl-stop">
+        <div class="trip-tl-dot-cell"><span class="trip-tl-dot small"></span></div>
+        <div class="trip-tl-name-cell"><span class="trip-tl-name">${tl.prev.name}</span><span class="trip-tl-time">${tl.prev.time||''}</span></div>
+      </div>`:''}
+      ${tl.prev?`<div class="trip-tl-line-cell"><div class="trip-tl-line" style="background:linear-gradient(90deg,${gradeColor}55,${gradeColor}cc)"></div></div>`:''}
+      <div class="trip-tl-stop">
+        <div class="trip-tl-dot-cell"><span class="trip-tl-dot current" style="background:${gradeColor};border-color:${gradeColor};box-shadow:0 0 0 4px ${gradeColor}33"></span></div>
+        <div class="trip-tl-name-cell"><span class="trip-tl-name current" style="color:${gradeColor}">${tl.cur?tl.cur.name:'이동 중'}</span><span class="trip-tl-time current" style="color:${gradeColor}">${tl.cur?tl.cur.time:''}</span></div>
+      </div>
+      ${tl.next?`<div class="trip-tl-line-cell"><div class="trip-tl-line" style="background:linear-gradient(90deg,${gradeColor}cc,${gradeColor}44)"></div></div>`:''}
+      ${tl.next?`<div class="trip-tl-stop">
+        <div class="trip-tl-dot-cell"><span class="trip-tl-dot small"></span></div>
+        <div class="trip-tl-name-cell"><span class="trip-tl-name">${tl.next.name}</span><span class="trip-tl-time">${tl.next.time||''}</span></div>
+      </div>`:''}
     </div>` : '';
 
   return `<div class="trip-widget" style="border-color:${gradeColor};background:linear-gradient(135deg,${gradeColor}18,${gradeColor}08)" onclick="jumpToTrain('${train.no}')">

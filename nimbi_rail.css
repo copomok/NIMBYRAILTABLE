@@ -645,35 +645,34 @@ tbody td{padding:10px 14px;font-size:13px;white-space:nowrap}
 
 .trip-widget-state{font-size:16px;font-weight:700;color:var(--text1);margin-bottom:14px}
 
-/* ── 타임라인: grid 2행 구조 ──
-   dot행: [dot] [선] [dot] [선] [dot]
-   이름행: [역명+시각] [공백] [역명+시각] [공백] [역명+시각]
-   열 비율: 역 고정(72px) + 선(flex) + 역 고정(72px) [+ 선 + 역]
+/* ── 타임라인: flex 구조 ──
+   [stop(flex:1)] [line(flex:2)] [stop(flex:1)] [line(flex:2)] [stop(flex:1)]
+   각 행의 dot과 이름이 같은 컬럼 중앙에 위치
 */
-/* 3역일 때: 72px 1fr 72px 1fr 72px */
 .trip-widget-timeline{
-  display:grid;
-  grid-template-columns:72px 1fr 72px;  /* 기본: prev없으면 cur+next만 */
+  display:flex;
+  align-items:stretch;
   margin-bottom:14px;
-  row-gap:4px;
 }
-.trip-widget-timeline.has-prev.has-next{
-  grid-template-columns:72px 1fr 72px 1fr 72px;
+/* stop: dot + 이름 + 시각을 세로로 쌓음, 가로는 flex:1로 균등 분배 */
+.trip-tl-stop{
+  display:flex;flex-direction:column;align-items:center;
+  gap:3px;flex:1;min-width:0;
 }
-.trip-widget-timeline.has-prev:not(.has-next){
-  grid-template-columns:72px 1fr 72px;
+/* dot 영역: 일정한 높이로 선과 수직 중앙 맞춤 */
+.trip-tl-dot-cell{
+  display:flex;align-items:center;justify-content:center;
+  width:100%;height:14px;
 }
-.trip-widget-timeline.has-next:not(.has-prev){
-  grid-template-columns:72px 1fr 72px;
+/* 선 영역: dot과 같은 높이, flex:2로 더 넓게 */
+.trip-tl-line-cell{
+  flex:2;display:flex;align-items:center;height:14px;
+  align-self:flex-start; /* stop의 dot-cell과 같은 위치에 맞춤 */
 }
-/* dot행 셀 */
-.trip-tl-dot-cell{display:flex;align-items:center;justify-content:center;height:14px}
-/* 선 셀 */
-.trip-tl-line-cell{display:flex;align-items:center;height:14px;margin:0 -1px}
 .trip-tl-line{width:100%;height:2px;background:var(--border)}
-/* 이름행 셀 */
+/* 이름/시각: stop 안에 dot-cell 아래 배치 */
 .trip-tl-name-cell{display:flex;flex-direction:column;align-items:center;gap:2px}
-.trip-tl-spacer{} /* 빈 셀 */
+.trip-tl-spacer{display:none} /* 미사용 */
 /* dot */
 .trip-tl-dot{width:9px;height:9px;border-radius:50%;background:var(--bg3);border:2px solid var(--text3);flex-shrink:0}
 .trip-tl-dot.small{width:7px;height:7px}
@@ -683,8 +682,8 @@ tbody td{padding:10px 14px;font-size:13px;white-space:nowrap}
 .trip-tl-name.current{color:var(--text1);font-weight:700;font-size:12px}
 .trip-tl-time{font-size:10px;color:var(--text3);font-family:var(--mono);text-align:center}
 .trip-tl-time.current{color:var(--accent);font-weight:600}
-/* 사용 안 하는 구 클래스 */
-.trip-widget-timeline-dots,.trip-widget-timeline-names,.trip-tl-stop{display:contents}
+/* 구 클래스 무력화 */
+.trip-widget-timeline-dots,.trip-widget-timeline-names{display:none}
 
 .trip-widget-progress{margin-top:4px}
 .trip-widget-progress-bar{height:5px;background:var(--bg3);border-radius:3px;overflow:hidden}
