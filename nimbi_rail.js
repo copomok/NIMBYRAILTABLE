@@ -117,18 +117,21 @@ updateClock();
 // 공지 안읽음 뱃지 표시
 function updateNoticeBadge(){
   const cnt=getUnreadNoticeCount();
+  // 기존 탭 뱃지 (숨겨져 있어도 유지)
   const tab=document.getElementById('tab-notice');
-  if(!tab)return;
-  let dot=tab.querySelector('.notice-badge-dot');
-  if(cnt>0){
-    if(!dot){
-      dot=document.createElement('span');
-      dot.className='notice-badge-dot';
-      tab.appendChild(dot);
-    }
-  } else if(dot){
-    dot.remove();
+  if(tab){
+    let dot=tab.querySelector('.notice-badge-dot');
+    if(cnt>0){
+      if(!dot){dot=document.createElement('span');dot.className='notice-badge-dot';tab.appendChild(dot);}
+    } else if(dot){dot.remove();}
   }
+  // 마이페이지 버튼 뱃지
+  const myBtn=document.querySelector('.my-btn');
+  if(!myBtn)return;
+  let myDot=myBtn.querySelector('.notice-badge-dot');
+  if(cnt>0){
+    if(!myDot){myDot=document.createElement('span');myDot.className='notice-badge-dot';myBtn.appendChild(myDot);}
+  } else if(myDot){myDot.remove();}
 }
 window.addEventListener('load',()=>setTimeout(updateNoticeBadge,300));
 
@@ -216,6 +219,7 @@ function switchTab(n){
   if(n==='stats') renderStats();
   if(n==='notice') renderNotice();
   if(n==='ticket') renderTickets();
+  if(n==='book') renderBookTab();
   
 }
 
@@ -671,13 +675,13 @@ function searchByRoute(){
         <td><span class="time-dep">${depT||'-'}</span></td>
         <td><span class="time-arr">${arrT||'-'}</span></td>
         <td style="font-family:var(--mono);font-size:11px;color:var(--text2)">${dur}</td>
-        <td><button class="btn btn-primary" style="font-size:11px;padding:5px 10px;white-space:nowrap" onclick="event.stopPropagation();openBookingPopup('${t.no}','${from}','${to}','${depT||''}','${arrT||''}')">🎫 예매</button></td>
+
       </tr>`
     ).join('');
     const fb=document.getElementById('fav-btn-route');
     if(fb)fb.style.display='';
     el.innerHTML=`<div class="result-header"><div class="result-title">🔍 ${from} → ${to}${afterLabel}</div><span class="badge blue">${directs.length}편</span><span class="badge" style="background:var(--bg3)">${sortLabel}</span></div>
-    <div class="table-wrap"><table><thead><tr><th>열차</th><th>등급</th><th>노선</th><th>방향</th><th>행선지</th><th>출발</th><th>도착</th><th>소요</th><th></th></tr></thead><tbody>${rows}</tbody></table></div>
+    <div class="table-wrap"><table><thead><tr><th>열차</th><th>등급</th><th>노선</th><th>방향</th><th>행선지</th><th>출발</th><th>도착</th><th>소요</th></tr></thead><tbody>${rows}</tbody></table></div>
     <p class="hint">※ 열차번호 클릭 시 전체 운행 정보 조회</p>`;
     return;
   }
@@ -792,7 +796,7 @@ function searchByRoute(){
           <span class="xfer-arrow">→</span>
           <span class="xfer-stn">${l.to}</span>
           <span class="xfer-arr time-arr">${l.arrT||'-'}</span>
-          <button class="btn btn-primary" style="font-size:11px;padding:4px 9px;margin-left:auto" onclick="openBookingPopup('${l.t.no}','${l.from}','${l.to}','${l.depT||''}','${l.arrT||''}')">🎫 예매</button>
+
         </div>
       </div>
       ${i<legs.length-1?`<div class="xfer-wait">🔄 환승 · 대기 ${toMin(legs[i+1].depT)-toMin(l.arrT)}분</div>`:''}
@@ -3845,3 +3849,359 @@ function renderTickets(){
     <div class="ticket-list">${cards}</div>`;
 }
 
+// ══════════════════════════════════════════
+// 👤 마이페이지 슬라이드 패널
+// ══════════════════════════════════════════
+function openMyPage(){
+  document.getElementById('my-backdrop').classList.add('open');
+  document.getElementById('my-panel').classList.add('open');
+  document.body.style.overflow='hidden';
+}
+function closeMyPage(){
+  document.getElementById('my-backdrop').classList.remove('open');
+  document.getElementById('my-panel').classList.remove('open');
+  document.getElementById('my-sub-panel').classList.remove('open');
+  document.body.style.overflow='';
+}
+function closeMySubPanel(){
+  document.getElementById('my-sub-panel').classList.remove('open');
+}
+
+const MY_TITLES = {
+  ticket:'🎫 승차권 조회',
+  pass:'🎟️ 정기권 예매',
+  alarm:'🔔 승하차 알람',
+  fav:'⭐ 즐겨찾기',
+  stats:'📊 운행 통계',
+  notice:'📢 공지사항',
+};
+
+function openMySection(section){
+  const titleEl = document.getElementById('my-sub-title');
+  const contentEl = document.getElementById('my-sub-content');
+  if(titleEl) titleEl.textContent = MY_TITLES[section]||'';
+  // 패널 열기
+  document.getElementById('my-sub-panel').classList.add('open');
+  // 콘텐츠 렌더링
+  if(!contentEl) return;
+  contentEl.innerHTML = '<div style="padding:20px;text-align:center;color:var(--text3)">불러오는 중...</div>';
+  setTimeout(()=>{
+    if(section==='ticket'){
+      contentEl.innerHTML = '<div id="result-ticket" style="padding:12px 0"></div>';
+      renderTickets();
+    } else if(section==='alarm'){
+      contentEl.innerHTML = '<div id="result-alarm" style="padding:12px 0"></div>';
+      renderAlarms();
+    } else if(section==='fav'){
+      contentEl.innerHTML = '<div id="result-fav" style="padding:12px 0"></div>';
+      renderFavs();
+    } else if(section==='stats'){
+      contentEl.innerHTML = '<div id="result-stats" style="padding:12px 0"></div>';
+      renderStats();
+    } else if(section==='notice'){
+      contentEl.innerHTML = '<div id="result-notice" style="padding:12px 0"></div>';
+      updateNoticeBadge();
+      renderNotice();
+    } else if(section==='pass'){
+      contentEl.innerHTML = '<div style="padding:12px 0">' + renderPassSection() + '</div>';
+    }
+  }, 50);
+}
+
+// ══════════════════════════════════════════
+// 🎫 열차 예매 탭
+// ══════════════════════════════════════════
+let _bookRoundTrip = false;
+let _bookPassengerCount = 1;
+
+function renderBookTab(){
+  const el = document.getElementById('result-book');
+  if(!el) return;
+
+  const toLocalDateStr = d => {
+    const y=d.getFullYear(), m=String(d.getMonth()+1).padStart(2,'0'), day=String(d.getDate()).padStart(2,'0');
+    return `${y}-${m}-${day}`;
+  };
+  const today = new Date();
+  const minDate = toLocalDateStr(today);
+  const maxD = new Date(today); maxD.setMonth(maxD.getMonth()+1);
+  const maxDate = toLocalDateStr(maxD);
+
+  el.innerHTML = `
+    <div class="book-card">
+      <!-- 편도/왕복 토글 -->
+      <div class="book-trip-type">
+        <button class="book-type-btn${!_bookRoundTrip?' active':''}" onclick="setBookTripType(false)">편도</button>
+        <button class="book-type-btn${_bookRoundTrip?' active':''}" onclick="setBookTripType(true)">왕복</button>
+      </div>
+
+      <!-- 출발/도착역 -->
+      <div class="book-route-row">
+        <div class="book-stn-box" onclick="openBookStnPicker('from')">
+          <div class="book-stn-label">출발</div>
+          <div class="book-stn-name" id="book-from-name">출발역 선택</div>
+        </div>
+        <button class="book-swap-btn" onclick="swapBookStations()">⇄</button>
+        <div class="book-stn-box" onclick="openBookStnPicker('to')">
+          <div class="book-stn-label">도착</div>
+          <div class="book-stn-name" id="book-to-name">도착역 선택</div>
+        </div>
+      </div>
+
+      <!-- 날짜 -->
+      <div class="book-date-row">
+        <div class="book-date-box">
+          <div class="book-date-label">가는날</div>
+          <input type="date" id="book-date-go" class="book-date-input" value="${minDate}" min="${minDate}" max="${maxDate}">
+        </div>
+        ${_bookRoundTrip ? `<div class="book-date-box">
+          <div class="book-date-label">오는날</div>
+          <input type="date" id="book-date-back" class="book-date-input" value="${minDate}" min="${minDate}" max="${maxDate}">
+        </div>` : ''}
+      </div>
+
+      <!-- 인원 -->
+      <div class="book-passenger-row" onclick="openBookPassengerPicker()">
+        <span class="book-passenger-label">인원 선택</span>
+        <span class="book-passenger-val" id="book-passenger-val">어른 ${_bookPassengerCount}명</span>
+        <span class="book-passenger-arrow">›</span>
+      </div>
+
+      <!-- 조회 버튼 -->
+      <button class="book-search-btn" onclick="searchBookTrains()">열차 조회</button>
+    </div>
+
+    <div id="book-results"></div>`;
+
+  // 역 선택 상태 복원
+  if(window._bookFrom) document.getElementById('book-from-name').textContent = window._bookFrom;
+  if(window._bookTo) document.getElementById('book-to-name').textContent = window._bookTo;
+}
+
+function setBookTripType(isRound){
+  _bookRoundTrip = isRound;
+  renderBookTab();
+}
+
+function swapBookStations(){
+  const tmp = window._bookFrom;
+  window._bookFrom = window._bookTo;
+  window._bookTo = tmp;
+  renderBookTab();
+}
+
+// 역 선택 팝업
+function openBookStnPicker(type){
+  const old = document.getElementById('book-stn-picker-wrap');
+  if(old) old.remove();
+  const wrap = document.createElement('div');
+  wrap.id = 'book-stn-picker-wrap';
+  wrap.innerHTML = `
+    <div class="alarm-popup-backdrop" onclick="closeBookStnPicker()"></div>
+    <div class="alarm-popup" style="max-width:340px">
+      <div class="alarm-popup-title">${type==='from'?'출발역':'도착역'} 선택</div>
+      <div class="autocomplete-wrap" style="margin-bottom:8px">
+        <input type="text" id="book-stn-input" placeholder="역명 입력 (예: 서울, ㅅㅇ)" autocomplete="off"
+          oninput="acShow('book-stn-input','ac-book-stn')"
+          onkeydown="acKey(event,'book-stn-input','ac-book-stn')"
+          onblur="setTimeout(()=>acHide('ac-book-stn'),150)"
+          style="width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:6px;color:var(--text1);font-family:var(--sans);font-size:14px;padding:10px 12px;outline:none">
+        <div class="ac-dropdown" id="ac-book-stn"></div>
+      </div>
+      <button class="alarm-popup-close" onclick="closeBookStnPicker()">취소</button>
+    </div>`;
+  document.body.appendChild(wrap);
+  setTimeout(()=>{
+    const inp = document.getElementById('book-stn-input');
+    if(inp) inp.focus();
+    // ac-item 클릭 시 역 선택
+    const origAcSel = window.acSel;
+    window.acSel = (iid, did, val) => {
+      if(iid==='book-stn-input'){
+        if(type==='from') window._bookFrom=val;
+        else window._bookTo=val;
+        closeBookStnPicker();
+        renderBookTab();
+      } else {
+        origAcSel(iid, did, val);
+      }
+    };
+  }, 100);
+}
+function closeBookStnPicker(){
+  const el = document.getElementById('book-stn-picker-wrap');
+  if(el) el.remove();
+}
+
+// 인원 선택 팝업
+function openBookPassengerPicker(){
+  const old = document.getElementById('book-pass-picker-wrap');
+  if(old) old.remove();
+  const wrap = document.createElement('div');
+  wrap.id = 'book-pass-picker-wrap';
+  wrap.innerHTML = `
+    <div class="alarm-popup-backdrop" onclick="closeBookPassengerPicker()"></div>
+    <div class="alarm-popup" style="max-width:300px;text-align:center">
+      <div class="alarm-popup-title">인원 선택</div>
+      <div class="booking-passenger-control" style="margin:20px 0">
+        <button class="booking-stepper-btn" onclick="changeBookPassenger(-1)">−</button>
+        <span id="book-passenger-num" style="font-size:22px;font-weight:700;min-width:40px;display:inline-block">${_bookPassengerCount}</span>
+        <button class="booking-stepper-btn" onclick="changeBookPassenger(1)">+</button>
+      </div>
+      <div style="font-size:13px;color:var(--text2);margin-bottom:16px">어른 기준 (최대 6명)</div>
+      <button class="btn btn-primary" style="width:100%;justify-content:center;padding:11px" onclick="confirmBookPassenger()">확인</button>
+    </div>`;
+  document.body.appendChild(wrap);
+}
+function closeBookPassengerPicker(){
+  const el = document.getElementById('book-pass-picker-wrap');
+  if(el) el.remove();
+}
+function changeBookPassenger(d){
+  _bookPassengerCount = Math.max(1, Math.min(6, _bookPassengerCount+d));
+  const el = document.getElementById('book-passenger-num');
+  if(el) el.textContent = _bookPassengerCount;
+}
+function confirmBookPassenger(){
+  closeBookPassengerPicker();
+  const el = document.getElementById('book-passenger-val');
+  if(el) el.textContent = `어른 ${_bookPassengerCount}명`;
+}
+
+// 열차 조회
+function searchBookTrains(){
+  const from = window._bookFrom;
+  const to = window._bookTo;
+  const dateGo = document.getElementById('book-date-go')?.value;
+  const dateBack = _bookRoundTrip ? document.getElementById('book-date-back')?.value : null;
+  const el = document.getElementById('book-results');
+  if(!el) return;
+
+  if(!from||!to){
+    el.innerHTML='<div class="empty"><div class="empty-icon">🚉</div><p>출발역과 도착역을 선택해주세요</p></div>';
+    return;
+  }
+  if(from===to){
+    el.innerHTML='<div class="empty"><div class="empty-icon">⚠️</div><p>출발역과 도착역이 같습니다</p></div>';
+    return;
+  }
+
+  // 직통 열차 탐색
+  const trains = [];
+  ALL_TRAINS.forEach(t=>{
+    const stops = t.stops;
+    const fi = stops.findIndex(s=>s.s===from);
+    const ti = stops.findIndex(s=>s.s===to);
+    if(fi<0||ti<0||fi>=ti) return;
+    if(isPassStop(t,from)||isPassStop(t,to)) return;
+    const depStop = stops[fi], arrStop = stops[ti];
+    const depT = hasTime(depStop.dep)?depStop.dep:hasTime(depStop.arr)?depStop.arr:null;
+    const arrT = hasTime(arrStop.arr)?arrStop.arr:hasTime(arrStop.dep)?arrStop.dep:null;
+    if(!depT) return;
+    trains.push({t, depT, arrT, dur:durStr(depT, arrT)});
+  });
+  trains.sort((a,b)=>(toMin(a.depT)||0)-(toMin(b.depT)||0));
+
+  if(!trains.length){
+    el.innerHTML=`<div class="empty"><div class="empty-icon">🚫</div><p>${from} → ${to} 직통 열차가 없습니다</p></div>`;
+    return;
+  }
+
+  const rows = trains.map(({t,depT,arrT,dur})=>`
+    <div class="book-train-row" onclick="openBookTrainDetail('${t.no}','${from}','${to}','${depT}','${arrT||''}','${dateGo}')">
+      <div class="book-train-grade" style="color:var(--c-${gcCssVar(t.grade)})">${t.grade}</div>
+      <div class="book-train-no">${t.no}</div>
+      <div class="book-train-times">
+        <span class="book-train-dep">${depT}</span>
+        <span class="book-train-arrow">→</span>
+        <span class="book-train-arr">${arrT||'-'}</span>
+      </div>
+      <div class="book-train-dur">${dur}</div>
+      <div class="book-train-chevron">›</div>
+    </div>`).join('');
+
+  const tripLabel = _bookRoundTrip ? `편도 (${dateGo})` : dateGo;
+  el.innerHTML = `
+    <div class="result-header" style="margin-top:16px">
+      <div class="result-title">${from} → ${to}</div>
+      <span class="badge blue">${trains.length}편</span>
+      <span class="badge" style="background:var(--bg3)">${tripLabel}</span>
+    </div>
+    <div class="book-train-list">${rows}</div>
+    ${_bookRoundTrip&&dateBack?`<p class="hint" style="margin-top:8px">※ 왕복 복편(${to}→${from}, ${dateBack})은 예매 후 별도 조회해주세요</p>`:''}`;
+}
+
+// 열차 상세 & 예매 패널 (하단 슬라이드업)
+function openBookTrainDetail(trainNo, from, to, depT, arrT, travelDate){
+  const t = ALL_TRAINS.find(x=>x.no===trainNo);
+  if(!t) return;
+
+  const old = document.getElementById('book-detail-wrap');
+  if(old) old.remove();
+
+  const fare = calcFare(t, from, to, 'general');
+  const fareSpec = availableSeatClasses(t.grade).map(c=>{
+    const f = calcFare(t, from, to, c);
+    return `<div class="book-detail-fare-row">
+      <span>${SEAT_CLASSES[c].label}</span>
+      <span style="font-family:var(--mono);color:var(--accent);font-weight:600">${f.toLocaleString()}원</span>
+    </div>`;
+  }).join('');
+
+  const wrap = document.createElement('div');
+  wrap.id = 'book-detail-wrap';
+  wrap.innerHTML = `
+    <div class="book-detail-backdrop" onclick="closeBookTrainDetail()"></div>
+    <div class="book-detail-panel">
+      <div class="book-detail-handle"></div>
+      <div class="book-detail-head">
+        <div>
+          <span class="book-detail-grade" style="color:var(--c-${gcCssVar(t.grade)})">${t.grade}</span>
+          <span class="book-detail-no">${t.no}</span>
+        </div>
+        <button class="my-panel-close" onclick="closeBookTrainDetail()">✕</button>
+      </div>
+      <div class="book-detail-route">
+        <div class="book-detail-stn">
+          <div class="book-detail-stn-name">${from}</div>
+          <div class="book-detail-stn-time">${depT}</div>
+        </div>
+        <div class="book-detail-dur">${durStr(depT,arrT)}</div>
+        <div class="book-detail-stn" style="text-align:right">
+          <div class="book-detail-stn-name">${to}</div>
+          <div class="book-detail-stn-time">${arrT||'-'}</div>
+        </div>
+      </div>
+      <div class="book-detail-fares">${fareSpec}</div>
+      <div style="display:flex;gap:8px;margin-top:4px">
+        <button class="btn" style="flex:1;justify-content:center;font-size:13px" onclick="closeBookTrainDetail();jumpToTrain('${trainNo}')">🔍 열차 상세</button>
+        <button class="btn btn-primary" style="flex:2;justify-content:center;font-size:14px"
+          onclick="closeBookTrainDetail();window._bookingPassengerCount=${_bookPassengerCount};openBookingWithDate('${trainNo}','${from}','${to}','${depT}','${arrT||''}','${travelDate}')">
+          🎫 예매하기
+        </button>
+      </div>
+    </div>`;
+  document.body.appendChild(wrap);
+  setTimeout(()=>wrap.querySelector('.book-detail-panel').classList.add('open'), 10);
+}
+
+function closeBookTrainDetail(){
+  const el = document.getElementById('book-detail-wrap');
+  if(!el) return;
+  el.querySelector('.book-detail-panel').classList.remove('open');
+  setTimeout(()=>el.remove(), 300);
+}
+
+// 날짜 지정 예매 (열차 예매 탭에서 호출)
+function openBookingWithDate(trainNo, from, to, depT, arrT, travelDate){
+  openBookingPopup(trainNo, from, to, depT, arrT);
+  setTimeout(()=>{
+    const dateInp = document.getElementById('booking-date');
+    if(dateInp && travelDate) dateInp.value = travelDate;
+    if(window._bookPassengerCount>1){
+      window._bookingPassengerCount = window._bookPassengerCount;
+      const cnt = document.getElementById('booking-passenger-count');
+      if(cnt) cnt.textContent = window._bookPassengerCount;
+    }
+  }, 50);
+}

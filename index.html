@@ -20,18 +20,90 @@
 <header>
   <div class="logo"><div class="logo-icon">🚆</div>님비레일 시간표</div>
   <span id="header-clock" style="font-family:var(--mono);font-size:14px;font-weight:600;color:var(--text1);letter-spacing:1px"></span>
+  <button class="my-btn" onclick="openMyPage()" title="마이페이지">👤</button>
 </header>
+
+<!-- 마이페이지 오버레이 -->
+<div class="my-backdrop" id="my-backdrop" onclick="closeMyPage()"></div>
+<div class="my-panel" id="my-panel">
+  <div class="my-panel-header">
+    <div class="my-panel-title">마이페이지</div>
+    <button class="my-panel-close" onclick="closeMyPage()">✕</button>
+  </div>
+  <div class="my-menu-list">
+    <div class="my-menu-item" onclick="openMySection('ticket')">
+      <span class="my-menu-icon">🎫</span>
+      <div class="my-menu-info">
+        <div class="my-menu-name">승차권 조회</div>
+        <div class="my-menu-desc">예매한 승차권 확인 및 취소</div>
+      </div>
+      <span class="my-menu-arrow">›</span>
+    </div>
+    <div class="my-menu-item" onclick="openMySection('pass')">
+      <span class="my-menu-icon">🎟️</span>
+      <div class="my-menu-info">
+        <div class="my-menu-name">정기권 예매</div>
+        <div class="my-menu-desc">자주 이용하는 구간 빠른 예매</div>
+      </div>
+      <span class="my-menu-arrow">›</span>
+    </div>
+    <div class="my-menu-item" onclick="openMySection('alarm')">
+      <span class="my-menu-icon">🔔</span>
+      <div class="my-menu-info">
+        <div class="my-menu-name">승하차 알람</div>
+        <div class="my-menu-desc">승차·하차 알람 설정 및 관리</div>
+      </div>
+      <span class="my-menu-arrow">›</span>
+    </div>
+    <div class="my-menu-item" onclick="openMySection('fav')">
+      <span class="my-menu-icon">⭐</span>
+      <div class="my-menu-info">
+        <div class="my-menu-name">즐겨찾기</div>
+        <div class="my-menu-desc">자주 찾는 열차·역·구간</div>
+      </div>
+      <span class="my-menu-arrow">›</span>
+    </div>
+    <div class="my-menu-item" onclick="openMySection('stats')">
+      <span class="my-menu-icon">📊</span>
+      <div class="my-menu-info">
+        <div class="my-menu-name">운행 통계</div>
+        <div class="my-menu-desc">열차별 운행 현황 및 통계</div>
+      </div>
+      <span class="my-menu-arrow">›</span>
+    </div>
+    <div class="my-menu-item" onclick="openMySection('notice')">
+      <span class="my-menu-icon">📢</span>
+      <div class="my-menu-info">
+        <div class="my-menu-name">공지사항</div>
+        <div class="my-menu-desc">서비스 업데이트 및 안내</div>
+      </div>
+      <span class="my-menu-arrow">›</span>
+    </div>
+  </div>
+</div>
+
+<!-- 마이페이지 서브패널 -->
+<div class="my-sub-panel" id="my-sub-panel">
+  <div class="my-panel-header">
+    <button class="my-back-btn" onclick="closeMySubPanel()">‹</button>
+    <div class="my-panel-title" id="my-sub-title"></div>
+    <button class="my-panel-close" onclick="closeMyPage()">✕</button>
+  </div>
+  <div id="my-sub-content"></div>
+</div>
 <div class="container">
   <div class="tabs">
     <button class="tab active" onclick="switchTab('train')" id="tab-train">🔢 열차</button>
     <button class="tab" onclick="switchTab('station')" id="tab-station">🏢 시간표</button>
     <button class="tab" onclick="switchTab('route')" id="tab-route">🔍 출도착</button>
+    <button class="tab" onclick="switchTab('book')" id="tab-book">🎫 열차 예매</button>
     <button class="tab" onclick="switchTab('map')" id="tab-map">🗺️ 노선도</button>
-    <button class="tab" onclick="switchTab('alarm')" id="tab-alarm">🔔 알람</button>
-    <button class="tab" onclick="switchTab('fav')" id="tab-fav">⭐ 즐겨찾기</button>
-    <button class="tab" onclick="switchTab('stats')" id="tab-stats">📊 통계</button>
-    <button class="tab" onclick="switchTab('notice')" id="tab-notice">📢 공지</button>
-    <button class="tab" onclick="switchTab('ticket')" id="tab-ticket">🎫 승차권</button>
+    <!-- 알람·즐겨찾기·통계·공지·승차권은 마이페이지로 이동 -->
+    <button class="tab" id="tab-alarm" style="display:none" onclick="switchTab('alarm')">🔔 알람</button>
+    <button class="tab" id="tab-fav" style="display:none" onclick="switchTab('fav')">⭐ 즐겨찾기</button>
+    <button class="tab" id="tab-stats" style="display:none" onclick="switchTab('stats')">📊 통계</button>
+    <button class="tab" id="tab-notice" style="display:none" onclick="switchTab('notice')">📢 공지</button>
+    <button class="tab" id="tab-ticket" style="display:none" onclick="switchTab('ticket')">🎫 승차권</button>
     
   </div>
 
@@ -291,6 +363,9 @@
   </div>
   <div class="panel" id="panel-ticket">
     <div id="result-ticket"></div>
+  </div>
+  <div class="panel" id="panel-book">
+    <div id="result-book"></div>
   </div>
   
 
