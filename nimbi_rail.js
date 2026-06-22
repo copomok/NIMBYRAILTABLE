@@ -3308,31 +3308,20 @@ function renderTripWidget(active){
     }
   }
 
-  // 선 위치: stop 개수에 따라 비율 계산
-  const _stopCnt = (tl?1:0)+(tl&&tl.prev?1:0)+(tl&&tl.next?1:0);
-  const _unit = _stopCnt>0?Math.round(100/_stopCnt):50;
-  // prev→cur 선
-  const lineL = tl&&tl.prev ? `<div class="trip-tl-line" style="left:${_unit/2}%;right:${100-_unit*(_stopCnt===3?2:1)+_unit/2}%;background:linear-gradient(90deg,${gradeColor}55,${gradeColor}cc)"></div>` : '';
-  // cur→next 선
-  const lineR = tl&&tl.next ? `<div class="trip-tl-line" style="left:${tl.prev?100-_unit/2:50}%;right:${_unit/2}%;background:linear-gradient(90deg,${gradeColor}cc,${gradeColor}44)"></div>` : '';
+  const _hasPrev = !!(tl&&tl.prev), _hasNext = !!(tl&&tl.next);
+  const _tlClass = `trip-widget-timeline${_hasPrev?' has-prev':''}${_hasNext?' has-next':''}`;
   const tlHtml = tl ? `
-    <div class="trip-widget-timeline">
-      ${lineL}${lineR}
-      ${tl.prev?`<div class="trip-tl-stop">
-        <div class="trip-tl-dot-row"><span class="trip-tl-dot small"></span></div>
-        <span class="trip-tl-name">${tl.prev.name}</span>
-        <span class="trip-tl-time">${tl.prev.time||''}</span>
-      </div>`:''}
-      <div class="trip-tl-stop">
-        <div class="trip-tl-dot-row"><span class="trip-tl-dot current" style="background:${gradeColor};border-color:${gradeColor};box-shadow:0 0 0 4px ${gradeColor}33"></span></div>
-        <span class="trip-tl-name current" style="color:${gradeColor}">${tl.cur?tl.cur.name:'이동 중'}</span>
-        <span class="trip-tl-time current" style="color:${gradeColor}">${tl.cur?tl.cur.time:''}</span>
-      </div>
-      ${tl.next?`<div class="trip-tl-stop">
-        <div class="trip-tl-dot-row"><span class="trip-tl-dot small"></span></div>
-        <span class="trip-tl-name">${tl.next.name}</span>
-        <span class="trip-tl-time">${tl.next.time||''}</span>
-      </div>`:''}
+    <div class="${_tlClass}">
+      ${_hasPrev?`<div class="trip-tl-dot-cell"><span class="trip-tl-dot small"></span></div>`:''}
+      ${_hasPrev?`<div class="trip-tl-line-cell"><div class="trip-tl-line" style="background:linear-gradient(90deg,${gradeColor}55,${gradeColor}cc)"></div></div>`:''}
+      <div class="trip-tl-dot-cell"><span class="trip-tl-dot current" style="background:${gradeColor};border-color:${gradeColor};box-shadow:0 0 0 4px ${gradeColor}33"></span></div>
+      ${_hasNext?`<div class="trip-tl-line-cell"><div class="trip-tl-line" style="background:linear-gradient(90deg,${gradeColor}cc,${gradeColor}44)"></div></div>`:''}
+      ${_hasNext?`<div class="trip-tl-dot-cell"><span class="trip-tl-dot small"></span></div>`:''}
+      ${_hasPrev?`<div class="trip-tl-name-cell"><span class="trip-tl-name">${tl.prev.name}</span><span class="trip-tl-time">${tl.prev.time||''}</span></div>`:''}
+      ${_hasPrev?`<div class="trip-tl-spacer"></div>`:''}
+      <div class="trip-tl-name-cell"><span class="trip-tl-name current" style="color:${gradeColor}">${tl.cur?tl.cur.name:'이동 중'}</span><span class="trip-tl-time current" style="color:${gradeColor}">${tl.cur?tl.cur.time:''}</span></div>
+      ${_hasNext?`<div class="trip-tl-spacer"></div>`:''}
+      ${_hasNext?`<div class="trip-tl-name-cell"><span class="trip-tl-name">${tl.next.name}</span><span class="trip-tl-time">${tl.next.time||''}</span></div>`:''}
     </div>` : '';
 
   return `<div class="trip-widget" style="border-color:${gradeColor};background:linear-gradient(135deg,${gradeColor}18,${gradeColor}08)" onclick="jumpToTrain('${train.no}')">
