@@ -686,3 +686,33 @@ tbody td{padding:10px 14px;font-size:13px;white-space:nowrap}
 .trip-widget-preboard-seat{
   font-size:12px;color:var(--text2);
 }
+
+/* ══════════════════════════════════════════
+   PC 탭별 콘텐츠 너비 제한 (알람/즐겨찾기/통계/공지/승차권)
+   시간표·열차 탭의 search-card처럼 좌우 여백이 생기도록
+   ══════════════════════════════════════════ */
+@media(min-width:641px){
+  #panel-alarm  > #result-alarm,
+  #panel-fav    > #result-fav,
+  #panel-stats  > #result-stats,
+  #panel-notice > #result-notice,
+  #panel-ticket > #result-ticket{
+    max-width:860px;
+    margin-left:auto;
+    margin-right:auto;
+  }
+  /* 탑승 중 위젯도 동일하게 */
+  .trip-widget,
+  .trip-widget-preboard{
+    max-width:860px;
+    margin-left:auto;
+    margin-right:auto;
+  }
+}
+
+/* 탑승 위젯 타임라인 PC 가로 과도한 팽창 방지 */
+@media(min-width:641px){
+  .trip-widget-timeline{
+    max-width:480px;
+  }
+}
