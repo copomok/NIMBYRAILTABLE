@@ -1202,7 +1202,16 @@ function getActiveTripTicket(){
     const inRange = (depM<=arrM) ? (nowM>=depM-2 && nowM<=arrM+2)
                                   : (nowM>=depM-2 || nowM<=arrM+2); // 자정 넘는 경우
     if(!inRange)continue;
-    return {ticket:tk, train:t, status, preBoard:false, minsUntilDep:0};
+
+    // 도착 5분 전: 위젯에 "도착 준비" 상태로 표시
+    const effectiveArrM = isOvernight && nowM < depM ? arrM + 1440 : arrM;
+    const effectiveNowM = isOvernight && nowM < depM ? nowM + 1440 : nowM;
+    const minsUntilArr = effectiveArrM - effectiveNowM;
+    if(minsUntilArr > 0 && minsUntilArr <= 5){
+      return {ticket:tk, train:t, status, preBoard:false, minsUntilDep:0, preArr:true, minsUntilArr};
+    }
+
+    return {ticket:tk, train:t, status, preBoard:false, minsUntilDep:0, preArr:false};
   }
   return null;
 }
@@ -3169,6 +3178,17 @@ function confirmBooking(trainNo,fromStn,toStn,depTime,arrTime){
   const dateInput=document.getElementById('booking-date');
   const travelDate=dateInput&&dateInput.value?dateInput.value:todayLocalStr();
 
+  // 오늘 날짜 예매 시 출발 시각이 현재 시각보다 이전이면 차단
+  if(travelDate===todayLocalStr()){
+    const nowCheck=new Date();
+    const nowMCheck=nowCheck.getHours()*60+nowCheck.getMinutes();
+    const depMCheck=toMin(depTime);
+    if(depMCheck!==null && depMCheck<nowMCheck){
+      alert(`이미 출발한 열차는 예매할 수 없습니다.\n\n${fromStn} ${depTime} 출발 → 현재 시각 ${String(nowCheck.getHours()).padStart(2,'0')}:${String(nowCheck.getMinutes()).padStart(2,'0')}`);
+      return;
+    }
+  }
+
   // 같은 날짜에 탑승 시간이 겹치는 다른 승차권이 이미 있는지 확인
   const newDepM=toMin(depTime), newArrM=toMin(arrTime);
   if(newDepM!==null&&newArrM!==null){
@@ -3263,6 +3283,27 @@ function renderTripWidget(active){
         <span class="trip-widget-no">${train.no}</span>
       </div>
       <div class="trip-widget-state" style="color:var(--orange)">🚉 ${minStr} 출발 예정</div>
+      <div class="trip-widget-preboard-info">
+        <span>${ticket.fromStn} <span style="font-family:var(--mono);color:var(--accent)">${ticket.depTime||''}</span> 출발</span>
+        <span style="color:var(--text3)">→</span>
+        <span>${ticket.toStn} <span style="font-family:var(--mono);color:var(--green)">${ticket.arrTime||''}</span> 도착</span>
+      </div>
+      <div class="trip-widget-preboard-seat">${ticket.seatClassLabel} · ${ticket.seats.join(', ')}</div>
+    </div>`;
+  }
+
+  // ── 도착 준비 중 위젯 (도착 5분 전) ──
+  if(active.preArr){
+    const minStr = active.minsUntilArr===1?'1분 후':`${active.minsUntilArr}분 후`;
+    const gradeC = `var(--c-${gcCssVar(train.grade)})`;
+    return `<div class="trip-widget trip-widget-prearr" onclick="jumpToTrain('${train.no}')">
+      <div class="trip-widget-head">
+        <span class="trip-widget-prearr-dot"></span>
+        <span class="trip-widget-label" style="color:var(--green)">도착 준비</span>
+        <span class="trip-widget-grade" style="color:${gradeC}">${train.grade}</span>
+        <span class="trip-widget-no">${train.no}</span>
+      </div>
+      <div class="trip-widget-state" style="color:var(--green)">🚉 ${minStr} 도착 예정</div>
       <div class="trip-widget-preboard-info">
         <span>${ticket.fromStn} <span style="font-family:var(--mono);color:var(--accent)">${ticket.depTime||''}</span> 출발</span>
         <span style="color:var(--text3)">→</span>

@@ -734,3 +734,14 @@ tbody td{padding:10px 14px;font-size:13px;white-space:nowrap}
   justify-content:space-between;
   margin-top:6px;font-size:11px;color:var(--text2);font-family:var(--mono);
 }
+
+/* ── 도착 준비 위젯 (도착 5분 전) ── */
+.trip-widget-prearr{
+  background:linear-gradient(135deg,rgba(63,185,80,.12),rgba(63,185,80,.06));
+  border-color:var(--green);
+}
+.trip-widget-prearr-dot{
+  width:8px;height:8px;border-radius:50%;background:var(--green);
+  animation:trip-pulse 1.5s ease-in-out infinite;
+  flex-shrink:0;
+}
