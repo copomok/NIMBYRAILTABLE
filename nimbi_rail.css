@@ -786,13 +786,20 @@ tbody td{padding:10px 14px;font-size:13px;white-space:nowrap}
    👤 마이페이지 슬라이드 패널
    ══════════════════════════════════════════ */
 .my-btn{
-  margin-left:12px;padding:6px 10px;border-radius:8px;
+  margin-left:12px;
+  width:36px;height:36px;
+  border-radius:8px;
   border:1px solid var(--border);background:var(--bg3);
-  color:var(--text1);font-size:18px;cursor:pointer;
-  position:relative;flex-shrink:0;line-height:1;
-  transition:background .15s;
+  color:var(--text1);cursor:pointer;
+  position:relative;flex-shrink:0;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;
+  transition:background .15s;padding:0;
 }
 .my-btn:hover{background:var(--bg2);border-color:var(--accent)}
+.my-btn-line{
+  width:16px;height:2px;background:currentColor;border-radius:1px;
+  display:block;transition:all .2s;
+}
 
 .my-backdrop{
   position:fixed;inset:0;background:rgba(0,0,0,.55);
@@ -803,7 +810,7 @@ tbody td{padding:10px 14px;font-size:13px;white-space:nowrap}
 /* 메인 패널 (우측에서 슬라이드) */
 .my-panel{
   position:fixed;top:0;right:0;bottom:0;
-  width:min(320px,90vw);
+  width:90vw;max-width:320px;
   background:var(--bg2);border-left:1px solid var(--border);
   z-index:501;
   transform:translateX(100%);transition:transform .28s cubic-bezier(.4,0,.2,1);
@@ -813,14 +820,14 @@ tbody td{padding:10px 14px;font-size:13px;white-space:nowrap}
 
 /* 서브 패널 (메인 위에 슬라이드) */
 .my-sub-panel{
-  position:fixed;top:0;right:0;bottom:0;
-  width:min(320px,90vw);
-  background:var(--bg1);border-left:1px solid var(--border);
-  z-index:502;
-  transform:translateX(100%);transition:transform .25s cubic-bezier(.4,0,.2,1);
+  position:fixed;top:0;left:0;right:0;bottom:0;
+  width:100%;
+  background:var(--bg1);
+  z-index:503;
+  transform:translateY(100%);transition:transform .28s cubic-bezier(.4,0,.2,1);
   display:flex;flex-direction:column;overflow:hidden;
 }
-.my-sub-panel.open{transform:translateX(0)}
+.my-sub-panel.open{transform:translateY(0)}
 
 .my-panel-header{
   display:flex;align-items:center;gap:8px;
@@ -865,7 +872,9 @@ tbody td{padding:10px 14px;font-size:13px;white-space:nowrap}
 .book-card{
   background:var(--bg2);border:1px solid var(--border);
   border-radius:14px;padding:20px;margin-bottom:16px;
+  max-width:680px;
 }
+#result-book{max-width:680px;}
 
 /* 편도/왕복 토글 */
 .book-trip-type{display:flex;gap:6px;margin-bottom:18px}
@@ -931,11 +940,11 @@ tbody td{padding:10px 14px;font-size:13px;white-space:nowrap}
 .book-search-btn:hover{background:var(--accent2)}
 
 /* 열차 목록 */
-.book-train-list{display:flex;flex-direction:column;gap:2px}
+.book-train-list{display:flex;flex-direction:column;gap:8px}
 .book-train-row{
   display:flex;align-items:center;gap:10px;
-  padding:14px 16px;background:var(--bg2);border:1px solid var(--border);
-  border-radius:10px;cursor:pointer;transition:background .1s;
+  padding:16px;background:var(--bg2);border:1px solid var(--border);
+  border-radius:12px;cursor:pointer;transition:background .1s;
 }
 .book-train-row:hover{background:var(--bg3);border-color:var(--accent)}
 .book-train-grade{font-size:12px;font-weight:700;min-width:56px}

@@ -20,7 +20,11 @@
 <header>
   <div class="logo"><div class="logo-icon">🚆</div>님비레일 시간표</div>
   <span id="header-clock" style="font-family:var(--mono);font-size:14px;font-weight:600;color:var(--text1);letter-spacing:1px"></span>
-  <button class="my-btn" onclick="openMyPage()" title="마이페이지">👤</button>
+  <button class="my-btn" onclick="openMyPage()" title="마이페이지">
+    <span class="my-btn-line"></span>
+    <span class="my-btn-line"></span>
+    <span class="my-btn-line"></span>
+  </button>
 </header>
 
 <!-- 마이페이지 오버레이 -->
@@ -85,7 +89,7 @@
 <!-- 마이페이지 서브패널 -->
 <div class="my-sub-panel" id="my-sub-panel">
   <div class="my-panel-header">
-    <button class="my-back-btn" onclick="closeMySubPanel()">‹</button>
+    <button class="my-back-btn" onclick="closeMySubPanel()">‹ 뒤로</button>
     <div class="my-panel-title" id="my-sub-title"></div>
     <button class="my-panel-close" onclick="closeMyPage()">✕</button>
   </div>

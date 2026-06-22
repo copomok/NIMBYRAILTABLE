@@ -3250,6 +3250,12 @@ function confirmBooking(trainNo,fromStn,toStn,depTime,arrTime){
   closeBookingPopup();
   alert(`예매가 완료되었습니다!\n${travelDate} · ${fromStn} → ${toStn}\n${SEAT_CLASSES[seatClass].label} ${count}명 · ${(fare*count).toLocaleString()}원`);
   if(document.getElementById('panel-ticket')?.classList.contains('active')) renderTickets();
+  // 왕복 예매 콜백 (편도 예매 완료 후 복편 조회)
+  if(window._afterBookingCallback){
+    const cb = window._afterBookingCallback;
+    window._afterBookingCallback = null;
+    cb();
+  }
 }
 
 function cancelTicket(id){
@@ -3695,11 +3701,14 @@ function renderTripWidget(active){
     pct=Math.max(0,Math.min(100,Math.round(elapsed/Math.max(total,1)*100)));
   }
 
-  // 목적지까지 남은 시간 계산
+  // 목적지까지 남은 시간 계산 (익일 도착 포함, 24h 초과 보정)
   let arrivalStr='';
   if(arrM!==null&&nowM!==null){
     let diff=(arrM>=depM)?(arrM-nowM):(arrM+1440-nowM);
+    // 이미 지났으면 0으로 처리 (음수 방지)
     if(diff<0) diff=0;
+    // 24시간(1440분) 초과면 1440을 빼서 실제 남은 시간으로 보정
+    if(diff>=1440) diff=diff%1440;
     if(diff===0) arrivalStr='곧 도착';
     else if(diff<60) arrivalStr=`목적지까지 ${diff}분 후 도착`;
     else {
@@ -4087,6 +4096,10 @@ function searchBookTrains(){
   }
 
   // 직통 열차 탐색
+  const nowForFilter = new Date();
+  const nowMFilter = nowForFilter.getHours()*60+nowForFilter.getMinutes();
+  // 오늘 날짜 예매일 때만 현재 시각 이전 열차 제외
+  const isToday = (dateGo === todayLocalStr());
   const trains = [];
   ALL_TRAINS.forEach(t=>{
     const stops = t.stops;
@@ -4098,6 +4111,8 @@ function searchBookTrains(){
     const depT = hasTime(depStop.dep)?depStop.dep:hasTime(depStop.arr)?depStop.arr:null;
     const arrT = hasTime(arrStop.arr)?arrStop.arr:hasTime(arrStop.dep)?arrStop.dep:null;
     if(!depT) return;
+    // 오늘이면 현재 시각 이전 출발 열차 제외
+    if(isToday && toMin(depT)!==null && toMin(depT)<nowMFilter) return;
     trains.push({t, depT, arrT, dur:durStr(depT, arrT)});
   });
   trains.sort((a,b)=>(toMin(a.depT)||0)-(toMin(b.depT)||0));
@@ -4176,8 +4191,8 @@ function openBookTrainDetail(trainNo, from, to, depT, arrT, travelDate){
       <div style="display:flex;gap:8px;margin-top:4px">
         <button class="btn" style="flex:1;justify-content:center;font-size:13px" onclick="closeBookTrainDetail();jumpToTrain('${trainNo}')">🔍 열차 상세</button>
         <button class="btn btn-primary" style="flex:2;justify-content:center;font-size:14px"
-          onclick="closeBookTrainDetail();window._bookingPassengerCount=${_bookPassengerCount};openBookingWithDate('${trainNo}','${from}','${to}','${depT}','${arrT||''}','${travelDate}')">
-          🎫 예매하기
+          onclick="closeBookTrainDetail();window._bookingPassengerCount=${_bookPassengerCount};openBookingWithDate('${trainNo}','${from}','${to}','${depT}','${arrT||''}','${travelDate}','${_bookRoundTrip}','${document.getElementById('book-date-back')?.value||''}')">
+          🎫 ${_bookRoundTrip?'왕편 예매':'예매하기'}
         </button>
       </div>
     </div>`;
@@ -4193,7 +4208,25 @@ function closeBookTrainDetail(){
 }
 
 // 날짜 지정 예매 (열차 예매 탭에서 호출)
-function openBookingWithDate(trainNo, from, to, depT, arrT, travelDate){
+// isRound='true': 편도 예매 완료 후 복편 조회 화면 자동 실행
+function openBookingWithDate(trainNo, from, to, depT, arrT, travelDate, isRound, dateBack){
+  // 예매 완료 후 콜백: 왕복이면 복편 조회로 이동
+  window._afterBookingCallback = (isRound==='true' && dateBack) ? ()=>{
+    setTimeout(()=>{
+      switchTab('book');
+      window._bookFrom = to;
+      window._bookTo = from;
+      window._bookRoundTrip = false; // 복편은 편도로
+      renderBookTab();
+      // 복편 날짜 자동 설정 후 바로 조회
+      setTimeout(()=>{
+        const dEl = document.getElementById('book-date-go');
+        if(dEl) dEl.value = dateBack;
+        searchBookTrains();
+      }, 100);
+    }, 300);
+  } : null;
+
   openBookingPopup(trainNo, from, to, depT, arrT);
   setTimeout(()=>{
     const dateInp = document.getElementById('booking-date');
