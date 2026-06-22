@@ -1545,6 +1545,7 @@ function removeFav(id){
 }
 
 function runFav(fav){
+  closeMyPage();
   if(fav.type==='train'){
     document.getElementById('input-trainno').value=fav.data.no;
     const sel=document.getElementById('sel-line-train');
@@ -2016,6 +2017,7 @@ function favDragOver(e, idx){
 }
 
 function jumpToTrain(no){
+  closeMyPage();
   document.getElementById('input-trainno').value=no;
   switchTab('train');searchByTrain();
   window.scrollTo({top:0,behavior:'smooth'});
@@ -4046,41 +4048,26 @@ function swapBookStations(){
 
 // 역 선택 팝업
 function openBookStnPicker(type){
-  const old = document.getElementById('book-stn-picker-wrap');
-  if(old) old.remove();
-  // body 고정 드롭다운 (z-index 문제 완전 해결)
-  const bodyDrop = document.createElement('div');
-  bodyDrop.id = 'book-stn-body-drop';
-  bodyDrop.style.cssText = 'position:fixed;background:var(--bg2);border:1px solid var(--accent);border-radius:0 0 8px 8px;z-index:19999;display:none;max-height:260px;overflow-y:auto;box-shadow:0 4px 16px rgba(0,0,0,.5)';
-  document.body.appendChild(bodyDrop);
-
+  document.getElementById('book-stn-picker-wrap')?.remove();
   const wrap = document.createElement('div');
   wrap.id = 'book-stn-picker-wrap';
   wrap.innerHTML = `
     <div class="alarm-popup-backdrop" onclick="closeBookStnPicker()"></div>
-    <div class="alarm-popup" style="max-width:340px;width:90vw;overflow:visible;z-index:10002">
+    <div class="alarm-popup" style="max-width:340px;width:90vw;z-index:10002;top:30%;transform:translate(-50%,-0%)">
       <div class="alarm-popup-title">${type==='from'?'출발역':'도착역'} 선택</div>
-      <div style="margin-bottom:8px">
-        <input type="text" id="book-stn-input" placeholder="역명 입력 (예: 서울, ㅅㅇ)" autocomplete="off"
-          style="width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:6px;color:var(--text1);font-family:var(--sans);font-size:14px;padding:10px 12px;outline:none;display:block">
-      </div>
-      <button class="alarm-popup-close" onclick="closeBookStnPicker()">취소</button>
+      <input type="text" id="book-stn-input" placeholder="역명 입력 (예: 서울, ㅅㅇ)" autocomplete="off"
+        style="width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:6px;color:var(--text1);font-family:var(--sans);font-size:14px;padding:10px 12px;outline:none;display:block;margin-bottom:6px">
+      <div id="book-stn-list" style="max-height:240px;overflow-y:auto;border-radius:6px;background:var(--bg3)"></div>
+      <button class="alarm-popup-close" style="margin-top:8px" onclick="closeBookStnPicker()">취소</button>
     </div>`;
   document.body.appendChild(wrap);
 
   const inp = document.getElementById('book-stn-input');
-  if(!inp) return;
+  const list = document.getElementById('book-stn-list');
+  if(!inp||!list) return;
 
-  // 드롭다운 위치를 input 아래에 맞춤
-  function positionDrop(){
-    const rect = inp.getBoundingClientRect();
-    bodyDrop.style.left = rect.left+'px';
-    bodyDrop.style.top = (rect.bottom+2)+'px';
-    bodyDrop.style.width = rect.width+'px';
-  }
-
-  function showDrop(q){
-    if(!q){bodyDrop.style.display='none';return;}
+  function renderList(q){
+    if(!q){list.innerHTML='';return;}
     const validStns = type==='from'
       ? getBookableStations()
       : (window._bookFrom
@@ -4090,55 +4077,33 @@ function openBookStnPicker(type){
               return fi>=0&&ti>fi&&!isPassStop(t,window._bookFrom)&&!isPassStop(t,s);
             }))
           : getBookableStations());
-    const hits = validStns.filter(s=>matchesQuery(s,q)).slice(0,12);
-    if(!hits.length){bodyDrop.style.display='none';return;}
-    bodyDrop.innerHTML = hits.map(s=>{
+    const hits = validStns.filter(s=>matchesQuery(s,q)).slice(0,15);
+    if(!hits.length){list.innerHTML='<div style="padding:10px 14px;color:var(--text3);font-size:13px">검색 결과 없음</div>';return;}
+    list.innerHTML = hits.map(s=>{
       let display=s;
       if(!CHO.includes(q[0])){
         const i=s.indexOf(q);
         if(i>=0) display=s.slice(0,i)+`<span style="color:var(--accent)">${s.slice(i,i+q.length)}</span>`+s.slice(i+q.length);
       }
-      return `<div class="ac-item" style="padding:10px 14px;cursor:pointer" data-val="${s}">${display}</div>`;
+      return `<div data-val="${s}" style="padding:11px 14px;cursor:pointer;border-bottom:1px solid var(--border);font-size:14px"
+        onmousedown="event.preventDefault();selectBookStn('${type}','${s}')"
+        ontouchend="event.preventDefault();selectBookStn('${type}','${s}')">${display}</div>`;
     }).join('');
-    positionDrop();
-    bodyDrop.style.display='block';
   }
 
-  inp.addEventListener('input', ()=>showDrop(inp.value.trim()));
-
-  // mousedown으로 blur 전에 처리
-  bodyDrop.addEventListener('mousedown', e=>{
-    e.preventDefault();
-    const item = e.target.closest('[data-val]');
-    if(item) selectBookStn(type, item.dataset.val);
-  });
-
-  // 키보드 네비게이션
+  inp.addEventListener('input', ()=>renderList(inp.value.trim()));
   inp.addEventListener('keydown', e=>{
-    const items=[...bodyDrop.querySelectorAll('[data-val]')];
-    let idx=items.findIndex(el=>el.classList.contains('active'));
-    if(e.key==='ArrowDown'){e.preventDefault();
-      if(idx>=0)items[idx].classList.remove('active');
-      const next=Math.min(idx+1,items.length-1);
-      if(next>=0)items[next].classList.add('active');
-    } else if(e.key==='ArrowUp'){e.preventDefault();
-      if(idx>=0)items[idx].classList.remove('active');
-      const prev=Math.max(idx-1,0);
-      items[prev].classList.add('active');
-    } else if(e.key==='Enter'){
-      const active=bodyDrop.querySelector('[data-val].active');
-      const val=active?active.dataset.val:(items.length===1?items[0].dataset.val:null);
-      if(val) selectBookStn(type,val);
-    } else if(e.key==='Escape'){closeBookStnPicker();}
+    if(e.key==='Escape') closeBookStnPicker();
+    if(e.key==='Enter'){
+      const items=[...list.querySelectorAll('[data-val]')];
+      if(items.length===1) selectBookStn(type,items[0].dataset.val);
+    }
   });
 
-  inp.addEventListener('blur', ()=>setTimeout(()=>bodyDrop.style.display='none', 150));
-
-  setTimeout(()=>{inp.focus(); positionDrop();}, 50);
+  setTimeout(()=>inp.focus(), 80);
 }
 function closeBookStnPicker(){
   document.getElementById('book-stn-picker-wrap')?.remove();
-  document.getElementById('book-stn-body-drop')?.remove();
 }
 function selectBookStn(type, val){
   if(type==='from') window._bookFrom=val;
