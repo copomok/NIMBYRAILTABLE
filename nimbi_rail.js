@@ -3263,6 +3263,341 @@ function deleteTicket(id){
   renderTickets();
 }
 
+
+// ══════════════════════════════════════════
+// 🔲 QR코드 생성 (Canvas 기반, 외부 라이브러리 없음)
+// 승차권 정보를 QR 패턴으로 시각화 (디자인 요소)
+// ══════════════════════════════════════════
+function generateQRCanvas(text, size){
+  // 간단한 매트릭스 기반 패턴 생성 (실제 QR 인코딩 근사)
+  const canvas = document.createElement('canvas');
+  canvas.width = size; canvas.height = size;
+  const ctx = canvas.getContext('2d');
+  const N = 25; // 25x25 모듈
+  const cell = Math.floor(size / N);
+
+  // 문자열을 숫자 배열로 변환 (의사 랜덤 패턴)
+  function strToSeed(s){
+    let h = 0;
+    for(let i=0;i<s.length;i++) h = (Math.imul(31,h) + s.charCodeAt(i)) | 0;
+    return h;
+  }
+  function seededRand(seed, i){
+    let x = Math.sin(seed * 9301 + i * 49297 + 233) * 803.9;
+    return x - Math.floor(x);
+  }
+
+  const seed = strToSeed(text);
+  const mod = [];
+  for(let r=0;r<N;r++){
+    mod[r]=[];
+    for(let c=0;c<N;c++) mod[r][c] = seededRand(seed, r*N+c) > 0.5 ? 1 : 0;
+  }
+
+  // QR 위치 감지 패턴 (좌상/우상/좌하 코너 고정)
+  function drawFinder(r, c){
+    for(let dr=0;dr<7;dr++) for(let dc=0;dc<7;dc++){
+      mod[r+dr][c+dc] =
+        (dr===0||dr===6||dc===0||dc===6) ? 1 :
+        (dr>=2&&dr<=4&&dc>=2&&dc<=4) ? 1 : 0;
+    }
+  }
+  drawFinder(0,0); drawFinder(0,N-7); drawFinder(N-7,0);
+
+  // 분리자 (흰색 테두리)
+  for(let i=0;i<8;i++){
+    mod[7][i]=0; mod[i][7]=0;
+    mod[7][N-1-i]=0; mod[i][N-8]=0;
+    mod[N-8][i]=0; mod[N-1-i][7]=0;
+  }
+
+  // 타이밍 패턴
+  for(let i=8;i<N-8;i++){
+    mod[6][i] = i%2===0?1:0;
+    mod[i][6] = i%2===0?1:0;
+  }
+
+  // 렌더링
+  ctx.fillStyle = '#ffffff';
+  ctx.fillRect(0,0,size,size);
+  ctx.fillStyle = '#0d1117';
+  for(let r=0;r<N;r++){
+    for(let c=0;c<N;c++){
+      if(mod[r][c]){
+        ctx.fillRect(c*cell, r*cell, cell, cell);
+      }
+    }
+  }
+  return canvas;
+}
+
+function openQRPopup(ticketId){
+  const tickets = loadTickets();
+  const tk = tickets.find(t=>t.id===ticketId);
+  if(!tk) return;
+
+  const old = document.getElementById('qr-popup-wrap');
+  if(old) old.remove();
+
+  const qrText = `NIMBIRAIL:${tk.id}:${tk.trainNo}:${tk.fromStn}:${tk.toStn}:${tk.travelDate}:${tk.depTime}`;
+
+  const wrap = document.createElement('div');
+  wrap.id = 'qr-popup-wrap';
+  wrap.innerHTML = `
+    <div class="alarm-popup-backdrop" onclick="closeQRPopup()"></div>
+    <div class="alarm-popup qr-popup">
+      <div class="qr-popup-header">
+        <div class="qr-popup-grade" style="color:var(--c-${gcCssVar(tk.grade)})">${tk.grade} ${tk.trainNo}</div>
+        <div class="qr-popup-route">${tk.fromStn} → ${tk.toStn}</div>
+        <div class="qr-popup-date">${tk.travelDate} · ${tk.depTime} 출발</div>
+      </div>
+      <div class="qr-canvas-wrap" id="qr-canvas-wrap"></div>
+      <div class="qr-popup-id">${tk.id}</div>
+      <div class="qr-popup-seat">${tk.seatClassLabel} · ${tk.seats.join(', ')} · ${tk.passengerCount}명</div>
+      <button class="alarm-popup-close" onclick="closeQRPopup()">닫기</button>
+    </div>`;
+  document.body.appendChild(wrap);
+
+  // Canvas 삽입
+  const canvasWrap = document.getElementById('qr-canvas-wrap');
+  const canvas = generateQRCanvas(qrText, 200);
+  canvas.style.cssText = 'border-radius:8px;display:block';
+  canvasWrap.appendChild(canvas);
+}
+
+function closeQRPopup(){
+  const el = document.getElementById('qr-popup-wrap');
+  if(el) el.remove();
+}
+
+// ══════════════════════════════════════════
+// 🎟️ 정기권 시스템
+// ══════════════════════════════════════════
+const PASS_KEY = 'nimbi_passes';
+function loadPasses(){ try{ return JSON.parse(localStorage.getItem(PASS_KEY))||[]; }catch(e){ return []; } }
+function savePasses(p){ localStorage.setItem(PASS_KEY, JSON.stringify(p)); }
+
+function openPassRegisterPopup(){
+  const old = document.getElementById('pass-register-wrap');
+  if(old) old.remove();
+
+  const wrap = document.createElement('div');
+  wrap.id = 'pass-register-wrap';
+  wrap.innerHTML = `
+    <div class="alarm-popup-backdrop" onclick="closePassRegisterPopup()"></div>
+    <div class="alarm-popup pass-popup">
+      <div class="alarm-popup-title">🎟️ 정기권 등록</div>
+      <div class="alarm-popup-sub">자주 이용하는 구간을 등록하세요</div>
+      <div class="booking-section-label">출발역</div>
+      <div class="autocomplete-wrap" style="margin-bottom:4px">
+        <input type="text" id="pass-from" placeholder="출발역 입력" autocomplete="off"
+          oninput="acShow('pass-from','ac-pass-from')"
+          onkeydown="acKey(event,'pass-from','ac-pass-from')"
+          onblur="setTimeout(()=>acHide('ac-pass-from'),150)"
+          style="width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:6px;color:var(--text1);font-family:var(--sans);font-size:13px;padding:8px 12px;outline:none">
+        <div class="ac-dropdown" id="ac-pass-from"></div>
+      </div>
+      <div class="booking-section-label">도착역</div>
+      <div class="autocomplete-wrap" style="margin-bottom:4px">
+        <input type="text" id="pass-to" placeholder="도착역 입력" autocomplete="off"
+          oninput="acShow('pass-to','ac-pass-to')"
+          onkeydown="acKey(event,'pass-to','ac-pass-to')"
+          onblur="setTimeout(()=>acHide('ac-pass-to'),150)"
+          style="width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:6px;color:var(--text1);font-family:var(--sans);font-size:13px;padding:8px 12px;outline:none">
+        <div class="ac-dropdown" id="ac-pass-to"></div>
+      </div>
+      <div class="booking-section-label">이름 (선택)</div>
+      <input type="text" id="pass-name" placeholder="예: 출근길, 주말 여행" autocomplete="off"
+        style="width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:6px;color:var(--text1);font-family:var(--sans);font-size:13px;padding:8px 12px;outline:none;margin-bottom:4px">
+      <button class="btn btn-primary booking-confirm-btn" style="margin-top:12px" onclick="confirmPassRegister()">등록하기</button>
+      <button class="alarm-popup-close" onclick="closePassRegisterPopup()">취소</button>
+    </div>`;
+  document.body.appendChild(wrap);
+}
+
+function closePassRegisterPopup(){
+  const el = document.getElementById('pass-register-wrap');
+  if(el) el.remove();
+}
+
+function confirmPassRegister(){
+  const from = document.getElementById('pass-from')?.value.trim();
+  const to   = document.getElementById('pass-to')?.value.trim();
+  const name = document.getElementById('pass-name')?.value.trim();
+  if(!from||!to){ alert('출발역과 도착역을 입력해주세요.'); return; }
+  if(from===to){ alert('출발역과 도착역이 같습니다.'); return; }
+  // 실제 열차 있는지 확인
+  const exists = ALL_TRAINS.some(t=>{
+    const stops=t.stops;
+    const fi=stops.findIndex(s=>s.s===from);
+    const ti=stops.findIndex(s=>s.s===to);
+    return fi>=0&&ti>=0&&fi<ti&&!isPassStop(t,from)&&!isPassStop(t,to);
+  });
+  if(!exists){ alert(`${from} → ${to} 구간을 운행하는 열차가 없습니다.`); return; }
+  const passes = loadPasses();
+  if(passes.some(p=>p.from===from&&p.to===to)){ alert('이미 등록된 구간입니다.'); return; }
+  passes.push({ id:'pass_'+Date.now(), from, to, name:name||(from+'→'+to), createdAt:Date.now() });
+  savePasses(passes);
+  closePassRegisterPopup();
+  renderTickets();
+}
+
+function deletePass(id){
+  if(!confirm('이 정기권을 삭제하시겠습니까?')) return;
+  savePasses(loadPasses().filter(p=>p.id!==id));
+  renderTickets();
+}
+
+// 정기권으로 빠른 예매 팝업 열기
+function openPassBookingPopup(passId){
+  const pass = loadPasses().find(p=>p.id===passId);
+  if(!pass) return;
+
+  const old = document.getElementById('pass-booking-wrap');
+  if(old) old.remove();
+
+  // 해당 구간 열차 조회
+  const trains = [];
+  ALL_TRAINS.forEach(t=>{
+    const stops=t.stops;
+    const fi=stops.findIndex(s=>s.s===pass.from);
+    const ti=stops.findIndex(s=>s.s===pass.to);
+    if(fi<0||ti<0||fi>=ti) return;
+    if(isPassStop(t,pass.from)||isPassStop(t,pass.to)) return;
+    const depStop=stops[fi], arrStop=stops[ti];
+    const depT=hasTime(depStop.dep)?depStop.dep:hasTime(depStop.arr)?depStop.arr:null;
+    const arrT=hasTime(arrStop.arr)?arrStop.arr:hasTime(arrStop.dep)?arrStop.dep:null;
+    if(!depT) return;
+    trains.push({t, depT, arrT});
+  });
+  trains.sort((a,b)=>(toMin(a.depT)||0)-(toMin(b.depT)||0));
+
+  if(!trains.length){ alert('현재 운행 중인 열차가 없습니다.'); return; }
+
+  const toLocalDateStr=d=>{
+    const y=d.getFullYear(), m=String(d.getMonth()+1).padStart(2,'0'), day=String(d.getDate()).padStart(2,'0');
+    return `${y}-${m}-${day}`;
+  };
+  const today=new Date();
+  const minDate=toLocalDateStr(today);
+  const maxD=new Date(today); maxD.setMonth(maxD.getMonth()+1);
+  const maxDate=toLocalDateStr(maxD);
+
+  const trainOpts = trains.slice(0,20).map(({t,depT,arrT})=>
+    `<option value="${t.no}|${depT}|${arrT||''}">${t.no} (${t.grade}) ${depT}→${arrT||'?'}</option>`
+  ).join('');
+
+  const wrap = document.createElement('div');
+  wrap.id = 'pass-booking-wrap';
+  wrap.innerHTML = `
+    <div class="alarm-popup-backdrop" onclick="closePassBookingPopup()"></div>
+    <div class="alarm-popup pass-popup">
+      <div class="alarm-popup-title">🎟️ ${pass.name}</div>
+      <div class="alarm-popup-sub">${pass.from} → ${pass.to}</div>
+      <div class="booking-section-label">탑승일</div>
+      <input type="date" id="pass-booking-date" value="${minDate}" min="${minDate}" max="${maxDate}"
+        class="booking-date-input" style="width:100%;margin-bottom:4px">
+      <div class="booking-section-label">열차 선택</div>
+      <select id="pass-train-sel" style="width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:6px;color:var(--text1);font-family:var(--sans);font-size:13px;padding:8px 12px;outline:none;margin-bottom:4px">
+        ${trainOpts}
+      </select>
+      <div class="booking-section-label">좌석 등급</div>
+      <div id="pass-seat-opts" class="booking-seat-options"></div>
+      <div class="booking-section-label">인원</div>
+      <div class="booking-passenger-control">
+        <button class="booking-stepper-btn" onclick="changePassengerCount(-1)">−</button>
+        <span id="booking-passenger-count">1</span>
+        <button class="booking-stepper-btn" onclick="changePassengerCount(1)">+</button>
+      </div>
+      <button class="btn btn-primary booking-confirm-btn" style="margin-top:16px" onclick="confirmPassBooking('${passId}')">🎫 예매하기</button>
+      <button class="alarm-popup-close" onclick="closePassBookingPopup()">취소</button>
+    </div>`;
+  document.body.appendChild(wrap);
+  window._bookingSeatClass = null;
+  window._bookingPassengerCount = 1;
+
+  // 열차 선택 시 좌석 등급 업데이트
+  function updateSeatOpts(){
+    const sel = document.getElementById('pass-train-sel');
+    if(!sel) return;
+    const [trainNo] = sel.value.split('|');
+    const t = ALL_TRAINS.find(x=>x.no===trainNo);
+    if(!t) return;
+    const classes = availableSeatClasses(t.grade);
+    const [,depT,arrT] = sel.value.split('|');
+    document.getElementById('pass-seat-opts').innerHTML = classes.map(c=>{
+      const fare = calcFare(t, pass.from, pass.to, c);
+      return `<button class="booking-seat-option" data-class="${c}" onclick="selectSeatClass(this,'${c}')">
+        <span class="booking-seat-label">${SEAT_CLASSES[c].label}</span>
+        <span class="booking-seat-fare">${fare.toLocaleString()}원</span>
+      </button>`;
+    }).join('');
+    window._bookingSeatClass = null;
+    const btn = document.querySelector('#pass-booking-wrap .booking-confirm-btn');
+    if(btn){ btn.disabled=true; btn.textContent='🎫 예매하기'; }
+  }
+  document.getElementById('pass-train-sel').addEventListener('change', updateSeatOpts);
+  // selectSeatClass 후 버튼 활성화 오버라이드
+  const origSelect = window._passSelectOverride = ()=>{
+    const btn = document.querySelector('#pass-booking-wrap .booking-confirm-btn');
+    if(btn){ btn.disabled=false; }
+  };
+  updateSeatOpts();
+}
+
+function closePassBookingPopup(){
+  const el = document.getElementById('pass-booking-wrap');
+  if(el) el.remove();
+}
+
+function confirmPassBooking(passId){
+  const pass = loadPasses().find(p=>p.id===passId);
+  if(!pass) return;
+  const sel = document.getElementById('pass-train-sel');
+  if(!sel) return;
+  const [trainNo, depTime, arrTime] = sel.value.split('|');
+  const seatClass = window._bookingSeatClass;
+  if(!seatClass){ alert('좌석 등급을 선택해주세요.'); return; }
+  closePassBookingPopup();
+  // 기존 예매 팝업으로 위임 (날짜·인원 값 전달)
+  const dateVal = document.getElementById('pass-booking-date')?.value || todayLocalStr();
+  openBookingPopup(trainNo, pass.from, pass.to, depTime, arrTime);
+  // 팝업이 열린 후 날짜와 등급 자동 설정
+  setTimeout(()=>{
+    const dateInp = document.getElementById('booking-date');
+    if(dateInp) dateInp.value = dateVal;
+    const opts = document.querySelectorAll('.booking-seat-option');
+    opts.forEach(b=>{ if(b.dataset.class===seatClass) b.click(); });
+  }, 50);
+}
+
+// 정기권 섹션 렌더링
+function renderPassSection(){
+  const passes = loadPasses();
+  const addBtn = `<button class="btn" style="font-size:12px;padding:5px 12px" onclick="openPassRegisterPopup()">＋ 구간 등록</button>`;
+  if(!passes.length){
+    return `<div class="pass-section">
+      <div class="pass-section-title">🎟️ 정기권</div>
+      <p class="hint" style="margin:4px 0 8px">자주 이용하는 구간을 등록하면 날짜만 선택해서 바로 예매할 수 있습니다.</p>
+      ${addBtn}
+    </div>`;
+  }
+  const cards = passes.map(p=>`
+    <div class="pass-card">
+      <div class="pass-card-info" onclick="openPassBookingPopup('${p.id}')">
+        <div class="pass-card-name">${p.name}</div>
+        <div class="pass-card-route">${p.from} → ${p.to}</div>
+      </div>
+      <button class="btn btn-primary" style="font-size:12px;padding:6px 14px;white-space:nowrap" onclick="openPassBookingPopup('${p.id}')">🎫 예매</button>
+      <button class="alarm-del-btn" onclick="deletePass('${p.id}')">✕</button>
+    </div>`).join('');
+  return `<div class="pass-section">
+    <div class="pass-section-title">🎟️ 정기권 <span style="font-size:11px;color:var(--text3);font-weight:400">${passes.length}개 등록</span></div>
+    ${cards}
+    ${addBtn}
+  </div>`;
+}
+
 // 승차권 탭 렌더링
 let _ticketFilterTab='upcoming'; // upcoming | past | cancelled
 function setTicketFilter(f){_ticketFilterTab=f;renderTickets();}
@@ -3398,7 +3733,7 @@ function renderTickets(){
   const tripWidget=renderTripWidget(activeTrip);
 
   if(!tickets.length){
-    el.innerHTML=`${tripWidget}<div class="empty"><div class="empty-icon">🎫</div><p>예매한 승차권이 없습니다.<br>열차 상세에서 🎫 예매 버튼을 눌러보세요.</p></div>`;
+    el.innerHTML=`${tripWidget}${renderPassSection()}<div class="empty"><div class="empty-icon">🎫</div><p>예매한 승차권이 없습니다.<br>열차 상세에서 🎫 예매 버튼을 눌러보세요.</p></div>`;
     return;
   }
 
@@ -3469,7 +3804,10 @@ function renderTickets(){
         <div class="ticket-info-row"><span>인원</span><span>${tk.passengerCount}명</span></div>
         <div class="ticket-info-row"><span>운임</span><span class="ticket-fare">${tk.totalFare.toLocaleString()}원</span></div>
       </div>
-      <div class="ticket-card-id">예매번호 ${tk.id}</div>
+      <div class="ticket-card-id" style="display:flex;align-items:center;justify-content:space-between">
+        <span>예매번호 ${tk.id}</span>
+        <button class="btn qr-btn" onclick="openQRPopup('${tk.id}')" title="QR코드 보기">🔲 QR</button>
+      </div>
       <div class="ticket-card-actions">
         ${tk.status==='active'&&_ticketFilterTab==='upcoming'?`<button class="btn" style="font-size:12px;padding:6px 12px" onclick="cancelTicket('${tk.id}')">예매 취소</button>`:''}
         <button class="btn" style="font-size:12px;padding:6px 12px" onclick="deleteTicket('${tk.id}')">기록 삭제</button>
@@ -3479,6 +3817,7 @@ function renderTickets(){
 
   el.innerHTML=`
     ${tripWidget}
+    ${renderPassSection()}
     <div class="result-header"><div class="result-title">🎫 내 승차권</div><span class="badge blue">${tickets.filter(t=>t.status==='active').length}건</span></div>
     ${tabs}
     <div class="ticket-list">${cards}</div>`;
