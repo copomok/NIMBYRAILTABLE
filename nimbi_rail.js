@@ -3310,15 +3310,27 @@ function renderTripWidget(active){
 
   const tlHtml = tl ? `
     <div class="trip-widget-timeline">
-      ${tl.prev?`<div class="trip-tl-stop"><div class="trip-tl-dot-row"><span class="trip-tl-dot small"></span></div><span class="trip-tl-name">${tl.prev.name}</span><span class="trip-tl-time">${tl.prev.time||''}</span></div>`:''}
-      ${tl.prev?`<div class="trip-tl-line" style="background:linear-gradient(90deg,${gradeColor}66,${gradeColor}cc)"></div>`:''}
-      <div class="trip-tl-stop">
-        <div class="trip-tl-dot-row"><span class="trip-tl-dot current" style="background:${gradeColor};border-color:${gradeColor};box-shadow:0 0 0 4px ${gradeColor}33"></span></div>
-        <span class="trip-tl-name current" style="color:${gradeColor}">${tl.cur?tl.cur.name:'이동 중'}</span>
-        <span class="trip-tl-time current" style="color:${gradeColor}">${tl.cur?tl.cur.time:''}</span>
+      <!-- 위 행: dot + 선 -->
+      <div class="trip-widget-timeline-dots">
+        ${tl.prev?`<div class="trip-tl-dot-row"><span class="trip-tl-dot small"></span></div>`:''}
+        ${tl.prev?`<div class="trip-tl-line" style="background:linear-gradient(90deg,${gradeColor}66,${gradeColor}cc)"></div>`:''}
+        <div class="trip-tl-dot-row">
+          <span class="trip-tl-dot current" style="background:${gradeColor};border-color:${gradeColor};box-shadow:0 0 0 4px ${gradeColor}33"></span>
+        </div>
+        ${tl.next?`<div class="trip-tl-line" style="background:linear-gradient(90deg,${gradeColor}cc,${gradeColor}44)"></div>`:''}
+        ${tl.next?`<div class="trip-tl-dot-row"><span class="trip-tl-dot small"></span></div>`:''}
       </div>
-      ${tl.next?`<div class="trip-tl-line" style="background:linear-gradient(90deg,${gradeColor}cc,${gradeColor}44)"></div>`:''}
-      ${tl.next?`<div class="trip-tl-stop"><div class="trip-tl-dot-row"><span class="trip-tl-dot small"></span></div><span class="trip-tl-name">${tl.next.name}</span><span class="trip-tl-time">${tl.next.time||''}</span></div>`:''}
+      <!-- 아래 행: 역명 + 시각 (dot 위치에 맞게) -->
+      <div class="trip-widget-timeline-names">
+        ${tl.prev?`<div class="trip-tl-stop"><span class="trip-tl-name">${tl.prev.name}</span><span class="trip-tl-time">${tl.prev.time||''}</span></div>`:''}
+        ${tl.prev?`<div class="trip-tl-spacer"></div>`:''}
+        <div class="trip-tl-stop">
+          <span class="trip-tl-name current" style="color:${gradeColor}">${tl.cur?tl.cur.name:'이동 중'}</span>
+          <span class="trip-tl-time current" style="color:${gradeColor}">${tl.cur?tl.cur.time:''}</span>
+        </div>
+        ${tl.next?`<div class="trip-tl-spacer"></div>`:''}
+        ${tl.next?`<div class="trip-tl-stop"><span class="trip-tl-name">${tl.next.name}</span><span class="trip-tl-time">${tl.next.time||''}</span></div>`:''}
+      </div>
     </div>` : '';
 
   return `<div class="trip-widget" style="border-color:${gradeColor};background:linear-gradient(135deg,${gradeColor}18,${gradeColor}08)" onclick="jumpToTrain('${train.no}')">
@@ -3333,7 +3345,7 @@ function renderTripWidget(active){
     ${tlHtml}
     <div class="trip-widget-progress">
       <div class="trip-widget-progress-bar"><div class="trip-widget-progress-fill" style="width:${pct}%;background:linear-gradient(90deg,${gradeColor},${gradeColor}aa)"></div></div>
-      <div class="trip-widget-progress-labels"><span>${ticket.fromStn} ${ticket.depTime||''}</span><span style="color:${gradeColor};font-weight:600">${arrivalStr||''}</span><span>${ticket.toStn} ${ticket.arrTime||''}</span></div>
+      <div class="trip-widget-progress-labels"><span>${ticket.fromStn} ${ticket.depTime||''}</span><span>${ticket.toStn} ${ticket.arrTime||''}</span></div>
     </div>
   </div>`;
 }
