@@ -664,21 +664,6 @@ tbody td{padding:10px 14px;font-size:13px;white-space:nowrap}
 .trip-widget-progress-fill{height:100%;background:linear-gradient(90deg,var(--accent),var(--green));border-radius:3px;transition:width .3s}
 .trip-widget-progress-labels{display:flex;justify-content:space-between;margin-top:6px;font-size:11px;color:var(--text2);font-family:var(--mono)}
 
-/* ══════════════════════════════════════════
-   탭별 콘텐츠 max-width 제한
-   알람/즐겨찾기/노선도/통계/공지/승차권 탭은 720px로 제한
-   ══════════════════════════════════════════ */
-#result-alarm,
-#result-fav,
-#result-stats,
-#result-notice,
-#result-ticket{
-  max-width:720px;
-}
-/* 노선도 패널은 지도만 예외, 나머지 컨트롤 영역만 제한 */
-#panel-map > div:first-child{
-  max-width:720px;
-}
 
 /* ── 승차 준비 중 위젯 ── */
 .trip-widget-preboard{
