@@ -4054,13 +4054,13 @@ function openBookStnPicker(type){
     <div class="alarm-popup-backdrop" onclick="closeBookStnPicker()"></div>
     <div class="alarm-popup" style="max-width:340px">
       <div class="alarm-popup-title">${type==='from'?'출발역':'도착역'} 선택</div>
-      <div class="autocomplete-wrap" style="margin-bottom:8px">
+      <div class="autocomplete-wrap" style="margin-bottom:8px;position:relative">
         <input type="text" id="book-stn-input" placeholder="역명 입력 (예: 서울, ㅅㅇ)" autocomplete="off"
           oninput="acShow('book-stn-input','ac-book-stn')"
           onkeydown="acKey(event,'book-stn-input','ac-book-stn')"
           onblur="setTimeout(()=>acHide('ac-book-stn'),150)"
           style="width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:6px;color:var(--text1);font-family:var(--sans);font-size:14px;padding:10px 12px;outline:none">
-        <div class="ac-dropdown" id="ac-book-stn"></div>
+        <div class="ac-dropdown" id="ac-book-stn" style="position:absolute;z-index:9999;left:0;right:0"></div>
       </div>
       <button class="alarm-popup-close" onclick="closeBookStnPicker()">취소</button>
     </div>`;
