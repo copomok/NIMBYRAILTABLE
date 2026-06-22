@@ -646,26 +646,30 @@ tbody td{padding:10px 14px;font-size:13px;white-space:nowrap}
 .trip-widget-state{font-size:16px;font-weight:700;color:var(--text1);margin-bottom:14px}
 
 /* 타임라인: 전역 - 현재역 - 다음역 (점 중심에 선 정렬) */
-/* ── 타임라인: 위 행(dot+선) / 아래 행(이름+시각) 2행 구조 ── */
-.trip-widget-timeline{display:grid;grid-template-rows:16px auto;margin-bottom:14px}
-/* 위 행: dot과 선이 수평으로 나란히, 모두 세로 중앙 정렬 */
-.trip-widget-timeline-dots{display:flex;align-items:center;width:100%}
-/* 아래 행: 역명+시각이 dot 위치에 맞춰 정렬 */
-.trip-widget-timeline-names{display:flex;align-items:flex-start;width:100%;margin-top:4px}
-.trip-tl-stop{display:flex;flex-direction:column;align-items:center;gap:2px;flex-shrink:0}
-.trip-tl-dot-row{height:16px;display:flex;align-items:center;justify-content:center}
+/* ── 타임라인: 각 stop이 flex:1로 늘어나고 선은 절대위치로 dot에 고정 ── */
+.trip-widget-timeline{display:flex;align-items:flex-start;margin-bottom:14px;position:relative}
+.trip-widget-timeline-dots{display:none}   /* 사용 안 함 (구조 단순화) */
+.trip-widget-timeline-names{display:none}  /* 사용 안 함 */
+/* 각 stop: flex:1로 공간을 균등 분배 */
+.trip-tl-stop{display:flex;flex-direction:column;align-items:center;gap:3px;flex:1;position:relative;z-index:1}
+.trip-tl-dot-row{height:14px;display:flex;align-items:center;justify-content:center;width:100%}
 .trip-tl-dot{width:9px;height:9px;border-radius:50%;background:var(--bg3);border:2px solid var(--text3);flex-shrink:0}
 .trip-tl-dot.small{width:7px;height:7px}
 .trip-tl-dot.current{width:13px;height:13px;background:var(--accent);border-color:var(--accent);box-shadow:0 0 0 4px rgba(56,139,253,.2)}
 .trip-tl-dot.current.pass{background:#f97316;border-color:#f97316;box-shadow:0 0 0 4px rgba(249,115,22,.2)}
-.trip-tl-name{font-size:11px;color:var(--text2);white-space:nowrap;max-width:68px;overflow:hidden;text-overflow:ellipsis;text-align:center}
+.trip-tl-name{font-size:11px;color:var(--text2);white-space:nowrap;max-width:72px;overflow:hidden;text-overflow:ellipsis;text-align:center}
 .trip-tl-name.current{color:var(--text1);font-weight:700;font-size:12px}
 .trip-tl-time{font-size:10px;color:var(--text3);font-family:var(--mono);text-align:center}
 .trip-tl-time.current{color:var(--accent);font-weight:600}
-/* 선: dots 행 안에서 flex:1로 늘어남, 세로 중앙 자동 정렬 */
-.trip-tl-line{flex:1;height:2px;background:var(--border);min-width:16px}
-/* 이름/시각 열 사이 스페이서 */
-.trip-tl-spacer{flex:1;min-width:16px}
+/* 선: 두 stop 사이를 position:absolute로 연결, dot 중앙(7px) 위치에 맞춤 */
+.trip-tl-line{
+  position:absolute;top:6px;height:2px;
+  left:0;right:0;
+  z-index:0;
+  background:var(--border);
+}
+/* spacer 불필요 */
+.trip-tl-spacer{display:none}
 
 .trip-widget-progress{margin-top:4px}
 .trip-widget-progress-bar{height:5px;background:var(--bg3);border-radius:3px;overflow:hidden}
@@ -696,17 +700,20 @@ tbody td{padding:10px 14px;font-size:13px;white-space:nowrap}
 }
 
 /* ══════════════════════════════════════════
-   PC 탭별 콘텐츠 너비 제한
-   출도착 탭 search-card 기준과 동일하게 max-width:1100px
+   탭별 콘텐츠 너비 제한
+   시간표 탭 search-card 너비와 동일하게 맞춤
    ══════════════════════════════════════════ */
-@media(min-width:641px){
-  #panel-alarm  > #result-alarm,
-  #panel-fav    > #result-fav,
-  #panel-stats  > #result-stats,
-  #panel-notice > #result-notice,
-  #panel-ticket > #result-ticket{
-    max-width:1100px;
-  }
+#panel-alarm  > #result-alarm,
+#panel-fav    > #result-fav,
+#panel-stats  > #result-stats,
+#panel-notice > #result-notice,
+#panel-ticket > #result-ticket{
+  max-width:680px;
+}
+/* 탑승 중 위젯도 동일 너비 */
+.trip-widget,
+.trip-widget-preboard{
+  max-width:680px;
 }
 
 /* ── 탑승 중 위젯 개선 ── */
