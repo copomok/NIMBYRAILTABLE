@@ -288,81 +288,91 @@ function searchByTrain(){
 function getCurrentStatus(t){
   const now=new Date();
   const nowMin=now.getHours()*60+now.getMinutes();
-  // 원본 stops에서 인덱스 보존하며 시각 있는 역 수집
+
+  // 시각 있는 역 전체 수집 (원본 인덱스 보존)
   const all=[];
   t.stops.forEach((s,idx)=>{
     if(hasTime(s.arr)||hasTime(s.dep))all.push({s,idx});
   });
   if(!all.length)return null;
 
-  // 자정 넘는 열차 대응: 시각이 역순으로 줄어드는 구간에서 +1440 보정
-  // 각 stop의 시각을 연속된 분 값으로 정규화
+  // 자정 넘는 열차 대응: 시각이 크게 줄어드는 구간에서 +1440 보정
   function normalizeMinutes(stops){
     const result=[];
-    let offset=0;
-    let prevM=-1;
+    let offset=0, prevM=-1;
     for(const item of stops){
       const s=item.s;
-      const rawArr=toMin(s.arr);
-      const rawDep=toMin(s.dep);
+      const rawArr=toMin(s.arr), rawDep=toMin(s.dep);
       const rawM=rawArr??rawDep;
       if(rawM===null){result.push({...item,normArr:null,normDep:null});continue;}
-      // 이전 시각보다 크게 줄었으면 자정 넘긴 것
       if(prevM>=0&&rawM<prevM-60) offset+=1440;
-      const normArr=rawArr!==null?rawArr+offset:null;
-      const normDep=rawDep!==null?rawDep+offset:null;
-      result.push({...item,normArr,normDep});
+      result.push({...item,
+        normArr:rawArr!==null?rawArr+offset:null,
+        normDep:rawDep!==null?rawDep+offset:null});
       prevM=rawM;
     }
     return result;
   }
 
-  const normalized=normalizeMinutes(all);
-  const firstDep=normalized[0].normDep??normalized[0].normArr;
-  const lastItem=normalized[normalized.length-1];
-  const lastArr=lastItem.normArr??lastItem.normDep;
+  const norm=normalizeMinutes(all);
+  const firstM=norm[0].normDep??norm[0].normArr;
+  const lastItem=norm[norm.length-1];
+  const lastM=lastItem.normArr??lastItem.normDep;
 
-  // nowMin도 열차 운행 범위에 맞게 보정
-  // 열차가 자정을 넘겨 운행 중이면 nowMin에 1440 더해서 비교
   let nowM=nowMin;
-  if(lastArr>1440&&nowMin<firstDep) nowM=nowMin+1440;
+  if(lastM>1440&&nowMin<firstM) nowM=nowMin+1440;
 
-  if(nowM<firstDep)return{status:'before'};
-  if(nowM>lastArr)return{status:'done'};
+  if(nowM<firstM)return{status:'before'};
+  if(nowM>lastM)return{status:'done',nowMin};
 
-  for(let i=0;i<normalized.length;i++){
-    const {s,idx,normArr,normDep}=normalized[i];
-    // 이 역이 통과역인지 판별 (dep 없고 arr만 있으면 통과역 or 종착역)
-    const isThisPass = isPassStop(t, s.s);
-    // 출발 시각: 정차역은 dep, 통과/종착역은 leaveM을 null로 처리 (arr만 있는 역에서 출발 개념 없음)
-    const leaveM = normDep !== null ? normDep : (isThisPass ? null : normArr);
+  // ── 핵심 로직: 정차역 단위로 구간 분리 ──
+  // 정차역 = dep가 있는 역(출발역 포함) 또는 기종점
+  // 통과역은 별도로 체크하되, 구간 이동 판정은 정차역 기준으로만 함
+  for(let i=0;i<norm.length;i++){
+    const cur=norm[i];
+    const {s,normArr,normDep}=cur;
 
-    // 정차 중: arrM <= now <= depM (arr·dep 둘 다 있는 경우만)
+    // 1) 정차 중 판정: arr·dep 둘 다 있고 그 사이에 nowM이 있음
     if(normArr!==null&&normDep!==null&&nowM>=normArr&&nowM<=normDep){
-      return{status:'running',atStn:s.s,prevStn:i>0?normalized[i-1].s.s:null,nowMin};
+      const prevStn=i>0?norm[i-1].s.s:null;
+      return{status:'running',atStn:s.s,prevStn,nowMin};
     }
-    // 이동 중: leaveM < now < 다음 역 arrM
-    if(i+1<normalized.length && leaveM!==null){
-      const {s:nextS,idx:nextIdx,normArr:nextArrM}=normalized[i+1];
-      const nextM=nextArrM??normalized[i+1].normDep;
-      if(nextM!==null&&nowM>leaveM&&nowM<nextM){
-        // 사이 통과역 확인
-        for(let j=idx+1;j<nextIdx;j++){
-          const mid=t.stops[j];
+
+    // 2) 이 역에서 출발할 수 있는 시각 (dep 있는 역만)
+    //    통과역(arr만)·종착역은 출발 시각 없으므로 다음 역으로 넘어감
+    if(normDep===null) continue;
+    const leaveM=normDep;
+
+    // leaveM 이후, 다음 정차역(dep 있는 역 또는 종착역) 사이에 nowM이 있으면 이동 중
+    // 그 사이 통과역들도 함께 체크
+    if(nowM<=leaveM) continue;
+
+    // 다음 정차역까지 순서대로 탐색
+    for(let j=i+1;j<norm.length;j++){
+      const nxt=norm[j];
+      const nxtArrM=nxt.normArr??nxt.normDep;
+      if(nxtArrM===null) continue;
+
+      if(nowM<nxtArrM){
+        // i역 출발 후 j역 도착 전 → 이동 중
+        // 사이 통과역 중 정확히 일치하는 시각 있으면 passStn
+        const {idx:curIdx}=cur;
+        const {idx:nxtIdx}=nxt;
+        for(let k=curIdx+1;k<nxtIdx;k++){
+          const mid=t.stops[k];
           if(!isPassStop(t,mid.s))continue;
-          const midRaw=toMin(mid.arr)||toMin(mid.dep);
+          const midRaw=toMin(mid.arr)??toMin(mid.dep);
           if(midRaw===null)continue;
-          // 통과역도 offset 적용 근사
           const midM=midRaw+(leaveM>=1440?1440:0);
-          if(midM===nowM){
-            return{status:'running',passStn:mid.s,prevStn:s.s,nowMin};
-          }
+          if(midM===nowM) return{status:'running',passStn:mid.s,prevStn:s.s,nowMin};
         }
-        return{status:'running',prevStn:s.s,nextStn:nextS.s,nowMin};
+        return{status:'running',prevStn:s.s,nextStn:nxt.s.s,nowMin};
       }
+      // nowM >= nxtArrM: 이미 j역에 도달했거나 지남 → 계속 탐색
+      break; // 시각 순서상 다음 역이 이미 지났으면 외부 루프로
     }
   }
-  return{status:'running',nextStn:normalized[normalized.length-1].s.s,nowMin};
+  return{status:'done',nowMin};
 }
 
 function renderDetail(t){
@@ -1194,31 +1204,35 @@ function getTripTimeline3(train, status){
   const allStops = train.stops.filter(s=>hasTime(s.arr)||hasTime(s.dep));
   if(!allStops.length) return null;
 
-  // 정차역만 (isPassStop 기준) - stopsOnly
-  const stopsOnly = allStops.filter(s=>!isPassStop(train,s.s));
+  const timeOf = s => !s ? null : (hasTime(s.dep)?s.dep:(hasTime(s.arr)?s.arr:null));
+  const toEntry = s => s ? {name:s.s, time:timeOf(s)} : null;
+
+  // 정차역 = dep 있는 역 + 종착역(마지막 역)
+  // isPassStop 대신 dep 유무로 직접 판별 (더 정확)
+  const terminus = allStops[allStops.length-1].s;
+  const isStopStn = s => hasTime(s.dep) || s.s === terminus;
+  const stopsOnly = allStops.filter(s => isStopStn(s));
   if(!stopsOnly.length) return null;
 
-  // 역 이름으로 정차역 인덱스 탐색 (없으면 -1)
-  const findStop = name => stopsOnly.findIndex(s=>s.s===name);
-  const getStop  = name => stopsOnly.find(s=>s.s===name) || null;
-  const timeOf   = s => !s ? null : (hasTime(s.dep)?s.dep:(hasTime(s.arr)?s.arr:null));
-  const toEntry  = s => s ? {name:s.s, time:timeOf(s)} : null;
+  const findInStops = name => stopsOnly.findIndex(s=>s.s===name);
+  const getInStops  = name => stopsOnly.find(s=>s.s===name) || null;
 
   // ── 이동 중 (prevStn → nextStn 사이) ──
   if(!status.atStn && !status.passStn && status.nextStn){
-    // nextStn이 정차역 목록에 있는지 먼저 확인
-    let ni = findStop(status.nextStn);
-    // 없으면 allStops에서 nextStn 뒤의 첫 정차역으로 fallback
+    // nextStn을 정차역 목록에서 탐색
+    let ni = findInStops(status.nextStn);
+    // 못 찾으면 nextStn 이후 첫 정차역으로 fallback
     if(ni < 0){
       const rawIdx = allStops.findIndex(s=>s.s===status.nextStn);
       if(rawIdx >= 0){
         for(let k=rawIdx; k<allStops.length; k++){
-          const fi = findStop(allStops[k].s);
+          const fi = findInStops(allStops[k].s);
           if(fi >= 0){ ni = fi; break; }
         }
       }
     }
-    const prevStop = status.prevStn ? getStop(status.prevStn) : null;
+    // prevStn도 정차역에서 탐색
+    const prevStop = status.prevStn ? getInStops(status.prevStn) : null;
     const curStop  = ni>=0 ? stopsOnly[ni] : null;
     const nextStop = ni>=0 && ni+1<stopsOnly.length ? stopsOnly[ni+1] : null;
     return {
@@ -1230,13 +1244,25 @@ function getTripTimeline3(train, status){
 
   // ── 정차 중 (atStn) ──
   if(status.atStn){
-    const ci = findStop(status.atStn);
+    const ci = findInStops(status.atStn);
+    // ci를 못 찾을 경우 allStops에서 탐색 후 주변 정차역 계산
+    if(ci < 0){
+      const ri = allStops.findIndex(s=>s.s===status.atStn);
+      const prevStop = ri>0 ? getInStops(allStops.slice(0,ri).reverse().find(s=>isStopStn(s))?.s) : null;
+      const nextStop = ri>=0 ? getInStops(allStops.slice(ri+1).find(s=>isStopStn(s))?.s) : null;
+      const curS = allStops[ri];
+      return {
+        prev: toEntry(prevStop),
+        cur:  curS ? {name:curS.s, time:timeOf(curS), isPass:false} : null,
+        next: toEntry(nextStop),
+      };
+    }
     const prevStop = ci>0 ? stopsOnly[ci-1] : null;
-    const curStop  = ci>=0 ? stopsOnly[ci] : null;
-    const nextStop = ci>=0 && ci+1<stopsOnly.length ? stopsOnly[ci+1] : null;
+    const curStop  = stopsOnly[ci];
+    const nextStop = ci+1<stopsOnly.length ? stopsOnly[ci+1] : null;
     return {
       prev: toEntry(prevStop),
-      cur:  curStop ? {name:curStop.s, time:timeOf(curStop), isPass:false} : null,
+      cur:  {name:curStop.s, time:timeOf(curStop), isPass:false},
       next: toEntry(nextStop),
     };
   }
@@ -1244,10 +1270,10 @@ function getTripTimeline3(train, status){
   // ── 통과역 통과 중 (passStn) ──
   if(status.passStn){
     const passIdx = allStops.findIndex(s=>s.s===status.passStn);
-    const prevStop = status.prevStn ? getStop(status.prevStn) : null;
+    const prevStop = status.prevStn ? getInStops(status.prevStn) : null;
     const afterPass = [];
     for(let i=passIdx+1; i<allStops.length; i++){
-      if(!isPassStop(train, allStops[i].s)){
+      if(isStopStn(allStops[i])){
         afterPass.push(allStops[i]);
         if(afterPass.length>=2) break;
       }
@@ -3249,7 +3275,8 @@ function renderTripWidget(active){
   }
 
   // 진행률 계산 (탑승구간 기준)
-  const depM=toMin(ticket.depTime), arrM=toMin(ticket.arrTime), nowM=status.nowMin;
+  const depM=toMin(ticket.depTime), arrM=toMin(ticket.arrTime);
+  const _wNow=new Date(); const nowM=_wNow.getHours()*60+_wNow.getMinutes();
   let pct=0;
   if(depM!==null&&arrM!==null&&nowM!==null){
     const total=(arrM>=depM)?(arrM-depM):(arrM+1440-depM);
