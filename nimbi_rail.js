@@ -1190,57 +1190,72 @@ function getActiveTripTicket(){
 // 현재 위치 기준 이전역/현재(정차·통과)/다음역 3개를 시간순으로 추출
 // (통과역도 포함, 시간 흐름에 따라 매번 새로 계산됨)
 function getTripTimeline3(train, status){
-  // 정차역만 포함 (통과역 제외) - 정차역 기준으로 전역/다음/다다음 표시
-  const stops = train.stops.filter(s=>hasTime(s.arr)||hasTime(s.dep));
-  const stopsOnly = stops.filter(s=>!isPassStop(train,s.s));
+  // 시각 있는 역 전체 (통과 포함)
+  const allStops = train.stops.filter(s=>hasTime(s.arr)||hasTime(s.dep));
+  if(!allStops.length) return null;
+
+  // 정차역만 (isPassStop 기준) - stopsOnly
+  const stopsOnly = allStops.filter(s=>!isPassStop(train,s.s));
   if(!stopsOnly.length) return null;
 
-  const timeOf = s => s ? (hasTime(s.dep)?s.dep:(hasTime(s.arr)?s.arr:null)) : null;
+  // 역 이름으로 정차역 인덱스 탐색 (없으면 -1)
+  const findStop = name => stopsOnly.findIndex(s=>s.s===name);
+  const getStop  = name => stopsOnly.find(s=>s.s===name) || null;
+  const timeOf   = s => !s ? null : (hasTime(s.dep)?s.dep:(hasTime(s.arr)?s.arr:null));
+  const toEntry  = s => s ? {name:s.s, time:timeOf(s)} : null;
 
-  // 이동 중: prevStn(전역)·nextStn(다음역)·그 다음역(다다음) 기준
-  if(!status.atStn && !status.passStn && status.prevStn && status.nextStn){
-    const ni = stopsOnly.findIndex(s=>s.s===status.nextStn);
-    const prev = stopsOnly.find(s=>s.s===status.prevStn) || null;
-    const cur  = ni>=0 ? stopsOnly[ni] : null;
-    const next = (ni>=0 && ni+1<stopsOnly.length) ? stopsOnly[ni+1] : null;
+  // ── 이동 중 (prevStn → nextStn 사이) ──
+  if(!status.atStn && !status.passStn && status.nextStn){
+    // nextStn이 정차역 목록에 있는지 먼저 확인
+    let ni = findStop(status.nextStn);
+    // 없으면 allStops에서 nextStn 뒤의 첫 정차역으로 fallback
+    if(ni < 0){
+      const rawIdx = allStops.findIndex(s=>s.s===status.nextStn);
+      if(rawIdx >= 0){
+        for(let k=rawIdx; k<allStops.length; k++){
+          const fi = findStop(allStops[k].s);
+          if(fi >= 0){ ni = fi; break; }
+        }
+      }
+    }
+    const prevStop = status.prevStn ? getStop(status.prevStn) : null;
+    const curStop  = ni>=0 ? stopsOnly[ni] : null;
+    const nextStop = ni>=0 && ni+1<stopsOnly.length ? stopsOnly[ni+1] : null;
     return {
-      prev: prev ? {name:prev.s, time:timeOf(prev)} : null,
-      cur:  cur  ? {name:cur.s,  time:timeOf(cur),  isPass:false} : null,
-      next: next ? {name:next.s, time:timeOf(next)} : null,
+      prev: toEntry(prevStop),
+      cur:  curStop ? {name:curStop.s, time:timeOf(curStop), isPass:false} : null,
+      next: toEntry(nextStop),
     };
   }
 
-  // 정차 중(atStn): 전역·현재역·다음역
+  // ── 정차 중 (atStn) ──
   if(status.atStn){
-    const ci = stopsOnly.findIndex(s=>s.s===status.atStn);
-    const prev = ci>0 ? stopsOnly[ci-1] : null;
-    const cur  = ci>=0 ? stopsOnly[ci]  : null;
-    const next = (ci>=0 && ci+1<stopsOnly.length) ? stopsOnly[ci+1] : null;
+    const ci = findStop(status.atStn);
+    const prevStop = ci>0 ? stopsOnly[ci-1] : null;
+    const curStop  = ci>=0 ? stopsOnly[ci] : null;
+    const nextStop = ci>=0 && ci+1<stopsOnly.length ? stopsOnly[ci+1] : null;
     return {
-      prev: prev ? {name:prev.s, time:timeOf(prev)} : null,
-      cur:  cur  ? {name:cur.s,  time:timeOf(cur),  isPass:false} : null,
-      next: next ? {name:next.s, time:timeOf(next)} : null,
+      prev: toEntry(prevStop),
+      cur:  curStop ? {name:curStop.s, time:timeOf(curStop), isPass:false} : null,
+      next: toEntry(nextStop),
     };
   }
 
-  // 통과역 통과 중: 이전 정차역·다음 정차역·다다음 정차역
+  // ── 통과역 통과 중 (passStn) ──
   if(status.passStn){
-    // passStn 이후 첫 정차역 찾기
-    const passIdx = train.stops.findIndex(s=>s.s===status.passStn);
-    const prevStop = status.prevStn ? stopsOnly.find(s=>s.s===status.prevStn) : null;
-    // passIdx 이후 정차역
-    let afterPass = [];
-    for(let i=passIdx+1;i<train.stops.length;i++){
-      const ss = train.stops[i];
-      if((hasTime(ss.arr)||hasTime(ss.dep)) && !isPassStop(train,ss.s)){
-        afterPass.push(ss);
+    const passIdx = allStops.findIndex(s=>s.s===status.passStn);
+    const prevStop = status.prevStn ? getStop(status.prevStn) : null;
+    const afterPass = [];
+    for(let i=passIdx+1; i<allStops.length; i++){
+      if(!isPassStop(train, allStops[i].s)){
+        afterPass.push(allStops[i]);
         if(afterPass.length>=2) break;
       }
     }
     return {
-      prev: prevStop ? {name:prevStop.s, time:timeOf(prevStop)} : null,
+      prev: toEntry(prevStop),
       cur:  afterPass[0] ? {name:afterPass[0].s, time:timeOf(afterPass[0]), isPass:false} : null,
-      next: afterPass[1] ? {name:afterPass[1].s, time:timeOf(afterPass[1])} : null,
+      next: toEntry(afterPass[1]||null),
     };
   }
 
@@ -3221,6 +3236,8 @@ function renderTripWidget(active){
   }
 
   const tl=getTripTimeline3(train,status);
+  // 열차 등급 CSS 색상값 (타임라인·진행바에 활용)
+  const gradeColor = `var(--c-${gcCssVar(train.grade)})`;
 
   let stateLabel;
   if(status.atStn){
@@ -3240,31 +3257,45 @@ function renderTripWidget(active){
     pct=Math.max(0,Math.min(100,Math.round(elapsed/Math.max(total,1)*100)));
   }
 
+  // 목적지까지 남은 시간 계산
+  let arrivalStr='';
+  if(arrM!==null&&nowM!==null){
+    let diff=(arrM>=depM)?(arrM-nowM):(arrM+1440-nowM);
+    if(diff<0) diff=0;
+    if(diff===0) arrivalStr='곧 도착';
+    else if(diff<60) arrivalStr=`목적지까지 ${diff}분 후 도착`;
+    else {
+      const h=Math.floor(diff/60), m=diff%60;
+      arrivalStr=`목적지까지 ${h}시간${m>0?' '+m+'분':''} 후 도착`;
+    }
+  }
+
   const tlHtml = tl ? `
     <div class="trip-widget-timeline">
       ${tl.prev?`<div class="trip-tl-stop"><div class="trip-tl-dot-row"><span class="trip-tl-dot small"></span></div><span class="trip-tl-name">${tl.prev.name}</span><span class="trip-tl-time">${tl.prev.time||''}</span></div>`:''}
-      ${tl.prev?'<div class="trip-tl-line"></div>':''}
+      ${tl.prev?`<div class="trip-tl-line" style="background:linear-gradient(90deg,${gradeColor}55,${gradeColor})"></div>`:''}
       <div class="trip-tl-stop">
-        <div class="trip-tl-dot-row"><span class="trip-tl-dot current"></span></div>
-        <span class="trip-tl-name current">${tl.cur?tl.cur.name:'?'}</span>
-        <span class="trip-tl-time current">${tl.cur?tl.cur.time:''}</span>
+        <div class="trip-tl-dot-row"><span class="trip-tl-dot current" style="background:${gradeColor};border-color:${gradeColor};box-shadow:0 0 0 4px ${gradeColor}33"></span></div>
+        <span class="trip-tl-name current" style="color:${gradeColor}">${tl.cur?tl.cur.name:'이동 중'}</span>
+        <span class="trip-tl-time current" style="color:${gradeColor}">${tl.cur?tl.cur.time:''}</span>
       </div>
-      ${tl.next?'<div class="trip-tl-line"></div>':''}
+      ${tl.next?`<div class="trip-tl-line" style="background:linear-gradient(90deg,${gradeColor},${gradeColor}33)"></div>`:''}
       ${tl.next?`<div class="trip-tl-stop"><div class="trip-tl-dot-row"><span class="trip-tl-dot small"></span></div><span class="trip-tl-name">${tl.next.name}</span><span class="trip-tl-time">${tl.next.time||''}</span></div>`:''}
     </div>` : '';
 
-  return `<div class="trip-widget" onclick="jumpToTrain('${train.no}')">
+  return `<div class="trip-widget" style="border-color:${gradeColor}" onclick="jumpToTrain('${train.no}')">
     <div class="trip-widget-head">
-      <span class="trip-widget-live-dot"></span>
-      <span class="trip-widget-label">탑승 중</span>
-      <span class="trip-widget-grade" style="color:var(--c-${gcCssVar(train.grade)})">${train.grade}</span>
+      <span class="trip-widget-live-dot" style="background:${gradeColor};box-shadow:0 0 0 0 ${gradeColor}80"></span>
+      <span class="trip-widget-label" style="color:${gradeColor}">탑승 중</span>
+      <span class="trip-widget-grade" style="color:${gradeColor}">${train.grade}</span>
       <span class="trip-widget-no">${train.no}</span>
     </div>
     <div class="trip-widget-state">${stateLabel}</div>
+    ${arrivalStr?`<div class="trip-widget-arrival">${arrivalStr}</div>`:''}
     ${tlHtml}
     <div class="trip-widget-progress">
-      <div class="trip-widget-progress-bar"><div class="trip-widget-progress-fill" style="width:${pct}%"></div></div>
-      <div class="trip-widget-progress-labels"><span>${ticket.fromStn} ${ticket.depTime||''}</span><span>${ticket.toStn} ${ticket.arrTime||''}</span></div>
+      <div class="trip-widget-progress-bar"><div class="trip-widget-progress-fill" style="width:${pct}%;background:linear-gradient(90deg,${gradeColor},${gradeColor}aa)"></div></div>
+      <div class="trip-widget-progress-labels"><span>${ticket.fromStn} ${ticket.depTime||''}</span><span style="color:${gradeColor};font-weight:600">${arrivalStr||''}</span><span>${ticket.toStn} ${ticket.arrTime||''}</span></div>
     </div>
   </div>`;
 }
