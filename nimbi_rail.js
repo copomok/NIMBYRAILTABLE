@@ -4048,69 +4048,97 @@ function swapBookStations(){
 function openBookStnPicker(type){
   const old = document.getElementById('book-stn-picker-wrap');
   if(old) old.remove();
+  // body 고정 드롭다운 (z-index 문제 완전 해결)
+  const bodyDrop = document.createElement('div');
+  bodyDrop.id = 'book-stn-body-drop';
+  bodyDrop.style.cssText = 'position:fixed;background:var(--bg2);border:1px solid var(--accent);border-radius:0 0 8px 8px;z-index:19999;display:none;max-height:260px;overflow-y:auto;box-shadow:0 4px 16px rgba(0,0,0,.5)';
+  document.body.appendChild(bodyDrop);
+
   const wrap = document.createElement('div');
   wrap.id = 'book-stn-picker-wrap';
   wrap.innerHTML = `
     <div class="alarm-popup-backdrop" onclick="closeBookStnPicker()"></div>
-    <div class="alarm-popup" style="max-width:340px">
+    <div class="alarm-popup" style="max-width:340px;width:90vw;overflow:visible;z-index:10002">
       <div class="alarm-popup-title">${type==='from'?'출발역':'도착역'} 선택</div>
-      <div class="autocomplete-wrap" style="margin-bottom:8px;position:relative">
+      <div style="margin-bottom:8px">
         <input type="text" id="book-stn-input" placeholder="역명 입력 (예: 서울, ㅅㅇ)" autocomplete="off"
-          oninput="acShow('book-stn-input','ac-book-stn')"
-          onkeydown="acKey(event,'book-stn-input','ac-book-stn')"
-          onblur="setTimeout(()=>acHide('ac-book-stn'),150)"
-          style="width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:6px;color:var(--text1);font-family:var(--sans);font-size:14px;padding:10px 12px;outline:none">
-        <div class="ac-dropdown" id="ac-book-stn" style="position:absolute;z-index:9999;left:0;right:0"></div>
+          style="width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:6px;color:var(--text1);font-family:var(--sans);font-size:14px;padding:10px 12px;outline:none;display:block">
       </div>
       <button class="alarm-popup-close" onclick="closeBookStnPicker()">취소</button>
     </div>`;
   document.body.appendChild(wrap);
-  setTimeout(()=>{
-    const inp = document.getElementById('book-stn-input');
-    if(inp){
-      inp.focus();
-      inp.oninput = ()=>{
-        const q = inp.value.trim();
-        const drop = document.getElementById('ac-book-stn');
-        if(!drop) return;
-        if(!q){drop.style.display='none';return;}
-        // 유효 역만 필터 (해당 방향 열차 있는 역)
-        const validStns = type==='from'
-          ? ALL_STATIONS.filter(s=>ALL_TRAINS.some(t=>!isPassStop(t,s)&&t.stops.some(x=>x.s===s&&(hasTime(x.dep)||hasTime(x.arr)))))
-          : (window._bookFrom
-              ? ALL_STATIONS.filter(s=>ALL_TRAINS.some(t=>{
-                  const fi=t.stops.findIndex(x=>x.s===window._bookFrom);
-                  const ti=t.stops.findIndex(x=>x.s===s);
-                  return fi>=0&&ti>fi&&!isPassStop(t,window._bookFrom)&&!isPassStop(t,s);
-                }))
-              : ALL_STATIONS);
-        const hits = validStns.filter(s=>matchesQuery(s,q)).slice(0,12);
-        if(!hits.length){drop.style.display='none';return;}
-        drop.innerHTML = hits.map(s=>{
-          const i=s.indexOf(q);
-          let display=s;
-          if(i>=0&&!q.split('').every(c=>['ㄱ','ㄲ','ㄴ','ㄷ','ㄸ','ㄹ','ㅁ','ㅂ','ㅃ','ㅅ','ㅆ','ㅇ','ㅈ','ㅉ','ㅊ','ㅋ','ㅌ','ㅍ','ㅎ'].includes(c)))
-            display=s.slice(0,i)+`<span style="color:var(--accent)">${s.slice(i,i+q.length)}</span>`+s.slice(i+q.length);
-          return `<div class="ac-item" onmousedown="event.preventDefault();selectBookStn('${type}','${s}')">${display}</div>`;
-        }).join('');
-        drop.className='ac-dropdown open';
-        drop.style.display='block';
-      };
-    }
-    // acSel 오버라이드 (기존 방식 유지)
-    const origAcSel = window.acSel;
-    window.acSel = (iid, did, val) => {
-      if(iid==='book-stn-input'){
-        selectBookStn(type, val);
-      } else {
-        origAcSel(iid, did, val);
+
+  const inp = document.getElementById('book-stn-input');
+  if(!inp) return;
+
+  // 드롭다운 위치를 input 아래에 맞춤
+  function positionDrop(){
+    const rect = inp.getBoundingClientRect();
+    bodyDrop.style.left = rect.left+'px';
+    bodyDrop.style.top = (rect.bottom+2)+'px';
+    bodyDrop.style.width = rect.width+'px';
+  }
+
+  function showDrop(q){
+    if(!q){bodyDrop.style.display='none';return;}
+    const validStns = type==='from'
+      ? getBookableStations()
+      : (window._bookFrom
+          ? ALL_STATIONS.filter(s=>ALL_TRAINS.some(t=>{
+              const fi=t.stops.findIndex(x=>x.s===window._bookFrom);
+              const ti=t.stops.findIndex(x=>x.s===s);
+              return fi>=0&&ti>fi&&!isPassStop(t,window._bookFrom)&&!isPassStop(t,s);
+            }))
+          : getBookableStations());
+    const hits = validStns.filter(s=>matchesQuery(s,q)).slice(0,12);
+    if(!hits.length){bodyDrop.style.display='none';return;}
+    bodyDrop.innerHTML = hits.map(s=>{
+      let display=s;
+      if(!CHO.includes(q[0])){
+        const i=s.indexOf(q);
+        if(i>=0) display=s.slice(0,i)+`<span style="color:var(--accent)">${s.slice(i,i+q.length)}</span>`+s.slice(i+q.length);
       }
-    };
-  }, 100);
+      return `<div class="ac-item" style="padding:10px 14px;cursor:pointer" data-val="${s}">${display}</div>`;
+    }).join('');
+    positionDrop();
+    bodyDrop.style.display='block';
+  }
+
+  inp.addEventListener('input', ()=>showDrop(inp.value.trim()));
+
+  // mousedown으로 blur 전에 처리
+  bodyDrop.addEventListener('mousedown', e=>{
+    e.preventDefault();
+    const item = e.target.closest('[data-val]');
+    if(item) selectBookStn(type, item.dataset.val);
+  });
+
+  // 키보드 네비게이션
+  inp.addEventListener('keydown', e=>{
+    const items=[...bodyDrop.querySelectorAll('[data-val]')];
+    let idx=items.findIndex(el=>el.classList.contains('active'));
+    if(e.key==='ArrowDown'){e.preventDefault();
+      if(idx>=0)items[idx].classList.remove('active');
+      const next=Math.min(idx+1,items.length-1);
+      if(next>=0)items[next].classList.add('active');
+    } else if(e.key==='ArrowUp'){e.preventDefault();
+      if(idx>=0)items[idx].classList.remove('active');
+      const prev=Math.max(idx-1,0);
+      items[prev].classList.add('active');
+    } else if(e.key==='Enter'){
+      const active=bodyDrop.querySelector('[data-val].active');
+      const val=active?active.dataset.val:(items.length===1?items[0].dataset.val:null);
+      if(val) selectBookStn(type,val);
+    } else if(e.key==='Escape'){closeBookStnPicker();}
+  });
+
+  inp.addEventListener('blur', ()=>setTimeout(()=>bodyDrop.style.display='none', 150));
+
+  setTimeout(()=>{inp.focus(); positionDrop();}, 50);
 }
 function closeBookStnPicker(){
-  const el = document.getElementById('book-stn-picker-wrap');
-  if(el) el.remove();
+  document.getElementById('book-stn-picker-wrap')?.remove();
+  document.getElementById('book-stn-body-drop')?.remove();
 }
 function selectBookStn(type, val){
   if(type==='from') window._bookFrom=val;

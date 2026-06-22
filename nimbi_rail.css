@@ -199,7 +199,7 @@ tbody td{padding:10px 14px;font-size:13px;white-space:nowrap}
 .alarm-bell-btn:hover{background:var(--bg3);color:var(--orange)}
 .alarm-bell-btn.has-alarm{background:rgba(249,115,22,.15);color:var(--orange);border-color:rgba(249,115,22,.4)}
 .alarm-popup-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:1001}
-.alarm-popup{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:20px;min-width:260px;max-width:320px;z-index:1002;box-shadow:0 8px 32px rgba(0,0,0,.6)}
+.alarm-popup{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:20px;min-width:260px;max-width:320px;z-index:1002;box-shadow:0 8px 32px rgba(0,0,0,.6);overflow:visible}
 .alarm-popup-title{font-size:15px;font-weight:700;margin-bottom:3px}
 .alarm-popup-sub{font-size:12px;color:var(--text2);margin-bottom:14px}
 .alarm-popup-option{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;width:100%;padding:12px 14px;border-radius:8px;border:1px solid var(--border);background:var(--bg3);cursor:pointer;margin-bottom:8px;font-family:inherit;text-align:left;transition:all .15s}
@@ -872,9 +872,9 @@ tbody td{padding:10px 14px;font-size:13px;white-space:nowrap}
 .book-card{
   background:var(--bg2);border:1px solid var(--border);
   border-radius:14px;padding:20px;margin-bottom:16px;
-  max-width:680px;
+  max-width:860px;
 }
-#result-book{max-width:680px;}
+#result-book{max-width:860px;}
 
 /* 편도/왕복 토글 */
 .book-trip-type{display:flex;gap:6px;margin-bottom:18px}
