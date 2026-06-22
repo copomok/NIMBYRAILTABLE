@@ -1164,20 +1164,31 @@ function getActiveTripTicket(){
   const now=new Date();
   const nowM=now.getHours()*60+now.getMinutes();
 
+  // 어제 날짜 계산 (익일 도착 열차 체크용)
+  const yesterdayD=new Date(now); yesterdayD.setDate(yesterdayD.getDate()-1);
+  const yesterday=todayLocalStr(yesterdayD);
+
   for(const tk of tickets){
     if(tk.status!=='active')continue;
-    if(tk.travelDate!==today)continue;
-    const t=ALL_TRAINS.find(x=>x.no===tk.trainNo);
-    if(!t)continue;
-
     const depM=toMin(tk.depTime);
     const arrM=toMin(tk.arrTime);
     if(depM===null||arrM===null)continue;
+    // 자정 넘는 열차: dep > arr
+    const isOvernight = depM>arrM;
+    // 오늘 출발이거나, 어제 출발한 익일 도착 열차(현재 새벽에 운행 중)
+    const isToday = tk.travelDate===today;
+    const isYesterdayOvernight = isOvernight && tk.travelDate===yesterday;
+    if(!isToday && !isYesterdayOvernight) continue;
 
-    // 출발 10분 전: 위젯에 "승차 준비" 상태로 표시
-    const minsUntilDep = depM - nowM;
-    if(minsUntilDep > 0 && minsUntilDep <= 10){
-      return {ticket:tk, train:t, status:null, preBoard:true, minsUntilDep};
+    const t=ALL_TRAINS.find(x=>x.no===tk.trainNo);
+    if(!t)continue;
+
+    // 출발 10분 전 (오늘 출발 열차만): 위젯에 "승차 준비" 상태로 표시
+    if(isToday){
+      const minsUntilDep = depM - nowM;
+      if(minsUntilDep > 0 && minsUntilDep <= 10){
+        return {ticket:tk, train:t, status:null, preBoard:true, minsUntilDep};
+      }
     }
 
     // 운행 중: 현재 상태 확인
@@ -3300,20 +3311,20 @@ function renderTripWidget(active){
   const tlHtml = tl ? `
     <div class="trip-widget-timeline">
       ${tl.prev?`<div class="trip-tl-stop"><div class="trip-tl-dot-row"><span class="trip-tl-dot small"></span></div><span class="trip-tl-name">${tl.prev.name}</span><span class="trip-tl-time">${tl.prev.time||''}</span></div>`:''}
-      ${tl.prev?`<div class="trip-tl-line" style="background:linear-gradient(90deg,${gradeColor}55,${gradeColor})"></div>`:''}
+      ${tl.prev?`<div class="trip-tl-line" style="background:linear-gradient(90deg,${gradeColor}66,${gradeColor}cc)"></div>`:''}
       <div class="trip-tl-stop">
         <div class="trip-tl-dot-row"><span class="trip-tl-dot current" style="background:${gradeColor};border-color:${gradeColor};box-shadow:0 0 0 4px ${gradeColor}33"></span></div>
         <span class="trip-tl-name current" style="color:${gradeColor}">${tl.cur?tl.cur.name:'이동 중'}</span>
         <span class="trip-tl-time current" style="color:${gradeColor}">${tl.cur?tl.cur.time:''}</span>
       </div>
-      ${tl.next?`<div class="trip-tl-line" style="background:linear-gradient(90deg,${gradeColor},${gradeColor}33)"></div>`:''}
+      ${tl.next?`<div class="trip-tl-line" style="background:linear-gradient(90deg,${gradeColor}cc,${gradeColor}44)"></div>`:''}
       ${tl.next?`<div class="trip-tl-stop"><div class="trip-tl-dot-row"><span class="trip-tl-dot small"></span></div><span class="trip-tl-name">${tl.next.name}</span><span class="trip-tl-time">${tl.next.time||''}</span></div>`:''}
     </div>` : '';
 
-  return `<div class="trip-widget" style="border-color:${gradeColor}" onclick="jumpToTrain('${train.no}')">
+  return `<div class="trip-widget" style="border-color:${gradeColor};background:linear-gradient(135deg,${gradeColor}18,${gradeColor}08)" onclick="jumpToTrain('${train.no}')">
     <div class="trip-widget-head">
-      <span class="trip-widget-live-dot" style="background:${gradeColor};box-shadow:0 0 0 0 ${gradeColor}80"></span>
-      <span class="trip-widget-label" style="color:${gradeColor}">탑승 중</span>
+      <span class="trip-widget-live-dot"></span>
+      <span class="trip-widget-label">탑승 중</span>
       <span class="trip-widget-grade" style="color:${gradeColor}">${train.grade}</span>
       <span class="trip-widget-no">${train.no}</span>
     </div>
@@ -3352,10 +3363,23 @@ function renderTickets(){
 
   const isPast=tk=>{
     if(tk.status==='cancelled')return false;
-    if(tk.travelDate<todayLocalStr(now))return true;
-    if(tk.travelDate>todayLocalStr(now))return false;
+    const depM=toMin(tk.depTime);
     const arrM=toMin(tk.arrTime);
-    return arrM!==null&&arrM<nowMin;
+    // 자정 넘는 열차 판별: dep > arr (예: 23:00 출발 → 01:00 도착)
+    const isOvernight = depM!==null && arrM!==null && depM>arrM;
+    // 실제 도착 날짜 계산
+    const arrDate = isOvernight ? (()=>{
+      const d=new Date(tk.travelDate+'T00:00:00');
+      d.setDate(d.getDate()+1);
+      return todayLocalStr(d);
+    })() : tk.travelDate;
+
+    // travelDate가 오늘보다 이전이고, 도착날짜도 오늘보다 이전이면 탑승완료
+    if(arrDate<todayLocalStr(now)) return true;
+    // 도착날짜가 오늘보다 미래면 아직 예정
+    if(arrDate>todayLocalStr(now)) return false;
+    // 도착날짜 == 오늘: 도착 시각이 지났으면 탑승완료
+    return arrM!==null && arrM<nowMin;
   };
 
   const upcoming=tickets.filter(tk=>tk.status==='active'&&!isPast(tk));

@@ -657,7 +657,7 @@ tbody td{padding:10px 14px;font-size:13px;white-space:nowrap}
 .trip-tl-name.current{color:var(--text1);font-weight:700;font-size:12px}
 .trip-tl-time{font-size:10px;color:var(--text3);font-family:var(--mono)}
 .trip-tl-time.current{color:var(--accent);font-weight:600}
-.trip-tl-line{flex:1;height:2px;background:linear-gradient(90deg,var(--border),var(--accent),var(--border));margin:0 2px;min-width:16px;align-self:flex-start;margin-top:5px}
+.trip-tl-line{flex:1;height:2px;background:var(--border);margin:0 2px;min-width:20px;align-self:center;margin-top:0}
 
 .trip-widget-progress{margin-top:4px}
 .trip-widget-progress-bar{height:5px;background:var(--bg3);border-radius:3px;overflow:hidden}
@@ -688,9 +688,18 @@ tbody td{padding:10px 14px;font-size:13px;white-space:nowrap}
 }
 
 /* ══════════════════════════════════════════
-   탑승 중 위젯 - trip-widget은 별도 너비 제한 없이
-   container(max-width:1100px) 그대로 활용
+   PC 탭별 콘텐츠 너비 제한
+   출도착 탭 search-card 기준과 동일하게 max-width:1100px
    ══════════════════════════════════════════ */
+@media(min-width:641px){
+  #panel-alarm  > #result-alarm,
+  #panel-fav    > #result-fav,
+  #panel-stats  > #result-stats,
+  #panel-notice > #result-notice,
+  #panel-ticket > #result-ticket{
+    max-width:1100px;
+  }
+}
 
 /* ── 탑승 중 위젯 개선 ── */
 /* 도착 예정 텍스트 */
