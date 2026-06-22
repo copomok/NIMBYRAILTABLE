@@ -332,16 +332,20 @@ function getCurrentStatus(t){
 
   for(let i=0;i<normalized.length;i++){
     const {s,idx,normArr,normDep}=normalized[i];
-    const leaveM=normDep??normArr;
-    // 정차 중: arrM <= now <= depM
+    // 이 역이 통과역인지 판별 (dep 없고 arr만 있으면 통과역 or 종착역)
+    const isThisPass = isPassStop(t, s.s);
+    // 출발 시각: 정차역은 dep, 통과/종착역은 leaveM을 null로 처리 (arr만 있는 역에서 출발 개념 없음)
+    const leaveM = normDep !== null ? normDep : (isThisPass ? null : normArr);
+
+    // 정차 중: arrM <= now <= depM (arr·dep 둘 다 있는 경우만)
     if(normArr!==null&&normDep!==null&&nowM>=normArr&&nowM<=normDep){
       return{status:'running',atStn:s.s,prevStn:i>0?normalized[i-1].s.s:null,nowMin};
     }
     // 이동 중: leaveM < now < 다음 역 arrM
-    if(i+1<normalized.length){
+    if(i+1<normalized.length && leaveM!==null){
       const {s:nextS,idx:nextIdx,normArr:nextArrM}=normalized[i+1];
       const nextM=nextArrM??normalized[i+1].normDep;
-      if(leaveM!==null&&nextM!==null&&nowM>leaveM&&nowM<nextM){
+      if(nextM!==null&&nowM>leaveM&&nowM<nextM){
         // 사이 통과역 확인
         for(let j=idx+1;j<nextIdx;j++){
           const mid=t.stops[j];
@@ -1142,31 +1146,42 @@ function sendNotification(title, body){
 const TRIP_NOTIF_TAG='nimbirail-trip-progress';
 let _tripNotifInterval=null;
 
-// 오늘 탑승하면서 "현재 운행 중"인 승차권 찾기
+// 오늘 탑승하면서 "현재 운행 중"이거나 "출발 10분 전"인 승차권 찾기
 function getActiveTripTicket(){
   const tickets=loadTickets();
   if(!tickets.length)return null;
   const today=todayLocalStr();
+  const now=new Date();
+  const nowM=now.getHours()*60+now.getMinutes();
+
   for(const tk of tickets){
     if(tk.status!=='active')continue;
     if(tk.travelDate!==today)continue;
     const t=ALL_TRAINS.find(x=>x.no===tk.trainNo);
     if(!t)continue;
+
+    const depM=toMin(tk.depTime);
+    const arrM=toMin(tk.arrTime);
+    if(depM===null||arrM===null)continue;
+
+    // 출발 10분 전: 위젯에 "승차 준비" 상태로 표시
+    const minsUntilDep = depM - nowM;
+    if(minsUntilDep > 0 && minsUntilDep <= 10){
+      return {ticket:tk, train:t, status:null, preBoard:true, minsUntilDep};
+    }
+
+    // 운행 중: 현재 상태 확인
     const status=getCurrentStatus(t);
     if(!status||status.status!=='running')continue;
     // 승차역을 이미 지났고 하차역에 아직 도착 안 했는지 확인
     const fi=t.stops.findIndex(s=>s.s===tk.fromStn);
     const ti=t.stops.findIndex(s=>s.s===tk.toStn);
     if(fi===-1||ti===-1)continue;
-    const depM=toMin(tk.depTime);
-    const arrM=toMin(tk.arrTime);
-    const nowM=status.nowMin;
-    if(depM===null||arrM===null)continue;
     // 자정 보정 단순 처리: 탑승구간 시각 범위 안에 있는지만 확인
     const inRange = (depM<=arrM) ? (nowM>=depM-2 && nowM<=arrM+2)
                                   : (nowM>=depM-2 || nowM<=arrM+2); // 자정 넘는 경우
     if(!inRange)continue;
-    return {ticket:tk, train:t, status};
+    return {ticket:tk, train:t, status, preBoard:false, minsUntilDep:0};
   }
   return null;
 }
@@ -1175,38 +1190,61 @@ function getActiveTripTicket(){
 // 현재 위치 기준 이전역/현재(정차·통과)/다음역 3개를 시간순으로 추출
 // (통과역도 포함, 시간 흐름에 따라 매번 새로 계산됨)
 function getTripTimeline3(train, status){
-  const valid = train.stops.filter(s=>hasTime(s.arr)||hasTime(s.dep));
-  if(!valid.length) return null;
+  // 정차역만 포함 (통과역 제외) - 정차역 기준으로 전역/다음/다다음 표시
+  const stops = train.stops.filter(s=>hasTime(s.arr)||hasTime(s.dep));
+  const stopsOnly = stops.filter(s=>!isPassStop(train,s.s));
+  if(!stopsOnly.length) return null;
 
-  // 현재 정차 중인 역의 인덱스
-  let curIdx = -1;
+  const timeOf = s => s ? (hasTime(s.dep)?s.dep:(hasTime(s.arr)?s.arr:null)) : null;
+
+  // 이동 중: prevStn(전역)·nextStn(다음역)·그 다음역(다다음) 기준
+  if(!status.atStn && !status.passStn && status.prevStn && status.nextStn){
+    const ni = stopsOnly.findIndex(s=>s.s===status.nextStn);
+    const prev = stopsOnly.find(s=>s.s===status.prevStn) || null;
+    const cur  = ni>=0 ? stopsOnly[ni] : null;
+    const next = (ni>=0 && ni+1<stopsOnly.length) ? stopsOnly[ni+1] : null;
+    return {
+      prev: prev ? {name:prev.s, time:timeOf(prev)} : null,
+      cur:  cur  ? {name:cur.s,  time:timeOf(cur),  isPass:false} : null,
+      next: next ? {name:next.s, time:timeOf(next)} : null,
+    };
+  }
+
+  // 정차 중(atStn): 전역·현재역·다음역
   if(status.atStn){
-    curIdx = valid.findIndex(s=>s.s===status.atStn);
-  } else if(status.passStn){
-    curIdx = valid.findIndex(s=>s.s===status.passStn);
+    const ci = stopsOnly.findIndex(s=>s.s===status.atStn);
+    const prev = ci>0 ? stopsOnly[ci-1] : null;
+    const cur  = ci>=0 ? stopsOnly[ci]  : null;
+    const next = (ci>=0 && ci+1<stopsOnly.length) ? stopsOnly[ci+1] : null;
+    return {
+      prev: prev ? {name:prev.s, time:timeOf(prev)} : null,
+      cur:  cur  ? {name:cur.s,  time:timeOf(cur),  isPass:false} : null,
+      next: next ? {name:next.s, time:timeOf(next)} : null,
+    };
   }
 
-  let prev, cur, next;
-  if(curIdx >= 0){
-    prev = curIdx>0 ? valid[curIdx-1] : null;
-    cur  = valid[curIdx];
-    next = curIdx<valid.length-1 ? valid[curIdx+1] : null;
-  } else {
-    // 정차/통과 중이 아니라 역 사이를 달리는 중 → prevStn/nextStn 기준
-    const pi = valid.findIndex(s=>s.s===status.prevStn);
-    const ni = valid.findIndex(s=>s.s===status.nextStn);
-    if(pi===-1 && ni===-1) return null;
-    prev = pi>=0 ? valid[pi] : null;
-    cur  = null; // "이동 중" 표시용
-    next = ni>=0 ? valid[ni] : null;
+  // 통과역 통과 중: 이전 정차역·다음 정차역·다다음 정차역
+  if(status.passStn){
+    // passStn 이후 첫 정차역 찾기
+    const passIdx = train.stops.findIndex(s=>s.s===status.passStn);
+    const prevStop = status.prevStn ? stopsOnly.find(s=>s.s===status.prevStn) : null;
+    // passIdx 이후 정차역
+    let afterPass = [];
+    for(let i=passIdx+1;i<train.stops.length;i++){
+      const ss = train.stops[i];
+      if((hasTime(ss.arr)||hasTime(ss.dep)) && !isPassStop(train,ss.s)){
+        afterPass.push(ss);
+        if(afterPass.length>=2) break;
+      }
+    }
+    return {
+      prev: prevStop ? {name:prevStop.s, time:timeOf(prevStop)} : null,
+      cur:  afterPass[0] ? {name:afterPass[0].s, time:timeOf(afterPass[0]), isPass:false} : null,
+      next: afterPass[1] ? {name:afterPass[1].s, time:timeOf(afterPass[1])} : null,
+    };
   }
 
-  const timeOf = s => s ? (hasTime(s.dep)?s.dep:s.arr) : null;
-  return {
-    prev: prev ? {name:prev.s, time:timeOf(prev)} : null,
-    cur:  cur  ? {name:cur.s,  time:timeOf(cur), isPass:isPassStop(train,cur.s)} : null,
-    next: next ? {name:next.s, time:timeOf(next)} : null,
-  };
+  return null;
 }
 
 function updateTripProgressNotif(){
@@ -3113,8 +3151,7 @@ function confirmBooking(trainNo,fromStn,toStn,depTime,arrTime){
   });
   saveTickets(tickets);
 
-  // 승차역/하차역 알람 자동 설정 (이미 설정되어 있으면 건너뜀)
-  let alarmMsg='';
+  // 승차역/하차역 알람 자동 설정 (이미 설정되어 있으면 건너뜀, 안내 문구 없이 조용히)
   try{
     const fi=t.stops.findIndex(s=>s.s===fromStn);
     const ti=t.stops.findIndex(s=>s.s===toStn);
@@ -3123,22 +3160,19 @@ function confirmBooking(trainNo,fromStn,toStn,depTime,arrTime){
         const prevStop=t.stops.slice(0,fi).reverse().find(x=>hasTime(x.dep)||hasTime(x.arr));
         const prevTime=prevStop?(hasTime(prevStop.dep)?prevStop.dep:prevStop.arr):null;
         toggleAlarmType('board',trainNo,fromStn,depTime,prevTime,true);
-        alarmMsg+='\n🔔 승차 알람이 자동 설정되었습니다.';
       } else if(fi===0 && !hasAlarm(`board:${trainNo}:${fromStn}`)){
         toggleAlarmType('board',trainNo,fromStn,depTime,null,true);
-        alarmMsg+='\n🔔 승차 알람이 자동 설정되었습니다.';
       }
       if(ti>=0 && !hasAlarm(`arr:${trainNo}:${toStn}`)){
         const prevStop2=t.stops.slice(0,ti).reverse().find(x=>hasTime(x.dep)||hasTime(x.arr));
         const prevTime2=prevStop2?(hasTime(prevStop2.dep)?prevStop2.dep:prevStop2.arr):null;
         toggleAlarmType('arr',trainNo,toStn,arrTime,prevTime2,true);
-        alarmMsg+='\n🔔 하차 알람이 자동 설정되었습니다.';
       }
     }
   }catch(e){console.warn('자동 알람 설정 실패:',e);}
 
   closeBookingPopup();
-  alert(`예매가 완료되었습니다!\n${travelDate} · ${fromStn} → ${toStn}\n${SEAT_CLASSES[seatClass].label} ${count}명 · ${(fare*count).toLocaleString()}원${alarmMsg}`);
+  alert(`예매가 완료되었습니다!\n${travelDate} · ${fromStn} → ${toStn}\n${SEAT_CLASSES[seatClass].label} ${count}명 · ${(fare*count).toLocaleString()}원`);
   if(document.getElementById('panel-ticket')?.classList.contains('active')) renderTickets();
 }
 
@@ -3164,11 +3198,31 @@ function setTicketFilter(f){_ticketFilterTab=f;renderTickets();}
 // ── 탑승 중인 열차 위젯 (승차권 탭 상단 고정 표시) ──
 function renderTripWidget(active){
   if(!active) return '';
-  const {ticket,train,status}=active;
-  const c=gc(train.grade);
+  const {ticket,train,status,preBoard,minsUntilDep}=active;
+
+  // ── 승차 준비 중 위젯 (출발 10분 전) ──
+  if(preBoard){
+    const minStr = minsUntilDep===1 ? '1분 후' : `${minsUntilDep}분 후`;
+    return `<div class="trip-widget trip-widget-preboard" onclick="jumpToTrain('${train.no}')">
+      <div class="trip-widget-head">
+        <span class="trip-widget-preboard-dot"></span>
+        <span class="trip-widget-label" style="color:var(--orange)">승차 준비</span>
+        <span class="trip-widget-grade" style="color:var(--c-${gcCssVar(train.grade)})">${train.grade}</span>
+        <span class="trip-widget-no">${train.no}</span>
+      </div>
+      <div class="trip-widget-state" style="color:var(--orange)">🚉 ${minStr} 출발 예정</div>
+      <div class="trip-widget-preboard-info">
+        <span>${ticket.fromStn} <span style="font-family:var(--mono);color:var(--accent)">${ticket.depTime||''}</span> 출발</span>
+        <span style="color:var(--text3)">→</span>
+        <span>${ticket.toStn} <span style="font-family:var(--mono);color:var(--green)">${ticket.arrTime||''}</span> 도착</span>
+      </div>
+      <div class="trip-widget-preboard-seat">${ticket.seatClassLabel} · ${ticket.seats.join(', ')}</div>
+    </div>`;
+  }
+
   const tl=getTripTimeline3(train,status);
 
-  let stateLabel, stateDetail;
+  let stateLabel;
   if(status.atStn){
     stateLabel=`${status.atStn}역 정차 중`;
   } else if(status.passStn){
@@ -3191,8 +3245,8 @@ function renderTripWidget(active){
       ${tl.prev?`<div class="trip-tl-stop"><div class="trip-tl-dot-row"><span class="trip-tl-dot small"></span></div><span class="trip-tl-name">${tl.prev.name}</span><span class="trip-tl-time">${tl.prev.time||''}</span></div>`:''}
       ${tl.prev?'<div class="trip-tl-line"></div>':''}
       <div class="trip-tl-stop">
-        <div class="trip-tl-dot-row"><span class="trip-tl-dot current ${tl.cur&&tl.cur.isPass?'pass':''}"></span></div>
-        <span class="trip-tl-name current">${tl.cur?tl.cur.name+(tl.cur.isPass?'(통과)':''):'이동 중'}</span>
+        <div class="trip-tl-dot-row"><span class="trip-tl-dot current"></span></div>
+        <span class="trip-tl-name current">${tl.cur?tl.cur.name:'?'}</span>
         <span class="trip-tl-time current">${tl.cur?tl.cur.time:''}</span>
       </div>
       ${tl.next?'<div class="trip-tl-line"></div>':''}
