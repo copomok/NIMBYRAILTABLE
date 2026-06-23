@@ -3153,6 +3153,7 @@ function openBookingPopup(trainNo, fromStn, toStn, depTime, arrTime){
 
   const wrap=document.createElement('div');
   wrap.id='booking-popup-wrap';
+  wrap.style.cssText='position:fixed;inset:0;z-index:9400;pointer-events:none';
   const classOpts=classes.map(c=>{
     const fare=calcFare(t,fromStn,toStn,c);
     return `<button class="booking-seat-option" data-class="${c}" onclick="selectSeatClass(this,'${c}')">
@@ -3555,126 +3556,138 @@ function deletePass(id){
 }
 
 // 정기권으로 빠른 예매 팝업 열기
+// ── 정기권 예매: 예매탭 이동 → 열차 선택 → 요일 선택 ──
 function openPassBookingPopup(passId){
-  const pass = loadPasses().find(p=>p.id===passId);
-  if(!pass) return;
+  const pass=loadPasses().find(p=>p.id===passId);
+  if(!pass)return;
+  closeMyPage();
+  window._bookFrom=pass.from; window._bookTo=pass.to; window._activePassId=passId;
+  switchTab('book'); renderBookTab();
+  setTimeout(()=>searchBookTrains(),100);
+}
+function closePassBookingPopup(){document.getElementById('pass-booking-wrap')?.remove();}
 
-  const old = document.getElementById('pass-booking-wrap');
-  if(old) old.remove();
-
-  // 해당 구간 열차 조회
-  const trains = [];
-  ALL_TRAINS.forEach(t=>{
-    const stops=t.stops;
-    const fi=stops.findIndex(s=>s.s===pass.from);
-    const ti=stops.findIndex(s=>s.s===pass.to);
-    if(fi<0||ti<0||fi>=ti) return;
-    if(isPassStop(t,pass.from)||isPassStop(t,pass.to)) return;
-    const depStop=stops[fi], arrStop=stops[ti];
-    const depT=hasTime(depStop.dep)?depStop.dep:hasTime(depStop.arr)?depStop.arr:null;
-    const arrT=hasTime(arrStop.arr)?arrStop.arr:hasTime(arrStop.dep)?arrStop.dep:null;
-    if(!depT) return;
-    trains.push({t, depT, arrT});
-  });
-  trains.sort((a,b)=>(toMin(a.depT)||0)-(toMin(b.depT)||0));
-
-  if(!trains.length){ alert('현재 운행 중인 열차가 없습니다.'); return; }
-
-  const toLocalDateStr=d=>{
-    const y=d.getFullYear(), m=String(d.getMonth()+1).padStart(2,'0'), day=String(d.getDate()).padStart(2,'0');
-    return `${y}-${m}-${day}`;
-  };
-  const today=new Date();
-  const minDate=toLocalDateStr(today);
-  const maxD=new Date(today); maxD.setMonth(maxD.getMonth()+1);
-  const maxDate=toLocalDateStr(maxD);
-
-  const trainOpts = trains.slice(0,20).map(({t,depT,arrT})=>
-    `<option value="${t.no}|${depT}|${arrT||''}">${t.no} (${t.grade}) ${depT}→${arrT||'?'}</option>`
-  ).join('');
-
-  const wrap = document.createElement('div');
-  wrap.id = 'pass-booking-wrap';
-  wrap.innerHTML = `
-    <div class="alarm-popup-backdrop" onclick="closePassBookingPopup()"></div>
-    <div class="alarm-popup pass-popup">
-      <div class="alarm-popup-title">🎟️ ${pass.name}</div>
-      <div class="alarm-popup-sub">${pass.from} → ${pass.to}</div>
-      <div class="booking-section-label">탑승일</div>
-      <input type="date" id="pass-booking-date" value="${minDate}" min="${minDate}" max="${maxDate}"
-        class="booking-date-input" style="width:100%;margin-bottom:4px">
-      <div class="booking-section-label">열차 선택</div>
-      <select id="pass-train-sel" style="width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:6px;color:var(--text1);font-family:var(--sans);font-size:13px;padding:8px 12px;outline:none;margin-bottom:4px">
-        ${trainOpts}
-      </select>
+function openPassDaySelector(passId,trainNo,from,to,depT,arrT){
+  const pass=loadPasses().find(p=>p.id===passId);
+  const t=ALL_TRAINS.find(x=>x.no===trainNo);
+  if(!pass||!t)return;
+  document.getElementById('book-detail-wrap')?.remove();
+  const DAY_NAMES=['일','월','화','수','목','금','토'];
+  const fareHtml=availableSeatClasses(t.grade).map(c=>{
+    const fare=calcFare(t,from,to,c);
+    return `<button class="booking-seat-option" data-class="${c}"
+      onclick="selectSeatClass(this,'${c}');updatePassDayConfirm()">
+      <span class="booking-seat-label">${SEAT_CLASSES[c].label}</span>
+      <span class="booking-seat-fare">${fare.toLocaleString()}원</span>
+    </button>`;
+  }).join('');
+  const wrap=document.createElement('div');
+  wrap.id='pass-day-wrap';
+  wrap.style.cssText='position:fixed;inset:0;z-index:9400;display:flex;align-items:center;justify-content:center';
+  wrap.innerHTML=`
+    <div style="position:fixed;inset:0;background:rgba(0,0,0,.65);backdrop-filter:blur(2px)" onclick="closePassDaySelector()"></div>
+    <div style="position:relative;z-index:1;background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:20px;width:90vw;max-width:380px;box-shadow:0 8px 32px rgba(0,0,0,.6);max-height:90vh;overflow-y:auto">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
+        <div style="font-size:15px;font-weight:700">🎟️ 정기권 예매</div>
+        <div style="font-family:var(--mono);font-size:12px;color:var(--text2)" id="pass-day-clock"></div>
+      </div>
+      <div style="font-size:12px;color:var(--text2);margin-bottom:14px">${pass.name} · ${from} → ${to}</div>
+      <div style="background:var(--bg3);border-radius:10px;padding:12px 14px;margin-bottom:14px">
+        <div style="color:var(--c-${gcCssVar(t.grade)});font-weight:700;margin-bottom:4px">${t.grade} ${trainNo}</div>
+        <div style="font-family:var(--mono);font-size:13px">${depT} → ${arrT||'-'} · ${durStr(depT,arrT)}</div>
+      </div>
+      <div class="booking-section-label">매주 반복 요일 선택 (복수 선택)</div>
+      <div style="display:flex;gap:6px;margin-bottom:10px">
+        ${DAY_NAMES.map((d,i)=>`<button data-day="${i}"
+          style="flex:1;padding:10px 2px;border-radius:8px;border:1.5px solid var(--border);background:var(--bg3);color:var(--text2);font-size:14px;font-weight:600;cursor:pointer;transition:all .15s"
+          onclick="togglePassDay(this)">${d}</button>`).join('')}
+      </div>
+      <div id="pass-day-preview" style="font-size:12px;color:var(--text3);margin-bottom:14px;min-height:16px"></div>
       <div class="booking-section-label">좌석 등급</div>
-      <div id="pass-seat-opts" class="booking-seat-options"></div>
+      <div class="booking-seat-options" style="margin-bottom:14px">${fareHtml}</div>
       <div class="booking-section-label">인원</div>
-      <div class="booking-passenger-control">
+      <div class="booking-passenger-control" style="margin-bottom:16px">
         <button class="booking-stepper-btn" onclick="changePassengerCount(-1)">−</button>
         <span id="booking-passenger-count">1</span>
         <button class="booking-stepper-btn" onclick="changePassengerCount(1)">+</button>
       </div>
-      <button class="btn btn-primary booking-confirm-btn" style="margin-top:16px" onclick="confirmPassBooking('${passId}')">🎫 예매하기</button>
-      <button class="alarm-popup-close" onclick="closePassBookingPopup()">취소</button>
+      <button id="pass-day-confirm" disabled
+        style="width:100%;padding:13px;border-radius:10px;border:none;background:var(--accent);color:#fff;font-size:14px;font-weight:700;cursor:pointer;opacity:.5"
+        onclick="confirmPassDayBooking('${passId}','${trainNo}','${from}','${to}','${depT}','${arrT||''}')">
+        🎫 정기권 예매하기
+      </button>
+      <button class="alarm-popup-close" style="margin-top:8px;width:100%" onclick="closePassDaySelector()">취소</button>
     </div>`;
   document.body.appendChild(wrap);
-  window._bookingSeatClass = null;
-  window._bookingPassengerCount = 1;
+  window._bookingSeatClass=null; window._bookingPassengerCount=1; window._selectedPassDays=[];
+  const cl=document.getElementById('pass-day-clock');
+  const tick=()=>{const n=new Date();if(cl)cl.textContent=`${String(n.getHours()).padStart(2,'0')}:${String(n.getMinutes()).padStart(2,'0')}:${String(n.getSeconds()).padStart(2,'0')}`;};
+  tick(); const ti=setInterval(tick,1000);
+  const obs=new MutationObserver(()=>{if(!document.getElementById('pass-day-wrap')){clearInterval(ti);obs.disconnect();}});
+  obs.observe(document.body,{childList:true});
+}
 
-  // 열차 선택 시 좌석 등급 업데이트
-  function updateSeatOpts(){
-    const sel = document.getElementById('pass-train-sel');
-    if(!sel) return;
-    const [trainNo] = sel.value.split('|');
-    const t = ALL_TRAINS.find(x=>x.no===trainNo);
-    if(!t) return;
-    const classes = availableSeatClasses(t.grade);
-    const [,depT,arrT] = sel.value.split('|');
-    document.getElementById('pass-seat-opts').innerHTML = classes.map(c=>{
-      const fare = calcFare(t, pass.from, pass.to, c);
-      return `<button class="booking-seat-option" data-class="${c}" onclick="selectSeatClass(this,'${c}')">
-        <span class="booking-seat-label">${SEAT_CLASSES[c].label}</span>
-        <span class="booking-seat-fare">${fare.toLocaleString()}원</span>
-      </button>`;
-    }).join('');
-    window._bookingSeatClass = null;
-    const btn = document.querySelector('#pass-booking-wrap .booking-confirm-btn');
-    if(btn){ btn.disabled=true; btn.textContent='🎫 예매하기'; }
+function getDatesForDays(days){
+  const dates=[]; const today=new Date(); today.setHours(0,0,0,0);
+  for(let w=0;w<4;w++) for(const d of days){
+    const dt=new Date(today); let diff=d-dt.getDay(); if(diff<=0)diff+=7;
+    dt.setDate(dt.getDate()+diff+w*7);
+    const s=`${dt.getFullYear()}-${String(dt.getMonth()+1).padStart(2,'0')}-${String(dt.getDate()).padStart(2,'0')}`;
+    if(!dates.includes(s))dates.push(s);
   }
-  document.getElementById('pass-train-sel').addEventListener('change', updateSeatOpts);
-  // selectSeatClass 후 버튼 활성화 오버라이드
-  const origSelect = window._passSelectOverride = ()=>{
-    const btn = document.querySelector('#pass-booking-wrap .booking-confirm-btn');
-    if(btn){ btn.disabled=false; }
-  };
-  updateSeatOpts();
+  return dates.sort();
 }
 
-function closePassBookingPopup(){
-  const el = document.getElementById('pass-booking-wrap');
-  if(el) el.remove();
+window.togglePassDay=function(btn){
+  const d=parseInt(btn.dataset.day);
+  if(!window._selectedPassDays)window._selectedPassDays=[];
+  const idx=window._selectedPassDays.indexOf(d);
+  if(idx>=0){window._selectedPassDays.splice(idx,1);btn.style.borderColor='var(--border)';btn.style.background='var(--bg3)';btn.style.color='var(--text2)';}
+  else{window._selectedPassDays.push(d);btn.style.borderColor='var(--accent)';btn.style.background='rgba(56,139,253,.15)';btn.style.color='var(--accent2)';}
+  updatePassDayConfirm();
+};
+
+function updatePassDayConfirm(){
+  const dates=getDatesForDays(window._selectedPassDays||[]);
+  const preview=document.getElementById('pass-day-preview');
+  if(preview)preview.textContent=dates.length?`앞으로 4주 · ${dates.length}장 예매 예정 (${dates.slice(0,2).join(', ')}${dates.length>2?` 외 ${dates.length-2}건`:''})` :'';
+  const btn=document.getElementById('pass-day-confirm');
+  if(btn){const ok=dates.length>0&&!!window._bookingSeatClass;btn.disabled=!ok;btn.style.opacity=ok?'1':'0.5';}
 }
 
-function confirmPassBooking(passId){
-  const pass = loadPasses().find(p=>p.id===passId);
-  if(!pass) return;
-  const sel = document.getElementById('pass-train-sel');
-  if(!sel) return;
-  const [trainNo, depTime, arrTime] = sel.value.split('|');
-  const seatClass = window._bookingSeatClass;
-  if(!seatClass){ alert('좌석 등급을 선택해주세요.'); return; }
-  closePassBookingPopup();
-  // 기존 예매 팝업으로 위임 (날짜·인원 값 전달)
-  const dateVal = document.getElementById('pass-booking-date')?.value || todayLocalStr();
-  openBookingPopup(trainNo, pass.from, pass.to, depTime, arrTime);
-  // 팝업이 열린 후 날짜와 등급 자동 설정
-  setTimeout(()=>{
-    const dateInp = document.getElementById('booking-date');
-    if(dateInp) dateInp.value = dateVal;
-    const opts = document.querySelectorAll('.booking-seat-option');
-    opts.forEach(b=>{ if(b.dataset.class===seatClass) b.click(); });
-  }, 50);
+function closePassDaySelector(){document.getElementById('pass-day-wrap')?.remove();}
+
+function confirmPassDayBooking(passId,trainNo,from,to,depT,arrT){
+  const seatClass=window._bookingSeatClass;
+  if(!seatClass){alert('좌석 등급을 선택해주세요.');return;}
+  const days=window._selectedPassDays||[];
+  if(!days.length){alert('요일을 선택해주세요.');return;}
+  const t=ALL_TRAINS.find(x=>x.no===trainNo);
+  if(!t)return;
+  const count=window._bookingPassengerCount||1, fare=calcFare(t,from,to,seatClass);
+  const tickets=loadTickets(); let created=0;
+  for(const date of getDatesForDays(days)){
+    const depM=toMin(depT),arrM=toMin(arrT||'');
+    const conflict=tickets.filter(tk=>tk.status==='active'&&tk.travelDate===date).some(tk=>{
+      const eD=toMin(tk.depTime),eA=toMin(tk.arrTime);
+      if(eD===null||depM===null)return false;
+      return !(arrM!==null&&arrM<=eD||eA!==null&&eA<=depM);
+    });
+    if(conflict)continue;
+    const seat=assignSeat(t,seatClass);
+    const id='NB'+date.replace(/-/g,'')+Math.random().toString(36).slice(2,6).toUpperCase();
+    tickets.push({id,trainNo,grade:t.grade,fromStn:from,toStn:to,depTime:depT,arrTime:arrT||'',
+      travelDate:date,seatClass,seatClassLabel:SEAT_CLASSES[seatClass].label,
+      seats:[seat],passengerCount:count,fare:fare*count,status:'active',bookedAt:Date.now(),isPass:true,passId});
+    created++;
+  }
+  saveTickets(tickets); closePassDaySelector(); window._activePassId=null;
+  const DN=['일','월','화','수','목','금','토'];
+  alert(`정기권 예매 완료!
+${from} → ${to} · ${t.grade} ${trainNo}
+매주 ${days.sort().map(d=>DN[d]).join('·')} · ${created}장
+${SEAT_CLASSES[seatClass].label} · ${count}명 · ${(fare*count).toLocaleString()}원/회`);
+  openMySection('ticket');
 }
 
 // 정기권 섹션 렌더링
@@ -3950,6 +3963,7 @@ function closeMyPage(){
 }
 function closeMySubPanel(){
   document.getElementById('my-sub-panel').classList.remove('open');
+  if(window._mySubClockTimer){clearInterval(window._mySubClockTimer);window._mySubClockTimer=null;}
 }
 
 const MY_TITLES = {
@@ -3966,7 +3980,20 @@ function openMySection(section){
   const titleEl = document.getElementById('my-sub-title');
   const contentEl = document.getElementById('my-sub-content');
   if(titleEl) titleEl.textContent = MY_TITLES[section]||'';
+  if(window._mySubClockTimer) clearInterval(window._mySubClockTimer);
+  const clockEl=document.getElementById('my-sub-clock');
+  if(clockEl){
+    const tick=()=>{const n=new Date();if(clockEl)clockEl.textContent=`${String(n.getHours()).padStart(2,'0')}:${String(n.getMinutes()).padStart(2,'0')}:${String(n.getSeconds()).padStart(2,'0')}`;};
+    tick(); window._mySubClockTimer=setInterval(tick,1000);
+  }
   document.getElementById('my-sub-panel').classList.add('open');
+  // 서브패널 헤더 시계 시작
+  (()=>{
+    const cl=document.getElementById('my-sub-clock');if(!cl)return;
+    const tick=()=>{const n=new Date();if(cl)cl.textContent=`${String(n.getHours()).padStart(2,'0')}:${String(n.getMinutes()).padStart(2,'0')}:${String(n.getSeconds()).padStart(2,'0')}`;};
+    tick();if(window._mySubClockTimer)clearInterval(window._mySubClockTimer);
+    window._mySubClockTimer=setInterval(tick,1000);
+  })();
   if(!contentEl) return;
   contentEl.innerHTML = '<div style="padding:20px;text-align:center;color:var(--text3)">불러오는 중...</div>';
   setTimeout(()=>{
@@ -4292,10 +4319,16 @@ function openBookTrainDetail(trainNo, from, to, depT, arrT, travelDate){
       <div class="book-detail-fares">${fareSpec}</div>
       <div style="display:flex;gap:8px;margin-top:4px">
         <button class="btn" style="flex:1;justify-content:center;font-size:13px" onclick="closeBookTrainDetail();jumpToTrain('${trainNo}')">🔍 열차 상세</button>
-        <button class="btn btn-primary" style="flex:2;justify-content:center;font-size:14px"
-          onclick="closeBookTrainDetail();window._bookingPassengerCount=${_bookPassengerCount};openBookingWithDate('${trainNo}','${from}','${to}','${depT}','${arrT||''}','${travelDate}','${_bookRoundTrip}','${document.getElementById('book-date-back')?.value||''}')">
-          🎫 ${_bookRoundTrip?'왕편 예매':'예매하기'}
-        </button>
+        ${window._activePassId
+          ? `<button class="btn btn-primary" style="flex:2;justify-content:center;font-size:14px"
+              onclick="closeBookTrainDetail();openPassDaySelector('${window._activePassId}','${trainNo}','${from}','${to}','${depT}','${arrT||''}')">
+              🎟️ 이 열차로 정기권
+            </button>`
+          : `<button class="btn btn-primary" style="flex:2;justify-content:center;font-size:14px"
+              onclick="closeBookTrainDetail();window._bookingPassengerCount=${_bookPassengerCount};openBookingWithDate('${trainNo}','${from}','${to}','${depT}','${arrT||''}','${travelDate}','${_bookRoundTrip}','${document.getElementById('book-date-back')?.value||''}')">
+              🎫 ${_bookRoundTrip?'왕편 예매':'예매하기'}
+            </button>`
+        }
       </div>
     </div>`;
   document.body.appendChild(wrap);
