@@ -337,14 +337,14 @@ function getCurrentStatus(t){
   const now=new Date();
   const nowMin=now.getHours()*60+now.getMinutes();
 
-  // 시각 있는 역 전체 수집 (원본 인덱스 보존)
+  // 시각 있는 역 전체 수집
   const all=[];
   t.stops.forEach((s,idx)=>{
     if(hasTime(s.arr)||hasTime(s.dep))all.push({s,idx});
   });
   if(!all.length)return null;
 
-  // 자정 넘는 열차 대응: 시각이 크게 줄어드는 구간에서 +1440 보정
+  // 자정 넘는 열차 대응: offset 보정
   function normalizeMinutes(stops){
     const result=[];
     let offset=0, prevM=-1;
@@ -373,48 +373,58 @@ function getCurrentStatus(t){
   if(nowM<firstM)return{status:'before'};
   if(nowM>lastM)return{status:'done',nowMin};
 
-  // ── 핵심 로직: 정차역 단위로 구간 분리 ──
-  // 정차역 = dep가 있는 역(출발역 포함) 또는 기종점
-  // 통과역은 별도로 체크하되, 구간 이동 판정은 정차역 기준으로만 함
+  // ── 핵심: 선형 탐색으로 단순하게 ──
+  // 1) 정차 중 판정: nowM이 이 역의 arr~dep 사이
   for(let i=0;i<norm.length;i++){
-    const cur=norm[i];
-    const {s,normArr,normDep}=cur;
-
-    // 1) 정차 중 판정
-    // case A: arr·dep 둘 다 있고 그 사이에 nowM이 있음 (일반 정차역)
+    const {s,normArr,normDep}=norm[i];
+    // case A: arr·dep 둘 다 있는 정차역
     if(normArr!==null&&normDep!==null&&nowM>=normArr&&nowM<=normDep){
       const prevStn=i>0?norm[i-1].s.s:null;
       return{status:'running',atStn:s.s,prevStn,nowMin};
     }
-    // case B: arr만 있는 정차역 (dep 없음) - arr 시각 ~ 다음 역 출발 시각 사이를 정차 중으로 판정
+    // case B: arr만 있는 정차역 (arr ~ 다음역 출발 전)
     if(normArr!==null&&normDep===null&&!isPassStop(t,s.s)&&nowM>=normArr){
-      // 다음 역의 출발(또는 도착) 시각을 구해 그 전까지 정차 중
       const nextNorm=norm[i+1]??null;
-      const nextDepM=nextNorm?(nextNorm.normDep??nextNorm.normArr):null;
-      if(nextDepM===null||nowM<nextDepM){
+      const nextM=nextNorm?(nextNorm.normDep??nextNorm.normArr):null;
+      if(nextM===null||nowM<nextM){
         const prevStn=i>0?norm[i-1].s.s:null;
         return{status:'running',atStn:s.s,prevStn,nowMin};
       }
     }
+  }
 
-    // 2) 이 역에서 출발할 수 있는 시각 (dep 있는 역만)
-    //    통과역(arr만)·종착역은 출발 시각 없으므로 다음 역으로 넘어감
+  // 2) 이동 중 판정: nowM 기준으로 가장 최근에 지난 역과 다음 도달할 역을 직접 찾기
+  let prevStn=null, nextStn=null;
+  for(let i=0;i<norm.length;i++){
+    const {s,normArr,normDep}=norm[i];
+    // 이 역을 떠난 시각 (dep 있으면 dep, 없으면 arr)
+    const leaveM=normDep??normArr;
+    // 이 역에 도착한 시각
+    const arriveM=normArr??normDep;
+
+    if(leaveM!==null&&leaveM<=nowM){
+      prevStn=s.s; // nowM 이전에 지난 역 → 계속 갱신
+    }
+    if(arriveM!==null&&arriveM>nowM&&nextStn===null){
+      nextStn=s.s; // nowM 이후 처음 도달할 역
+    }
+  }
+
+  if(prevStn&&nextStn) return{status:'running',prevStn,nextStn,nowMin};
+  return{status:'done',nowMin};
+
+  // (아래 코드는 도달하지 않지만 구조 유지용)
+  for(let i=0;i<norm.length;i++){
+    const cur=norm[i];
+    const {s,normArr,normDep}=cur;
     if(normDep===null) continue;
     const leaveM=normDep;
-
-    // leaveM 이후, 다음 정차역(dep 있는 역 또는 종착역) 사이에 nowM이 있으면 이동 중
-    // 그 사이 통과역들도 함께 체크
     if(nowM<=leaveM) continue;
-
-    // 다음 정차역까지 순서대로 탐색
     for(let j=i+1;j<norm.length;j++){
       const nxt=norm[j];
       const nxtArrM=nxt.normArr??nxt.normDep;
       if(nxtArrM===null) continue;
-
       if(nowM<nxtArrM){
-        // i역 출발 후 j역 도착 전 → 이동 중
-        // 사이 통과역 중 정확히 일치하는 시각 있으면 passStn
         const {idx:curIdx}=cur;
         const {idx:nxtIdx}=nxt;
         for(let k=curIdx+1;k<nxtIdx;k++){
@@ -425,9 +435,8 @@ function getCurrentStatus(t){
           const midM=midRaw+(leaveM>=1440?1440:0);
           if(midM===nowM) return{status:'running',passStn:mid.s,prevStn:s.s,nowMin};
         }
-        // prevStn = j역 바로 직전 역 (nowM 기준 가장 최근에 지난 역)
-        const prevStn = j>0 ? norm[j-1].s.s : s.s;
-        return{status:'running',prevStn,nextStn:nxt.s.s,nowMin};
+        const prevStn2 = j>0 ? norm[j-1].s.s : s.s;
+        return{status:'running',prevStn:prevStn2,nextStn:nxt.s.s,nowMin};
       }
       // nowM >= nxtArrM: j역에 도달했거나 지남
       // j역이 arr·dep 둘 다 있는 정차역이면 nowM이 그 사이에 있는지 체크
@@ -3225,6 +3234,11 @@ function openBookingPopup(trainNo, fromStn, toStn, depTime, arrTime){
         <div class="booking-seat-options">${classOpts}</div>
       </div>
       <div class="booking-passenger-section">
+        <div class="booking-section-label">좌석 선택 <span style="font-size:11px;color:var(--text3);font-weight:400">(선택 안 하면 자동 배정)</span></div>
+        <button class="btn" id="booking-seat-select-btn" style="width:100%;justify-content:center;margin-bottom:12px;font-size:13px;gap:6px"
+          onclick="openSeatSelectorFromBooking('')">
+          🪑 직접 선택 — <span id="booking-seat-display" style="color:var(--accent2)">자동 배정</span>
+        </button>
         <div class="booking-section-label">인원</div>
         <div class="booking-passenger-control">
           <button class="booking-stepper-btn" onclick="changePassengerCount(-1)">−</button>
@@ -3597,9 +3611,16 @@ function openPassBookingPopup(passId){
   const pass=loadPasses().find(p=>p.id===passId);
   if(!pass)return;
   window._bookFrom=pass.from; window._bookTo=pass.to; window._activePassId=passId;
-  // 서브패널 안에서 열차 예매 섹션으로 이동
   openMySection('book');
-  setTimeout(()=>searchBookTrains(),150);
+  setTimeout(()=>{
+    searchBookTrains();
+    // 날짜를 내일로 설정 (정기권은 특정 날짜가 아닌 요일 기반)
+    const dateEl=document.getElementById('book-date-go');
+    if(dateEl){
+      const d=new Date(); d.setDate(d.getDate()+1);
+      dateEl.value=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+    }
+  },200);
 }
 function closePassBookingPopup(){document.getElementById('pass-booking-wrap')?.remove();}
 
@@ -4280,7 +4301,11 @@ function searchBookTrains(){
     return;
   }
 
-  const rows = trains.map(({t,depT,arrT,dur})=>`
+  const rows = trains.map(({t,depT,arrT,dur})=>{
+    const _formType=getFormationType(t.grade,t.no);
+    const _comp=getCarComposition(_formType);
+    const _cong=getCongestionLevel(t.no,dateGo,_comp);
+    return `
     <div class="book-train-row" onclick="openBookTrainDetail('${t.no}','${from}','${to}','${depT}','${arrT||''}','${dateGo}')">
       <div class="book-train-grade" style="color:var(--c-${gcCssVar(t.grade)})">${t.grade}</div>
       <div class="book-train-no">${t.no}</div>
@@ -4289,9 +4314,12 @@ function searchBookTrains(){
         <span class="book-train-arrow">→</span>
         <span class="book-train-arr">${arrT||'-'}</span>
       </div>
-      <div class="book-train-dur">${dur}</div>
+      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:2px;flex-shrink:0">
+        <div class="book-train-dur">${dur}</div>
+        <div style="font-size:10px;font-weight:700;color:${_cong.color}">${_cong.label}</div>
+      </div>
       <div class="book-train-chevron">›</div>
-    </div>`).join('');
+    </div>`; }).join('');
 
   const tripLabel = _bookRoundTrip ? `편도 (${dateGo})` : dateGo;
   el.innerHTML = `
