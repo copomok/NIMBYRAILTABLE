@@ -416,8 +416,8 @@ function getCurrentStatus(t){
         }
         return{status:'running',prevStn:s.s,nextStn:nxt.s.s,nowMin};
       }
-      // nowM >= nxtArrM: 이미 j역에 도달했거나 지남 → 계속 탐색
-      break; // 시각 순서상 다음 역이 이미 지났으면 외부 루프로
+      // nowM >= nxtArrM: 이미 j역에 도달했거나 지남 → 내부 루프 계속
+      // (break 대신 continue: 통과역 여러 개 연속일 때 외부 루프가 done으로 빠지는 버그 방지)
     }
   }
   return{status:'done',nowMin};
