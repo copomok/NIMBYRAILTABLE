@@ -3505,8 +3505,8 @@ function openPassRegisterPopup(){
   wrap.id = 'pass-register-wrap';
   wrap.style.cssText = 'position:fixed;inset:0;z-index:9400;display:flex;align-items:center;justify-content:center';
   wrap.innerHTML = `
-    <div style="position:fixed;inset:0;background:rgba(0,0,0,.6);backdrop-filter:blur(2px)" onclick="closePassRegisterPopup()"></div>
-    <div style="position:relative;z-index:1;background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:20px;width:90vw;max-width:360px;box-shadow:0 8px 32px rgba(0,0,0,.6);max-height:90vh;overflow-y:auto">
+    <div style="position:fixed;inset:0;background:rgba(0,0,0,.6);backdrop-filter:blur(2px);z-index:0" onclick="closePassRegisterPopup()"></div>
+    <div style="position:relative;z-index:2;background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:20px;width:90vw;max-width:360px;box-shadow:0 8px 32px rgba(0,0,0,.6);max-height:90vh;overflow-y:auto">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:2px">
         <div class="alarm-popup-title" style="margin-bottom:0">🎟️ 정기권 등록</div>
         <div style="font-family:var(--mono);font-size:12px;color:var(--text2)" id="pass-reg-clock"></div>
@@ -3619,8 +3619,8 @@ function openPassDaySelector(passId,trainNo,from,to,depT,arrT){
   wrap.id='pass-day-wrap';
   wrap.style.cssText='position:fixed;inset:0;z-index:9400;display:flex;align-items:center;justify-content:center;pointer-events:auto';
   wrap.innerHTML=`
-    <div style="position:fixed;inset:0;background:rgba(0,0,0,.65);backdrop-filter:blur(2px)" onclick="closePassDaySelector()"></div>
-    <div style="position:relative;z-index:1;background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:20px;width:90vw;max-width:380px;box-shadow:0 8px 32px rgba(0,0,0,.6);max-height:90vh;overflow-y:auto">
+    <div style="position:fixed;inset:0;background:rgba(0,0,0,.65);backdrop-filter:blur(2px);z-index:0" onclick="closePassDaySelector()"></div>
+    <div style="position:relative;z-index:2;background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:20px;width:90vw;max-width:380px;box-shadow:0 8px 32px rgba(0,0,0,.6);max-height:90vh;overflow-y:auto">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
         <div style="font-size:15px;font-weight:700">🎟️ 정기권 예매</div>
         <div style="font-family:var(--mono);font-size:12px;color:var(--text2)" id="pass-day-clock"></div>
@@ -4137,8 +4137,8 @@ function openBookStnPicker(type){
   // 전체화면 wrap에 z-index + pointer-events 적용 (터치 차단 + 블러)
   wrap.style.cssText = 'position:fixed;inset:0;z-index:9500;display:flex;align-items:center;justify-content:center';
   wrap.innerHTML = `
-    <div style="position:fixed;inset:0;background:rgba(0,0,0,.65);backdrop-filter:blur(3px)" onclick="closeBookStnPicker()"></div>
-    <div style="position:relative;z-index:1;background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:20px;width:90vw;max-width:340px;box-shadow:0 8px 32px rgba(0,0,0,.6)">
+    <div style="position:fixed;inset:0;background:rgba(0,0,0,.65);backdrop-filter:blur(3px);z-index:0" onclick="closeBookStnPicker()"></div>
+    <div style="position:relative;z-index:2;background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:20px;width:90vw;max-width:340px;box-shadow:0 8px 32px rgba(0,0,0,.6)">
       <div style="font-size:15px;font-weight:700;margin-bottom:12px">${type==='from'?'출발역':'도착역'} 선택</div>
       <input type="text" id="book-stn-input" placeholder="역명 입력 (예: 서울, ㅅㅇ)" autocomplete="off"
         style="width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:6px;color:var(--text1);font-family:var(--sans);font-size:14px;padding:10px 12px;outline:none;display:block;margin-bottom:6px">
