@@ -131,6 +131,7 @@ function acShow(iid,did){
     return `<div class="ac-item" onmousedown="event.preventDefault();acSel('${iid}','${did}','${s}')">${display}</div>`;
   }).join('');
   drop.className='ac-dropdown open';
+  drop.style.zIndex='9500';
   drop.style.display='block';
 }
 function acHide(did){const el=document.getElementById(did);if(el){el.className='ac-dropdown';el.style.display='none';}}
@@ -3458,36 +3459,48 @@ function openPassRegisterPopup(){
 
   const wrap = document.createElement('div');
   wrap.id = 'pass-register-wrap';
+  wrap.style.cssText = 'position:fixed;inset:0;z-index:9400;display:flex;align-items:center;justify-content:center';
   wrap.innerHTML = `
-    <div class="alarm-popup-backdrop" onclick="closePassRegisterPopup()"></div>
-    <div class="alarm-popup pass-popup">
+    <div style="position:fixed;inset:0;background:rgba(0,0,0,.6);backdrop-filter:blur(2px)" onclick="closePassRegisterPopup()"></div>
+    <div style="position:relative;z-index:1;background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:20px;width:90vw;max-width:360px;box-shadow:0 8px 32px rgba(0,0,0,.6);max-height:90vh;overflow-y:auto">
       <div class="alarm-popup-title">🎟️ 정기권 등록</div>
       <div class="alarm-popup-sub">자주 이용하는 구간을 등록하세요</div>
       <div class="booking-section-label">출발역</div>
-      <div class="autocomplete-wrap" style="margin-bottom:4px">
+      <div style="margin-bottom:4px">
         <input type="text" id="pass-from" placeholder="출발역 입력" autocomplete="off"
-          oninput="acShow('pass-from','ac-pass-from')"
-          onkeydown="acKey(event,'pass-from','ac-pass-from')"
-          onblur="setTimeout(()=>acHide('ac-pass-from'),150)"
           style="width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:6px;color:var(--text1);font-family:var(--sans);font-size:13px;padding:8px 12px;outline:none">
-        <div class="ac-dropdown" id="ac-pass-from"></div>
+        <div id="ac-pass-from" style="background:var(--bg2);border:1px solid var(--accent);border-top:none;border-radius:0 0 6px 6px;max-height:180px;overflow-y:auto;display:none"></div>
       </div>
       <div class="booking-section-label">도착역</div>
-      <div class="autocomplete-wrap" style="margin-bottom:4px">
+      <div style="margin-bottom:4px">
         <input type="text" id="pass-to" placeholder="도착역 입력" autocomplete="off"
-          oninput="acShow('pass-to','ac-pass-to')"
-          onkeydown="acKey(event,'pass-to','ac-pass-to')"
-          onblur="setTimeout(()=>acHide('ac-pass-to'),150)"
           style="width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:6px;color:var(--text1);font-family:var(--sans);font-size:13px;padding:8px 12px;outline:none">
-        <div class="ac-dropdown" id="ac-pass-to"></div>
+        <div id="ac-pass-to" style="background:var(--bg2);border:1px solid var(--accent);border-top:none;border-radius:0 0 6px 6px;max-height:180px;overflow-y:auto;display:none"></div>
       </div>
       <div class="booking-section-label">이름 (선택)</div>
       <input type="text" id="pass-name" placeholder="예: 출근길, 주말 여행" autocomplete="off"
         style="width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:6px;color:var(--text1);font-family:var(--sans);font-size:13px;padding:8px 12px;outline:none;margin-bottom:4px">
-      <button class="btn btn-primary booking-confirm-btn" style="margin-top:12px" onclick="confirmPassRegister()">등록하기</button>
-      <button class="alarm-popup-close" onclick="closePassRegisterPopup()">취소</button>
+      <button class="btn btn-primary booking-confirm-btn" style="margin-top:12px;width:100%;justify-content:center" onclick="confirmPassRegister()">등록하기</button>
+      <button class="alarm-popup-close" style="margin-top:8px" onclick="closePassRegisterPopup()">취소</button>
     </div>`;
   document.body.appendChild(wrap);
+  // ac-dropdown 이벤트 직접 연결
+  ['pass-from','pass-to'].forEach(iid=>{
+    const inp=document.getElementById(iid);
+    const did='ac-'+iid;
+    const drop=document.getElementById(did);
+    if(!inp||!drop)return;
+    inp.addEventListener('input',()=>{
+      const q=inp.value.trim();
+      if(!q){drop.style.display='none';return;}
+      const hits=getBookableStations().filter(s=>matchesQuery(s,q)).slice(0,12);
+      if(!hits.length){drop.style.display='none';return;}
+      drop.innerHTML=hits.map(s=>`<div style="padding:8px 12px;cursor:pointer;font-size:13px;color:var(--text1);border-bottom:1px solid var(--border)"
+        onmousedown="event.preventDefault();document.getElementById('${iid}').value='${s}';document.getElementById('${did}').style.display='none'">${s}</div>`).join('');
+      drop.style.display='block';
+    });
+    inp.addEventListener('blur',()=>setTimeout(()=>drop.style.display='none',150));
+  });
 }
 
 function closePassRegisterPopup(){
