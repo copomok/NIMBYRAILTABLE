@@ -380,10 +380,21 @@ function getCurrentStatus(t){
     const cur=norm[i];
     const {s,normArr,normDep}=cur;
 
-    // 1) 정차 중 판정: arr·dep 둘 다 있고 그 사이에 nowM이 있음
+    // 1) 정차 중 판정
+    // case A: arr·dep 둘 다 있고 그 사이에 nowM이 있음 (일반 정차역)
     if(normArr!==null&&normDep!==null&&nowM>=normArr&&nowM<=normDep){
       const prevStn=i>0?norm[i-1].s.s:null;
       return{status:'running',atStn:s.s,prevStn,nowMin};
+    }
+    // case B: arr만 있는 정차역 (dep 없음) - arr 시각 ~ 다음 역 출발 시각 사이를 정차 중으로 판정
+    if(normArr!==null&&normDep===null&&!isPassStop(t,s.s)&&nowM>=normArr){
+      // 다음 역의 출발(또는 도착) 시각을 구해 그 전까지 정차 중
+      const nextNorm=norm[i+1]??null;
+      const nextDepM=nextNorm?(nextNorm.normDep??nextNorm.normArr):null;
+      if(nextDepM===null||nowM<nextDepM){
+        const prevStn=i>0?norm[i-1].s.s:null;
+        return{status:'running',atStn:s.s,prevStn,nowMin};
+      }
     }
 
     // 2) 이 역에서 출발할 수 있는 시각 (dep 있는 역만)
@@ -1267,7 +1278,7 @@ function getActiveTripTicket(){
 // 진행 상태 알림 내용 구성 및 발송 (같은 tag로 갱신)
 // 현재 위치 기준 이전역/현재(정차·통과)/다음역 3개를 시간순으로 추출
 // (통과역도 포함, 시간 흐름에 따라 매번 새로 계산됨)
-function getTripTimeline3(train, status){
+function getTripTimeline3(train, status, ticket){
   // 시각 있는 역 전체 (통과 포함)
   const allStops = train.stops.filter(s=>hasTime(s.arr)||hasTime(s.dep));
   if(!allStops.length) return null;
@@ -1276,10 +1287,27 @@ function getTripTimeline3(train, status){
   const toEntry = s => s ? {name:s.s, time:timeOf(s)} : null;
 
   // 정차역 = dep 있는 역 + 종착역(마지막 역)
-  // isPassStop 대신 dep 유무로 직접 판별 (더 정확)
   const terminus = allStops[allStops.length-1].s;
   const isStopStn = s => hasTime(s.dep) || s.s === terminus;
-  const stopsOnly = allStops.filter(s => isStopStn(s));
+
+  // 탑승 구간(fromStn~toStn) 내 정차역만 사용
+  // ticket이 있으면 탑승 구간으로 제한
+  let stopsOnly;
+  if(ticket && ticket.fromStn && ticket.toStn){
+    const fi = allStops.findIndex(s=>s.s===ticket.fromStn);
+    const ti = allStops.findIndex(s=>s.s===ticket.toStn);
+    if(fi>=0 && ti>fi){
+      // fromStn~toStn 구간의 정차역만
+      stopsOnly = allStops.slice(fi, ti+1).filter(s=>isStopStn(s));
+      // fromStn, toStn이 정차역 목록에 없으면 강제 추가
+      if(!stopsOnly.find(s=>s.s===ticket.fromStn)) stopsOnly.unshift(allStops[fi]);
+      if(!stopsOnly.find(s=>s.s===ticket.toStn)) stopsOnly.push(allStops[ti]);
+    } else {
+      stopsOnly = allStops.filter(s=>isStopStn(s));
+    }
+  } else {
+    stopsOnly = allStops.filter(s=>isStopStn(s));
+  }
   if(!stopsOnly.length) return null;
 
   const findInStops = name => stopsOnly.findIndex(s=>s.s===name);
@@ -3767,7 +3795,7 @@ function renderTripWidget(active){
     </div>`;
   }
 
-  const tl=getTripTimeline3(train,status);
+  const tl=getTripTimeline3(train,status,ticket);
   // 열차 등급 CSS 색상값 (타임라인·진행바에 활용)
   const gradeColor = `var(--c-${gcCssVar(train.grade)})`;
 
