@@ -3153,7 +3153,7 @@ function openBookingPopup(trainNo, fromStn, toStn, depTime, arrTime){
 
   const wrap=document.createElement('div');
   wrap.id='booking-popup-wrap';
-  wrap.style.cssText='position:fixed;inset:0;z-index:9400;pointer-events:none';
+  wrap.style.cssText='position:fixed;inset:0;z-index:9400;pointer-events:auto';
   const classOpts=classes.map(c=>{
     const fare=calcFare(t,fromStn,toStn,c);
     return `<button class="booking-seat-option" data-class="${c}" onclick="selectSeatClass(this,'${c}')">
@@ -3980,20 +3980,14 @@ function openMySection(section){
   const titleEl = document.getElementById('my-sub-title');
   const contentEl = document.getElementById('my-sub-content');
   if(titleEl) titleEl.textContent = MY_TITLES[section]||'';
+  document.getElementById('my-sub-panel').classList.add('open');
+  // 서브패널 헤더 시계
   if(window._mySubClockTimer) clearInterval(window._mySubClockTimer);
   const clockEl=document.getElementById('my-sub-clock');
   if(clockEl){
     const tick=()=>{const n=new Date();if(clockEl)clockEl.textContent=`${String(n.getHours()).padStart(2,'0')}:${String(n.getMinutes()).padStart(2,'0')}:${String(n.getSeconds()).padStart(2,'0')}`;};
     tick(); window._mySubClockTimer=setInterval(tick,1000);
   }
-  document.getElementById('my-sub-panel').classList.add('open');
-  // 서브패널 헤더 시계 시작
-  (()=>{
-    const cl=document.getElementById('my-sub-clock');if(!cl)return;
-    const tick=()=>{const n=new Date();if(cl)cl.textContent=`${String(n.getHours()).padStart(2,'0')}:${String(n.getMinutes()).padStart(2,'0')}:${String(n.getSeconds()).padStart(2,'0')}`;};
-    tick();if(window._mySubClockTimer)clearInterval(window._mySubClockTimer);
-    window._mySubClockTimer=setInterval(tick,1000);
-  })();
   if(!contentEl) return;
   contentEl.innerHTML = '';
   // 서브패널 전체화면으로 콘텐츠 렌더링 (탭 이동 없음)
@@ -4107,14 +4101,16 @@ function openBookStnPicker(type){
   document.getElementById('book-stn-picker-wrap')?.remove();
   const wrap = document.createElement('div');
   wrap.id = 'book-stn-picker-wrap';
+  // 전체화면 wrap에 z-index + pointer-events 적용 (터치 차단 + 블러)
+  wrap.style.cssText = 'position:fixed;inset:0;z-index:9500;display:flex;align-items:center;justify-content:center';
   wrap.innerHTML = `
-    <div class="alarm-popup-backdrop" onclick="closeBookStnPicker()"></div>
-    <div class="alarm-popup" style="max-width:340px;width:90vw;z-index:10002;top:30%;transform:translate(-50%,-0%)">
-      <div class="alarm-popup-title">${type==='from'?'출발역':'도착역'} 선택</div>
+    <div style="position:fixed;inset:0;background:rgba(0,0,0,.65);backdrop-filter:blur(3px)" onclick="closeBookStnPicker()"></div>
+    <div style="position:relative;z-index:1;background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:20px;width:90vw;max-width:340px;box-shadow:0 8px 32px rgba(0,0,0,.6)">
+      <div style="font-size:15px;font-weight:700;margin-bottom:12px">${type==='from'?'출발역':'도착역'} 선택</div>
       <input type="text" id="book-stn-input" placeholder="역명 입력 (예: 서울, ㅅㅇ)" autocomplete="off"
         style="width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:6px;color:var(--text1);font-family:var(--sans);font-size:14px;padding:10px 12px;outline:none;display:block;margin-bottom:6px">
       <div id="book-stn-list" style="max-height:240px;overflow-y:auto;border-radius:6px;background:var(--bg3)"></div>
-      <button class="alarm-popup-close" style="margin-top:8px" onclick="closeBookStnPicker()">취소</button>
+      <button style="margin-top:10px;width:100%;padding:9px;border-radius:8px;border:1px solid var(--border);background:transparent;color:var(--text2);font-size:13px;cursor:pointer;font-family:var(--sans)" onclick="closeBookStnPicker()">취소</button>
     </div>`;
   document.body.appendChild(wrap);
 
@@ -4498,12 +4494,11 @@ function openBookingWithDate(trainNo, from, to, depT, arrT, travelDate, isRound,
   // 예매 완료 후 콜백: 왕복이면 복편 조회로 이동
   window._afterBookingCallback = (isRound==='true' && dateBack) ? ()=>{
     setTimeout(()=>{
-      switchTab('book');
+      openMySection('book');
       window._bookFrom = to;
       window._bookTo = from;
-      window._bookRoundTrip = false; // 복편은 편도로
+      window._bookRoundTrip = false;
       renderBookTab();
-      // 복편 날짜 자동 설정 후 바로 조회
       setTimeout(()=>{
         const dEl = document.getElementById('book-date-go');
         if(dEl) dEl.value = dateBack;
@@ -4512,7 +4507,8 @@ function openBookingWithDate(trainNo, from, to, depT, arrT, travelDate, isRound,
     }, 300);
   } : null;
 
-  openBookingPopup(trainNo, from, to, depT, arrT);
+  // book-detail-panel 애니메이션 완료 후 예매창 열기 (겹침 방지)
+  setTimeout(()=>openBookingPopup(trainNo, from, to, depT, arrT), 320);
   setTimeout(()=>{
     const dateInp = document.getElementById('booking-date');
     if(dateInp && travelDate) dateInp.value = travelDate;
