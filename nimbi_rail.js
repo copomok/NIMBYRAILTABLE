@@ -3560,10 +3560,10 @@ function deletePass(id){
 function openPassBookingPopup(passId){
   const pass=loadPasses().find(p=>p.id===passId);
   if(!pass)return;
-  closeMyPage();
   window._bookFrom=pass.from; window._bookTo=pass.to; window._activePassId=passId;
-  switchTab('book'); renderBookTab();
-  setTimeout(()=>searchBookTrains(),100);
+  // 서브패널 안에서 열차 예매 섹션으로 이동
+  openMySection('book');
+  setTimeout(()=>searchBookTrains(),150);
 }
 function closePassBookingPopup(){document.getElementById('pass-booking-wrap')?.remove();}
 
@@ -3995,31 +3995,29 @@ function openMySection(section){
     window._mySubClockTimer=setInterval(tick,1000);
   })();
   if(!contentEl) return;
-  contentEl.innerHTML = '<div style="padding:20px;text-align:center;color:var(--text3)">불러오는 중...</div>';
-  setTimeout(()=>{
-    if(section==='book'){
-      contentEl.innerHTML = '<div style="padding:12px 0"><div id="result-book"></div></div>';
-      renderBookTab();
-    } else if(section==='ticket'){
-      contentEl.innerHTML = '<div style="padding:12px 0" id="result-ticket"></div>';
-      renderTickets();
-    } else if(section==='alarm'){
-      contentEl.innerHTML = '<div style="padding:12px 0" id="result-alarm"></div>';
-      renderAlarms();
-    } else if(section==='fav'){
-      contentEl.innerHTML = '<div style="padding:12px 0" id="result-fav"></div>';
-      renderFavs();
-    } else if(section==='stats'){
-      contentEl.innerHTML = '<div style="padding:12px 0" id="result-stats"></div>';
-      renderStats();
-    } else if(section==='notice'){
-      contentEl.innerHTML = '<div style="padding:12px 0" id="result-notice"></div>';
-      updateNoticeBadge();
-      renderNotice();
-    } else if(section==='pass'){
-      contentEl.innerHTML = '<div style="padding:12px 0">' + renderPassSection() + '</div>';
-    }
-  }, 50);
+  contentEl.innerHTML = '';
+  // 서브패널 전체화면으로 콘텐츠 렌더링 (탭 이동 없음)
+  if(section==='book'){
+    contentEl.innerHTML = '<div style="padding:0"><div id="result-book"></div></div>';
+    renderBookTab();
+  } else if(section==='ticket'){
+    contentEl.innerHTML = '<div id="result-ticket"></div>';
+    renderTickets();
+  } else if(section==='alarm'){
+    contentEl.innerHTML = '<div id="result-alarm"></div>';
+    renderAlarms();
+  } else if(section==='fav'){
+    contentEl.innerHTML = '<div id="result-fav"></div>';
+    renderFavs();
+  } else if(section==='stats'){
+    contentEl.innerHTML = '<div id="result-stats"></div>';
+    renderStats();
+  } else if(section==='notice'){
+    contentEl.innerHTML = '<div id="result-notice"></div>';
+    updateNoticeBadge(); renderNotice();
+  } else if(section==='pass'){
+    contentEl.innerHTML = '<div id="result-pass-my">' + renderPassSection() + '</div>';
+  }
 }
 
 // ══════════════════════════════════════════
