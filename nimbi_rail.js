@@ -3174,7 +3174,10 @@ function openBookingPopup(trainNo, fromStn, toStn, depTime, arrTime){
   wrap.innerHTML=`
     <div class="alarm-popup-backdrop" onclick="closeBookingPopup()"></div>
     <div class="alarm-popup booking-popup">
-      <div class="alarm-popup-title">🎫 ${t.grade} ${trainNo}</div>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:2px">
+        <div class="alarm-popup-title" style="margin-bottom:0">🎫 ${t.grade} ${trainNo}</div>
+        <div style="font-family:var(--mono);font-size:12px;color:var(--text2)" id="booking-clock"></div>
+      </div>
       <div class="alarm-popup-sub">${fromStn} ${depTime||''} → ${toStn} ${arrTime||''}</div>
       <div class="booking-date-section">
         <div class="booking-section-label">탑승일</div>
@@ -3196,6 +3199,12 @@ function openBookingPopup(trainNo, fromStn, toStn, depTime, arrTime){
       <button class="alarm-popup-close" onclick="closeBookingPopup()">취소</button>
     </div>`;
   document.body.appendChild(wrap);
+  (()=>{const cl=document.getElementById('booking-clock');if(!cl)return;
+    const tick=()=>{const n=new Date();if(cl)cl.textContent=`${String(n.getHours()).padStart(2,'0')}:${String(n.getMinutes()).padStart(2,'0')}:${String(n.getSeconds()).padStart(2,'0')}`;};
+    tick();const ti=setInterval(tick,1000);
+    const obs=new MutationObserver(()=>{if(!document.getElementById('booking-popup-wrap')){clearInterval(ti);obs.disconnect();}});
+    obs.observe(document.body,{childList:true});
+  })();
   window._bookingSeatClass=null;
   window._bookingPassengerCount=1;
 }
@@ -3463,7 +3472,10 @@ function openPassRegisterPopup(){
   wrap.innerHTML = `
     <div style="position:fixed;inset:0;background:rgba(0,0,0,.6);backdrop-filter:blur(2px)" onclick="closePassRegisterPopup()"></div>
     <div style="position:relative;z-index:1;background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:20px;width:90vw;max-width:360px;box-shadow:0 8px 32px rgba(0,0,0,.6);max-height:90vh;overflow-y:auto">
-      <div class="alarm-popup-title">🎟️ 정기권 등록</div>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:2px">
+        <div class="alarm-popup-title" style="margin-bottom:0">🎟️ 정기권 등록</div>
+        <div style="font-family:var(--mono);font-size:12px;color:var(--text2)" id="pass-reg-clock"></div>
+      </div>
       <div class="alarm-popup-sub">자주 이용하는 구간을 등록하세요</div>
       <div class="booking-section-label">출발역</div>
       <div style="margin-bottom:4px">
@@ -3484,6 +3496,12 @@ function openPassRegisterPopup(){
       <button class="alarm-popup-close" style="margin-top:8px" onclick="closePassRegisterPopup()">취소</button>
     </div>`;
   document.body.appendChild(wrap);
+  (()=>{const cl=document.getElementById('pass-reg-clock');if(!cl)return;
+    const tick=()=>{const n=new Date();if(cl)cl.textContent=`${String(n.getHours()).padStart(2,'0')}:${String(n.getMinutes()).padStart(2,'0')}:${String(n.getSeconds()).padStart(2,'0')}`;};
+    tick();const ti=setInterval(tick,1000);
+    const obs=new MutationObserver(()=>{if(!document.getElementById('pass-register-wrap')){clearInterval(ti);obs.disconnect();}});
+    obs.observe(document.body,{childList:true});
+  })();
   // ac-dropdown 이벤트 직접 연결
   ['pass-from','pass-to'].forEach(iid=>{
     const inp=document.getElementById(iid);
