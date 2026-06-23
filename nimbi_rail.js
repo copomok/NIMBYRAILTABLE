@@ -3236,7 +3236,7 @@ function openBookingPopup(trainNo, fromStn, toStn, depTime, arrTime){
       <div class="booking-passenger-section">
         <div class="booking-section-label">좌석 선택 <span style="font-size:11px;color:var(--text3);font-weight:400">(선택 안 하면 자동 배정)</span></div>
         <button class="btn" id="booking-seat-select-btn" style="width:100%;justify-content:center;margin-bottom:12px;font-size:13px;gap:6px"
-          onclick="openSeatSelectorFromBooking('')">
+          onclick="openSeatSelectorFromBooking('${trainNo}')">
           🪑 직접 선택 — <span id="booking-seat-display" style="color:var(--accent2)">자동 배정</span>
         </button>
         <div class="booking-section-label">인원</div>
@@ -3773,6 +3773,263 @@ function renderPassSection(){
     ${addBtn}
   </div>`;
 }
+
+
+// ══════════════════════════════════════════
+// 🪑 열차 편성 & 좌석 배치 시스템
+// ══════════════════════════════════════════
+function getFormationType(grade, trainNo){
+  if(grade==='KTX'){
+    const n=parseInt(trainNo);
+    // 이음: 700번대 (중앙선·강릉선)
+    if(n>=711&&n<=740) return 'ktx-eum';
+    // 산천: 101~199, 201~299, 401~499 (경부고속 일부, 전라선)
+    if((n>=101&&n<=199)||(n>=201&&n<=299)||(n>=401&&n<=499)) return 'ktx-sancheon';
+    return 'ktx-1';
+  }
+  if(grade==='SRT') return 'ktx-sancheon';
+  if(grade==='ITX-청춘') return 'itx-cc';
+  if(grade==='ITX-새마을') return 'itx-sm';
+  if(grade==='무궁화호') return 'mgh';
+  return 'mgh';
+}
+
+function getCarComposition(formType){
+  switch(formType){
+    case 'ktx-1':
+      return [
+        {car:1,type:'special',label:'특실',rows:11,cols:['A','B','C'],totalSeats:33},
+        {car:2,type:'special',label:'특실',rows:11,cols:['A','B','C'],totalSeats:33},
+        {car:3,type:'special',label:'특실',rows:11,cols:['A','B','C'],totalSeats:33},
+        ...Array.from({length:15},(_,i)=>({car:i+4,type:'general',label:'일반실',rows:17,cols:['A','B','C','D'],totalSeats:66})),
+        {car:19,type:'free',label:'자유석',totalSeats:0},
+        {car:20,type:'free',label:'자유석',totalSeats:0},
+      ];
+    case 'ktx-sancheon':
+      return [
+        {car:1,type:'special',label:'특실',rows:11,cols:['A','B','C'],totalSeats:33},
+        ...Array.from({length:7},(_,i)=>({car:i+2,type:'general',label:'일반실',rows:17,cols:['A','B','C','D'],totalSeats:66})),
+        {car:9,type:'free',label:'자유석',totalSeats:0},
+        {car:10,type:'free',label:'자유석',totalSeats:0},
+      ];
+    case 'ktx-eum':
+      return [
+        {car:1,type:'premium',label:'우등실',rows:12,cols:['A','B','C','D'],totalSeats:46,
+         missingSeats:['12A','12B']},
+        ...Array.from({length:5},(_,i)=>({car:i+2,type:'general',label:'일반실',rows:17,cols:['A','B','C','D'],totalSeats:66})),
+        {car:7,type:'free',label:'자유석',totalSeats:0},
+        {car:8,type:'free',label:'자유석',totalSeats:0},
+      ];
+    case 'itx-cc':
+      return Array.from({length:10},(_,i)=>({car:i+1,type:'general',label:'일반실',rows:13,cols:['A','B','C','D'],totalSeats:52}));
+    case 'itx-sm':
+      return Array.from({length:6},(_,i)=>({car:i+1,type:'general',label:'일반실',rows:13,cols:['A','B','C','D'],totalSeats:52}));
+    case 'mgh':
+    default:
+      return Array.from({length:8},(_,i)=>({car:i+1,type:'general',label:'일반실',rows:20,cols:['1','2','3','4'],totalSeats:80}));
+  }
+}
+
+function getCarsForClass(composition, seatClass){
+  if(seatClass==='special') return composition.filter(c=>c.type==='special');
+  if(seatClass==='premium') return composition.filter(c=>c.type==='premium');
+  if(seatClass==='general') return composition.filter(c=>c.type==='general');
+  if(seatClass==='standing') return composition.filter(c=>c.type==='free');
+  return composition.filter(c=>c.type==='general');
+}
+
+const CONGESTION_KEY='nimbi_congestion';
+function loadCongestion(){ try{return JSON.parse(localStorage.getItem(CONGESTION_KEY))||{};}catch(e){return{};} }
+function saveCongestion(d){ localStorage.setItem(CONGESTION_KEY,JSON.stringify(d)); }
+
+function getBookedSeats(trainNo, travelDate){
+  const tickets=loadTickets();
+  const booked=new Set();
+  tickets.filter(tk=>tk.trainNo===trainNo&&tk.travelDate===travelDate&&tk.status==='active')
+    .forEach(tk=>(tk.seats||[]).forEach(s=>booked.add(s)));
+  const cong=loadCongestion();
+  const key=`${trainNo}:${travelDate}`;
+  (cong[key]||[]).forEach(s=>booked.add(s));
+  return booked;
+}
+
+function generateVirtualBookings(trainNo, travelDate, composition){
+  const key=`${trainNo}:${travelDate}`;
+  const cong=loadCongestion();
+  if(cong[key]) return;
+  function seededRand(seed,i){let x=Math.sin(seed*9301+i*49297+233)*803.9;return x-Math.floor(x);}
+  function strSeed(s){let h=0;for(let i=0;i<s.length;i++)h=(Math.imul(31,h)+s.charCodeAt(i))|0;return Math.abs(h);}
+  const seed=strSeed(trainNo+travelDate);
+  const fillRate=0.2+seededRand(seed,0)*0.5;
+  const booked=[];
+  let idx=0;
+  composition.forEach(car=>{
+    if(car.type==='free')return;
+    const missing=new Set(car.missingSeats||[]);
+    Array.from({length:car.rows||20},(_,r)=>r+1).forEach(row=>{
+      (car.cols||[]).forEach(col=>{
+        if(missing.has(`${row}${col}`))return;
+        if(seededRand(seed,idx++)<fillRate) booked.push(`${car.car}호차 ${row}${col}`);
+      });
+    });
+  });
+  cong[key]=booked; saveCongestion(cong);
+}
+
+function getCongestionLevel(trainNo, travelDate, composition){
+  generateVirtualBookings(trainNo, travelDate, composition);
+  const booked=getBookedSeats(trainNo,travelDate);
+  const totalSeats=composition.filter(c=>c.type!=='free').reduce((s,c)=>s+(c.totalSeats||0),0);
+  if(totalSeats===0)return{label:'',color:'var(--text3)'};
+  const rate=booked.size/totalSeats;
+  if(rate>=1.0) return{label:'매진',color:'var(--red)'};
+  if(rate>=0.8) return{label:'혼잡',color:'var(--orange)'};
+  if(rate>=0.5) return{label:'보통',color:'var(--accent)'};
+  return{label:'여유',color:'var(--green)'};
+}
+
+// ── 좌석 선택 팝업 ──
+let _selectedSeats=[];
+let _seatCarIdx=0;
+
+function openSeatSelector(trainNo, travelDate, seatClass){
+  const t=ALL_TRAINS.find(x=>x.no===trainNo);
+  if(!t)return;
+  const formType=getFormationType(t.grade,trainNo);
+  const composition=getCarComposition(formType);
+  const validCars=getCarsForClass(composition,seatClass);
+  if(!validCars.length){alert('해당 좌석 등급의 호차가 없습니다.');return;}
+  generateVirtualBookings(trainNo,travelDate,composition);
+  _selectedSeats=[]; _seatCarIdx=0;
+  document.getElementById('seat-selector-wrap')?.remove();
+  const wrap=document.createElement('div');
+  wrap.id='seat-selector-wrap';
+  wrap.dataset.trainNo=trainNo; wrap.dataset.travelDate=travelDate; wrap.dataset.seatClass=seatClass;
+  wrap.style.cssText='position:fixed;inset:0;z-index:9500;display:flex;flex-direction:column;background:var(--bg)';
+  document.body.appendChild(wrap);
+  _renderSeatMap(wrap,t,trainNo,travelDate,seatClass,validCars,getBookedSeats(trainNo,travelDate),composition);
+}
+
+function _renderSeatMap(wrap,t,trainNo,travelDate,seatClass,validCars,booked,composition){
+  const car=validCars[_seatCarIdx];
+  const count=window._bookingPassengerCount||1;
+  const missing=new Set(car.missingSeats||[]);
+  const isKtxType=['ktx-1','ktx-sancheon','ktx-eum'].includes(getFormationType(t.grade,trainNo));
+
+  function seatHTML(){
+    let html='';
+    for(let r=1;r<=car.rows;r++){
+      const leftCols=car.cols.slice(0,2);
+      const rightCols=car.cols.slice(2);
+      const dirIcon=isKtxType?(r%2===1?'▲':'▽'):null;
+      const mkBtn=(col)=>{
+        const id=`${car.car}호차 ${r}${col}`;
+        if(missing.has(`${r}${col}`)) return `<div class="seat-cell empty"></div>`;
+        const isB=booked.has(id), isS=_selectedSeats.includes(id);
+        return `<button class="seat-btn${isB?' booked':isS?' selected':''}"
+          ${isB?'disabled':''} onclick="toggleSeatBtn('${id}',${count})">${r}${col}</button>`;
+      };
+      html+=`<div class="seat-row">
+        <div class="seat-group">${leftCols.map(mkBtn).join('')}</div>
+        <div class="seat-dir">${dirIcon||''}</div>
+        <div class="seat-group">${rightCols.map(mkBtn).join('')}</div>
+      </div>`;
+    }
+    return html;
+  }
+
+  const carTabs=validCars.map((c,i)=>`
+    <button class="seat-car-tab${i===_seatCarIdx?' active':''}" onclick="switchSeatCar(${i})">
+      ${c.car}호차<br><span style="font-size:10px;font-weight:400">${c.label}</span>
+    </button>`).join('');
+
+  wrap.innerHTML=`
+    <div class="seat-header">
+      <button class="seat-back-btn" onclick="closeSeatSelector()">✕</button>
+      <div class="seat-header-info">
+        <div style="font-size:14px;font-weight:700">${t.grade} ${trainNo}</div>
+        <div style="font-size:11px;color:var(--text2)">${car.car}호차 ${car.label}</div>
+      </div>
+      <div style="font-size:12px;color:var(--text2);font-family:var(--mono)" id="seat-sel-clock"></div>
+    </div>
+    <div class="seat-car-tabs">${carTabs}</div>
+    <div class="seat-legend">
+      <span class="seat-legend-item"><span class="seat-dot available"></span>선택가능</span>
+      <span class="seat-legend-item"><span class="seat-dot selected"></span>선택됨</span>
+      <span class="seat-legend-item"><span class="seat-dot booked"></span>예약됨</span>
+      ${isKtxType?'<span class="seat-legend-item">▲순방향 ▽역방향</span>':''}
+    </div>
+    <div class="seat-label-row">
+      <div style="font-size:11px;color:var(--text3)">창측 내측</div>
+      <div></div>
+      <div style="font-size:11px;color:var(--text3)">내측 창측</div>
+    </div>
+    <div class="seat-map">${seatHTML()}</div>
+    <div class="seat-footer">
+      <div id="seat-footer-info" style="flex:1;font-size:12px;color:var(--text2)">좌석을 선택해주세요 (${count}명)</div>
+      <button class="seat-confirm-btn" id="seat-confirm-btn" disabled style="opacity:.5"
+        onclick="confirmSeatSelection()">선택 완료</button>
+    </div>`;
+
+  const cl=document.getElementById('seat-sel-clock');
+  const tick=()=>{const n=new Date();if(cl)cl.textContent=`${String(n.getHours()).padStart(2,'0')}:${String(n.getMinutes()).padStart(2,'0')}:${String(n.getSeconds()).padStart(2,'0')}`;};
+  tick(); const ti=setInterval(tick,1000);
+  const obs=new MutationObserver(()=>{if(!document.getElementById('seat-selector-wrap')){clearInterval(ti);obs.disconnect();}});
+  obs.observe(document.body,{childList:true});
+  _updateSeatFooter(count);
+}
+
+window.toggleSeatBtn=function(id,count){
+  const idx=_selectedSeats.indexOf(id);
+  if(idx>=0) _selectedSeats.splice(idx,1);
+  else { if(_selectedSeats.length>=count) _selectedSeats.shift(); _selectedSeats.push(id); }
+  document.querySelectorAll('.seat-btn:not(.booked)').forEach(btn=>{
+    const m=(btn.getAttribute('onclick')||'').match(/'([^']+)'/);
+    if(m) btn.className='seat-btn'+(_selectedSeats.includes(m[1])?' selected':'');
+  });
+  _updateSeatFooter(count);
+};
+
+function _updateSeatFooter(count){
+  const info=document.getElementById('seat-footer-info');
+  const btn=document.getElementById('seat-confirm-btn');
+  if(!info||!btn)return;
+  const ok=_selectedSeats.length===count;
+  info.textContent=_selectedSeats.length?`선택 좌석: ${_selectedSeats.join(', ')} (${_selectedSeats.length}/${count}명)`:`좌석을 선택해주세요 (${count}명)`;
+  btn.disabled=!ok; btn.style.opacity=ok?'1':'0.5';
+}
+
+window.switchSeatCar=function(idx){
+  _seatCarIdx=idx;
+  const wrap=document.getElementById('seat-selector-wrap');
+  if(!wrap)return;
+  const trainNo=wrap.dataset.trainNo, travelDate=wrap.dataset.travelDate, seatClass=wrap.dataset.seatClass;
+  const t=ALL_TRAINS.find(x=>x.no===trainNo); if(!t)return;
+  const formType=getFormationType(t.grade,trainNo);
+  const composition=getCarComposition(formType);
+  const validCars=getCarsForClass(composition,seatClass);
+  _renderSeatMap(wrap,t,trainNo,travelDate,seatClass,validCars,getBookedSeats(trainNo,travelDate),composition);
+};
+
+function closeSeatSelector(){
+  document.getElementById('seat-selector-wrap')?.remove();
+}
+
+function confirmSeatSelection(){
+  if(!_selectedSeats.length){alert('좌석을 선택해주세요.');return;}
+  window._preselectedSeats=[..._selectedSeats];
+  closeSeatSelector();
+  const disp=document.getElementById('booking-seat-display');
+  if(disp) disp.textContent=_selectedSeats.join(', ');
+}
+
+function openSeatSelectorFromBooking(trainNo){
+  const dateInp=document.getElementById('booking-date');
+  const travelDate=dateInp?.value||todayLocalStr();
+  const seatClass=window._bookingSeatClass||'general';
+  openSeatSelector(trainNo,travelDate,seatClass);
+}
+
 
 // 승차권 탭 렌더링
 let _ticketFilterTab='upcoming'; // upcoming | past | cancelled
