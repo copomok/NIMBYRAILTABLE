@@ -425,7 +425,9 @@ function getCurrentStatus(t){
           const midM=midRaw+(leaveM>=1440?1440:0);
           if(midM===nowM) return{status:'running',passStn:mid.s,prevStn:s.s,nowMin};
         }
-        return{status:'running',prevStn:s.s,nextStn:nxt.s.s,nowMin};
+        // prevStn = j역 바로 직전 역 (nowM 기준 가장 최근에 지난 역)
+        const prevStn = j>0 ? norm[j-1].s.s : s.s;
+        return{status:'running',prevStn,nextStn:nxt.s.s,nowMin};
       }
       // nowM >= nxtArrM: j역에 도달했거나 지남
       // j역이 arr·dep 둘 다 있는 정차역이면 nowM이 그 사이에 있는지 체크
