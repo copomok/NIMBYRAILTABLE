@@ -3235,9 +3235,9 @@ function openBookingPopup(trainNo, fromStn, toStn, depTime, arrTime){
       </div>
       <div class="booking-passenger-section">
         <div class="booking-section-label">좌석 선택 <span style="font-size:11px;color:var(--text3);font-weight:400">(선택 안 하면 자동 배정)</span></div>
-        <button class="btn" id="booking-seat-select-btn" style="width:100%;justify-content:center;margin-bottom:12px;font-size:13px;gap:6px"
+        <button class="btn" id="booking-seat-select-btn" disabled style="width:100%;justify-content:center;margin-bottom:12px;font-size:13px;gap:6px;opacity:.4;cursor:not-allowed"
           onclick="openSeatSelectorFromBooking('${trainNo}')">
-          🪑 직접 선택 — <span id="booking-seat-display" style="color:var(--accent2)">자동 배정</span>
+          🪑 직접 선택 — <span id="booking-seat-display" style="color:var(--accent2)">등급 선택 후 가능</span>
         </button>
         <div class="booking-section-label">인원</div>
         <div class="booking-passenger-control">
@@ -3269,6 +3269,9 @@ function selectSeatClass(btn,cls){
   window._bookingSeatClass=cls;
   const confirmBtn=document.getElementById('booking-confirm-btn');
   if(confirmBtn){confirmBtn.disabled=false;confirmBtn.textContent='🎫 예매하기';}
+  const sb=document.getElementById('booking-seat-select-btn');
+  if(sb){sb.disabled=false;sb.style.opacity='1';sb.style.cursor='pointer';window._preselectedSeats=null;
+    const d=document.getElementById('booking-seat-display');if(d)d.textContent='자동 배정';}
 }
 function changePassengerCount(delta){
   let n=(window._bookingPassengerCount||1)+delta;
@@ -3318,7 +3321,8 @@ function confirmBooking(trainNo,fromStn,toStn,depTime,arrTime){
   }
 
   const tickets=loadTickets();
-  const seats=Array.from({length:count},()=>randomSeat(seatClass));
+  const seats=(window._preselectedSeats&&window._preselectedSeats.length===count)?[...window._preselectedSeats]:Array.from({length:count},()=>randomSeat(seatClass,trainNo));
+  window._preselectedSeats=null;
 
   tickets.push({
     id:genTicketId(),
@@ -3853,10 +3857,13 @@ function getBookedSeats(trainNo, travelDate){
   return booked;
 }
 
+const _congCache={};
+const _levelCache={};
 function generateVirtualBookings(trainNo, travelDate, composition){
   const key=`${trainNo}:${travelDate}`;
+  if(_congCache[key])return;
   const cong=loadCongestion();
-  if(cong[key]) return;
+  if(cong[key]){_congCache[key]=true;return;}
   function seededRand(seed,i){let x=Math.sin(seed*9301+i*49297+233)*803.9;return x-Math.floor(x);}
   function strSeed(s){let h=0;for(let i=0;i<s.length;i++)h=(Math.imul(31,h)+s.charCodeAt(i))|0;return Math.abs(h);}
   const seed=strSeed(trainNo+travelDate);
@@ -3873,19 +3880,19 @@ function generateVirtualBookings(trainNo, travelDate, composition){
       });
     });
   });
-  cong[key]=booked; saveCongestion(cong);
+  cong[key]=booked; saveCongestion(cong); _congCache[key]=true;
 }
 
 function getCongestionLevel(trainNo, travelDate, composition){
+  const _ck=trainNo+':'+travelDate;
+  if(_levelCache[_ck])return _levelCache[_ck];
   generateVirtualBookings(trainNo, travelDate, composition);
   const booked=getBookedSeats(trainNo,travelDate);
   const totalSeats=composition.filter(c=>c.type!=='free').reduce((s,c)=>s+(c.totalSeats||0),0);
   if(totalSeats===0)return{label:'',color:'var(--text3)'};
   const rate=booked.size/totalSeats;
-  if(rate>=1.0) return{label:'매진',color:'var(--red)'};
-  if(rate>=0.8) return{label:'혼잡',color:'var(--orange)'};
-  if(rate>=0.5) return{label:'보통',color:'var(--accent)'};
-  return{label:'여유',color:'var(--green)'};
+  const _r=rate>=1.0?{label:'매진',color:'var(--red)'}:rate>=0.8?{label:'혼잡',color:'var(--orange)'}:rate>=0.5?{label:'보통',color:'var(--accent)'}:{label:'여유',color:'var(--green)'};
+  _levelCache[_ck]=_r;return _r;
 }
 
 // ── 좌석 선택 팝업 ──
