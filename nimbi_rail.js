@@ -3583,7 +3583,7 @@ function openPassDaySelector(passId,trainNo,from,to,depT,arrT){
   }).join('');
   const wrap=document.createElement('div');
   wrap.id='pass-day-wrap';
-  wrap.style.cssText='position:fixed;inset:0;z-index:9400;display:flex;align-items:center;justify-content:center';
+  wrap.style.cssText='position:fixed;inset:0;z-index:9400;display:flex;align-items:center;justify-content:center;pointer-events:auto';
   wrap.innerHTML=`
     <div style="position:fixed;inset:0;background:rgba(0,0,0,.65);backdrop-filter:blur(2px)" onclick="closePassDaySelector()"></div>
     <div style="position:relative;z-index:1;background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:20px;width:90vw;max-width:380px;box-shadow:0 8px 32px rgba(0,0,0,.6);max-height:90vh;overflow-y:auto">
@@ -3941,7 +3941,6 @@ function renderTickets(){
 
   el.innerHTML=`
     ${tripWidget}
-    ${renderPassSection()}
     <div class="result-header"><div class="result-title">🎫 내 승차권</div><span class="badge blue">${tickets.filter(t=>t.status==='active').length}건</span></div>
     ${tabs}
     <div class="ticket-list">${cards}</div>`;
