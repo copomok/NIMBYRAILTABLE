@@ -4262,8 +4262,8 @@ function openMySection(section){
   contentEl.innerHTML = '';
   // 서브패널 전체화면으로 콘텐츠 렌더링 (탭 이동 없음)
   if(section==='book'){
-    contentEl.innerHTML = '<div style="padding:0"><div id="result-book"></div></div>';
-    renderBookTab();
+    contentEl.innerHTML = '<div style="padding:0"><div id="my-result-book"></div></div>';
+    renderMyBookTab();
   } else if(section==='ticket'){
     contentEl.innerHTML = '<div id="result-ticket"></div>';
     renderTickets();
@@ -4290,6 +4290,13 @@ function openMySection(section){
 let _bookRoundTrip = false;
 let _bookPassengerCount = 1;
 
+function renderMyBookTab(){
+  const el = document.getElementById('my-result-book');
+  if(!el) return;
+  // my-result-book용 렌더링 (마이페이지 서브패널)
+  _renderBookTabInto(el, "my-book-results");
+}
+
 function renderBookTab(){
   const el = document.getElementById('result-book');
   if(!el) return;
@@ -4303,6 +4310,11 @@ function renderBookTab(){
   const maxD = new Date(today); maxD.setMonth(maxD.getMonth()+1);
   const maxDate = toLocalDateStr(maxD);
 
+  _renderBookTabInto(el);
+}
+
+function _renderBookTabInto(el, resultId){
+  resultId = resultId || "book-results";
   el.innerHTML = `
     <div class="book-card">
       <!-- 편도/왕복 토글 -->
@@ -4347,7 +4359,7 @@ function renderBookTab(){
       <button class="book-search-btn" onclick="searchBookTrains()">열차 조회</button>
     </div>
 
-    <div id="book-results"></div>`;
+    <div id="${resultId}"></div>`;
 
   // 역 선택 상태 복원
   if(window._bookFrom) document.getElementById('book-from-name').textContent = window._bookFrom;
@@ -4356,14 +4368,16 @@ function renderBookTab(){
 
 function setBookTripType(isRound){
   _bookRoundTrip = isRound;
-  renderBookTab();
+  if(document.getElementById('my-result-book')) renderMyBookTab();
+  else renderBookTab();
 }
 
 function swapBookStations(){
   const tmp = window._bookFrom;
   window._bookFrom = window._bookTo;
   window._bookTo = tmp;
-  renderBookTab();
+  if(document.getElementById('my-result-book')) renderMyBookTab();
+  else renderBookTab();
 }
 
 // 역 선택 팝업
@@ -4475,7 +4489,7 @@ function searchBookTrains(){
   const to = window._bookTo;
   const dateGo = document.getElementById('book-date-go')?.value;
   const dateBack = _bookRoundTrip ? document.getElementById('book-date-back')?.value : null;
-  const el = document.getElementById('book-results');
+  const el = document.getElementById('book-results') || document.getElementById('my-book-results');
   if(!el) return;
 
   if(!from||!to){
