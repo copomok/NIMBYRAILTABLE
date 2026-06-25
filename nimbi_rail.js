@@ -3842,215 +3842,7 @@ function getCarsForClass(composition, seatClass){
   return composition.filter(c=>c.type==='general');
 }
 
-const CONGESTION_KEY='nimbi_congestion_v2'; // v2: 현실적 모델
-// 구버전 캐시 삭제
-try{['nimbi_congestion'].forEach(k=>localStorage.removeItem(k));}catch(e){}
-function loadCongestion(){ try{return JSON.parse(localStorage.getItem(CONGESTION_KEY))||{};}catch(e){return{};} }
-function saveCongestion(d){ localStorage.setItem(CONGESTION_KEY,JSON.stringify(d)); }
-
-function getBookedSeats(trainNo, travelDate){
-  const tickets=loadTickets();
-  const booked=new Set();
-  tickets.filter(tk=>tk.trainNo===trainNo&&tk.travelDate===travelDate&&tk.status==='active')
-    .forEach(tk=>(tk.seats||[]).forEach(s=>booked.add(s)));
-  const cong=loadCongestion();
-  const key=`${trainNo}:${travelDate}`;
-  (cong[key]||[]).forEach(s=>booked.add(s));
-  return booked;
-}
-
-const _congCache={};
-const _levelCache={};
-// 자정 넘으면 캐시 무효화
-(()=>{
-  const now=new Date();
-  const midnight=new Date(now); midnight.setHours(24,0,0,0);
-  setTimeout(()=>{
-    Object.keys(_levelCache).forEach(k=>delete _levelCache[k]);
-    Object.keys(_congCache).forEach(k=>delete _congCache[k]);
-  }, midnight-now);
-})();
-// ── 현실적 혼잡도 모델 ──
-// ══════════════════════════════════════════
-// 현실적 혼잡도 계산 시스템
-// ══════════════════════════════════════════
-
-// 노선별 기본 수요 (번호 기반)
-function getLineDemand(trainNo, grade, isWeekend){
-  const n=parseInt(trainNo)||0;
-
-  // KTX 경부고속선 (서울-부산/대구 직통, 최고 수요)
-  if((n>=1&&n<=100)||(n>=501&&n<=600))
-    return isWeekend ? 0.88 : 0.85;
-
-  // SRT 경부고속선 (301~399, 경쟁 노선)
-  if(n>=301&&n<=399)
-    return isWeekend ? 0.86 : 0.83;
-
-  // KTX 강릉선/중앙선 (711~750, 주말 스키·관광 극성수기)
-  if(n>=711&&n<=750)
-    return isWeekend ? 0.92 : 0.58;
-
-  // KTX 호남선 (서울-광주, 두번째 고수요)
-  if(n>=201&&n<=299)
-    return isWeekend ? 0.82 : 0.76;
-
-  // KTX 전라선 (서울-여수, 주말 관광)
-  if(n>=401&&n<=499)
-    return isWeekend ? 0.80 : 0.68;
-
-  // ITX-청춘 경춘선 (2001~2099, 주말 춘천 관광)
-  if(n>=2001&&n<=2099)
-    return isWeekend ? 0.82 : 0.55;
-
-  // ITX-새마을 경부선 (1001~1099, 중거리)
-  if(n>=1001&&n<=1099)
-    return isWeekend ? 0.72 : 0.68;
-
-  // ITX-새마을 기타 (호남·전라 등)
-  if(n>=1101&&n<=1199)
-    return isWeekend ? 0.68 : 0.62;
-
-  // 무궁화 경부선 (1301~1399, 단거리 통근)
-  if(n>=1301&&n<=1399)
-    return isWeekend ? 0.65 : 0.70; // 평일 통근 수요↑
-
-  // 무궁화 호남선 (1501~1599)
-  if(n>=1501&&n<=1599)
-    return isWeekend ? 0.62 : 0.60;
-
-  // 무궁화 전라선 (1701~1799, 저수요)
-  if(n>=1701&&n<=1799)
-    return isWeekend ? 0.58 : 0.52;
-
-  // 무궁화 중앙/동해선 등 기타
-  return isWeekend ? 0.55 : 0.50;
-}
-
-// 시간대별 수요 계수
-function getHourDemand(hour, isWeekend, grade){
-  if(isWeekend){
-    // 주말: 출퇴근 없음, 관광 수요 고르게 분포
-    // 오전 출발(9~12시)↑, 오후(13~17시) 보통, 심야↓
-    if(hour>=0&&hour<=5)   return 0.28; // 새벽 (거의 없음)
-    if(hour>=6&&hour<=8)   return 0.58; // 이른 아침
-    if(hour>=9&&hour<=11)  return 0.88; // 오전 출발 성수기
-    if(hour>=12&&hour<=14) return 0.85; // 점심 무렵
-    if(hour>=15&&hour<=17) return 0.80; // 오후
-    if(hour>=18&&hour<=20) return 0.75; // 귀경 시작
-    if(hour>=21&&hour<=22) return 0.65; // 귀경 피크
-    return 0.45;                         // 심야
-  } else {
-    // 평일: 출퇴근 극성수기
-    if(hour>=0&&hour<=5)   return 0.22; // 새벽
-    if(hour>=6&&hour<=6)   return 0.48; // 이른 출근
-    if(hour>=7&&hour<=9)   return 0.92; // 출근 피크
-    if(hour>=10&&hour<=12) return 0.62; // 오전 중간
-    if(hour>=13&&hour<=15) return 0.65; // 오후
-    if(hour>=16&&hour<=17) return 0.72; // 이른 퇴근
-    if(hour>=18&&hour<=20) return 0.90; // 퇴근 피크
-    if(hour>=21&&hour<=22) return 0.60; // 늦은 귀가
-    return 0.35;                         // 심야
-  }
-}
-
-// 출발일까지 남은 기간별 예매율 계수
-function getDateProximityFactor(travelDate){
-  const today=new Date(); today.setHours(0,0,0,0);
-  const travel=new Date(travelDate); travel.setHours(0,0,0,0);
-  const daysLeft=Math.round((travel-today)/(1000*60*60*24));
-  if(daysLeft<=0)  return 0.98; // 오늘 (거의 만석)
-  if(daysLeft<=1)  return 0.93; // 내일
-  if(daysLeft<=3)  return 0.85; // 3일 이내
-  if(daysLeft<=7)  return 0.72; // 1주일 이내
-  if(daysLeft<=14) return 0.58; // 2주 이내
-  if(daysLeft<=30) return 0.42; // 1달 이내
-  return 0.25;                   // 1달 이상
-}
-
-// 등급별 보정 (KTX 특실은 일반실보다 여유 있음)
-function getGradeCarFactor(carType){
-  if(carType==='special')  return 0.72; // 특실: 비싸서 여유
-  if(carType==='premium')  return 0.75; // 우등실
-  if(carType==='free')     return 0;    // 자유석 제외
-  return 1.0;                           // 일반실
-}
-
-function calcRealisticFillRate(trainNo, travelDate, depTime, grade){
-  function seededRand(seed,i){let x=Math.sin(seed*9301+i*49297+233)*803.9;return x-Math.floor(x);}
-  function strSeed(s){let h=0;for(let i=0;i<s.length;i++)h=(Math.imul(31,h)+s.charCodeAt(i))|0;return Math.abs(h);}
-  const seed=strSeed(trainNo+travelDate);
-  // ±8% 재현 가능한 노이즈
-  const noise=(seededRand(seed,999)*0.16)-0.08;
-
-  const dow=new Date(travelDate).getDay();
-  const isWeekend=(dow===0||dow===6);
-  const isFriday=(dow===5);
-
-  const lineDemand=getLineDemand(trainNo, grade||'', isWeekend);
-
-  const h=depTime?parseInt(depTime.split(':')[0]):12;
-  let hourDemand=getHourDemand(h, isWeekend, grade||'');
-  // 금요일 저녁은 주말 수준으로 강화
-  if(isFriday&&h>=17&&h<=21) hourDemand=Math.min(0.95, hourDemand*1.15);
-
-  const dateFactor=getDateProximityFactor(travelDate);
-
-  // 세 요소 합성: 가중 평균 방식 (단순 곱보다 자연스럽게)
-  // 노선(40%) + 시간대(35%) + 날짜(25%)
-  const base = lineDemand*0.40 + hourDemand*0.35 + dateFactor*0.25;
-
-  return Math.min(0.98, Math.max(0.04, base+noise));
-}
-
-function generateVirtualBookings(trainNo, travelDate, composition){
-  const key=`${trainNo}:${travelDate}`;
-  if(_congCache[key])return;
-  const cong=loadCongestion();
-  if(cong[key]){_congCache[key]=true;return;}
-
-  function seededRand(seed,i){let x=Math.sin(seed*9301+i*49297+233)*803.9;return x-Math.floor(x);}
-  function strSeed(s){let h=0;for(let i=0;i<s.length;i++)h=(Math.imul(31,h)+s.charCodeAt(i))|0;return Math.abs(h);}
-  const seed=strSeed(trainNo+travelDate);
-
-  // 실제 열차 출발 시간 가져오기
-  const t=ALL_TRAINS.find(x=>x.no===trainNo);
-  const depTime=t?t.stops[0].dep||t.stops[0].arr:null;
-
-  // 현실적 혼잡도 계산
-  const baseFillRate=calcRealisticFillRate(trainNo,travelDate,depTime,t?.grade);
-
-  const booked=[];
-  let idx=0;
-  composition.forEach(car=>{
-    if(car.type==='free')return;
-    const missing=new Set(car.missingSeats||[]);
-    // 특실/우등실은 일반실보다 여유 있음 (약 70% 수준)
-    const classMulti=getGradeCarFactor(car.type)||1.0;
-    if(!classMulti)return; // 자유석 건너뜀
-    const fillRate=Math.min(0.98,baseFillRate*classMulti);
-    Array.from({length:car.rows||20},(_,r)=>r+1).forEach(row=>{
-      (car.cols||[]).forEach(col=>{
-        if(missing.has(`${row}${col}`))return;
-        if(seededRand(seed,idx++)<fillRate) booked.push(`${car.car}호차 ${row}${col}`);
-      });
-    });
-  });
-  cong[key]=booked; saveCongestion(cong); _congCache[key]=true;
-}
-
-function getCongestionLevel(trainNo, travelDate, composition){
-  const _ck=trainNo+':'+travelDate;
-  if(_levelCache[_ck])return _levelCache[_ck];
-  generateVirtualBookings(trainNo, travelDate, composition);
-  const booked=getBookedSeats(trainNo,travelDate);
-  const totalSeats=composition.filter(c=>c.type!=='free').reduce((s,c)=>s+(c.totalSeats||0),0);
-  if(totalSeats===0)return{label:'',color:'var(--text3)'};
-  const rate=booked.size/totalSeats;
-  const _r=rate>=1.0?{label:'매진',color:'var(--red)'}:rate>=0.8?{label:'혼잡',color:'var(--orange)'}:rate>=0.5?{label:'보통',color:'var(--accent)'}:{label:'여유',color:'var(--green)'};
-  _levelCache[_ck]=_r;return _r;
-}
-
+// 혼잡도 알고리즘 → nimbi_congestion.js 참조
 // ── 좌석 선택 팝업 ──
 let _selectedSeats=[];
 let _seatCarIdx=0;
@@ -4101,17 +3893,19 @@ function _renderSeatMap(wrap,t,trainNo,travelDate,seatClass,validCars,booked,com
     return html;
   }
 
-  const carTabs=validCars.map((c,i)=>`
-    <button class="seat-car-tab${i===_seatCarIdx?' active':''}" onclick="switchSeatCar(${i})">
-      ${c.car}호차<br><span style="font-size:10px;font-weight:400">${c.label}</span>
-    </button>`).join('');
+  const carTabs=validCars.map((c,i)=>{
+    const rem=getCarRemaining(trainNo,travelDate,c);
+    return `<button class="seat-car-tab${i===_seatCarIdx?' active':''}" onclick="switchSeatCar(${i})">
+      ${c.car}호차<br><span style="font-size:10px;font-weight:400">${rem.remaining}석</span>
+    </button>`;
+  }).join('');
 
   wrap.innerHTML=`
     <div class="seat-header">
       <button class="seat-back-btn" onclick="closeSeatSelector()">✕</button>
       <div class="seat-header-info">
         <div style="font-size:14px;font-weight:700">${t.grade} ${trainNo}</div>
-        <div style="font-size:11px;color:var(--text2)">${car.car}호차 ${car.label}</div>
+        <div style="font-size:11px;color:var(--text2)">${car.car}호차 · 잔여 ${getCarRemaining(trainNo,travelDate,car).remaining}석</div>
       </div>
       <div style="font-size:12px;color:var(--text2);font-family:var(--mono)" id="seat-sel-clock"></div>
     </div>
@@ -4751,7 +4545,7 @@ function searchBookTrains(){
     <div class="book-train-list">${rows}</div>
     ${_bookRoundTrip&&dateBack?`<p class="hint" style="margin-top:8px">※ 왕복 복편(${to}→${from}, ${dateBack})은 예매 후 별도 조회해주세요</p>`:''}`;
 
-  // 혼잡도 비동기 (목록 렌더 후 배경 계산)
+  // 혼잡도: 매진 임박만 표시 (속도 최적화)
   setTimeout(()=>{
     trains.forEach(({t})=>{
       const ft=getFormationType(t.grade,t.no);
@@ -4759,7 +4553,11 @@ function searchBookTrains(){
       const cong=getCongestionLevel(t.no,dateGo,comp);
       const row=el.querySelector(`[data-train-no="${t.no}"]`);
       const badge=row?.querySelector('.cong-badge');
-      if(badge){badge.textContent=cong.label;badge.style.color=cong.color;}
+      if(badge){
+        // 매진 임박(95%+)만 표시, 나머지는 숨김
+        if(cong.rate>=0.95){badge.textContent='매진 임박';badge.style.color='var(--red)';}
+        else badge.style.display='none';
+      }
     });
   },0);
 }
