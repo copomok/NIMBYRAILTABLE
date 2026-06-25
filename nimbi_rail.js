@@ -4515,12 +4515,9 @@ function searchBookTrains(){
     return;
   }
 
-  const rows = trains.map(({t,depT,arrT,dur})=>{
-    const _formType=getFormationType(t.grade,t.no);
-    const _comp=getCarComposition(_formType);
-    const _cong=getCongestionLevel(t.no,dateGo,_comp);
-    return `
-    <div class="book-train-row" onclick="openBookTrainDetail('${t.no}','${from}','${to}','${depT}','${arrT||''}','${dateGo}')">
+  const rows = trains.map(({t,depT,arrT,dur})=>`
+    <div class="book-train-row" data-train-no="${t.no}"
+      onclick="openBookTrainDetail('${t.no}','${from}','${to}','${depT}','${arrT||''}','${dateGo}')">
       <div class="book-train-grade" style="color:var(--c-${gcCssVar(t.grade)})">${t.grade}</div>
       <div class="book-train-no">${t.no}</div>
       <div class="book-train-times">
@@ -4530,10 +4527,10 @@ function searchBookTrains(){
       </div>
       <div style="display:flex;flex-direction:column;align-items:flex-end;gap:2px;flex-shrink:0">
         <div class="book-train-dur">${dur}</div>
-        <div style="font-size:10px;font-weight:700;color:${_cong.color}">${_cong.label}</div>
+        <div class="cong-badge" style="font-size:10px;font-weight:700"></div>
       </div>
       <div class="book-train-chevron">›</div>
-    </div>`; }).join('');
+    </div>`).join('');
 
   const tripLabel = _bookRoundTrip ? `편도 (${dateGo})` : dateGo;
   el.innerHTML = `
@@ -4545,19 +4542,16 @@ function searchBookTrains(){
     <div class="book-train-list">${rows}</div>
     ${_bookRoundTrip&&dateBack?`<p class="hint" style="margin-top:8px">※ 왕복 복편(${to}→${from}, ${dateBack})은 예매 후 별도 조회해주세요</p>`:''}`;
 
-  // 혼잡도: 매진 임박만 표시 (속도 최적화)
+  // 매진 임박(95%+)만 비동기 표시
   setTimeout(()=>{
     trains.forEach(({t})=>{
       const ft=getFormationType(t.grade,t.no);
       const comp=getCarComposition(ft);
       const cong=getCongestionLevel(t.no,dateGo,comp);
+      if(cong.rate<0.95) return; // 매진 임박 아니면 스킵
       const row=el.querySelector(`[data-train-no="${t.no}"]`);
       const badge=row?.querySelector('.cong-badge');
-      if(badge){
-        // 매진 임박(95%+)만 표시, 나머지는 숨김
-        if(cong.rate>=0.95){badge.textContent='매진 임박';badge.style.color='var(--red)';}
-        else badge.style.display='none';
-      }
+      if(badge){badge.textContent='매진 임박';badge.style.color='var(--red)';}
     });
   },0);
 }
