@@ -142,10 +142,9 @@ function getGradeCarFactor(carType){
 
 // ── 최종 예매율 계산 ──
 function calcRealisticFillRate(trainNo, travelDate, depTime, grade){
-  function seededRand(seed,i){let x=Math.sin(seed*9301+i*49297+233)*803.9;return x-Math.floor(x);}
-  function strSeed(s){let h=0;for(let i=0;i<s.length;i++)h=(Math.imul(31,h)+s.charCodeAt(i))|0;return Math.abs(h);}
-  const seed=strSeed(trainNo+travelDate);
-  const noise=(seededRand(seed,999)*0.16)-0.08;
+  function strSeed(s){let h=0;for(let i=0;i<s.length;i++)h=(Math.imul(31,h)+s.charCodeAt(i))|0;return Math.abs(h)||1;}
+  const _s=strSeed(trainNo+travelDate);
+  const noise=((((Math.imul(1664525,_s)+1013904223)>>>0)/4294967296)*0.16)-0.08;
 
   const dow=new Date(travelDate).getDay();
   const isWeekend=(dow===0||dow===6);
