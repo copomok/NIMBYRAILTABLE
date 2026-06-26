@@ -3189,7 +3189,7 @@ function genTicketId(){
 }
 
 // 예매 팝업 열기 (열차 상세/출도착 결과에서 호출)
-function openBookingPopup(trainNo, fromStn, toStn, depTime, arrTime){
+function openBookingPopup(trainNo, fromStn, toStn, depTime, arrTime, travelDate){
   const t=ALL_TRAINS.find(x=>x.no===trainNo);
   if(!t){alert('열차 정보를 찾을 수 없습니다.');return;}
   const classes=availableSeatClasses(t.grade);
@@ -3227,7 +3227,7 @@ function openBookingPopup(trainNo, fromStn, toStn, depTime, arrTime){
       <div class="alarm-popup-sub">${fromStn} ${depTime||''} → ${toStn} ${arrTime||''}</div>
       <div class="booking-date-section">
         <div class="booking-section-label">탑승일</div>
-        <input type="date" id="booking-date" value="${minDate}" min="${minDate}" max="${maxDate}" class="booking-date-input">
+        <input type="date" id="booking-date" value="${travelDate&&travelDate>=minDate?travelDate:minDate}" min="${minDate}" max="${maxDate}" class="booking-date-input">
       </div>
       <div class="booking-seat-section">
         <div class="booking-section-label">좌석 등급</div>
@@ -4001,8 +4001,10 @@ function confirmSeatSelection(){
 
 function openSeatSelectorFromBooking(trainNo){
   const dateInp=document.getElementById('booking-date');
-  const travelDate=dateInp?.value||todayLocalStr();
+  const travelDate=dateInp?.value||window._currentTravelDate||todayLocalStr();
   const seatClass=window._bookingSeatClass||'general';
+  if(!window._bookingSeatClass){alert('좌석 등급을 먼저 선택해주세요.');return;}
+  window._bookingPassengerCount = window._bookingPassengerCount||_bookPassengerCount||1;
   openSeatSelector(trainNo,travelDate,seatClass);
 }
 
@@ -4359,10 +4361,10 @@ function _renderBookTabInto(el, resultId){
           <div class="book-date-label">가는날</div>
           <input type="date" id="book-date-go" class="book-date-input" value="${minDate}" min="${minDate}" max="${maxDate}">
         </div>
-        ${_bookRoundTrip ? `<div class="book-date-box">
+        <div class="book-date-box" id="book-date-back-row" style="${_bookRoundTrip?'':'display:none'}">
           <div class="book-date-label">오는날</div>
           <input type="date" id="book-date-back" class="book-date-input" value="${minDate}" min="${minDate}" max="${maxDate}">
-        </div>` : ''}
+        </div>
       </div>
 
       <!-- 인원 -->
@@ -4391,14 +4393,16 @@ function _renderBookTabInto(el, resultId){
 
 function setBookTripType(isRound){
   _bookRoundTrip = isRound;
-  renderBookTab();
+  if(document.getElementById('my-result-book')) renderMyBookTab();
+  else renderBookTab();
 }
 
 function swapBookStations(){
   const tmp = window._bookFrom;
   window._bookFrom = window._bookTo;
   window._bookTo = tmp;
-  renderBookTab();
+  if(document.getElementById('my-result-book')) renderMyBookTab();
+  else renderBookTab();
 }
 
 // 역 선택 팝업
@@ -4475,17 +4479,18 @@ function openBookPassengerPicker(){
   if(old) old.remove();
   const wrap = document.createElement('div');
   wrap.id = 'book-pass-picker-wrap';
+  wrap.style.cssText='position:fixed;inset:0;z-index:9600;display:flex;align-items:center;justify-content:center';
   wrap.innerHTML = `
-    <div class="alarm-popup-backdrop" onclick="closeBookPassengerPicker()"></div>
-    <div class="alarm-popup" style="max-width:300px;text-align:center">
-      <div class="alarm-popup-title">인원 선택</div>
-      <div class="booking-passenger-control" style="margin:20px 0">
+    <div style="position:fixed;inset:0;background:rgba(0,0,0,.65);backdrop-filter:blur(2px);z-index:0" onclick="closeBookPassengerPicker()"></div>
+    <div style="position:relative;z-index:2;background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:24px 20px;width:88vw;max-width:300px;text-align:center;box-shadow:0 8px 32px rgba(0,0,0,.6)">
+      <div style="font-size:15px;font-weight:700;margin-bottom:20px">인원 선택</div>
+      <div class="booking-passenger-control" style="margin:0 0 16px">
         <button class="booking-stepper-btn" onclick="changeBookPassenger(-1)">−</button>
-        <span id="book-passenger-num" style="font-size:22px;font-weight:700;min-width:40px;display:inline-block">${_bookPassengerCount}</span>
+        <span id="book-passenger-num" style="font-size:26px;font-weight:700;min-width:44px;display:inline-block">${_bookPassengerCount}</span>
         <button class="booking-stepper-btn" onclick="changeBookPassenger(1)">+</button>
       </div>
-      <div style="font-size:13px;color:var(--text2);margin-bottom:16px">어른 기준 (최대 6명)</div>
-      <button class="btn btn-primary" style="width:100%;justify-content:center;padding:11px" onclick="confirmBookPassenger()">확인</button>
+      <div style="font-size:13px;color:var(--text2);margin-bottom:18px">어른 기준 (최대 6명)</div>
+      <button class="btn btn-primary" style="width:100%;justify-content:center;padding:12px;font-size:14px" onclick="confirmBookPassenger()">확인</button>
     </div>`;
   document.body.appendChild(wrap);
 }
@@ -4502,6 +4507,15 @@ function confirmBookPassenger(){
   closeBookPassengerPicker();
   const el = document.getElementById('book-passenger-val');
   if(el) el.textContent = `어른 ${_bookPassengerCount}명`;
+  window._bookingPassengerCount = _bookPassengerCount;
+  // 예매 팝업 내 인원도 동기화
+  const bpc = document.getElementById('booking-passenger-count');
+  if(bpc) bpc.textContent = _bookPassengerCount;
+  window._bookingPassengerCount = _bookPassengerCount;
+  // 선택된 좌석 초기화 (인원 바뀌면 좌석 다시 선택)
+  window._preselectedSeats = null;
+  const disp = document.getElementById('booking-seat-display');
+  if(disp) disp.textContent = '자동 배정';
 }
 
 // 열차 조회
@@ -4518,6 +4532,12 @@ function searchBookTrains(includeTransfer){
   const dateBack = _bookRoundTrip ? document.getElementById('book-date-back')?.value : null;
   const el = document.getElementById('my-book-results') || document.getElementById('book-results');
   if(!el) return;
+  // 가는날 → 탑승일 동기화
+  if(dateGo){
+    const bdEl=document.getElementById('booking-date');
+    if(bdEl) bdEl.value=dateGo;
+    window._currentTravelDate=dateGo;
+  }
 
   if(!from||!to){
     el.innerHTML='<div class="empty"><div class="empty-icon">🚉</div><p>출발역과 도착역을 선택해주세요</p></div>';
@@ -4562,24 +4582,21 @@ function searchBookTrains(includeTransfer){
   const rows = trains.map(({t,depT,arrT,dur})=>`
     <div class="book-train-row" data-train-no="${t.no}"
       onclick="openBookTrainDetail('${t.no}','${from}','${to}','${depT}','${arrT||''}','${dateGo}')">
-      <div style="display:flex;flex-direction:column;gap:2px;min-width:0;flex:1">
-        <div style="display:flex;align-items:center;gap:8px">
-          <span class="book-train-grade" style="color:var(--c-${gcCssVar(t.grade)})">${t.grade}</span>
-          <span class="book-train-no">${t.no}</span>
+      <div style="flex:1;min-width:0">
+        <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px">
+          <span style="font-size:13px;font-weight:700;color:var(--c-${gcCssVar(t.grade)})">${t.grade}</span>
+          <span style="font-size:13px;color:var(--text2);font-family:var(--mono)">${t.no}</span>
         </div>
-        <div class="book-train-times">
-          <span class="book-train-dep">${depT}</span>
-          <span class="book-train-arrow">→</span>
-          <span class="book-train-arr">${arrT||'-'}</span>
-          <span class="book-train-dur" style="margin-left:6px">${dur}</span>
+        <div style="display:flex;align-items:baseline;gap:6px">
+          <span style="font-size:17px;font-weight:700;font-family:var(--mono)">${depT}</span>
+          <span style="color:var(--text3);font-size:12px">→</span>
+          <span style="font-size:17px;font-weight:700;font-family:var(--mono);color:var(--green)">${arrT||'-'}</span>
+          <span style="font-size:11px;color:var(--text3);font-family:var(--mono)">${dur}</span>
         </div>
       </div>
       <div style="display:flex;align-items:center;gap:8px;flex-shrink:0">
-        <button class="seat-avail-btn" data-no="${t.no}"
-          onclick="event.stopPropagation();openBookTrainDetail('${t.no}','${from}','${to}','${depT}','${arrT||''}','${dateGo}')"
-          style="min-width:52px;padding:6px 10px;border-radius:6px;border:1.5px solid var(--border);background:transparent;color:var(--text3);font-size:12px;font-weight:600;font-family:var(--sans);cursor:pointer">
-          　
-        </button>
+        <div class="seat-avail-btn" data-no="${t.no}"
+          style="min-width:54px;height:44px;border-radius:8px;border:1.5px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:600;font-family:var(--sans);color:var(--text3);text-align:center;line-height:1.3">조회<br>중</div>
         <div class="book-train-chevron">›</div>
       </div>
     </div>`).join('');
@@ -4604,21 +4621,11 @@ function searchBookTrains(includeTransfer){
       const btn=row?.querySelector('.seat-avail-btn');
       if(!btn)return;
       const r=cong.rate||0;
-      const base='min-width:52px;padding:6px 10px;border-radius:6px;border:1.5px solid;background:transparent;font-size:12px;font-weight:700;font-family:var(--sans);cursor:pointer';
-      if(r>=0.98){
-        btn.textContent='매진';
-        btn.style.cssText=base+';color:var(--red);border-color:var(--red);cursor:default';
-        btn.onclick=e=>{e.stopPropagation();};
-      } else if(r>=0.80){
-        btn.textContent='혼잡';
-        btn.style.cssText=base+';color:var(--orange);border-color:var(--orange)';
-      } else if(r>=0.50){
-        btn.textContent='보통';
-        btn.style.cssText=base+';color:var(--accent2);border-color:var(--accent)';
-      } else {
-        btn.textContent='여유';
-        btn.style.cssText=base+';color:var(--green);border-color:var(--green)';
-      }
+      const base='min-width:54px;height:44px;border-radius:8px;border:1.5px solid;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;font-family:var(--sans)';
+      if(r>=0.98){btn.textContent='매진';btn.style.cssText=base+';color:var(--red);border-color:var(--red);background:rgba(248,81,73,.08)';}
+      else if(r>=0.80){btn.textContent='혼잡';btn.style.cssText=base+';color:var(--orange);border-color:var(--orange);background:rgba(249,115,22,.08)';}
+      else if(r>=0.50){btn.textContent='보통';btn.style.cssText=base+';color:var(--accent2);border-color:var(--accent);background:rgba(56,139,253,.08)';}
+      else{btn.textContent='여유';btn.style.cssText=base+';color:var(--green);border-color:var(--green);background:rgba(63,185,80,.08)';}
     });
   },0);
 }
@@ -4886,7 +4893,7 @@ function openBookingWithDate(trainNo, from, to, depT, arrT, travelDate, isRound,
   } : null;
 
   // book-detail-panel 애니메이션 완료 후 예매창 열기 (겹침 방지)
-  setTimeout(()=>openBookingPopup(trainNo, from, to, depT, arrT), 320);
+  setTimeout(()=>openBookingPopup(trainNo, from, to, depT, arrT, travelDate), 320);
   setTimeout(()=>{
     const dateInp = document.getElementById('booking-date');
     if(dateInp && travelDate) dateInp.value = travelDate;
