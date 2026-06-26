@@ -202,11 +202,10 @@ function generateVirtualBookings(trainNo, travelDate, composition){
 function getCongestionLevel(trainNo, travelDate, composition){
   const _ck=trainNo+':'+travelDate;
   if(_levelCache[_ck])return _levelCache[_ck];
-  generateVirtualBookings(trainNo, travelDate, composition);
-  const booked=getBookedSeats(trainNo,travelDate);
-  const totalSeats=composition.filter(c=>c.type!=='free').reduce((s,c)=>s+(c.totalSeats||0),0);
-  if(totalSeats===0)return{rate:0,label:'',color:'var(--text3)'};
-  const rate=booked.size/totalSeats;
+  // 좌석 순회 없이 fillRate만으로 즉시 계산 (열차 목록용)
+  const t=ALL_TRAINS.find(x=>x.no===trainNo);
+  const depTime=t?t.stops[0].dep||t.stops[0].arr:null;
+  const rate=calcRealisticFillRate(trainNo,travelDate,depTime,t?.grade);
   const _r=rate>=0.95?{rate,label:'매진 임박',color:'var(--red)'}:
             rate>=0.80?{rate,label:'혼잡',color:'var(--orange)'}:
             {rate,label:'',color:''}; // 보통/여유는 목록에서 표시 안 함
