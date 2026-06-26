@@ -873,9 +873,9 @@ tbody td{padding:10px 14px;font-size:13px;white-space:nowrap}
 .book-card{
   background:var(--bg2);border:1px solid var(--border);
   border-radius:14px;padding:20px;margin-bottom:16px;
-  max-width:860px;
+  max-width:860px;margin-left:auto;margin-right:auto;
 }
-#result-book{max-width:860px;}
+#result-book,#my-result-book{max-width:860px;margin:0 auto;padding:16px;}
 
 /* 편도/왕복 토글 */
 .book-trip-type{display:flex;gap:6px;margin-bottom:18px}
@@ -1006,7 +1006,8 @@ tbody td{padding:10px 14px;font-size:13px;white-space:nowrap}
   max-width:860px;
 }
 /* 열차예매 탭은 book-card 자체에 패딩 있으므로 별도 패딩 불필요 */
-#my-sub-content #result-book{
+#my-sub-content #result-book,
+#my-sub-content #my-result-book{
   padding:16px;
   max-width:860px;
 }

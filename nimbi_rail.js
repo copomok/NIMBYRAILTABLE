@@ -4354,7 +4354,10 @@ function _renderBookTabInto(el, resultId){
       </div>
 
       <!-- 조회 버튼 -->
-      <button class="book-search-btn" onclick="searchBookTrains()">열차 조회</button>
+      <div style="display:flex;gap:8px">
+        <button class="book-search-btn" style="flex:2" onclick="searchBookTrains(false)">직통 조회</button>
+        <button class="book-search-btn" style="flex:1;background:var(--bg3);color:var(--text2);font-size:14px" onclick="searchBookTrains(true)">환승 포함</button>
+      </div>
     </div>
 
     <div id="${resultId}"></div>`;
@@ -4480,12 +4483,12 @@ function confirmBookPassenger(){
 }
 
 // 열차 조회
-function searchBookTrains(){
+function searchBookTrains(includeTransfer){
   const from = window._bookFrom;
   const to = window._bookTo;
   const dateGo = document.getElementById('book-date-go')?.value;
   const dateBack = _bookRoundTrip ? document.getElementById('book-date-back')?.value : null;
-  const el = document.getElementById('book-results');
+  const el = document.getElementById('my-book-results') || document.getElementById('book-results');
   if(!el) return;
 
   if(!from||!to){
@@ -4520,8 +4523,11 @@ function searchBookTrains(){
   trains.sort((a,b)=>(toMin(a.depT)||0)-(toMin(b.depT)||0));
 
   if(!trains.length){
-    // 직통 없으면 환승 탐색
-    searchBookTransfers(from, to, dateGo, el);
+    if(includeTransfer){
+      searchBookTransfers(from, to, dateGo, el);
+    } else {
+      el.innerHTML=`<div class="empty"><div class="empty-icon">🔍</div><p>${from} → ${to} 직통 열차가 없습니다.<br><small style="color:var(--text3)">환승 포함 버튼으로 환승편을 검색하세요</small></p></div>`;
+    }
     return;
   }
 
