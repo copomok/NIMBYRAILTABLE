@@ -4300,7 +4300,11 @@ function renderMyBookTab(){
 function renderBookTab(){
   const el = document.getElementById('result-book');
   if(!el) return;
+  _renderBookTabInto(el);
+}
 
+function _renderBookTabInto(el, resultId){
+  resultId = resultId || "book-results";
   const toLocalDateStr = d => {
     const y=d.getFullYear(), m=String(d.getMonth()+1).padStart(2,'0'), day=String(d.getDate()).padStart(2,'0');
     return `${y}-${m}-${day}`;
@@ -4309,12 +4313,6 @@ function renderBookTab(){
   const minDate = toLocalDateStr(today);
   const maxD = new Date(today); maxD.setMonth(maxD.getMonth()+1);
   const maxDate = toLocalDateStr(maxD);
-
-  _renderBookTabInto(el);
-}
-
-function _renderBookTabInto(el, resultId){
-  resultId = resultId || "book-results";
   el.innerHTML = `
     <div class="book-card">
       <!-- 편도/왕복 토글 -->
@@ -4368,16 +4366,14 @@ function _renderBookTabInto(el, resultId){
 
 function setBookTripType(isRound){
   _bookRoundTrip = isRound;
-  if(document.getElementById('my-result-book')) renderMyBookTab();
-  else renderBookTab();
+  renderBookTab();
 }
 
 function swapBookStations(){
   const tmp = window._bookFrom;
   window._bookFrom = window._bookTo;
   window._bookTo = tmp;
-  if(document.getElementById('my-result-book')) renderMyBookTab();
-  else renderBookTab();
+  renderBookTab();
 }
 
 // 역 선택 팝업
@@ -4489,7 +4485,7 @@ function searchBookTrains(){
   const to = window._bookTo;
   const dateGo = document.getElementById('book-date-go')?.value;
   const dateBack = _bookRoundTrip ? document.getElementById('book-date-back')?.value : null;
-  const el = document.getElementById('book-results') || document.getElementById('my-book-results');
+  const el = document.getElementById('book-results');
   if(!el) return;
 
   if(!from||!to){
