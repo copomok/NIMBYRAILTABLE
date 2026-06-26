@@ -3871,6 +3871,24 @@ function _renderSeatMap(wrap,t,trainNo,travelDate,seatClass,validCars,booked,com
   const missing=new Set(car.missingSeats||[]);
   const isKtxType=['ktx-1','ktx-sancheon','ktx-eum'].includes(getFormationType(t.grade,trainNo));
 
+  // 잔여석 한 번에 계산 (getCarRemaining 반복 호출 방지)
+  const colIdx={'가':0,'나':1,'다':2,'라':3,'A':0,'B':1,'C':2,'D':3,'1':0,'2':1,'3':2,'4':3};
+  function calcRem(c){
+    if(c.type==='free') return '-';
+    const miss=new Set(c.missingSeats||[]);
+    let total=0,bc=0;
+    for(let r=1;r<=c.rows;r++){
+      c.cols.forEach(col=>{
+        if(miss.has(`${r}${col}`))return;
+        total++;
+        const sn=c.isMgh?((r-1)*c.cols.length+(colIdx[col]||0)+1):null;
+        const id=sn?`${c.car}호차 ${sn}번`:`${c.car}호차 ${r}${col}`;
+        if(booked.has(id))bc++;
+      });
+    }
+    return total-bc;
+  }
+
   function seatHTML(){
     let html='';
     for(let r=1;r<=car.rows;r++){
@@ -3878,11 +3896,13 @@ function _renderSeatMap(wrap,t,trainNo,travelDate,seatClass,validCars,booked,com
       const rightCols=car.cols.slice(2);
       const dirIcon=isKtxType?(r%2===1?'▲':'▽'):null;
       const mkBtn=(col)=>{
-        const id=`${car.car}호차 ${r}${col}`;
         if(missing.has(`${r}${col}`)) return `<div class="seat-cell empty"></div>`;
+        const sn=car.isMgh?((r-1)*car.cols.length+(colIdx[col]||0)+1):null;
+        const id=sn?`${car.car}호차 ${sn}번`:`${car.car}호차 ${r}${col}`;
+        const label=sn?`${sn}번`:`${r}${col}`;
         const isB=booked.has(id), isS=_selectedSeats.includes(id);
         return `<button class="seat-btn${isB?' booked':isS?' selected':''}"
-          ${isB?'disabled':''} onclick="toggleSeatBtn('${id}',${count})">${r}${col}</button>`;
+          ${isB?'disabled':''} onclick="toggleSeatBtn('${id}',${count})">${label}</button>`;
       };
       html+=`<div class="seat-row">
         <div class="seat-group">${leftCols.map(mkBtn).join('')}</div>
@@ -3893,19 +3913,18 @@ function _renderSeatMap(wrap,t,trainNo,travelDate,seatClass,validCars,booked,com
     return html;
   }
 
-  const carTabs=validCars.map((c,i)=>{
-    const rem=getCarRemaining(trainNo,travelDate,c);
-    return `<button class="seat-car-tab${i===_seatCarIdx?' active':''}" onclick="switchSeatCar(${i})">
-      ${c.car}호차<br><span style="font-size:10px;font-weight:400">${rem.remaining}석</span>
-    </button>`;
-  }).join('');
+  // 현재 호차만 잔여석 계산, 나머지는 클릭 시 계산 (성능 최적화)
+  const curRem=calcRem(car);
+  const carTabs=validCars.map((c,i)=>`<button class="seat-car-tab${i===_seatCarIdx?' active':''}" onclick="switchSeatCar(${i})">
+      ${c.car}호차<br><span style="font-size:10px;font-weight:400">${i===_seatCarIdx?curRem+'석':'…'}</span>
+    </button>`).join('');
 
   wrap.innerHTML=`
     <div class="seat-header">
       <button class="seat-back-btn" onclick="closeSeatSelector()">✕</button>
       <div class="seat-header-info">
         <div style="font-size:14px;font-weight:700">${t.grade} ${trainNo}</div>
-        <div style="font-size:11px;color:var(--text2)">${car.car}호차 · 잔여 ${getCarRemaining(trainNo,travelDate,car).remaining}석</div>
+        <div style="font-size:11px;color:var(--text2)">${car.car}호차 · 잔여 ${curRem}석</div>
       </div>
       <div style="font-size:12px;color:var(--text2);font-family:var(--mono)" id="seat-sel-clock"></div>
     </div>
@@ -4353,10 +4372,13 @@ function _renderBookTabInto(el, resultId){
         <span class="book-passenger-arrow">›</span>
       </div>
 
-      <!-- 조회 버튼 -->
-      <div style="display:flex;gap:8px">
-        <button class="book-search-btn" style="flex:2" onclick="searchBookTrains(false)">직통 조회</button>
-        <button class="book-search-btn" style="flex:1;background:var(--bg3);color:var(--text2);font-size:14px" onclick="searchBookTrains(true)">환승 포함</button>
+      <!-- 직통/환승 선택 + 조회 버튼 -->
+      <div style="display:flex;gap:8px;margin-bottom:0">
+        <select id="book-transfer-sel" style="flex:1;background:var(--bg3);border:1px solid var(--border);border-radius:10px;color:var(--text1);font-family:var(--sans);font-size:14px;padding:0 12px;outline:none;cursor:pointer;color-scheme:dark">
+          <option value="direct">직통</option>
+          <option value="transfer">환승 포함</option>
+        </select>
+        <button class="book-search-btn" style="flex:2" onclick="searchBookTrainsUI()">열차 조회</button>
       </div>
     </div>
 
@@ -4483,6 +4505,12 @@ function confirmBookPassenger(){
 }
 
 // 열차 조회
+function searchBookTrainsUI(){
+  const sel=document.getElementById('book-transfer-sel');
+  const includeTransfer=sel?.value==='transfer';
+  searchBookTrains(includeTransfer);
+}
+
 function searchBookTrains(includeTransfer){
   const from = window._bookFrom;
   const to = window._bookTo;
@@ -4534,18 +4562,26 @@ function searchBookTrains(includeTransfer){
   const rows = trains.map(({t,depT,arrT,dur})=>`
     <div class="book-train-row" data-train-no="${t.no}"
       onclick="openBookTrainDetail('${t.no}','${from}','${to}','${depT}','${arrT||''}','${dateGo}')">
-      <div class="book-train-grade" style="color:var(--c-${gcCssVar(t.grade)})">${t.grade}</div>
-      <div class="book-train-no">${t.no}</div>
-      <div class="book-train-times">
-        <span class="book-train-dep">${depT}</span>
-        <span class="book-train-arrow">→</span>
-        <span class="book-train-arr">${arrT||'-'}</span>
+      <div style="display:flex;flex-direction:column;gap:2px;min-width:0;flex:1">
+        <div style="display:flex;align-items:center;gap:8px">
+          <span class="book-train-grade" style="color:var(--c-${gcCssVar(t.grade)})">${t.grade}</span>
+          <span class="book-train-no">${t.no}</span>
+        </div>
+        <div class="book-train-times">
+          <span class="book-train-dep">${depT}</span>
+          <span class="book-train-arrow">→</span>
+          <span class="book-train-arr">${arrT||'-'}</span>
+          <span class="book-train-dur" style="margin-left:6px">${dur}</span>
+        </div>
       </div>
-      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:2px;flex-shrink:0">
-        <div class="book-train-dur">${dur}</div>
-        <div class="cong-badge" style="font-size:10px;font-weight:700"></div>
+      <div style="display:flex;align-items:center;gap:8px;flex-shrink:0">
+        <button class="seat-avail-btn" data-no="${t.no}"
+          onclick="event.stopPropagation();openBookTrainDetail('${t.no}','${from}','${to}','${depT}','${arrT||''}','${dateGo}')"
+          style="min-width:52px;padding:6px 10px;border-radius:6px;border:1.5px solid var(--border);background:transparent;color:var(--text3);font-size:12px;font-weight:600;font-family:var(--sans);cursor:pointer">
+          　
+        </button>
+        <div class="book-train-chevron">›</div>
       </div>
-      <div class="book-train-chevron">›</div>
     </div>`).join('');
 
   const tripLabel = _bookRoundTrip ? `편도 (${dateGo})` : dateGo;
@@ -4558,16 +4594,31 @@ function searchBookTrains(includeTransfer){
     <div class="book-train-list">${rows}</div>
     ${_bookRoundTrip&&dateBack?`<p class="hint" style="margin-top:8px">※ 왕복 복편(${to}→${from}, ${dateBack})은 예매 후 별도 조회해주세요</p>`:''}`;
 
-  // 매진 임박(95%+)만 비동기 표시
+  // 좌석 가용 버튼 비동기 업데이트
   setTimeout(()=>{
     trains.forEach(({t})=>{
       const ft=getFormationType(t.grade,t.no);
       const comp=getCarComposition(ft);
       const cong=getCongestionLevel(t.no,dateGo,comp);
-      if(cong.rate<0.95) return; // 매진 임박 아니면 스킵
       const row=el.querySelector(`[data-train-no="${t.no}"]`);
-      const badge=row?.querySelector('.cong-badge');
-      if(badge){badge.textContent='매진 임박';badge.style.color='var(--red)';}
+      const btn=row?.querySelector('.seat-avail-btn');
+      if(!btn)return;
+      const r=cong.rate||0;
+      const base='min-width:52px;padding:6px 10px;border-radius:6px;border:1.5px solid;background:transparent;font-size:12px;font-weight:700;font-family:var(--sans);cursor:pointer';
+      if(r>=0.98){
+        btn.textContent='매진';
+        btn.style.cssText=base+';color:var(--red);border-color:var(--red);cursor:default';
+        btn.onclick=e=>{e.stopPropagation();};
+      } else if(r>=0.80){
+        btn.textContent='혼잡';
+        btn.style.cssText=base+';color:var(--orange);border-color:var(--orange)';
+      } else if(r>=0.50){
+        btn.textContent='보통';
+        btn.style.cssText=base+';color:var(--accent2);border-color:var(--accent)';
+      } else {
+        btn.textContent='여유';
+        btn.style.cssText=base+';color:var(--green);border-color:var(--green)';
+      }
     });
   },0);
 }
@@ -4730,7 +4781,12 @@ function searchBookTransfers(from, to, dateGo, el){
         </div>
         ${legsHtml}
       </div>
-      <div class="book-train-chevron">›</div>
+      <div style="display:flex;align-items:center;gap:8px;flex-shrink:0">
+        <button class="seat-avail-btn xfer-avail" data-no="${firstLeg.t.no}"
+          onclick="event.stopPropagation();openBookTrainDetail('${firstLeg.t.no}','${firstLeg.from}','${firstLeg.to}','${firstLeg.depT}','${firstLeg.arrT||''}','${dateGo}')"
+          style="min-width:52px;padding:6px 10px;border-radius:6px;border:1.5px solid var(--border);background:transparent;color:var(--text3);font-size:12px;font-weight:600;font-family:var(--sans);cursor:pointer">　</button>
+        <div class="book-train-chevron">›</div>
+      </div>
     </div>`;
   }).join('');
 
@@ -4742,6 +4798,24 @@ function searchBookTransfers(from, to, dateGo, el){
       <span class="badge" style="background:var(--bg3)">${tripLabel}</span>
     </div>
     <div class="book-train-list">${cards}</div>`;
+
+  // 환승 결과 가용 버튼 비동기 업데이트
+  setTimeout(()=>{
+    transfers.forEach(legs=>{
+      const t=legs[0].t;
+      const ft=getFormationType(t.grade,t.no);
+      const comp=getCarComposition(ft);
+      const cong=getCongestionLevel(t.no,dateGo,comp);
+      const btn=el.querySelector(`.xfer-avail[data-no="${t.no}"]`);
+      if(!btn)return;
+      const r=cong.rate||0;
+      const base='min-width:52px;padding:6px 10px;border-radius:6px;border:1.5px solid;background:transparent;font-size:12px;font-weight:700;font-family:var(--sans);cursor:pointer';
+      if(r>=0.98){btn.textContent='매진';btn.style.cssText=base+';color:var(--red);border-color:var(--red)';}
+      else if(r>=0.80){btn.textContent='혼잡';btn.style.cssText=base+';color:var(--orange);border-color:var(--orange)';}
+      else if(r>=0.50){btn.textContent='보통';btn.style.cssText=base+';color:var(--accent2);border-color:var(--accent)';}
+      else{btn.textContent='여유';btn.style.cssText=base+';color:var(--green);border-color:var(--green)';}
+    });
+  },0);
 }
 
 function closeBookTrainDetail(){
