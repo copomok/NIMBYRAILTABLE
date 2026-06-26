@@ -3783,12 +3783,12 @@ function renderPassSection(){
 // 🪑 열차 편성 & 좌석 배치 시스템
 // ══════════════════════════════════════════
 function getFormationType(grade, trainNo){
+  if(grade==='KTX-이음') return 'ktx-eum';
+  if(grade==='KTX-산천') return 'ktx-sancheon';
   if(grade==='KTX'){
     const n=parseInt(trainNo);
-    // 이음: 700번대 (중앙선·강릉선)
-    if(n>=711&&n<=740) return 'ktx-eum';
-    // 산천: 101~199, 201~299, 401~499 (경부고속 일부, 전라선)
-    if((n>=101&&n<=199)||(n>=201&&n<=299)||(n>=401&&n<=499)) return 'ktx-sancheon';
+    if((n>=501&&n<=529)||(n>=701&&n<=773)) return 'ktx-eum';
+    if((n>=151&&n<=181)||(n>=231&&n<=258)||(n>=551&&n<=582)) return 'ktx-sancheon';
     return 'ktx-1';
   }
   if(grade==='SRT') return 'ktx-sancheon';
