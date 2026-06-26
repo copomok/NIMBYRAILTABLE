@@ -3899,7 +3899,7 @@ function _renderSeatMap(wrap,t,trainNo,travelDate,seatClass,validCars,booked,com
         if(missing.has(`${r}${col}`)) return `<div class="seat-cell empty"></div>`;
         const sn=car.isMgh?((r-1)*car.cols.length+(colIdx[col]||0)+1):null;
         const id=sn?`${car.car}호차 ${sn}번`:`${car.car}호차 ${r}${col}`;
-        const label=sn?`${sn}번`:`${r}${col}`;
+        const label=sn?`${sn}`:`${r}${col}`;
         const isB=booked.has(id), isS=_selectedSeats.includes(id);
         return `<button class="seat-btn${isB?' booked':isS?' selected':''}"
           ${isB?'disabled':''} onclick="toggleSeatBtn('${id}',${count})">${label}</button>`;
