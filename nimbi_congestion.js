@@ -2,19 +2,18 @@
 // 🚆 님비레일 혼잡도 알고리즘 (nimbi_congestion.js)
 // ══════════════════════════════════════════
 
-const CONGESTION_KEY='nimbi_congestion_v2';
-
-function loadCongestion(){ try{return JSON.parse(localStorage.getItem(CONGESTION_KEY))||{};}catch(e){return{};} }
-function saveCongestion(d){ localStorage.setItem(CONGESTION_KEY,JSON.stringify(d)); }
+// 혼잡도 세션 메모리 캐시 (localStorage 제거 → 모바일 성능 향상)
+const _bookedCache={};
+function loadCongestion(){ return _bookedCache; }
+function saveCongestion(d){ Object.assign(_bookedCache,d); }
 
 function getBookedSeats(trainNo, travelDate){
-  const tickets=loadTickets();
+  const tickets=typeof loadTickets==='function'?loadTickets():[];
   const booked=new Set();
   tickets.filter(tk=>tk.trainNo===trainNo&&tk.travelDate===travelDate&&tk.status==='active')
     .forEach(tk=>(tk.seats||[]).forEach(s=>booked.add(s)));
-  const cong=loadCongestion();
   const key=`${trainNo}:${travelDate}`;
-  (cong[key]||[]).forEach(s=>booked.add(s));
+  (_bookedCache[key]||[]).forEach(s=>booked.add(s));
   return booked;
 }
 
@@ -194,7 +193,7 @@ function generateVirtualBookings(trainNo, travelDate, composition){
       });
     });
   });
-  cong[key]=booked; saveCongestion(cong); _congCache[key]=true;
+  _bookedCache[key]=booked; _congCache[key]=true;
 }
 
 // ── 혼잡도 레벨 반환 ──
