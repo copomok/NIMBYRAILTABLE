@@ -1,9 +1,10 @@
 
 
-const GC={'KTX':'KTX','SRT':'SRT','ITX-새마을':'ITX','ITX-청춘':'ITXCC','무궁화호':'MGH'};
-const GL={'KTX':'KTX','SRT':'SRT','ITX-새마을':'ITX-새마을','ITX-청춘':'ITX-청춘','무궁화호':'무궁화'};
+// KTX-산천/이음은 KTX와 동일하게 취급
+const GC={'KTX':'KTX','KTX-산천':'KTX','KTX-이음':'KTX','SRT':'SRT','ITX-새마을':'ITX','ITX-청춘':'ITXCC','무궁화호':'MGH'};
+const GL={'KTX':'KTX','KTX-산천':'KTX-산천','KTX-이음':'KTX-이음','SRT':'SRT','ITX-새마을':'ITX-새마을','ITX-청춘':'ITX-청춘','무궁화호':'무궁화'};
 function gc(g){return GC[g]||'MGH';}
-// gc()의 결과(KTX/SRT/ITX/ITXCC/MGH)를 실제 CSS 변수명(--c-ktx 등)으로 정확히 매핑
+// gc() → CSS 변수명 (KTX-산천/이음 모두 파란색)
 const GC_CSS_VAR={'KTX':'ktx','SRT':'srt','ITX':'itxsm','ITXCC':'itxcc','MGH':'mgh'};
 function gcCssVar(g){return GC_CSS_VAR[gc(g)]||'mgh';}
 function gradeHtml(g){return `<span class="grade g-${gc(g)}">${GL[g]||g}</span>`;}
@@ -603,7 +604,7 @@ function searchByStation(){
   ALL_TRAINS.forEach(t=>{
     if(dir!=='all'&&t.dir!==dir)return;
     if(lineF!=='all'&&!t.line.includes(lineF))return;
-    if(gradeF!=='all'&&t.grade!==gradeF)return;
+    if(gradeF!=='all'&&gc(t.grade)!==gradeF)return;
     const stop=t.stops.find(s=>s.s===stn);
     if(!stop||(!stop.arr&&!stop.dep))return;
     const isPass=isPassStop(t,stn);
@@ -715,7 +716,7 @@ function searchByRoute(){
   // ── 직통 탐색 ──
   let directs=[];
   ALL_TRAINS.forEach(t=>{
-    if(gradeF!=='all'&&t.grade!==gradeF)return;
+    if(gradeF!=='all'&&gc(t.grade)!==gradeF)return;
     const stops=t.stops;   const fi=stops.findIndex(s=>s.s===from);
     const ti=stops.findIndex(s=>s.s===to);
     if(fi===-1||ti===-1||fi>=ti)return;
@@ -768,7 +769,7 @@ function searchByRoute(){
   function getLegs(depStn, minDepMin){
     const legs=[];
     ALL_TRAINS.forEach(t=>{
-      if(gradeF!=='all'&&t.grade!==gradeF)return;
+      if(gradeF!=='all'&&gc(t.grade)!==gradeF)return;
       const stops=t.stops;
       const fi=stops.findIndex(s=>s.s===depStn);
       if(fi===-1||isPassStop(t,depStn))return;
