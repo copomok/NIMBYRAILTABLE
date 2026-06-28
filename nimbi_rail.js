@@ -5206,15 +5206,12 @@ function renderSICard(name){
         <div style="font-size:12px;font-weight:700;color:var(--text2);margin-bottom:8px">🚉 홈 선택</div>
         <div style="overflow-x:auto;-webkit-overflow-scrolling:touch;padding-bottom:2px">
           <div style="display:flex;gap:6px;min-width:max-content">
-            ${platforms.map(p=>{
-              const dir=_getDirectionForPlatform(name,p);
-              const dArrow=dir==='down'?'↓':dir==='up'?'↑':'';
-              return `<button id="si-ptab-${p}" onclick="selectSICardPlatform('${nameEsc}',${p})"
+            ${platforms.map(p=>`
+              <button id="si-ptab-${p}" onclick="selectSICardPlatform('${nameEsc}',${p})"
                 style="padding:6px 16px;border-radius:20px;border:1px solid var(--border);font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap;font-family:var(--sans);transition:background .15s,color .15s;
                 background:${_siCardPlatform===p?'var(--accent)':'var(--bg3)'};color:${_siCardPlatform===p?'#fff':'var(--text1)'}">
-                ${p}${dArrow}
-              </button>`;
-            }).join('')}
+                ${p}
+              </button>`).join('')}
           </div>
         </div>
       </div>`:''}
