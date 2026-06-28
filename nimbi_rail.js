@@ -261,8 +261,14 @@ function switchTab(n){
   }
   if(n==='alarm') renderAlarms();
   if(n==='fav') renderFavs();
-  if(n==='stats') renderStats();
-  if(n==='notice') renderNotice();
+  if(n==='stats'){
+    const se=document.querySelector('#panel-stats #result-stats');
+    if(se){const tmp=se;renderStats();}else renderStats();
+  }
+  if(n==='notice'){
+    const ne=document.querySelector('#panel-notice #result-notice');
+    renderNotice();
+  }
   if(n==='ticket') renderTickets();
   if(n==='book') renderBookTab();
   
@@ -561,7 +567,7 @@ function renderDetail(t){
         <button class="share-btn" style="position:static" onclick="shareTrainLink('${t.no}')" title="링크 복사">🔗</button>
       </div>
       <div style="padding-right:80px">
-        <div style="font-size:48px;font-weight:900;font-family:var(--mono);color:var(--c-${gcCssVar(t.grade)});line-height:1;margin-bottom:8px">${t.no}</div>
+        <div class="detail-no" style="color:var(--c-${gcCssVar(t.grade)})">${t.no}</div>
         <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px;flex-wrap:wrap">
           ${gradeHtml(t.grade)}${lineChipHtml(t.line)}
           <span style="font-size:16px;font-weight:700">${t.dest}행</span>
@@ -3226,7 +3232,7 @@ function openBookingPopup(trainNo, fromStn, toStn, depTime, arrTime, travelDate)
   const maxDate=toLocalDateStr(maxD);
 
   wrap.innerHTML=`
-    <div style="position:fixed;inset:0;background:rgba(0,0,0,.6);backdrop-filter:blur(2px);z-index:0" onclick="closeBookingPopup()"></div>
+    <div style="position:absolute;inset:0;background:rgba(0,0,0,.6);backdrop-filter:blur(2px)" onclick="closeBookingPopup()"></div>
     <div class="alarm-popup booking-popup" style="position:relative;z-index:1;top:auto;left:auto;transform:none;max-height:90vh;overflow-y:auto">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:2px">
         <div class="alarm-popup-title" style="margin-bottom:0">🎫 ${t.grade} ${trainNo}</div>

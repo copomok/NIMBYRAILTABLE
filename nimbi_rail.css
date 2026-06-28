@@ -387,8 +387,8 @@ tbody td{padding:10px 14px;font-size:13px;white-space:nowrap}
 /* 라인 컬럼 */
 .tl-line-col{display:flex;flex-direction:column;align-items:center;position:relative;height:100%;min-height:40px}
 .tl-dot{width:12px;height:12px;border-radius:50%;border:2px solid var(--border);background:var(--bg1);flex-shrink:0;z-index:1;margin:auto}
-.tl-dot.origin{width:16px;height:16px;background:#f85149;border-color:#f85149}
-.tl-dot.term{width:16px;height:16px;background:#3fb950;border-color:#3fb950}
+.tl-dot.origin{width:16px;height:16px;background:#3fb950;border-color:#3fb950}
+.tl-dot.term{width:16px;height:16px;background:#f85149;border-color:#f85149}
 .tl-dot.stop{background:var(--accent);border-color:var(--accent)}
 .tl-dot.pass{background:var(--bg2);border-color:var(--border)}
 .tl-line{position:absolute;top:0;bottom:0;left:50%;transform:translateX(-50%);width:2px;background:var(--border);z-index:0}
@@ -396,7 +396,7 @@ tbody td{padding:10px 14px;font-size:13px;white-space:nowrap}
 /* 역명 컬럼 */
 .tl-stn-col{display:flex;align-items:center;gap:6px;padding:4px 0}
 .tl-stn-name{font-size:14px;font-weight:500}
-.tl-stn-name.origin{color:#f85149;font-weight:700;font-size:15px}
+.tl-stn-name.origin{color:#3fb950;font-weight:700;font-size:15px}
 .tl-stn-name.term{color:#3fb950;font-weight:700;font-size:15px}
 .tl-stn-name.stop{color:var(--text1)}
 .tl-stn-name.pass{color:var(--text3);font-size:13px}
