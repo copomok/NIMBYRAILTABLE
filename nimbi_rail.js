@@ -258,6 +258,9 @@ function switchTab(n){
     if(content) content.style.display='none';
     const countEl=document.getElementById('map-train-count');
     if(countEl) countEl.textContent='';
+    // 고정 오버레이 숨기기
+    const overlay=document.getElementById('map-track-overlay');
+    if(overlay) overlay.style.display='none';
   }
   if(n==='alarm') renderAlarms();
   if(n==='fav') renderFavs();
@@ -2117,37 +2120,72 @@ function mapZoomReset(){ setMapZoom(1); }
 
 // ── 노선도에서 열차 위치 추적 ──
 function trackTrainOnMap(trainNo){
-  const t = ALL_TRAINS.find(t => t.no === trainNo);
+  const t = ALL_TRAINS.find(x => x.no === trainNo);
   if(!t) return;
 
-  // 경전선은 gyeongjeon, 경부선은 gyeongbu 등 노선 매핑
   const lineMap = {
     '경부선':'gyeongbu','경부고속선':'gyeongbuhs','호남선':'honam',
     '중앙선':'jungang','동해선':'donghae','강릉선':'gangreung',
     '중부내륙선':'jungnaelyuk','경전선':'gyeongjeon'
   };
-  const lines = t.line.split('·').map(l=>l.trim());
-  const lineKey = lineMap[lines[0]];
+
+  // 현재 위치 기준으로 실제 운행 중인 노선 판단
+  const status = getCurrentStatus(t);
+  let lineKey = null;
+
+  if(status && status.status === 'running'){
+    const curStn = status.atStn || status.prevStn || status.nextStn;
+    if(curStn){
+      for(const [key, mapLine] of Object.entries(MAP_LINES)){
+        if(mapLine.routes.some(r => r.stations.some(s => s.n === curStn))){
+          lineKey = key; break;
+        }
+      }
+    }
+  }
+
+  // fallback: 열차 노선 속성 첫 번째 항목
+  if(!lineKey){
+    for(const l of t.line.split('·').map(l=>l.trim())){
+      if(lineMap[l]){ lineKey = lineMap[l]; break; }
+    }
+  }
+
   if(!lineKey){ alert('해당 노선의 노선도가 없습니다'); return; }
 
-  // 노선도 탭으로 이동 후 해당 노선 표시
+  _mapTrackedTrain = trainNo;
   switchTab('map');
+
+  // 해당 노선 탭이 이미 활성이면 그냥 재렌더, 아니면 클릭
   const btn = document.querySelector(`.map-line-tab[onclick*="${lineKey}"]`);
-  if(btn){ btn.click(); }
+  if(btn && !btn.classList.contains('active')){
+    btn.click(); // showMapLine + updateMapTrains 호출됨
+  } else {
+    showMapLine(lineKey, btn || document.querySelector('.map-line-tab.active'));
+  }
+
   setTimeout(()=>{
-    const status = getCurrentStatus(t);
-    if(!status || status.status !== 'running') return;
-    const stn = status.atStn || status.nextStn || status.prevStn;
-    if(!stn || !_mapStnPos[stn]) return;
-    // 해당 역으로 스크롤
-    const wrap = document.getElementById('map-svg-wrap');
-    const pos = _mapStnPos[stn];
-    if(wrap && pos){
-      const {ox, oy} = _mapSvgSize;
-      wrap.scrollLeft = pos.x - ox - wrap.clientWidth/2;
-      wrap.scrollTop = pos.y - oy - wrap.clientHeight/2;
-    }
-  }, 400);
+    updateMapTrains();
+    _scrollToTrackedTrain();
+    _updateMapOverlay();
+  }, 420);
+}
+
+function _scrollToTrackedTrain(){
+  if(!_mapTrackedTrain) return;
+  const t = ALL_TRAINS.find(x => x.no === _mapTrackedTrain);
+  if(!t) return;
+  const status = getCurrentStatus(t);
+  if(!status) return;
+  const stn = status.atStn || status.prevStn || status.nextStn;
+  if(!stn || !_mapStnPos[stn]) return;
+  const wrap = document.getElementById('map-svg-wrap');
+  const pos = _mapStnPos[stn];
+  if(wrap && pos){
+    const {ox, oy} = _mapSvgSize;
+    wrap.scrollLeft = pos.x - ox - wrap.clientWidth/2;
+    wrap.scrollTop = pos.y - oy - wrap.clientHeight/2;
+  }
 }
 
 // ── 최근 검색 드롭다운 ──
@@ -2205,6 +2243,7 @@ let _mapSvgSize = {w:0,h:0,ox:0,oy:0};
 let _mapTrainInterval = null;
 let _mapLayerMode = 'station'; // 'station': 역 우선, 'train': 열차 우선
 let _mapDirFilter = 'both'; // 'both': 전체, 'down': 하행만, 'up': 상행만
+let _mapTrackedTrain = null; // 현재 추적 중인 열차 번호
 
 function toggleMapLayer(){
   _mapLayerMode = _mapLayerMode==='station'?'train':'station';
@@ -2326,22 +2365,54 @@ function updateMapTrains(){
     } else {
       px=posA.x; py=posA.y;
     }
-    running.push({t,px,py,status});
+    running.push({t,px,py,status,stnA,stnB,posA,posB});
+  });
+
+  // 추적 열차를 맨 뒤(최상위)로 재정렬
+  running.sort((a,b)=>{
+    if(_mapTrackedTrain&&a.t.no===_mapTrackedTrain)return 1;
+    if(_mapTrackedTrain&&b.t.no===_mapTrackedTrain)return -1;
+    return 0;
   });
 
   // 열차 레이어를 SVG 문자열로 생성
   const r=Math.max(6, _mapSvgSize.w*0.018);
   const fs=Math.max(9, _mapSvgSize.w*0.016);
   let layerHtml='<g id="train-layer">';
-  running.forEach(({t,px,py,status})=>{
+  running.forEach(({t,px,py,status,stnA,stnB,posA,posB})=>{
     const color=GRADE_COLORS[t.grade]||'#888';
-    layerHtml+=`<circle cx="${px.toFixed(1)}" cy="${py.toFixed(1)}" r="${r}"
-      fill="${color}" stroke="#0d1117" stroke-width="2"
-      style="cursor:pointer" class="train-dot" data-no="${t.no}"/>`;
-    layerHtml+=`<text x="${px.toFixed(1)}" y="${(py-r-3).toFixed(1)}"
-      text-anchor="middle" font-size="${fs}" fill="${color}"
-      font-family="Noto Sans KR,sans-serif" font-weight="600"
-      pointer-events="none">${t.no}</text>`;
+    const isTracked=!!(_mapTrackedTrain&&t.no===_mapTrackedTrain);
+    const cr=isTracked?r*1.7:r;
+
+    if(isTracked){
+      // 외부 pulse 링
+      layerHtml+=`<circle cx="${px.toFixed(1)}" cy="${py.toFixed(1)}" r="${(cr+6).toFixed(1)}"
+        fill="none" stroke="${color}" stroke-width="2.5" opacity="0.45" pointer-events="none"/>`;
+      // 진행 방향 화살표 (이동 중인 경우)
+      if(posA&&posB){
+        const dx=posB.x-posA.x, dy=posB.y-posA.y;
+        const ang=Math.atan2(dy,dx)*180/Math.PI;
+        layerHtml+=`<text x="${px.toFixed(1)}" y="${py.toFixed(1)}"
+          text-anchor="middle" dominant-baseline="central"
+          font-size="${(cr*0.9).toFixed(1)}" fill="#fff" pointer-events="none"
+          transform="rotate(${ang.toFixed(0)},${px.toFixed(1)},${py.toFixed(1)})">▶</text>`;
+      }
+      // 현재 위치 텍스트 (가장 위)
+      const posLabel=status.atStn?`📍 ${status.atStn} 정차`
+        :(status.prevStn&&status.nextStn?`📍 ${status.prevStn}→${status.nextStn}`:'📍 운행 중');
+      layerHtml+=`<text x="${px.toFixed(1)}" y="${(py-cr-fs*1.5-4).toFixed(1)}"
+        text-anchor="middle" font-size="${(fs*0.95).toFixed(1)}" fill="#fff"
+        font-family="Noto Sans KR,sans-serif" font-weight="500"
+        pointer-events="none" paint-order="stroke" stroke="#0d1117" stroke-width="3">${posLabel}</text>`;
+    }
+
+    layerHtml+=`<circle cx="${px.toFixed(1)}" cy="${py.toFixed(1)}" r="${cr.toFixed(1)}"
+      fill="${color}" stroke="${isTracked?'#fff':'#0d1117'}" stroke-width="${isTracked?3:2}"
+      style="cursor:pointer" class="train-dot${isTracked?' tracked-train':''}" data-no="${t.no}"/>`;
+    layerHtml+=`<text x="${px.toFixed(1)}" y="${(py-cr-3).toFixed(1)}"
+      text-anchor="middle" font-size="${isTracked?(fs*1.15).toFixed(1):fs}" fill="${color}"
+      font-family="Noto Sans KR,sans-serif" font-weight="${isTracked?'800':'600'}"
+      pointer-events="none" paint-order="stroke" stroke="${isTracked?'#0d1117':'none'}" stroke-width="2">${t.no}</text>`;
   });
   layerHtml+='</g>';
 
@@ -2817,6 +2888,8 @@ function showMapLine(lineKey, btn){
   if(wrap) wrap.onscroll=updateMinimap;
   // 확대/축소 초기화
   initMapZoom();
+  // 고정 오버레이 버튼 업데이트
+  _updateMapOverlay();
 }
 
 
@@ -2847,6 +2920,60 @@ function showHistory(inputId,listId,type){
 
 
 
+
+// ── 노선도 고정 오버레이 (추적 열차 버튼) ──
+function _updateMapOverlay(){
+  let overlay=document.getElementById('map-track-overlay');
+  if(!overlay){
+    overlay=document.createElement('div');
+    overlay.id='map-track-overlay';
+    overlay.style.cssText='position:fixed;z-index:60;top:56px;right:12px;display:flex;flex-direction:column;gap:6px;pointer-events:all';
+    document.body.appendChild(overlay);
+  }
+  overlay.style.display='flex';
+
+  if(_mapTrackedTrain){
+    const t=ALL_TRAINS.find(x=>x.no===_mapTrackedTrain);
+    const status=t?getCurrentStatus(t):null;
+    let posLabel='—';
+    if(status){
+      if(status.status==='running'){
+        posLabel=status.atStn?`${status.atStn} 정차`
+          :(status.nextStn?`→ ${status.nextStn}`:'운행 중');
+      } else if(status.status==='done') posLabel='운행 종료';
+      else posLabel='운행 전';
+    }
+    const color=t?GRADE_COLORS[t.grade]||'#888':'#888';
+    overlay.innerHTML=`
+      <div style="background:var(--bg2);border:1px solid ${color};border-radius:10px;padding:7px 10px;font-size:11px;line-height:1.4;max-width:130px;box-shadow:0 3px 12px rgba(0,0,0,.5)">
+        <div style="font-weight:700;color:${color};margin-bottom:2px">${t?t.grade+' ':''}<span style="font-size:13px">${_mapTrackedTrain}</span></div>
+        <div style="color:var(--text2)">${posLabel}</div>
+      </div>
+      <button onclick="_scrollToTrackedTrain();_updateMapOverlay()"
+        style="padding:7px 11px;border-radius:8px;border:none;background:var(--accent);color:#fff;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;box-shadow:0 2px 8px rgba(0,0,0,.5);text-align:left">
+        📍 위치 보기
+      </button>
+      <button onclick="shareTrainLink('${_mapTrackedTrain}')"
+        style="padding:7px 11px;border-radius:8px;border:none;background:var(--bg3);color:var(--text1);font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;box-shadow:0 2px 8px rgba(0,0,0,.4);text-align:left">
+        🔗 링크 복사
+      </button>
+      <button onclick="_clearTrainTracking()"
+        style="padding:5px 11px;border-radius:8px;border:1px solid var(--border);background:transparent;color:var(--text3);font-size:11px;cursor:pointer;font-family:inherit">
+        ✕ 추적 해제
+      </button>`;
+  } else {
+    overlay.innerHTML=`
+      <button style="padding:7px 11px;border-radius:8px;border:none;background:var(--bg3);color:var(--text3);font-size:12px;font-weight:600;cursor:default;font-family:inherit;box-shadow:0 2px 8px rgba(0,0,0,.3);opacity:0.6;text-align:left" disabled>
+        📍 추적 없음
+      </button>`;
+  }
+}
+
+function _clearTrainTracking(){
+  _mapTrackedTrain=null;
+  _updateMapOverlay();
+  updateMapTrains();
+}
 
 // ── 열차 공유 ──
 function shareTrainLink(no){
