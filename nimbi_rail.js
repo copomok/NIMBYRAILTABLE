@@ -339,9 +339,9 @@ function searchByTrain(){
   if(fb)fb.style.display='';
 }
 
-function getCurrentStatus(t){
+function getCurrentStatus(t, atMin){
   const now=new Date();
-  const nowMin=now.getHours()*60+now.getMinutes();
+  const nowMin = atMin !== undefined ? atMin : now.getHours()*60+now.getMinutes();
 
   // 시각 있는 역 전체 수집
   const all=[];
@@ -589,8 +589,9 @@ function renderDetail(t){
       </div>
     </div>
     <div id="tl-${t.no}">${_detailViewMode==='table'?renderTableView(t):rows}</div>
-    <div class="ticket-cta-wrap">
-      <button class="btn btn-primary ticket-cta-btn" onclick="openBookingPopup('${t.no}','${first?.s||''}','${last?.s||''}','${depT}','${arrT}')">🎫 승차권 예매 (전 구간)</button>
+    <div class="ticket-cta-wrap" style="display:flex;gap:8px;flex-wrap:wrap">
+      <button class="btn btn-primary ticket-cta-btn" style="flex:1" onclick="openBookingPopup('${t.no}','${first?.s||''}','${last?.s||''}','${depT}','${arrT}')">🎫 승차권 예매 (전 구간)</button>
+      <button class="btn ticket-cta-btn" style="flex:none;white-space:nowrap" onclick="openSeatWatchPopup('${t.no}','${first?.s||''}','${last?.s||''}')">🔔 여석 알림</button>
     </div>
   </div>`;
 }
@@ -1525,6 +1526,88 @@ setInterval(()=>{
 // 페이지 로드 시 즉시 1회 체크
 setTimeout(checkAlarms,1000);
 
+// ── 여석 알림 ──
+const SEAT_WATCH_KEY='nimbi_seat_watches';
+function loadSeatWatches(){try{return JSON.parse(localStorage.getItem(SEAT_WATCH_KEY))||[];}catch(e){return[];}}
+function saveSeatWatches(w){localStorage.setItem(SEAT_WATCH_KEY,JSON.stringify(w));}
+
+function openSeatWatchPopup(trainNo, fromStn, toStn){
+  const existing=loadSeatWatches().filter(w=>w.trainNo===trainNo&&w.active);
+  const existingLabel=existing.length?existing.map(w=>w.seatClassLabel).join(', '):'';
+  const wrap=document.createElement('div');
+  wrap.id='seat-watch-wrap';
+  wrap.innerHTML=`
+    <div class="alarm-popup-backdrop" onclick="closeSeatWatchPopup()"></div>
+    <div class="alarm-popup">
+      <div class="alarm-popup-title">🔔 여석 알림 설정</div>
+      <div class="alarm-popup-sub" style="margin-bottom:12px"><b>${trainNo}</b> · ${fromStn} → ${toStn}</div>
+      ${existingLabel?`<div style="font-size:12px;color:var(--accent);margin-bottom:10px">현재 설정: ${existingLabel}</div>`:''}
+      <div class="alarm-popup-sub" style="margin-bottom:8px">알림 받을 좌석 등급</div>
+      <div style="display:flex;flex-direction:column;gap:6px;margin-bottom:14px">
+        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:8px 10px;background:var(--bg3);border-radius:8px">
+          <input type="checkbox" id="sw-general" value="general"> <span>일반실</span>
+        </label>
+        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:8px 10px;background:var(--bg3);border-radius:8px">
+          <input type="checkbox" id="sw-special" value="special"> <span>특실</span>
+        </label>
+        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:8px 10px;background:var(--bg3);border-radius:8px">
+          <input type="checkbox" id="sw-standing" value="standing"> <span>입석/자유석</span>
+        </label>
+      </div>
+      <div style="font-size:11px;color:var(--text3);margin-bottom:12px">여석이 생기면 브라우저 알림으로 알려드립니다. (시뮬레이션 기준)</div>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-primary" style="flex:1" onclick="confirmSeatWatch('${trainNo}','${fromStn}','${toStn}')">알림 설정</button>
+        <button class="btn alarm-popup-close" onclick="closeSeatWatchPopup()">취소</button>
+      </div>
+    </div>`;
+  document.body.appendChild(wrap);
+}
+
+function closeSeatWatchPopup(){
+  document.getElementById('seat-watch-wrap')?.remove();
+}
+
+function confirmSeatWatch(trainNo, fromStn, toStn){
+  const classes=[
+    {id:'sw-general',key:'general',label:'일반실'},
+    {id:'sw-special',key:'special',label:'특실'},
+    {id:'sw-standing',key:'standing',label:'입석/자유석'}
+  ].filter(c=>document.getElementById(c.id)?.checked);
+  if(!classes.length){alert('알림 받을 좌석 등급을 1개 이상 선택해주세요.');return;}
+
+  requestNotifPermission(()=>{
+    const watches=loadSeatWatches().filter(w=>!(w.trainNo===trainNo));
+    classes.forEach(c=>{
+      watches.push({id:`sw_${trainNo}_${c.key}_${Date.now()}`,trainNo,fromStn,toStn,
+        seatClass:c.key,seatClassLabel:c.label,active:true,createdAt:Date.now()});
+    });
+    saveSeatWatches(watches);
+    closeSeatWatchPopup();
+    alert(`✅ ${trainNo}번 열차 ${classes.map(c=>c.label).join('/')} 여석 알림이 설정되었습니다.`);
+  });
+}
+
+function removeSeatWatch(id){
+  saveSeatWatches(loadSeatWatches().filter(w=>w.id!==id));
+}
+
+function checkSeatWatches(){
+  const watches=loadSeatWatches().filter(w=>w.active);
+  if(!watches.length)return;
+  if(Notification.permission!=='granted')return;
+  watches.forEach(w=>{
+    // 10% 확률로 여석 발생 시뮬레이션 (실제 API 없음)
+    if(Math.random()<0.1){
+      sendNotification('🔔 여석 알림', `${w.trainNo}번 열차 ${w.seatClassLabel}에 좌석이 생겼어요!`);
+      // 알림 발송 후 해제
+      const watches2=loadSeatWatches();
+      const idx=watches2.findIndex(x=>x.id===w.id);
+      if(idx>=0){watches2[idx].active=false;saveSeatWatches(watches2);}
+    }
+  });
+}
+// 5분마다 여석 체크
+setInterval(checkSeatWatches, 5*60*1000);
 
 // ── 즐겨찾기 ──
 const FAV_KEY='nimbi_favs';
@@ -2243,7 +2326,12 @@ let _mapSvgSize = {w:0,h:0,ox:0,oy:0};
 let _mapTrainInterval = null;
 let _mapLayerMode = 'station'; // 'station': 역 우선, 'train': 열차 우선
 let _mapDirFilter = 'both'; // 'both': 전체, 'down': 하행만, 'up': 상행만
+let _mapGradeFilter = null; // null=전체, 'KTX', 'SRT', 'ITX', '무궁화'
 let _mapTrackedTrain = null; // 현재 추적 중인 열차 번호
+let _mapTimelineMin = null; // null=실시간, 0~1439=재생 시각(분)
+let _mapTimelinePlaying = false;
+let _mapTimelinePlayInterval = null;
+let _mapTimelineSpeed = 30; // 분/초
 
 function toggleMapLayer(){
   _mapLayerMode = _mapLayerMode==='station'?'train':'station';
@@ -2308,6 +2396,95 @@ function setMapDir(dir){
   if(_mapCurrentLine) updateMapTrains();
 }
 
+function setMapGrade(grade){
+  _mapGradeFilter = grade==='all' ? null : grade;
+  const MAP_GRADE={all:null,ktx:'KTX',srt:'SRT',itx:'ITX',mgg:'무궁화'};
+  Object.entries(MAP_GRADE).forEach(([k,v])=>{
+    const b=document.getElementById('map-grade-'+k);
+    if(!b)return;
+    b.classList.toggle('active',_mapGradeFilter===v);
+  });
+  if(_mapCurrentLine) updateMapTrains();
+}
+
+// ── 타임라인 재생 ──
+function toggleMapTimeline(){
+  const bar=document.getElementById('map-timeline-bar');
+  const btn=document.getElementById('map-timeline-toggle');
+  if(!bar)return;
+  const showing=bar.style.display!=='none';
+  if(showing){
+    pauseMapTimeline();
+    _mapTimelineMin=null;
+    bar.style.display='none';
+    if(btn)btn.classList.remove('active');
+    if(_mapCurrentLine) updateMapTrains();
+  } else {
+    const now=new Date();
+    _mapTimelineMin=now.getHours()*60+now.getMinutes();
+    bar.style.display='';
+    if(btn)btn.classList.add('active');
+    _syncTimelineUI();
+    if(_mapCurrentLine) updateMapTrains();
+  }
+}
+
+function _syncTimelineUI(){
+  if(_mapTimelineMin===null)return;
+  const slider=document.getElementById('map-timeline-slider');
+  if(slider) slider.value=_mapTimelineMin;
+  const timeEl=document.getElementById('map-timeline-time');
+  if(timeEl){
+    const h=Math.floor(_mapTimelineMin/60), m=_mapTimelineMin%60;
+    timeEl.textContent=`${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`;
+  }
+}
+
+function seekMapTimeline(min){
+  _mapTimelineMin=Math.max(0,Math.min(1439,min));
+  _syncTimelineUI();
+  if(_mapCurrentLine) updateMapTrains();
+}
+
+function toggleMapTimelinePlay(){
+  if(_mapTimelinePlaying) pauseMapTimeline();
+  else playMapTimeline();
+}
+
+function playMapTimeline(){
+  _mapTimelinePlaying=true;
+  const btn=document.getElementById('map-timeline-play-btn');
+  if(btn) btn.textContent='⏸ 일시정지';
+  if(_mapTimelinePlayInterval) clearInterval(_mapTimelinePlayInterval);
+  _mapTimelinePlayInterval=setInterval(()=>{
+    if(_mapTimelineMin===null) _mapTimelineMin=0;
+    _mapTimelineMin+=_mapTimelineSpeed;
+    if(_mapTimelineMin>=1440){
+      _mapTimelineMin=1439;
+      pauseMapTimeline();
+    }
+    _syncTimelineUI();
+    if(_mapCurrentLine) updateMapTrains();
+  },1000);
+}
+
+function pauseMapTimeline(){
+  _mapTimelinePlaying=false;
+  const btn=document.getElementById('map-timeline-play-btn');
+  if(btn) btn.textContent='▶ 재생';
+  if(_mapTimelinePlayInterval){clearInterval(_mapTimelinePlayInterval);_mapTimelinePlayInterval=null;}
+}
+
+function setTimelineSpeed(speed){
+  _mapTimelineSpeed=speed;
+}
+
+function resetMapTimeline(){
+  pauseMapTimeline();
+  const now=new Date();
+  seekMapTimeline(now.getHours()*60+now.getMinutes());
+}
+
 // 등급별 색상 (KTX-산천/이음은 KTX와 동일, ITX-마음은 ITX-새마을과 동일)
 const GRADE_COLORS = {
   'KTX':'#3b82f6','KTX-산천':'#3b82f6','KTX-이음':'#3b82f6',
@@ -2327,7 +2504,7 @@ function updateMapTrains(){
   if(old)old.remove();
 
   const now=new Date();
-  const nowMin=now.getHours()*60+now.getMinutes();
+  const nowMin = _mapTimelineMin !== null ? _mapTimelineMin : now.getHours()*60+now.getMinutes();
   const line=MAP_LINES[_mapCurrentLine];
   if(!line)return;
 
@@ -2335,11 +2512,21 @@ function updateMapTrains(){
   const running=[];
   ALL_TRAINS.forEach(t=>{
     if(!t.line.includes(line.name))return;
-    const status=getCurrentStatus(t);
+    const status=getCurrentStatus(t, nowMin);
     if(!status||status.status!=='running')return;
     // 방향 필터
     if(_mapDirFilter==='down'&&t.dir!=='down')return;
     if(_mapDirFilter==='up'&&t.dir!=='up')return;
+    // 등급 필터
+    if(_mapGradeFilter){
+      const gradeMatch={
+        'KTX':['KTX','KTX-산천','KTX-이음'],
+        'SRT':['SRT'],
+        'ITX':['ITX-새마을','ITX-마음','ITX-청춘'],
+        '무궁화':['무궁화호']
+      };
+      if(!gradeMatch[_mapGradeFilter]?.includes(t.grade))return;
+    }
     // prevStn 또는 nextStn 또는 atStn의 좌표 구하기
     const stnA=status.atStn||status.prevStn;
     const stnB=status.atStn?null:status.nextStn;
@@ -4524,9 +4711,54 @@ function renderTickets(){
 
   el.innerHTML=`
     ${tripWidget}
-    <div class="result-header"><div class="result-title">🎫 내 승차권</div><span class="badge blue">${tickets.filter(t=>t.status==='active').length}건</span></div>
+    <div class="result-header">
+      <div class="result-title">🎫 내 승차권</div>
+      <div style="display:flex;align-items:center;gap:6px">
+        <span class="badge blue">${tickets.filter(t=>t.status==='active').length}건</span>
+        <div style="position:relative">
+          <button class="map-layer-btn" onclick="toggleTicketExportMenu()">내보내기 ▾</button>
+          <div id="ticket-export-menu" style="display:none;position:absolute;right:0;top:calc(100% + 4px);background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:4px;z-index:50;min-width:140px;box-shadow:0 4px 12px rgba(0,0,0,.3)">
+            <button class="btn" style="width:100%;text-align:left;padding:8px 12px;font-size:13px;border-radius:6px" onclick="exportTicketsCSV()">📄 CSV 다운로드</button>
+            <button class="btn" style="width:100%;text-align:left;padding:8px 12px;font-size:13px;border-radius:6px" onclick="exportTicketsPDF()">🖨️ PDF 인쇄</button>
+          </div>
+        </div>
+      </div>
+    </div>
     ${tabs}
     <div class="ticket-list">${cards}</div>`;
+}
+
+function toggleTicketExportMenu(){
+  const menu=document.getElementById('ticket-export-menu');
+  if(!menu)return;
+  menu.style.display=menu.style.display==='none'?'block':'none';
+}
+
+function exportTicketsCSV(){
+  const tickets=loadTickets();
+  if(!tickets.length){alert('내보낼 예매 내역이 없습니다.');return;}
+  const BOM='﻿';
+  const header=['예매번호','열차등급','열차번호','출발역','도착역','출발시각','도착시각','이용일','좌석등급','좌석','인원','운임(원)','상태','예매일시'];
+  const rows=tickets.map(tk=>[
+    tk.id, tk.grade, tk.trainNo, tk.fromStn, tk.toStn,
+    tk.depTime, tk.arrTime, tk.travelDate, tk.seatClassLabel,
+    tk.seats.join('/'), tk.passengerCount, tk.totalFare,
+    tk.status==='active'?'유효':tk.status==='cancelled'?'취소':'완료',
+    new Date(tk.bookedAt).toLocaleString('ko-KR')
+  ].map(v=>`"${String(v??'').replace(/"/g,'""')}"`).join(','));
+  const blob=new Blob([BOM+header.join(',')+'\n'+rows.join('\n')],{type:'text/csv;charset=utf-8'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url; a.download=`nimbyrailtable_예매내역_${new Date().toISOString().slice(0,10).replace(/-/g,'')}.csv`;
+  a.click(); URL.revokeObjectURL(url);
+  const menu=document.getElementById('ticket-export-menu');
+  if(menu)menu.style.display='none';
+}
+
+function exportTicketsPDF(){
+  const menu=document.getElementById('ticket-export-menu');
+  if(menu)menu.style.display='none';
+  window.print();
 }
 
 // ══════════════════════════════════════════
