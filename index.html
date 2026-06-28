@@ -98,6 +98,7 @@
     <button class="tab" onclick="switchTab('stats')" id="tab-stats">📊 통계</button>
     <button class="tab" onclick="switchTab('notice')" id="tab-notice">📢 공지</button>
     <button class="tab" onclick="switchTab('stationinfo')" id="tab-stationinfo">🚉 역 정보</button>
+    <button class="tab" onclick="switchTab('delay')" id="tab-delay">⏱️ 지연 예측</button>
     <button class="tab" id="tab-book" style="display:none" onclick="switchTab('book')">🎫 열차 예매</button>
     <!-- 알람·즐겨찾기·승차권은 마이페이지로 이동 -->
     <button class="tab" id="tab-alarm" style="display:none" onclick="switchTab('alarm')">🔔 알람</button>
@@ -360,6 +361,9 @@
   </div>
   <div class="panel" id="panel-stationinfo">
     <div id="result-stationinfo"></div>
+  </div>
+  <div class="panel" id="panel-delay">
+    <div id="result-delay"></div>
   </div>
   <div class="panel" id="panel-stats">
     <div id="result-stats"></div>

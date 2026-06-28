@@ -266,6 +266,7 @@ function switchTab(n){
   if(n==='notice') renderNotice();
   if(n==='ticket') renderTickets();
   if(n==='book') renderBookTab();
+  if(n==='delay'){const el=document.getElementById('result-delay');if(el)renderSIDelay(el);}
   
 }
 
@@ -4958,7 +4959,6 @@ function renderStationInfo(){
       <div style="display:flex;gap:4px;background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:4px">
         <button class="si-tab${_siSubTab==='near'?' active':''}" onclick="setSITab('near')">📍 가까운 역</button>
         <button class="si-tab${_siSubTab==='detail'?' active':''}" onclick="setSITab('detail')">🏢 역 상세</button>
-        <button class="si-tab${_siSubTab==='delay'?' active':''}" onclick="setSITab('delay')">⏱️ 지연 예측</button>
       </div>
     </div>
     <div id="si-content" style="padding:0 16px 24px"></div>`;
@@ -4967,7 +4967,7 @@ function renderStationInfo(){
 
 function setSITab(t){
   _siSubTab=t;
-  document.querySelectorAll('.si-tab').forEach((b,i)=>b.classList.toggle('active',['near','detail','delay'][i]===t));
+  document.querySelectorAll('.si-tab').forEach((b,i)=>b.classList.toggle('active',['near','detail'][i]===t));
   renderSIContent();
 }
 
@@ -4975,8 +4975,7 @@ function renderSIContent(){
   const el=document.getElementById('si-content');
   if(!el)return;
   if(_siSubTab==='near') renderSINear(el);
-  else if(_siSubTab==='detail') renderSIDetail(el);
-  else renderSIDelay(el);
+  else renderSIDetail(el);
 }
 
 function siNearSearch(q){
@@ -5030,11 +5029,23 @@ function renderSIDetail(el){
     <div style="display:flex;gap:8px;margin-bottom:12px">
       <input id="si-inp" type="text" placeholder="역 이름 검색..." value="${_siCurrent||''}"
         style="flex:1;background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:10px 14px;color:var(--text1);font-size:14px;font-family:var(--sans)"
-        oninput="siSearch(this.value)">
+        oninput="siSearch(this.value)"
+        onkeydown="if(event.key==='Enter'){const r=document.getElementById('si-results');const first=r&&r.querySelector('button');if(first)first.click();else siSearchDirect(this.value);}">
+      <button onclick="siSearchDirect(document.getElementById('si-inp').value)"
+        style="padding:10px 14px;border-radius:10px;border:1px solid var(--border);background:var(--accent);color:#fff;font-size:14px;cursor:pointer;flex-shrink:0">🔍</button>
     </div>
     <div id="si-results"></div>
     <div id="si-card"></div></div>`;
   if(_siCurrent) renderSICard(_siCurrent);
+}
+
+function siSearchDirect(q){
+  q=(q||'').trim();
+  if(!q)return;
+  if(typeof STATION_DB!=='undefined'&&STATION_DB[q]){siSelect(q);return;}
+  const res=typeof STATION_DB!=='undefined'?Object.keys(STATION_DB).filter(n=>n.includes(q)):[];
+  if(res.length===1){siSelect(res[0]);}
+  else if(res.length>1){siSearch(q);}
 }
 
 function siSearch(q){
