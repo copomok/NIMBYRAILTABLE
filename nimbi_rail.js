@@ -4954,6 +4954,18 @@ function renderSIContent(){
   else renderSIDelay(el);
 }
 
+function siNearSearch(q){
+  if(!q){const r=document.getElementById('si-near-search-results');if(r)r.innerHTML='';return;}
+  if(typeof STATION_DB==='undefined')return;
+  const res=Object.keys(STATION_DB).filter(n=>n.includes(q)).slice(0,8);
+  const el=document.getElementById('si-near-search-results');
+  if(!el)return;
+  el.innerHTML=res.length?`<div style="display:flex;flex-wrap:wrap;gap:6px">${
+    res.map(n=>`<button onclick="openStationDetail('${n}')"
+      style="padding:6px 12px;border-radius:20px;border:1px solid var(--border);background:var(--bg3);color:var(--text1);font-size:12px;cursor:pointer;font-family:var(--sans)">${n}</button>`).join('')
+  }</div>`:'<div style="color:var(--text3);font-size:12px;padding:4px">검색 결과 없음</div>';
+}
+
 function renderSINear(el){
   el.innerHTML=`<div style="margin-top:12px">
     <div style="background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:12px 14px;margin-bottom:12px">
