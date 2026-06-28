@@ -1,6 +1,6 @@
 
 
-// KTX-산천/이음은 KTX와 동일하게 취급
+// KTX-산천/이음은 KTX와, ITX-마음은 ITX-새마을과 동일하게 취급
 const GC={'KTX':'KTX','KTX-산천':'KTX','KTX-이음':'KTX','SRT':'SRT','ITX-새마을':'ITX','ITX-마음':'ITX','ITX-청춘':'ITXCC','무궁화호':'MGH'};
 const GL={'KTX':'KTX','KTX-산천':'KTX-산천','KTX-이음':'KTX-이음','SRT':'SRT','ITX-새마을':'ITX-새마을','ITX-마음':'ITX-마음','ITX-청춘':'ITX-청춘','무궁화호':'무궁화'};
 function gc(g){return GC[g]||'MGH';}
@@ -4016,6 +4016,288 @@ function openSeatSelectorFromBooking(trainNo){
 }
 
 
+// ══════════════════════════════════════════
+// 💾 승차권 이미지 저장
+// ══════════════════════════════════════════
+function saveTicketImage(ticketId){
+  const tk=loadTickets().find(t=>t.id===ticketId);
+  if(!tk)return;
+
+  const W=360, H=520;
+  const canvas=document.createElement('canvas');
+  canvas.width=W*2; canvas.height=H*2; // 2x 해상도
+  const ctx=canvas.getContext('2d');
+  ctx.scale(2,2);
+
+  const gradeColor={'KTX':'#3b82f6','KTX-산천':'#3b82f6','KTX-이음':'#3b82f6',
+    'SRT':'#a855f7','ITX-새마을':'#ef4444','ITX-마음':'#ef4444',
+    'ITX-청춘':'#22c55e','무궁화호':'#f97316'}[tk.grade]||'#58a6ff';
+
+  // 배경
+  ctx.fillStyle='#161b22';
+  ctx.beginPath();
+  ctx.roundRect(0,0,W,H,14);
+  ctx.fill();
+
+  // 등급 색상 상단 바
+  ctx.fillStyle=gradeColor;
+  ctx.beginPath();
+  ctx.roundRect(0,0,W,6,{upperLeft:14,upperRight:14,lowerLeft:0,lowerRight:0});
+  ctx.fill();
+
+  // 로고/앱명
+  ctx.fillStyle='#8b949e';
+  ctx.font='500 11px sans-serif';
+  ctx.fillText('님비레일 시간표', 20, 30);
+
+  // 등급 + 번호
+  ctx.fillStyle=gradeColor;
+  ctx.font='bold 16px sans-serif';
+  ctx.fillText(tk.grade, 20, 58);
+  ctx.fillStyle='#8b949e';
+  ctx.font='500 15px monospace';
+  ctx.fillText(tk.trainNo, ctx.measureText(tk.grade).width+28, 58);
+
+  // 상태 뱃지
+  const statusLabel=tk.status==='cancelled'?'취소됨':tk.status==='used'?'탑승완료':'예정';
+  const statusColor=tk.status==='cancelled'?'#f85149':tk.status==='used'?'#8b949e':'#3fb950';
+  ctx.fillStyle=statusColor+'22';
+  ctx.strokeStyle=statusColor;
+  ctx.lineWidth=1;
+  ctx.beginPath(); ctx.roundRect(W-75,42,60,20,6); ctx.fill(); ctx.stroke();
+  ctx.fillStyle=statusColor;
+  ctx.font='bold 10px sans-serif';
+  ctx.textAlign='center';
+  ctx.fillText(statusLabel, W-45, 56);
+  ctx.textAlign='left';
+
+  // 구분선
+  ctx.strokeStyle='#30363d';
+  ctx.lineWidth=1;
+  ctx.setLineDash([4,4]);
+  ctx.beginPath(); ctx.moveTo(20,72); ctx.lineTo(W-20,72); ctx.stroke();
+  ctx.setLineDash([]);
+
+  // 출발 → 도착
+  ctx.fillStyle='#e6edf3';
+  ctx.font='bold 26px sans-serif';
+  ctx.fillText(tk.fromStn, 20, 112);
+  ctx.fillStyle='#8b949e';
+  ctx.font='500 16px sans-serif';
+  ctx.fillText('→', W/2-12, 112);
+  ctx.fillStyle='#e6edf3';
+  ctx.font='bold 26px sans-serif';
+  ctx.textAlign='right';
+  ctx.fillText(tk.toStn, W-20, 112);
+  ctx.textAlign='left';
+
+  // 시각
+  ctx.fillStyle='#58a6ff';
+  ctx.font='bold 18px monospace';
+  ctx.fillText(tk.depTime||'-', 20, 138);
+  ctx.textAlign='right';
+  ctx.fillStyle='#3fb950';
+  ctx.fillText(tk.arrTime||'-', W-20, 138);
+  ctx.textAlign='left';
+
+  // 구분선
+  ctx.strokeStyle='#30363d';
+  ctx.lineWidth=1;
+  ctx.setLineDash([4,4]);
+  ctx.beginPath(); ctx.moveTo(20,152); ctx.lineTo(W-20,152); ctx.stroke();
+  ctx.setLineDash([]);
+
+  // 정보 행
+  const rows=[
+    ['탑승일', tk.travelDate],
+    ['좌석', `${tk.seatClassLabel} · ${(tk.seats||[]).join(', ')}`],
+    ['인원', `${tk.passengerCount}명`],
+    ['운임', `${(tk.totalFare||0).toLocaleString()}원`],
+  ];
+  rows.forEach(([label,val],i)=>{
+    const y=178+i*30;
+    ctx.fillStyle='#8b949e';
+    ctx.font='500 12px sans-serif';
+    ctx.fillText(label, 20, y);
+    ctx.fillStyle='#e6edf3';
+    ctx.font=label==='운임'?'bold 15px sans-serif':'500 13px sans-serif';
+    ctx.textAlign='right';
+    ctx.fillText(val, W-20, y);
+    ctx.textAlign='left';
+  });
+
+  // QR 영역
+  ctx.strokeStyle='#30363d';
+  ctx.lineWidth=1;
+  ctx.setLineDash([4,4]);
+  ctx.beginPath(); ctx.moveTo(20,302); ctx.lineTo(W-20,302); ctx.stroke();
+  ctx.setLineDash([]);
+
+  // QR 캔버스 삽입
+  const qrSize=100;
+  const qrCanvas=generateQRCanvas(`NIMBIRAIL:${tk.id}:${tk.trainNo}:${tk.fromStn}:${tk.toStn}:${tk.travelDate}`,qrSize);
+  ctx.drawImage(qrCanvas, W/2-qrSize/2, 316, qrSize, qrSize);
+
+  // 예매번호
+  ctx.fillStyle='#6e7681';
+  ctx.font='500 10px monospace';
+  ctx.textAlign='center';
+  ctx.fillText(tk.id, W/2, 432);
+  ctx.textAlign='left';
+
+  // 하단 로고
+  ctx.fillStyle='#30363d';
+  ctx.beginPath();
+  ctx.roundRect(0,H-44,W,44,{upperLeft:0,upperRight:0,lowerLeft:14,lowerRight:14});
+  ctx.fill();
+  ctx.fillStyle='#58a6ff';
+  ctx.font='bold 13px sans-serif';
+  ctx.textAlign='center';
+  ctx.fillText('🚆 님비레일 시간표 · NIMBIRAIL', W/2, H-18);
+  ctx.textAlign='left';
+
+  // 다운로드
+  const link=document.createElement('a');
+  link.download=`nimbirail_${tk.id}.png`;
+  link.href=canvas.toDataURL('image/png');
+  link.click();
+}
+
+// ══════════════════════════════════════════
+// 🔔 예매 대기 알림 시스템
+// ══════════════════════════════════════════
+const WAITLIST_KEY='nimbi_waitlist';
+function loadWaitlist(){try{return JSON.parse(localStorage.getItem(WAITLIST_KEY))||[];}catch(e){return[];}}
+function saveWaitlist(d){localStorage.setItem(WAITLIST_KEY,JSON.stringify(d));}
+
+function isOnWaitlist(trainNo,from,to,date){
+  return loadWaitlist().some(w=>w.trainNo===trainNo&&w.from===from&&w.to===to&&w.date===date);
+}
+
+function toggleWaitlist(trainNo,from,to,depT,date){
+  let list=loadWaitlist();
+  const idx=list.findIndex(w=>w.trainNo===trainNo&&w.from===from&&w.to===to&&w.date===date);
+  if(idx>=0){
+    list.splice(idx,1);
+    saveWaitlist(list);
+    const span=document.getElementById(`waitlist-btn-${trainNo}`);
+    if(span)span.textContent='매진 시 대기 알림';
+    showToast('대기 알림이 취소됐어요');
+  } else {
+    list.push({trainNo,from,to,depT,date,addedAt:Date.now()});
+    saveWaitlist(list);
+    const span=document.getElementById(`waitlist-btn-${trainNo}`);
+    if(span)span.textContent='대기 취소';
+    showToast(`🔔 ${from}→${to} ${trainNo}번 대기 등록!
+자리가 생기면 알려드릴게요`);
+    // 30초마다 체크
+    startWaitlistCheck();
+  }
+}
+
+let _waitlistTimer=null;
+function startWaitlistCheck(){
+  if(_waitlistTimer)return;
+  _waitlistTimer=setInterval(checkWaitlist,30000);
+}
+
+function checkWaitlist(){
+  const list=loadWaitlist();
+  if(!list.length){clearInterval(_waitlistTimer);_waitlistTimer=null;return;}
+  list.forEach(w=>{
+    const t=ALL_TRAINS.find(x=>x.no===w.trainNo);
+    if(!t)return;
+    const ft=getFormationType(t.grade,w.trainNo);
+    const comp=getCarComposition(ft);
+    const cong=getCongestionLevel(w.trainNo,w.date,comp);
+    // 혼잡도가 80% 미만으로 떨어지면 자리 생긴 것으로 간주
+    if(cong.rate<0.80){
+      showToast(`🎉 ${w.from}→${w.to} ${w.trainNo}번
+${w.date} · 자리가 생겼어요!`);
+      // 알림 후 목록에서 제거
+      const updated=loadWaitlist().filter(x=>!(x.trainNo===w.trainNo&&x.from===w.from&&x.to===w.to&&x.date===w.date));
+      saveWaitlist(updated);
+    }
+  });
+}
+
+function showToast(msg){
+  const old=document.getElementById('nimbi-toast');
+  if(old)old.remove();
+  const toast=document.createElement('div');
+  toast.id='nimbi-toast';
+  toast.style.cssText='position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:12px 20px;font-size:13px;color:var(--text1);z-index:99999;white-space:pre-line;text-align:center;box-shadow:0 4px 20px rgba(0,0,0,.5);max-width:300px;line-height:1.5;pointer-events:none';
+  toast.textContent=msg;
+  document.body.appendChild(toast);
+  setTimeout(()=>toast.remove(),3500);
+}
+
+// 현재 노선도 탭의 노선으로 역 목록 열기
+const LINE_NAME_MAP={'gyeongbu':'경부선','gyeongbuhs':'경부고속선','honam':'호남선','jungang':'중앙선','donghae':'동해선','gangreung':'강릉선','jungnaelyuk':'중부내륙선','gyeongjeon':'경전선'};
+function openCurrentLineStationList(){
+  const lineName=LINE_NAME_MAP[_mapCurrentLine]||'경부선';
+  openLineStationList(lineName);
+}
+
+// ══════════════════════════════════════════
+// 🗺️ 노선별 전체 역 목록
+// ══════════════════════════════════════════
+function openLineStationList(line){
+  const old=document.getElementById('line-station-list-wrap');
+  if(old){old.remove();return;}
+
+  // 해당 노선 모든 정차역 수집 (순서대로)
+  const stationSet=new Map(); // 역명 → {arr, dep 평균}
+  ALL_TRAINS.filter(t=>t.line&&t.line.includes(line)).forEach(t=>{
+    t.stops.forEach((s,i)=>{
+      if(!stationSet.has(s.s)) stationSet.set(s.s,{name:s.s,idx:i,trains:[]});
+      stationSet.get(s.s).trains.push(t.no);
+    });
+  });
+
+  // 대표 열차 하나의 정차 순서로 정렬
+  const repTrain=ALL_TRAINS.find(t=>t.line&&t.line.includes(line));
+  let stations=[];
+  if(repTrain){
+    stations=repTrain.stops.map(s=>({
+      name:s.s,
+      isPass:isPassStop(repTrain,s.s),
+      arr:s.arr,dep:s.dep,
+      trainCount:[...new Set(ALL_TRAINS.filter(t=>t.line&&t.line.includes(line)&&t.stops.some(x=>x.s===s.s)).map(t=>t.no))].length
+    }));
+  }
+
+  const wrap=document.createElement('div');
+  wrap.id='line-station-list-wrap';
+  wrap.style.cssText='position:fixed;inset:0;z-index:9500;display:flex;align-items:flex-end;justify-content:center';
+  wrap.innerHTML=`
+    <div style="position:fixed;inset:0;background:rgba(0,0,0,.6);backdrop-filter:blur(2px)" onclick="document.getElementById('line-station-list-wrap')?.remove()"></div>
+    <div style="position:relative;z-index:1;background:var(--bg2);border-radius:16px 16px 0 0;padding:20px;width:100%;max-width:600px;max-height:80vh;display:flex;flex-direction:column">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-shrink:0">
+        <div style="font-size:16px;font-weight:700">📍 ${line} 전체 역</div>
+        <div style="font-size:12px;color:var(--text2)">${stations.length}개 역</div>
+      </div>
+      <div style="overflow-y:auto;flex:1">
+        ${stations.map((s,i)=>`
+          <div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--border);cursor:pointer"
+            onclick="document.getElementById('line-station-list-wrap')?.remove();searchStation('${s.name}')">
+            <div style="display:flex;flex-direction:column;align-items:center;gap:2px;flex-shrink:0">
+              <div style="width:2px;height:${i===0?'50%':'100%'};background:${s.isPass?'var(--border)':'var(--accent)'};min-height:10px"></div>
+              <div style="width:10px;height:10px;border-radius:50%;background:${s.isPass?'var(--border)':i===0||i===stations.length-1?'var(--green)':'var(--accent)'}"></div>
+              <div style="width:2px;height:${i===stations.length-1?'50%':'100%'};background:${s.isPass?'var(--border)':'var(--accent)'};min-height:10px"></div>
+            </div>
+            <div style="flex:1">
+              <span style="font-size:14px;font-weight:${s.isPass?'400':'600'};color:${s.isPass?'var(--text3)':'var(--text1)'}">${s.name}</span>
+              ${s.isPass?'<span style="font-size:10px;color:var(--text3);margin-left:6px">통과</span>':''}
+            </div>
+            <span style="font-size:11px;color:var(--text3)">${s.trainCount}편</span>
+            <span style="font-size:16px;color:var(--text3)">›</span>
+          </div>`).join('')}
+      </div>
+    </div>`;
+  document.body.appendChild(wrap);
+}
+
 // 승차권 탭 렌더링
 let _ticketFilterTab='upcoming'; // upcoming | past | cancelled
 function setTicketFilter(f){_ticketFilterTab=f;renderTickets();}
@@ -4230,6 +4512,7 @@ function renderTickets(){
       <div class="ticket-card-id" style="display:flex;align-items:center;justify-content:space-between">
         <span>예매번호 ${tk.id}</span>
         <button class="btn qr-btn" onclick="openQRPopup('${tk.id}')" title="QR코드 보기">🔲 QR</button>
+        <button class="btn" onclick="saveTicketImage('${tk.id}')" style="font-size:12px;padding:4px 8px" title="이미지 저장">💾 저장</button>
       </div>
       <div class="ticket-card-actions">
         ${tk.status==='active'&&_ticketFilterTab==='upcoming'?`<button class="btn" style="font-size:12px;padding:6px 12px" onclick="cancelTicket('${tk.id}')">예매 취소</button>`:''}
@@ -4693,6 +4976,10 @@ function openBookTrainDetail(trainNo, from, to, depT, arrT, travelDate){
             </button>`
         }
       </div>
+      <button class="btn" style="width:100%;justify-content:center;font-size:12px;margin-top:6px;color:var(--text2)"
+        onclick="toggleWaitlist('${trainNo}','${from}','${to}','${depT}','${dateGo}')">
+        🔔 <span id="waitlist-btn-${trainNo}">${isOnWaitlist(trainNo,from,to,dateGo)?'대기 취소':'매진 시 대기 알림'}</span>
+      </button>
     </div>`;
   document.body.appendChild(wrap);
   setTimeout(()=>wrap.querySelector('.book-detail-panel').classList.add('open'), 10);
