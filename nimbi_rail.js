@@ -1623,18 +1623,21 @@ function openGroupManager(){
   wrap.id='group-manager-wrap';
   wrap.innerHTML=`
     <div class="alarm-popup-backdrop" onclick="closeGroupManager()"></div>
-    <div class="alarm-popup" style="max-height:80vh;overflow-y:auto">
+    <div class="alarm-popup" style="top:16px;transform:translateX(-50%);max-height:calc(100vh - 32px);overflow-y:auto;display:flex;flex-direction:column;gap:0">
       <div class="alarm-popup-title">⚙️ 그룹 관리</div>
-      <div class="alarm-popup-sub">기본 그룹은 삭제할 수 없습니다</div>
-      <div id="gm-list" style="margin:12px 0">${_gmListHtml(loadFavGroups())}</div>
-      <div class="alarm-popup-sub" style="margin-bottom:6px">새 그룹 추가</div>
-      <div style="display:flex;gap:8px">
-        <input id="gm-new-name" class="si-inp" placeholder="그룹 이름" style="flex:1;font-size:13px;padding:8px 12px;border-radius:8px;border:1px solid var(--border);background:var(--bg1);color:var(--text1);font-family:inherit">
-        <button onclick="addFavGroup()" style="padding:8px 16px;border-radius:8px;border:none;background:var(--accent);color:#fff;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit">추가</button>
+      <div class="alarm-popup-sub" style="margin-bottom:10px">새 그룹 이름을 입력하고 추가하세요</div>
+      <div style="display:flex;gap:8px;margin-bottom:14px">
+        <input id="gm-new-name" placeholder="그룹 이름" style="flex:1;font-size:13px;padding:8px 12px;border-radius:8px;border:1px solid var(--border);background:var(--bg1);color:var(--text1);font-family:inherit"
+          onkeydown="if(event.key==='Enter')addFavGroup()">
+        <button onclick="addFavGroup()" style="padding:8px 16px;border-radius:8px;border:none;background:var(--accent);color:#fff;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;flex-shrink:0">추가</button>
       </div>
+      <div class="alarm-popup-sub" style="margin-bottom:6px">그룹 목록 (기본 그룹은 삭제 불가)</div>
+      <div id="gm-list">${_gmListHtml(loadFavGroups())}</div>
       <button class="alarm-popup-close" onclick="closeGroupManager()" style="margin-top:14px">닫기</button>
     </div>`;
   document.body.appendChild(wrap);
+  // focus the input after render
+  setTimeout(()=>document.getElementById('gm-new-name')?.focus(),50);
 }
 
 function closeGroupManager(){
@@ -5049,9 +5052,9 @@ function openBookingWithDate(trainNo, from, to, depT, arrT, travelDate, isRound,
     }, 300);
   } : null;
 
-  // book-detail-panel 애니메이션 완료 후 예매창 열기 (겹침 방지)
-  setTimeout(()=>openBookingPopup(trainNo, from, to, depT, arrT, travelDate), 320);
+  // book-detail-panel 슬라이드 닫힘 후 예매창 열기
   setTimeout(()=>{
+    openBookingPopup(trainNo, from, to, depT, arrT, travelDate);
     const dateInp = document.getElementById('booking-date');
     if(dateInp && travelDate) dateInp.value = travelDate;
     if(window._bookPassengerCount>1){
@@ -5208,53 +5211,82 @@ function openStationDetail(name){
 }
 
 function renderSIDetail(el){
+  const curVal=(_siCurrent||'').replace(/"/g,'&quot;');
   el.innerHTML=`<div style="margin-top:12px">
-    <div style="display:flex;gap:8px;margin-bottom:12px">
-      <input id="si-inp" type="text" placeholder="역 이름 검색..." value="${_siCurrent||''}"
-        style="flex:1;background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:10px 14px;color:var(--text1);font-size:14px;font-family:var(--sans)"
+    <div class="autocomplete-wrap" style="margin-bottom:12px">
+      <input id="si-inp" type="text" placeholder="역 이름 검색 (초성 가능, 예: ㄷㄷㄱ)" value="${curVal}"
+        style="width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:10px 14px;color:var(--text1);font-size:14px;font-family:var(--sans);box-sizing:border-box"
+        autocomplete="off"
         oninput="siSearch(this.value)"
-        onkeydown="if(event.key==='Enter'){const r=document.getElementById('si-results');const first=r&&r.querySelector('button');if(first)first.click();else siSearchDirect(this.value);}">
-      <button onclick="siSearchDirect(document.getElementById('si-inp').value)"
-        style="padding:10px 14px;border-radius:10px;border:1px solid var(--border);background:var(--accent);color:#fff;font-size:14px;cursor:pointer;flex-shrink:0">🔍</button>
+        onblur="setTimeout(()=>{const r=document.getElementById('si-results');if(r){r.style.display='none';}},160)"
+        onkeydown="siSearchKey(event)">
+      <div id="si-results" class="ac-dropdown" style="display:none"></div>
     </div>
-    <div id="si-results"></div>
     <div id="si-card"></div></div>`;
   if(_siCurrent) renderSICard(_siCurrent);
 }
 
-function siSearchDirect(q){
-  q=(q||'').trim();
-  if(!q)return;
-  if(typeof STATION_DB!=='undefined'&&STATION_DB[q]){siSelect(q);return;}
-  const qStation=q.endsWith('역')?q:q+'역';
-  if(typeof STATION_DB!=='undefined'&&STATION_DB[qStation]){siSelect(qStation);return;}
-  const res=typeof STATION_DB!=='undefined'?Object.keys(STATION_DB).filter(n=>n.includes(q)):[];
-  if(res.length===1){siSelect(res[0]);}
-  else if(res.length>1){siSearch(q);}
-}
-
 function siSearch(q){
-  if(!q||typeof STATION_DB==='undefined')return;
-  const qBase=q.endsWith('역')?q.slice(0,-1):q;
-  const all=Object.keys(STATION_DB).filter(n=>n.includes(q)||(!q.endsWith('역')&&n.includes(qBase+'역')));
-  all.sort((a,b)=>{
-    const aEx=(a===q||a===q+'역')?0:1;
-    const bEx=(b===q||b===q+'역')?0:1;
-    if(aEx!==bEx)return aEx-bEx;
-    return a.localeCompare(b,'ko');
-  });
-  const res=all.slice(0,6);
   const el=document.getElementById('si-results');
   if(!el)return;
-  el.innerHTML=res.length?`<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px">${
-    res.map(n=>`<button onclick="siSelect('${n.replace(/'/g,"\\'")}')\" style="padding:5px 12px;border-radius:20px;border:1px solid var(--border);background:var(--bg3);color:var(--text1);font-size:12px;cursor:pointer;font-family:var(--sans)">${n}</button>`).join('')
-  }</div>`:'';
+  q=(q||'').trim();
+  if(!q||typeof STATION_DB==='undefined'){el.style.display='none';el.innerHTML='';return;}
+  const qBase=q.endsWith('역')?q.slice(0,-1):q;
+  const all=Object.keys(STATION_DB).filter(n=>{
+    const ns=n.endsWith('역')?n.slice(0,-1):n;
+    return matchesQuery(n,q)||matchesQuery(ns,q)||matchesQuery(ns,qBase);
+  });
+  all.sort((a,b)=>{
+    const aS=a.endsWith('역')?a.slice(0,-1):a;
+    const bS=b.endsWith('역')?b.slice(0,-1):b;
+    const aR=(aS===qBase||a===q)?0:aS.startsWith(qBase)?1:2;
+    const bR=(bS===qBase||b===q)?0:bS.startsWith(qBase)?1:2;
+    return aR!==bR?aR-bR:a.localeCompare(b,'ko');
+  });
+  const res=all.slice(0,12);
+  if(!res.length){el.style.display='none';el.innerHTML='';return;}
+  const isChoQ=q.split('').every(c=>CHO.includes(c));
+  el.innerHTML=res.map(n=>{
+    let display=n;
+    if(!isChoQ){
+      const i=n.indexOf(q);
+      const iB=i<0&&qBase?n.indexOf(qBase):-1;
+      if(i>=0) display=n.slice(0,i)+`<span style="color:var(--accent)">${n.slice(i,i+q.length)}</span>`+n.slice(i+q.length);
+      else if(iB>=0) display=n.slice(0,iB)+`<span style="color:var(--accent)">${n.slice(iB,iB+qBase.length)}</span>`+n.slice(iB+qBase.length);
+    }
+    const nEsc=n.replace(/\\/g,'\\\\').replace(/'/g,"\\'");
+    return `<div class="ac-item" onmousedown="event.preventDefault();siSelect('${nEsc}')">${display}</div>`;
+  }).join('');
+  el.className='ac-dropdown open';
+  el.style.display='block';
+}
+
+function siSearchKey(e){
+  const drop=document.getElementById('si-results');
+  if(!drop||drop.style.display==='none')return;
+  const items=drop.querySelectorAll('.ac-item');
+  if(!items.length)return;
+  let idx=-1;
+  items.forEach((it,i)=>{if(it.classList.contains('active'))idx=i;});
+  if(e.key==='ArrowDown'){e.preventDefault();idx=Math.min(idx+1,items.length-1);}
+  else if(e.key==='ArrowUp'){e.preventDefault();idx=Math.max(idx-1,0);}
+  else if(e.key==='Enter'){
+    e.preventDefault();
+    const t=items[Math.max(idx,0)];
+    if(t)t.dispatchEvent(new MouseEvent('mousedown'));
+    return;
+  } else if(e.key==='Escape'){drop.style.display='none';return;}
+  else return;
+  items.forEach((it,i)=>it.classList.toggle('active',i===idx));
+  if(items[idx])items[idx].scrollIntoView({block:'nearest'});
 }
 
 function siSelect(name){
   _siCurrent=name; _siCardPlatform=null;
-  document.getElementById('si-inp').value=name;
-  document.getElementById('si-results').innerHTML='';
+  const inp=document.getElementById('si-inp');
+  if(inp)inp.value=name;
+  const el=document.getElementById('si-results');
+  if(el){el.style.display='none';el.innerHTML='';}
   renderSICard(name);
 }
 
@@ -5311,15 +5343,6 @@ function renderSICard(name){
           <div style="font-size:11px;color:var(--text2);text-align:right">${platforms.length>0?platforms.length+'개 홈<br>':''}${trains.length}편 경유</div>
         </div>
         ${d?`<div style="font-size:11px;color:var(--text3);font-family:var(--mono);margin-top:4px">${d.lon.toFixed(4)}°E, ${d.lat.toFixed(4)}°N</div>`:''}
-        ${(()=>{
-          const hist=typeof STATION_HISTORY!=='undefined'?STATION_HISTORY[name]:null;
-          if(!hist)return '';
-          const age=new Date().getFullYear()-hist.year;
-          return `<div style="margin-top:6px">
-            <span style="display:inline-block;font-size:11px;padding:2px 8px;border-radius:10px;background:var(--bg3);color:var(--text2);font-weight:600">🏛️ 개업 ${hist.year}년 · ${age}년 역사</span>
-            ${hist.note?`<div style="font-size:11px;color:var(--text3);margin-top:3px">${hist.note}</div>`:''}
-          </div>`;
-        })()}
         <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:10px">
           ${Object.entries(gc_count).map(([g,n])=>
             `<span style="padding:3px 10px;border-radius:12px;font-size:11px;font-weight:600;border:1px solid var(--c-${GC_CSS_VAR[g]||'mgh'});color:var(--c-${GC_CSS_VAR[g]||'mgh'})">${g} ${n}편</span>`
@@ -5354,11 +5377,11 @@ function renderSICard(name){
             style="width:100%;height:220px;border:1px solid var(--border);border-radius:8px;display:block"
             loading="lazy" title="${name} 주변 지도"></iframe>
           <div style="display:flex;gap:8px;margin-top:8px">
-            <a href="https://map.kakao.com/?q=${encodeURIComponent(name)}" target="_blank" rel="noopener noreferrer"
+            <a href="https://map.kakao.com/link/map/${encodeURIComponent(name)},${d.lat},${d.lon}" target="_blank" rel="noopener noreferrer"
               style="flex:1;display:block;text-align:center;padding:8px;background:var(--bg3);border:1px solid var(--border);border-radius:8px;font-size:12px;color:var(--text1);text-decoration:none;font-weight:600">
               카카오지도 ↗
             </a>
-            <a href="https://map.naver.com/?query=${encodeURIComponent(name)}" target="_blank" rel="noopener noreferrer"
+            <a href="https://map.naver.com/?lng=${d.lon}&lat=${d.lat}&zoom=15" target="_blank" rel="noopener noreferrer"
               style="flex:1;display:block;text-align:center;padding:8px;background:var(--bg3);border:1px solid var(--border);border-radius:8px;font-size:12px;color:var(--text1);text-decoration:none;font-weight:600">
               네이버지도 ↗
             </a>
