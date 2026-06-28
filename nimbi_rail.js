@@ -1,8 +1,8 @@
 
 
 // KTX-산천/이음은 KTX와 동일하게 취급
-const GC={'KTX':'KTX','KTX-산천':'KTX','KTX-이음':'KTX','SRT':'SRT','ITX-새마을':'ITX','ITX-마음':'ITX','ITX-청춘':'ITXCC','무궁화호':'MGH'};
-const GL={'KTX':'KTX','KTX-산천':'KTX-산천','KTX-이음':'KTX-이음','SRT':'SRT','ITX-새마을':'ITX-새마을','ITX-마음':'ITX-마음','ITX-청춘':'ITX-청춘','무궁화호':'무궁화'};
+const GC={'KTX':'KTX','KTX-산천':'KTX','KTX-이음':'KTX','SRT':'SRT','ITX-새마을':'ITX','ITX-청춘':'ITXCC','무궁화호':'MGH'};
+const GL={'KTX':'KTX','KTX-산천':'KTX-산천','KTX-이음':'KTX-이음','SRT':'SRT','ITX-새마을':'ITX-새마을','ITX-청춘':'ITX-청춘','무궁화호':'무궁화'};
 function gc(g){return GC[g]||'MGH';}
 // gc() → CSS 변수명 (KTX-산천/이음 모두 파란색)
 const GC_CSS_VAR={'KTX':'ktx','SRT':'srt','ITX':'itxsm','ITXCC':'itxcc','MGH':'mgh'};
@@ -3155,12 +3155,14 @@ const SEAT_CLASSES={
   standing:{label:'입석/자유석',mult:0.85},
 };
 function availableSeatClasses(grade){
+  if(grade==='KTX'||grade==='KTX-산천'||grade==='SRT') return ['special','general','standing'];
+  if(grade==='KTX-이음') return ['premium','general','standing'];
   if(grade==='무궁화호') return ['general','standing'];
-  return ['general','special','standing'];
+  return ['general','standing']; // ITX-새마을, ITX-마음, ITX-청춘
 }
 
 // 가상 운임 계산: 등급 기본요금 + 정차역 1개당 거리요금 + 좌석등급 배율
-const GRADE_BASE_FARE={'KTX':8400,'SRT':8400,'ITX-새마을':4800,'ITX-청춘':4200,'무궁화호':2600};
+const GRADE_BASE_FARE={'KTX':8400,'KTX-산천':8400,'KTX-이음':7700,'SRT':8400,'ITX-새마을':4800,'ITX-마음':4800,'ITX-청춘':4200,'무궁화호':2600};
 const FARE_PER_STOP=1450;
 function calcFare(t, fromStn, toStn, seatClass){
   const stops=t.stops.filter(s=>hasTime(s.arr)||hasTime(s.dep));
@@ -3199,7 +3201,7 @@ function openBookingPopup(trainNo, fromStn, toStn, depTime, arrTime, travelDate)
 
   const wrap=document.createElement('div');
   wrap.id='booking-popup-wrap';
-  wrap.style.cssText='position:fixed;inset:0;z-index:9400;pointer-events:auto';
+  wrap.style.cssText='position:fixed;inset:0;z-index:9400;display:flex;align-items:center;justify-content:center;pointer-events:auto';
   const classOpts=classes.map(c=>{
     const fare=calcFare(t,fromStn,toStn,c);
     return `<button class="booking-seat-option" data-class="${c}" onclick="selectSeatClass(this,'${c}')">
@@ -3219,8 +3221,8 @@ function openBookingPopup(trainNo, fromStn, toStn, depTime, arrTime, travelDate)
   const maxDate=toLocalDateStr(maxD);
 
   wrap.innerHTML=`
-    <div class="alarm-popup-backdrop" onclick="closeBookingPopup()"></div>
-    <div class="alarm-popup booking-popup">
+    <div style="position:fixed;inset:0;background:rgba(0,0,0,.6);backdrop-filter:blur(2px);z-index:0" onclick="closeBookingPopup()"></div>
+    <div class="alarm-popup booking-popup" style="position:relative;z-index:1;top:auto;left:auto;transform:none;max-height:90vh;overflow-y:auto">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:2px">
         <div class="alarm-popup-title" style="margin-bottom:0">🎫 ${t.grade} ${trainNo}</div>
         <div style="font-family:var(--mono);font-size:12px;color:var(--text2)" id="booking-clock"></div>
@@ -3247,7 +3249,8 @@ function openBookingPopup(trainNo, fromStn, toStn, depTime, arrTime, travelDate)
           <button class="booking-stepper-btn" onclick="changePassengerCount(1)">+</button>
         </div>
       </div>
-      <button class="btn btn-primary booking-confirm-btn" id="booking-confirm-btn" onclick="confirmBooking('${trainNo}','${fromStn}','${toStn}','${depTime||''}','${arrTime||''}')" disabled>좌석 등급을 선택하세요</button>
+      <button class="btn btn-primary booking-confirm-btn" id="booking-confirm-btn" style="opacity:.5"
+        onclick="if(!window._bookingSeatClass){alert('좌석 등급을 먼저 선택해주세요');return;}confirmBooking('${trainNo}','${fromStn}','${toStn}','${depTime||''}','${arrTime||''}')">좌석 등급을 선택하세요</button>
       <button class="alarm-popup-close" onclick="closeBookingPopup()">취소</button>
     </div>`;
   document.body.appendChild(wrap);
@@ -3269,7 +3272,7 @@ function selectSeatClass(btn,cls){
   btn.classList.add('active');
   window._bookingSeatClass=cls;
   const confirmBtn=document.getElementById('booking-confirm-btn');
-  if(confirmBtn){confirmBtn.disabled=false;confirmBtn.textContent='🎫 예매하기';}
+  if(confirmBtn){confirmBtn.disabled=false;confirmBtn.style.opacity='1';confirmBtn.textContent='🎫 예매하기';}
   const sb=document.getElementById('booking-seat-select-btn');
   if(sb){sb.disabled=false;sb.style.opacity='1';sb.style.cursor='pointer';window._preselectedSeats=null;
     const d=document.getElementById('booking-seat-display');if(d)d.textContent='자동 배정';}
@@ -3794,7 +3797,7 @@ function getFormationType(grade, trainNo){
   }
   if(grade==='SRT') return 'ktx-sancheon';
   if(grade==='ITX-청춘') return 'itx-cc';
-  if(grade==='ITX-새마을') return 'itx-sm';
+  if(grade==='ITX-새마을'||grade==='ITX-마음') return 'itx-sm';
   if(grade==='무궁화호') return 'mgh';
   return 'mgh';
 }
@@ -3998,6 +4001,9 @@ function confirmSeatSelection(){
   closeSeatSelector();
   const disp=document.getElementById('booking-seat-display');
   if(disp) disp.textContent=_selectedSeats.join(', ');
+  // 예매 버튼 활성화
+  const confirmBtn=document.getElementById('booking-confirm-btn');
+  if(confirmBtn){confirmBtn.disabled=false;confirmBtn.style.opacity='1';confirmBtn.textContent='🎫 예매하기';}
 }
 
 function openSeatSelectorFromBooking(trainNo){
