@@ -5115,7 +5115,9 @@ function renderSICard(name){
   const el=document.getElementById('si-card');
   if(!el)return;
   const d=typeof STATION_DB!=='undefined'?STATION_DB[name]:null;
-  const trains=ALL_TRAINS.filter(t=>t.stops.some(s=>s.s===name&&(s.dep||s.arr)));
+  // ALL_TRAINS uses station names without 역 suffix (e.g. "영주"), STATION_DB uses "영주역"
+  const trainName=name.endsWith('역')?name.slice(0,-1):name;
+  const trains=ALL_TRAINS.filter(t=>t.stops.some(s=>s.s===trainName&&(s.dep||s.arr)));
   const gc_count={};
   trains.forEach(t=>{const g=gc(t.grade);gc_count[g]=(gc_count[g]||0)+1;});
   // Prefer PLATFORM_DB for platform list; filter out empty platforms; fallback to STATION_DB
@@ -5170,12 +5172,31 @@ function selectSICardPlatform(name, p){
     b.style.background=bp===p?'var(--accent)':'var(--bg3)';
     b.style.color=bp===p?'#fff':'var(--text1)';
   });
-  const trains=ALL_TRAINS.filter(t=>t.stops.some(s=>s.s===name&&(s.dep||s.arr)));
+  const trainName=name.endsWith('역')?name.slice(0,-1):name;
+  const trains=ALL_TRAINS.filter(t=>t.stops.some(s=>s.s===trainName&&(s.dep||s.arr)));
   const el=document.getElementById('si-platform-trains');
   if(el) el.innerHTML=_siPlatformTrainsHTML(name, trains);
 }
 
+function _extractDestinations(lines, stationName){
+  const stnBase=stationName.endsWith('역')?stationName.slice(0,-1):stationName;
+  const gradeWords=['ITX-새마을','ITX새마을','ITX-청춘','ITX청춘','ITX-마음','ITX마음','무궁화호','무궁화','KTX','SRT'];
+  const citySet=new Set();
+  for(const line of lines){
+    let s=line.replace(/\/\S+$/,'').trim(); // remove /심야, /1 etc.
+    s=s.replace(/\([^)]*\)/g,'').trim();   // remove (충주 경유) etc.
+    for(const g of gradeWords) s=s.replace(new RegExp(g,'g'),'').trim();
+    s=s.replace(/[가-힣]+선\s*/g,'').trim(); // remove 경부선, 교외선 etc.
+    if(s.includes('-')){
+      s.split('-').map(c=>c.trim()).filter(c=>c&&c!==stnBase&&c!==stationName)
+        .forEach(c=>citySet.add(c));
+    }
+  }
+  return [...citySet].slice(0,5);
+}
+
 function _siPlatformTrainsHTML(name, trains){
+  const trainName=name.endsWith('역')?name.slice(0,-1):name;
   const pInfo=_siCardPlatform!==null?_getPlatformInfo(name,_siCardPlatform):null;
   const hasData=pInfo!==null;
   // Filter trains by platform grade when data is available
@@ -5184,18 +5205,19 @@ function _siPlatformTrainsHTML(name, trains){
     filtered=filtered.filter(t=>_gradeMatchesPlatform(t.grade,pInfo.g));
   }
   const sorted=filtered.sort((a,b)=>{
-    const sa=a.stops.find(x=>x.s===name), sb=b.stops.find(x=>x.s===name);
+    const sa=a.stops.find(x=>x.s===trainName), sb=b.stops.find(x=>x.s===trainName);
     return (toMin(sa?.dep||sa?.arr)||9999)-(toMin(sb?.dep||sb?.arr)||9999);
   });
-  const serviceLines=hasData&&pInfo.l.length>0?pInfo.l.slice(0,4).join(' / '):'';
+  const dests=hasData&&pInfo.l.length>0?_extractDestinations(pInfo.l,name):[];
+  const destsStr=dests.length>0?dests.join(' • ')+' 방면':'';
   const nameEsc=name.replace(/\\/g,'\\\\').replace(/'/g,"\\'");
   return `
     <div style="font-size:12px;font-weight:700;color:var(--text2);margin-bottom:${_siCardPlatform?'4':'10'}px">🚆 ${_siCardPlatform?`${_siCardPlatform}번 홈 시간표`:'역 시간표'}</div>
     ${_siCardPlatform&&!hasData?'<div style="font-size:10px;color:var(--text3);margin-bottom:8px">홈별 배정 데이터 없음 · 역 전체 운행 기준</div>':''}
-    ${serviceLines?`<div style="font-size:10px;color:var(--text3);margin-bottom:8px">노선: ${serviceLines}</div>`:''}
+    ${destsStr?`<div style="font-size:10px;color:var(--accent2);margin-bottom:8px">📍 ${destsStr}</div>`:''}
     ${sorted.length===0?'<div style="color:var(--text3);font-size:13px;text-align:center;padding:12px">운행 열차 없음</div>':''}
     ${sorted.slice(0,20).map(t=>{
-      const s=t.stops.find(x=>x.s===name);
+      const s=t.stops.find(x=>x.s===trainName);
       const time=s?.dep||s?.arr||'-';
       const dir=t.dir==='down'?'하행↓':'상행↑';
       const dirC=t.dir==='down'?'var(--accent)':'var(--red)';
