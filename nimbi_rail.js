@@ -556,16 +556,22 @@ function renderDetail(t){
   const dur=durStr(depT,arrT);
 
   return `<div class="detail-card" id="dc-${t.no}">
-    <div class="detail-head" style="position:relative">
-      <button class="share-btn" onclick="shareTrainLink('${t.no}')" title="링크 복사">🔗</button>
-      <button class="share-btn" style="right:44px" onclick="trackTrainOnMap('${t.no}')" title="노선도에서 보기">🗺️</button>
-      <div class="detail-no" style="color:var(--c-${gcCssVar(t.grade)})">${t.no}</div>
-      <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px;flex-wrap:wrap">
-        ${gradeHtml(t.grade)}${lineChipHtml(t.line)}
-        <span style="font-size:16px;font-weight:700">${t.dest}행</span>
+    <div class="detail-head">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px">
+        <div style="flex:1;min-width:0">
+          <div class="detail-no" style="color:var(--c-${gcCssVar(t.grade)})">${t.no}</div>
+          <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px;flex-wrap:wrap">
+            ${gradeHtml(t.grade)}${lineChipHtml(t.line)}
+            <span style="font-size:16px;font-weight:700">${t.dest}행</span>
+          </div>
+          <div class="detail-meta">${first?.s||''} ${depT} 발 → ${last?.s||''} ${arrT} 착</div>
+          <div class="detail-meta" style="margin-top:2px">정차역 ${totalStops}개 &nbsp;·&nbsp; 소요시간 ${dur}</div>
+        </div>
+        <div style="display:flex;gap:4px;flex-shrink:0">
+          <button class="share-btn" style="position:static" onclick="trackTrainOnMap('${t.no}')">🗺️</button>
+          <button class="share-btn" style="position:static" onclick="shareTrainLink('${t.no}')">🔗</button>
+        </div>
       </div>
-      <div class="detail-meta">${first?.s||''} ${depT} 발 → ${last?.s||''} ${arrT} 착</div>
-      <div class="detail-meta" style="margin-top:2px">정차역 ${totalStops}개 &nbsp;·&nbsp; 소요시간 ${dur}</div>
     </div>
     ${statusBanner}
     <div class="tl-toolbar">
@@ -2781,6 +2787,7 @@ function renderFirstLastTrains(stn){
 function renderStats(){
   const el=document.querySelector('#panel-stats #result-stats')||document.getElementById('result-stats');
   if(!el)return;
+  try{
 
   const now=new Date();
   const nowM=now.getHours()*60+now.getMinutes();
@@ -2795,7 +2802,7 @@ function renderStats(){
   // 노선별 통계
   const lineCount={};
   ALL_TRAINS.forEach(t=>{
-    const lines=t.line.split('·');
+    const lines=(t.line||'').split('·');
     lines.forEach(l=>{const ll=l.trim();lineCount[ll]=(lineCount[ll]||0)+1;});
   });
 
@@ -3024,6 +3031,9 @@ function renderStats(){
       <div>${densityRows}</div>
     </div>
     <p class="hint">※ ${String(now.getHours()).padStart(2,"0")}:${String(now.getMinutes()).padStart(2,"0")} 현재 기준 · AM 4:00 기준일</p>`;
+  }catch(e){
+    el.innerHTML=`<div class="empty"><div class="empty-icon">⚠️</div><p>통계 로딩 오류<br><small style="color:var(--text3)">${e.message}</small></p><button class="btn" onclick="renderStats()" style="margin-top:12px">🔄 다시 시도</button></div>`;
+  }
 }
 
 
@@ -3072,7 +3082,8 @@ function setNoticeFilter(cat){
 function renderNotice(){
   const el=document.querySelector('#panel-notice #result-notice')||document.getElementById('result-notice');
   if(!el)return;
-  if(!NOTICES.length){
+  try{
+  if(typeof NOTICES==='undefined'||!NOTICES.length){
     el.innerHTML=`<div class="empty"><div class="empty-icon">📢</div><p>등록된 공지사항이 없습니다.</p></div>`;
     return;
   }
@@ -3116,6 +3127,9 @@ function renderNotice(){
     <div class="result-header"><div class="result-title">📢 공지사항</div><span class="badge blue">${NOTICES.length}건</span></div>
     ${filterTabs}
     <div class="notice-list">${rows}</div>`;
+  }catch(e){
+    el.innerHTML=`<div class="empty"><div class="empty-icon">⚠️</div><p>공지 로딩 오류<br><small>${e.message}</small></p><button class="btn" onclick="renderNotice()">🔄</button></div>`;
+  }
 }
 
 function openNoticeDetail(idx){
@@ -3199,6 +3213,8 @@ function openBookingPopup(trainNo, fromStn, toStn, depTime, arrTime, travelDate)
   const classes=availableSeatClasses(t.grade);
   const old=document.getElementById('booking-popup-wrap');
   if(old)old.remove();
+  // 모바일 onclick 파싱 오류 방지: 인자를 전역에 저장
+  window._bArgs={trainNo,fromStn,toStn,depTime,arrTime};
 
   const wrap=document.createElement('div');
   wrap.id='booking-popup-wrap';
@@ -3250,8 +3266,8 @@ function openBookingPopup(trainNo, fromStn, toStn, depTime, arrTime, travelDate)
           <button class="booking-stepper-btn" onclick="changePassengerCount(1)">+</button>
         </div>
       </div>
-      <button class="btn btn-primary booking-confirm-btn" id="booking-confirm-btn" style="opacity:.5"
-        onclick="if(!window._bookingSeatClass){alert('좌석 등급을 먼저 선택해주세요');return;}confirmBooking('${trainNo}','${fromStn}','${toStn}','${depTime||''}','${arrTime||''}')">좌석 등급을 선택하세요</button>
+      <button class="btn btn-<button class="btn btn-primary booking-confirm-btn" id="booking-confirm-btn" style="opacity:.5"
+        onclick="doConfirmBooking()">좌석 등급을 선택하세요</button>
       <button class="alarm-popup-close" onclick="closeBookingPopup()">취소</button>
     </div>`;
   document.body.appendChild(wrap);
@@ -3285,6 +3301,12 @@ function changePassengerCount(delta){
   const el=document.getElementById('booking-passenger-count');
   if(el)el.textContent=n;
 }
+function doConfirmBooking(){
+  if(!window._bookingSeatClass){alert('좌석 등급을 먼저 선택해주세요');return;}
+  const a=window._bArgs||{};
+  confirmBooking(a.trainNo,a.fromStn,a.toStn,a.depTime,a.arrTime);
+}
+
 function confirmBooking(trainNo,fromStn,toStn,depTime,arrTime){
   const t=ALL_TRAINS.find(x=>x.no===trainNo);
   if(!t)return;
