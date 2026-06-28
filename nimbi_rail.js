@@ -3211,6 +3211,8 @@ function genTicketId(){
 function openBookingPopup(trainNo, fromStn, toStn, depTime, arrTime, travelDate){
   const t=ALL_TRAINS.find(x=>x.no===trainNo);
   if(!t){alert('열차 정보를 찾을 수 없습니다.');return;}
+  // book-detail-backdrop(z-index:9900)이 booking popup(z-index:9400)을 가리는 것 방지
+  document.getElementById('book-detail-wrap')?.remove();
   const classes=availableSeatClasses(t.grade);
   const old=document.getElementById('booking-popup-wrap');
   if(old)old.remove();
@@ -5122,7 +5124,7 @@ function renderSICard(name){
               <button id="si-ptab-${p}" onclick="selectSICardPlatform('${nameEsc}',${p})"
                 style="padding:6px 16px;border-radius:20px;border:1px solid var(--border);font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap;font-family:var(--sans);transition:background .15s,color .15s;
                 background:${_siCardPlatform===p?'var(--accent)':'var(--bg3)'};color:${_siCardPlatform===p?'#fff':'var(--text1)'}">
-                (${p})
+                ${p}
               </button>`).join('')}
           </div>
         </div>
@@ -5152,7 +5154,7 @@ function _siPlatformTrainsHTML(name, trains){
   });
   const nameEsc=name.replace(/\\/g,'\\\\').replace(/'/g,"\\'");
   return `
-    <div style="font-size:12px;font-weight:700;color:var(--text2);margin-bottom:${_siCardPlatform?'4':'10'}px">🚆 ${_siCardPlatform?`(${_siCardPlatform})번 홈 시간표`:'역 시간표'}</div>
+    <div style="font-size:12px;font-weight:700;color:var(--text2);margin-bottom:${_siCardPlatform?'4':'10'}px">🚆 ${_siCardPlatform?`${_siCardPlatform}번 홈 시간표`:'역 시간표'}</div>
     ${_siCardPlatform?'<div style="font-size:10px;color:var(--text3);margin-bottom:8px">홈별 배정 데이터 없음 · 역 전체 운행 기준</div>':''}
     ${sorted.length===0?'<div style="color:var(--text3);font-size:13px;text-align:center;padding:12px">운행 열차 없음</div>':''}
     ${sorted.slice(0,20).map(t=>{
@@ -5177,17 +5179,17 @@ function _siPlatformTrainsHTML(name, trains){
 
 function renderSIDelay(el){
   const model=[
-    {name:'KTX 경부고속선',prob:18,min:2,max:5,c:'#3b82f6'},
-    {name:'KTX 호남고속선',prob:20,min:2,max:6,c:'#3b82f6'},
-    {name:'KTX 강릉선',prob:28,min:3,max:8,c:'#3b82f6'},
-    {name:'KTX 중앙선',prob:32,min:3,max:10,c:'#3b82f6'},
-    {name:'SRT 경부고속선',prob:16,min:2,max:5,c:'#a855f7'},
-    {name:'ITX-새마을 경부',prob:38,min:5,max:15,c:'#ef4444'},
-    {name:'무궁화 경부선',prob:42,min:5,max:18,c:'#f97316'},
-    {name:'무궁화 호남선',prob:40,min:5,max:16,c:'#f97316'},
-    {name:'무궁화 중앙선',prob:30,min:4,max:12,c:'#f97316'},
-    {name:'무궁화 경전선',prob:25,min:3,max:10,c:'#f97316'},
-    {name:'무궁화 동해선',prob:22,min:3,max:8,c:'#f97316'},
+    {name:'경부고속선 KTX',prob:18,min:2,max:5,c:'#3b82f6'},
+    {name:'호남고속선 KTX',prob:20,min:2,max:6,c:'#3b82f6'},
+    {name:'강릉선 KTX',prob:28,min:3,max:8,c:'#3b82f6'},
+    {name:'중앙선 KTX',prob:32,min:3,max:10,c:'#3b82f6'},
+    {name:'경부고속선 SRT',prob:16,min:2,max:5,c:'#a855f7'},
+    {name:'경부선 ITX-새마을',prob:38,min:5,max:15,c:'#ef4444'},
+    {name:'경부선 무궁화호',prob:42,min:5,max:18,c:'#f97316'},
+    {name:'호남선 무궁화호',prob:40,min:5,max:16,c:'#f97316'},
+    {name:'중앙선 무궁화호',prob:30,min:4,max:12,c:'#f97316'},
+    {name:'경전선 무궁화호',prob:25,min:3,max:10,c:'#f97316'},
+    {name:'동해선 무궁화호',prob:22,min:3,max:8,c:'#f97316'},
   ];
   el.innerHTML=`<div style="margin-top:12px">
     <div style="background:var(--bg3);border-radius:10px;padding:10px 14px;margin-bottom:14px;font-size:12px;color:var(--text2);line-height:1.6">
