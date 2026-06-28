@@ -313,8 +313,8 @@
     <div id="result-route"></div>
   </div>
   <div class="panel" id="panel-map">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;flex-wrap:wrap;gap:6px">
-      <div class="map-line-tabs" id="map-line-tabs" style="margin-bottom:0">
+    <!-- 노선 선택 탭 -->
+    <div class="map-line-tabs" id="map-line-tabs">
       <button class="map-line-tab active" onclick="showMapLine('gyeongbu',this)">경부선</button>
       <button class="map-line-tab" onclick="showMapLine('gyeongbuhs',this)">경부고속선</button>
       <button class="map-line-tab" onclick="showMapLine('honam',this)">호남선</button>
@@ -324,21 +324,25 @@
       <button class="map-line-tab" onclick="showMapLine('jungnaelyuk',this)">중부내륙선</button>
       <button class="map-line-tab" onclick="showMapLine('gyeongjeon',this)">경전선</button>
     </div>
-      </div>
-      <div style="display:flex;gap:4px;align-items:center;flex-wrap:wrap">
-        <span id="map-train-count" class="badge blue" style="white-space:nowrap"></span>
-        <button class="map-layer-btn" id="map-layer-btn" onclick="toggleMapLayer()" title="레이어 전환">🚉 역 우선</button>
-        <button class="map-layer-btn" onclick="openCurrentLineStationList()" title="전체 역 목록">📍 역 목록</button>
-        <button class="map-dir-btn active" id="map-dir-down" onclick="setMapDir('down')">하행 ↓</button>
-        <button class="map-dir-btn active" id="map-dir-up" onclick="setMapDir('up')">상행 ↑</button>
+    <!-- 컨트롤 바 -->
+    <div style="display:flex;align-items:center;gap:6px;padding:6px 0 4px;flex-wrap:wrap">
+      <span id="map-train-count" class="badge blue" style="white-space:nowrap"></span>
+      <!-- 방향 -->
+      <div style="display:flex;gap:3px;background:var(--bg3);border-radius:8px;padding:3px">
+        <button class="map-dir-btn active" id="map-dir-down" onclick="setMapDir('down')">하행↓</button>
+        <button class="map-dir-btn active" id="map-dir-up" onclick="setMapDir('up')">상행↑</button>
         <button class="map-dir-btn" id="map-dir-all" onclick="setMapDir('all')">전체</button>
-        <div style="display:flex;gap:2px;align-items:center;margin-left:4px">
-          <button class="map-dir-btn" onclick="mapZoomOut()" title="축소">－</button>
-          <span id="map-zoom-label" style="font-size:11px;color:var(--text2);min-width:32px;text-align:center">100%</span>
-          <button class="map-dir-btn" onclick="mapZoomIn()" title="확대">＋</button>
-          <button class="map-dir-btn" onclick="mapZoomReset()" title="초기화">↺</button>
-        </div>
       </div>
+      <!-- 줌 -->
+      <div style="display:flex;gap:2px;align-items:center;background:var(--bg3);border-radius:8px;padding:3px">
+        <button class="map-dir-btn" onclick="mapZoomOut()">－</button>
+        <span id="map-zoom-label" style="font-size:11px;color:var(--text2);min-width:34px;text-align:center">100%</span>
+        <button class="map-dir-btn" onclick="mapZoomIn()">＋</button>
+        <button class="map-dir-btn" onclick="mapZoomReset()" title="초기화">↺</button>
+      </div>
+      <!-- 기타 -->
+      <button class="map-layer-btn" id="map-layer-btn" onclick="toggleMapLayer()">🚉 역 우선</button>
+      <button class="map-layer-btn" onclick="openCurrentLineStationList()">📍 역 목록</button>
     </div>
     <div id="map-content" style="display:none">
       <div class="map-legend" id="map-legend"></div>

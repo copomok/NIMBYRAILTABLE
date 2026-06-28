@@ -965,8 +965,9 @@ tbody td{padding:10px 14px;font-size:13px;white-space:nowrap}
   border-top:1px solid var(--border);
   padding:12px 20px 32px;z-index:9301;
   transform:translateY(100%);transition:transform .3s cubic-bezier(.4,0,.2,1);
-  max-width:600px;margin:0 auto;
+  max-width:600px;margin:0 auto;pointer-events:auto;
 }
+.book-detail-backdrop{pointer-events:auto}
 .book-detail-panel.open{transform:translateY(0)}
 .book-detail-handle{width:36px;height:4px;background:var(--border);border-radius:2px;margin:0 auto 16px}
 .book-detail-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}

@@ -555,16 +555,22 @@ function renderDetail(t){
   const dur=durStr(depT,arrT);
 
   return `<div class="detail-card" id="dc-${t.no}">
-    <div class="detail-head" style="position:relative">
-      <button class="share-btn" onclick="shareTrainLink('${t.no}')" title="링크 복사">🔗</button>
-      <button class="share-btn" style="right:44px" onclick="trackTrainOnMap('${t.no}')" title="노선도에서 보기">🗺️</button>
-      <div class="detail-no" style="color:var(--c-${gcCssVar(t.grade)})">${t.no}</div>
-      <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px;flex-wrap:wrap">
-        ${gradeHtml(t.grade)}${lineChipHtml(t.line)}
-        <span style="font-size:16px;font-weight:700">${t.dest}행</span>
+    <div class="detail-head">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px">
+        <div style="flex:1;min-width:0">
+          <div class="detail-no" style="color:var(--c-${gcCssVar(t.grade)})">${t.no}</div>
+          <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px;flex-wrap:wrap">
+            ${gradeHtml(t.grade)}${lineChipHtml(t.line)}
+            <span style="font-size:16px;font-weight:700">${t.dest}행</span>
+          </div>
+          <div class="detail-meta">${first?.s||''} ${depT} 발 → ${last?.s||''} ${arrT} 착</div>
+          <div class="detail-meta" style="margin-top:2px">정차역 ${totalStops}개 &nbsp;·&nbsp; 소요시간 ${dur}</div>
+        </div>
+        <div style="display:flex;gap:6px;flex-shrink:0;margin-top:4px">
+          <button class="share-btn" style="position:static" onclick="trackTrainOnMap('${t.no}')" title="노선도에서 보기">🗺️</button>
+          <button class="share-btn" style="position:static" onclick="shareTrainLink('${t.no}')" title="링크 복사">🔗</button>
+        </div>
       </div>
-      <div class="detail-meta">${first?.s||''} ${depT} 발 → ${last?.s||''} ${arrT} 착</div>
-      <div class="detail-meta" style="margin-top:2px">정차역 ${totalStops}개 &nbsp;·&nbsp; 소요시간 ${dur}</div>
     </div>
     ${statusBanner}
     <div class="tl-toolbar">
@@ -3487,9 +3493,10 @@ function openQRPopup(ticketId){
 
   const wrap = document.createElement('div');
   wrap.id = 'qr-popup-wrap';
+  wrap.style.cssText = 'position:fixed;inset:0;z-index:9600;display:flex;align-items:center;justify-content:center';
   wrap.innerHTML = `
-    <div class="alarm-popup-backdrop" onclick="closeQRPopup()"></div>
-    <div class="alarm-popup qr-popup">
+    <div style="position:fixed;inset:0;background:rgba(0,0,0,.7);backdrop-filter:blur(3px);z-index:0" onclick="closeQRPopup()"></div>
+    <div class="alarm-popup qr-popup" style="position:relative;z-index:1;top:auto;left:auto;transform:none">
       <div class="qr-popup-header">
         <div class="qr-popup-grade" style="color:var(--c-${gcCssVar(tk.grade)})">${tk.grade} ${tk.trainNo}</div>
         <div class="qr-popup-route">${tk.fromStn} → ${tk.toStn}</div>
@@ -4940,6 +4947,7 @@ function openBookTrainDetail(trainNo, from, to, depT, arrT, travelDate){
 
   const wrap = document.createElement('div');
   wrap.id = 'book-detail-wrap';
+  wrap.style.cssText = 'position:fixed;inset:0;z-index:9300;pointer-events:none';
   wrap.innerHTML = `
     <div class="book-detail-backdrop" onclick="closeBookTrainDetail()"></div>
     <div class="book-detail-panel">
