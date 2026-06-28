@@ -1,8 +1,8 @@
 
 
 // KTX-산천/이음은 KTX와 동일하게 취급
-const GC={'KTX':'KTX','KTX-산천':'KTX','KTX-이음':'KTX','SRT':'SRT','ITX-새마을':'ITX','ITX-청춘':'ITXCC','무궁화호':'MGH'};
-const GL={'KTX':'KTX','KTX-산천':'KTX-산천','KTX-이음':'KTX-이음','SRT':'SRT','ITX-새마을':'ITX-새마을','ITX-청춘':'ITX-청춘','무궁화호':'무궁화'};
+const GC={'KTX':'KTX','KTX-산천':'KTX','KTX-이음':'KTX','SRT':'SRT','ITX-새마을':'ITX','ITX-마음':'ITX','ITX-청춘':'ITXCC','무궁화호':'MGH'};
+const GL={'KTX':'KTX','KTX-산천':'KTX-산천','KTX-이음':'KTX-이음','SRT':'SRT','ITX-새마을':'ITX-새마을','ITX-마음':'ITX-마음','ITX-청춘':'ITX-청춘','무궁화호':'무궁화'};
 function gc(g){return GC[g]||'MGH';}
 // gc() → CSS 변수명 (KTX-산천/이음 모두 파란색)
 const GC_CSS_VAR={'KTX':'ktx','SRT':'srt','ITX':'itxsm','ITXCC':'itxcc','MGH':'mgh'};
