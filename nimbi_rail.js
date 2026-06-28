@@ -4949,8 +4949,8 @@ function openBookTrainDetail(trainNo, from, to, depT, arrT, travelDate){
   wrap.id = 'book-detail-wrap';
   wrap.style.cssText = 'position:fixed;inset:0;z-index:9300;pointer-events:none';
   wrap.innerHTML = `
-    <div class="book-detail-backdrop" onclick="closeBookTrainDetail()"></div>
-    <div class="book-detail-panel">
+    <div class="book-detail-backdrop" onclick="closeBookTrainDetail()" style="pointer-events:auto"></div>
+    <div class="book-detail-panel" style="pointer-events:auto">
       <div class="book-detail-handle"></div>
       <div class="book-detail-head">
         <div>
@@ -4973,16 +4973,10 @@ function openBookTrainDetail(trainNo, from, to, depT, arrT, travelDate){
       <div class="book-detail-fares">${fareSpec}</div>
       <div style="display:flex;gap:8px;margin-top:4px">
         <button class="btn" style="flex:1;justify-content:center;font-size:13px" onclick="closeBookTrainDetail();jumpToTrain('${trainNo}')">🔍 열차 상세</button>
-        ${window._activePassId
-          ? `<button class="btn btn-primary" style="flex:2;justify-content:center;font-size:14px"
-              onclick="closeBookTrainDetail();openPassDaySelector('${window._activePassId}','${trainNo}','${from}','${to}','${depT}','${arrT||''}')">
-              🎟️ 이 열차로 정기권
-            </button>`
-          : `<button class="btn btn-primary" style="flex:2;justify-content:center;font-size:14px"
-              onclick="closeBookTrainDetail();window._bookingPassengerCount=${_bookPassengerCount};openBookingWithDate('${trainNo}','${from}','${to}','${depT}','${arrT||''}','${travelDate}','${_bookRoundTrip}','${document.getElementById('book-date-back')?.value||''}')">
-              🎫 ${_bookRoundTrip?'왕편 예매':'예매하기'}
-            </button>`
-        }
+        <button class="btn btn-primary" style="flex:2;justify-content:center;font-size:14px"
+          onclick="closeBookTrainDetail();_bookDetailConfirm('${trainNo}','${from}','${to}','${depT}','${arrT||''}','${travelDate}')">
+          🎫 예매하기
+        </button>
       </div>
       <button class="btn" style="width:100%;justify-content:center;font-size:12px;margin-top:6px;color:var(--text2)"
         onclick="toggleWaitlist('${trainNo}','${from}','${to}','${depT}','${dateGo}')">
@@ -5125,6 +5119,17 @@ function searchBookTransfers(from, to, dateGo, el){
       else{btn.textContent='여유';btn.style.cssText=base+';color:var(--green);border-color:var(--green)';}
     });
   },0);
+}
+
+// 열차 상세에서 예매/정기권 분기
+function _bookDetailConfirm(trainNo, from, to, depT, arrT, travelDate){
+  if(window._activePassId){
+    openPassDaySelector(window._activePassId, trainNo, from, to, depT, arrT);
+  } else {
+    window._bookingPassengerCount = _bookPassengerCount || 1;
+    openBookingWithDate(trainNo, from, to, depT, arrT, travelDate,
+      _bookRoundTrip, document.getElementById('book-date-back')?.value||'');
+  }
 }
 
 function closeBookTrainDetail(){
