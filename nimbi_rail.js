@@ -2308,10 +2308,13 @@ function setMapDir(dir){
   if(_mapCurrentLine) updateMapTrains();
 }
 
-// 등급별 색상
+// 등급별 색상 (KTX-산천/이음은 KTX와 동일, ITX-마음은 ITX-새마을과 동일)
 const GRADE_COLORS = {
-  'KTX':'#3b82f6','SRT':'#a855f7',
-  'ITX-새마을':'#ef4444','ITX-청춘':'#22c55e','무궁화호':'#f97316'
+  'KTX':'#3b82f6','KTX-산천':'#3b82f6','KTX-이음':'#3b82f6',
+  'SRT':'#a855f7',
+  'ITX-새마을':'#ef4444','ITX-마음':'#ef4444',
+  'ITX-청춘':'#22c55e',
+  '무궁화호':'#f97316'
 };
 
 function updateMapTrains(){
@@ -2368,18 +2371,16 @@ function updateMapTrains(){
     running.push({t,px,py,status,stnA,stnB,posA,posB});
   });
 
-  // 추적 열차를 맨 뒤(최상위)로 재정렬
-  running.sort((a,b)=>{
-    if(_mapTrackedTrain&&a.t.no===_mapTrackedTrain)return 1;
-    if(_mapTrackedTrain&&b.t.no===_mapTrackedTrain)return -1;
-    return 0;
-  });
+  // 추적 모드: 추적 열차만 표시 / 일반 모드: 전체 표시
+  const displayTrains = _mapTrackedTrain
+    ? running.filter(x => x.t.no === _mapTrackedTrain)
+    : running;
 
   // 열차 레이어를 SVG 문자열로 생성
   const r=Math.max(6, _mapSvgSize.w*0.018);
   const fs=Math.max(9, _mapSvgSize.w*0.016);
   let layerHtml='<g id="train-layer">';
-  running.forEach(({t,px,py,status,stnA,stnB,posA,posB})=>{
+  displayTrains.forEach(({t,px,py,status,stnA,stnB,posA,posB})=>{
     const color=GRADE_COLORS[t.grade]||'#888';
     const isTracked=!!(_mapTrackedTrain&&t.no===_mapTrackedTrain);
     const cr=isTracked?r*1.7:r;
@@ -2431,7 +2432,7 @@ function updateMapTrains(){
   // 클릭 이벤트 등록
   svgEl.querySelectorAll('.train-dot').forEach(dot=>{
     const no=dot.getAttribute('data-no');
-    const entry=running.find(r=>r.t.no===no);
+    const entry=displayTrains.find(r=>r.t.no===no);
     if(entry) dot.addEventListener('click',()=>openMapTrainPopup(entry.t, entry.status));
   });
   // 레이어 모드에 따라 역/열차 우선순위 결정
@@ -2445,9 +2446,13 @@ function updateMapTrains(){
     if(trainLayer) svgEl.appendChild(trainLayer);
   }
 
-  // 운행 열차 수 업데이트
+  // 운행 열차 수 / 추적 상태 업데이트
   const countEl=document.getElementById('map-train-count');
-  if(countEl)countEl.textContent=`운행 중 ${running.length}편`;
+  if(countEl){
+    countEl.textContent = _mapTrackedTrain
+      ? `📍 ${_mapTrackedTrain} 추적 중`
+      : `운행 중 ${running.length}편`;
+  }
 }
 
 function openMapTrainPopup(t, status){
@@ -2923,55 +2928,59 @@ function showHistory(inputId,listId,type){
 
 // ── 노선도 고정 오버레이 (추적 열차 버튼) ──
 function _updateMapOverlay(){
+  // 추적 중이 아니면 오버레이 자체를 제거
+  if(!_mapTrackedTrain){
+    const old=document.getElementById('map-track-overlay');
+    if(old) old.remove();
+    return;
+  }
+
   let overlay=document.getElementById('map-track-overlay');
   if(!overlay){
     overlay=document.createElement('div');
     overlay.id='map-track-overlay';
-    overlay.style.cssText='position:fixed;z-index:60;top:56px;right:12px;display:flex;flex-direction:column;gap:6px;pointer-events:all';
+    // 헤더(56px) 바로 아래, 우측 상단 고정
+    overlay.style.cssText='position:fixed;z-index:200;top:64px;right:10px;display:flex;flex-direction:column;gap:6px;pointer-events:all';
     document.body.appendChild(overlay);
   }
   overlay.style.display='flex';
 
-  if(_mapTrackedTrain){
-    const t=ALL_TRAINS.find(x=>x.no===_mapTrackedTrain);
-    const status=t?getCurrentStatus(t):null;
-    let posLabel='—';
-    if(status){
-      if(status.status==='running'){
-        posLabel=status.atStn?`${status.atStn} 정차`
-          :(status.nextStn?`→ ${status.nextStn}`:'운행 중');
-      } else if(status.status==='done') posLabel='운행 종료';
-      else posLabel='운행 전';
-    }
-    const color=t?GRADE_COLORS[t.grade]||'#888':'#888';
-    overlay.innerHTML=`
-      <div style="background:var(--bg2);border:1px solid ${color};border-radius:10px;padding:7px 10px;font-size:11px;line-height:1.4;max-width:130px;box-shadow:0 3px 12px rgba(0,0,0,.5)">
-        <div style="font-weight:700;color:${color};margin-bottom:2px">${t?t.grade+' ':''}<span style="font-size:13px">${_mapTrackedTrain}</span></div>
-        <div style="color:var(--text2)">${posLabel}</div>
-      </div>
-      <button onclick="_scrollToTrackedTrain();_updateMapOverlay()"
-        style="padding:7px 11px;border-radius:8px;border:none;background:var(--accent);color:#fff;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;box-shadow:0 2px 8px rgba(0,0,0,.5);text-align:left">
-        📍 위치 보기
-      </button>
-      <button onclick="shareTrainLink('${_mapTrackedTrain}')"
-        style="padding:7px 11px;border-radius:8px;border:none;background:var(--bg3);color:var(--text1);font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;box-shadow:0 2px 8px rgba(0,0,0,.4);text-align:left">
-        🔗 링크 복사
-      </button>
-      <button onclick="_clearTrainTracking()"
-        style="padding:5px 11px;border-radius:8px;border:1px solid var(--border);background:transparent;color:var(--text3);font-size:11px;cursor:pointer;font-family:inherit">
-        ✕ 추적 해제
-      </button>`;
-  } else {
-    overlay.innerHTML=`
-      <button style="padding:7px 11px;border-radius:8px;border:none;background:var(--bg3);color:var(--text3);font-size:12px;font-weight:600;cursor:default;font-family:inherit;box-shadow:0 2px 8px rgba(0,0,0,.3);opacity:0.6;text-align:left" disabled>
-        📍 추적 없음
-      </button>`;
+  const t=ALL_TRAINS.find(x=>x.no===_mapTrackedTrain);
+  const status=t?getCurrentStatus(t):null;
+  let posLabel='—';
+  if(status){
+    if(status.status==='running'){
+      posLabel=status.atStn?`${status.atStn} 정차`
+        :(status.nextStn?`→ ${status.nextStn}`:'운행 중');
+    } else if(status.status==='done') posLabel='운행 종료';
+    else posLabel='운행 전';
   }
+  const color=t?GRADE_COLORS[t.grade]||'#888':'#888';
+  overlay.innerHTML=`
+    <div style="background:var(--bg2);border:1px solid ${color};border-radius:10px;padding:7px 10px;font-size:11px;line-height:1.4;max-width:130px;box-shadow:0 3px 12px rgba(0,0,0,.5)">
+      <div style="font-weight:700;color:${color};margin-bottom:2px">${t?t.grade+' ':''}<span style="font-size:13px">${_mapTrackedTrain}</span></div>
+      <div style="color:var(--text2)">${posLabel}</div>
+    </div>
+    <button onclick="_scrollToTrackedTrain();_updateMapOverlay()"
+      style="padding:7px 11px;border-radius:8px;border:none;background:var(--accent);color:#fff;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;box-shadow:0 2px 8px rgba(0,0,0,.5);text-align:left">
+      📍 위치 보기
+    </button>
+    <button onclick="shareTrainLink('${_mapTrackedTrain}')"
+      style="padding:7px 11px;border-radius:8px;border:none;background:var(--bg3);color:var(--text1);font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;box-shadow:0 2px 8px rgba(0,0,0,.4);text-align:left">
+      🔗 링크 복사
+    </button>
+    <button onclick="_clearTrainTracking()"
+      style="padding:5px 11px;border-radius:8px;border:1px solid var(--border);background:transparent;color:var(--text3);font-size:11px;cursor:pointer;font-family:inherit">
+      ✕ 추적 해제
+    </button>`;
 }
 
 function _clearTrainTracking(){
   _mapTrackedTrain=null;
-  _updateMapOverlay();
+  // 오버레이 완전 제거
+  const overlay=document.getElementById('map-track-overlay');
+  if(overlay) overlay.remove();
+  // 전체 열차 다시 표시
   updateMapTrains();
 }
 
