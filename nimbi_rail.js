@@ -555,21 +555,19 @@ function renderDetail(t){
   const dur=durStr(depT,arrT);
 
   return `<div class="detail-card" id="dc-${t.no}">
-    <div class="detail-head">
-      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px">
-        <div style="flex:1;min-width:0">
-          <div class="detail-no" style="color:var(--c-${gcCssVar(t.grade)})">${t.no}</div>
-          <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px;flex-wrap:wrap">
-            ${gradeHtml(t.grade)}${lineChipHtml(t.line)}
-            <span style="font-size:16px;font-weight:700">${t.dest}행</span>
-          </div>
-          <div class="detail-meta">${first?.s||''} ${depT} 발 → ${last?.s||''} ${arrT} 착</div>
-          <div class="detail-meta" style="margin-top:2px">정차역 ${totalStops}개 &nbsp;·&nbsp; 소요시간 ${dur}</div>
+    <div class="detail-head" style="position:relative">
+      <div style="position:absolute;top:0;right:0;display:flex;gap:6px">
+        <button class="share-btn" style="position:static" onclick="trackTrainOnMap('${t.no}')" title="노선도에서 보기">🗺️</button>
+        <button class="share-btn" style="position:static" onclick="shareTrainLink('${t.no}')" title="링크 복사">🔗</button>
+      </div>
+      <div style="padding-right:80px">
+        <div style="font-size:48px;font-weight:900;font-family:var(--mono);color:var(--c-${gcCssVar(t.grade)});line-height:1;margin-bottom:8px">${t.no}</div>
+        <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px;flex-wrap:wrap">
+          ${gradeHtml(t.grade)}${lineChipHtml(t.line)}
+          <span style="font-size:16px;font-weight:700">${t.dest}행</span>
         </div>
-        <div style="display:flex;gap:6px;flex-shrink:0;margin-top:4px">
-          <button class="share-btn" style="position:static" onclick="trackTrainOnMap('${t.no}')" title="노선도에서 보기">🗺️</button>
-          <button class="share-btn" style="position:static" onclick="shareTrainLink('${t.no}')" title="링크 복사">🔗</button>
-        </div>
+        <div class="detail-meta">${first?.s||''} ${depT} 발 → ${last?.s||''} ${arrT} 착</div>
+        <div class="detail-meta" style="margin-top:2px">정차역 ${totalStops}개 &nbsp;·&nbsp; 소요시간 ${dur}</div>
       </div>
     </div>
     ${statusBanner}
@@ -2785,7 +2783,8 @@ function renderFirstLastTrains(stn){
 // ── 통계 탭 ──
 function renderStats(){
   const el=document.getElementById('result-stats');
-  if(!el)return;
+  if(!el){return;}
+  el.innerHTML=''; // 초기화
 
   const now=new Date();
   const nowM=now.getHours()*60+now.getMinutes();
@@ -4947,10 +4946,10 @@ function openBookTrainDetail(trainNo, from, to, depT, arrT, travelDate){
 
   const wrap = document.createElement('div');
   wrap.id = 'book-detail-wrap';
-  wrap.style.cssText = 'position:fixed;inset:0;z-index:9300;pointer-events:none';
+  // wrap은 z-index 없이 단순 컨테이너 (스태킹 컨텍스트 생성 방지)
   wrap.innerHTML = `
-    <div class="book-detail-backdrop" onclick="closeBookTrainDetail()" style="pointer-events:auto"></div>
-    <div class="book-detail-panel" style="pointer-events:auto">
+    <div class="book-detail-backdrop" onclick="closeBookTrainDetail()"></div>
+    <div class="book-detail-panel">
       <div class="book-detail-handle"></div>
       <div class="book-detail-head">
         <div>
