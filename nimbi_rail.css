@@ -397,7 +397,7 @@ tbody td{padding:10px 14px;font-size:13px;white-space:nowrap}
 .tl-stn-col{display:flex;align-items:center;gap:6px;padding:4px 0}
 .tl-stn-name{font-size:14px;font-weight:500}
 .tl-stn-name.origin{color:#3fb950;font-weight:700;font-size:15px}
-.tl-stn-name.term{color:#3fb950;font-weight:700;font-size:15px}
+.tl-stn-name.term{color:#f85149;font-weight:700;font-size:15px}
 .tl-stn-name.stop{color:var(--text1)}
 .tl-stn-name.pass{color:var(--text3);font-size:13px}
 .tl-badge{font-size:10px;padding:1px 6px;border-radius:8px;font-weight:600}
@@ -413,8 +413,8 @@ tbody td{padding:10px 14px;font-size:13px;white-space:nowrap}
 .view-toggle-btn.active{background:var(--accent);color:#fff;border-color:var(--accent)}
 
 /* 표 뷰 역명 색상 */
-.stn-name.origin-n{color:var(--red);font-weight:700}
-.stn-name.term-n{color:var(--green);font-weight:700}
+.stn-name.origin-n{color:var(--green);font-weight:700}
+.stn-name.term-n{color:var(--red);font-weight:700}
 /* 표 뷰 다음 역 하이라이트 */
 .sr.hl-next>div{background:rgba(56,139,253,.1)!important}
 .sr.hl-at>div{background:rgba(63,185,80,.1)!important}

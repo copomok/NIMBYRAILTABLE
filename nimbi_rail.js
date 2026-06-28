@@ -2789,7 +2789,8 @@ function renderFirstLastTrains(stn){
 
 // ── 통계 탭 ──
 function renderStats(){
-  const el=document.getElementById('result-stats');
+  // panel-stats 안의 result-stats를 우선 찾고, 없으면 일반 검색
+  const el=document.querySelector('#panel-stats #result-stats')||document.getElementById('result-stats');
   if(!el){return;}
   el.innerHTML=''; // 초기화
 
@@ -3081,7 +3082,7 @@ function setNoticeFilter(cat){
 }
 
 function renderNotice(){
-  const el=document.getElementById('result-notice');
+  const el=document.querySelector('#panel-notice #result-notice')||document.getElementById('result-notice');
   if(!el)return;
   if(!NOTICES.length){
     el.innerHTML=`<div class="empty"><div class="empty-icon">📢</div><p>등록된 공지사항이 없습니다.</p></div>`;
@@ -4598,11 +4599,19 @@ function openMySection(section){
     contentEl.innerHTML = '<div id="result-fav"></div>';
     renderFavs();
   } else if(section==='stats'){
-    contentEl.innerHTML = '<div id="result-stats"></div>';
-    renderStats();
+    contentEl.innerHTML = '<div id="my-result-stats"></div>';
+    // 마이페이지에서는 탭 result-stats와 충돌 방지를 위해 별도 렌더
+    (function(){
+      const el=document.getElementById('my-result-stats');
+      if(!el)return;
+      // 탭으로 이동
+      closeMyPanel();
+      switchTab('stats');
+    })();
   } else if(section==='notice'){
-    contentEl.innerHTML = '<div id="result-notice"></div>';
-    updateNoticeBadge(); renderNotice();
+    contentEl.innerHTML = '<div id="my-result-notice"></div>';
+    closeMyPanel();
+    switchTab('notice');
   } else if(section==='pass'){
     contentEl.innerHTML = '<div id="result-pass-my">' + renderPassSection() + '</div>';
   }
@@ -5454,9 +5463,9 @@ function renderSIDelay(el) {
     {name:'ITX-새마을 경부선', grade:'ITX-새마을', prob:38, minMin:5, maxMin:15, color:'#ef4444'},
     {name:'무궁화 경부선', grade:'무궁화호', prob:42, minMin:5, maxMin:18, color:'#f97316'},
     {name:'무궁화 호남선', grade:'무궁화호', prob:45, minMin:6, maxMin:20, color:'#f97316'},
-    {name:'무궁화 중앙선', grade:'무궁화호', prob:50, minMin:8, maxMin:22, color:'#f97316'},
-    {name:'무궁화 경전선', grade:'무궁화호', prob:58, minMin:10, maxMin:28, color:'#f97316'},
-    {name:'무궁화 동해선', grade:'무궁화호', prob:48, minMin:7, maxMin:20, color:'#f97316'},
+    {name:'무궁화 중앙선', grade:'무궁화호', prob:35, minMin:5, maxMin:15, color:'#f97316'},
+    {name:'무궁화 경전선', grade:'무궁화호', prob:28, minMin:3, maxMin:10, color:'#f97316'},
+    {name:'무궁화 동해선', grade:'무궁화호', prob:25, minMin:3, maxMin:10, color:'#f97316'},
   ];
 
   el.innerHTML = `
