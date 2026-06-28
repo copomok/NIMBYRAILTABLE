@@ -1528,7 +1528,23 @@ const FAV_KEY='nimbi_favs';
 function loadFavs(){try{return JSON.parse(localStorage.getItem(FAV_KEY))||[];}catch(e){return[];}}
 function saveFavs(favs){localStorage.setItem(FAV_KEY,JSON.stringify(favs));}
 
-// 즐겨찾기 카테고리 정의
+// 즐겨찾기 그룹 시스템 (사용자 정의 그룹 지원)
+const FAV_GROUPS_KEY='nimbi_fav_groups';
+const FAV_GROUPS_DEFAULT=[
+  {id:'commute',label:'출퇴근',icon:'💼',color:'#388bfd'},
+  {id:'travel', label:'여행',  icon:'✈️', color:'#3fb950'},
+  {id:'etc',    label:'기타',  icon:'📌', color:'#8b949e'},
+];
+const FAV_GROUPS_BUILT_IN=['commute','travel','etc'];
+function loadFavGroups(){
+  try{
+    const g=JSON.parse(localStorage.getItem(FAV_GROUPS_KEY));
+    if(Array.isArray(g)&&g.length) return g;
+  }catch(e){}
+  return FAV_GROUPS_DEFAULT.map(g=>({...g}));
+}
+function saveFavGroups(groups){localStorage.setItem(FAV_GROUPS_KEY,JSON.stringify(groups));}
+// 하위 호환: 기존 코드가 FAV_CATEGORIES를 참조할 경우 대비
 const FAV_CATEGORIES={
   commute:{label:'출퇴근',icon:'💼',color:'#388bfd'},
   travel: {label:'여행',  icon:'✈️',color:'#3fb950'},
@@ -1557,26 +1573,26 @@ function addFav(type){
   openFavCategoryPicker(id,type,label,data);
 }
 
-// 즐겨찾기 추가 시 카테고리 선택 팝업
+// 즐겨찾기 추가 시 그룹 선택 팝업
 function openFavCategoryPicker(id,type,label,data){
   const old=document.getElementById('fav-cat-popup-wrap');
   if(old)old.remove();
   const wrap=document.createElement('div');
   wrap.id='fav-cat-popup-wrap';
-  const opts=Object.entries(FAV_CATEGORIES).map(([key,c])=>
-    `<button class="fav-cat-option" onclick="confirmAddFav('${id}','${type}','${label.replace(/'/g,"\\'")}','${key}')">
-      <span style="font-size:18px">${c.icon}</span><span>${c.label}</span>
+  const groups=loadFavGroups();
+  const opts=groups.map(g=>
+    `<button class="fav-cat-option" onclick="confirmAddFav('${id}','${type}','${label.replace(/'/g,"\\'")}','${g.id}')">
+      <span style="font-size:18px">${g.icon}</span><span style="color:${g.color}">${g.label}</span>
     </button>`).join('');
   wrap.innerHTML=`
     <div class="alarm-popup-backdrop" onclick="closeFavCategoryPicker()"></div>
     <div class="alarm-popup">
       <div class="alarm-popup-title">⭐ ${label}</div>
-      <div class="alarm-popup-sub">카테고리를 선택하세요</div>
+      <div class="alarm-popup-sub">그룹을 선택하세요</div>
       <div class="fav-cat-options">${opts}</div>
       <button class="alarm-popup-close" onclick="closeFavCategoryPicker()">취소</button>
     </div>`;
   document.body.appendChild(wrap);
-  // data를 임시 보관 (confirmAddFav에서 사용)
   window._pendingFavData=data;
 }
 function closeFavCategoryPicker(){
@@ -1584,6 +1600,95 @@ function closeFavCategoryPicker(){
   if(w)w.remove();
   window._pendingFavData=null;
 }
+
+// ── 즐겨찾기 그룹 관리 ──
+const _FAV_GROUP_ICONS=['🗂️','📁','🔖','⭐','❤️','🚂','🏔️','☕'];
+const _FAV_GROUP_COLORS=['#e879f9','#f59e0b','#10b981','#ec4899','#6366f1','#f97316','#06b6d4','#84cc16'];
+
+function _gmListHtml(groups){
+  return groups.map(g=>`
+    <div class="group-manager-item">
+      <div class="gm-label"><span style="font-size:16px">${g.icon}</span><span id="gm-lbl-${g.id}" style="font-size:14px;font-weight:600;color:${g.color}">${g.label}</span></div>
+      <div class="gm-actions">
+        <button onclick="startRenameGroup('${g.id}')" style="font-size:11px;padding:4px 8px;border-radius:6px;border:1px solid var(--border);background:var(--bg3);color:var(--text2);cursor:pointer;font-family:inherit">수정</button>
+        ${!FAV_GROUPS_BUILT_IN.includes(g.id)?`<button onclick="deleteFavGroup('${g.id}')" style="font-size:11px;padding:4px 8px;border-radius:6px;border:1px solid var(--red);background:transparent;color:var(--red);cursor:pointer;font-family:inherit">삭제</button>`:''}
+      </div>
+    </div>`).join('');
+}
+
+function openGroupManager(){
+  const old=document.getElementById('group-manager-wrap');
+  if(old)old.remove();
+  const wrap=document.createElement('div');
+  wrap.id='group-manager-wrap';
+  wrap.innerHTML=`
+    <div class="alarm-popup-backdrop" onclick="closeGroupManager()"></div>
+    <div class="alarm-popup" style="max-height:80vh;overflow-y:auto">
+      <div class="alarm-popup-title">⚙️ 그룹 관리</div>
+      <div class="alarm-popup-sub">기본 그룹은 삭제할 수 없습니다</div>
+      <div id="gm-list" style="margin:12px 0">${_gmListHtml(loadFavGroups())}</div>
+      <div class="alarm-popup-sub" style="margin-bottom:6px">새 그룹 추가</div>
+      <div style="display:flex;gap:8px">
+        <input id="gm-new-name" class="si-inp" placeholder="그룹 이름" style="flex:1;font-size:13px;padding:8px 12px;border-radius:8px;border:1px solid var(--border);background:var(--bg1);color:var(--text1);font-family:inherit">
+        <button onclick="addFavGroup()" style="padding:8px 16px;border-radius:8px;border:none;background:var(--accent);color:#fff;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit">추가</button>
+      </div>
+      <button class="alarm-popup-close" onclick="closeGroupManager()" style="margin-top:14px">닫기</button>
+    </div>`;
+  document.body.appendChild(wrap);
+}
+
+function closeGroupManager(){
+  const w=document.getElementById('group-manager-wrap');
+  if(w)w.remove();
+  if(document.getElementById('panel-fav')?.classList.contains('active'))renderFavs();
+}
+
+function addFavGroup(){
+  const inp=document.getElementById('gm-new-name');
+  const label=(inp?.value||'').trim();
+  if(!label){alert('그룹 이름을 입력해주세요.');return;}
+  const groups=loadFavGroups();
+  if(groups.some(g=>g.label===label)){alert('같은 이름의 그룹이 이미 있습니다.');return;}
+  const idx=groups.length % _FAV_GROUP_ICONS.length;
+  groups.push({id:'g_'+Date.now(),label,icon:_FAV_GROUP_ICONS[idx],color:_FAV_GROUP_COLORS[idx]});
+  saveFavGroups(groups);
+  if(inp)inp.value='';
+  const list=document.getElementById('gm-list');
+  if(list)list.innerHTML=_gmListHtml(loadFavGroups());
+}
+
+function deleteFavGroup(id){
+  if(!confirm('이 그룹을 삭제하면 해당 그룹의 즐겨찾기 항목이 "기타"로 이동됩니다.\n삭제하시겠습니까?'))return;
+  const groups=loadFavGroups().filter(g=>g.id!==id);
+  saveFavGroups(groups);
+  saveFavs(loadFavs().map(f=>f.cat===id?{...f,cat:'etc'}:f));
+  const list=document.getElementById('gm-list');
+  if(list)list.innerHTML=_gmListHtml(loadFavGroups());
+}
+
+function startRenameGroup(id){
+  const lbl=document.getElementById('gm-lbl-'+id);
+  if(!lbl)return;
+  const old=lbl.textContent;
+  lbl.outerHTML=`<span id="gm-lbl-${id}">
+    <input id="gm-rename-${id}" value="${old}" style="font-size:13px;padding:3px 6px;border-radius:4px;border:1px solid var(--accent);background:var(--bg1);color:var(--text1);font-family:inherit;width:90px">
+    <button onclick="confirmRenameGroup('${id}')" style="font-size:11px;padding:3px 8px;border-radius:4px;border:none;background:var(--accent);color:#fff;cursor:pointer;margin-left:4px;font-family:inherit">확인</button>
+  </span>`;
+  document.getElementById('gm-rename-'+id)?.focus();
+}
+
+function confirmRenameGroup(id){
+  const inp=document.getElementById('gm-rename-'+id);
+  const lbl=document.getElementById('gm-lbl-'+id);
+  if(!inp||!lbl)return;
+  const newLabel=inp.value.trim();
+  if(!newLabel)return;
+  const groups=loadFavGroups().map(g=>g.id===id?{...g,label:newLabel}:g);
+  saveFavGroups(groups);
+  const grp=groups.find(g=>g.id===id);
+  lbl.innerHTML=`<span style="font-size:14px;font-weight:600;color:${grp?.color||'var(--text1)'}">${newLabel}</span>`;
+}
+
 function confirmAddFav(id,type,label,cat){
   const data=window._pendingFavData||{};
   const favs=loadFavs();
@@ -1715,53 +1820,64 @@ function renderFavs(){
   if(!el){console.warn('result-fav 엘리먼트 없음');return;}
   try{
   const allFavs=loadFavs();
-  if(!allFavs.length){
-    el.innerHTML='<div class="empty"><div class="empty-icon">⭐</div><p>즐겨찾기가 비어있습니다.<br>각 탭의 ⭐ 버튼으로 추가해보세요.</p></div>';
-    return;
-  }
+  const groups=loadFavGroups();
   const typeIcon={train:'🚆',station:'🏢',route:'🔍'};
 
-  // 카테고리 필터 탭
-  const catCounts={all:allFavs.length};
-  Object.keys(FAV_CATEGORIES).forEach(k=>{catCounts[k]=allFavs.filter(f=>(f.cat||'etc')===k).length;});
+  const headerBar=`<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+    <div class="result-title" style="display:flex;align-items:center;gap:8px">⭐ 즐겨찾기 <span class="badge blue">${allFavs.length}개</span></div>
+    <button onclick="openGroupManager()" style="font-size:12px;padding:5px 10px;border-radius:8px;border:1px solid var(--border);background:var(--bg3);color:var(--text2);cursor:pointer;font-family:inherit;white-space:nowrap">⚙️ 그룹 관리</button>
+  </div>`;
+
+  if(!allFavs.length){
+    el.innerHTML=headerBar+'<div class="empty"><div class="empty-icon">⭐</div><p>즐겨찾기가 비어있습니다.<br>각 탭의 ⭐ 버튼으로 추가해보세요.</p></div>';
+    return;
+  }
+
+  // 그룹 필터 탭
+  const groupCounts={all:allFavs.length};
+  groups.forEach(g=>{groupCounts[g.id]=allFavs.filter(f=>(f.cat||'etc')===g.id).length;});
   const filterTabs=`<div class="fav-filter-tabs">
-    <button class="fav-filter-tab${_favFilterCat==='all'?' active':''}" onclick="setFavFilter('all')">전체 ${catCounts.all}</button>
-    ${Object.entries(FAV_CATEGORIES).map(([k,c])=>
-      catCounts[k]>0?`<button class="fav-filter-tab${_favFilterCat===k?' active':''}" onclick="setFavFilter('${k}')">${c.icon} ${c.label} ${catCounts[k]}</button>`:''
+    <button class="fav-filter-tab${_favFilterCat==='all'?' active':''}" onclick="setFavFilter('all')">전체 ${groupCounts.all}</button>
+    ${groups.map(g=>
+      groupCounts[g.id]>0?`<button class="fav-filter-tab${_favFilterCat===g.id?' active':''}" onclick="setFavFilter('${g.id}')">${g.icon} ${g.label} ${groupCounts[g.id]}</button>`:''
     ).join('')}
   </div>`;
 
-  const favs=_favFilterCat==='all'?allFavs:allFavs.filter(f=>(f.cat||'etc')===_favFilterCat);
-
-  if(!favs.length){
-    el.innerHTML=`${filterTabs}<div class="empty"><div class="empty-icon">📭</div><p>해당 카테고리에 즐겨찾기가 없습니다.</p></div>`;
-    return;
-  }
-
-  const cards=favs.map((f,i)=>{
+  const makeFavCard=(f,globalIdx)=>{
     const info=getFavInfo(f);
-    const cat=FAV_CATEGORIES[f.cat]||FAV_CATEGORIES.etc;
-    // station은 두 줄(lines), 나머지는 한 줄(sub)
+    const grp=groups.find(g=>g.id===f.cat)||groups.find(g=>g.id==='etc')||{icon:'📌',color:'#8b949e'};
     const subHtml=info.lines
       ? info.lines.map(l=>`<div class="fav-sub">${l}</div>`).join('')
       : `<div class="fav-sub">${info.sub||''}</div>`;
-    return `<div class="fav-card" draggable="true" ondragstart="favDragStart(event,${i})" ondragend="favDragEnd(event)" ondragover="favDragOver(event,${i})" onclick="runFav(${JSON.stringify(f).replace(/"/g,'&quot;')})">
+    return `<div class="fav-card" draggable="true" ondragstart="favDragStart(event,${globalIdx})" ondragend="favDragEnd(event)" ondragover="favDragOver(event,${globalIdx})" onclick="runFav(${JSON.stringify(f).replace(/"/g,'&quot;')})">
       <div class="fav-icon">${typeIcon[f.type]||'⭐'}</div>
       <div class="fav-info">
-        <div class="fav-label">${info.main} <span class="fav-cat-tag" style="color:${cat.color}">${cat.icon}</span></div>
+        <div class="fav-label">${info.main} <span class="fav-cat-tag" style="color:${grp.color}">${grp.icon}</span></div>
         ${subHtml}
       </div>
       <button class="fav-del-btn" onclick="event.stopPropagation();removeFav('${f.id}')" title="삭제">✕</button>
     </div>`;
-  }).join('');
-  el.innerHTML=`
-    <div class="result-header">
-      <div class="result-title">⭐ 즐겨찾기</div>
-      <span class="badge blue">${allFavs.length}개</span>
-    </div>
-    ${filterTabs}
-    <div class="fav-list">${cards}</div>
-    <p class="hint">※ 클릭 시 해당 탭으로 이동해 바로 조회합니다</p>`;
+  };
+
+  let cardsHtml='';
+  if(_favFilterCat==='all'){
+    // 그룹별 섹션으로 표시
+    groups.forEach(g=>{
+      const gFavs=allFavs.filter(f=>(f.cat||'etc')===g.id);
+      if(!gFavs.length)return;
+      cardsHtml+=`<div class="fav-group-header"><span style="color:${g.color};font-weight:700">${g.icon} ${g.label}</span><span style="font-size:11px;color:var(--text3)">${gFavs.length}개</span></div>`;
+      cardsHtml+=gFavs.map(f=>makeFavCard(f,allFavs.indexOf(f))).join('');
+    });
+  } else {
+    const filtered=allFavs.filter(f=>(f.cat||'etc')===_favFilterCat);
+    if(!filtered.length){
+      el.innerHTML=`${headerBar}${filterTabs}<div class="empty"><div class="empty-icon">📭</div><p>해당 그룹에 즐겨찾기가 없습니다.</p></div>`;
+      return;
+    }
+    cardsHtml=filtered.map(f=>makeFavCard(f,allFavs.indexOf(f))).join('');
+  }
+
+  el.innerHTML=`${headerBar}${filterTabs}<div class="fav-list">${cardsHtml}</div><p class="hint">※ 클릭 시 해당 탭으로 이동해 바로 조회합니다</p>`;
   }catch(err){
     console.error('renderFavs 오류:', err);
     el.innerHTML=`<div class="empty"><div class="empty-icon">⚠️</div><p>즐겨찾기를 불러오는 중 오류가 발생했습니다.<br><span style="font-size:11px;color:var(--text3)">${err.message}</span></p></div>`;
@@ -5195,6 +5311,15 @@ function renderSICard(name){
           <div style="font-size:11px;color:var(--text2);text-align:right">${platforms.length>0?platforms.length+'개 홈<br>':''}${trains.length}편 경유</div>
         </div>
         ${d?`<div style="font-size:11px;color:var(--text3);font-family:var(--mono);margin-top:4px">${d.lon.toFixed(4)}°E, ${d.lat.toFixed(4)}°N</div>`:''}
+        ${(()=>{
+          const hist=typeof STATION_HISTORY!=='undefined'?STATION_HISTORY[name]:null;
+          if(!hist)return '';
+          const age=new Date().getFullYear()-hist.year;
+          return `<div style="margin-top:6px">
+            <span style="display:inline-block;font-size:11px;padding:2px 8px;border-radius:10px;background:var(--bg3);color:var(--text2);font-weight:600">🏛️ 개업 ${hist.year}년 · ${age}년 역사</span>
+            ${hist.note?`<div style="font-size:11px;color:var(--text3);margin-top:3px">${hist.note}</div>`:''}
+          </div>`;
+        })()}
         <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:10px">
           ${Object.entries(gc_count).map(([g,n])=>
             `<span style="padding:3px 10px;border-radius:12px;font-size:11px;font-weight:600;border:1px solid var(--c-${GC_CSS_VAR[g]||'mgh'});color:var(--c-${GC_CSS_VAR[g]||'mgh'})">${g} ${n}편</span>`
@@ -5218,8 +5343,40 @@ function renderSICard(name){
       <div id="si-platform-trains" style="padding:14px 16px">
         ${_siPlatformTrainsHTML(name, trains)}
       </div>
+      ${d&&d.lat&&d.lon?`
+      <div style="border-top:1px solid var(--border)">
+        <button onclick="toggleStationMap()" style="width:100%;padding:11px 16px;background:transparent;border:none;color:var(--text2);font-size:12px;font-weight:600;cursor:pointer;font-family:var(--sans);display:flex;align-items:center;justify-content:space-between">
+          <span>🗺️ 역 주변 지도</span><span id="si-map-arrow">▼</span>
+        </button>
+        <div id="si-map-section" style="display:none;padding:0 16px 14px">
+          <iframe
+            src="https://www.openstreetmap.org/export/embed.html?bbox=${(d.lon-0.01).toFixed(5)},${(d.lat-0.008).toFixed(5)},${(d.lon+0.01).toFixed(5)},${(d.lat+0.008).toFixed(5)}&layer=mapnik&marker=${d.lat.toFixed(5)},${d.lon.toFixed(5)}"
+            style="width:100%;height:220px;border:1px solid var(--border);border-radius:8px;display:block"
+            loading="lazy" title="${name} 주변 지도"></iframe>
+          <div style="display:flex;gap:8px;margin-top:8px">
+            <a href="https://map.kakao.com/?q=${encodeURIComponent(name)}" target="_blank" rel="noopener noreferrer"
+              style="flex:1;display:block;text-align:center;padding:8px;background:var(--bg3);border:1px solid var(--border);border-radius:8px;font-size:12px;color:var(--text1);text-decoration:none;font-weight:600">
+              카카오지도 ↗
+            </a>
+            <a href="https://map.naver.com/?query=${encodeURIComponent(name)}" target="_blank" rel="noopener noreferrer"
+              style="flex:1;display:block;text-align:center;padding:8px;background:var(--bg3);border:1px solid var(--border);border-radius:8px;font-size:12px;color:var(--text1);text-decoration:none;font-weight:600">
+              네이버지도 ↗
+            </a>
+          </div>
+        </div>
+      </div>`:''}
     </div>`;
 }
+
+function toggleStationMap(){
+  const sec=document.getElementById('si-map-section');
+  const arr=document.getElementById('si-map-arrow');
+  if(!sec)return;
+  const open=sec.style.display==='none'||sec.style.display==='';
+  sec.style.display=open?'block':'none';
+  if(arr)arr.textContent=open?'▲':'▼';
+}
+
 
 function selectSICardPlatform(name, p){
   _siCardPlatform=p;

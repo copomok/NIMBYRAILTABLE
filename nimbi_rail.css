@@ -562,6 +562,13 @@ tbody td{padding:10px 14px;font-size:13px;white-space:nowrap}
 .fav-cat-option{display:flex;align-items:center;gap:10px;padding:12px 14px;background:var(--bg3);border:1px solid var(--border);border-radius:10px;color:var(--text1);font-size:14px;font-weight:600;cursor:pointer;transition:all .15s;font-family:inherit}
 .fav-cat-option:hover{border-color:var(--accent);background:rgba(56,139,253,.08)}
 
+/* 즐겨찾기 그룹 관리 */
+.fav-group-header{display:flex;align-items:center;justify-content:space-between;padding:10px 0 6px;margin-top:8px;border-bottom:1px solid var(--border)}
+.fav-group-header:first-child{margin-top:0}
+.group-manager-item{display:flex;align-items:center;justify-content:space-between;padding:10px 12px;background:var(--bg3);border:1px solid var(--border);border-radius:8px;margin-bottom:6px}
+.gm-label{display:flex;align-items:center;gap:8px}
+.gm-actions{display:flex;gap:6px}
+
 /* ── 공지사항 카테고리 필터 ── */
 .notice-filter-tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}
 .notice-filter-tab{padding:6px 12px;font-size:12px;border:1px solid var(--border);border-radius:20px;background:var(--bg2);color:var(--text2);cursor:pointer;transition:all .15s;font-family:inherit}
