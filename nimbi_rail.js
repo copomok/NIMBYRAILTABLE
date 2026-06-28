@@ -5091,6 +5091,26 @@ function siSelect(name){
   renderSICard(name);
 }
 
+function _getPlatformInfo(stationName, platformNum){
+  if(typeof PLATFORM_DB==='undefined')return null;
+  const s=PLATFORM_DB[stationName];
+  if(!s)return null;
+  return s[String(platformNum)]||null;
+}
+
+function _gradeMatchesPlatform(trainGrade, platformGrades){
+  if(!platformGrades||platformGrades.length===0)return true;
+  for(const pg of platformGrades){
+    if(pg==='KTX'&&(trainGrade==='KTX'||trainGrade==='KTX-산천'||trainGrade==='KTX-이음'))return true;
+    if(pg==='SRT'&&trainGrade==='SRT')return true;
+    if(pg==='ITX-새마을'&&trainGrade==='ITX-새마을')return true;
+    if(pg==='ITX-청춘'&&trainGrade==='ITX-청춘')return true;
+    if(pg==='ITX-마음'&&trainGrade==='ITX-마음')return true;
+    if(pg==='무궁화호'&&(trainGrade==='무궁화호'||trainGrade==='무궁호화'))return true;
+  }
+  return false;
+}
+
 function renderSICard(name){
   const el=document.getElementById('si-card');
   if(!el)return;
@@ -5098,7 +5118,15 @@ function renderSICard(name){
   const trains=ALL_TRAINS.filter(t=>t.stops.some(s=>s.s===name&&(s.dep||s.arr)));
   const gc_count={};
   trains.forEach(t=>{const g=gc(t.grade);gc_count[g]=(gc_count[g]||0)+1;});
-  const platforms=d?.platforms?.length>0?d.platforms:[];
+  // Prefer PLATFORM_DB for platform list; filter out empty platforms; fallback to STATION_DB
+  let platforms=[];
+  if(typeof PLATFORM_DB!=='undefined'&&PLATFORM_DB[name]){
+    platforms=Object.keys(PLATFORM_DB[name]).map(Number)
+      .filter(p=>{const i=PLATFORM_DB[name][String(p)];return i&&(i.g.length>0||i.l.length>0);})
+      .sort((a,b)=>a-b);
+  } else if(d?.platforms?.length>0){
+    platforms=d.platforms;
+  }
   if(_siCardPlatform===null&&platforms.length>0) _siCardPlatform=platforms[0];
   const nameEsc=name.replace(/\\/g,'\\\\').replace(/'/g,"\\'");
   el.innerHTML=`
@@ -5148,14 +5176,23 @@ function selectSICardPlatform(name, p){
 }
 
 function _siPlatformTrainsHTML(name, trains){
-  const sorted=[...trains].sort((a,b)=>{
+  const pInfo=_siCardPlatform!==null?_getPlatformInfo(name,_siCardPlatform):null;
+  const hasData=pInfo!==null;
+  // Filter trains by platform grade when data is available
+  let filtered=[...trains];
+  if(_siCardPlatform!==null&&hasData&&pInfo.g.length>0){
+    filtered=filtered.filter(t=>_gradeMatchesPlatform(t.grade,pInfo.g));
+  }
+  const sorted=filtered.sort((a,b)=>{
     const sa=a.stops.find(x=>x.s===name), sb=b.stops.find(x=>x.s===name);
     return (toMin(sa?.dep||sa?.arr)||9999)-(toMin(sb?.dep||sb?.arr)||9999);
   });
+  const serviceLines=hasData&&pInfo.l.length>0?pInfo.l.slice(0,4).join(' / '):'';
   const nameEsc=name.replace(/\\/g,'\\\\').replace(/'/g,"\\'");
   return `
     <div style="font-size:12px;font-weight:700;color:var(--text2);margin-bottom:${_siCardPlatform?'4':'10'}px">🚆 ${_siCardPlatform?`${_siCardPlatform}번 홈 시간표`:'역 시간표'}</div>
-    ${_siCardPlatform?'<div style="font-size:10px;color:var(--text3);margin-bottom:8px">홈별 배정 데이터 없음 · 역 전체 운행 기준</div>':''}
+    ${_siCardPlatform&&!hasData?'<div style="font-size:10px;color:var(--text3);margin-bottom:8px">홈별 배정 데이터 없음 · 역 전체 운행 기준</div>':''}
+    ${serviceLines?`<div style="font-size:10px;color:var(--text3);margin-bottom:8px">노선: ${serviceLines}</div>`:''}
     ${sorted.length===0?'<div style="color:var(--text3);font-size:13px;text-align:center;padding:12px">운행 열차 없음</div>':''}
     ${sorted.slice(0,20).map(t=>{
       const s=t.stops.find(x=>x.s===name);
