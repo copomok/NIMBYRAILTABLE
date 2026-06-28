@@ -3218,7 +3218,7 @@ function openBookingPopup(trainNo, fromStn, toStn, depTime, arrTime, travelDate)
 
   const wrap=document.createElement('div');
   wrap.id='booking-popup-wrap';
-  wrap.style.cssText='position:fixed;inset:0;z-index:9400;display:flex;align-items:center;justify-content:center;pointer-events:auto';
+  wrap.style.cssText='position:fixed;top:0;right:0;bottom:0;left:0;z-index:9400;pointer-events:auto';
   const classOpts=classes.map(c=>{
     const fare=calcFare(t,fromStn,toStn,c);
     return `<button class="booking-seat-option" data-class="${c}" onclick="selectSeatClass(this,'${c}')">
@@ -3238,8 +3238,9 @@ function openBookingPopup(trainNo, fromStn, toStn, depTime, arrTime, travelDate)
   const maxDate=toLocalDateStr(maxD);
 
   wrap.innerHTML=`
-    <div style="position:fixed;inset:0;background:rgba(0,0,0,.6);backdrop-filter:blur(2px);z-index:0" onclick="closeBookingPopup()"></div>
-    <div class="alarm-popup booking-popup" style="position:relative;z-index:1;top:auto;left:auto;transform:none;max-height:90vh;overflow-y:auto">
+    <div style="position:absolute;top:0;right:0;bottom:0;left:0;background:rgba(0,0,0,.6)"></div>
+    <div style="position:absolute;top:0;right:0;bottom:0;left:0;display:flex;align-items:center;justify-content:center;padding:16px;box-sizing:border-box">
+    <div class="alarm-popup booking-popup" style="position:relative;top:auto;left:auto;transform:none;max-height:90vh;overflow-y:auto;width:100%">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:2px">
         <div class="alarm-popup-title" style="margin-bottom:0">🎫 ${t.grade} ${trainNo}</div>
         <div style="font-family:var(--mono);font-size:12px;color:var(--text2)" id="booking-clock"></div>
@@ -3266,11 +3267,13 @@ function openBookingPopup(trainNo, fromStn, toStn, depTime, arrTime, travelDate)
           <button class="booking-stepper-btn" onclick="changePassengerCount(1)">+</button>
         </div>
       </div>
-      <button class="btn btn-<button class="btn btn-primary booking-confirm-btn" id="booking-confirm-btn" style="opacity:.5"
+      <button class="btn btn-primary booking-confirm-btn" id="booking-confirm-btn" disabled
         onclick="doConfirmBooking()">좌석 등급을 선택하세요</button>
       <button class="alarm-popup-close" onclick="closeBookingPopup()">취소</button>
+    </div>
     </div>`;
   document.body.appendChild(wrap);
+  wrap.addEventListener('click', e=>{ if(e.target===wrap||e.target===wrap.firstElementChild) closeBookingPopup(); });
   (()=>{const cl=document.getElementById('booking-clock');if(!cl)return;
     const tick=()=>{const n=new Date();if(cl)cl.textContent=`${String(n.getHours()).padStart(2,'0')}:${String(n.getMinutes()).padStart(2,'0')}:${String(n.getSeconds()).padStart(2,'0')}`;};
     tick();const ti=setInterval(tick,1000);
