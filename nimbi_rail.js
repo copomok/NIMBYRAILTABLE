@@ -258,6 +258,9 @@ function switchTab(n){
     if(content) content.style.display='none';
     const countEl=document.getElementById('map-train-count');
     if(countEl) countEl.textContent='';
+    // 고정 오버레이 숨기기
+    const overlay=document.getElementById('map-track-overlay');
+    if(overlay) overlay.style.display='none';
   }
   if(n==='alarm') renderAlarms();
   if(n==='fav') renderFavs();
@@ -266,6 +269,7 @@ function switchTab(n){
   if(n==='notice') renderNotice();
   if(n==='ticket') renderTickets();
   if(n==='book') renderBookTab();
+  if(n==='delay'){const el=document.getElementById('result-delay');if(el)renderSIDelay(el);}
   
 }
 
@@ -335,9 +339,9 @@ function searchByTrain(){
   if(fb)fb.style.display='';
 }
 
-function getCurrentStatus(t){
+function getCurrentStatus(t, atMin){
   const now=new Date();
-  const nowMin=now.getHours()*60+now.getMinutes();
+  const nowMin = atMin !== undefined ? atMin : now.getHours()*60+now.getMinutes();
 
   // 시각 있는 역 전체 수집
   const all=[];
@@ -585,8 +589,9 @@ function renderDetail(t){
       </div>
     </div>
     <div id="tl-${t.no}">${_detailViewMode==='table'?renderTableView(t):rows}</div>
-    <div class="ticket-cta-wrap">
-      <button class="btn btn-primary ticket-cta-btn" onclick="openBookingPopup('${t.no}','${first?.s||''}','${last?.s||''}','${depT}','${arrT}')">🎫 승차권 예매 (전 구간)</button>
+    <div class="ticket-cta-wrap" style="display:flex;gap:8px;flex-wrap:wrap">
+      <button class="btn btn-primary ticket-cta-btn" style="flex:1" onclick="openBookingPopup('${t.no}','${first?.s||''}','${last?.s||''}','${depT}','${arrT}')">🎫 승차권 예매 (전 구간)</button>
+      <button class="btn ticket-cta-btn" style="flex:none;white-space:nowrap" onclick="openSeatWatchPopup('${t.no}','${first?.s||''}','${last?.s||''}')">🔔 여석 알림</button>
     </div>
   </div>`;
 }
@@ -1521,6 +1526,88 @@ setInterval(()=>{
 // 페이지 로드 시 즉시 1회 체크
 setTimeout(checkAlarms,1000);
 
+// ── 여석 알림 ──
+const SEAT_WATCH_KEY='nimbi_seat_watches';
+function loadSeatWatches(){try{return JSON.parse(localStorage.getItem(SEAT_WATCH_KEY))||[];}catch(e){return[];}}
+function saveSeatWatches(w){localStorage.setItem(SEAT_WATCH_KEY,JSON.stringify(w));}
+
+function openSeatWatchPopup(trainNo, fromStn, toStn){
+  const existing=loadSeatWatches().filter(w=>w.trainNo===trainNo&&w.active);
+  const existingLabel=existing.length?existing.map(w=>w.seatClassLabel).join(', '):'';
+  const wrap=document.createElement('div');
+  wrap.id='seat-watch-wrap';
+  wrap.innerHTML=`
+    <div class="alarm-popup-backdrop" onclick="closeSeatWatchPopup()"></div>
+    <div class="alarm-popup">
+      <div class="alarm-popup-title">🔔 여석 알림 설정</div>
+      <div class="alarm-popup-sub" style="margin-bottom:12px"><b>${trainNo}</b> · ${fromStn} → ${toStn}</div>
+      ${existingLabel?`<div style="font-size:12px;color:var(--accent);margin-bottom:10px">현재 설정: ${existingLabel}</div>`:''}
+      <div class="alarm-popup-sub" style="margin-bottom:8px">알림 받을 좌석 등급</div>
+      <div style="display:flex;flex-direction:column;gap:6px;margin-bottom:14px">
+        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:8px 10px;background:var(--bg3);border-radius:8px">
+          <input type="checkbox" id="sw-general" value="general"> <span>일반실</span>
+        </label>
+        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:8px 10px;background:var(--bg3);border-radius:8px">
+          <input type="checkbox" id="sw-special" value="special"> <span>특실</span>
+        </label>
+        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:8px 10px;background:var(--bg3);border-radius:8px">
+          <input type="checkbox" id="sw-standing" value="standing"> <span>입석/자유석</span>
+        </label>
+      </div>
+      <div style="font-size:11px;color:var(--text3);margin-bottom:12px">여석이 생기면 브라우저 알림으로 알려드립니다. (시뮬레이션 기준)</div>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-primary" style="flex:1" onclick="confirmSeatWatch('${trainNo}','${fromStn}','${toStn}')">알림 설정</button>
+        <button class="btn alarm-popup-close" onclick="closeSeatWatchPopup()">취소</button>
+      </div>
+    </div>`;
+  document.body.appendChild(wrap);
+}
+
+function closeSeatWatchPopup(){
+  document.getElementById('seat-watch-wrap')?.remove();
+}
+
+function confirmSeatWatch(trainNo, fromStn, toStn){
+  const classes=[
+    {id:'sw-general',key:'general',label:'일반실'},
+    {id:'sw-special',key:'special',label:'특실'},
+    {id:'sw-standing',key:'standing',label:'입석/자유석'}
+  ].filter(c=>document.getElementById(c.id)?.checked);
+  if(!classes.length){alert('알림 받을 좌석 등급을 1개 이상 선택해주세요.');return;}
+
+  requestNotifPermission(()=>{
+    const watches=loadSeatWatches().filter(w=>!(w.trainNo===trainNo));
+    classes.forEach(c=>{
+      watches.push({id:`sw_${trainNo}_${c.key}_${Date.now()}`,trainNo,fromStn,toStn,
+        seatClass:c.key,seatClassLabel:c.label,active:true,createdAt:Date.now()});
+    });
+    saveSeatWatches(watches);
+    closeSeatWatchPopup();
+    alert(`✅ ${trainNo}번 열차 ${classes.map(c=>c.label).join('/')} 여석 알림이 설정되었습니다.`);
+  });
+}
+
+function removeSeatWatch(id){
+  saveSeatWatches(loadSeatWatches().filter(w=>w.id!==id));
+}
+
+function checkSeatWatches(){
+  const watches=loadSeatWatches().filter(w=>w.active);
+  if(!watches.length)return;
+  if(Notification.permission!=='granted')return;
+  watches.forEach(w=>{
+    // 10% 확률로 여석 발생 시뮬레이션 (실제 API 없음)
+    if(Math.random()<0.1){
+      sendNotification('🔔 여석 알림', `${w.trainNo}번 열차 ${w.seatClassLabel}에 좌석이 생겼어요!`);
+      // 알림 발송 후 해제
+      const watches2=loadSeatWatches();
+      const idx=watches2.findIndex(x=>x.id===w.id);
+      if(idx>=0){watches2[idx].active=false;saveSeatWatches(watches2);}
+    }
+  });
+}
+// 5분마다 여석 체크
+setInterval(checkSeatWatches, 5*60*1000);
 
 // ── 즐겨찾기 ──
 const FAV_KEY='nimbi_favs';
@@ -2122,37 +2209,72 @@ function mapZoomReset(){ setMapZoom(1); }
 
 // ── 노선도에서 열차 위치 추적 ──
 function trackTrainOnMap(trainNo){
-  const t = ALL_TRAINS.find(t => t.no === trainNo);
+  const t = ALL_TRAINS.find(x => x.no === trainNo);
   if(!t) return;
 
-  // 경전선은 gyeongjeon, 경부선은 gyeongbu 등 노선 매핑
   const lineMap = {
     '경부선':'gyeongbu','경부고속선':'gyeongbuhs','호남선':'honam',
     '중앙선':'jungang','동해선':'donghae','강릉선':'gangreung',
     '중부내륙선':'jungnaelyuk','경전선':'gyeongjeon'
   };
-  const lines = t.line.split('·').map(l=>l.trim());
-  const lineKey = lineMap[lines[0]];
+
+  // 현재 위치 기준으로 실제 운행 중인 노선 판단
+  const status = getCurrentStatus(t);
+  let lineKey = null;
+
+  if(status && status.status === 'running'){
+    const curStn = status.atStn || status.prevStn || status.nextStn;
+    if(curStn){
+      for(const [key, mapLine] of Object.entries(MAP_LINES)){
+        if(mapLine.routes.some(r => r.stations.some(s => s.n === curStn))){
+          lineKey = key; break;
+        }
+      }
+    }
+  }
+
+  // fallback: 열차 노선 속성 첫 번째 항목
+  if(!lineKey){
+    for(const l of t.line.split('·').map(l=>l.trim())){
+      if(lineMap[l]){ lineKey = lineMap[l]; break; }
+    }
+  }
+
   if(!lineKey){ alert('해당 노선의 노선도가 없습니다'); return; }
 
-  // 노선도 탭으로 이동 후 해당 노선 표시
+  _mapTrackedTrain = trainNo;
   switchTab('map');
+
+  // 해당 노선 탭이 이미 활성이면 그냥 재렌더, 아니면 클릭
   const btn = document.querySelector(`.map-line-tab[onclick*="${lineKey}"]`);
-  if(btn){ btn.click(); }
+  if(btn && !btn.classList.contains('active')){
+    btn.click(); // showMapLine + updateMapTrains 호출됨
+  } else {
+    showMapLine(lineKey, btn || document.querySelector('.map-line-tab.active'));
+  }
+
   setTimeout(()=>{
-    const status = getCurrentStatus(t);
-    if(!status || status.status !== 'running') return;
-    const stn = status.atStn || status.nextStn || status.prevStn;
-    if(!stn || !_mapStnPos[stn]) return;
-    // 해당 역으로 스크롤
-    const wrap = document.getElementById('map-svg-wrap');
-    const pos = _mapStnPos[stn];
-    if(wrap && pos){
-      const {ox, oy} = _mapSvgSize;
-      wrap.scrollLeft = pos.x - ox - wrap.clientWidth/2;
-      wrap.scrollTop = pos.y - oy - wrap.clientHeight/2;
-    }
-  }, 400);
+    updateMapTrains();
+    _scrollToTrackedTrain();
+    _updateMapOverlay();
+  }, 420);
+}
+
+function _scrollToTrackedTrain(){
+  if(!_mapTrackedTrain) return;
+  const t = ALL_TRAINS.find(x => x.no === _mapTrackedTrain);
+  if(!t) return;
+  const status = getCurrentStatus(t);
+  if(!status) return;
+  const stn = status.atStn || status.prevStn || status.nextStn;
+  if(!stn || !_mapStnPos[stn]) return;
+  const wrap = document.getElementById('map-svg-wrap');
+  const pos = _mapStnPos[stn];
+  if(wrap && pos){
+    const {ox, oy} = _mapSvgSize;
+    wrap.scrollLeft = pos.x - ox - wrap.clientWidth/2;
+    wrap.scrollTop = pos.y - oy - wrap.clientHeight/2;
+  }
 }
 
 // ── 최근 검색 드롭다운 ──
@@ -2210,6 +2332,12 @@ let _mapSvgSize = {w:0,h:0,ox:0,oy:0};
 let _mapTrainInterval = null;
 let _mapLayerMode = 'station'; // 'station': 역 우선, 'train': 열차 우선
 let _mapDirFilter = 'both'; // 'both': 전체, 'down': 하행만, 'up': 상행만
+let _mapGradeFilter = null; // null=전체, 'KTX', 'SRT', 'ITX', '무궁화'
+let _mapTrackedTrain = null; // 현재 추적 중인 열차 번호
+let _mapTimelineMin = null; // null=실시간, 0~1439=재생 시각(분)
+let _mapTimelinePlaying = false;
+let _mapTimelinePlayInterval = null;
+let _mapTimelineSpeed = 30; // 분/초
 
 function toggleMapFilterPanel(){
   const panel=document.getElementById('map-filter-panel');
@@ -2285,10 +2413,102 @@ function setMapDir(dir){
   if(_mapCurrentLine) updateMapTrains();
 }
 
-// 등급별 색상
+function setMapGrade(grade){
+  _mapGradeFilter = grade==='all' ? null : grade;
+  const MAP_GRADE={all:null,ktx:'KTX',srt:'SRT',itx:'ITX',mgg:'무궁화'};
+  Object.entries(MAP_GRADE).forEach(([k,v])=>{
+    const b=document.getElementById('map-grade-'+k);
+    if(!b)return;
+    b.classList.toggle('active',_mapGradeFilter===v);
+  });
+  if(_mapCurrentLine) updateMapTrains();
+}
+
+// ── 타임라인 재생 ──
+function toggleMapTimeline(){
+  const bar=document.getElementById('map-timeline-bar');
+  const btn=document.getElementById('map-timeline-toggle');
+  if(!bar)return;
+  const showing=bar.style.display!=='none';
+  if(showing){
+    pauseMapTimeline();
+    _mapTimelineMin=null;
+    bar.style.display='none';
+    if(btn)btn.classList.remove('active');
+    if(_mapCurrentLine) updateMapTrains();
+  } else {
+    const now=new Date();
+    _mapTimelineMin=now.getHours()*60+now.getMinutes();
+    bar.style.display='';
+    if(btn)btn.classList.add('active');
+    _syncTimelineUI();
+    if(_mapCurrentLine) updateMapTrains();
+  }
+}
+
+function _syncTimelineUI(){
+  if(_mapTimelineMin===null)return;
+  const slider=document.getElementById('map-timeline-slider');
+  if(slider) slider.value=_mapTimelineMin;
+  const timeEl=document.getElementById('map-timeline-time');
+  if(timeEl){
+    const h=Math.floor(_mapTimelineMin/60), m=_mapTimelineMin%60;
+    timeEl.textContent=`${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`;
+  }
+}
+
+function seekMapTimeline(min){
+  _mapTimelineMin=Math.max(0,Math.min(1439,min));
+  _syncTimelineUI();
+  if(_mapCurrentLine) updateMapTrains();
+}
+
+function toggleMapTimelinePlay(){
+  if(_mapTimelinePlaying) pauseMapTimeline();
+  else playMapTimeline();
+}
+
+function playMapTimeline(){
+  _mapTimelinePlaying=true;
+  const btn=document.getElementById('map-timeline-play-btn');
+  if(btn) btn.textContent='⏸ 일시정지';
+  if(_mapTimelinePlayInterval) clearInterval(_mapTimelinePlayInterval);
+  _mapTimelinePlayInterval=setInterval(()=>{
+    if(_mapTimelineMin===null) _mapTimelineMin=0;
+    _mapTimelineMin+=_mapTimelineSpeed;
+    if(_mapTimelineMin>=1440){
+      _mapTimelineMin=1439;
+      pauseMapTimeline();
+    }
+    _syncTimelineUI();
+    if(_mapCurrentLine) updateMapTrains();
+  },1000);
+}
+
+function pauseMapTimeline(){
+  _mapTimelinePlaying=false;
+  const btn=document.getElementById('map-timeline-play-btn');
+  if(btn) btn.textContent='▶ 재생';
+  if(_mapTimelinePlayInterval){clearInterval(_mapTimelinePlayInterval);_mapTimelinePlayInterval=null;}
+}
+
+function setTimelineSpeed(speed){
+  _mapTimelineSpeed=speed;
+}
+
+function resetMapTimeline(){
+  pauseMapTimeline();
+  const now=new Date();
+  seekMapTimeline(now.getHours()*60+now.getMinutes());
+}
+
+// 등급별 색상 (KTX-산천/이음은 KTX와 동일, ITX-마음은 ITX-새마을과 동일)
 const GRADE_COLORS = {
-  'KTX':'#3b82f6','SRT':'#a855f7',
-  'ITX-새마을':'#ef4444','ITX-청춘':'#22c55e','무궁화호':'#f97316'
+  'KTX':'#3b82f6','KTX-산천':'#3b82f6','KTX-이음':'#3b82f6',
+  'SRT':'#a855f7',
+  'ITX-새마을':'#ef4444','ITX-마음':'#ef4444',
+  'ITX-청춘':'#22c55e',
+  '무궁화호':'#f97316'
 };
 
 function updateMapTrains(){
@@ -2301,7 +2521,7 @@ function updateMapTrains(){
   if(old)old.remove();
 
   const now=new Date();
-  const nowMin=now.getHours()*60+now.getMinutes();
+  const nowMin = _mapTimelineMin !== null ? _mapTimelineMin : now.getHours()*60+now.getMinutes();
   const line=MAP_LINES[_mapCurrentLine];
   if(!line)return;
 
@@ -2309,11 +2529,21 @@ function updateMapTrains(){
   const running=[];
   ALL_TRAINS.forEach(t=>{
     if(!t.line.includes(line.name))return;
-    const status=getCurrentStatus(t);
+    const status=getCurrentStatus(t, nowMin);
     if(!status||status.status!=='running')return;
     // 방향 필터
     if(_mapDirFilter==='down'&&t.dir!=='down')return;
     if(_mapDirFilter==='up'&&t.dir!=='up')return;
+    // 등급 필터
+    if(_mapGradeFilter){
+      const gradeMatch={
+        'KTX':['KTX','KTX-산천','KTX-이음'],
+        'SRT':['SRT'],
+        'ITX':['ITX-새마을','ITX-마음','ITX-청춘'],
+        '무궁화':['무궁화호']
+      };
+      if(!gradeMatch[_mapGradeFilter]?.includes(t.grade))return;
+    }
     // prevStn 또는 nextStn 또는 atStn의 좌표 구하기
     const stnA=status.atStn||status.prevStn;
     const stnB=status.atStn?null:status.nextStn;
@@ -2342,22 +2572,52 @@ function updateMapTrains(){
     } else {
       px=posA.x; py=posA.y;
     }
-    running.push({t,px,py,status});
+    running.push({t,px,py,status,stnA,stnB,posA,posB});
   });
+
+  // 추적 모드: 추적 열차만 표시 / 일반 모드: 전체 표시
+  const displayTrains = _mapTrackedTrain
+    ? running.filter(x => x.t.no === _mapTrackedTrain)
+    : running;
 
   // 열차 레이어를 SVG 문자열로 생성
   const r=Math.max(6, _mapSvgSize.w*0.018);
   const fs=Math.max(9, _mapSvgSize.w*0.016);
   let layerHtml='<g id="train-layer">';
-  running.forEach(({t,px,py,status})=>{
+  displayTrains.forEach(({t,px,py,status,stnA,stnB,posA,posB})=>{
     const color=GRADE_COLORS[t.grade]||'#888';
-    layerHtml+=`<circle cx="${px.toFixed(1)}" cy="${py.toFixed(1)}" r="${r}"
-      fill="${color}" stroke="#0d1117" stroke-width="2"
-      style="cursor:pointer" class="train-dot" data-no="${t.no}"/>`;
-    layerHtml+=`<text x="${px.toFixed(1)}" y="${(py-r-3).toFixed(1)}"
-      text-anchor="middle" font-size="${fs}" fill="${color}"
-      font-family="Noto Sans KR,sans-serif" font-weight="600"
-      pointer-events="none">${t.no}</text>`;
+    const isTracked=!!(_mapTrackedTrain&&t.no===_mapTrackedTrain);
+    const cr=isTracked?r*1.7:r;
+
+    if(isTracked){
+      // 외부 pulse 링
+      layerHtml+=`<circle cx="${px.toFixed(1)}" cy="${py.toFixed(1)}" r="${(cr+6).toFixed(1)}"
+        fill="none" stroke="${color}" stroke-width="2.5" opacity="0.45" pointer-events="none"/>`;
+      // 진행 방향 화살표 (이동 중인 경우)
+      if(posA&&posB){
+        const dx=posB.x-posA.x, dy=posB.y-posA.y;
+        const ang=Math.atan2(dy,dx)*180/Math.PI;
+        layerHtml+=`<text x="${px.toFixed(1)}" y="${py.toFixed(1)}"
+          text-anchor="middle" dominant-baseline="central"
+          font-size="${(cr*0.9).toFixed(1)}" fill="#fff" pointer-events="none"
+          transform="rotate(${ang.toFixed(0)},${px.toFixed(1)},${py.toFixed(1)})">▶</text>`;
+      }
+      // 현재 위치 텍스트 (가장 위)
+      const posLabel=status.atStn?`📍 ${status.atStn} 정차`
+        :(status.prevStn&&status.nextStn?`📍 ${status.prevStn}→${status.nextStn}`:'📍 운행 중');
+      layerHtml+=`<text x="${px.toFixed(1)}" y="${(py-cr-fs*1.5-4).toFixed(1)}"
+        text-anchor="middle" font-size="${(fs*0.95).toFixed(1)}" fill="#fff"
+        font-family="Noto Sans KR,sans-serif" font-weight="500"
+        pointer-events="none" paint-order="stroke" stroke="#0d1117" stroke-width="3">${posLabel}</text>`;
+    }
+
+    layerHtml+=`<circle cx="${px.toFixed(1)}" cy="${py.toFixed(1)}" r="${cr.toFixed(1)}"
+      fill="${color}" stroke="${isTracked?'#fff':'#0d1117'}" stroke-width="${isTracked?3:2}"
+      style="cursor:pointer" class="train-dot${isTracked?' tracked-train':''}" data-no="${t.no}"/>`;
+    layerHtml+=`<text x="${px.toFixed(1)}" y="${(py-cr-3).toFixed(1)}"
+      text-anchor="middle" font-size="${isTracked?(fs*1.15).toFixed(1):fs}" fill="${color}"
+      font-family="Noto Sans KR,sans-serif" font-weight="${isTracked?'800':'600'}"
+      pointer-events="none" paint-order="stroke" stroke="${isTracked?'#0d1117':'none'}" stroke-width="2">${t.no}</text>`;
   });
   layerHtml+='</g>';
 
@@ -2376,7 +2636,7 @@ function updateMapTrains(){
   // 클릭 이벤트 등록
   svgEl.querySelectorAll('.train-dot').forEach(dot=>{
     const no=dot.getAttribute('data-no');
-    const entry=running.find(r=>r.t.no===no);
+    const entry=displayTrains.find(r=>r.t.no===no);
     if(entry) dot.addEventListener('click',()=>openMapTrainPopup(entry.t, entry.status));
   });
   // 레이어 모드에 따라 역/열차 우선순위 결정
@@ -2390,9 +2650,13 @@ function updateMapTrains(){
     if(trainLayer) svgEl.appendChild(trainLayer);
   }
 
-  // 운행 열차 수 업데이트
+  // 운행 열차 수 / 추적 상태 업데이트
   const countEl=document.getElementById('map-train-count');
-  if(countEl)countEl.textContent=`운행 중 ${running.length}편`;
+  if(countEl){
+    countEl.textContent = _mapTrackedTrain
+      ? `📍 ${_mapTrackedTrain} 추적 중`
+      : `운행 중 ${running.length}편`;
+  }
 }
 
 function openMapTrainPopup(t, status){
@@ -2833,6 +3097,8 @@ function showMapLine(lineKey, btn){
   if(wrap) wrap.onscroll=updateMinimap;
   // 확대/축소 초기화
   initMapZoom();
+  // 고정 오버레이 버튼 업데이트
+  _updateMapOverlay();
 }
 
 
@@ -2863,6 +3129,64 @@ function showHistory(inputId,listId,type){
 
 
 
+
+// ── 노선도 고정 오버레이 (추적 열차 버튼) ──
+function _updateMapOverlay(){
+  // 추적 중이 아니면 오버레이 자체를 제거
+  if(!_mapTrackedTrain){
+    const old=document.getElementById('map-track-overlay');
+    if(old) old.remove();
+    return;
+  }
+
+  let overlay=document.getElementById('map-track-overlay');
+  if(!overlay){
+    overlay=document.createElement('div');
+    overlay.id='map-track-overlay';
+    // 헤더(56px) 바로 아래, 우측 상단 고정
+    overlay.style.cssText='position:fixed;z-index:200;top:64px;right:10px;display:flex;flex-direction:column;gap:6px;pointer-events:all';
+    document.body.appendChild(overlay);
+  }
+  overlay.style.display='flex';
+
+  const t=ALL_TRAINS.find(x=>x.no===_mapTrackedTrain);
+  const status=t?getCurrentStatus(t):null;
+  let posLabel='—';
+  if(status){
+    if(status.status==='running'){
+      posLabel=status.atStn?`${status.atStn} 정차`
+        :(status.nextStn?`→ ${status.nextStn}`:'운행 중');
+    } else if(status.status==='done') posLabel='운행 종료';
+    else posLabel='운행 전';
+  }
+  const color=t?GRADE_COLORS[t.grade]||'#888':'#888';
+  overlay.innerHTML=`
+    <div style="background:var(--bg2);border:1px solid ${color};border-radius:10px;padding:7px 10px;font-size:11px;line-height:1.4;max-width:130px;box-shadow:0 3px 12px rgba(0,0,0,.5)">
+      <div style="font-weight:700;color:${color};margin-bottom:2px">${t?t.grade+' ':''}<span style="font-size:13px">${_mapTrackedTrain}</span></div>
+      <div style="color:var(--text2)">${posLabel}</div>
+    </div>
+    <button onclick="_scrollToTrackedTrain();_updateMapOverlay()"
+      style="padding:7px 11px;border-radius:8px;border:none;background:var(--accent);color:#fff;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;box-shadow:0 2px 8px rgba(0,0,0,.5);text-align:left">
+      📍 위치 보기
+    </button>
+    <button onclick="shareTrainLink('${_mapTrackedTrain}')"
+      style="padding:7px 11px;border-radius:8px;border:none;background:var(--bg3);color:var(--text1);font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;box-shadow:0 2px 8px rgba(0,0,0,.4);text-align:left">
+      🔗 링크 복사
+    </button>
+    <button onclick="_clearTrainTracking()"
+      style="padding:5px 11px;border-radius:8px;border:1px solid var(--border);background:transparent;color:var(--text3);font-size:11px;cursor:pointer;font-family:inherit">
+      ✕ 추적 해제
+    </button>`;
+}
+
+function _clearTrainTracking(){
+  _mapTrackedTrain=null;
+  // 오버레이 완전 제거
+  const overlay=document.getElementById('map-track-overlay');
+  if(overlay) overlay.remove();
+  // 전체 열차 다시 표시
+  updateMapTrains();
+}
 
 // ── 열차 공유 ──
 function shareTrainLink(no){
@@ -3346,6 +3670,8 @@ function genTicketId(){
 function openBookingPopup(trainNo, fromStn, toStn, depTime, arrTime, travelDate){
   const t=ALL_TRAINS.find(x=>x.no===trainNo);
   if(!t){alert('열차 정보를 찾을 수 없습니다.');return;}
+  // book-detail-backdrop(z-index:9900)이 booking popup(z-index:9400)을 가리는 것 방지
+  document.getElementById('book-detail-wrap')?.remove();
   const classes=availableSeatClasses(t.grade);
   const old=document.getElementById('booking-popup-wrap');
   if(old)old.remove();
@@ -4411,9 +4737,54 @@ function renderTickets(){
 
   el.innerHTML=`
     ${tripWidget}
-    <div class="result-header"><div class="result-title">🎫 내 승차권</div><span class="badge blue">${tickets.filter(t=>t.status==='active').length}건</span></div>
+    <div class="result-header">
+      <div class="result-title">🎫 내 승차권</div>
+      <div style="display:flex;align-items:center;gap:6px">
+        <span class="badge blue">${tickets.filter(t=>t.status==='active').length}건</span>
+        <div style="position:relative">
+          <button class="map-layer-btn" onclick="toggleTicketExportMenu()">내보내기 ▾</button>
+          <div id="ticket-export-menu" style="display:none;position:absolute;right:0;top:calc(100% + 4px);background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:4px;z-index:50;min-width:140px;box-shadow:0 4px 12px rgba(0,0,0,.3)">
+            <button class="btn" style="width:100%;text-align:left;padding:8px 12px;font-size:13px;border-radius:6px" onclick="exportTicketsCSV()">📄 CSV 다운로드</button>
+            <button class="btn" style="width:100%;text-align:left;padding:8px 12px;font-size:13px;border-radius:6px" onclick="exportTicketsPDF()">🖨️ PDF 인쇄</button>
+          </div>
+        </div>
+      </div>
+    </div>
     ${tabs}
     <div class="ticket-list">${cards}</div>`;
+}
+
+function toggleTicketExportMenu(){
+  const menu=document.getElementById('ticket-export-menu');
+  if(!menu)return;
+  menu.style.display=menu.style.display==='none'?'block':'none';
+}
+
+function exportTicketsCSV(){
+  const tickets=loadTickets();
+  if(!tickets.length){alert('내보낼 예매 내역이 없습니다.');return;}
+  const BOM='﻿';
+  const header=['예매번호','열차등급','열차번호','출발역','도착역','출발시각','도착시각','이용일','좌석등급','좌석','인원','운임(원)','상태','예매일시'];
+  const rows=tickets.map(tk=>[
+    tk.id, tk.grade, tk.trainNo, tk.fromStn, tk.toStn,
+    tk.depTime, tk.arrTime, tk.travelDate, tk.seatClassLabel,
+    tk.seats.join('/'), tk.passengerCount, tk.totalFare,
+    tk.status==='active'?'유효':tk.status==='cancelled'?'취소':'완료',
+    new Date(tk.bookedAt).toLocaleString('ko-KR')
+  ].map(v=>`"${String(v??'').replace(/"/g,'""')}"`).join(','));
+  const blob=new Blob([BOM+header.join(',')+'\n'+rows.join('\n')],{type:'text/csv;charset=utf-8'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url; a.download=`nimbyrailtable_예매내역_${new Date().toISOString().slice(0,10).replace(/-/g,'')}.csv`;
+  a.click(); URL.revokeObjectURL(url);
+  const menu=document.getElementById('ticket-export-menu');
+  if(menu)menu.style.display='none';
+}
+
+function exportTicketsPDF(){
+  const menu=document.getElementById('ticket-export-menu');
+  if(menu)menu.style.display='none';
+  window.print();
 }
 
 // ══════════════════════════════════════════
@@ -5101,9 +5472,9 @@ function openBookingWithDate(trainNo, from, to, depT, arrT, travelDate, isRound,
     }, 300);
   } : null;
 
-  // book-detail-panel 애니메이션 완료 후 예매창 열기 (겹침 방지)
-  setTimeout(()=>openBookingPopup(trainNo, from, to, depT, arrT, travelDate), 320);
+  // book-detail-panel 슬라이드 닫힘 후 예매창 열기
   setTimeout(()=>{
+    openBookingPopup(trainNo, from, to, depT, arrT, travelDate);
     const dateInp = document.getElementById('booking-date');
     if(dateInp && travelDate) dateInp.value = travelDate;
     if(window._bookPassengerCount>1){
@@ -5119,7 +5490,7 @@ function openBookingWithDate(trainNo, from, to, depT, arrT, travelDate, isRound,
 // ══════════════════════════════════════════
 // 🚉 역 정보 탭
 // ══════════════════════════════════════════
-let _siSubTab='near', _siCurrent=null;
+let _siSubTab='near', _siCurrent=null, _siCardPlatform=null, _siNearAll=[], _siNearShowClosed=false, _siNearLat=null, _siNearLon=null;
 
 function renderStationInfo(){
   const el=document.getElementById('result-stationinfo');
@@ -5129,7 +5500,6 @@ function renderStationInfo(){
       <div style="display:flex;gap:4px;background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:4px">
         <button class="si-tab${_siSubTab==='near'?' active':''}" onclick="setSITab('near')">📍 가까운 역</button>
         <button class="si-tab${_siSubTab==='detail'?' active':''}" onclick="setSITab('detail')">🏢 역 상세</button>
-        <button class="si-tab${_siSubTab==='delay'?' active':''}" onclick="setSITab('delay')">⏱️ 지연 예측</button>
       </div>
     </div>
     <div id="si-content" style="padding:0 16px 24px"></div>`;
@@ -5138,7 +5508,7 @@ function renderStationInfo(){
 
 function setSITab(t){
   _siSubTab=t;
-  document.querySelectorAll('.si-tab').forEach((b,i)=>b.classList.toggle('active',['near','detail','delay'][i]===t));
+  document.querySelectorAll('.si-tab').forEach((b,i)=>b.classList.toggle('active',['near','detail'][i]===t));
   renderSIContent();
 }
 
@@ -5146,8 +5516,7 @@ function renderSIContent(){
   const el=document.getElementById('si-content');
   if(!el)return;
   if(_siSubTab==='near') renderSINear(el);
-  else if(_siSubTab==='detail') renderSIDetail(el);
-  else renderSIDelay(el);
+  else renderSIDetail(el);
 }
 
 function siNearSearch(q){
@@ -5164,122 +5533,258 @@ function siNearSearch(q){
 
 function renderSINear(el){
   el.innerHTML=`<div style="margin-top:12px">
-    <div style="background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:12px 14px;margin-bottom:12px">
-      <div style="font-size:12px;color:var(--accent2);font-weight:600;margin-bottom:8px">📍 현재 위치 기반 가까운 역</div>
-      <div id="si-near-list"><div style="color:var(--text3);font-size:13px;text-align:center;padding:8px">위치 정보 가져오는 중...</div></div>
-    </div></div>`;
-  if(!navigator.geolocation){document.getElementById('si-near-list').innerHTML='<div style="color:var(--text3);font-size:12px">위치 서비스 미지원</div>';return;}
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+      <div style="font-size:13px;font-weight:700;color:var(--text1)">가까운 역 TOP 5</div>
+      <label style="display:flex;align-items:center;gap:4px;font-size:11px;color:var(--text3);cursor:pointer">
+        <input type="checkbox" id="si-near-closed" onchange="_siNearShowClosed=this.checked;renderSINearList()" ${_siNearShowClosed?'checked':''}>
+        폐역 포함
+      </label>
+    </div>
+    <div id="si-near-list"><div style="background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:20px;color:var(--text3);font-size:13px;text-align:center">위치 정보 가져오는 중...</div></div>
+  </div>`;
+  if(!navigator.geolocation){document.getElementById('si-near-list').innerHTML='<div style="color:var(--text3);font-size:12px;padding:12px;text-align:center">위치 서비스 미지원</div>';return;}
+  if(_siNearAll.length>0){renderSINearList();return;}
   navigator.geolocation.getCurrentPosition(pos=>{
     const {latitude:lat,longitude:lon}=pos.coords;
-    if(typeof getNearestStations==='undefined'){document.getElementById('si-near-list').innerHTML='<div style="color:var(--red);font-size:12px">역 데이터 로드 안됨 (nimbi_station_data.js 필요)</div>';return;}
-    const list=document.getElementById('si-near-list');
-    if(!list)return;
-    list.innerHTML=getNearestStations(lat,lon,8).map(s=>`
-      <div style="display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--bg2);border:1px solid var(--border);border-radius:10px;margin-bottom:6px;cursor:pointer"
-        onclick="openStationDetail('${s.name}')">
-        <div style="font-size:12px;font-weight:700;color:var(--accent2);font-family:var(--mono);min-width:44px">${s.dist<1?(s.dist*1000).toFixed(0)+'m':s.dist.toFixed(1)+'km'}</div>
-        <div style="flex:1">
-          <div style="font-size:14px;font-weight:700">${s.name}</div>
-          <div style="font-size:11px;color:var(--text3)">${s.platforms.length>0?s.platforms.length+'개 홈 · ':''} ${s.lines.length}개 노선</div>
-        </div>
-        <div style="font-size:18px;color:var(--text3)">›</div>
-      </div>`).join('');
+    _siNearLat=lat; _siNearLon=lon;
+    if(typeof getNearestStations==='undefined'){document.getElementById('si-near-list').innerHTML='<div style="color:var(--red);font-size:12px;padding:12px">역 데이터 로드 안됨</div>';return;}
+    _siNearAll=getNearestStations(lat,lon,50);
+    renderSINearList();
   },err=>{
     const l=document.getElementById('si-near-list');
-    if(l)l.innerHTML=`<div style="color:var(--text3);font-size:12px;text-align:center">위치 권한 필요<br><small>${err.message}</small></div>`;
+    if(l)l.innerHTML=`<div style="color:var(--text3);font-size:12px;text-align:center;padding:16px">위치 권한 필요<br><small>${err.message}</small></div>`;
   },{timeout:8000,maximumAge:60000});
 }
 
+function renderSINearList(){
+  const list=document.getElementById('si-near-list');
+  if(!list)return;
+  const filtered=_siNearShowClosed?_siNearAll:_siNearAll.filter(s=>s.lines&&s.lines.length>0);
+  if(!filtered.length){list.innerHTML='<div style="color:var(--text3);font-size:13px;text-align:center;padding:8px">주변에 운영 중인 역 없음</div>';return;}
+  const dotColors=['#3b82f6','#f97316','#a855f7','#22c55e','#ef4444'];
+  const top5=filtered.slice(0,5);
+
+  // ── Coordinate-based mini map ──
+  let mapSVG='';
+  if(_siNearLat!==null){
+    const W=320,H=200;
+    const allLats=[_siNearLat,...top5.map(s=>s.lat)];
+    const allLons=[_siNearLon,...top5.map(s=>s.lon)];
+    let minLat=Math.min(...allLats),maxLat=Math.max(...allLats);
+    let minLon=Math.min(...allLons),maxLon=Math.max(...allLons);
+    const rLat=maxLat-minLat||0.005,rLon=maxLon-minLon||0.005;
+    const pad=0.28;
+    minLat-=rLat*pad; maxLat+=rLat*pad;
+    minLon-=rLon*pad; maxLon+=rLon*pad;
+    const toX=lon=>((lon-minLon)/(maxLon-minLon))*W;
+    const toY=lat=>((maxLat-lat)/(maxLat-minLat))*H;
+    const myX=toX(_siNearLon),myY=toY(_siNearLat);
+    const dots=top5.map((s,i)=>({x:toX(s.lon),y:toY(s.lat),c:dotColors[i],name:s.name,dist:s.dist}));
+    const label=(d,ix)=>{
+      // Avoid right-edge overflow and overlap with "나" label
+      const lx=d.x>W*0.65?d.x-7:d.x+7;
+      const anchor=d.x>W*0.65?'end':'start';
+      const ly=d.y<18?d.y+16:d.y-7;
+      const distStr=d.dist<1?(d.dist*1000).toFixed(0)+'m':d.dist.toFixed(1)+'km';
+      return `<circle cx="${d.x.toFixed(1)}" cy="${d.y.toFixed(1)}" r="5" fill="${d.c}"/>
+        <text x="${lx.toFixed(1)}" y="${ly.toFixed(1)}" font-size="9" fill="${d.c}" font-family="sans-serif" text-anchor="${anchor}">${d.name} (${distStr})</text>`;
+    };
+    const myLy=myY<22?myY+18:myY-10;
+    mapSVG=`<div style="background:var(--bg2);border:1px solid var(--border);border-radius:10px;overflow:hidden;margin-bottom:10px">
+      <svg width="100%" viewBox="0 0 ${W} ${H}" style="display:block">
+        ${dots.map((d,i)=>label(d,i)).join('')}
+        <circle cx="${myX.toFixed(1)}" cy="${myY.toFixed(1)}" r="12" fill="#22c55e" opacity="0.18"/>
+        <circle cx="${myX.toFixed(1)}" cy="${myY.toFixed(1)}" r="5" fill="#22c55e"/>
+        <text x="${myX.toFixed(1)}" y="${myLy.toFixed(1)}" font-size="9" fill="#22c55e" font-family="sans-serif" text-anchor="middle" font-weight="bold">나</text>
+        <text x="${(W-6).toFixed(0)}" y="${(H-6).toFixed(0)}" font-size="8" fill="rgba(180,180,180,0.4)" text-anchor="end" font-family="sans-serif">실제 좌표 기반</text>
+      </svg>
+    </div>`;
+  }
+
+  // ── Station list ──
+  const stationList=filtered.slice(0,10).map((s,i)=>{
+    const color=i<5?dotColors[i]:'var(--text2)';
+    const distStr=s.dist<1?(s.dist*1000).toFixed(0)+'m':s.dist.toFixed(1)+'km';
+    const mainLines=s.lines.slice(0,3).join('·');
+    const extraLines=s.lines.length>3?` 외 ${s.lines.length-3}개 노선`:'';
+    const pArr=s.platforms||[];
+    const platStr=pArr.length>0?` · 홈 1~${Math.max(...pArr)}번`:'';
+    const nameEsc=s.name.replace(/'/g,"\\'");
+    return `<div style="display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--bg2);border:1px solid var(--border);border-radius:10px;margin-bottom:6px;cursor:pointer"
+      onclick="openStationDetail('${nameEsc}')">
+      <div style="min-width:48px;font-size:14px;font-weight:700;color:${color};font-family:var(--mono)">${distStr}</div>
+      <div style="flex:1">
+        <div style="font-size:15px;font-weight:700">${s.name}${s.lines.length===0?' <span style="font-size:10px;color:var(--text3)">(폐역)</span>':''}</div>
+        <div style="font-size:11px;color:var(--text3);margin-top:2px">${mainLines}${extraLines}${platStr}</div>
+      </div>
+      <div style="font-size:18px;color:var(--text3)">›</div>
+    </div>`;
+  }).join('');
+
+  list.innerHTML=mapSVG+stationList;
+}
+
 function openStationDetail(name){
-  _siCurrent=name; _siSubTab='detail';
+  _siCurrent=name; _siSubTab='detail'; _siCardPlatform=null;
   switchTab('stationinfo');
   setTimeout(()=>renderStationInfo(),50);
 }
 
 function renderSIDetail(el){
+  const curVal=(_siCurrent||'').replace(/"/g,'&quot;');
   el.innerHTML=`<div style="margin-top:12px">
-    <div style="display:flex;gap:8px;margin-bottom:12px">
-      <input id="si-inp" type="text" placeholder="역 이름 검색..." value="${_siCurrent||''}"
-        style="flex:1;background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:10px 14px;color:var(--text1);font-size:14px;font-family:var(--sans)"
-        oninput="siSearch(this.value)">
+    <div class="autocomplete-wrap" style="margin-bottom:12px">
+      <input id="si-inp" type="text" placeholder="역 이름 검색 (초성 가능, 예: ㄷㄷㄱ)" value="${curVal}"
+        style="width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:10px 14px;color:var(--text1);font-size:14px;font-family:var(--sans);box-sizing:border-box"
+        autocomplete="off"
+        oninput="siSearch(this.value)"
+        onblur="setTimeout(()=>{const r=document.getElementById('si-results');if(r){r.style.display='none';}},160)"
+        onkeydown="siSearchKey(event)">
+      <div id="si-results" class="ac-dropdown" style="display:none"></div>
     </div>
-    <div id="si-results"></div>
     <div id="si-card"></div></div>`;
   if(_siCurrent) renderSICard(_siCurrent);
 }
 
 function siSearch(q){
-  if(!q||typeof STATION_DB==='undefined')return;
-  const res=Object.keys(STATION_DB).filter(n=>n.includes(q)).slice(0,6);
   const el=document.getElementById('si-results');
   if(!el)return;
-  el.innerHTML=res.length?`<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px">${
-    res.map(n=>`<button onclick="siSelect('${n}')" style="padding:5px 12px;border-radius:20px;border:1px solid var(--border);background:var(--bg3);color:var(--text1);font-size:12px;cursor:pointer;font-family:var(--sans)">${n}</button>`).join('')
-  }</div>`:'';
+  q=(q||'').trim();
+  if(!q||typeof STATION_DB==='undefined'){el.style.display='none';el.innerHTML='';return;}
+  const qBase=q.endsWith('역')?q.slice(0,-1):q;
+  const all=Object.keys(STATION_DB).filter(n=>{
+    const ns=n.endsWith('역')?n.slice(0,-1):n;
+    return matchesQuery(n,q)||matchesQuery(ns,q)||matchesQuery(ns,qBase);
+  });
+  all.sort((a,b)=>{
+    const aS=a.endsWith('역')?a.slice(0,-1):a;
+    const bS=b.endsWith('역')?b.slice(0,-1):b;
+    const aR=(aS===qBase||a===q)?0:aS.startsWith(qBase)?1:2;
+    const bR=(bS===qBase||b===q)?0:bS.startsWith(qBase)?1:2;
+    return aR!==bR?aR-bR:a.localeCompare(b,'ko');
+  });
+  const res=all.slice(0,12);
+  if(!res.length){el.style.display='none';el.innerHTML='';return;}
+  const isChoQ=q.split('').every(c=>CHO.includes(c));
+  el.innerHTML=res.map(n=>{
+    let display=n;
+    if(!isChoQ){
+      const i=n.indexOf(q);
+      const iB=i<0&&qBase?n.indexOf(qBase):-1;
+      if(i>=0) display=n.slice(0,i)+`<span style="color:var(--accent)">${n.slice(i,i+q.length)}</span>`+n.slice(i+q.length);
+      else if(iB>=0) display=n.slice(0,iB)+`<span style="color:var(--accent)">${n.slice(iB,iB+qBase.length)}</span>`+n.slice(iB+qBase.length);
+    }
+    const nEsc=n.replace(/\\/g,'\\\\').replace(/'/g,"\\'");
+    return `<div class="ac-item" onmousedown="event.preventDefault();siSelect('${nEsc}')">${display}</div>`;
+  }).join('');
+  el.className='ac-dropdown open';
+  el.style.display='block';
+}
+
+function siSearchKey(e){
+  const drop=document.getElementById('si-results');
+  if(!drop||drop.style.display==='none')return;
+  const items=drop.querySelectorAll('.ac-item');
+  if(!items.length)return;
+  let idx=-1;
+  items.forEach((it,i)=>{if(it.classList.contains('active'))idx=i;});
+  if(e.key==='ArrowDown'){e.preventDefault();idx=Math.min(idx+1,items.length-1);}
+  else if(e.key==='ArrowUp'){e.preventDefault();idx=Math.max(idx-1,0);}
+  else if(e.key==='Enter'){
+    e.preventDefault();
+    const t=items[Math.max(idx,0)];
+    if(t)t.dispatchEvent(new MouseEvent('mousedown'));
+    return;
+  } else if(e.key==='Escape'){drop.style.display='none';return;}
+  else return;
+  items.forEach((it,i)=>it.classList.toggle('active',i===idx));
+  if(items[idx])items[idx].scrollIntoView({block:'nearest'});
 }
 
 function siSelect(name){
-  _siCurrent=name;
-  document.getElementById('si-inp').value=name;
-  document.getElementById('si-results').innerHTML='';
+  _siCurrent=name; _siCardPlatform=null;
+  const inp=document.getElementById('si-inp');
+  if(inp)inp.value=name;
+  const el=document.getElementById('si-results');
+  if(el){el.style.display='none';el.innerHTML='';}
   renderSICard(name);
+}
+
+function _getPlatformInfo(stationName, platformNum){
+  if(typeof PLATFORM_DB==='undefined')return null;
+  const s=PLATFORM_DB[stationName];
+  if(!s)return null;
+  return s[String(platformNum)]||null;
+}
+
+function _gradeMatchesPlatform(trainGrade, platformGrades){
+  if(!platformGrades||platformGrades.length===0)return true;
+  for(const pg of platformGrades){
+    if(pg==='KTX'&&(trainGrade==='KTX'||trainGrade==='KTX-산천'||trainGrade==='KTX-이음'))return true;
+    if(pg==='SRT'&&trainGrade==='SRT')return true;
+    if(pg==='ITX-새마을'&&trainGrade==='ITX-새마을')return true;
+    if(pg==='ITX-청춘'&&trainGrade==='ITX-청춘')return true;
+    if(pg==='ITX-마음'&&trainGrade==='ITX-마음')return true;
+    if(pg==='무궁화호'&&(trainGrade==='무궁화호'||trainGrade==='무궁호화'))return true;
+  }
+  return false;
 }
 
 function renderSICard(name){
   const el=document.getElementById('si-card');
   if(!el)return;
   const d=typeof STATION_DB!=='undefined'?STATION_DB[name]:null;
-  const trains=ALL_TRAINS.filter(t=>t.stops.some(s=>s.s===name&&(s.dep||s.arr)));
+  // ALL_TRAINS uses station names without 역 suffix (e.g. "영주"), STATION_DB uses "영주역"
+  const trainName=name.endsWith('역')?name.slice(0,-1):name;
+  const trains=ALL_TRAINS.filter(t=>t.stops.some(s=>s.s===trainName&&(s.dep||s.arr)));
   const gc_count={};
   trains.forEach(t=>{const g=gc(t.grade);gc_count[g]=(gc_count[g]||0)+1;});
-  const platforms=d?.platforms?.length>0?d.platforms:[1,2,3,4];
+  // Prefer PLATFORM_DB for platform list; filter out empty platforms; fallback to STATION_DB
+  let platforms=[];
+  if(typeof PLATFORM_DB!=='undefined'&&PLATFORM_DB[name]){
+    // Candidates: non-empty platforms from PLATFORM_DB
+    const candidates=Object.keys(PLATFORM_DB[name]).map(Number)
+      .filter(p=>{const i=PLATFORM_DB[name][String(p)];return i&&(i.g.length>0||i.l.length>0);})
+      .sort((a,b)=>a-b);
+    // 문제 3: only show platforms with at least one matching train
+    platforms=candidates.filter(p=>_getFilteredTrainsForPlatform(name,trains,p).length>0);
+  } else if(d?.platforms?.length>0){
+    platforms=d.platforms;
+  }
+  // Reset selected platform if it was filtered out
+  if(_siCardPlatform!==null&&!platforms.includes(_siCardPlatform)) _siCardPlatform=null;
+  if(_siCardPlatform===null&&platforms.length>0) _siCardPlatform=platforms[0];
+  const nameEsc=name.replace(/\\/g,'\\\\').replace(/'/g,"\\'");
   el.innerHTML=`
     <div style="background:var(--bg2);border:1px solid var(--border);border-radius:14px;overflow:hidden">
       <div style="padding:16px;border-bottom:1px solid var(--border)">
         <div style="display:flex;align-items:flex-start;justify-content:space-between">
           <div style="font-size:22px;font-weight:700">${name}</div>
-          <div style="font-size:11px;color:var(--text2);text-align:right">${platforms.length}개 홈<br>${trains.length}편 경유</div>
+          <div style="font-size:11px;color:var(--text2);text-align:right">${platforms.length>0?platforms.length+'개 홈<br>':''}${trains.length}편 경유</div>
         </div>
         ${d?`<div style="font-size:11px;color:var(--text3);font-family:var(--mono);margin-top:4px">${d.lon.toFixed(4)}°E, ${d.lat.toFixed(4)}°N</div>`:''}
-        ${(()=>{
-          const hist=typeof STATION_HISTORY!=='undefined'?STATION_HISTORY[name]:null;
-          if(!hist)return '';
-          const age=new Date().getFullYear()-hist.year;
-          return `<div style="margin-top:6px">
-            <span style="display:inline-block;font-size:11px;padding:2px 8px;border-radius:10px;background:var(--bg3);color:var(--text2);font-weight:600">🏛️ 개업 ${hist.year}년 · ${age}년 역사</span>
-            ${hist.note?`<div style="font-size:11px;color:var(--text3);margin-top:3px">${hist.note}</div>`:''}
-          </div>`;
-        })()}
         <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:10px">
           ${Object.entries(gc_count).map(([g,n])=>
             `<span style="padding:3px 10px;border-radius:12px;font-size:11px;font-weight:600;border:1px solid var(--c-${GC_CSS_VAR[g]||'mgh'});color:var(--c-${GC_CSS_VAR[g]||'mgh'})">${g} ${n}편</span>`
           ).join('')}
         </div>
       </div>
-      <div style="padding:14px 16px;border-bottom:1px solid var(--border)">
-        <div style="font-size:12px;font-weight:700;color:var(--text2);margin-bottom:10px">🚉 홈 배치도</div>
-        ${platforms.slice(0,8).map(p=>`
-          <div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--border)33">
-            <div style="width:32px;height:32px;border-radius:8px;background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;flex-shrink:0">${p}</div>
-            <div style="font-size:12px;font-weight:600">${p}번 홈</div>
-          </div>`).join('')}
-        ${platforms.length>8?`<div style="font-size:11px;color:var(--text3);text-align:center;padding:6px">+${platforms.length-8}개 홈 더 있음</div>`:''}
-      </div>
-      <div style="padding:14px 16px">
-        <div style="font-size:12px;font-weight:700;color:var(--text2);margin-bottom:10px">🚆 경유 열차 (상위 5편)</div>
-        ${trains.slice(0,5).map(t=>{
-          const s=t.stops.find(x=>x.s===name);
-          const dep=s?.dep||s?.arr||'-';
-          return `<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border)22;cursor:pointer" onclick="searchStation('${name}')">
-            <div style="min-width:52px">
-              <div style="font-size:12px;font-weight:700;color:var(--c-${gcCssVar(t.grade)})">${t.grade}</div>
-              <div style="font-size:11px;color:var(--text3);font-family:var(--mono)">${t.no}</div>
-            </div>
-            <div style="flex:1;font-size:13px;font-weight:600">${t.dest}행</div>
-            <div style="font-size:14px;font-weight:700;font-family:var(--mono)">${dep}</div>
-          </div>`;
-        }).join('')}
-        <button onclick="searchStation('${name}')" style="width:100%;margin-top:10px;padding:9px;border-radius:8px;border:1px solid var(--border);background:var(--bg3);color:var(--text2);font-size:12px;cursor:pointer;font-family:var(--sans)">전체 시간표 →</button>
+      ${platforms.length>0?`
+      <div style="padding:12px 16px;border-bottom:1px solid var(--border)">
+        <div style="font-size:12px;font-weight:700;color:var(--text2);margin-bottom:8px">🚉 홈 선택</div>
+        <div style="overflow-x:auto;-webkit-overflow-scrolling:touch;padding-bottom:2px">
+          <div style="display:flex;gap:6px;min-width:max-content">
+            ${platforms.map(p=>`
+              <button id="si-ptab-${p}" onclick="selectSICardPlatform('${nameEsc}',${p})"
+                style="padding:6px 16px;border-radius:20px;border:1px solid var(--border);font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap;font-family:var(--sans);transition:background .15s,color .15s;
+                background:${_siCardPlatform===p?'var(--accent)':'var(--bg3)'};color:${_siCardPlatform===p?'#fff':'var(--text1)'}">
+                ${p}
+              </button>`).join('')}
+          </div>
+        </div>
+      </div>`:''}
+      <div id="si-platform-trains" style="padding:14px 16px">
+        ${_siPlatformTrainsHTML(name, trains)}
       </div>
       ${d&&d.lat&&d.lon?`
       <div style="border-top:1px solid var(--border)">
@@ -5292,11 +5797,11 @@ function renderSICard(name){
             style="width:100%;height:220px;border:1px solid var(--border);border-radius:8px;display:block"
             loading="lazy" title="${name} 주변 지도"></iframe>
           <div style="display:flex;gap:8px;margin-top:8px">
-            <a href="https://map.kakao.com/?q=${encodeURIComponent(name)}" target="_blank" rel="noopener noreferrer"
+            <a href="https://map.kakao.com/link/map/${encodeURIComponent(name)},${d.lat},${d.lon}" target="_blank" rel="noopener noreferrer"
               style="flex:1;display:block;text-align:center;padding:8px;background:var(--bg3);border:1px solid var(--border);border-radius:8px;font-size:12px;color:var(--text1);text-decoration:none;font-weight:600">
               카카오지도 ↗
             </a>
-            <a href="https://map.naver.com/?query=${encodeURIComponent(name)}" target="_blank" rel="noopener noreferrer"
+            <a href="https://map.naver.com/?lng=${d.lon}&lat=${d.lat}&zoom=15" target="_blank" rel="noopener noreferrer"
               style="flex:1;display:block;text-align:center;padding:8px;background:var(--bg3);border:1px solid var(--border);border-radius:8px;font-size:12px;color:var(--text1);text-decoration:none;font-weight:600">
               네이버지도 ↗
             </a>
@@ -5314,6 +5819,7 @@ function toggleStationMap(){
   sec.style.display=open?'block':'none';
   if(arr)arr.textContent=open?'▲':'▼';
 }
+
 
 function selectSICardPlatform(name, p){
   _siCardPlatform=p;
@@ -5473,17 +5979,17 @@ function _siPlatformTrainsHTML(name, trains){
 
 function renderSIDelay(el){
   const model=[
-    {name:'KTX 경부고속선',prob:18,min:2,max:5,c:'#3b82f6'},
-    {name:'KTX 호남고속선',prob:20,min:2,max:6,c:'#3b82f6'},
-    {name:'KTX 강릉선',prob:28,min:3,max:8,c:'#3b82f6'},
-    {name:'KTX 중앙선',prob:32,min:3,max:10,c:'#3b82f6'},
-    {name:'SRT 경부고속선',prob:16,min:2,max:5,c:'#a855f7'},
-    {name:'ITX-새마을 경부',prob:38,min:5,max:15,c:'#ef4444'},
-    {name:'무궁화 경부선',prob:42,min:5,max:18,c:'#f97316'},
-    {name:'무궁화 호남선',prob:40,min:5,max:16,c:'#f97316'},
-    {name:'무궁화 중앙선',prob:30,min:4,max:12,c:'#f97316'},
-    {name:'무궁화 경전선',prob:25,min:3,max:10,c:'#f97316'},
-    {name:'무궁화 동해선',prob:22,min:3,max:8,c:'#f97316'},
+    {name:'경부고속선 KTX',prob:18,min:2,max:5,c:'#3b82f6'},
+    {name:'호남고속선 KTX',prob:20,min:2,max:6,c:'#3b82f6'},
+    {name:'강릉선 KTX',prob:28,min:3,max:8,c:'#3b82f6'},
+    {name:'중앙선 KTX',prob:32,min:3,max:10,c:'#3b82f6'},
+    {name:'경부고속선 SRT',prob:16,min:2,max:5,c:'#a855f7'},
+    {name:'경부선 ITX-새마을',prob:38,min:5,max:15,c:'#ef4444'},
+    {name:'경부선 무궁화호',prob:42,min:5,max:18,c:'#f97316'},
+    {name:'호남선 무궁화호',prob:40,min:5,max:16,c:'#f97316'},
+    {name:'중앙선 무궁화호',prob:30,min:4,max:12,c:'#f97316'},
+    {name:'경전선 무궁화호',prob:25,min:3,max:10,c:'#f97316'},
+    {name:'동해선 무궁화호',prob:22,min:3,max:8,c:'#f97316'},
   ];
   el.innerHTML=`<div style="margin-top:12px">
     <div style="background:var(--bg3);border-radius:10px;padding:10px 14px;margin-bottom:14px;font-size:12px;color:var(--text2);line-height:1.6">

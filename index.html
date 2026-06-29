@@ -98,6 +98,7 @@
     <button class="tab" onclick="switchTab('stats')" id="tab-stats">📊 통계</button>
     <button class="tab" onclick="switchTab('notice')" id="tab-notice">📢 공지</button>
     <button class="tab" onclick="switchTab('stationinfo')" id="tab-stationinfo">🚉 역 정보</button>
+    <button class="tab" onclick="switchTab('delay')" id="tab-delay">⏱️ 지연 예측</button>
     <button class="tab" id="tab-book" style="display:none" onclick="switchTab('book')">🎫 열차 예매</button>
     <!-- 알람·즐겨찾기·승차권은 마이페이지로 이동 -->
     <button class="tab" id="tab-alarm" style="display:none" onclick="switchTab('alarm')">🔔 알람</button>
@@ -363,6 +364,26 @@
     </div>
     <div id="map-content" style="display:none">
       <div class="map-legend" id="map-legend"></div>
+      <!-- 타임라인 바 (기본 숨김) -->
+      <div id="map-timeline-bar" style="display:none;padding:8px 10px 4px;background:var(--bg2);border-bottom:1px solid var(--border)">
+        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+          <span style="font-size:11px;color:var(--text3);white-space:nowrap">00:00</span>
+          <input type="range" id="map-timeline-slider" min="0" max="1439" value="720"
+            style="flex:1;min-width:80px;accent-color:var(--accent);cursor:pointer"
+            oninput="seekMapTimeline(parseInt(this.value))"
+            onchange="seekMapTimeline(parseInt(this.value))">
+          <span style="font-size:11px;color:var(--text3);white-space:nowrap">24:00</span>
+          <span id="map-timeline-time" style="font-size:13px;font-weight:700;color:var(--accent);min-width:42px;text-align:right">12:00</span>
+          <button class="map-dir-btn" id="map-timeline-play-btn" onclick="toggleMapTimelinePlay()" style="padding:4px 10px">▶ 재생</button>
+          <select id="map-timeline-speed" onchange="setTimelineSpeed(parseInt(this.value))"
+            style="font-size:11px;background:var(--bg3);border:1px solid var(--border);border-radius:8px;color:var(--text1);padding:3px 6px;font-family:inherit;cursor:pointer">
+            <option value="10">×빠름(10분/s)</option>
+            <option value="30" selected>×중간(30분/s)</option>
+            <option value="60">×느림(60분/s)</option>
+          </select>
+          <button class="map-dir-btn" onclick="resetMapTimeline()">현재 시각</button>
+        </div>
+      </div>
       <div style="position:relative">
       <div class="map-svg-wrap" id="map-svg-wrap"><div style="padding:40px;text-align:center;color:var(--text3)">노선을 선택하세요</div></div>
     </div>
@@ -376,6 +397,9 @@
   </div>
   <div class="panel" id="panel-stationinfo">
     <div id="result-stationinfo"></div>
+  </div>
+  <div class="panel" id="panel-delay">
+    <div id="result-delay"></div>
   </div>
   <div class="panel" id="panel-stats">
     <div id="result-stats"></div>
