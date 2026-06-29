@@ -976,11 +976,13 @@ tbody td{padding:10px 14px;font-size:13px;white-space:nowrap}
   position:fixed;left:0;right:0;bottom:0;
   background:var(--bg2);border-radius:20px 20px 0 0;
   border-top:1px solid var(--border);
-  padding:12px 20px 32px;z-index:9901;
+  padding:0;z-index:9901;
   transform:translateY(100%);transition:transform .3s cubic-bezier(.4,0,.2,1);
   max-width:600px;margin:0 auto;pointer-events:auto;
-  max-height:80vh;overflow-y:auto;
+  max-height:80vh;overflow:hidden;display:flex;flex-direction:column;
 }
+/* iOS Safari fix: 버튼을 overflow:auto 바깥 고정 영역에 배치해 탭 이벤트 누락 방지 */
+.book-detail-scroll{overflow-y:auto;flex:1;min-height:0;-webkit-overflow-scrolling:touch}
 .book-detail-backdrop{pointer-events:auto}
 .book-detail-panel.open{transform:translateY(0)}
 .book-detail-handle{width:36px;height:4px;background:var(--border);border-radius:2px;margin:0 auto 16px}
@@ -1123,3 +1125,21 @@ tbody td{padding:10px 14px;font-size:13px;white-space:nowrap}
 /* ── 노선도 타임라인 바 ── */
 #map-timeline-bar input[type=range]{height:4px}
 #map-timeline-bar select{cursor:pointer}
+
+/* ── iOS Safari 모바일 터치 수정 ──
+   touch-action:manipulation → 더블탭 줌 비활성, 300ms 탭 딜레이 제거
+   iOS는 overflow:auto 스크롤 컨테이너 안의 클릭 이벤트를 지연/무시할 수 있음 */
+button, select, input[type=range],
+.book-train-row, .my-menu-item, .alarm-popup-option,
+.fav-card, .fav-cat-option, .fav-filter-tab, .ticket-filter-tab,
+.notice-row, .trip-widget, .pass-card-info, .line-train-chip, .tc,
+.alarm-bell-btn, .btn-next-train, .notice-filter-tab, .map-line-tab,
+.map-dir-btn, .map-layer-btn, .tab, .notice-popup-close, .fav-del-btn,
+.alarm-del-btn, .btn-pass-toggle, .alarm-popup-close, .booking-seat-option,
+.booking-stepper-btn, .fav-filter-tab, .pass-card {
+  touch-action: manipulation;
+}
+
+/* ── 노선도 필터 패널 ── */
+#map-filter-panel { padding: 6px 0 4px; border-top: 1px solid var(--border); }
+.map-filter-toggle-active { background: rgba(56,139,253,.12) !important; color: var(--accent) !important; border-color: var(--accent) !important; }
