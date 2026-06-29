@@ -976,11 +976,13 @@ tbody td{padding:10px 14px;font-size:13px;white-space:nowrap}
   position:fixed;left:0;right:0;bottom:0;
   background:var(--bg2);border-radius:20px 20px 0 0;
   border-top:1px solid var(--border);
-  padding:12px 20px 32px;z-index:9901;
+  padding:0;z-index:9901;
   transform:translateY(100%);transition:transform .3s cubic-bezier(.4,0,.2,1);
   max-width:600px;margin:0 auto;pointer-events:auto;
-  max-height:80vh;overflow-y:auto;
+  max-height:80vh;overflow:hidden;display:flex;flex-direction:column;
 }
+/* iOS Safari fix: 버튼을 overflow:auto 바깥 고정 영역에 배치해 탭 이벤트 누락 방지 */
+.book-detail-scroll{overflow-y:auto;flex:1;min-height:0;-webkit-overflow-scrolling:touch}
 .book-detail-backdrop{pointer-events:auto}
 .book-detail-panel.open{transform:translateY(0)}
 .book-detail-handle{width:36px;height:4px;background:var(--border);border-radius:2px;margin:0 auto 16px}

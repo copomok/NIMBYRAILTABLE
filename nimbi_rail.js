@@ -46,6 +46,18 @@ function durStr(depT,arrT){
 }
 function hasTime(v){return v&&/\d+:\d+/.test(v);}
 
+// iOS Safari: overflow:auto 내부 버튼 탭 누락 방지용 이중 핸들러
+// touchend로 즉시 처리 + click으로 데스크탑 커버, 중복 방지
+function addMobileTap(el, fn){
+  let _startY=0, _tapped=false;
+  el.style.touchAction='manipulation';
+  el.addEventListener('touchstart', e=>{ _startY=e.touches[0].clientY; _tapped=false; }, {passive:true});
+  el.addEventListener('touchend', e=>{
+    if(Math.abs(e.changedTouches[0].clientY-_startY)<10){ _tapped=true; fn(e); }
+  });
+  el.addEventListener('click', e=>{ if(!_tapped) fn(e); else _tapped=false; });
+}
+
 let _detailViewMode='timeline';
 const ALL_STATIONS=[...new Set(ALL_TRAINS.flatMap(t=>t.stops.map(s=>s.s)))].sort((a,b)=>a.localeCompare(b,'ko'));
 
@@ -3703,34 +3715,38 @@ function openBookingPopup(trainNo, fromStn, toStn, depTime, arrTime, travelDate)
   wrap.innerHTML=`
     <div style="position:absolute;top:0;right:0;bottom:0;left:0;background:rgba(0,0,0,.6)"></div>
     <div style="position:absolute;top:0;right:0;bottom:0;left:0;display:flex;align-items:center;justify-content:center;padding:16px;box-sizing:border-box">
-    <div class="alarm-popup booking-popup" style="position:relative;top:auto;left:auto;transform:none;max-height:90vh;overflow-y:auto;width:100%">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:2px">
-        <div class="alarm-popup-title" style="margin-bottom:0">🎫 ${t.grade} ${trainNo}</div>
-        <div style="font-family:var(--mono);font-size:12px;color:var(--text2)" id="booking-clock"></div>
-      </div>
-      <div class="alarm-popup-sub">${fromStn} ${depTime||''} → ${toStn} ${arrTime||''}</div>
-      <div class="booking-date-section">
-        <div class="booking-section-label">탑승일</div>
-        <input type="date" id="booking-date" value="${travelDate&&travelDate>=minDate?travelDate:minDate}" min="${minDate}" max="${maxDate}" class="booking-date-input">
-      </div>
-      <div class="booking-seat-section">
-        <div class="booking-section-label">좌석 등급</div>
-        <div class="booking-seat-options">${classOpts}</div>
-      </div>
-      <div class="booking-passenger-section">
-        <div class="booking-section-label">좌석 선택 <span style="font-size:11px;color:var(--text3);font-weight:400">(선택 안 하면 자동 배정)</span></div>
-        <button class="btn" id="booking-seat-select-btn" disabled style="width:100%;justify-content:center;margin-bottom:12px;font-size:13px;gap:6px;opacity:.4;cursor:not-allowed">
-          🪑 직접 선택 — <span id="booking-seat-display" style="color:var(--accent2)">등급 선택 후 가능</span>
-        </button>
-        <div class="booking-section-label">인원</div>
-        <div class="booking-passenger-control">
-          <button class="booking-stepper-btn" id="booking-stepper-minus">−</button>
-          <span id="booking-passenger-count">1</span>
-          <button class="booking-stepper-btn" id="booking-stepper-plus">+</button>
+    <div class="alarm-popup booking-popup" style="position:relative;top:auto;left:auto;transform:none;max-height:90vh;overflow:hidden;display:flex;flex-direction:column;width:100%">
+      <div style="overflow-y:auto;flex:1;min-height:0;-webkit-overflow-scrolling:touch">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:2px">
+          <div class="alarm-popup-title" style="margin-bottom:0">🎫 ${t.grade} ${trainNo}</div>
+          <div style="font-family:var(--mono);font-size:12px;color:var(--text2)" id="booking-clock"></div>
+        </div>
+        <div class="alarm-popup-sub">${fromStn} ${depTime||''} → ${toStn} ${arrTime||''}</div>
+        <div class="booking-date-section">
+          <div class="booking-section-label">탑승일</div>
+          <input type="date" id="booking-date" value="${travelDate&&travelDate>=minDate?travelDate:minDate}" min="${minDate}" max="${maxDate}" class="booking-date-input">
+        </div>
+        <div class="booking-seat-section">
+          <div class="booking-section-label">좌석 등급</div>
+          <div class="booking-seat-options">${classOpts}</div>
+        </div>
+        <div class="booking-passenger-section">
+          <div class="booking-section-label">좌석 선택 <span style="font-size:11px;color:var(--text3);font-weight:400">(선택 안 하면 자동 배정)</span></div>
+          <button class="btn" id="booking-seat-select-btn" disabled style="width:100%;justify-content:center;margin-bottom:12px;font-size:13px;gap:6px;opacity:.4;cursor:not-allowed">
+            🪑 직접 선택 — <span id="booking-seat-display" style="color:var(--accent2)">등급 선택 후 가능</span>
+          </button>
+          <div class="booking-section-label">인원</div>
+          <div class="booking-passenger-control">
+            <button class="booking-stepper-btn" id="booking-stepper-minus">−</button>
+            <span id="booking-passenger-count">1</span>
+            <button class="booking-stepper-btn" id="booking-stepper-plus">+</button>
+          </div>
         </div>
       </div>
-      <button class="btn btn-primary booking-confirm-btn" id="booking-confirm-btn" disabled>좌석 등급을 선택하세요</button>
-      <button class="alarm-popup-close" id="booking-cancel-btn">취소</button>
+      <div style="flex-shrink:0;padding-top:8px">
+        <button class="btn btn-primary booking-confirm-btn" id="booking-confirm-btn" disabled>좌석 등급을 선택하세요</button>
+        <button class="alarm-popup-close" id="booking-cancel-btn">취소</button>
+      </div>
     </div>
     </div>`;
   document.body.appendChild(wrap);
@@ -3743,8 +3759,10 @@ function openBookingPopup(trainNo, fromStn, toStn, depTime, arrTime, travelDate)
   document.getElementById('booking-seat-select-btn')?.addEventListener('click', ()=>openSeatSelectorFromBooking(trainNo));
   document.getElementById('booking-stepper-minus')?.addEventListener('click', ()=>changePassengerCount(-1));
   document.getElementById('booking-stepper-plus')?.addEventListener('click', ()=>changePassengerCount(1));
-  document.getElementById('booking-confirm-btn')?.addEventListener('click', doConfirmBooking);
-  document.getElementById('booking-cancel-btn')?.addEventListener('click', closeBookingPopup);
+  const _confirmBtn=document.getElementById('booking-confirm-btn');
+  if(_confirmBtn) addMobileTap(_confirmBtn, doConfirmBooking);
+  const _cancelBtn=document.getElementById('booking-cancel-btn');
+  if(_cancelBtn) addMobileTap(_cancelBtn, closeBookingPopup);
   (()=>{const cl=document.getElementById('booking-clock');if(!cl)return;
     const tick=()=>{const n=new Date();if(cl)cl.textContent=`${String(n.getHours()).padStart(2,'0')}:${String(n.getMinutes()).padStart(2,'0')}:${String(n.getSeconds()).padStart(2,'0')}`;};
     tick();const ti=setInterval(tick,1000);
@@ -5211,37 +5229,40 @@ function openBookTrainDetail(trainNo, from, to, depT, arrT, travelDate){
   wrap.innerHTML = `
     <div class="book-detail-backdrop"></div>
     <div class="book-detail-panel">
-      <div class="book-detail-handle"></div>
-      <div class="book-detail-head">
-        <div>
-          <span class="book-detail-grade" style="color:var(--c-${gcCssVar(t.grade)})">${t.grade}</span>
-          <span class="book-detail-no">${t.no}</span>
+      <div style="flex-shrink:0;padding:12px 20px 0">
+        <div class="book-detail-handle"></div>
+        <div class="book-detail-head">
+          <div>
+            <span class="book-detail-grade" style="color:var(--c-${gcCssVar(t.grade)})">${t.grade}</span>
+            <span class="book-detail-no">${t.no}</span>
+          </div>
+          <button class="my-panel-close" id="bdd-close-x">✕</button>
         </div>
-        <button class="my-panel-close" id="bdd-close-x">✕</button>
+        <div class="book-detail-route">
+          <div class="book-detail-stn">
+            <div class="book-detail-stn-name">${from}</div>
+            <div class="book-detail-stn-time">${depT}</div>
+          </div>
+          <div class="book-detail-dur">${durStr(depT,arrT)}</div>
+          <div class="book-detail-stn" style="text-align:right">
+            <div class="book-detail-stn-name">${to}</div>
+            <div class="book-detail-stn-time">${arrT||'-'}</div>
+          </div>
+        </div>
       </div>
-      <div class="book-detail-route">
-        <div class="book-detail-stn">
-          <div class="book-detail-stn-name">${from}</div>
-          <div class="book-detail-stn-time">${depT}</div>
-        </div>
-        <div class="book-detail-dur">${durStr(depT,arrT)}</div>
-        <div class="book-detail-stn" style="text-align:right">
-          <div class="book-detail-stn-name">${to}</div>
-          <div class="book-detail-stn-time">${arrT||'-'}</div>
-        </div>
+      <div class="book-detail-scroll" style="padding:0 20px">
+        <div class="book-detail-fares">${fareSpec}</div>
       </div>
-      <div class="book-detail-fares">${fareSpec}</div>
-      <div style="display:flex;gap:8px;margin-top:4px">
+      <div style="flex-shrink:0;padding:8px 20px 32px;display:flex;gap:8px">
         <button class="btn" id="bdd-detail-btn" style="flex:1;justify-content:center;font-size:13px">🔍 열차 상세</button>
         <button class="btn btn-primary" id="bdd-book-btn" style="flex:2;justify-content:center;font-size:14px">🎫 예매하기</button>
       </div>
     </div>`;
   document.body.appendChild(wrap);
-  // addEventListener 방식 — iOS overflow:auto 내부 클릭 문제 해결
   wrap.querySelector('.book-detail-backdrop').addEventListener('click', closeBookTrainDetail);
-  document.getElementById('bdd-close-x').addEventListener('click', closeBookTrainDetail);
-  document.getElementById('bdd-detail-btn').addEventListener('click', ()=>{ closeBookTrainDetail(); jumpToTrain(trainNo); });
-  document.getElementById('bdd-book-btn').addEventListener('click', ()=>{ closeBookTrainDetail(); _bookDetailConfirm(trainNo,from,to,depT,arrT||'',travelDate); });
+  addMobileTap(document.getElementById('bdd-close-x'), closeBookTrainDetail);
+  addMobileTap(document.getElementById('bdd-detail-btn'), ()=>{ closeBookTrainDetail(); jumpToTrain(trainNo); });
+  addMobileTap(document.getElementById('bdd-book-btn'), ()=>{ closeBookTrainDetail(); _bookDetailConfirm(trainNo,from,to,depT,arrT||'',travelDate); });
   setTimeout(()=>wrap.querySelector('.book-detail-panel').classList.add('open'), 10);
 }
 
@@ -5419,37 +5440,37 @@ function openBookXferDetail(no1,no2,from,xStn,to,depT1,arrT1,depT2,arrT2,travelD
   const wrap=document.createElement('div');
   wrap.id='book-detail-wrap';
   wrap.innerHTML=`
-    <div class="book-detail-backdrop" onclick="closeBookTrainDetail()"></div>
+    <div class="book-detail-backdrop"></div>
     <div class="book-detail-panel">
-      <div class="book-detail-handle"></div>
-      <div class="book-detail-head">
-        <div style="font-size:14px;font-weight:600">1회 환승 · ${from} → ${to}</div>
-        <button class="my-panel-close" onclick="closeBookTrainDetail()">✕</button>
-      </div>
-      <div style="background:var(--bg3);border-radius:12px;padding:14px;margin-bottom:12px;display:flex;flex-direction:column;gap:10px">
-        <div style="display:flex;justify-content:space-between;align-items:center">
-          <span style="color:var(--c-${gcCssVar(t1.grade)});font-weight:700">${t1.grade} ${no1}</span>
-          <span style="font-family:var(--mono);font-size:13px">${depT1} → ${arrT1}</span>
+      <div style="flex-shrink:0;padding:12px 20px 0">
+        <div class="book-detail-handle"></div>
+        <div class="book-detail-head">
+          <div style="font-size:14px;font-weight:600">1회 환승 · ${from} → ${to}</div>
+          <button class="my-panel-close" id="bxd-close-x">✕</button>
         </div>
-        <div style="text-align:center;font-size:12px;color:var(--text3);border-top:1px dashed var(--border);border-bottom:1px dashed var(--border);padding:5px 0">🔄 ${xStn} 환승</div>
-        <div style="display:flex;justify-content:space-between;align-items:center">
-          <span style="color:var(--c-${gcCssVar(t2.grade)});font-weight:700">${t2.grade} ${no2}</span>
-          <span style="font-family:var(--mono);font-size:13px">${depT2} → ${arrT2}</span>
+        <div style="background:var(--bg3);border-radius:12px;padding:14px;margin-bottom:12px;display:flex;flex-direction:column;gap:10px">
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <span style="color:var(--c-${gcCssVar(t1.grade)});font-weight:700">${t1.grade} ${no1}</span>
+            <span style="font-family:var(--mono);font-size:13px">${depT1} → ${arrT1}</span>
+          </div>
+          <div style="text-align:center;font-size:12px;color:var(--text3);border-top:1px dashed var(--border);border-bottom:1px dashed var(--border);padding:5px 0">🔄 ${xStn} 환승</div>
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <span style="color:var(--c-${gcCssVar(t2.grade)});font-weight:700">${t2.grade} ${no2}</span>
+            <span style="font-family:var(--mono);font-size:13px">${depT2} → ${arrT2}</span>
+          </div>
         </div>
+        <p class="hint" style="margin-bottom:14px">※ 환승 구간은 각각 별도로 예매됩니다</p>
       </div>
-      <p class="hint" style="margin-bottom:14px">※ 환승 구간은 각각 별도로 예매됩니다</p>
-      <div style="display:flex;gap:8px">
-        <button class="btn btn-primary" style="flex:1;justify-content:center;font-size:12px;padding:10px 6px"
-          onclick="closeBookTrainDetail();window._bookingPassengerCount=${_bookPassengerCount};openBookingWithDate('${no1}','${from}','${xStn}','${depT1}','${arrT1}','${travelDate}')">
-          🎫 ${from}→${xStn}
-        </button>
-        <button class="btn btn-primary" style="flex:1;justify-content:center;font-size:12px;padding:10px 6px"
-          onclick="closeBookTrainDetail();window._bookingPassengerCount=${_bookPassengerCount};openBookingWithDate('${no2}','${xStn}','${to}','${depT2}','${arrT2}','${travelDate}')">
-          🎫 ${xStn}→${to}
-        </button>
+      <div style="flex-shrink:0;padding:0 20px 32px;display:flex;gap:8px">
+        <button class="btn btn-primary" id="bxd-leg1-btn" style="flex:1;justify-content:center;font-size:12px;padding:10px 6px">🎫 ${from}→${xStn}</button>
+        <button class="btn btn-primary" id="bxd-leg2-btn" style="flex:1;justify-content:center;font-size:12px;padding:10px 6px">🎫 ${xStn}→${to}</button>
       </div>
     </div>`;
   document.body.appendChild(wrap);
+  wrap.querySelector('.book-detail-backdrop').addEventListener('click', closeBookTrainDetail);
+  addMobileTap(document.getElementById('bxd-close-x'), closeBookTrainDetail);
+  addMobileTap(document.getElementById('bxd-leg1-btn'), ()=>{ closeBookTrainDetail(); window._bookingPassengerCount=_bookPassengerCount; openBookingWithDate(no1,from,xStn,depT1,arrT1,travelDate); });
+  addMobileTap(document.getElementById('bxd-leg2-btn'), ()=>{ closeBookTrainDetail(); window._bookingPassengerCount=_bookPassengerCount; openBookingWithDate(no2,xStn,to,depT2,arrT2,travelDate); });
   setTimeout(()=>wrap.querySelector('.book-detail-panel').classList.add('open'),10);
 }
 
