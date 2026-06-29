@@ -1620,20 +1620,29 @@ function openGroupManager(){
   if(old)old.remove();
   const wrap=document.createElement('div');
   wrap.id='group-manager-wrap';
+  // 팝업이 overflow-y:auto면 iOS Safari에서 내부 버튼 클릭이 무시됨
+  // → 팝업 자체는 스크롤 없음, 목록 영역만 overflow-y:auto
+  // z-index:9500 → my-sub-panel(9002)과 booking-popup-wrap(9400) 위
   wrap.innerHTML=`
-    <div class="alarm-popup-backdrop" onclick="closeGroupManager()"></div>
-    <div class="alarm-popup" style="max-height:80vh;overflow-y:auto">
+    <div id="gm-backdrop" style="position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:9499"></div>
+    <div id="gm-popup" style="position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:20px;min-width:260px;max-width:340px;width:calc(100% - 40px);z-index:9500;box-shadow:0 8px 32px rgba(0,0,0,.6);display:flex;flex-direction:column;gap:0;max-height:calc(100vh - 48px)">
       <div class="alarm-popup-title">⚙️ 그룹 관리</div>
-      <div class="alarm-popup-sub">기본 그룹은 삭제할 수 없습니다</div>
-      <div id="gm-list" style="margin:12px 0">${_gmListHtml(loadFavGroups())}</div>
-      <div class="alarm-popup-sub" style="margin-bottom:6px">새 그룹 추가</div>
-      <div style="display:flex;gap:8px">
-        <input id="gm-new-name" class="si-inp" placeholder="그룹 이름" style="flex:1;font-size:13px;padding:8px 12px;border-radius:8px;border:1px solid var(--border);background:var(--bg1);color:var(--text1);font-family:inherit">
-        <button onclick="addFavGroup()" style="padding:8px 16px;border-radius:8px;border:none;background:var(--accent);color:#fff;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit">추가</button>
+      <div class="alarm-popup-sub" style="margin-bottom:10px;flex-shrink:0">새 그룹 이름을 입력하고 추가하세요</div>
+      <div style="display:flex;gap:8px;margin-bottom:14px;flex-shrink:0">
+        <input id="gm-new-name" placeholder="그룹 이름" style="flex:1;font-size:13px;padding:8px 12px;border-radius:8px;border:1px solid var(--border);background:var(--bg1);color:var(--text1);font-family:inherit"
+          onkeydown="if(event.key==='Enter')addFavGroup()">
+        <button id="gm-add-btn" style="padding:8px 16px;border-radius:8px;border:none;background:var(--accent);color:#fff;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;flex-shrink:0;touch-action:manipulation">추가</button>
       </div>
-      <button class="alarm-popup-close" onclick="closeGroupManager()" style="margin-top:14px">닫기</button>
+      <div class="alarm-popup-sub" style="margin-bottom:6px;flex-shrink:0">그룹 목록 (기본 그룹은 삭제 불가)</div>
+      <div id="gm-list" style="overflow-y:auto;flex:1;min-height:0">${_gmListHtml(loadFavGroups())}</div>
+      <button id="gm-close-btn" class="alarm-popup-close" style="margin-top:14px;flex-shrink:0;touch-action:manipulation">닫기</button>
     </div>`;
   document.body.appendChild(wrap);
+  // addEventListener 사용 (iOS Safari에서 inline onclick보다 신뢰성 높음)
+  document.getElementById('gm-backdrop').addEventListener('click', closeGroupManager);
+  document.getElementById('gm-add-btn').addEventListener('click', addFavGroup);
+  document.getElementById('gm-close-btn').addEventListener('click', closeGroupManager);
+  setTimeout(()=>document.getElementById('gm-new-name')?.focus(),50);
 }
 
 function closeGroupManager(){
@@ -2201,6 +2210,17 @@ let _mapSvgSize = {w:0,h:0,ox:0,oy:0};
 let _mapTrainInterval = null;
 let _mapLayerMode = 'station'; // 'station': 역 우선, 'train': 열차 우선
 let _mapDirFilter = 'both'; // 'both': 전체, 'down': 하행만, 'up': 상행만
+
+function toggleMapFilterPanel(){
+  const panel=document.getElementById('map-filter-panel');
+  const arrow=document.getElementById('map-filter-arrow');
+  const btn=document.getElementById('map-filter-toggle-btn');
+  if(!panel) return;
+  const open=panel.style.display!=='none';
+  panel.style.display=open?'none':'block';
+  if(arrow) arrow.textContent=open?'▾':'▴';
+  if(btn) btn.classList.toggle('map-filter-toggle-active',!open);
+}
 
 function toggleMapLayer(){
   _mapLayerMode = _mapLayerMode==='station'?'train':'station';
@@ -3337,7 +3357,8 @@ function openBookingPopup(trainNo, fromStn, toStn, depTime, arrTime, travelDate)
   wrap.style.cssText='position:fixed;top:0;right:0;bottom:0;left:0;z-index:9400;pointer-events:auto';
   const classOpts=classes.map(c=>{
     const fare=calcFare(t,fromStn,toStn,c);
-    return `<button class="booking-seat-option" data-class="${c}" onclick="selectSeatClass(this,'${c}')">
+    // inline onclick 제거 → addEventListener로 등록 (iOS Safari 호환)
+    return `<button class="booking-seat-option" data-class="${c}">
       <span class="booking-seat-label">${SEAT_CLASSES[c].label}</span>
       <span class="booking-seat-fare">${fare.toLocaleString()}원</span>
     </button>`;
@@ -3372,24 +3393,32 @@ function openBookingPopup(trainNo, fromStn, toStn, depTime, arrTime, travelDate)
       </div>
       <div class="booking-passenger-section">
         <div class="booking-section-label">좌석 선택 <span style="font-size:11px;color:var(--text3);font-weight:400">(선택 안 하면 자동 배정)</span></div>
-        <button class="btn" id="booking-seat-select-btn" disabled style="width:100%;justify-content:center;margin-bottom:12px;font-size:13px;gap:6px;opacity:.4;cursor:not-allowed"
-          onclick="openSeatSelectorFromBooking('${trainNo}')">
+        <button class="btn" id="booking-seat-select-btn" disabled style="width:100%;justify-content:center;margin-bottom:12px;font-size:13px;gap:6px;opacity:.4;cursor:not-allowed">
           🪑 직접 선택 — <span id="booking-seat-display" style="color:var(--accent2)">등급 선택 후 가능</span>
         </button>
         <div class="booking-section-label">인원</div>
         <div class="booking-passenger-control">
-          <button class="booking-stepper-btn" onclick="changePassengerCount(-1)">−</button>
+          <button class="booking-stepper-btn" id="booking-stepper-minus">−</button>
           <span id="booking-passenger-count">1</span>
-          <button class="booking-stepper-btn" onclick="changePassengerCount(1)">+</button>
+          <button class="booking-stepper-btn" id="booking-stepper-plus">+</button>
         </div>
       </div>
-      <button class="btn btn-primary booking-confirm-btn" id="booking-confirm-btn" disabled
-        onclick="doConfirmBooking()">좌석 등급을 선택하세요</button>
-      <button class="alarm-popup-close" onclick="closeBookingPopup()">취소</button>
+      <button class="btn btn-primary booking-confirm-btn" id="booking-confirm-btn" disabled>좌석 등급을 선택하세요</button>
+      <button class="alarm-popup-close" id="booking-cancel-btn">취소</button>
     </div>
     </div>`;
   document.body.appendChild(wrap);
   wrap.addEventListener('click', e=>{ if(e.target===wrap||e.target===wrap.firstElementChild) closeBookingPopup(); });
+  // addEventListener 방식으로 버튼 이벤트 등록 (iOS Safari overflow:auto 내부 onclick 미동작 방지)
+  wrap.querySelectorAll('.booking-seat-option').forEach(btn=>{
+    const cls=btn.dataset.class;
+    btn.addEventListener('click', ()=>selectSeatClass(btn, cls));
+  });
+  document.getElementById('booking-seat-select-btn')?.addEventListener('click', ()=>openSeatSelectorFromBooking(trainNo));
+  document.getElementById('booking-stepper-minus')?.addEventListener('click', ()=>changePassengerCount(-1));
+  document.getElementById('booking-stepper-plus')?.addEventListener('click', ()=>changePassengerCount(1));
+  document.getElementById('booking-confirm-btn')?.addEventListener('click', doConfirmBooking);
+  document.getElementById('booking-cancel-btn')?.addEventListener('click', closeBookingPopup);
   (()=>{const cl=document.getElementById('booking-clock');if(!cl)return;
     const tick=()=>{const n=new Date();if(cl)cl.textContent=`${String(n.getHours()).padStart(2,'0')}:${String(n.getMinutes()).padStart(2,'0')}:${String(n.getSeconds()).padStart(2,'0')}`;};
     tick();const ti=setInterval(tick,1000);
@@ -4728,9 +4757,9 @@ function searchBookTrains(includeTransfer){
     return;
   }
 
+  // inline onclick 제거 → data 속성 저장 후 addEventListener로 등록 (iOS Safari 호환)
   const rows = trains.map(({t,depT,arrT,dur})=>`
-    <div class="book-train-row" data-train-no="${t.no}"
-      onclick="openBookTrainDetail('${t.no}','${from}','${to}','${depT}','${arrT||''}','${dateGo}')">
+    <div class="book-train-row" data-train-no="${t.no}" data-dep="${depT}" data-arr="${arrT||''}" data-from="${from}" data-to="${to}" data-date="${dateGo}">
       <div style="flex:1;min-width:0">
         <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px">
           <span style="font-size:13px;font-weight:700;color:var(--c-${gcCssVar(t.grade)})">${t.grade}</span>
@@ -4759,6 +4788,13 @@ function searchBookTrains(includeTransfer){
     </div>
     <div class="book-train-list">${rows}</div>
     ${_bookRoundTrip&&dateBack?`<p class="hint" style="margin-top:8px">※ 왕복 복편(${to}→${from}, ${dateBack})은 예매 후 별도 조회해주세요</p>`:''}`;
+
+  // addEventListener 방식으로 클릭 등록 (iOS Safari: overflow-y:auto 내부 div onclick 미동작 방지)
+  el.querySelectorAll('.book-train-row[data-train-no]').forEach(row=>{
+    row.addEventListener('click', ()=>{
+      openBookTrainDetail(row.dataset.trainNo, row.dataset.from||from, row.dataset.to||to, row.dataset.dep||'', row.dataset.arr||'', row.dataset.date||dateGo);
+    });
+  });
 
   // 좌석 가용 버튼 비동기 업데이트
   setTimeout(()=>{
@@ -4800,8 +4836,9 @@ function openBookTrainDetail(trainNo, from, to, depT, arrT, travelDate){
   const wrap = document.createElement('div');
   wrap.id = 'book-detail-wrap';
   // wrap은 스타일 없이 순수 컨테이너 (스태킹 컨텍스트 없음)
+  // inline onclick 제거 → appendChild 후 addEventListener로 등록 (iOS Safari 호환)
   wrap.innerHTML = `
-    <div class="book-detail-backdrop" onclick="closeBookTrainDetail()"></div>
+    <div class="book-detail-backdrop"></div>
     <div class="book-detail-panel">
       <div class="book-detail-handle"></div>
       <div class="book-detail-head">
@@ -4809,7 +4846,7 @@ function openBookTrainDetail(trainNo, from, to, depT, arrT, travelDate){
           <span class="book-detail-grade" style="color:var(--c-${gcCssVar(t.grade)})">${t.grade}</span>
           <span class="book-detail-no">${t.no}</span>
         </div>
-        <button class="my-panel-close" onclick="closeBookTrainDetail()">✕</button>
+        <button class="my-panel-close" id="bdd-close-x">✕</button>
       </div>
       <div class="book-detail-route">
         <div class="book-detail-stn">
@@ -4824,14 +4861,16 @@ function openBookTrainDetail(trainNo, from, to, depT, arrT, travelDate){
       </div>
       <div class="book-detail-fares">${fareSpec}</div>
       <div style="display:flex;gap:8px;margin-top:4px">
-        <button class="btn" style="flex:1;justify-content:center;font-size:13px" onclick="closeBookTrainDetail();jumpToTrain('${trainNo}')">🔍 열차 상세</button>
-        <button class="btn btn-primary" style="flex:2;justify-content:center;font-size:14px"
-          onclick="closeBookTrainDetail();_bookDetailConfirm('${trainNo}','${from}','${to}','${depT}','${arrT||''}','${travelDate}')">
-          🎫 예매하기
-        </button>
+        <button class="btn" id="bdd-detail-btn" style="flex:1;justify-content:center;font-size:13px">🔍 열차 상세</button>
+        <button class="btn btn-primary" id="bdd-book-btn" style="flex:2;justify-content:center;font-size:14px">🎫 예매하기</button>
       </div>
     </div>`;
   document.body.appendChild(wrap);
+  // addEventListener 방식 — iOS overflow:auto 내부 클릭 문제 해결
+  wrap.querySelector('.book-detail-backdrop').addEventListener('click', closeBookTrainDetail);
+  document.getElementById('bdd-close-x').addEventListener('click', closeBookTrainDetail);
+  document.getElementById('bdd-detail-btn').addEventListener('click', ()=>{ closeBookTrainDetail(); jumpToTrain(trainNo); });
+  document.getElementById('bdd-book-btn').addEventListener('click', ()=>{ closeBookTrainDetail(); _bookDetailConfirm(trainNo,from,to,depT,arrT||'',travelDate); });
   setTimeout(()=>wrap.querySelector('.book-detail-panel').classList.add('open'), 10);
 }
 
@@ -4923,8 +4962,10 @@ function searchBookTransfers(from, to, dateGo, el){
       ${i<legs.length-1?`<div class="book-xfer-wait">🔄 환승 · 대기 ${toMin(legs[i+1].depT)-toMin(l.arrT)}분</div>`:''}`
     ).join('');
     const firstLeg=legs[0], lastLeg=legs[legs.length-1];
+    // inline onclick 제거 → data 속성 저장 후 addEventListener (iOS Safari 호환)
     return `<div class="book-train-row book-xfer-card"
-      onclick="openBookTrainDetail('${firstLeg.t.no}','${firstLeg.from}','${firstLeg.to}','${firstLeg.depT}','${firstLeg.arrT||''}','${dateGo}')">
+      data-train-no="${firstLeg.t.no}" data-dep="${firstLeg.depT}" data-arr="${firstLeg.arrT||''}"
+      data-from="${firstLeg.from}" data-to="${firstLeg.to}" data-date="${dateGo}">
       <div style="flex:1">
         <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
           <span style="font-size:11px;font-weight:600;padding:2px 8px;border-radius:10px;background:rgba(210,153,34,.15);color:#d29922;border:1px solid rgba(210,153,34,.3)">1회 환승</span>
@@ -4934,8 +4975,7 @@ function searchBookTransfers(from, to, dateGo, el){
       </div>
       <div style="display:flex;align-items:center;gap:8px;flex-shrink:0">
         <button class="seat-avail-btn xfer-avail" data-no="${firstLeg.t.no}"
-          onclick="event.stopPropagation();openBookTrainDetail('${firstLeg.t.no}','${firstLeg.from}','${firstLeg.to}','${firstLeg.depT}','${firstLeg.arrT||''}','${dateGo}')"
-          style="min-width:52px;padding:6px 10px;border-radius:6px;border:1.5px solid var(--border);background:transparent;color:var(--text3);font-size:12px;font-weight:600;font-family:var(--sans);cursor:pointer">　</button>
+          style="min-width:52px;padding:6px 10px;border-radius:6px;border:1.5px solid var(--border);background:transparent;color:var(--text3);font-size:12px;font-weight:600;font-family:var(--sans);cursor:pointer;touch-action:manipulation">　</button>
         <div class="book-train-chevron">›</div>
       </div>
     </div>`;
@@ -4949,6 +4989,21 @@ function searchBookTransfers(from, to, dateGo, el){
       <span class="badge" style="background:var(--bg3)">${tripLabel}</span>
     </div>
     <div class="book-train-list">${cards}</div>`;
+
+  // addEventListener 방식으로 클릭 등록 (iOS Safari 호환)
+  el.querySelectorAll('.book-train-row[data-train-no]').forEach(row=>{
+    row.addEventListener('click', ()=>{
+      openBookTrainDetail(row.dataset.trainNo, row.dataset.from, row.dataset.to, row.dataset.dep||'', row.dataset.arr||'', row.dataset.date||dateGo);
+    });
+  });
+  el.querySelectorAll('.xfer-avail[data-no]').forEach(btn=>{
+    const row=btn.closest('.book-train-row');
+    if(!row) return;
+    btn.addEventListener('click', e=>{
+      e.stopPropagation();
+      openBookTrainDetail(row.dataset.trainNo, row.dataset.from, row.dataset.to, row.dataset.dep||'', row.dataset.arr||'', row.dataset.date||dateGo);
+    });
+  });
 
   // 환승 결과 가용 버튼 비동기 업데이트
   setTimeout(()=>{

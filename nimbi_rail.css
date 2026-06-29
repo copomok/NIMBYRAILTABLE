@@ -1101,3 +1101,37 @@ tbody td{padding:10px 14px;font-size:13px;white-space:nowrap}
   cursor:pointer;white-space:nowrap;text-align:center
 }
 .si-tab.active{background:var(--accent);color:#fff}
+
+/* ── 인쇄(PDF) 스타일 ── */
+@media print{
+  body{background:#fff!important;color:#000!important}
+  .tab-bar,.top-bar,.panel:not(#panel-ticket),
+  .ticket-filter-tabs,.ticket-card-actions,.qr-btn,
+  .result-header button,.badge{display:none!important}
+  #panel-ticket{display:block!important;padding:12px!important}
+  .ticket-card{break-inside:avoid;border:1px solid #ccc!important;background:#fff!important;color:#000!important;margin-bottom:12px}
+  .ticket-card-top,.ticket-card-route,.ticket-card-info,.ticket-card-id{border-color:#ccc!important}
+  .ticket-grade,.ticket-fare{color:#000!important}
+}
+
+/* ── 노선도 타임라인 바 ── */
+#map-timeline-bar input[type=range]{height:4px}
+#map-timeline-bar select{cursor:pointer}
+
+/* ── iOS Safari 모바일 터치 수정 ──
+   touch-action:manipulation → 더블탭 줌 비활성, 300ms 탭 딜레이 제거
+   iOS는 overflow:auto 스크롤 컨테이너 안의 클릭 이벤트를 지연/무시할 수 있음 */
+button, select, input[type=range],
+.book-train-row, .my-menu-item, .alarm-popup-option,
+.fav-card, .fav-cat-option, .fav-filter-tab, .ticket-filter-tab,
+.notice-row, .trip-widget, .pass-card-info, .line-train-chip, .tc,
+.alarm-bell-btn, .btn-next-train, .notice-filter-tab, .map-line-tab,
+.map-dir-btn, .map-layer-btn, .tab, .notice-popup-close, .fav-del-btn,
+.alarm-del-btn, .btn-pass-toggle, .alarm-popup-close, .booking-seat-option,
+.booking-stepper-btn, .fav-filter-tab, .pass-card {
+  touch-action: manipulation;
+}
+
+/* ── 노선도 필터 패널 ── */
+#map-filter-panel { padding: 6px 0 4px; border-top: 1px solid var(--border); }
+.map-filter-toggle-active { background: rgba(56,139,253,.12) !important; color: var(--accent) !important; border-color: var(--accent) !important; }
