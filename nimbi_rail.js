@@ -1571,14 +1571,14 @@ function computeStopWindows(stops, maxWidth){
   const out=[]; const n=stops.length;
   if(!n) return out;
   if(!maxWidth || maxWidth<20) maxWidth=240;
-  let start=0, guard=0;
-  while(guard++<300){
-    let end=start;
-    while(end+1<n && measureLedText(stops.slice(start,end+2).join(LED_SEP))<=maxWidth) end++;
-    out.push(stops.slice(start,end+1).join(LED_SEP));
-    if(end>=n-1) break;       // 마지막 역까지 표시했으면 종료
-    start++;
-  }
+  const fits=(s,e)=>measureLedText(stops.slice(s,e+1).join(LED_SEP))<=maxWidth;
+  const fitEnd=(s)=>{ let e=s; while(e+1<n && fits(s,e+1)) e++; return e; };
+  // ① 앞에서부터 한 역씩 쌓기 (천안 → 천안 서청주 → …)
+  out.push(stops[0]);
+  let e0=0;
+  while(e0+1<n && fits(0,e0+1)){ e0++; out.push(stops.slice(0,e0+1).join(LED_SEP)); }
+  // ② 앞 역을 하나씩 지우며 전진, 끝에서는 종착역만 남을 때까지 축소
+  for(let s=1;s<n;s++){ out.push(stops.slice(s,fitEnd(s)+1).join(LED_SEP)); }
   return out;
 }
 
