@@ -38,10 +38,22 @@ function todayLocalStr(d){
   return `${y}-${m}-${day}`;
 }
 function toMin(v){if(!v)return null;const m=v.match(/(\d+):(\d+)/);return m?+m[1]*60+ +m[2]:null;}
+// 자정 넘김: 도착 시각이 출발보다 작으면 다음날로 간주(+1440)
+function durMin(depT,arrT){
+  if(depT==null||arrT==null)return null;
+  let d=toMin(arrT)-toMin(depT);
+  if(d<0)d+=1440;
+  return d;
+}
+// 정렬용 도착 절대분: 출발 이후 시각이 더 작으면 +1440
+function arrKey(depT,arrT){
+  const a=toMin(arrT); if(a==null)return 9999;
+  return (toMin(depT)!=null&&a<toMin(depT))?a+1440:a;
+}
 function durStr(depT,arrT){
   if(!depT||!arrT)return '-';
-  const d=toMin(arrT)-toMin(depT);
-  if(d<=0)return '-';
+  const d=durMin(depT,arrT);
+  if(d==null||d<=0)return '-';
   return d<60?`${d}m`:`${Math.floor(d/60)}h ${d%60}m`;
 }
 function hasTime(v){return v&&/\d+:\d+/.test(v);}
@@ -749,15 +761,15 @@ function searchByRoute(){
     const arrT=hasTime(stops[ti].arr)?stops[ti].arr:hasTime(stops[ti].dep)?stops[ti].dep:null;
     if(!depT)return;
     if(afterMin!==null&&toMin(depT)<afterMin)return;
-    const durM=(toMin(arrT)||0)-(toMin(depT)||0);
+    const durM=durMin(depT,arrT)??0;
     if(maxDur>0&&durM>maxDur)return;
     directs.push({t,depT,arrT,dur:durStr(depT,arrT),sortT:toMin(depT)??9999});
   });
   // 정렬
   if(sortMode==='depart') directs.sort((a,b)=>a.sortT-b.sortT);
-  else if(sortMode==='arrive') directs.sort((a,b)=>(toMin(a.arrT)??9999)-(toMin(b.arrT)??9999));
+  else if(sortMode==='arrive') directs.sort((a,b)=>arrKey(a.depT,a.arrT)-arrKey(b.depT,b.arrT));
   else directs.sort((a,b)=>{
-    const dA=toMin(a.arrT)-toMin(a.depT), dB=toMin(b.arrT)-toMin(b.depT);
+    const dA=durMin(a.depT,a.arrT), dB=durMin(b.depT,b.arrT);
     return (dA||9999)-(dB||9999);
   });
 
@@ -839,7 +851,7 @@ function searchByRoute(){
       if(wait<MIN_WAIT||wait>MAX_WAIT)return;
       const arr2T=hasTime(stops[ti].arr)?stops[ti].arr:hasTime(stops[ti].dep)?stops[ti].dep:null;
       if(!arr2T)return;
-      const totalM=toMin(arr2T)-toMin(l1.depT);
+      const totalM=durMin(l1.depT,arr2T)??0;
       if(totalM<=0)return;
       if(maxDur>0&&totalM>maxDur)return;
       transfers.push({
@@ -850,7 +862,7 @@ function searchByRoute(){
         totalDur:durStr(l1.depT,arr2T),
         totalM,
         depM:l1.depM,
-        arrM:toMin(arr2T)||9999,
+        arrM:arrKey(l1.depT,arr2T),
         sortT:l1.depM
       });
     });
