@@ -69,6 +69,68 @@ function durStr(depT,arrT){
 }
 function hasTime(v){return v&&/\d+:\d+/.test(v);}
 
+// ══════════════════════════════════════════
+// 📏 표기 포맷 헬퍼 (앱 전반 통일)
+// ══════════════════════════════════════════
+function fmtWon(n){ return (Math.round(n||0)).toLocaleString()+'원'; }
+function fmtKm(km){ if(km==null||!isFinite(km))return '-'; return km>=100?`${Math.round(km)} km`:`${(Math.round(km*10)/10).toFixed(1)} km`; }
+function fmtDurKor(min){ if(min==null||min<0)return '-'; const h=Math.floor(min/60),m=min%60; return h>0?(m>0?`${h}시간 ${m}분`:`${h}시간`):`${m}분`; }
+function fmtSpeed(kmh){ if(kmh==null||!isFinite(kmh)||kmh<=0)return '-'; return `${Math.round(kmh)} km/h`; }
+// 남은시간 + 도착시각: "12분 후 (14:30)"
+function fmtEta(mins, clockStr){ if(mins==null)return '-'; const t=mins<=0?'곧':(mins===1?'1분 후':`${mins}분 후`); return clockStr?`${t} (${clockStr})`:t; }
+function addMinToClock(clockStr, add){ const m=toMin(clockStr); if(m==null)return ''; let x=(m+add)%1440; if(x<0)x+=1440; return `${String(Math.floor(x/60)).padStart(2,'0')}:${String(x%60).padStart(2,'0')}`; }
+
+// ══════════════════════════════════════════
+// 📐 실좌표 기반 거리·운임
+// ══════════════════════════════════════════
+function _stnCoord(name){
+  if(typeof STATION_DB==='undefined'||!name) return null;
+  let d=STATION_DB[name]||STATION_DB[name+'역']||(name.endsWith('역')?STATION_DB[name.slice(0,-1)]:null);
+  return (d&&d.lat!=null&&d.lon!=null)?{lat:+d.lat,lon:+d.lon}:null;
+}
+function haversineKm(a,b){
+  if(!a||!b)return 0;
+  const R=6371,r=Math.PI/180;
+  const dLat=(b.lat-a.lat)*r, dLon=(b.lon-a.lon)*r;
+  const h=Math.sin(dLat/2)**2+Math.cos(a.lat*r)*Math.cos(b.lat*r)*Math.sin(dLon/2)**2;
+  return 2*R*Math.asin(Math.min(1,Math.sqrt(h)));
+}
+// 열차 경로(fromStn~toStn)를 따라 실제 거리(km). 좌표 이상치(스파이크)는 이웃으로 보간.
+function routeDistanceKm(t, fromStn, toStn){
+  if(!t||!t.stops)return 0;
+  const stops=t.stops;
+  const fi=stops.findIndex(s=>s.s===fromStn), ti=stops.findIndex(s=>s.s===toStn);
+  if(fi<0||ti<0||ti<=fi)return 0;
+  // 좌표 시퀀스 수집 (없는 역 제외)
+  const pts=[];
+  for(let i=fi;i<=ti;i++){ const c=_stnCoord(stops[i].s); if(c) pts.push({lat:c.lat,lon:c.lon}); }
+  if(pts.length<2)return 0;
+  // 좌표 이상치 보정 (정상 최장 구간 ~93km, 이상치는 240km+ → 150km 기준으로 분리)
+  const SPIKE=150;
+  // 내부 스파이크: 앞뒤로 크게 튀었다 되돌아오는 좌표 → 이웃 중점으로 대체
+  for(let i=1;i+1<pts.length;i++){
+    const a=haversineKm(pts[i-1],pts[i]), b=haversineKm(pts[i],pts[i+1]), by=haversineKm(pts[i-1],pts[i+1]);
+    if(a>SPIKE&&b>SPIKE&&by<a*0.5){ pts[i]={lat:(pts[i-1].lat+pts[i+1].lat)/2, lon:(pts[i-1].lon+pts[i+1].lon)/2}; }
+  }
+  // 끝점 스파이크: 첫/마지막 좌표가 이웃과 150km 이상 떨어지면 이웃에 흡수
+  if(pts.length>=2 && haversineKm(pts[0],pts[1])>SPIKE) pts[0]={...pts[1]};
+  const L=pts.length;
+  if(L>=2 && haversineKm(pts[L-1],pts[L-2])>SPIKE) pts[L-1]={...pts[L-2]};
+  let total=0;
+  for(let i=1;i<pts.length;i++) total+=haversineKm(pts[i-1],pts[i]);
+  return total;
+}
+// 열차 전체(시종착) 거리·표정속도
+function trainStats(t){
+  const valid=t.stops.filter(s=>hasTime(s.arr)||hasTime(s.dep));
+  if(valid.length<2)return {km:0,min:0,speed:0};
+  const f=valid[0], l=valid[valid.length-1];
+  const dep=hasTime(f.dep)?f.dep:f.arr, arr=hasTime(l.arr)?l.arr:l.dep;
+  const km=routeDistanceKm(t, f.s, l.s);
+  const min=durMin(dep,arr)||0;
+  return {km, min, speed: min>0?km/(min/60):0};
+}
+
 // iOS Safari: overflow:auto 내부 버튼 탭 누락 방지용 이중 핸들러
 // touchend로 즉시 처리 + click으로 데스크탑 커버, 중복 방지
 function addMobileTap(el, fn){
@@ -594,6 +656,7 @@ function renderDetail(t){
   const depT=hasTime(first?.dep)?first.dep:first?.arr||'';
   const arrT=hasTime(last?.arr)?last.arr:last?.dep||'';
   const dur=durStr(depT,arrT);
+  const st=trainStats(t);
 
   return `<div class="detail-card" id="dc-${t.no}">
     <div class="detail-head">
@@ -605,7 +668,8 @@ function renderDetail(t){
             <span style="font-size:16px;font-weight:700">${t.dest}행</span>
           </div>
           <div class="detail-meta">${first?.s||''} ${depT} 발 → ${last?.s||''} ${arrT} 착</div>
-          <div class="detail-meta" style="margin-top:2px">정차역 ${totalStops}개 &nbsp;·&nbsp; 소요시간 ${dur}</div>
+          <div class="detail-meta" style="margin-top:2px">정차역 ${totalStops}개 &nbsp;·&nbsp; 소요시간 ${fmtDurKor(durMin(depT,arrT))}</div>
+          ${st.km>0?`<div class="detail-meta" style="margin-top:2px">총거리 ${fmtKm(st.km)} &nbsp;·&nbsp; 표정속도 ${fmtSpeed(st.speed)}</div>`:''}
         </div>
         <div style="display:flex;gap:4px;flex-shrink:0">
           <button class="share-btn" style="position:static" onclick="trackTrainOnMap('${t.no}')">🗺️</button>
@@ -3745,16 +3809,28 @@ function availableSeatClasses(grade){
   return ['general','standing']; // ITX-새마을, ITX-마음, ITX-청춘
 }
 
-// 가상 운임 계산: 등급 기본요금 + 정차역 1개당 거리요금 + 좌석등급 배율
-const GRADE_BASE_FARE={'KTX':8400,'KTX-산천':8400,'KTX-이음':7700,'SRT':8400,'ITX-새마을':4800,'ITX-마음':4800,'ITX-청춘':4200,'무궁화호':2600};
-const FARE_PER_STOP=1450;
+// 거리비례 운임: 등급별 기본운임 + 거리(km)×등급 km단가 + 좌석등급 배율
+// {base: 기본운임, rate: 원/km, min: 최저운임}
+const FARE_TABLE={
+  'KTX':      {base:3800, rate:148, min:8400},
+  'KTX-산천': {base:3800, rate:148, min:8400},
+  'KTX-이음': {base:3200, rate:120, min:8400},
+  'SRT':      {base:3600, rate:140, min:8000},
+  'ITX-새마을':{base:2800, rate:96,  min:4800},
+  'ITX-마음': {base:2800, rate:92,  min:4800},
+  'ITX-청춘': {base:2400, rate:74,  min:4200},
+  '무궁화호': {base:2600, rate:63,  min:2600},
+};
 function calcFare(t, fromStn, toStn, seatClass){
-  const stops=t.stops.filter(s=>hasTime(s.arr)||hasTime(s.dep));
-  const fi=stops.findIndex(s=>s.s===fromStn);
-  const ti=stops.findIndex(s=>s.s===toStn);
-  const stationCount=(fi>=0&&ti>=0)?Math.max(1,ti-fi):3;
-  const base=GRADE_BASE_FARE[t.grade]||3000;
-  const raw=base+stationCount*FARE_PER_STOP;
+  const tb=FARE_TABLE[t.grade]||{base:3000,rate:90,min:3000};
+  let km=routeDistanceKm(t, fromStn, toStn);
+  if(!km||km<=0){
+    // 좌표 부재 등으로 거리 산출 실패 시: 정차역 수 기반 보조 추정
+    const stops=t.stops.filter(s=>hasTime(s.arr)||hasTime(s.dep));
+    const fi=stops.findIndex(s=>s.s===fromStn), ti=stops.findIndex(s=>s.s===toStn);
+    km=(fi>=0&&ti>=0?Math.max(1,ti-fi):3)*18;
+  }
+  const raw=Math.max(tb.min, tb.base + km*tb.rate);
   const mult=SEAT_CLASSES[seatClass]?.mult||1;
   return Math.round(raw*mult/100)*100; // 100원 단위 반올림
 }
@@ -3832,6 +3908,7 @@ function openBookingPopup(trainNo, fromStn, toStn, depTime, arrTime, travelDate)
           <div style="font-family:var(--mono);font-size:12px;color:var(--text2)" id="booking-clock"></div>
         </div>
         <div class="alarm-popup-sub">${fromStn} ${depTime||''} → ${toStn} ${arrTime||''}</div>
+        ${(()=>{const km=Math.round(routeDistanceKm(t,fromStn,toStn));const d=durMin(depTime,arrTime);return (km>0||d!=null)?`<div class="alarm-popup-sub" style="margin-top:-2px;color:var(--text3)">${km>0?'거리 '+fmtKm(km):''}${km>0&&d!=null?' · ':''}${d!=null?'소요 '+fmtDurKor(d):''}</div>`:'';})()}
         <div class="booking-date-section">
           <div class="booking-section-label">탑승일</div>
           <input type="date" id="booking-date" value="${travelDate&&travelDate>=minDate?travelDate:minDate}" min="${minDate}" max="${maxDate}" class="booking-date-input">
@@ -3984,6 +4061,7 @@ function confirmBooking(trainNo,fromStn,toStn,depTime,arrTime){
     seats,passengerCount:count,
     farePerPerson:fare,totalFare:fare*count,
     discount,discountLabel:DISCOUNTS[discount].label,baseFarePerPerson:baseFare,
+    distanceKm:Math.round(routeDistanceKm(t,fromStn,toStn)),
     bookedAt:Date.now(),
     travelDate,
     status:'active', // active | used | cancelled
@@ -4135,6 +4213,8 @@ function openQRPopup(ticketId){
   // 개표(탑승완료) 자동 전이: 하차역을 지났으면 완료 처리 후 저장
   if(tk.board==='active' && isTicketPast(tk)){ tk.board='done'; saveTickets(tickets); }
   const bs = ticketBoardState(tk);
+  const _qtrain = ALL_TRAINS.find(x=>x.no===tk.trainNo);
+  const tkDistKm = tk.distanceKm || (_qtrain?Math.round(routeDistanceKm(_qtrain,tk.fromStn,tk.toStn)):0);
 
   const qrText = `NIMBIRAIL:${tk.id}:${tk.trainNo}:${tk.fromStn}:${tk.toStn}:${tk.travelDate}:${tk.depTime}`;
   const gradeC = `var(--c-${gcCssVar(tk.grade)})`;
@@ -4169,8 +4249,10 @@ function openQRPopup(ticketId){
         <div class="rt-meta">
           <div><span class="rt-k">날짜</span><span class="rt-v">${tk.travelDate}</span></div>
           <div><span class="rt-k">좌석</span><span class="rt-v">${tk.seatClassLabel} · ${tk.seats.join(', ')}</span></div>
+          <div><span class="rt-k">거리</span><span class="rt-v">${tkDistKm?fmtKm(tkDistKm):'-'}</span></div>
+          <div><span class="rt-k">소요</span><span class="rt-v">${fmtDurKor(durMin(tk.depTime,tk.arrTime))}</span></div>
           <div><span class="rt-k">인원</span><span class="rt-v">${tk.passengerCount}명${discBadge?' · '+tk.discountLabel:''}</span></div>
-          <div><span class="rt-k">운임</span><span class="rt-v">${(tk.totalFare||0).toLocaleString()}원</span></div>
+          <div><span class="rt-k">운임</span><span class="rt-v">${fmtWon(tk.totalFare)}</span></div>
         </div>
         <div class="rt-perf"></div>
         <div class="rt-qr" id="qr-canvas-wrap"></div>
@@ -5003,7 +5085,7 @@ function renderTripWidget(active){
 
   // ── 승차 준비 중 위젯 (출발 10분 전) ──
   if(preBoard){
-    const minStr = minsUntilDep===1 ? '1분 후' : `${minsUntilDep}분 후`;
+    const minStr = fmtEta(minsUntilDep, ticket.depTime);
     return `<div class="trip-widget trip-widget-preboard" onclick="jumpToTrain('${train.no}')">
       <div class="trip-widget-head">
         <span class="trip-widget-preboard-dot"></span>
@@ -5023,7 +5105,7 @@ function renderTripWidget(active){
 
   // ── 도착 준비 중 위젯 (도착 5분 전) ──
   if(active.preArr){
-    const minStr = active.minsUntilArr===1?'1분 후':`${active.minsUntilArr}분 후`;
+    const minStr = fmtEta(active.minsUntilArr, ticket.arrTime);
     const gradeC = `var(--c-${gcCssVar(train.grade)})`;
     return `<div class="trip-widget trip-widget-prearr" onclick="jumpToTrain('${train.no}')">
       <div class="trip-widget-head">
@@ -5069,16 +5151,10 @@ function renderTripWidget(active){
   let arrivalStr='';
   if(arrM!==null&&nowM!==null){
     let diff=(arrM>=depM)?(arrM-nowM):(arrM+1440-nowM);
-    // 이미 지났으면 0으로 처리 (음수 방지)
     if(diff<0) diff=0;
-    // 24시간(1440분) 초과면 1440을 빼서 실제 남은 시간으로 보정
     if(diff>=1440) diff=diff%1440;
-    if(diff===0) arrivalStr='곧 도착';
-    else if(diff<60) arrivalStr=`목적지까지 ${diff}분 후 도착`;
-    else {
-      const h=Math.floor(diff/60), m=diff%60;
-      arrivalStr=`목적지까지 ${h}시간${m>0?' '+m+'분':''} 후 도착`;
-    }
+    arrivalStr = diff===0 ? `${ticket.toStn} 곧 도착 (${ticket.arrTime||''})`
+                          : `${ticket.toStn} ${fmtEta(diff, ticket.arrTime)} 도착`;
   }
 
   const tlHtml = tl ? `
@@ -5132,8 +5208,8 @@ function renderTripWidgetCompact(active){
   const {ticket,train,status,preBoard,minsUntilDep,preArr,minsUntilArr}=active;
   const gc=GRADE_COLORS[train.grade]||'#8b949e';
   let label,color,ledTag,led,sub;
-  if(preBoard){ label='승차 준비'; color='var(--orange)'; ledTag='곧 출발'; led=`${ticket.fromStn} ${ticket.depTime||''}`; sub=`${minsUntilDep}분 후 출발 · ${ticket.toStn}행`; }
-  else if(preArr){ label='도착 준비'; color='var(--green)'; ledTag='곧 도착'; led=`${ticket.toStn}`; sub=`${minsUntilArr}분 후 도착 · 내리는 문 확인`; }
+  if(preBoard){ label='승차 준비'; color='var(--orange)'; ledTag='곧 출발'; led=`${ticket.fromStn} ${ticket.depTime||''}`; sub=`${fmtEta(minsUntilDep, ticket.depTime)} 출발 · ${ticket.toStn}행`; }
+  else if(preArr){ label='도착 준비'; color='var(--green)'; ledTag='곧 도착'; led=`${ticket.toStn}`; sub=`${fmtEta(minsUntilArr, ticket.arrTime)} 도착 · 내리는 문 확인`; }
   else {
     const tl=getTripTimeline3(train,status,ticket);
     ledTag = '이번 역';
@@ -5143,7 +5219,7 @@ function renderTripWidgetCompact(active){
     const now=new Date(); const nowM=now.getHours()*60+now.getMinutes();
     let diff=(arrM!=null&&depM!=null)?((arrM>=depM)?arrM-nowM:arrM+1440-nowM):null;
     if(diff!=null&&diff<0)diff+=1440; if(diff!=null&&diff>=1440)diff%=1440;
-    label='탑승 중'; color='var(--green)'; sub=`${ticket.toStn} 도착까지 ${diff!=null?diff+'분':'-'}`;
+    label='탑승 중'; color='var(--green)'; sub=`${ticket.toStn} ${diff!=null?fmtEta(diff, ticket.arrTime):'-'} 도착`;
   }
   return `<div class="trip-mini" style="border-color:${gc}" onclick="switchTab('ticket')">
     <div class="trip-mini-top">
@@ -5283,6 +5359,8 @@ function renderTickets(){
     const c=gc(tk.grade);
     const cancelledCls=tk.status==='cancelled'?' ticket-cancelled':'';
     const seatList=tk.seats.join(', ');
+    const _tkt=ALL_TRAINS.find(x=>x.no===tk.trainNo);
+    const tkDistKm=tk.distanceKm||(_tkt?Math.round(routeDistanceKm(_tkt,tk.fromStn,tk.toStn)):0);
     return `<div class="ticket-card${cancelledCls}">
       <div class="ticket-card-top" style="border-color:var(--c-${gcCssVar(tk.grade)})">
         <span class="ticket-grade" style="color:var(--c-${gcCssVar(tk.grade)})">${tk.grade}</span>
@@ -5302,6 +5380,7 @@ function renderTickets(){
       <div class="ticket-card-info">
         <div class="ticket-info-row"><span>탑승일</span><span>${tk.travelDate}</span></div>
         <div class="ticket-info-row"><span>좌석</span><span>${tk.seatClassLabel} · ${seatList}</span></div>
+        <div class="ticket-info-row"><span>거리 · 소요</span><span>${tkDistKm?fmtKm(tkDistKm):'-'} · ${fmtDurKor(durMin(tk.depTime,tk.arrTime))}</span></div>
         <div class="ticket-info-row"><span>인원</span><span>${tk.passengerCount}명</span></div>
         <div class="ticket-info-row"><span>운임</span><span class="ticket-fare">${tk.totalFare.toLocaleString()}원</span></div>
       </div>
