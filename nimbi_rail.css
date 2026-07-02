@@ -1186,6 +1186,9 @@ button, select, input[type=range],
 .trip-led-scr{flex:1;overflow:hidden;white-space:nowrap}
 .trip-led-txt{display:inline-block;font-family:var(--mono);font-weight:800;font-size:15px;letter-spacing:1px;color:#ffbf34;text-shadow:0 0 6px rgba(255,176,32,.6);animation:ledBlink 1.6s steps(2) infinite}
 @keyframes ledBlink{0%,80%{opacity:1}90%,100%{opacity:.55}}
+/* 긴 안내문(남은 정차역 등)은 좌우로 흐르게 */
+.trip-led-txt.led-marquee{animation:ledMarquee var(--mqt,6s) linear infinite alternate}
+@keyframes ledMarquee{0%,12%{transform:translateX(0)}88%,100%{transform:translateX(calc(-1*var(--mqd,80px)))}}
 
 /* ── 여정 위젯 액션 버튼 ── */
 .trip-widget-actions{display:flex;gap:6px;margin-top:10px}

@@ -1498,6 +1498,93 @@ function getTripTimeline3(train, status, ticket){
   };
 }
 
+// 이번 역 이후 남은 정차역 이름 목록 (다음역 ~ 하차역). LED 안내용.
+function getRemainingStops(train, ticket){
+  const allStops = train.stops.filter(s=>hasTime(s.arr)||hasTime(s.dep));
+  if(!allStops.length) return [];
+  const terminus = allStops[allStops.length-1].s;
+  const isStopStn = s => hasTime(s.dep) || s.s === terminus;
+  let stopsOnly;
+  if(ticket && ticket.fromStn && ticket.toStn){
+    const fi = allStops.findIndex(s=>s.s===ticket.fromStn);
+    const ti = allStops.findIndex(s=>s.s===ticket.toStn);
+    if(fi>=0 && ti>fi){
+      stopsOnly = allStops.slice(fi, ti+1).filter(isStopStn);
+      if(!stopsOnly.find(s=>s.s===ticket.fromStn)) stopsOnly.unshift(allStops[fi]);
+      if(!stopsOnly.find(s=>s.s===ticket.toStn)) stopsOnly.push(allStops[ti]);
+    } else stopsOnly = allStops.filter(isStopStn);
+  } else stopsOnly = allStops.filter(isStopStn);
+  if(!stopsOnly.length) return [];
+  const timeOf = s => hasTime(s.dep)?s.dep:(hasTime(s.arr)?s.arr:null);
+  const norm=[]; let off=0, prev=-1;
+  for(const s of stopsOnly){ const raw=toMin(timeOf(s)); if(raw==null){norm.push(null);continue;} if(prev>=0&&raw<prev-60)off+=1440; norm.push(raw+off); prev=raw; }
+  const nowD=new Date(); let nowM=nowD.getHours()*60+nowD.getMinutes();
+  const firstN=norm.find(n=>n!=null)??0, lastN=[...norm].reverse().find(n=>n!=null)??0;
+  if(lastN>1440 && nowM<firstN) nowM+=1440;
+  let ci=norm.findIndex(n=>n!=null && n>nowM); if(ci<0) ci=stopsOnly.length-1;
+  // 이번역(접근/정차 중) 포함하여 남은 정차역 전체
+  return stopsOnly.slice(ci).map(s=>s.s);
+}
+
+// 탑승 카드 LED 표시 순환 프레임: 이번역 → 다음역 → 행선지 → 남은 정차역(순차 누적)
+function getTripLEDFrames(active){
+  if(!active) return [];
+  const {ticket,train,status,preBoard,minsUntilDep,preArr}=active;
+  if(preBoard){
+    return [
+      {tag:'출발역', text:`${ticket.fromStn}`},
+      {tag:'행선지', text:`${ticket.toStn}행`},
+      {tag:'곧 출발', text:`${fmtEta(minsUntilDep)} 출발`},
+    ];
+  }
+  if(preArr){
+    return [ {tag:'곧 도착', text:`${ticket.toStn} · 내리는 문 확인`} ];
+  }
+  const tl=getTripTimeline3(train,status,ticket);
+  const frames=[];
+  const cur = tl&&tl.cur ? tl.cur.name : (status&&status.atStn?status.atStn:null);
+  if(cur) frames.push({tag:'이번 역', text: cur + (cur===ticket.toStn?' · 내리는 문 확인':'')});
+  if(tl&&tl.next) frames.push({tag:'다음 역', text: tl.next.name});
+  frames.push({tag:'행선지', text:`${ticket.toStn}행`});
+  const rem=getRemainingStops(train,ticket);
+  for(let k=1;k<=rem.length;k++) frames.push({tag:'남은 정차역', text: rem.slice(0,k).join(' - ')});
+  if(!frames.length) frames.push({tag:'이번 역', text:'-'});
+  return frames;
+}
+
+// LED 순환 갱신 (3초 간격, 화면에 떠있는 탑승 카드 LED를 직접 업데이트)
+let _ledFrameIdx=0;
+function applyLedMarquee(txtEl, scrEl){
+  if(!txtEl||!scrEl) return;
+  txtEl.classList.remove('led-marquee'); txtEl.style.transform='';
+  const over = txtEl.scrollWidth - scrEl.clientWidth;
+  if(over>4){
+    txtEl.style.setProperty('--mqd', (over+10)+'px');
+    txtEl.style.setProperty('--mqt', Math.max(3, (over+10)/28)+'s');
+    txtEl.classList.add('led-marquee');
+  }
+}
+function updateTripLED(){
+  const active = getActiveTripTicket();
+  if(!active) return;
+  const frames = getTripLEDFrames(active);
+  if(!frames.length) return;
+  const f = frames[_ledFrameIdx % frames.length];
+  // 상세 카드
+  document.querySelectorAll('.trip-led').forEach(led=>{
+    const tag=led.querySelector('.trip-led-tag'), txt=led.querySelector('.trip-led-txt'), scr=led.querySelector('.trip-led-scr');
+    if(tag) tag.textContent=f.tag;
+    if(txt){ txt.textContent=f.text; requestAnimationFrame(()=>applyLedMarquee(txt,scr)); }
+  });
+  // 간략 카드
+  document.querySelectorAll('.trip-mini-led').forEach(led=>{
+    const tag=led.querySelector('.trip-mini-led-tag'), txt=led.querySelector('.trip-mini-led-txt');
+    if(tag) tag.textContent=f.tag;
+    if(txt) txt.textContent=f.text;
+  });
+}
+setInterval(()=>{ _ledFrameIdx++; updateTripLED(); }, 3000);
+
 function updateTripProgressNotif(){
   if(Notification.permission!=='granted')return;
   const active=getActiveTripTicket();
@@ -5117,7 +5204,7 @@ function renderTripWidget(active){
 
   // ── 승차 준비 중 위젯 (출발 10분 전) ──
   if(preBoard){
-    const minStr = fmtEta(minsUntilDep, ticket.depTime);
+    const minStr = fmtEta(minsUntilDep);
     return `<div class="trip-widget trip-widget-preboard" onclick="jumpToTrain('${train.no}')">
       <div class="trip-widget-head">
         <span class="trip-widget-preboard-dot"></span>
@@ -5137,7 +5224,7 @@ function renderTripWidget(active){
 
   // ── 도착 준비 중 위젯 (도착 5분 전) ──
   if(active.preArr){
-    const minStr = fmtEta(active.minsUntilArr, ticket.arrTime);
+    const minStr = fmtEta(active.minsUntilArr);
     const gradeC = `var(--c-${gcCssVar(train.grade)})`;
     return `<div class="trip-widget trip-widget-prearr" onclick="jumpToTrain('${train.no}')">
       <div class="trip-widget-head">
@@ -5185,8 +5272,8 @@ function renderTripWidget(active){
     let diff=(arrM>=depM)?(arrM-nowM):(arrM+1440-nowM);
     if(diff<0) diff=0;
     if(diff>=1440) diff=diff%1440;
-    arrivalStr = diff===0 ? `${ticket.toStn} 곧 도착 (${ticket.arrTime||''})`
-                          : `${ticket.toStn} ${fmtEta(diff, ticket.arrTime)} 도착`;
+    arrivalStr = diff===0 ? `${ticket.toStn} 곧 도착`
+                          : `${ticket.toStn} ${fmtEta(diff)} 도착`;
   }
 
   const tlHtml = tl ? `
@@ -5240,8 +5327,8 @@ function renderTripWidgetCompact(active){
   const {ticket,train,status,preBoard,minsUntilDep,preArr,minsUntilArr}=active;
   const gc=GRADE_COLORS[train.grade]||'#8b949e';
   let label,color,ledTag,led,sub;
-  if(preBoard){ label='승차 준비'; color='var(--orange)'; ledTag='곧 출발'; led=`${ticket.fromStn} ${ticket.depTime||''}`; sub=`${fmtEta(minsUntilDep, ticket.depTime)} 출발 · ${ticket.toStn}행`; }
-  else if(preArr){ label='도착 준비'; color='var(--green)'; ledTag='곧 도착'; led=`${ticket.toStn}`; sub=`${fmtEta(minsUntilArr, ticket.arrTime)} 도착 · 내리는 문 확인`; }
+  if(preBoard){ label='승차 준비'; color='var(--orange)'; ledTag='곧 출발'; led=`${ticket.fromStn} ${ticket.depTime||''}`; sub=`${fmtEta(minsUntilDep)} 출발 · ${ticket.toStn}행`; }
+  else if(preArr){ label='도착 준비'; color='var(--green)'; ledTag='곧 도착'; led=`${ticket.toStn}`; sub=`${fmtEta(minsUntilArr)} 도착 · 내리는 문 확인`; }
   else {
     const tl=getTripTimeline3(train,status,ticket);
     ledTag = '이번 역';
@@ -5251,7 +5338,7 @@ function renderTripWidgetCompact(active){
     const now=new Date(); const nowM=now.getHours()*60+now.getMinutes();
     let diff=(arrM!=null&&depM!=null)?((arrM>=depM)?arrM-nowM:arrM+1440-nowM):null;
     if(diff!=null&&diff<0)diff+=1440; if(diff!=null&&diff>=1440)diff%=1440;
-    label='탑승 중'; color='var(--green)'; sub=`${ticket.toStn} ${diff!=null?fmtEta(diff, ticket.arrTime):'-'} 도착`;
+    label='탑승 중'; color='var(--green)'; sub=`${ticket.toStn} ${diff!=null?fmtEta(diff):'-'} 도착`;
   }
   return `<div class="trip-mini" style="border-color:${gc}" onclick="switchTab('ticket')">
     <div class="trip-mini-top">
@@ -5272,6 +5359,7 @@ function updateHomeTripWidget(){
   const active=getActiveTripTicket();
   box.innerHTML = active ? renderTripWidgetCompact(active) : '';
   box.style.display = active ? '' : 'none';
+  if(active) updateTripLED();
 }
 function renderTripWidgetIfVisible(){
   const tp=document.getElementById('panel-ticket');
@@ -5444,6 +5532,7 @@ function renderTickets(){
     </div>
     ${tabs}
     <div class="ticket-list">${cards}</div>`;
+  updateTripLED();
 }
 
 function toggleTicketExportMenu(){
