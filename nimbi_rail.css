@@ -1206,3 +1206,104 @@ button, select, input[type=range],
 .trip-mini-led-tag{font-size:10px;font-weight:700;color:#0d1117;background:#f0b429;border-radius:3px;padding:1px 6px;flex-shrink:0}
 .trip-mini-led-txt{font-family:var(--mono);font-weight:800;font-size:14px;letter-spacing:1px;color:#ffbf34;text-shadow:0 0 6px rgba(255,176,32,.55);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .trip-mini-sub{font-size:12px;color:var(--text2);font-weight:600}
+
+/* ══════════════════════════════════════════
+   🎫 개표/탑승 (게이트) · 편성/좌석 · 역 전광판
+   ══════════════════════════════════════════ */
+
+/* ── QR 승차권 개표 상태 배지 ── */
+.rt-board-badge{margin-left:auto;font-size:11px;font-weight:800;border-radius:20px;padding:2px 10px;letter-spacing:.5px}
+.rt-board-none{color:var(--text3);background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.14)}
+.rt-board-active{color:#3fb950;background:rgba(63,185,80,.16);border:1px solid rgba(63,185,80,.5)}
+.rt-board-done{color:#8b949e;background:rgba(139,148,158,.14);border:1px solid rgba(139,148,158,.4)}
+.rt-actions{display:flex;gap:8px;margin-top:12px}
+.rt-act-btn{flex:1;padding:11px 8px;border-radius:10px;border:1px solid var(--border);background:var(--bg3);color:var(--text1);font-size:13px;font-weight:700;font-family:var(--sans);cursor:pointer;touch-action:manipulation}
+.rt-act-board{border-color:#3fb950;background:linear-gradient(180deg,rgba(63,185,80,.22),rgba(63,185,80,.1));color:#7ee2a0}
+.rt-act-board:disabled{opacity:.5}
+
+/* ── 개표 게이트 통과 애니메이션 ── */
+.gate-overlay{position:fixed;inset:0;z-index:9800;display:flex;align-items:center;justify-content:center;background:radial-gradient(circle at 50% 40%,#0b2a1a,#05080d 70%);animation:gateFade .3s ease}
+@keyframes gateFade{from{opacity:0}to{opacity:1}}
+.gate-scene{position:relative;width:260px;height:220px}
+.gate-door{position:absolute;top:20px;width:104px;height:150px;background:linear-gradient(180deg,#20303f,#0e1620);border:2px solid #2f4a63;border-radius:10px 10px 4px 4px;box-shadow:inset 0 0 24px rgba(0,0,0,.6)}
+.gate-door.left{left:8px;border-right:3px solid #0f9d58;transform-origin:left;animation:gateOpenL .9s .35s cubic-bezier(.6,.1,.3,1) forwards}
+.gate-door.right{right:8px;border-left:3px solid #0f9d58;transform-origin:right;animation:gateOpenR .9s .35s cubic-bezier(.6,.1,.3,1) forwards}
+@keyframes gateOpenL{to{transform:translateX(-96px) perspective(300px) rotateY(-18deg)}}
+@keyframes gateOpenR{to{transform:translateX(96px) perspective(300px) rotateY(18deg)}}
+.gate-lamp{position:absolute;top:0;left:50%;transform:translateX(-50%);width:60px;height:14px;border-radius:8px;background:#f0b429;opacity:.4;box-shadow:0 0 10px #f0b429;animation:gateLamp 1.4s .4s forwards}
+@keyframes gateLamp{40%{background:#f0b429;box-shadow:0 0 10px #f0b429}100%{background:#0f9d58;box-shadow:0 0 22px #24d67f;opacity:1}}
+.gate-check{position:absolute;bottom:6px;left:50%;transform:translate(-50%,10px);font-size:15px;font-weight:800;color:#7ee2a0;opacity:0;white-space:nowrap;animation:gateCheck .5s 1s forwards}
+@keyframes gateCheck{to{transform:translate(-50%,0);opacity:1}}
+.gate-beep{position:absolute;inset:0;border-radius:50%;border:2px solid #24d67f;opacity:0;animation:gateBeep 1s .35s ease-out}
+@keyframes gateBeep{0%{transform:scale(.3);opacity:.8}100%{transform:scale(2.4);opacity:0}}
+
+/* ── 편성 정보 + 좌석 배치도 팝업 ── */
+.fmt-backdrop{position:fixed;inset:0;z-index:9590;background:rgba(0,0,0,.66);backdrop-filter:blur(6px)}
+.fmt-wrap{position:fixed;inset:0;z-index:9600;display:flex;align-items:flex-end;justify-content:center;pointer-events:none}
+.fmt-sheet{pointer-events:auto;width:100%;max-width:440px;max-height:92vh;background:var(--bg1);border:1px solid var(--border);border-radius:18px 18px 0 0;display:flex;flex-direction:column;box-shadow:0 -8px 40px rgba(0,0,0,.6)}
+.fmt-head{flex-shrink:0;padding:16px 18px 10px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px}
+.fmt-head-grade{font-size:15px;font-weight:800}
+.fmt-head-no{font-size:15px;font-weight:800;font-family:var(--mono)}
+.fmt-head-close{margin-left:auto;background:var(--bg3);border:1px solid var(--border);color:var(--text2);border-radius:8px;width:30px;height:30px;font-size:16px;cursor:pointer}
+.fmt-body{overflow-y:auto;flex:1;min-height:0;padding:14px 16px 24px}
+.fmt-sec-label{font-size:12px;font-weight:800;color:var(--text2);margin:16px 0 8px}
+.fmt-sec-label:first-child{margin-top:0}
+
+/* 편성도 (가로 스크롤 차량) */
+.fmt-train{display:flex;align-items:stretch;gap:0;overflow-x:auto;-webkit-overflow-scrolling:touch;padding:6px 2px 10px}
+.fmt-loco{flex-shrink:0;width:26px;align-self:center;height:34px;background:linear-gradient(135deg,#48586a,#28323e);border-radius:14px 4px 4px 14px;margin-right:2px}
+.fmt-car{flex-shrink:0;width:62px;border:1.5px solid var(--border);border-radius:7px;padding:6px 3px;margin-right:5px;text-align:center;background:var(--bg2);cursor:pointer;position:relative;transition:transform .1s}
+.fmt-car:active{transform:scale(.96)}
+.fmt-car.sel{border-color:var(--accent);background:rgba(56,139,253,.14);box-shadow:0 0 0 2px rgba(56,139,253,.25)}
+.fmt-car-no{font-size:14px;font-weight:800;font-family:var(--mono)}
+.fmt-car-type{font-size:9px;font-weight:700;margin-top:1px}
+.fmt-car-amen{font-size:11px;margin-top:3px;letter-spacing:1px;min-height:14px}
+.fmt-car.t-special .fmt-car-type,.fmt-car.t-premium .fmt-car-type{color:#f0b429}
+.fmt-car.t-free .fmt-car-type{color:var(--text3)}
+.fmt-car.t-general .fmt-car-type{color:var(--accent2)}
+.fmt-car-mine{position:absolute;top:-8px;left:50%;transform:translateX(-50%);font-size:9px;font-weight:800;color:#0d1117;background:#3fb950;border-radius:8px;padding:0 5px;white-space:nowrap}
+
+/* 승강장 정차위치 */
+.fmt-platform{display:flex;align-items:center;gap:6px;background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:8px 10px;font-size:12px;color:var(--text2)}
+.fmt-platform b{color:var(--text1)}
+.fmt-plat-bar{flex:1;height:8px;border-radius:4px;background:linear-gradient(90deg,#1f6feb44,#1f6feb 50%,#1f6feb44);position:relative}
+.fmt-plat-mark{position:absolute;top:-3px;width:14px;height:14px;border-radius:50%;background:#3fb950;border:2px solid var(--bg1);transform:translateX(-50%)}
+
+/* 좌석 배치도 */
+.seat-legend{display:flex;flex-wrap:wrap;gap:10px;font-size:11px;color:var(--text2);margin-bottom:10px}
+.seat-legend span{display:inline-flex;align-items:center;gap:4px}
+.seat-dot{width:12px;height:12px;border-radius:3px;display:inline-block}
+.seatmap{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:14px 10px;overflow-x:auto}
+.seatmap-dir{text-align:center;font-size:11px;font-weight:700;color:var(--text3);margin-bottom:8px;letter-spacing:2px}
+.seatmap-grid{display:inline-flex;flex-direction:column;gap:5px;min-width:100%}
+.seatmap-row{display:flex;align-items:center;gap:5px;justify-content:center}
+.seatmap-rownum{width:20px;text-align:center;font-size:10px;color:var(--text3);font-family:var(--mono);flex-shrink:0}
+.seat{width:26px;height:26px;border-radius:5px;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;background:var(--bg3);border:1px solid var(--border);color:var(--text2);position:relative}
+.seat.aisle{width:12px;background:transparent;border:none}
+.seat.win::before{content:'';position:absolute;top:2px;bottom:2px;width:2px;border-radius:1px;background:#4a9eff88}
+.seat.win.wl::before{left:-4px}.seat.win.wr::before{right:-4px}
+.seat.power{box-shadow:inset 0 0 0 1px rgba(240,180,41,.5)}
+.seat.power::after{content:'⚡';position:absolute;top:-1px;right:1px;font-size:7px;opacity:.7}
+.seat.mine{background:#3fb950;border-color:#3fb950;color:#04130a;box-shadow:0 0 0 3px rgba(63,185,80,.3);z-index:1}
+.seatmap-caption{text-align:center;font-size:11px;color:var(--text2);margin-top:10px}
+.seatmap-caption b{color:#3fb950}
+
+/* ── 역 전광판 (출발 안내 LED) ── */
+.stn-board{background:#05080c;border:1px solid #1b2a36;border-radius:12px;padding:10px 12px 12px;margin:0 16px 4px;box-shadow:inset 0 0 30px rgba(0,40,80,.25)}
+.stn-board-head{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.stn-board-title{font-size:11px;font-weight:800;color:#ffbf34;letter-spacing:1px;font-family:var(--mono);text-shadow:0 0 6px rgba(255,176,32,.5)}
+.stn-board-clock{margin-left:auto;font-size:12px;font-family:var(--mono);font-weight:700;color:#3fd08a;text-shadow:0 0 6px rgba(63,208,138,.5)}
+.stn-board-cols{display:flex;font-size:9px;color:#3a5a70;font-weight:700;padding:0 2px 5px;border-bottom:1px solid #14283a;letter-spacing:.5px}
+.stn-board-row{display:flex;align-items:center;padding:7px 2px;border-bottom:1px solid #0e1c28;font-family:var(--mono)}
+.stn-board-row:last-child{border-bottom:none}
+.sb-time{width:52px;font-size:15px;font-weight:800;color:#ffbf34;text-shadow:0 0 5px rgba(255,176,32,.45)}
+.sb-info{flex:1;min-width:0;padding-right:6px}
+.sb-dest{font-size:14px;font-weight:800;color:#e9f3ff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-family:var(--sans)}
+.sb-train{font-size:10px;color:#5a8fb5;font-weight:700}
+.sb-plat{width:30px;text-align:center;font-size:16px;font-weight:800;color:#3fd08a;text-shadow:0 0 6px rgba(63,208,138,.45)}
+.sb-plat.none{color:#3a5a70;text-shadow:none;font-size:13px}
+.sb-status{width:56px;text-align:right;font-size:11px;font-weight:800}
+.sb-st-soon{color:#ff6b6b;animation:ledBlink 1s steps(2) infinite}
+.sb-st-board{color:#3fd08a}
+.sb-st-sched{color:#8b949e}
+.stn-board-empty{text-align:center;color:#3a5a70;font-size:12px;padding:14px;font-family:var(--mono)}

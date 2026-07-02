@@ -1375,78 +1375,38 @@ function getTripTimeline3(train, status, ticket){
   }
   if(!stopsOnly.length) return null;
 
-  const findInStops = name => stopsOnly.findIndex(s=>s.s===name);
-  const getInStops  = name => stopsOnly.find(s=>s.s===name) || null;
-
-  // ── 이동 중 (prevStn → nextStn 사이) ──
-  if(!status.atStn && !status.passStn && status.nextStn){
-    // nextStn을 정차역 목록에서 탐색
-    let ni = findInStops(status.nextStn);
-    // 못 찾으면 nextStn 이후 첫 정차역으로 fallback
-    if(ni < 0){
-      const rawIdx = allStops.findIndex(s=>s.s===status.nextStn);
-      if(rawIdx >= 0){
-        for(let k=rawIdx; k<allStops.length; k++){
-          const fi = findInStops(allStops[k].s);
-          if(fi >= 0){ ni = fi; break; }
-        }
-      }
-    }
-    // prevStn도 정차역에서 탐색
-    const prevStop = status.prevStn ? getInStops(status.prevStn) : null;
-    const curStop  = ni>=0 ? stopsOnly[ni] : null;
-    const nextStop = ni>=0 && ni+1<stopsOnly.length ? stopsOnly[ni+1] : null;
-    return {
-      prev: toEntry(prevStop),
-      cur:  curStop ? {name:curStop.s, time:timeOf(curStop), isPass:false} : null,
-      next: toEntry(nextStop),
-    };
+  // ── 시간 기준 위치 계산 (통과역/status 의존성 제거, 항상 전/이번/다음 3역 확보) ──
+  // 각 정차역의 "출발(=떠나는) 시각" = dep 있으면 dep, 없으면 arr. 자정 보정 누적.
+  const normalized = [];
+  let offset = 0, prevRaw = -1;
+  for(const s of stopsOnly){
+    const raw = toMin(timeOf(s));
+    if(raw === null){ normalized.push({s, norm:null}); continue; }
+    if(prevRaw >= 0 && raw < prevRaw - 60) offset += 1440;
+    normalized.push({s, norm: raw + offset});
+    prevRaw = raw;
   }
 
-  // ── 정차 중 (atStn) ──
-  if(status.atStn){
-    const ci = findInStops(status.atStn);
-    // ci를 못 찾을 경우 allStops에서 탐색 후 주변 정차역 계산
-    if(ci < 0){
-      const ri = allStops.findIndex(s=>s.s===status.atStn);
-      const prevStop = ri>0 ? getInStops(allStops.slice(0,ri).reverse().find(s=>isStopStn(s))?.s) : null;
-      const nextStop = ri>=0 ? getInStops(allStops.slice(ri+1).find(s=>isStopStn(s))?.s) : null;
-      const curS = allStops[ri];
-      return {
-        prev: toEntry(prevStop),
-        cur:  curS ? {name:curS.s, time:timeOf(curS), isPass:false} : null,
-        next: toEntry(nextStop),
-      };
-    }
-    const prevStop = ci>0 ? stopsOnly[ci-1] : null;
-    const curStop  = stopsOnly[ci];
-    const nextStop = ci+1<stopsOnly.length ? stopsOnly[ci+1] : null;
-    return {
-      prev: toEntry(prevStop),
-      cur:  {name:curStop.s, time:timeOf(curStop), isPass:false},
-      next: toEntry(nextStop),
-    };
-  }
+  // 현재 시각 (자정 넘는 운행 보정)
+  const nowD = new Date();
+  let nowM = nowD.getHours()*60 + nowD.getMinutes();
+  const firstNorm = normalized.find(n=>n.norm!==null)?.norm ?? 0;
+  const lastNorm  = [...normalized].reverse().find(n=>n.norm!==null)?.norm ?? 0;
+  if(lastNorm > 1440 && nowM < firstNorm) nowM += 1440;
 
-  // ── 통과역 통과 중 (passStn) ──
-  if(status.passStn){
-    const passIdx = allStops.findIndex(s=>s.s===status.passStn);
-    const prevStop = status.prevStn ? getInStops(status.prevStn) : null;
-    const afterPass = [];
-    for(let i=passIdx+1; i<allStops.length; i++){
-      if(isStopStn(allStops[i])){
-        afterPass.push(allStops[i]);
-        if(afterPass.length>=2) break;
-      }
-    }
-    return {
-      prev: toEntry(prevStop),
-      cur:  afterPass[0] ? {name:afterPass[0].s, time:timeOf(afterPass[0]), isPass:false} : null,
-      next: toEntry(afterPass[1]||null),
-    };
-  }
+  // 이번역(cur) = 아직 떠나지 않은 첫 정차역 (도착 중이거나 정차 중)
+  let ci = normalized.findIndex(n => n.norm !== null && n.norm > nowM);
+  if(ci < 0) ci = stopsOnly.length - 1; // 전부 지났으면 종착역
 
-  return null;
+  const prevStop = ci > 0 ? stopsOnly[ci-1] : null;
+  const curStop  = stopsOnly[ci];
+  const nextStop = ci+1 < stopsOnly.length ? stopsOnly[ci+1] : null;
+
+  return {
+    prev: toEntry(prevStop),
+    cur:  curStop ? {name:curStop.s, time:timeOf(curStop), isPass:false} : null,
+    next: toEntry(nextStop),
+  };
 }
 
 function updateTripProgressNotif(){
@@ -4159,9 +4119,21 @@ function openQRPopup(ticketId){
   const old = document.getElementById('qr-popup-wrap');
   if(old) old.remove();
 
+  // 개표(탑승완료) 자동 전이: 하차역을 지났으면 완료 처리 후 저장
+  if(tk.board==='active' && isTicketPast(tk)){ tk.board='done'; saveTickets(tickets); }
+  const bs = ticketBoardState(tk);
+
   const qrText = `NIMBIRAIL:${tk.id}:${tk.trainNo}:${tk.fromStn}:${tk.toStn}:${tk.travelDate}:${tk.depTime}`;
   const gradeC = `var(--c-${gcCssVar(tk.grade)})`;
-  const discBadge = (tk.discount && tk.discount!=='none') ? `<span class="rt-badge">${tk.discountLabel}</span>` : '';
+  const discBadge = (tk.discount && tk.discount!=='none') ? `<span class="rt-badge" style="margin-left:0">${tk.discountLabel}</span>` : '';
+  const boardBadge = bs==='active' ? `<span class="rt-board-badge rt-board-active">● 탑승 중</span>`
+    : bs==='done' ? `<span class="rt-board-badge rt-board-done">탑승 완료</span>`
+    : `<span class="rt-board-badge rt-board-none">미개표</span>`;
+  const boardBtn = canBoardTicket(tk) && bs==='none'
+    ? `<button class="rt-act-btn rt-act-board" onclick="boardTicket('${tk.id}')">🎫 탑승하기 (개표)</button>`
+    : bs==='active'
+    ? `<button class="rt-act-btn rt-act-board" disabled>✓ 개표 완료</button>`
+    : '';
 
   const wrap = document.createElement('div');
   wrap.id = 'qr-popup-wrap';
@@ -4174,7 +4146,7 @@ function openQRPopup(ticketId){
         <div class="rt-top">
           <span class="rt-grade" style="color:${gradeC}">${tk.grade}</span>
           <span class="rt-no">${tk.trainNo}</span>
-          ${discBadge}
+          <span style="margin-left:auto;display:flex;gap:6px;align-items:center">${discBadge}${boardBadge}</span>
         </div>
         <div class="rt-route">
           <div class="rt-stn"><div class="rt-stn-name">${tk.fromStn}</div><div class="rt-stn-time">${tk.depTime||''}</div></div>
@@ -4191,6 +4163,10 @@ function openQRPopup(ticketId){
         <div class="rt-qr" id="qr-canvas-wrap"></div>
         <div class="rt-id">${tk.id}</div>
         <div class="rt-barcode">${genBarcodeHTML(tk.id+tk.trainNo)}</div>
+        <div class="rt-actions">
+          ${boardBtn}
+          <button class="rt-act-btn" onclick="openFormationPopup('${tk.id}')">🚆 편성·좌석</button>
+        </div>
       </div>
       <button class="alarm-popup-close" style="margin-top:12px" onclick="closeQRPopup()">닫기</button>
     </div>`;
@@ -4212,6 +4188,236 @@ function closeQRPopup(){
   const el = document.getElementById('qr-popup-wrap');
   if(el) el.remove();
 }
+
+// ══════════════════════════════════════════
+// 🎫 개표 / 탑승 처리 (QR 체크인)
+// ══════════════════════════════════════════
+// 하차역(도착)을 이미 지났는지 (탑승완료 판정)
+function isTicketPast(tk){
+  if(tk.status==='cancelled') return false;
+  const now=new Date(); const nowMin=now.getHours()*60+now.getMinutes();
+  const depM=toMin(tk.depTime), arrM=toMin(tk.arrTime);
+  const isOvernight = depM!==null && arrM!==null && depM>arrM;
+  const arrDate = isOvernight ? (()=>{ const d=new Date(tk.travelDate+'T00:00:00'); d.setDate(d.getDate()+1); return todayLocalStr(d); })() : tk.travelDate;
+  if(arrDate<todayLocalStr(now)) return true;
+  if(arrDate>todayLocalStr(now)) return false;
+  return arrM!==null && arrM<nowMin;
+}
+// 승차권 개표 상태: 'none'(미개표) | 'active'(탑승 중) | 'done'(탑승 완료)
+function ticketBoardState(tk){
+  if(tk.board==='done') return 'done';
+  if(isTicketPast(tk)) return 'done';
+  return tk.board==='active' ? 'active' : 'none';
+}
+// 지금 개표(탑승) 가능한가 (오늘 열차 · 출발 30분 전~하차 전)
+function canBoardTicket(tk){
+  if(tk.status!=='active' || isTicketPast(tk)) return false;
+  const now=new Date(); const nowMin=now.getHours()*60+now.getMinutes();
+  const today=todayLocalStr(now);
+  const depM=toMin(tk.depTime), arrM=toMin(tk.arrTime);
+  const isOvernight = depM!==null && arrM!==null && depM>arrM;
+  if(tk.travelDate===today){
+    if(depM===null) return true;
+    return nowMin >= depM-30;
+  }
+  // 어제 출발 · 익일 도착 열차(현재 새벽에 운행 중)
+  const yd=new Date(now); yd.setDate(yd.getDate()-1);
+  if(isOvernight && tk.travelDate===todayLocalStr(yd)) return true;
+  return false;
+}
+// 개표 실행 → 게이트 통과 연출 + 소리 → 상태 갱신
+function boardTicket(id){
+  const tickets=loadTickets();
+  const tk=tickets.find(t=>t.id===id);
+  if(!tk) return;
+  if(!canBoardTicket(tk)){ alert('아직 개표할 수 없는 승차권입니다.\n(당일 열차 · 출발 30분 전부터 개표 가능)'); return; }
+  tk.board='active';
+  saveTickets(tickets);
+  playGateSound();
+  if(navigator.vibrate) try{ navigator.vibrate([30,40,30]); }catch(e){}
+  showGateAnimation(tk, ()=>{
+    if(document.getElementById('qr-popup-wrap')) openQRPopup(id);
+    if(typeof renderTickets==='function') renderTickets();
+    if(typeof updateHomeTripWidget==='function') updateHomeTripWidget();
+  });
+}
+// 개표음 (WebAudio, 실제 개찰구 "삑" 2음)
+function playGateSound(){
+  try{
+    const AC=window.AudioContext||window.webkitAudioContext; if(!AC) return;
+    const ac=new AC();
+    const beep=(freq,start,dur)=>{
+      const o=ac.createOscillator(), g=ac.createGain();
+      o.type='square'; o.frequency.value=freq;
+      o.connect(g); g.connect(ac.destination);
+      const t0=ac.currentTime+start;
+      g.gain.setValueAtTime(0.0001,t0);
+      g.gain.exponentialRampToValueAtTime(0.2,t0+0.015);
+      g.gain.exponentialRampToValueAtTime(0.0001,t0+dur);
+      o.start(t0); o.stop(t0+dur+0.02);
+    };
+    beep(1046,0,0.11); beep(1568,0.13,0.2);
+    setTimeout(()=>{ try{ ac.close(); }catch(e){} }, 900);
+  }catch(e){}
+}
+// 게이트 통과 애니메이션 오버레이
+function showGateAnimation(tk, done){
+  document.getElementById('gate-overlay')?.remove();
+  const ov=document.createElement('div');
+  ov.id='gate-overlay'; ov.className='gate-overlay';
+  ov.innerHTML=`<div class="gate-scene">
+    <div class="gate-beep"></div>
+    <div class="gate-lamp"></div>
+    <div class="gate-door left"></div>
+    <div class="gate-door right"></div>
+    <div class="gate-check">✓ 개표 완료 · ${tk.fromStn} 승차</div>
+  </div>`;
+  document.body.appendChild(ov);
+  setTimeout(()=>{ ov.remove(); if(done) done(); }, 1750);
+}
+
+// ══════════════════════════════════════════
+// 🚆 편성 정보 + 좌석 배치도
+// ══════════════════════════════════════════
+// 편성별 편의시설 배치 (칸 번호 → 아이콘/설명). 실제 열차 감성의 대표 배치.
+function getCarAmenities(formType, composition){
+  const n=composition.length;
+  const map={};
+  const add=(car,emoji,label)=>{ if(car>=1&&car<=n){ (map[car]=map[car]||[]).push({emoji,label}); } };
+  // 카페/스낵칸 (편성 중앙 근처)
+  if(formType==='ktx-1'){ add(4,'☕','카페칸'); add(4,'♿','휠체어석'); add(15,'👶','유아동반'); add(18,'🚲','자전거'); }
+  else if(formType==='ktx-sancheon'||formType==='ktx-eum'){ add(1,'♿','휠체어석'); add(4,'☕','스낵자판기'); add(3,'👶','유아동반'); add(n-2,'🚲','자전거'); }
+  else if(formType==='itx-cc'){ add(1,'♿','휠체어석'); add(5,'🚲','자전거'); add(6,'👶','유아동반'); }
+  else if(formType==='itx-sm'){ add(1,'♿','휠체어석'); add(3,'👶','유아동반'); add(4,'🚲','자전거'); }
+  else { add(1,'♿','휠체어석'); add(4,'🚲','자전거'); }
+  return map;
+}
+// 티켓 좌석 문자열 파싱: "3호차 12A" → {car:3,row:12,col:'A'}
+function parseSeat(str){
+  if(!str) return null;
+  const m=String(str).match(/(\d+)\s*호차?\s*(\d+)\s*([A-D가-힣0-9])/);
+  if(!m) return null;
+  return { car:parseInt(m[1]), row:parseInt(m[2]), col:m[3] };
+}
+function openFormationPopup(ticketId){
+  const tk=loadTickets().find(t=>t.id===ticketId);
+  if(!tk){ return; }
+  document.getElementById('fmt-popup-wrap')?.remove();
+  const formType=getFormationType(tk.grade, tk.trainNo);
+  const comp=getCarComposition(formType);
+  const amen=getCarAmenities(formType, comp);
+  const mySeat=parseSeat(tk.seats && tk.seats[0]);
+  const myCar = mySeat ? mySeat.car : null;
+  const gradeC=`var(--c-${gcCssVar(tk.grade)})`;
+  window._fmtCtx={ formType, comp, amen, mySeat, tk };
+
+  // 편성도 (차량 카드들)
+  const carsHtml=comp.map(c=>{
+    const isMine = myCar!==null && c.car===myCar;
+    const a=(amen[c.car]||[]).map(x=>x.emoji).join('');
+    return `<div class="fmt-car t-${c.type}${isMine?' sel':''}" onclick="selectFmtCar(${c.car})" id="fmt-car-${c.car}">
+      ${isMine?'<span class="fmt-car-mine">내 좌석</span>':''}
+      <div class="fmt-car-no">${c.car}</div>
+      <div class="fmt-car-type">${c.label}</div>
+      <div class="fmt-car-amen">${a||'&nbsp;'}</div>
+    </div>`;
+  }).join('');
+
+  // 정차위치 안내: 내 칸이 편성에서 앞/중/뒤 어디인지
+  let platMsg='';
+  if(myCar!==null){
+    const ratio=myCar/comp.length;
+    const zone = ratio<=0.34?'앞쪽':ratio<=0.67?'가운데':'뒤쪽';
+    const markPct = Math.round(((myCar-0.5)/comp.length)*100);
+    platMsg=`<div class="fmt-platform">
+      <span>승강장 정차 시 내 칸(<b>${myCar}호차</b>)은 열차 <b>${zone}</b></span>
+      <span class="fmt-plat-bar"><span class="fmt-plat-mark" style="left:${markPct}%"></span></span>
+    </div>`;
+  }
+
+  const wrap=document.createElement('div');
+  wrap.id='fmt-popup-wrap';
+  wrap.innerHTML=`
+    <div class="fmt-backdrop" onclick="closeFormationPopup()"></div>
+    <div class="fmt-wrap">
+      <div class="fmt-sheet">
+        <div class="fmt-head">
+          <span class="fmt-head-grade" style="color:${gradeC}">${tk.grade}</span>
+          <span class="fmt-head-no">${tk.trainNo}</span>
+          <span style="font-size:12px;color:var(--text2)">${tk.seatClassLabel} · ${(tk.seats||[]).join(', ')}</span>
+          <button class="fmt-head-close" onclick="closeFormationPopup()">✕</button>
+        </div>
+        <div class="fmt-body">
+          <div class="fmt-sec-label">🚆 편성 안내 (${comp.length}량)</div>
+          <div class="fmt-train"><div class="fmt-loco"></div>${carsHtml}</div>
+          ${platMsg}
+          <div class="fmt-sec-label">💺 좌석 배치도</div>
+          <div id="fmt-seatmap"></div>
+        </div>
+      </div>
+    </div>`;
+  document.body.appendChild(wrap);
+  selectFmtCar(myCar!==null?myCar:comp.find(c=>c.type!=='free')?.car||1);
+}
+function selectFmtCar(car){
+  const ctx=window._fmtCtx; if(!ctx) return;
+  document.querySelectorAll('.fmt-car').forEach(el=>el.classList.remove('sel'));
+  const cEl=document.getElementById('fmt-car-'+car); if(cEl) cEl.classList.add('sel');
+  // 내 좌석 칸이면 selected 유지되도록 mine 클래스는 별도
+  const myCar = ctx.mySeat ? ctx.mySeat.car : null;
+  if(myCar!==null){ const mEl=document.getElementById('fmt-car-'+myCar); if(mEl) mEl.classList.add('sel'); }
+  const box=document.getElementById('fmt-seatmap');
+  if(box) box.innerHTML=renderSeatMap(ctx.comp, car, ctx.mySeat, ctx.amen);
+}
+function renderSeatMap(comp, car, mySeat, amenMap){
+  const c=comp.find(x=>x.car===car);
+  if(!c) return '<div style="color:var(--text3);font-size:12px;text-align:center;padding:12px">배치도 정보 없음</div>';
+  if(c.type==='free'){
+    return `<div class="seatmap"><div class="seatmap-caption">🚉 <b>${car}호차 · 자유석</b><br><span style="color:var(--text3)">지정 좌석이 없는 입석/자유석 칸입니다.</span></div></div>`;
+  }
+  const cols=c.cols||['A','B','C','D'];
+  const rows=c.rows||15;
+  const missing=new Set(c.missingSeats||[]);
+  const isMineCar = mySeat && mySeat.car===car;
+  const half=Math.ceil(cols.length/2); // 통로 위치
+  const amenTags=(amenMap[car]||[]).map(a=>`${a.emoji} ${a.label}`).join(' · ');
+
+  let rowsHtml='';
+  for(let r=1;r<=rows;r++){
+    let cells='';
+    cols.forEach((col,idx)=>{
+      const code=`${r}${col}`;
+      if(missing.has(code)){ cells+='<span class="seat" style="visibility:hidden"></span>'; }
+      else {
+        const isWindow = idx===0 || idx===cols.length-1;
+        const winSide = idx===0?'wl':'wr';
+        const mine = isMineCar && mySeat.row===r && String(mySeat.col)===String(col);
+        const cls=['seat'];
+        if(isWindow){ cls.push('win',winSide,'power'); } // 창측 콘센트
+        if(mine) cls.push('mine');
+        cells+=`<span class="${cls.join(' ')}">${col}</span>`;
+      }
+      if(idx===half-1 && cols.length>2) cells+='<span class="seat aisle"></span>';
+    });
+    rowsHtml+=`<div class="seatmap-row"><span class="seatmap-rownum">${r}</span>${cells}</div>`;
+  }
+  const seatStr=isMineCar?`${car}호차 ${mySeat.row}${mySeat.col}`:'';
+  return `
+    <div class="seat-legend">
+      <span><i class="seat-dot" style="background:#3fb950"></i>내 좌석</span>
+      <span><i class="seat-dot" style="background:var(--bg3);border:1px solid var(--border)"></i>일반</span>
+      <span>▮ 창측</span>
+      <span>⚡ 콘센트</span>
+    </div>
+    ${amenTags?`<div style="font-size:11px;color:var(--text2);margin-bottom:8px">🏷️ ${car}호차: ${amenTags}</div>`:''}
+    <div class="seatmap">
+      <div class="seatmap-dir">◀ 진행방향</div>
+      <div class="seatmap-grid">${rowsHtml}</div>
+      ${isMineCar?`<div class="seatmap-caption">내 좌석 <b>${seatStr}</b> · 창측/콘센트 표시 참고</div>`
+        :`<div class="seatmap-caption" style="color:var(--text3)">${car}호차 배치도 (내 좌석은 ${mySeat?mySeat.car+'호차':'-'})</div>`}
+    </div>`;
+}
+function closeFormationPopup(){ document.getElementById('fmt-popup-wrap')?.remove(); }
 
 // ══════════════════════════════════════════
 // 🎟️ 정기권 시스템
@@ -4822,9 +5028,9 @@ function renderTripWidget(active){
       </div>`:''}
     </div>` : '';
 
-  // 차내 LED "다음 역" 안내
-  const ledLabel = status.atStn ? '이번 역' : (status.passStn ? '통과' : '다음 역');
-  const ledStn = status.atStn ? status.atStn : (tl&&tl.next?tl.next.name:(tl&&tl.cur?tl.cur.name:'-'));
+  // 차내 LED "이번 역" 안내 (실제 열차처럼 접근/정차 중인 역을 표시)
+  const ledLabel = '이번 역';
+  const ledStn = (tl&&tl.cur?tl.cur.name:(status.atStn||'-'));
   const ledFinal = (ledStn===ticket.toStn) ? ' · 내리는 문 확인' : '';
 
   return `<div class="trip-widget" style="border-color:${gradeColor};background:linear-gradient(135deg,${gradeColor}18,${gradeColor}08)" onclick="jumpToTrain('${train.no}')">
@@ -4859,8 +5065,9 @@ function renderTripWidgetCompact(active){
   else if(preArr){ label='도착 준비'; color='var(--green)'; ledTag='곧 도착'; led=`${ticket.toStn}`; sub=`${minsUntilArr}분 후 도착 · 내리는 문 확인`; }
   else {
     const tl=getTripTimeline3(train,status,ticket);
-    ledTag = status.atStn?'이번 역':(status.passStn?'통과':'다음 역');
-    led = status.atStn?status.atStn:(tl&&tl.next?tl.next.name:(tl&&tl.cur?tl.cur.name:'-'));
+    ledTag = '이번 역';
+    led = (tl&&tl.cur?tl.cur.name:(status.atStn||'-'));
+    if(led===ticket.toStn) led += ' · 내리는 문 확인';
     const depM=toMin(ticket.depTime), arrM=toMin(ticket.arrTime);
     const now=new Date(); const nowM=now.getHours()*60+now.getMinutes();
     let diff=(arrM!=null&&depM!=null)?((arrM>=depM)?arrM-nowM:arrM+1440-nowM):null;
@@ -5009,7 +5216,11 @@ function renderTickets(){
       <div class="ticket-card-top" style="border-color:var(--c-${gcCssVar(tk.grade)})">
         <span class="ticket-grade" style="color:var(--c-${gcCssVar(tk.grade)})">${tk.grade}</span>
         <span class="ticket-no">${tk.trainNo}</span>
-        ${tk.status==='cancelled'?'<span class="ticket-status-badge">취소됨</span>':''}
+        ${tk.status==='cancelled'?'<span class="ticket-status-badge">취소됨</span>'
+          :(()=>{const bs=ticketBoardState(tk);
+            if(bs==='active')return '<span class="rt-board-badge rt-board-active" style="margin-left:auto">● 탑승 중</span>';
+            if(bs==='done')return '<span class="rt-board-badge rt-board-done" style="margin-left:auto">탑승 완료</span>';
+            return '';})()}
       </div>
       <div class="ticket-card-route">
         <div class="ticket-station"><span class="ticket-station-name">${tk.fromStn}</span><span class="ticket-time">${tk.depTime||'-'}</span></div>
@@ -6085,6 +6296,7 @@ function renderSICard(name){
           ).join('')}
         </div>
       </div>
+      <div style="padding:12px 0 4px">${_siDepartureBoardHTML(name, trains)}</div>
       ${platforms.length>0?`
       <div style="padding:12px 16px;border-bottom:1px solid var(--border)">
         <div style="font-size:12px;font-weight:700;color:var(--text2);margin-bottom:8px">🚉 홈 선택</div>
@@ -6313,6 +6525,63 @@ function _siPlatformTrainsHTML(name, trains){
     })()}
     <button onclick="searchStation('${nameEsc}')" style="width:100%;margin-top:10px;padding:9px;border-radius:8px;border:1px solid var(--accent);background:transparent;color:var(--accent);font-size:12px;cursor:pointer;font-family:var(--sans);font-weight:600">전체 시간표 보기 →</button>
   `;
+}
+
+// ── 역 전광판 (출발 안내 LED) ──
+function _siDepartureBoardHTML(name, trains){
+  const trainName=name.endsWith('역')?name.slice(0,-1):name;
+  const now=new Date();
+  const nowMin=now.getHours()*60+now.getMinutes();
+  const clock=`${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+  // 열차별 승강장 매핑
+  const platOf={};
+  if(typeof PLATFORM_DB!=='undefined' && PLATFORM_DB[name]){
+    Object.keys(PLATFORM_DB[name]).map(Number).sort((a,b)=>a-b).forEach(p=>{
+      const info=PLATFORM_DB[name][String(p)];
+      if(!info || (info.g.length===0 && info.l.length===0)) return;
+      _getFilteredTrainsForPlatform(name, trains, p).forEach(t=>{ if(platOf[t.no]===undefined) platOf[t.no]=p; });
+    });
+  }
+  // 지금 이후 출발 열차 추출
+  const rows=trains.map(t=>{
+    const s=t.stops.find(x=>x.s===trainName);
+    if(!s) return null;
+    const depStr=s.dep||s.arr; if(!depStr) return null;
+    const m=toMin(depStr); if(m===null) return null;
+    let diff=m-nowMin; if(diff< -180) diff+=1440; // 자정 넘긴 새벽 열차 보정
+    return {t,depStr,m,diff};
+  }).filter(Boolean)
+    .filter(r=>r.diff>=-2)
+    .sort((a,b)=>a.diff-b.diff)
+    .slice(0,6);
+
+  const rowsHtml = rows.length ? rows.map(r=>{
+    const t=r.t;
+    const plat=platOf[t.no];
+    let st, cls;
+    if(r.diff<=0){ st='출발'; cls='sb-st-board'; }
+    else if(r.diff<=5){ st=`${r.diff}분 후`; cls='sb-st-soon'; }
+    else { st='정시'; cls='sb-st-sched'; }
+    const isTerm = t.dest===trainName || (()=>{const s=t.stops.find(x=>x.s===trainName);return s&&s.arr&&!s.dep;})();
+    return `<div class="stn-board-row">
+      <span class="sb-time">${r.depStr}</span>
+      <span class="sb-info">
+        <span class="sb-dest">${isTerm?'당역종착':t.dest+'행'}</span>
+        <span class="sb-train">${t.grade} ${t.no}</span>
+      </span>
+      <span class="sb-plat ${plat?'':'none'}">${plat||'–'}</span>
+      <span class="sb-status ${cls}">${st}</span>
+    </div>`;
+  }).join('') : `<div class="stn-board-empty">현재 출발 예정 열차 없음</div>`;
+
+  return `<div class="stn-board">
+    <div class="stn-board-head">
+      <span class="stn-board-title">▶ 출발 안내 · DEPARTURES</span>
+      <span class="stn-board-clock">${clock}</span>
+    </div>
+    <div class="stn-board-cols"><span style="width:52px">시각</span><span style="flex:1">방면 · 열차</span><span style="width:30px;text-align:center">홈</span><span style="width:56px;text-align:right">안내</span></div>
+    ${rowsHtml}
+  </div>`;
 }
 
 function renderSIDelay(el){
