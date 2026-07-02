@@ -191,5 +191,33 @@ const NOTICES = [
 </table>
 </div><br>
 <span class="n-warn">한강로-강릉 무궁화호는 신설 계통으로, 일부 시간대 좌석이 빠르게 마감될 수 있습니다.</span>`
+  },
+  {
+    date:'2026-06-27',
+    cat:'timetable',
+    title:'충주행 ITX-마음이 개통되었습니다',
+    body:`중부내륙선을 경유하는 <strong>한강로 ↔ 충주 ITX-마음</strong>이 새로 개통되었습니다.<br><br>
+<div class="n-box">
+경유: 한강로 → 남안양 → 수원 → 오산 → 죽산 → 일죽 → 장호원 → 돈산 → 충주<br><br>
+<table>
+<tr><th>열차</th><th>방향</th><th>출발</th><th>도착</th></tr>
+<tr><td>#1882</td><td>충주→한강로</td><td>충주 5:30</td><td>한강로 6:38</td></tr>
+<tr><td>#1884</td><td>충주→한강로</td><td>충주 7:00</td><td>한강로 8:08</td></tr>
+<tr><td>#1881</td><td>한강로→충주</td><td>한강로 21:20</td><td>충주 22:28</td></tr>
+<tr><td>#1883</td><td>한강로→충주</td><td>한강로 22:10</td><td>충주 23:18</td></tr>
+</table>
+</div><br>
+편도 소요시간은 약 <strong>1시간 8분</strong>입니다. 예매 탭에서 좌석을 예약하실 수 있습니다.`
+  },
+  {
+    date:'2026-07-02',
+    cat:'update',
+    title:'역 정보·지연 예측 기능이 개선되었습니다',
+    body:`<strong>역 정보</strong>와 <strong>지연 예측</strong> 기능이 업데이트되었습니다.<br><br>
+<div class="n-box">
+🚉 역 정보 — 각 역의 경유 노선과 플랫폼 정보를 더 정확하게 확인할 수 있습니다.<br>
+📊 지연 예측 — 실제 운행 기록을 기반으로 시간대·노선별 지연 확률과 예상 지연 시간을 안내합니다.
+</div><br>
+<span class="n-highlight">자정을 넘겨 운행하는 열차의 소요시간이 올바르게 계산되도록 함께 개선되었습니다.</span>`
   }
 ];

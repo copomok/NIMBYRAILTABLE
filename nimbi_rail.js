@@ -4,6 +4,17 @@
 const GC={'KTX':'KTX','KTX-산천':'KTX','KTX-이음':'KTX','SRT':'SRT','ITX-새마을':'ITX','ITX-마음':'ITX','ITX-청춘':'ITXCC','무궁화호':'MGH'};
 const GL={'KTX':'KTX','KTX-산천':'KTX-산천','KTX-이음':'KTX-이음','SRT':'SRT','ITX-새마을':'ITX-새마을','ITX-마음':'ITX-마음','ITX-청춘':'ITX-청춘','무궁화호':'무궁화'};
 function gc(g){return GC[g]||'MGH';}
+// 등급 필터 매칭: select 값(전체/KTX/SRT/ITX-새마을/ITX-청춘/무궁화호)과 열차 등급 비교
+// KTX는 산천·이음 포함, ITX-새마을은 ITX-마음 포함(동일 등급군)
+function gradeMatch(trainGrade, filterVal){
+  if(!filterVal||filterVal==='all')return true;
+  if(filterVal==='KTX')return gc(trainGrade)==='KTX';
+  if(filterVal==='SRT')return gc(trainGrade)==='SRT';
+  if(filterVal==='ITX-새마을')return gc(trainGrade)==='ITX';
+  if(filterVal==='ITX-청춘')return trainGrade==='ITX-청춘';
+  if(filterVal==='무궁화호')return trainGrade==='무궁화호';
+  return trainGrade===filterVal;
+}
 // gc() → CSS 변수명 (KTX-산천/이음 모두 파란색)
 const GC_CSS_VAR={'KTX':'ktx','SRT':'srt','ITX':'itxsm','ITXCC':'itxcc','MGH':'mgh'};
 function gcCssVar(g){return GC_CSS_VAR[gc(g)]||'mgh';}
@@ -615,7 +626,6 @@ function renderDetail(t){
     <div id="tl-${t.no}">${_detailViewMode==='table'?renderTableView(t):rows}</div>
     <div class="ticket-cta-wrap" style="display:flex;gap:8px;flex-wrap:wrap">
       <button class="btn btn-primary ticket-cta-btn" style="flex:1" onclick="openBookingPopup('${t.no}','${first?.s||''}','${last?.s||''}','${depT}','${arrT}')">🎫 승차권 예매 (전 구간)</button>
-      <button class="btn ticket-cta-btn" style="flex:none;white-space:nowrap" onclick="openSeatWatchPopup('${t.no}','${first?.s||''}','${last?.s||''}')">🔔 여석 알림</button>
     </div>
   </div>`;
 }
@@ -640,7 +650,7 @@ function searchByStation(){
   ALL_TRAINS.forEach(t=>{
     if(dir!=='all'&&t.dir!==dir)return;
     if(lineF!=='all'&&!t.line.includes(lineF))return;
-    if(gradeF!=='all'&&gc(t.grade)!==gradeF)return;
+    if(!gradeMatch(t.grade,gradeF))return;
     const stop=t.stops.find(s=>s.s===stn);
     if(!stop||(!stop.arr&&!stop.dep))return;
     const isPass=isPassStop(t,stn);
@@ -752,7 +762,7 @@ function searchByRoute(){
   // ── 직통 탐색 ──
   let directs=[];
   ALL_TRAINS.forEach(t=>{
-    if(gradeF!=='all'&&gc(t.grade)!==gradeF)return;
+    if(!gradeMatch(t.grade,gradeF))return;
     const stops=t.stops;   const fi=stops.findIndex(s=>s.s===from);
     const ti=stops.findIndex(s=>s.s===to);
     if(fi===-1||ti===-1||fi>=ti)return;
@@ -805,7 +815,7 @@ function searchByRoute(){
   function getLegs(depStn, minDepMin){
     const legs=[];
     ALL_TRAINS.forEach(t=>{
-      if(gradeF!=='all'&&gc(t.grade)!==gradeF)return;
+      if(!gradeMatch(t.grade,gradeF))return;
       const stops=t.stops;
       const fi=stops.findIndex(s=>s.s===depStn);
       if(fi===-1||isPassStop(t,depStn))return;
@@ -3651,6 +3661,7 @@ function saveTickets(t){localStorage.setItem(TICKET_KEY,JSON.stringify(t));}
 const SEAT_CLASSES={
   general:{label:'일반실',mult:1.0},
   special:{label:'특실',mult:1.4},
+  premium:{label:'우등실',mult:1.3},
   standing:{label:'입석/자유석',mult:0.85},
 };
 function availableSeatClasses(grade){
@@ -5225,6 +5236,13 @@ function openBookTrainDetail(trainNo, from, to, depT, arrT, travelDate){
   const old = document.getElementById('book-detail-wrap');
   if(old) old.remove();
 
+  // 매진 여부 판정 (예매 탭 매진 열차 전용 여석 알림)
+  let soldOut=false;
+  try{
+    const _comp=getCarComposition(getFormationType(t.grade,t.no));
+    soldOut=(getCongestionLevel(t.no,travelDate,_comp).rate||0)>=0.98;
+  }catch(e){}
+
   const fare = calcFare(t, from, to, 'general');
   const fareSpec = availableSeatClasses(t.grade).map(c=>{
     const f = calcFare(t, from, to, c);
@@ -5267,14 +5285,20 @@ function openBookTrainDetail(trainNo, from, to, depT, arrT, travelDate){
       </div>
       <div style="flex-shrink:0;padding:8px 20px 32px;display:flex;gap:8px">
         <button class="btn" id="bdd-detail-btn" style="flex:1;justify-content:center;font-size:13px">🔍 열차 상세</button>
-        <button class="btn btn-primary" id="bdd-book-btn" style="flex:2;justify-content:center;font-size:14px">🎫 예매하기</button>
+        ${soldOut
+          ? `<button class="btn" id="bdd-watch-btn" style="flex:2;justify-content:center;font-size:14px;color:var(--red);border-color:var(--red)">🔔 여석 알림 (매진)</button>`
+          : `<button class="btn btn-primary" id="bdd-book-btn" style="flex:2;justify-content:center;font-size:14px">🎫 예매하기</button>`}
       </div>
     </div>`;
   document.body.appendChild(wrap);
   wrap.querySelector('.book-detail-backdrop').addEventListener('click', closeBookTrainDetail);
   addMobileTap(document.getElementById('bdd-close-x'), closeBookTrainDetail);
   addMobileTap(document.getElementById('bdd-detail-btn'), ()=>{ closeBookTrainDetail(); jumpToTrain(trainNo); });
-  addMobileTap(document.getElementById('bdd-book-btn'), ()=>{ closeBookTrainDetail(); _bookDetailConfirm(trainNo,from,to,depT,arrT||'',travelDate); });
+  if(soldOut){
+    addMobileTap(document.getElementById('bdd-watch-btn'), ()=>{ closeBookTrainDetail(); openSeatWatchPopup(trainNo,from,to); });
+  }else{
+    addMobileTap(document.getElementById('bdd-book-btn'), ()=>{ closeBookTrainDetail(); _bookDetailConfirm(trainNo,from,to,depT,arrT||'',travelDate); });
+  }
   setTimeout(()=>wrap.querySelector('.book-detail-panel').classList.add('open'), 10);
 }
 
