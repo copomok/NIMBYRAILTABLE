@@ -2811,24 +2811,24 @@ gyeongbuhs:{
     {n:'청도',x:615,y:683},
     {n:'부산',x:687,y:837}
     ]},
-    {color:'#a78bfa', stations:[
+    {color:'#388bfd', dash:true, stations:[
     {n:'잠실',x:228,y:136},
     {n:'수진',x:235,y:159},
     {n:'동탄',x:225,y:230},
     {n:'천안',x:239,y:342}
     ]},
-    {color:'#34d399', stations:[
+    {color:'#388bfd', dash:true, stations:[
     {n:'서인천',x:114,y:147},
     {n:'연수',x:129,y:168},
     {n:'안산',x:154,y:190},
     {n:'원평',x:187,y:214},
     {n:'천안',x:239,y:342}
     ]},
-    {color:'#fb923c', stations:[
+    {color:'#388bfd', dash:true, stations:[
     {n:'남대구',x:567,y:635},
     {n:'포항',x:757,y:547}
     ]},
-    {color:'#f472b6', stations:[
+    {color:'#388bfd', dash:true, stations:[
     {n:'청도',x:615,y:683},
     {n:'이서',x:599,y:678},
     {n:'풍각',x:587,y:685},
@@ -3042,15 +3042,35 @@ jungnaelyuk:{
 
 };
 
+// 인접 역이 너무 가까워 아이콘/텍스트가 겹치는 것 방지: 경로 방향 유지하며 최소 간격 확보
+function spreadMapRoutes(routes){
+  const MIN=18;
+  const adj={};
+  return routes.map(r=>({...r, stations:r.stations.map((s,i,arr)=>{
+    if(adj[s.n]) return {...s, x:adj[s.n].x, y:adj[s.n].y};
+    if(i===0){ adj[s.n]={x:s.x,y:s.y}; return {...s}; }
+    const pp=arr[i-1], prev=adj[pp.n]||{x:pp.x,y:pp.y};
+    let dx=s.x-prev.x, dy=s.y-prev.y, dl=Math.hypot(dx,dy), nx=s.x, ny=s.y;
+    if(dl<MIN){
+      if(dl<0.01){
+        const p2=arr[i-2]; let ux=0,uy=1;
+        if(p2){const q=adj[p2.n]||{x:p2.x,y:p2.y};const vx=prev.x-q.x,vy=prev.y-q.y,vl=Math.hypot(vx,vy);if(vl>0.01){ux=vx/vl;uy=vy/vl;}}
+        nx=prev.x+ux*MIN; ny=prev.y+uy*MIN;
+      } else { nx=prev.x+dx/dl*MIN; ny=prev.y+dy/dl*MIN; }
+    }
+    adj[s.n]={x:nx,y:ny}; return {...s, x:nx, y:ny};
+  })}));
+}
 function showMapLine(lineKey, btn){
   document.querySelectorAll('.map-line-tab').forEach(t=>t.classList.remove('active'));
   if(btn)btn.classList.add('active');
   const line=MAP_LINES[lineKey];
   if(!line)return;
 
+  const routes=spreadMapRoutes(line.routes);
   // 좌표 범위
   let minX=9999,maxX=0,minY=9999,maxY=0;
-  line.routes.forEach(r=>r.stations.forEach(s=>{
+  routes.forEach(r=>r.stations.forEach(s=>{
     minX=Math.min(minX,s.x);maxX=Math.max(maxX,s.x);
     minY=Math.min(minY,s.y);maxY=Math.max(maxY,s.y);
   }));
@@ -3069,7 +3089,7 @@ function showMapLine(lineKey, btn){
 
   // 역 좌표 수집 (첫 등장 기준)
   const stnPos={};
-  line.routes.forEach(r=>r.stations.forEach(s=>{
+  routes.forEach(r=>r.stations.forEach(s=>{
     if(!stnPos[s.n])stnPos[s.n]={x:s.x+ox,y:s.y+oy};
   }));
   _mapStnPos=stnPos;
@@ -3101,15 +3121,15 @@ function showMapLine(lineKey, btn){
     return d;
   }
 
-  line.routes.forEach(r=>{
-    const isDash=r.dash||false;
+  routes.forEach(r=>{
+    const isBranch=r.dash||false;   // 지선/경유: 본선과 같은 색, 흐릿한 실선
     const d=smoothPath(r.stations, ox, oy);
-    parts.push(`<path d="${d}" fill="none" stroke="${r.color}" stroke-width="${isDash?3:5}" stroke-linecap="round" stroke-linejoin="round" ${isDash?'stroke-dasharray="8,5"':''} opacity="${isDash?0.65:1}"/>`);
+    parts.push(`<path d="${d}" fill="none" stroke="${r.color}" stroke-width="${isBranch?4:5}" stroke-linecap="round" stroke-linejoin="round" opacity="${isBranch?0.4:1}"/>`);
   });
 
   // 역 점 + 이름 (중복 없이)
   const rendered=new Set();
-  line.routes.forEach(r=>{
+  routes.forEach(r=>{
     r.stations.forEach((s,i)=>{
       if(rendered.has(s.n))return;
       rendered.add(s.n);
@@ -3118,13 +3138,13 @@ function showMapLine(lineKey, btn){
       const r2=isEnd?7:5;
       const sw=isEnd?3:2;
       // 히트 영역
-      parts.push(`<circle cx="${x}" cy="${y}" r="${r2+8}" fill="transparent" style="cursor:pointer" onclick="openMapPopup('${s.n}','${line.name}')"/>`);
+      parts.push(`<circle cx="${x}" cy="${y}" r="${r2+8}" fill="transparent" style="cursor:pointer" onclick="openStationDetail('${s.n}')"/>`);
       // 역 점
       parts.push(`<circle cx="${x}" cy="${y}" r="${r2}" fill="#161b22" stroke="${r.color}" stroke-width="${sw}" pointer-events="none"/>`);
       // 역명
       // 인접 역 방향 기반 텍스트 위치 결정
       // 이전/다음 역의 x 평균으로 텍스트를 반대쪽에 배치
-      const allStnList=line.routes.flatMap(r=>r.stations);
+      const allStnList=routes.flatMap(r=>r.stations);
       const sIdx=allStnList.findIndex(q=>q.n===s.n);
       const prevS=sIdx>0?allStnList[sIdx-1]:null;
       const nextS=sIdx<allStnList.length-1?allStnList[sIdx+1]:null;
