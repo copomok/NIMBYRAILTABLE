@@ -4766,8 +4766,8 @@ function renderTripWidget(active){
   }
 
   const tl=getTripTimeline3(train,status,ticket);
-  // 열차 등급 CSS 색상값 (타임라인·진행바에 활용)
-  const gradeColor = `var(--c-${gcCssVar(train.grade)})`;
+  // 열차 등급 색상값(hex) — 타임라인 선·진행바에 알파 접미사(55/aa 등)를 붙이므로 hex여야 함
+  const gradeColor = GRADE_COLORS[train.grade] || '#8b949e';
 
   let stateLabel;
   if(status.atStn){
@@ -4849,12 +4849,42 @@ function renderTripWidget(active){
   </div>`;
 }
 
-// 홈(열차 탭) 상단 여정 카드 갱신
+// 홈(열차 탭)용 간략 여정 카드 (상세는 승차권 탭)
+function renderTripWidgetCompact(active){
+  if(!active) return '';
+  const {ticket,train,status,preBoard,minsUntilDep,preArr,minsUntilArr}=active;
+  const gc=GRADE_COLORS[train.grade]||'#8b949e';
+  let label,color,ledTag,led,sub;
+  if(preBoard){ label='승차 준비'; color='var(--orange)'; ledTag='곧 출발'; led=`${ticket.fromStn} ${ticket.depTime||''}`; sub=`${minsUntilDep}분 후 출발 · ${ticket.toStn}행`; }
+  else if(preArr){ label='도착 준비'; color='var(--green)'; ledTag='곧 도착'; led=`${ticket.toStn}`; sub=`${minsUntilArr}분 후 도착 · 내리는 문 확인`; }
+  else {
+    const tl=getTripTimeline3(train,status,ticket);
+    ledTag = status.atStn?'이번 역':(status.passStn?'통과':'다음 역');
+    led = status.atStn?status.atStn:(tl&&tl.next?tl.next.name:(tl&&tl.cur?tl.cur.name:'-'));
+    const depM=toMin(ticket.depTime), arrM=toMin(ticket.arrTime);
+    const now=new Date(); const nowM=now.getHours()*60+now.getMinutes();
+    let diff=(arrM!=null&&depM!=null)?((arrM>=depM)?arrM-nowM:arrM+1440-nowM):null;
+    if(diff!=null&&diff<0)diff+=1440; if(diff!=null&&diff>=1440)diff%=1440;
+    label='탑승 중'; color='var(--green)'; sub=`${ticket.toStn} 도착까지 ${diff!=null?diff+'분':'-'}`;
+  }
+  return `<div class="trip-mini" style="border-color:${gc}" onclick="switchTab('ticket')">
+    <div class="trip-mini-top">
+      <span class="trip-mini-dot" style="background:${color}"></span>
+      <span class="trip-mini-label" style="color:${color}">${label}</span>
+      <span class="trip-mini-grade" style="color:${gc}">${train.grade}</span>
+      <span class="trip-mini-no">${train.no}</span>
+      <span class="trip-mini-go">승차권 ›</span>
+    </div>
+    <div class="trip-mini-led"><span class="trip-mini-led-tag">${ledTag}</span><span class="trip-mini-led-txt">${led}</span></div>
+    <div class="trip-mini-sub">${sub}</div>
+  </div>`;
+}
+// 홈(열차 탭) 상단 여정 카드 갱신 (간략)
 function updateHomeTripWidget(){
   const box=document.getElementById('home-trip-widget');
   if(!box) return;
   const active=getActiveTripTicket();
-  box.innerHTML = active ? renderTripWidget(active) : '';
+  box.innerHTML = active ? renderTripWidgetCompact(active) : '';
   box.style.display = active ? '' : 'none';
 }
 function renderTripWidgetIfVisible(){
