@@ -4204,7 +4204,7 @@ function openQRPopup(ticketId){
 function genBarcodeHTML(str){
   let h=0; for(let i=0;i<str.length;i++) h=(h*31+str.charCodeAt(i))>>>0;
   let seed=h||12345, out='';
-  for(let i=0;i<46;i++){ seed=(seed*1103515245+12345)>>>0; const w=1+((seed>>8)%3); const on=((seed>>4)&3)!==0; out+=`<i style="width:${w}px;background:${on?'#0b0e12':'transparent'}"></i>`; }
+  for(let i=0;i<46;i++){ seed=(seed*1103515245+12345)>>>0; const w=1+((seed>>8)%3); const on=((seed>>4)&3)!==0; out+=`<i style="width:${w}px;background:${on?'#e6edf3':'transparent'}"></i>`; }
   return out;
 }
 
