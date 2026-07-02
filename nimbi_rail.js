@@ -3760,12 +3760,25 @@ function calcFare(t, fromStn, toStn, seatClass){
 }
 
 // 좌석 자동 배정 (가상 - 좌석배치도 연동 전까지 임시)
-function randomSeat(seatClass){
+function randomSeat(seatClass, trainNo){
   if(seatClass==='standing') return '입석';
-  const car=Math.floor(Math.random()*8)+1;
-  const row=Math.floor(Math.random()*20)+1;
-  const col=['A','B','C','D'][Math.floor(Math.random()*4)];
-  return `${car}호차 ${row}${col}`;
+  // 편성 기반으로 실제 좌석 형식(연번/열+문자)에 맞춰 배정
+  const grade = trainNo ? (ALL_TRAINS.find(t=>t.no===trainNo)||{}).grade : null;
+  const comp = getCarComposition(getFormationType(grade||'무궁화호', trainNo));
+  let pool = getCarsForClass(comp, seatClass);
+  if(!pool.length) pool = comp.filter(c=>c.type!=='free');
+  if(!pool.length) return `1호차 1A`;
+  const c = pool[Math.floor(Math.random()*pool.length)];
+  if(c.numbered){
+    const total=c.totalSeats||72;
+    return `${c.car}호차 ${Math.floor(Math.random()*total)+1}`;
+  }
+  const cols=c.cols||['A','B','C','D'];
+  const missing=new Set(c.missingSeats||[]);
+  const rows=c.rows||15;
+  let row,col,code,guard=0;
+  do{ row=Math.floor(Math.random()*rows)+1; col=cols[Math.floor(Math.random()*cols.length)]; code=`${row}${col}`; guard++; }while(missing.has(code)&&guard<25);
+  return `${c.car}호차 ${row}${col}`;
 }
 
 function genTicketId(){
@@ -4295,9 +4308,16 @@ function getCarAmenities(formType, composition){
 // 티켓 좌석 문자열 파싱: "3호차 12A" → {car:3,row:12,col:'A'}
 function parseSeat(str){
   if(!str) return null;
-  const m=String(str).match(/(\d+)\s*호차?\s*(\d+)\s*([A-D가-힣0-9])/);
-  if(!m) return null;
-  return { car:parseInt(m[1]), row:parseInt(m[2]), col:m[3] };
+  const carM=String(str).match(/(\d+)\s*호차?/);
+  const car=carM?parseInt(carM[1]):null;
+  const rest=String(str).replace(/\d+\s*호차?/,'').trim();
+  // 열+문자 (예: 12A)
+  const lm=rest.match(/(\d+)\s*([A-Da-d])/);
+  if(lm) return { car, row:parseInt(lm[1]), col:lm[2].toUpperCase() };
+  // 연번 좌석 (예: 45, 45번)
+  const nm=rest.match(/(\d+)/);
+  if(nm) return { car, seatNum:parseInt(nm[1]) };
+  return car!==null ? { car } : null;
 }
 function openFormationPopup(ticketId){
   const tk=loadTickets().find(t=>t.id===ticketId);
@@ -4375,15 +4395,69 @@ function renderSeatMap(comp, car, mySeat, amenMap){
   if(c.type==='free'){
     return `<div class="seatmap"><div class="seatmap-caption">🚉 <b>${car}호차 · 자유석</b><br><span style="color:var(--text3)">지정 좌석이 없는 입석/자유석 칸입니다.</span></div></div>`;
   }
+  const isMineCar = mySeat && mySeat.car===car;
+  const amenTags=(amenMap[car]||[]).map(a=>`${a.emoji} ${a.label}`).join(' · ');
+  const legend=`
+    <div class="seat-legend">
+      <span><i class="seat-dot" style="background:#3fb950"></i>내 좌석</span>
+      <span><i class="seat-dot" style="background:var(--bg3);border:1px solid var(--border)"></i>일반</span>
+      <span>▮ 창측</span>
+      <span>⚡ 콘센트</span>
+    </div>
+    ${amenTags?`<div style="font-size:11px;color:var(--text2);margin-bottom:8px">🏷️ ${car}호차: ${amenTags}</div>`:''}`;
+
+  // ── 무궁화: 좌석 1~72 연번 배치 ──
+  if(c.numbered){
+    const per=c.perRow||4;
+    const total=c.totalSeats||72;
+    const half=Math.ceil(per/2);
+    const nRows=Math.ceil(total/per);
+    let rowsHtml='', n=1;
+    for(let r=1;r<=nRows;r++){
+      let cells='';
+      for(let idx=0;idx<per;idx++){
+        if(n>total){ cells+='<span class="seat" style="visibility:hidden"></span>'; }
+        else{
+          const isWindow=idx===0||idx===per-1;
+          const winSide=idx===0?'wl':'wr';
+          const mine=isMineCar && mySeat.seatNum===n;
+          const cls=['seat'];
+          if(isWindow) cls.push('win',winSide,'power');
+          if(mine) cls.push('mine');
+          cells+=`<span class="${cls.join(' ')}">${n}</span>`;
+          n++;
+        }
+        if(idx===half-1) cells+='<span class="seat aisle"></span>';
+      }
+      rowsHtml+=`<div class="seatmap-row">${cells}</div>`;
+    }
+    const seatStr=isMineCar&&mySeat.seatNum?`${car}호차 ${mySeat.seatNum}번`:'';
+    return `${legend}
+    <div class="seatmap">
+      <div class="seatmap-dir">◀ 진행방향</div>
+      <div class="seatmap-grid">${rowsHtml}</div>
+      ${isMineCar&&mySeat.seatNum?`<div class="seatmap-caption">내 좌석 <b>${seatStr}</b> · 창측/콘센트 표시 참고</div>`
+        :`<div class="seatmap-caption" style="color:var(--text3)">${car}호차 배치도 (좌석 1~${total}번)</div>`}
+    </div>`;
+  }
+
+  // ── KTX/ITX 계열: 열+좌석문자(A~D), 순/역방향 구분 ──
   const cols=c.cols||['A','B','C','D'];
   const rows=c.rows||15;
+  const revRows=c.revRows||0; // 앞쪽 몇 열이 역방향인지
   const missing=new Set(c.missingSeats||[]);
-  const isMineCar = mySeat && mySeat.car===car;
   const half=Math.ceil(cols.length/2); // 통로 위치
-  const amenTags=(amenMap[car]||[]).map(a=>`${a.emoji} ${a.label}`).join(' · ');
+  const faceOf = r => r<=revRows ? 'rev' : 'fwd';
 
-  let rowsHtml='';
+  let rowsHtml='', prevFace=null;
   for(let r=1;r<=rows;r++){
+    const face=faceOf(r);
+    if(face!==prevFace){
+      // 방향 그룹 헤더 (해당 방향 열 범위)
+      let end=r; while(end+1<=rows && faceOf(end+1)===face) end++;
+      rowsHtml+=`<div class="seatmap-face">${r}–${end}열 · ${face==='fwd'?'순방향 ◀':'역방향 ▶'}</div>`;
+      prevFace=face;
+    }
     let cells='';
     cols.forEach((col,idx)=>{
       const code=`${r}${col}`;
@@ -4402,14 +4476,7 @@ function renderSeatMap(comp, car, mySeat, amenMap){
     rowsHtml+=`<div class="seatmap-row"><span class="seatmap-rownum">${r}</span>${cells}</div>`;
   }
   const seatStr=isMineCar?`${car}호차 ${mySeat.row}${mySeat.col}`:'';
-  return `
-    <div class="seat-legend">
-      <span><i class="seat-dot" style="background:#3fb950"></i>내 좌석</span>
-      <span><i class="seat-dot" style="background:var(--bg3);border:1px solid var(--border)"></i>일반</span>
-      <span>▮ 창측</span>
-      <span>⚡ 콘센트</span>
-    </div>
-    ${amenTags?`<div style="font-size:11px;color:var(--text2);margin-bottom:8px">🏷️ ${car}호차: ${amenTags}</div>`:''}
+  return `${legend}
     <div class="seatmap">
       <div class="seatmap-dir">◀ 진행방향</div>
       <div class="seatmap-grid">${rowsHtml}</div>
@@ -4710,36 +4777,40 @@ function getFormationType(grade, trainNo){
 function getCarComposition(formType){
   switch(formType){
     case 'ktx-1':
+      // 일반실: 1~8열 역방향, 9~15열 순방향
       return [
         {car:1,type:'special',label:'특실',rows:11,cols:['A','B','C'],totalSeats:33},
         {car:2,type:'special',label:'특실',rows:11,cols:['A','B','C'],totalSeats:33},
         {car:3,type:'special',label:'특실',rows:11,cols:['A','B','C'],totalSeats:33},
-        ...Array.from({length:15},(_,i)=>({car:i+4,type:'general',label:'일반실',rows:17,cols:['A','B','C','D'],totalSeats:66})),
+        ...Array.from({length:15},(_,i)=>({car:i+4,type:'general',label:'일반실',rows:15,cols:['A','B','C','D'],revRows:8,totalSeats:60})),
         {car:19,type:'free',label:'자유석',totalSeats:0},
         {car:20,type:'free',label:'자유석',totalSeats:0},
       ];
     case 'ktx-sancheon':
+      // 일반실: 1~15열 전부 순방향
       return [
         {car:1,type:'special',label:'특실',rows:11,cols:['A','B','C'],totalSeats:33},
-        ...Array.from({length:7},(_,i)=>({car:i+2,type:'general',label:'일반실',rows:17,cols:['A','B','C','D'],totalSeats:66})),
+        ...Array.from({length:7},(_,i)=>({car:i+2,type:'general',label:'일반실',rows:15,cols:['A','B','C','D'],revRows:0,totalSeats:60})),
         {car:9,type:'free',label:'자유석',totalSeats:0},
         {car:10,type:'free',label:'자유석',totalSeats:0},
       ];
     case 'ktx-eum':
+      // 일반실: 1~19열 전부 순방향, 19열은 A·B만 (C·D 없음)
       return [
         {car:1,type:'premium',label:'우등실',rows:12,cols:['A','B','C','D'],totalSeats:46,
          missingSeats:['12A','12B']},
-        ...Array.from({length:5},(_,i)=>({car:i+2,type:'general',label:'일반실',rows:17,cols:['A','B','C','D'],totalSeats:66})),
+        ...Array.from({length:5},(_,i)=>({car:i+2,type:'general',label:'일반실',rows:19,cols:['A','B','C','D'],revRows:0,missingSeats:['19C','19D'],totalSeats:74})),
         {car:7,type:'free',label:'자유석',totalSeats:0},
         {car:8,type:'free',label:'자유석',totalSeats:0},
       ];
     case 'itx-cc':
-      return Array.from({length:10},(_,i)=>({car:i+1,type:'general',label:'일반실',rows:13,cols:['A','B','C','D'],totalSeats:52}));
+      return Array.from({length:10},(_,i)=>({car:i+1,type:'general',label:'일반실',rows:13,cols:['A','B','C','D'],revRows:0,totalSeats:52}));
     case 'itx-sm':
-      return Array.from({length:6},(_,i)=>({car:i+1,type:'general',label:'일반실',rows:13,cols:['A','B','C','D'],totalSeats:52}));
+      return Array.from({length:6},(_,i)=>({car:i+1,type:'general',label:'일반실',rows:13,cols:['A','B','C','D'],revRows:0,totalSeats:52}));
     case 'mgh':
     default:
-      return Array.from({length:8},(_,i)=>({car:i+1,type:'general',label:'일반실',rows:20,cols:['1','2','3','4'],totalSeats:80}));
+      // 무궁화: 좌석 1~72 연번, 4석 1열
+      return Array.from({length:8},(_,i)=>({car:i+1,type:'general',label:'일반실',numbered:true,perRow:4,totalSeats:72}));
   }
 }
 
