@@ -95,30 +95,55 @@ function haversineKm(a,b){
   const h=Math.sin(dLat/2)**2+Math.cos(a.lat*r)*Math.cos(b.lat*r)*Math.sin(dLon/2)**2;
   return 2*R*Math.asin(Math.min(1,Math.sqrt(h)));
 }
-// 열차 경로(fromStn~toStn)를 따라 실제 거리(km). 좌표 이상치(스파이크)는 이웃으로 보간.
+// 좌표가 신뢰 불가한 역(동명이역 충돌 등): DB 좌표를 무시하고 소요시간으로 거리 추정
+// - 장성/장흥/춘양: 남부(경전·호남) 노선과 북부(교외·영동) 노선에 같은 이름이 존재해
+//   STATION_DB의 단일 좌표가 한쪽만 가리킴 → 노선별 소요시간 기반으로 위치/거리 추정
+const UNTRUSTED_COORDS=new Set(['장성','장흥','춘양']);
+// 등급별 대표 표정속도(km/h) — 좌표 없는 구간을 시간으로 환산할 때 사용
+const GRADE_KMH={'KTX':190,'KTX-산천':190,'KTX-이음':150,'SRT':190,'ITX-새마을':100,'ITX-마음':100,'ITX-청춘':100,'무궁화호':75};
+
+// 열차 경로(fromStn~toStn) 실제 거리(km).
+// 좌표 이상치/미확보 구간은 "해당 열차의 소요시간 × 구간 평균속도"로 추정.
 function routeDistanceKm(t, fromStn, toStn){
   if(!t||!t.stops)return 0;
-  const stops=t.stops;
-  const fi=stops.findIndex(s=>s.s===fromStn), ti=stops.findIndex(s=>s.s===toStn);
+  const S=t.stops;
+  const fi=S.findIndex(s=>s.s===fromStn), ti=S.findIndex(s=>s.s===toStn);
   if(fi<0||ti<0||ti<=fi)return 0;
-  // 좌표 시퀀스 수집 (없는 역 제외)
-  const pts=[];
-  for(let i=fi;i<=ti;i++){ const c=_stnCoord(stops[i].s); if(c) pts.push({lat:c.lat,lon:c.lon}); }
-  if(pts.length<2)return 0;
-  // 좌표 이상치 보정 (정상 최장 구간 ~93km, 이상치는 240km+ → 150km 기준으로 분리)
-  const SPIKE=150;
-  // 내부 스파이크: 앞뒤로 크게 튀었다 되돌아오는 좌표 → 이웃 중점으로 대체
-  for(let i=1;i+1<pts.length;i++){
-    const a=haversineKm(pts[i-1],pts[i]), b=haversineKm(pts[i],pts[i+1]), by=haversineKm(pts[i-1],pts[i+1]);
-    if(a>SPIKE&&b>SPIKE&&by<a*0.5){ pts[i]={lat:(pts[i-1].lat+pts[i+1].lat)/2, lon:(pts[i-1].lon+pts[i+1].lon)/2}; }
+  const kmh=GRADE_KMH[t.grade]||90, vpm=kmh/60; // km/분 폴백
+  // 구간 내 정거장: 좌표(신뢰 불가/미확보 시 null)와 시각(분)
+  const E=[];
+  for(let i=fi;i<=ti;i++){
+    let c=_stnCoord(S[i].s);
+    if(UNTRUSTED_COORDS.has(S[i].s)) c=null; // 신뢰 불가 좌표 무시 → 시간으로 추정
+    const m=toMin(hasTime(S[i].dep)?S[i].dep:(hasTime(S[i].arr)?S[i].arr:null));
+    E.push({c, m});
   }
-  // 끝점 스파이크: 첫/마지막 좌표가 이웃과 150km 이상 떨어지면 이웃에 흡수
-  if(pts.length>=2 && haversineKm(pts[0],pts[1])>SPIKE) pts[0]={...pts[1]};
-  const L=pts.length;
-  if(L>=2 && haversineKm(pts[L-1],pts[L-2])>SPIKE) pts[L-1]={...pts[L-2]};
+  const SPIKE=150; // 정상 최장 구간 ~93km, 좌표 오류는 240km+
+  let vi=E.map((e,i)=>e.c?i:-1).filter(i=>i>=0);
+  // 남은 좌표 중 내부 스파이크(앞뒤로 튀었다 되돌아옴) → 무시(이웃 직선으로 흡수)
+  for(let k=1;k+1<vi.length;k++){
+    const Lc=E[vi[k-1]].c, Mc=E[vi[k]].c, Rc=E[vi[k+1]].c;
+    if(haversineKm(Lc,Mc)>SPIKE && haversineKm(Mc,Rc)>SPIKE && haversineKm(Lc,Rc)<Math.min(haversineKm(Lc,Mc),haversineKm(Mc,Rc))) E[vi[k]].c=null;
+  }
+  vi=E.map((e,i)=>e.c?i:-1).filter(i=>i>=0);
+  // 좌표가 1개 이하 → 전체를 소요시간으로 환산
+  if(vi.length<2){
+    const span=(E[E.length-1].m!=null&&E[0].m!=null)?((E[E.length-1].m-E[0].m+1440)%1440):0;
+    return span>0 ? span*vpm : 0;
+  }
+  // 유효 좌표 폴리라인
   let total=0;
-  for(let i=1;i<pts.length;i++) total+=haversineKm(pts[i-1],pts[i]);
-  return total;
+  for(let k=1;k<vi.length;k++) total+=haversineKm(E[vi[k-1]].c, E[vi[k]].c);
+  // 폴리라인 구간의 평균속도(km/분)
+  const fM=E[vi[0]].m, lM=E[vi[vi.length-1]].m;
+  const cMin=(fM!=null&&lM!=null)?((lM-fM+1440)%1440):0;
+  const avg=cMin>0 ? total/cMin : vpm;
+  // 앞/뒤 좌표 없는 구간(시종착이 이상치/미확보) → 시간 × 평균속도로 보충
+  let add=0;
+  const fromM=E[0].m, toM=E[E.length-1].m;
+  if(vi[0]>0 && fM!=null && fromM!=null){ const g=(fM-fromM+1440)%1440; if(g>=0&&g<600) add+=g*avg; }
+  if(vi[vi.length-1]<E.length-1 && toM!=null && lM!=null){ const g=(toM-lM+1440)%1440; if(g>=0&&g<600) add+=g*avg; }
+  return total+add;
 }
 // 열차 전체(시종착) 거리·표정속도
 function trainStats(t){
