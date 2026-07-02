@@ -303,6 +303,7 @@ function switchTab(n){
   if(n==='stats') renderStats();
   if(n==='notice') renderNotice();
   if(n==='ticket') renderTickets();
+  if(n==='train') updateHomeTripWidget();
   if(n==='book') renderBookTab();
   if(n==='delay'){const el=document.getElementById('result-delay');if(el)renderSIDelay(el);}
   
@@ -3767,6 +3768,16 @@ const SEAT_CLASSES={
   premium:{label:'우등실',mult:1.3},
   standing:{label:'입석/자유석',mult:0.85},
 };
+// 운임 할인 (여객 유형별)
+const DISCOUNTS={
+  none:{label:'일반',rate:0},
+  child:{label:'어린이',rate:0.5,note:'만 6~12세'},
+  infant:{label:'유아',rate:0.75,note:'만 6세 미만'},
+  senior:{label:'경로우대',rate:0.3,note:'만 65세 이상'},
+  disabled:{label:'장애인',rate:0.5,note:'복지'},
+  veteran:{label:'국가유공',rate:0.5,note:'유공자'},
+};
+function applyDiscount(fare,key){const d=DISCOUNTS[key]||DISCOUNTS.none;return Math.round(fare*(1-d.rate)/100)*100;}
 function availableSeatClasses(grade){
   if(grade==='KTX'||grade==='KTX-산천'||grade==='SRT') return ['special','general','standing'];
   if(grade==='KTX-이음') return ['premium','general','standing'];
@@ -3868,6 +3879,12 @@ function openBookingPopup(trainNo, fromStn, toStn, depTime, arrTime, travelDate)
             <button class="booking-stepper-btn" id="booking-stepper-plus">+</button>
           </div>
         </div>
+        <div class="booking-passenger-section">
+          <div class="booking-section-label">할인 <span style="font-size:11px;color:var(--text3);font-weight:400">(승차권에 표시)</span></div>
+          <div class="booking-discount-options" id="booking-discount-options">
+            ${Object.entries(DISCOUNTS).map(([k,d])=>`<button class="booking-discount-option${k==='none'?' active':''}" data-discount="${k}">${d.label}${d.rate?`<span class="booking-discount-rate">${Math.round(d.rate*100)}%↓</span>`:''}</button>`).join('')}
+          </div>
+        </div>
       </div>
       <div style="flex-shrink:0;padding-top:8px">
         <button class="btn btn-primary booking-confirm-btn" id="booking-confirm-btn" disabled>좌석 등급을 선택하세요</button>
@@ -3885,6 +3902,9 @@ function openBookingPopup(trainNo, fromStn, toStn, depTime, arrTime, travelDate)
   document.getElementById('booking-seat-select-btn')?.addEventListener('click', ()=>openSeatSelectorFromBooking(trainNo));
   document.getElementById('booking-stepper-minus')?.addEventListener('click', ()=>changePassengerCount(-1));
   document.getElementById('booking-stepper-plus')?.addEventListener('click', ()=>changePassengerCount(1));
+  wrap.querySelectorAll('.booking-discount-option').forEach(btn=>{
+    btn.addEventListener('click', ()=>selectDiscount(btn, btn.dataset.discount));
+  });
   const _confirmBtn=document.getElementById('booking-confirm-btn');
   if(_confirmBtn) addMobileTap(_confirmBtn, doConfirmBooking);
   const _cancelBtn=document.getElementById('booking-cancel-btn');
@@ -3897,6 +3917,18 @@ function openBookingPopup(trainNo, fromStn, toStn, depTime, arrTime, travelDate)
   })();
   window._bookingSeatClass=null;
   window._bookingPassengerCount=1;
+  window._bookingDiscount='none';
+}
+function selectDiscount(btn,key){
+  document.querySelectorAll('.booking-discount-option').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  window._bookingDiscount=key;
+  // 좌석 등급별 표시 요금을 할인 반영해 갱신
+  const a=window._bArgs||{}; const t=ALL_TRAINS.find(x=>x.no===a.trainNo);
+  if(t) document.querySelectorAll('.booking-seat-option').forEach(b=>{
+    const c=b.dataset.class; const fe=b.querySelector('.booking-seat-fare');
+    if(fe) fe.textContent=applyDiscount(calcFare(t,a.fromStn,a.toStn,c),key).toLocaleString()+'원';
+  });
 }
 function closeBookingPopup(){
   const w=document.getElementById('booking-popup-wrap');
@@ -3931,7 +3963,9 @@ function confirmBooking(trainNo,fromStn,toStn,depTime,arrTime){
   const seatClass=window._bookingSeatClass;
   if(!seatClass){alert('좌석 등급을 선택해주세요.');return;}
   const count=window._bookingPassengerCount||1;
-  const fare=calcFare(t,fromStn,toStn,seatClass);
+  const discount=window._bookingDiscount||'none';
+  const baseFare=calcFare(t,fromStn,toStn,seatClass);
+  const fare=applyDiscount(baseFare,discount);
 
   const dateInput=document.getElementById('booking-date');
   const travelDate=dateInput&&dateInput.value?dateInput.value:todayLocalStr();
@@ -3976,6 +4010,7 @@ function confirmBooking(trainNo,fromStn,toStn,depTime,arrTime){
     seatClass,seatClassLabel:SEAT_CLASSES[seatClass].label,
     seats,passengerCount:count,
     farePerPerson:fare,totalFare:fare*count,
+    discount,discountLabel:DISCOUNTS[discount].label,baseFarePerPerson:baseFare,
     bookedAt:Date.now(),
     travelDate,
     status:'active', // active | used | cancelled
@@ -4003,7 +4038,7 @@ function confirmBooking(trainNo,fromStn,toStn,depTime,arrTime){
   }catch(e){console.warn('자동 알람 설정 실패:',e);}
 
   closeBookingPopup();
-  alert(`예매가 완료되었습니다!\n${travelDate} · ${fromStn} → ${toStn}\n${SEAT_CLASSES[seatClass].label} ${count}명 · ${(fare*count).toLocaleString()}원`);
+  alert(`예매가 완료되었습니다!\n${travelDate} · ${fromStn} → ${toStn}\n${SEAT_CLASSES[seatClass].label} ${count}명${discount!=='none'?' · '+DISCOUNTS[discount].label:''} · ${(fare*count).toLocaleString()}원`);
   if(document.getElementById('panel-ticket')?.classList.contains('active')) renderTickets();
   // 왕복 예매 콜백 (편도 예매 완료 후 복편 조회)
   if(window._afterBookingCallback){
@@ -4125,29 +4160,52 @@ function openQRPopup(ticketId){
   if(old) old.remove();
 
   const qrText = `NIMBIRAIL:${tk.id}:${tk.trainNo}:${tk.fromStn}:${tk.toStn}:${tk.travelDate}:${tk.depTime}`;
+  const gradeC = `var(--c-${gcCssVar(tk.grade)})`;
+  const discBadge = (tk.discount && tk.discount!=='none') ? `<span class="rt-badge">${tk.discountLabel}</span>` : '';
 
   const wrap = document.createElement('div');
   wrap.id = 'qr-popup-wrap';
   wrap.innerHTML = `
     <div class="alarm-popup-backdrop" onclick="closeQRPopup()"></div>
-    <div class="alarm-popup qr-popup">
-      <div class="qr-popup-header">
-        <div class="qr-popup-grade" style="color:var(--c-${gcCssVar(tk.grade)})">${tk.grade} ${tk.trainNo}</div>
-        <div class="qr-popup-route">${tk.fromStn} → ${tk.toStn}</div>
-        <div class="qr-popup-date">${tk.travelDate} · ${tk.depTime} 출발</div>
+    <div class="rail-ticket-wrap">
+      <div class="rail-ticket" style="--tk:${gradeC}">
+        <div class="rt-holo"></div>
+        <div class="rt-watermark"><span>${('NIMBIRAIL · 재판매금지 · '+tk.id+' · ').repeat(28)}</span></div>
+        <div class="rt-top">
+          <span class="rt-grade" style="color:${gradeC}">${tk.grade}</span>
+          <span class="rt-no">${tk.trainNo}</span>
+          ${discBadge}
+        </div>
+        <div class="rt-route">
+          <div class="rt-stn"><div class="rt-stn-name">${tk.fromStn}</div><div class="rt-stn-time">${tk.depTime||''}</div></div>
+          <div class="rt-arrow" style="color:${gradeC}">→</div>
+          <div class="rt-stn rt-stn-r"><div class="rt-stn-name">${tk.toStn}</div><div class="rt-stn-time">${tk.arrTime||''}</div></div>
+        </div>
+        <div class="rt-meta">
+          <div><span class="rt-k">날짜</span><span class="rt-v">${tk.travelDate}</span></div>
+          <div><span class="rt-k">좌석</span><span class="rt-v">${tk.seatClassLabel} · ${tk.seats.join(', ')}</span></div>
+          <div><span class="rt-k">인원</span><span class="rt-v">${tk.passengerCount}명${discBadge?' · '+tk.discountLabel:''}</span></div>
+          <div><span class="rt-k">운임</span><span class="rt-v">${(tk.totalFare||0).toLocaleString()}원</span></div>
+        </div>
+        <div class="rt-perf"></div>
+        <div class="rt-qr" id="qr-canvas-wrap"></div>
+        <div class="rt-id">${tk.id}</div>
+        <div class="rt-barcode">${genBarcodeHTML(tk.id+tk.trainNo)}</div>
       </div>
-      <div class="qr-canvas-wrap" id="qr-canvas-wrap"></div>
-      <div class="qr-popup-id">${tk.id}</div>
-      <div class="qr-popup-seat">${tk.seatClassLabel} · ${tk.seats.join(', ')} · ${tk.passengerCount}명</div>
-      <button class="alarm-popup-close" onclick="closeQRPopup()">닫기</button>
+      <button class="alarm-popup-close" style="margin-top:12px" onclick="closeQRPopup()">닫기</button>
     </div>`;
   document.body.appendChild(wrap);
 
-  // Canvas 삽입
-  const canvasWrap = document.getElementById('qr-canvas-wrap');
-  const canvas = generateQRCanvas(qrText, 200);
-  canvas.style.cssText = 'border-radius:8px;display:block';
-  canvasWrap.appendChild(canvas);
+  const canvas = generateQRCanvas(qrText, 168);
+  canvas.style.cssText = 'border-radius:8px;display:block;margin:0 auto';
+  document.getElementById('qr-canvas-wrap').appendChild(canvas);
+}
+// 티켓 ID 기반 의사 바코드 생성 (연출용)
+function genBarcodeHTML(str){
+  let h=0; for(let i=0;i<str.length;i++) h=(h*31+str.charCodeAt(i))>>>0;
+  let seed=h||12345, out='';
+  for(let i=0;i<46;i++){ seed=(seed*1103515245+12345)>>>0; const w=1+((seed>>8)%3); const on=((seed>>4)&3)!==0; out+=`<i style="width:${w}px;background:${on?'#0b0e12':'transparent'}"></i>`; }
+  return out;
 }
 
 function closeQRPopup(){
@@ -4764,6 +4822,11 @@ function renderTripWidget(active){
       </div>`:''}
     </div>` : '';
 
+  // 차내 LED "다음 역" 안내
+  const ledLabel = status.atStn ? '이번 역' : (status.passStn ? '통과' : '다음 역');
+  const ledStn = status.atStn ? status.atStn : (tl&&tl.next?tl.next.name:(tl&&tl.cur?tl.cur.name:'-'));
+  const ledFinal = (ledStn===ticket.toStn) ? ' · 내리는 문 확인' : '';
+
   return `<div class="trip-widget" style="border-color:${gradeColor};background:linear-gradient(135deg,${gradeColor}18,${gradeColor}08)" onclick="jumpToTrain('${train.no}')">
     <div class="trip-widget-head">
       <span class="trip-widget-live-dot"></span>
@@ -4771,6 +4834,7 @@ function renderTripWidget(active){
       <span class="trip-widget-grade" style="color:${gradeColor}">${train.grade}</span>
       <span class="trip-widget-no">${train.no}</span>
     </div>
+    <div class="trip-led"><span class="trip-led-tag">${ledLabel}</span><span class="trip-led-scr"><span class="trip-led-txt">${ledStn}${ledFinal}</span></span></div>
     <div class="trip-widget-state">${stateLabel}</div>
     ${arrivalStr?`<div class="trip-widget-arrival">${arrivalStr}</div>`:''}
     ${tlHtml}
@@ -4778,14 +4842,75 @@ function renderTripWidget(active){
       <div class="trip-widget-progress-bar"><div class="trip-widget-progress-fill" style="width:${pct}%;background:linear-gradient(90deg,${gradeColor},${gradeColor}aa)"></div></div>
       <div class="trip-widget-progress-labels"><span>${ticket.fromStn} ${ticket.depTime||''}</span><span>${ticket.toStn} ${ticket.arrTime||''}</span></div>
     </div>
+    <div class="trip-widget-actions">
+      <button class="trip-widget-btn" onclick="event.stopPropagation();switchTab('map');setTimeout(()=>trackTrainOnMap('${train.no}'),120)">🗺️ 실시간 위치</button>
+      <button class="trip-widget-btn${liveActEnabled()?' on':''}" onclick="event.stopPropagation();toggleLiveActivity()">📲 라이브${liveActEnabled()?' 켜짐':''}</button>
+    </div>
   </div>`;
 }
 
+// 홈(열차 탭) 상단 여정 카드 갱신
+function updateHomeTripWidget(){
+  const box=document.getElementById('home-trip-widget');
+  if(!box) return;
+  const active=getActiveTripTicket();
+  box.innerHTML = active ? renderTripWidget(active) : '';
+  box.style.display = active ? '' : 'none';
+}
 function renderTripWidgetIfVisible(){
-  const panel=document.getElementById('panel-ticket');
-  if(panel&&panel.classList.contains('active')) renderTickets();
+  const tp=document.getElementById('panel-ticket');
+  if(tp&&tp.classList.contains('active')) renderTickets();
+  const hp=document.getElementById('panel-train');
+  if(hp&&hp.classList.contains('active')) updateHomeTripWidget();
+  updateLiveActivity();
 }
 setInterval(renderTripWidgetIfVisible, 30000); // 30초마다 위젯 갱신
+setTimeout(()=>{ updateHomeTripWidget(); updateLiveActivity(); }, 800);
+
+// ── 📲 라이브 활동 (잠금화면 진행 알림) ──
+// 웹 한계상 iOS는 네이티브 라이브 액티비티 불가 → 안드로이드 지속 알림 / 앱 열림 시 갱신
+const LIVEACT_KEY='nimbi_liveact';
+function liveActEnabled(){ return localStorage.getItem(LIVEACT_KEY)==='1'; }
+function toggleLiveActivity(){
+  if(!liveActEnabled()){
+    if(!('Notification'in window)){ alert('이 브라우저는 알림을 지원하지 않습니다.'); return; }
+    Notification.requestPermission().then(p=>{
+      if(p==='granted'){ localStorage.setItem(LIVEACT_KEY,'1'); _liveActLast=''; updateLiveActivity();
+        alert('📲 라이브 활동을 켰습니다.\n탑승 중이면 도착까지 남은 시간을 알림으로 표시합니다.\n\n※ Android는 잠금화면에 표시됩니다.\n※ iOS는 앱이 열려 있을 때만 갱신됩니다(웹 제약).'); }
+      else alert('알림 권한이 거부되어 켤 수 없습니다.');
+      updateHomeTripWidget();
+    });
+  } else {
+    localStorage.setItem(LIVEACT_KEY,'0');
+    if('serviceWorker'in navigator) navigator.serviceWorker.ready.then(r=>r.getNotifications({tag:'trip-live'}).then(ns=>ns.forEach(n=>n.close()))).catch(()=>{});
+    alert('라이브 활동을 껐습니다.');
+    updateHomeTripWidget();
+  }
+}
+let _liveActLast='';
+function updateLiveActivity(){
+  if(!liveActEnabled()||!('serviceWorker'in navigator)||!('Notification'in window)||Notification.permission!=='granted') return;
+  const active=getActiveTripTicket();
+  navigator.serviceWorker.ready.then(reg=>{
+    if(!active){ reg.getNotifications({tag:'trip-live'}).then(ns=>ns.forEach(n=>n.close())); _liveActLast=''; return; }
+    const {ticket,train,status,preBoard,minsUntilDep}=active;
+    let title, body;
+    if(preBoard){ title=`${train.grade} ${train.no} · 승차 준비`; body=`${ticket.fromStn} ${ticket.depTime} 출발 · ${minsUntilDep}분 전`; }
+    else {
+      const tl=getTripTimeline3(train,status,ticket);
+      const next=(status&&status.atStn)?`${status.atStn} 정차`:(tl&&tl.next?`다음 역 ${tl.next.name}`:'이동 중');
+      const arrM=toMin(ticket.arrTime), depM=toMin(ticket.depTime);
+      const now=new Date(); const nowM=now.getHours()*60+now.getMinutes();
+      let diff = arrM!=null&&depM!=null ? ((arrM>=depM)?arrM-nowM:arrM+1440-nowM) : null;
+      if(diff!=null&&diff<0) diff+=1440; if(diff!=null&&diff>=1440) diff%=1440;
+      title=`${train.grade} ${train.no} · ${ticket.toStn}행`;
+      body=`${next} · 도착까지 ${diff!=null?diff+'분':'-'}`;
+    }
+    const key=title+'|'+body;
+    if(key===_liveActLast) return; _liveActLast=key;
+    reg.showNotification(title,{ body, tag:'trip-live', renotify:false, silent:true, requireInteraction:true }).catch(()=>{});
+  }).catch(()=>{});
+}
 
 function renderTickets(){
   const el=document.getElementById('result-ticket');
