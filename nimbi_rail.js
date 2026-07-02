@@ -4594,6 +4594,64 @@ function openFormationPopup(ticketId){
   document.body.appendChild(wrap);
   selectFmtCar(myCar!==null?myCar:comp.find(c=>c.type!=='free')?.car||1);
 }
+// 승차권 카드 뒷면용 편성/좌석 콘텐츠 (내 칸 중심, 비대화형)
+function renderFormationContent(tk){
+  const formType=getFormationType(tk.grade, tk.trainNo);
+  const comp=getCarComposition(formType);
+  const amen=getCarAmenities(formType, comp);
+  const mySeat=parseSeat(tk.seats && tk.seats[0]);
+  const myCar = mySeat ? mySeat.car : (comp.find(c=>c.type!=='free')?.car||1);
+  const carsHtml=comp.map(c=>{
+    const isMine = mySeat && c.car===mySeat.car;
+    const a=(amen[c.car]||[]).map(x=>x.emoji).join('');
+    return `<div class="fmt-car t-${c.type}${isMine?' sel':''}">
+      ${isMine?'<span class="fmt-car-mine">내 좌석</span>':''}
+      <div class="fmt-car-no">${c.car}</div>
+      <div class="fmt-car-type">${c.label}</div>
+      <div class="fmt-car-amen">${a||'&nbsp;'}</div>
+    </div>`;
+  }).join('');
+  let platMsg='';
+  if(mySeat){
+    const ratio=myCar/comp.length;
+    const zone = ratio<=0.34?'앞쪽':ratio<=0.67?'가운데':'뒤쪽';
+    const markPct = Math.round(((myCar-0.5)/comp.length)*100);
+    platMsg=`<div class="fmt-platform">
+      <span>승강장 정차 시 내 칸(<b>${myCar}호차</b>)은 열차 <b>${zone}</b></span>
+      <span class="fmt-plat-bar"><span class="fmt-plat-mark" style="left:${markPct}%"></span></span>
+    </div>`;
+  }
+  return `
+    <div class="fmt-sec-label">🚆 편성 안내 (${comp.length}량)</div>
+    <div class="fmt-train"><div class="fmt-loco"></div>${carsHtml}</div>
+    ${platMsg}
+    <div class="fmt-sec-label">💺 좌석 배치도 · ${myCar}호차</div>
+    ${renderSeatMap(comp, myCar, mySeat, amen)}
+  `;
+}
+// 승차권 카드 뒤집기 (앞↔뒤). 뒷면 편성/좌석은 최초 뒤집을 때 렌더
+function flipTicketCard(id, ev){
+  if(ev) ev.stopPropagation();
+  const flip=document.getElementById('tcf-'+id); if(!flip) return;
+  const inner=flip.querySelector('.tcard-inner');
+  const front=flip.querySelector('.tcard-front');
+  const back=flip.querySelector('.tcard-back');
+  if(!inner||!front||!back) return;
+  const willFlip=!flip.classList.contains('flipped');
+  if(willFlip){
+    const body=document.getElementById('tcbody-'+id);
+    if(body && !body.dataset.rendered){
+      const tk=loadTickets().find(t=>t.id===id);
+      if(tk){ body.innerHTML=renderFormationContent(tk); body.dataset.rendered='1'; }
+    }
+  }
+  inner.style.height=(willFlip?front.offsetHeight:back.offsetHeight)+'px';
+  requestAnimationFrame(()=>{
+    flip.classList.toggle('flipped', willFlip);
+    const h = willFlip ? Math.min(back.scrollHeight, Math.round(window.innerHeight*0.78)) : front.offsetHeight;
+    inner.style.height=h+'px';
+  });
+}
 function selectFmtCar(car){
   const ctx=window._fmtCtx; if(!ctx) return;
   document.querySelectorAll('.fmt-car').forEach(el=>el.classList.remove('sel'));
@@ -5093,24 +5151,35 @@ function _renderSeatMap(wrap,t,trainNo,travelDate,seatClass,validCars,booked,com
   }
 
   function seatHTML(){
-    let html='';
+    const cols=car.cols;
+    const half=Math.ceil(cols.length/2);
+    const faceOf=r=>r<=revRows?'rev':'fwd';
+    let html='', prevFace=null;
     for(let r=1;r<=car.rows;r++){
-      const leftCols=car.cols.slice(0,2);
-      const rightCols=car.cols.slice(2);
-      const dirIcon=showDir?(r<=revRows?'▽':'▲'):null;
-      const mkBtn=(col)=>{
-        if(missing.has(`${r}${col}`)) return `<div class="seat-cell seat-empty"></div>`;
-        const id=seatId(car,r,col);
-        const label=car.numbered?`${seatSeqNum(car,r,col)}`:`${r}${col}`;
-        const isB=booked.has(id), isS=_selectedSeats.includes(id);
-        return `<button class="seat-btn${isB?' booked':isS?' selected':''}"
-          ${isB?'disabled':''} onclick="toggleSeatBtn('${id}',${count})">${label}</button>`;
-      };
-      html+=`<div class="seat-row">
-        <div class="seat-group">${leftCols.map(mkBtn).join('')}</div>
-        ${showDir?`<div class="seat-dir">${dirIcon||''}</div>`:''}
-        <div class="seat-group">${rightCols.map(mkBtn).join('')}</div>
-      </div>`;
+      if(showDir){
+        const face=faceOf(r);
+        if(face!==prevFace){
+          let end=r; while(end+1<=car.rows && faceOf(end+1)===face) end++;
+          html+=`<div class="seatmap-face">${r}–${end}열 · ${face==='fwd'?'순방향 ◀':'역방향 ▶'}</div>`;
+          prevFace=face;
+        }
+      }
+      let cells='';
+      cols.forEach((col,idx)=>{
+        if(missing.has(`${r}${col}`)){ cells+='<span class="seat seat-pick seat-empty" style="visibility:hidden"></span>'; }
+        else {
+          const id=seatId(car,r,col);
+          const label=car.numbered?`${seatSeqNum(car,r,col)}`:`${r}${col}`;
+          const isB=booked.has(id), isS=_selectedSeats.includes(id);
+          const isWin=idx===0||idx===cols.length-1, winSide=idx===0?'wl':'wr';
+          const cls=['seat','seat-pick'];
+          if(isWin) cls.push('win',winSide,'power');
+          if(isB) cls.push('taken'); else if(isS) cls.push('sel');
+          cells+=`<button class="${cls.join(' ')}" data-sid="${id}" ${isB?'disabled':''} onclick="toggleSeatBtn('${id}',${count})">${label}</button>`;
+        }
+        if(idx===half-1 && cols.length>2) cells+='<span class="seat aisle"></span>';
+      });
+      html+=`<div class="seatmap-row"><span class="seatmap-rownum">${r}</span>${cells}</div>`;
     }
     return html;
   }
@@ -5135,14 +5204,15 @@ function _renderSeatMap(wrap,t,trainNo,travelDate,seatClass,validCars,booked,com
       <span class="seat-legend-item"><span class="seat-dot available"></span>선택가능</span>
       <span class="seat-legend-item"><span class="seat-dot selected"></span>선택됨</span>
       <span class="seat-legend-item"><span class="seat-dot booked"></span>예약됨</span>
-      ${showDir?'<span class="seat-legend-item">▲순방향 ▽역방향</span>':''}
+      <span class="seat-legend-item">▮ 창측</span>
+      <span class="seat-legend-item">⚡ 콘센트</span>
     </div>
     <div class="seat-label-row">
       <div style="font-size:11px;color:var(--text3)">창측 내측</div>
-      <div></div>
+      <div style="font-size:11px;color:var(--text3);font-weight:700">◀ 진행방향</div>
       <div style="font-size:11px;color:var(--text3)">내측 창측</div>
     </div>
-    <div class="seat-map">${seatHTML()}</div>
+    <div class="seat-map"><div class="seatmap-grid pick">${seatHTML()}</div></div>
     <div class="seat-footer">
       <div id="seat-footer-info" style="flex:1;font-size:12px;color:var(--text2)">좌석을 선택해주세요 (${count}명)</div>
       <button class="seat-confirm-btn" id="seat-confirm-btn" disabled style="opacity:.5"
@@ -5161,9 +5231,9 @@ window.toggleSeatBtn=function(id,count){
   const idx=_selectedSeats.indexOf(id);
   if(idx>=0) _selectedSeats.splice(idx,1);
   else { if(_selectedSeats.length>=count) _selectedSeats.shift(); _selectedSeats.push(id); }
-  document.querySelectorAll('.seat-btn:not(.booked)').forEach(btn=>{
-    const m=(btn.getAttribute('onclick')||'').match(/'([^']+)'/);
-    if(m) btn.className='seat-btn'+(_selectedSeats.includes(m[1])?' selected':'');
+  document.querySelectorAll('.seat-pick').forEach(btn=>{
+    if(btn.classList.contains('taken')) return;
+    btn.classList.toggle('sel', _selectedSeats.includes(btn.dataset.sid));
   });
   _updateSeatFooter(count);
 };
@@ -5502,8 +5572,10 @@ function renderTickets(){
     const seatList=tk.seats.join(', ');
     const _tkt=ALL_TRAINS.find(x=>x.no===tk.trainNo);
     const tkDistKm=tk.distanceKm||(_tkt?Math.round(routeDistanceKm(_tkt,tk.fromStn,tk.toStn)):0);
-    return `<div class="ticket-card${cancelledCls}">
-      <div class="ticket-card-top" style="border-color:var(--c-${gcCssVar(tk.grade)})">
+    return `<div class="tcard-flip" id="tcf-${tk.id}">
+     <div class="tcard-inner">
+      <div class="tcard-face tcard-front ticket-card${cancelledCls}" onclick="flipTicketCard('${tk.id}',event)">
+       <div class="ticket-card-top" style="border-color:var(--c-${gcCssVar(tk.grade)})">
         <span class="ticket-grade" style="color:var(--c-${gcCssVar(tk.grade)})">${tk.grade}</span>
         <span class="ticket-no">${tk.trainNo}</span>
         ${tk.status==='cancelled'?'<span class="ticket-status-badge">취소됨</span>'
@@ -5511,28 +5583,38 @@ function renderTickets(){
             if(bs==='active')return '<span class="rt-board-badge rt-board-active" style="margin-left:auto">● 탑승 중</span>';
             if(bs==='done')return '<span class="rt-board-badge rt-board-done" style="margin-left:auto">탑승 완료</span>';
             return '';})()}
-      </div>
-      <div class="ticket-card-route">
+       </div>
+       <div class="ticket-card-route">
         <div class="ticket-station"><span class="ticket-station-name">${tk.fromStn}</span><span class="ticket-time">${tk.depTime||'-'}</span></div>
         <div class="ticket-arrow">→</div>
         <div class="ticket-station"><span class="ticket-station-name">${tk.toStn}</span><span class="ticket-time">${tk.arrTime||'-'}</span></div>
-      </div>
-      <div class="ticket-card-divider"></div>
-      <div class="ticket-card-info">
+       </div>
+       <div class="ticket-card-divider"></div>
+       <div class="ticket-card-info">
         <div class="ticket-info-row"><span>탑승일</span><span>${tk.travelDate}</span></div>
         <div class="ticket-info-row"><span>좌석</span><span>${tk.seatClassLabel} · ${seatList}</span></div>
         <div class="ticket-info-row"><span>거리 · 소요</span><span>${tkDistKm?fmtKm(tkDistKm):'-'} · ${fmtDurKor(durMin(tk.depTime,tk.arrTime))}</span></div>
         <div class="ticket-info-row"><span>인원</span><span>${tk.passengerCount}명</span></div>
         <div class="ticket-info-row"><span>운임</span><span class="ticket-fare">${tk.totalFare.toLocaleString()}원</span></div>
-      </div>
-      <div class="ticket-card-id" style="display:flex;align-items:center;justify-content:space-between">
+       </div>
+       <div class="ticket-card-id" style="display:flex;align-items:center;justify-content:space-between">
         <span>예매번호 ${tk.id}</span>
-        <button class="btn qr-btn" onclick="openQRPopup('${tk.id}')" title="QR코드 보기">🔲 QR</button>
+        <button class="btn qr-btn" onclick="event.stopPropagation();openQRPopup('${tk.id}')" title="QR코드 보기">🔲 QR</button>
+       </div>
+       <div class="ticket-card-actions">
+        ${tk.status==='active'&&_ticketFilterTab==='upcoming'?`<button class="btn" style="font-size:12px;padding:6px 12px" onclick="event.stopPropagation();cancelTicket('${tk.id}')">예매 취소</button>`:''}
+        <button class="btn" style="font-size:12px;padding:6px 12px" onclick="event.stopPropagation();deleteTicket('${tk.id}')">기록 삭제</button>
+       </div>
+       <div class="tcard-flip-hint">탭하여 좌석·편성 보기 ⟳</div>
       </div>
-      <div class="ticket-card-actions">
-        ${tk.status==='active'&&_ticketFilterTab==='upcoming'?`<button class="btn" style="font-size:12px;padding:6px 12px" onclick="cancelTicket('${tk.id}')">예매 취소</button>`:''}
-        <button class="btn" style="font-size:12px;padding:6px 12px" onclick="deleteTicket('${tk.id}')">기록 삭제</button>
+      <div class="tcard-face tcard-back" id="tcback-${tk.id}">
+       <div class="tcard-back-head">
+        <span>🚆 ${tk.grade} ${tk.trainNo} · ${tk.seatClassLabel} ${seatList}</span>
+        <button class="tcard-back-btn" onclick="flipTicketCard('${tk.id}',event)">← 승차권</button>
+       </div>
+       <div class="tcard-back-body" id="tcbody-${tk.id}"></div>
       </div>
+     </div>
     </div>`;
   }).join('');
 

@@ -617,6 +617,20 @@ tbody td{padding:10px 14px;font-size:13px;white-space:nowrap}
 .ticket-card{background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:16px;position:relative}
 .ticket-card.ticket-cancelled{opacity:.55}
 
+/* ── 승차권 카드 뒤집기 (앞:승차권 / 뒤:편성·좌석) ── */
+.tcard-flip{perspective:1600px}
+.tcard-inner{position:relative;transition:transform .6s cubic-bezier(.45,.05,.25,1),height .35s ease;transform-style:preserve-3d}
+.tcard-flip.flipped .tcard-inner{transform:rotateY(180deg)}
+.tcard-face{position:absolute;top:0;left:0;width:100%;backface-visibility:hidden;-webkit-backface-visibility:hidden}
+.tcard-front{position:relative;cursor:pointer}
+.tcard-front.ticket-card{margin:0}
+.tcard-flip-hint{margin-top:10px;text-align:center;font-size:11px;color:var(--text3);font-weight:600}
+.tcard-back{transform:rotateY(180deg);background:var(--bg2);border:1px solid var(--border);border-radius:14px;overflow-y:auto;-webkit-overflow-scrolling:touch;max-height:78vh}
+.tcard-back-head{position:sticky;top:0;z-index:2;display:flex;align-items:center;gap:8px;padding:12px 14px;background:var(--bg2);border-bottom:1px solid var(--border)}
+.tcard-back-head span{flex:1;font-size:12px;font-weight:700;color:var(--text1);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tcard-back-btn{flex-shrink:0;background:var(--bg3);border:1px solid var(--border);color:var(--text2);border-radius:8px;padding:5px 10px;font-size:12px;font-weight:700;cursor:pointer;font-family:var(--sans)}
+.tcard-back-body{padding:14px 14px 20px}
+
 .ticket-card-top{display:flex;align-items:center;gap:10px;padding-bottom:10px;border-bottom:2px solid var(--border);margin-bottom:12px}
 .ticket-grade{font-size:14px;font-weight:700}
 .ticket-no{font-size:12px;color:var(--text3);font-family:var(--mono)}
@@ -1292,6 +1306,14 @@ button, select, input[type=range],
 .seat.mine{background:#3fb950;border-color:#3fb950;color:#04130a;box-shadow:0 0 0 3px rgba(63,185,80,.3);z-index:1}
 .seatmap-caption{text-align:center;font-size:11px;color:var(--text2);margin-top:10px}
 .seatmap-caption b{color:#3fb950}
+/* 예매 좌석 선택(배치도 디자인, 터치 크기·상태) */
+.seatmap-grid.pick{display:inline-flex;flex-direction:column;gap:6px;min-width:100%}
+.seatmap-grid.pick .seatmap-row{gap:6px}
+.seat.seat-pick{width:38px;height:38px;font-size:12px;cursor:pointer;font-family:var(--mono);transition:transform .1s,background .1s}
+.seat.seat-pick:active{transform:scale(.92)}
+.seat.seat-pick.taken{opacity:.25;cursor:not-allowed;background:var(--bg3)}
+.seat.seat-pick.sel{background:#3fb950;border-color:#3fb950;color:#04130a;box-shadow:0 0 0 3px rgba(63,185,80,.3);z-index:1}
+.seatmap-grid.pick .seat.aisle{width:16px}
 
 /* ── 역 전광판 (출발 안내 LED) ── */
 .stn-board{background:#05080c;border:1px solid #1b2a36;border-radius:12px;padding:10px 12px 12px;margin:0 16px 4px;box-shadow:inset 0 0 30px rgba(0,40,80,.25)}
