@@ -1526,8 +1526,8 @@ function getRemainingStops(train, ticket){
   return stopsOnly.slice(ci).map(s=>s.s);
 }
 
-// 탑승 카드 LED 표시 순환 프레임: 이번역 → 다음역 → 행선지 → 남은 정차역(순차 누적)
-function getTripLEDFrames(active){
+// 탑승 카드 LED 표시 순환 프레임: 이번역 → 다음역 → 행선지 → 남은 정차역(너비 맞춤 슬라이딩)
+function getTripLEDFrames(active, ledWidth){
   if(!active) return [];
   const {ticket,train,status,preBoard,minsUntilDep,preArr}=active;
   if(preBoard){
@@ -1547,36 +1547,57 @@ function getTripLEDFrames(active){
   if(tl&&tl.next) frames.push({tag:'다음 역', text: tl.next.name});
   frames.push({tag:'행선지', text:`${ticket.toStn}행`});
   const rem=getRemainingStops(train,ticket);
-  for(let k=1;k<=rem.length;k++) frames.push({tag:'남은 정차역', text: rem.slice(0,k).join(' - ')});
+  if(rem.length){
+    const wins = computeStopWindows(rem, ledWidth);
+    wins.forEach(w=>frames.push({tag:'남은 정차역', text:w}));
+  }
   if(!frames.length) frames.push({tag:'이번 역', text:'-'});
   return frames;
 }
 
+// 남은 정차역: 화면 너비에 맞춰 앞에서부터 채우고, 넘치면 맨 앞 역을 지우며 한 칸씩 전진
+// 예: 천안 서청주 대전 옥천 → 서청주 대전 옥천 영동 → 대전 옥천 영동 김천 …
+const LED_SEP=' · ';
+let _ledCanvas=null;
+function measureLedText(str){
+  try{
+    if(!_ledCanvas) _ledCanvas=document.createElement('canvas');
+    const ctx=_ledCanvas.getContext('2d');
+    ctx.font="800 15px ui-monospace, SFMono-Regular, 'JetBrains Mono', monospace";
+    return ctx.measureText(str).width + str.length*1; // letter-spacing ~1px 보정
+  }catch(e){ return str.length*11; }
+}
+function computeStopWindows(stops, maxWidth){
+  const out=[]; const n=stops.length;
+  if(!n) return out;
+  if(!maxWidth || maxWidth<20) maxWidth=240;
+  let start=0, guard=0;
+  while(guard++<300){
+    let end=start;
+    while(end+1<n && measureLedText(stops.slice(start,end+2).join(LED_SEP))<=maxWidth) end++;
+    out.push(stops.slice(start,end+1).join(LED_SEP));
+    if(end>=n-1) break;       // 마지막 역까지 표시했으면 종료
+    start++;
+  }
+  return out;
+}
+
 // LED 순환 갱신 (3초 간격, 화면에 떠있는 탑승 카드 LED를 직접 업데이트)
 let _ledFrameIdx=0;
-function applyLedMarquee(txtEl, scrEl){
-  if(!txtEl||!scrEl) return;
-  txtEl.classList.remove('led-marquee'); txtEl.style.transform='';
-  const over = txtEl.scrollWidth - scrEl.clientWidth;
-  if(over>4){
-    txtEl.style.setProperty('--mqd', (over+10)+'px');
-    txtEl.style.setProperty('--mqt', Math.max(3, (over+10)/28)+'s');
-    txtEl.classList.add('led-marquee');
-  }
-}
 function updateTripLED(){
   const active = getActiveTripTicket();
   if(!active) return;
-  const frames = getTripLEDFrames(active);
+  // 남은 정차역 창을 실제 LED 폭에 맞추기 위해 폭 측정
+  const scrEl=document.querySelector('.trip-led-scr')||document.querySelector('.trip-mini-led-txt');
+  const width=scrEl?scrEl.clientWidth:240;
+  const frames = getTripLEDFrames(active, width);
   if(!frames.length) return;
   const f = frames[_ledFrameIdx % frames.length];
-  // 상세 카드
   document.querySelectorAll('.trip-led').forEach(led=>{
-    const tag=led.querySelector('.trip-led-tag'), txt=led.querySelector('.trip-led-txt'), scr=led.querySelector('.trip-led-scr');
+    const tag=led.querySelector('.trip-led-tag'), txt=led.querySelector('.trip-led-txt');
     if(tag) tag.textContent=f.tag;
-    if(txt){ txt.textContent=f.text; requestAnimationFrame(()=>applyLedMarquee(txt,scr)); }
+    if(txt) txt.textContent=f.text;
   });
-  // 간략 카드
   document.querySelectorAll('.trip-mini-led').forEach(led=>{
     const tag=led.querySelector('.trip-mini-led-tag'), txt=led.querySelector('.trip-mini-led-txt');
     if(tag) tag.textContent=f.tag;
