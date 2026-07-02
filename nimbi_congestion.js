@@ -189,7 +189,7 @@ function generateVirtualBookings(trainNo, travelDate, composition){
     Array.from({length:car.rows||20},(_,r)=>r+1).forEach(row=>{
       (car.cols||[]).forEach(col=>{
         if(missing.has(`${row}${col}`))return;
-        if(seededRand(seed,idx++)<fillRate) booked.push(`${car.car}호차 ${row}${col}`);
+        if(seededRand(seed,idx++)<fillRate) booked.push(typeof seatId==='function'?seatId(car,row,col):`${car.car}호차 ${row}${col}`);
       });
     });
   });
@@ -220,7 +220,7 @@ function getCarRemaining(trainNo, travelDate, car){
     (car.cols||[]).forEach(col=>{
       if(missing.has(`${row}${col}`))return;
       total++;
-      if(booked.has(`${car.car}호차 ${row}${col}`))bookedCnt++;
+      if(booked.has(typeof seatId==='function'?seatId(car,row,col):`${car.car}호차 ${row}${col}`))bookedCnt++;
     });
   });
   return{total, remaining:total-bookedCnt};

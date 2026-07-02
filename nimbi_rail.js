@@ -3872,7 +3872,7 @@ function randomSeat(seatClass, trainNo){
   const c = pool[Math.floor(Math.random()*pool.length)];
   if(c.numbered){
     const total=c.totalSeats||72;
-    return `${c.car}호차 ${Math.floor(Math.random()*total)+1}`;
+    return `${c.car}호차 ${Math.floor(Math.random()*total)+1}번`;
   }
   const cols=c.cols||['A','B','C','D'];
   const missing=new Set(c.missingSeats||[]);
@@ -4916,8 +4916,8 @@ function getCarComposition(formType){
       return Array.from({length:6},(_,i)=>({car:i+1,type:'general',label:'일반실',rows:13,cols:['A','B','C','D'],revRows:0,totalSeats:52}));
     case 'mgh':
     default:
-      // 무궁화: 좌석 1~72 연번, 4석 1열
-      return Array.from({length:8},(_,i)=>({car:i+1,type:'general',label:'일반실',numbered:true,perRow:4,totalSeats:72}));
+      // 무궁화: 좌석 1~72 연번, 4석 1열 (18열)
+      return Array.from({length:8},(_,i)=>({car:i+1,type:'general',label:'일반실',numbered:true,rows:18,cols:['1','2','3','4'],perRow:4,totalSeats:72}));
   }
 }
 
@@ -4927,6 +4927,13 @@ function getCarsForClass(composition, seatClass){
   if(seatClass==='general') return composition.filter(c=>c.type==='general');
   if(seatClass==='standing') return composition.filter(c=>c.type==='free');
   return composition.filter(c=>c.type==='general');
+}
+
+// 좌석 열문자 → 인덱스, 좌석 고유 ID 생성 (연번/열+문자 통일)
+const SEAT_COL_IDX={'가':0,'나':1,'다':2,'라':3,'A':0,'B':1,'C':2,'D':3,'1':0,'2':1,'3':2,'4':3};
+function seatSeqNum(car,row,col){ return (row-1)*((car.cols?car.cols.length:4))+((SEAT_COL_IDX[col]||0))+1; }
+function seatId(car,row,col){
+  return car.numbered ? `${car.car}호차 ${seatSeqNum(car,row,col)}번` : `${car.car}호차 ${row}${col}`;
 }
 
 // 혼잡도 알고리즘 → nimbi_congestion.js 참조
@@ -4958,8 +4965,11 @@ function _renderSeatMap(wrap,t,trainNo,travelDate,seatClass,validCars,booked,com
   const missing=new Set(car.missingSeats||[]);
   const isKtxType=['ktx-1','ktx-sancheon','ktx-eum'].includes(getFormationType(t.grade,trainNo));
 
+  // 방향 표시: 앞쪽 revRows열=역방향(▽), 나머지=순방향(▲). revRows=0이면 방향 표시 없음.
+  const revRows=car.revRows||0;
+  const showDir=isKtxType && revRows>0;
+
   // 잔여석 한 번에 계산 (getCarRemaining 반복 호출 방지)
-  const colIdx={'가':0,'나':1,'다':2,'라':3,'A':0,'B':1,'C':2,'D':3,'1':0,'2':1,'3':2,'4':3};
   function calcRem(c){
     if(c.type==='free') return '-';
     const miss=new Set(c.missingSeats||[]);
@@ -4968,9 +4978,7 @@ function _renderSeatMap(wrap,t,trainNo,travelDate,seatClass,validCars,booked,com
       c.cols.forEach(col=>{
         if(miss.has(`${r}${col}`))return;
         total++;
-        const sn=c.isMgh?((r-1)*c.cols.length+(colIdx[col]||0)+1):null;
-        const id=sn?`${c.car}호차 ${sn}번`:`${c.car}호차 ${r}${col}`;
-        if(booked.has(id))bc++;
+        if(booked.has(seatId(c,r,col)))bc++;
       });
     }
     return total-bc;
@@ -4981,19 +4989,18 @@ function _renderSeatMap(wrap,t,trainNo,travelDate,seatClass,validCars,booked,com
     for(let r=1;r<=car.rows;r++){
       const leftCols=car.cols.slice(0,2);
       const rightCols=car.cols.slice(2);
-      const dirIcon=isKtxType?(r%2===1?'▲':'▽'):null;
+      const dirIcon=showDir?(r<=revRows?'▽':'▲'):null;
       const mkBtn=(col)=>{
-        if(missing.has(`${r}${col}`)) return `<div class="seat-cell empty"></div>`;
-        const sn=car.isMgh?((r-1)*car.cols.length+(colIdx[col]||0)+1):null;
-        const id=sn?`${car.car}호차 ${sn}번`:`${car.car}호차 ${r}${col}`;
-        const label=sn?`${sn}`:`${r}${col}`;
+        if(missing.has(`${r}${col}`)) return `<div class="seat-cell seat-empty"></div>`;
+        const id=seatId(car,r,col);
+        const label=car.numbered?`${seatSeqNum(car,r,col)}`:`${r}${col}`;
         const isB=booked.has(id), isS=_selectedSeats.includes(id);
         return `<button class="seat-btn${isB?' booked':isS?' selected':''}"
           ${isB?'disabled':''} onclick="toggleSeatBtn('${id}',${count})">${label}</button>`;
       };
       html+=`<div class="seat-row">
         <div class="seat-group">${leftCols.map(mkBtn).join('')}</div>
-        <div class="seat-dir">${dirIcon||''}</div>
+        ${showDir?`<div class="seat-dir">${dirIcon||''}</div>`:''}
         <div class="seat-group">${rightCols.map(mkBtn).join('')}</div>
       </div>`;
     }
@@ -5020,7 +5027,7 @@ function _renderSeatMap(wrap,t,trainNo,travelDate,seatClass,validCars,booked,com
       <span class="seat-legend-item"><span class="seat-dot available"></span>선택가능</span>
       <span class="seat-legend-item"><span class="seat-dot selected"></span>선택됨</span>
       <span class="seat-legend-item"><span class="seat-dot booked"></span>예약됨</span>
-      ${isKtxType?'<span class="seat-legend-item">▲순방향 ▽역방향</span>':''}
+      ${showDir?'<span class="seat-legend-item">▲순방향 ▽역방향</span>':''}
     </div>
     <div class="seat-label-row">
       <div style="font-size:11px;color:var(--text3)">창측 내측</div>
