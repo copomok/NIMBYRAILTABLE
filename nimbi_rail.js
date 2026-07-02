@@ -2723,6 +2723,30 @@ function openMapTrainPopup(t, status){
   document.getElementById('map-backdrop').style.display='block';
 }
 
+// 역 클릭 팝업 (역 정보로 넘어가기 전 먼저 표시)
+function openMapPopup(stn, lineName){
+  _mapCurrentStn=stn;
+  const trains=ALL_TRAINS.filter(t=>t.stops.some(s=>s.s===stn&&(s.dep||s.arr)));
+  const lineSet=[...new Set(trains.flatMap(t=>t.line.split('·')))];
+  const gcc={}; trains.forEach(t=>{gcc[t.grade]=(gcc[t.grade]||0)+1;});
+  const gradeStr=Object.entries(gcc).sort((a,b)=>b[1]-a[1]).map(([g,n])=>`${g} ${n}편`).join(' · ')||'경유 열차 없음';
+  document.getElementById('map-popup-name').innerHTML=`<span>${stn}</span>`;
+  document.getElementById('map-popup-sub').textContent=(lineName?lineName+' · ':'')+`${trains.length}편 경유`;
+  document.getElementById('map-popup-trains').innerHTML=
+    `<div>${lineSet.slice(0,4).join(' · ')}${lineSet.length>4?' 외':''}</div>
+     <div style="margin-top:4px">${gradeStr}</div>`;
+  const popupBtn=document.querySelector('#map-popup .btn.btn-primary');
+  if(popupBtn){ popupBtn.textContent='🚉 역 정보 보기'; popupBtn.onclick=(e)=>{if(e)e.preventDefault();goToMapStation();}; }
+  document.getElementById('map-popup').style.display='block';
+  document.getElementById('map-backdrop').style.display='block';
+}
+// 팝업 → 역 정보 탭으로 이동
+function goToMapStation(){
+  const s=_mapCurrentStn;
+  closeMapPopup();
+  if(s) openStationDetail(s);
+}
+
 // 역 팝업 닫힐 때 버튼 원상복구
 function closeMapPopup(){
   document.getElementById('map-popup').style.display='none';
@@ -3122,9 +3146,9 @@ function showMapLine(lineKey, btn){
   }
 
   routes.forEach(r=>{
-    const isBranch=r.dash||false;   // 지선/경유: 본선과 같은 색, 흐릿한 실선
+    const isBranch=r.dash||false;   // 지선/경유: 본선과 같은 색, 점선
     const d=smoothPath(r.stations, ox, oy);
-    parts.push(`<path d="${d}" fill="none" stroke="${r.color}" stroke-width="${isBranch?4:5}" stroke-linecap="round" stroke-linejoin="round" opacity="${isBranch?0.4:1}"/>`);
+    parts.push(`<path d="${d}" fill="none" stroke="${r.color}" stroke-width="${isBranch?4:5}" stroke-linecap="round" stroke-linejoin="round" ${isBranch?'stroke-dasharray="9,9"':''} opacity="${isBranch?0.85:1}"/>`);
   });
 
   // 역 점 + 이름 (중복 없이)
@@ -3138,7 +3162,7 @@ function showMapLine(lineKey, btn){
       const r2=isEnd?7:5;
       const sw=isEnd?3:2;
       // 히트 영역
-      parts.push(`<circle cx="${x}" cy="${y}" r="${r2+8}" fill="transparent" style="cursor:pointer" onclick="openStationDetail('${s.n}')"/>`);
+      parts.push(`<circle cx="${x}" cy="${y}" r="${r2+8}" fill="transparent" style="cursor:pointer" onclick="openMapPopup('${s.n}','${line.name}')"/>`);
       // 역 점
       parts.push(`<circle cx="${x}" cy="${y}" r="${r2}" fill="#161b22" stroke="${r.color}" stroke-width="${sw}" pointer-events="none"/>`);
       // 역명
@@ -3189,7 +3213,7 @@ function showMapLine(lineKey, btn){
   // 범례
   document.getElementById('map-legend').innerHTML=`
     <div class="map-legend-item"><div class="map-legend-line" style="background:${line.color}"></div><span>${line.name} 본선</span></div>
-    <div class="map-legend-item"><div class="map-legend-line" style="background:${line.color};opacity:.5"></div><span>지선 / 경유</span></div>
+    <div class="map-legend-item"><div class="map-legend-line" style="background:transparent;border-top:3px dashed ${line.color};height:0;opacity:.85"></div><span>지선 / 경유</span></div>
     <div class="map-legend-item" style="gap:8px"><svg width="12" height="12"><circle cx="6" cy="6" r="5" fill="#161b22" stroke="${line.color}" stroke-width="2"/></svg><span>역 (클릭하여 정보 확인)</span></div>
     <div class="map-legend-item" style="gap:8px;margin-left:8px">
       <svg width="10" height="10"><circle cx="5" cy="5" r="5" fill="#3b82f6"/></svg><span style="font-size:11px">KTX</span>
@@ -5803,12 +5827,11 @@ function siSearch(q){
   if(!res.length){el.style.display='none';el.innerHTML='';return;}
   const isChoQ=q.split('').every(c=>CHO.includes(c));
   el.innerHTML=res.map(n=>{
-    let display=n;
+    const nb=n.endsWith('역')?n.slice(0,-1):n;   // 검색 표시는 맨 이름(○○)
+    let display=nb;
     if(!isChoQ){
-      const i=n.indexOf(q);
-      const iB=i<0&&qBase?n.indexOf(qBase):-1;
-      if(i>=0) display=n.slice(0,i)+`<span style="color:var(--accent)">${n.slice(i,i+q.length)}</span>`+n.slice(i+q.length);
-      else if(iB>=0) display=n.slice(0,iB)+`<span style="color:var(--accent)">${n.slice(iB,iB+qBase.length)}</span>`+n.slice(iB+qBase.length);
+      const i=nb.indexOf(qBase||q);
+      if(i>=0){const L=(qBase||q).length;display=nb.slice(0,i)+`<span style="color:var(--accent)">${nb.slice(i,i+L)}</span>`+nb.slice(i+L);}
     }
     const nEsc=n.replace(/\\/g,'\\\\').replace(/'/g,"\\'");
     return `<div class="ac-item" onmousedown="event.preventDefault();siSelect('${nEsc}')">${display}</div>`;
@@ -5840,7 +5863,7 @@ function siSearchKey(e){
 function siSelect(name){
   _siCurrent=name; _siCardPlatform=null;
   const inp=document.getElementById('si-inp');
-  if(inp)inp.value=name;
+  if(inp)inp.value=name.endsWith('역')?name.slice(0,-1):name;   // 검색창은 맨 이름(○○)
   const el=document.getElementById('si-results');
   if(el){el.style.display='none';el.innerHTML='';}
   renderSICard(name);
@@ -5869,6 +5892,8 @@ function _gradeMatchesPlatform(trainGrade, platformGrades){
 function renderSICard(name){
   const el=document.getElementById('si-card');
   if(!el)return;
+  // 지도 클릭은 '서울'(맨 이름), 검색은 '서울역'(DB 키) → DB 키로 정규화
+  if(typeof STATION_DB!=='undefined' && !STATION_DB[name] && STATION_DB[name+'역']) name=name+'역';
   const d=typeof STATION_DB!=='undefined'?STATION_DB[name]:null;
   // ALL_TRAINS uses station names without 역 suffix (e.g. "영주"), STATION_DB uses "영주역"
   const trainName=name.endsWith('역')?name.slice(0,-1):name;
@@ -5895,10 +5920,10 @@ function renderSICard(name){
     <div style="background:var(--bg2);border:1px solid var(--border);border-radius:14px;overflow:hidden">
       <div style="padding:16px;border-bottom:1px solid var(--border)">
         <div style="display:flex;align-items:flex-start;justify-content:space-between">
-          <div style="font-size:22px;font-weight:700">${name}</div>
+          <div style="font-size:22px;font-weight:700">${trainName}</div>
           <div style="font-size:11px;color:var(--text2);text-align:right">${platforms.length>0?platforms.length+'개 홈<br>':''}${trains.length}편 경유</div>
         </div>
-        ${d?`<div style="font-size:11px;color:var(--text3);font-family:var(--mono);margin-top:4px">${d.lon.toFixed(4)}°E, ${d.lat.toFixed(4)}°N</div>`:''}
+        ${d?`<div id="si-addr" data-lat="${d.lat}" data-lon="${d.lon}" style="font-size:11px;color:var(--text3);margin-top:4px">📍 ${d.addr||'주소 확인 중…'}</div>`:''}
         <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:10px">
           ${Object.entries(gc_count).map(([g,n])=>
             `<span style="padding:3px 10px;border-radius:12px;font-size:11px;font-weight:600;border:1px solid var(--c-${GC_CSS_VAR[g]||'mgh'});color:var(--c-${GC_CSS_VAR[g]||'mgh'})">${g} ${n}편</span>`
@@ -5945,6 +5970,28 @@ function renderSICard(name){
         </div>
       </div>`:''}
     </div>`;
+  if(d) siLoadAddress(name, d.lat, d.lon);
+}
+
+// 좌표 → 주소 (사용자 브라우저에서 역지오코딩, localStorage 캐시, 실패 시 좌표 표시)
+async function siLoadAddress(name, lat, lon){
+  const box=document.getElementById('si-addr');
+  if(!box) return;
+  let cache={}; try{ cache=JSON.parse(localStorage.getItem('nimbi_addr')||'{}'); }catch(e){}
+  if(cache[name]){ box.innerHTML='📍 '+cache[name]; return; }
+  const coordStr=`${(+lon).toFixed(4)}°E, ${(+lat).toFixed(4)}°N`;
+  try{
+    const r=await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}&accept-language=ko&zoom=16&addressdetails=1`,{headers:{Accept:'application/json'}});
+    const j=await r.json(); const a=j.address||{};
+    const parts=[a.state||a.province, a.city||a.county||a.town||a.village, a.borough||a.city_district, a.suburb||a.neighbourhood||a.quarter, a.road].filter(Boolean);
+    const seen=new Set(); const addr=parts.filter(p=>!seen.has(p)&&seen.add(p)).slice(0,4).join(' ');
+    if(addr){ cache[name]=addr; try{ localStorage.setItem('nimbi_addr',JSON.stringify(cache)); }catch(e){} }
+    const cur=document.getElementById('si-addr');
+    if(cur && String(cur.dataset.lat)===String(lat)) cur.innerHTML='📍 '+(addr||coordStr);
+  }catch(e){
+    const cur=document.getElementById('si-addr');
+    if(cur && String(cur.dataset.lat)===String(lat)) cur.innerHTML='📍 '+coordStr;
+  }
 }
 
 function toggleStationMap(){
