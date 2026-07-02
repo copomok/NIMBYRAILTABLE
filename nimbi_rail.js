@@ -4166,7 +4166,7 @@ function openQRPopup(ticketId){
   const wrap = document.createElement('div');
   wrap.id = 'qr-popup-wrap';
   wrap.innerHTML = `
-    <div class="alarm-popup-backdrop" onclick="closeQRPopup()"></div>
+    <div class="rail-ticket-backdrop"></div>
     <div class="rail-ticket-wrap">
       <div class="rail-ticket" style="--tk:${gradeC}">
         <div class="rt-holo"></div>
@@ -4196,8 +4196,8 @@ function openQRPopup(ticketId){
     </div>`;
   document.body.appendChild(wrap);
 
-  const canvas = generateQRCanvas(qrText, 168);
-  canvas.style.cssText = 'border-radius:8px;display:block;margin:0 auto';
+  const canvas = generateQRCanvas(qrText, 225);
+  canvas.style.cssText = 'display:block';
   document.getElementById('qr-canvas-wrap').appendChild(canvas);
 }
 // 티켓 ID 기반 의사 바코드 생성 (연출용)

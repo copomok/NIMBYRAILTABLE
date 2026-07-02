@@ -1151,6 +1151,7 @@ button, select, input[type=range],
 .booking-discount-rate{font-size:10px;color:var(--green);font-weight:700}
 
 /* ── 실 승차권 (QR·바코드·홀로그램·워터마크) ── */
+.rail-ticket-backdrop{position:fixed;inset:0;z-index:9590;background:rgba(0,0,0,.62);backdrop-filter:blur(7px);-webkit-backdrop-filter:blur(7px)}
 .rail-ticket-wrap{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:9600;width:calc(100% - 40px);max-width:330px;display:flex;flex-direction:column;align-items:center;max-height:calc(100vh - 40px);overflow-y:auto}
 .rail-ticket{position:relative;width:100%;box-sizing:border-box;background:linear-gradient(160deg,#1b2330,#111722 55%,#0c1119);color:var(--text1);border:1px solid var(--border);border-top:5px solid var(--tk);border-radius:16px;padding:16px 18px 14px;overflow:hidden;box-shadow:0 14px 44px rgba(0,0,0,.6)}
 .rt-holo{position:absolute;inset:0;pointer-events:none;background:linear-gradient(115deg,transparent 30%,rgba(120,180,255,.28),rgba(255,120,200,.22),rgba(120,255,190,.24),transparent 70%);background-size:250% 100%;mix-blend-mode:screen;opacity:.9;animation:rtHolo 3.6s linear infinite}
@@ -1173,8 +1174,8 @@ button, select, input[type=range],
 .rt-perf{height:14px;margin:2px -18px 8px;border-top:2px dashed rgba(255,255,255,.16);position:relative}
 .rt-perf::before,.rt-perf::after{content:'';position:absolute;top:-11px;width:20px;height:20px;border-radius:50%;background:var(--bg1,#0d1117)}
 .rt-perf::before{left:-10px}.rt-perf::after{right:-10px}
-.rt-qr{display:flex;justify-content:center;padding:4px 0}
-.rt-qr canvas{background:#fff;padding:9px;border-radius:10px;box-shadow:0 0 0 1px rgba(255,255,255,.12),0 4px 14px rgba(0,0,0,.4)}
+.rt-qr{display:flex;justify-content:center;padding:6px 0}
+.rt-qr canvas{background:#fff;padding:6px;border-radius:12px;width:100%;max-width:236px;height:auto;box-shadow:0 4px 14px rgba(0,0,0,.4)}
 .rt-id{text-align:center;font-family:var(--mono);font-size:12px;color:var(--text2);letter-spacing:1px;margin-top:8px}
 .rt-barcode{display:flex;gap:0;justify-content:center;align-items:flex-end;height:38px;margin-top:8px;opacity:.9}
 .rt-barcode i{display:block;height:38px}
