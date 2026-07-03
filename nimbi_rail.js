@@ -1555,24 +1555,33 @@ function getTripLEDFrames(active, ledWidth){
       {tag:'곧 도착', text:`${ticket.toStn} · 내리는 문 확인`, dur:D_HEAD},
     ];
   }
+  const D_ANN=5000;
   const tl=getTripTimeline3(train,status,ticket);
-  const frames=[];
   const cur = tl&&tl.cur ? tl.cur.name : (status&&status.atStn?status.atStn:null);
-  // 안내 문구 (정차 중 / 접근 중)
+  // 안내 문구 판별 (정차 중 / 접근 중 5분 전)
+  let announce=null;
   if(status&&status.atStn){
-    frames.push({tag:'안내', text:`${status.atStn}역에 정차 중입니다`, dur:D_HEAD});
+    announce={tag:'안내', text:`${status.atStn}역에 정차 중입니다`, dur:D_ANN};
   } else if(tl&&tl.cur&&tl.cur.time){
     const now=new Date(); const nowM=now.getHours()*60+now.getMinutes();
     const mm=toMin(tl.cur.time); const d=mm!=null?((mm-nowM+1440)%1440):null;
-    if(d!=null && d<=5) frames.push({tag:'안내', text:`잠시 후 ${tl.cur.name}역에 도착합니다`, dur:D_HEAD});
+    if(d!=null && d<=5) announce={tag:'안내', text:`잠시 후 ${tl.cur.name}역에 도착합니다`, dur:D_ANN};
   }
-  if(cur) frames.push({tag:'이번 역', text: cur + (cur===ticket.toStn?' · 내리는 문 확인':''), dur:D_HEAD});
-  if(tl&&tl.next) frames.push({tag:'다음 역', text: tl.next.name, dur:D_HEAD});
-  frames.push({tag:'행선지', text:`${ticket.toStn}행`, dur:D_HEAD});
+  // 남은 정차역 프레임 (너비 맞춤 슬라이딩)
   const rem=getRemainingStops(train,ticket);
-  if(rem.length){
-    const wins = computeStopWindows(rem, ledWidth);
-    wins.forEach(w=>frames.push({tag:'남은 정차역', text:w, dur:D_STOP}));
+  const remFrames = rem.length ? computeStopWindows(rem, ledWidth).map(w=>({tag:'남은 정차역', text:w, dur:D_STOP})) : [];
+
+  const frames=[];
+  if(announce){
+    // 안내 표출 시: 안내(5초) → 남은 정차역 → 안내 순으로만
+    frames.push(announce);
+    remFrames.forEach(f=>frames.push(f));
+  } else {
+    // 평상시: 이번역 → 다음역 → 행선지 → 남은 정차역
+    if(cur) frames.push({tag:'이번 역', text: cur + (cur===ticket.toStn?' · 내리는 문 확인':''), dur:D_HEAD});
+    if(tl&&tl.next) frames.push({tag:'다음 역', text: tl.next.name, dur:D_HEAD});
+    frames.push({tag:'행선지', text:`${ticket.toStn}행`, dur:D_HEAD});
+    remFrames.forEach(f=>frames.push(f));
   }
   if(!frames.length) frames.push({tag:'이번 역', text:'-', dur:D_HEAD});
   return frames;
