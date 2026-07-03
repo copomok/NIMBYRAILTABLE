@@ -228,15 +228,15 @@ const NOTICES = [
 <div class="n-box">
 느린 열차를 직전 정차역에서 잠시 대피(정차)시켜 <strong>빠른 열차가 역에서 안전하게 추월</strong>하도록 조정했습니다. 각 열차의 종착 직전 구간만 소폭(3~4분) 늦춰지며, 그 외 시각은 변동이 없습니다.
 </div><br>
-<strong>■ 조정된 열차 (종착역 도착 3~4분 지연)</strong>
+<strong>■ 조정된 열차 (대피역에서 대피 · 종착 도착 3~4분 지연)</strong>
 <table>
-<tr><th>열차</th><th>구간</th><th>추월 열차</th><th>조정</th></tr>
-<tr><td>무궁화 1530</td><td>운암~전주</td><td>KTX-산천 564</td><td>+4분</td></tr>
-<tr><td>무궁화 1544</td><td>운암~전주</td><td>KTX-산천 582</td><td>+4분</td></tr>
-<tr><td>무궁화 1558</td><td>남안양~서울</td><td>ITX-새마을 1156</td><td>+4분</td></tr>
-<tr><td>무궁화 1562</td><td>남안양~서울</td><td>ITX-새마을 1160</td><td>+4분</td></tr>
-<tr><td>무궁화 1923</td><td>강진~완도</td><td>KTX 903</td><td>+3분</td></tr>
-<tr><td>무궁화 1931</td><td>강진~완도</td><td>KTX 915</td><td>+3분</td></tr>
+<tr><th>열차</th><th>대피역</th><th>구간</th><th>추월 열차</th><th>조정</th></tr>
+<tr><td>무궁화 1530</td><td>운암</td><td>운암~전주</td><td>KTX-산천 564</td><td>+4분</td></tr>
+<tr><td>무궁화 1544</td><td>운암</td><td>운암~전주</td><td>KTX-산천 582</td><td>+4분</td></tr>
+<tr><td>무궁화 1558</td><td>남안양</td><td>남안양~서울</td><td>ITX-새마을 1156</td><td>+4분</td></tr>
+<tr><td>무궁화 1562</td><td>남안양</td><td>남안양~서울</td><td>ITX-새마을 1160</td><td>+4분</td></tr>
+<tr><td>무궁화 1923</td><td>강진</td><td>강진~완도</td><td>KTX 903</td><td>+3분</td></tr>
+<tr><td>무궁화 1931</td><td>강진</td><td>강진~완도</td><td>KTX 915</td><td>+3분</td></tr>
 </table>`
   }
 ];
