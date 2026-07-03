@@ -253,9 +253,11 @@ const NOTICES = [
 <tr><th>열차</th><th>방면</th><th>출발</th><th>도착</th></tr>
 <tr><td>무궁화 1491</td><td>순천행</td><td>한강로 06:00</td><td>순천 11:12</td></tr>
 <tr><td>무궁화 1493</td><td>순천행</td><td>한강로 13:20</td><td>순천 18:33</td></tr>
+<tr><td>무궁화 1495 <span class="n-highlight">신설·막차</span></td><td>순천행</td><td>한강로 17:51</td><td>순천 23:04</td></tr>
 <tr><td>무궁화 1492</td><td>한강로행</td><td>순천 05:57</td><td>한강로 11:13</td></tr>
 <tr><td>무궁화 1494</td><td>한강로행</td><td>순천 11:37</td><td>한강로 16:53</td></tr>
+<tr><td>무궁화 1496 <span class="n-highlight">신설·막차</span></td><td>한강로행</td><td>순천 18:26</td><td>한강로 23:29</td></tr>
 </table><br>
-<span class="n-highlight">한강로~회덕 기존 시각은 그대로 유지되며, 회덕 이후 구간이 새로 추가되었습니다. 통과·추월 검증을 거쳐 개활선 무단 추월이 없도록 조정했습니다.</span>`
+<span class="n-highlight">막차가 이른 점을 보완해 심야 왕복 1편(1495·1496)을 신설했습니다. 한강로~회덕 기존 시각은 유지되며, 통과·추월 검증을 거쳐 개활선 무단 추월 없이 동시 출발 간격도 확보했습니다.</span>`
   }
 ];
