@@ -264,10 +264,9 @@ const NOTICES = [
     date:'2026-07-03',
     cat:'timetable',
     title:'호남고속선 KTX 신설 (401~460)',
-    body:`<strong>마포~목포</strong>를 잇는 <strong>호남고속선 KTX</strong> 60편(왕복 30회)이 신설되었습니다.<br><br>
+    body:`<strong>서울~목포</strong>를 잇는 <strong>호남고속선 KTX</strong> 60편(왕복 30회)이 신설되었습니다.<br><br>
 <div class="n-box">
-경부고속선 <strong>마포~천안</strong> · 호남고속선 <strong>천안~광주</strong> · 호남선 <strong>광주~목포</strong>를 이용합니다.<br>
-상행은 목포에서 출발해 <strong>서울</strong>까지 운행합니다.
+경부고속선 <strong>서울~천안</strong> · 호남고속선 <strong>천안~광주</strong> · 호남선 <strong>광주~목포</strong>를 이용합니다.
 </div><br>
 <strong>■ 계통 (정차역 차등)</strong>
 <table>
@@ -279,10 +278,10 @@ const NOTICES = [
 <strong>■ 운행 시각</strong>
 <table>
 <tr><th>방면</th><th>첫차</th><th>막차(종착 도착)</th><th>배차</th></tr>
-<tr><td>목포행(하행)</td><td>마포 05:35</td><td>마포 23:20 → 목포 00:51</td><td>약 30~40분</td></tr>
+<tr><td>목포행(하행)</td><td>서울 05:40</td><td>서울 23:24 → 목포 00:51</td><td>약 30~40분</td></tr>
 <tr><td>서울행(상행)</td><td>목포 05:48</td><td>목포 23:25 → 서울 00:52</td><td>약 30~40분</td></tr>
 </table><br>
-<span class="n-highlight" style="display:block;margin-bottom:8px">심야 막차는 급행(/1)으로 편성해 종착 도착이 0시~1시대에 들어오도록 연장했습니다. 상·하행 소요시간은 게임 노선 파일 기준으로 대칭화했습니다(하행 91~100분·상행 87~95분).</span>
+<span class="n-highlight" style="display:block;margin-bottom:8px">심야 막차는 급행(/1)으로 편성해 종착 도착이 0시~1시대에 들어오도록 연장했습니다. 서울~목포 상·하행 소요시간을 게임 노선 파일 기준으로 대칭화했습니다(급행 87분·일반 94분·완행 95분).</span>
 <span class="n-highlight">일반 &gt; 급행 &gt; 완행 순으로 세 계통을 통합 약 30~40분 간격으로 배치했습니다. 통과·추월 검증(경부고속·호남고속·호남선 구간)을 거쳐 개활선 무단 추월 0건, 같은 승강장 3분 미만 근접 0건으로 조정했습니다.</span>`
   }
 ];
