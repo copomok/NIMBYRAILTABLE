@@ -88,7 +88,8 @@ function _stnCoord(name){
   let d=STATION_DB[name]||STATION_DB[name+'역']||(name.endsWith('역')?STATION_DB[name.slice(0,-1)]:null);
   return (d&&d.lat!=null&&d.lon!=null)?{lat:+d.lat,lon:+d.lon}:null;
 }
-function haversineKm(a,b){
+// 좌표 객체 2개 간 거리 (nimbi_station_data.js의 haversineKm(4인자)와 이름 충돌 방지 위해 별도 명명)
+function havPt(a,b){
   if(!a||!b)return 0;
   const R=6371,r=Math.PI/180;
   const dLat=(b.lat-a.lat)*r, dLon=(b.lon-a.lon)*r;
@@ -123,7 +124,7 @@ function routeDistanceKm(t, fromStn, toStn){
   // 남은 좌표 중 내부 스파이크(앞뒤로 튀었다 되돌아옴) → 무시(이웃 직선으로 흡수)
   for(let k=1;k+1<vi.length;k++){
     const Lc=E[vi[k-1]].c, Mc=E[vi[k]].c, Rc=E[vi[k+1]].c;
-    if(haversineKm(Lc,Mc)>SPIKE && haversineKm(Mc,Rc)>SPIKE && haversineKm(Lc,Rc)<Math.min(haversineKm(Lc,Mc),haversineKm(Mc,Rc))) E[vi[k]].c=null;
+    if(havPt(Lc,Mc)>SPIKE && havPt(Mc,Rc)>SPIKE && havPt(Lc,Rc)<Math.min(havPt(Lc,Mc),havPt(Mc,Rc))) E[vi[k]].c=null;
   }
   vi=E.map((e,i)=>e.c?i:-1).filter(i=>i>=0);
   // 좌표가 1개 이하 → 전체를 소요시간으로 환산
@@ -133,7 +134,7 @@ function routeDistanceKm(t, fromStn, toStn){
   }
   // 유효 좌표 폴리라인
   let total=0;
-  for(let k=1;k<vi.length;k++) total+=haversineKm(E[vi[k-1]].c, E[vi[k]].c);
+  for(let k=1;k<vi.length;k++) total+=havPt(E[vi[k-1]].c, E[vi[k]].c);
   // 폴리라인 구간의 평균속도(km/분)
   const fM=E[vi[0]].m, lM=E[vi[vi.length-1]].m;
   const cMin=(fM!=null&&lM!=null)?((lM-fM+1440)%1440):0;
@@ -404,13 +405,13 @@ function isPassStop(t, stn){
   const origin=valid[0].s, terminus=valid[valid.length-1].s;
   // 전체 기종점
   if(stn===origin||stn===terminus)return false;
-  // 섹션 경계역 (섹션의 시작/끝)
-  if(t.boundary&&t.boundary.includes(stn))return false;
   const s=t.stops.find(x=>x.s===stn);
   if(!s)return true;
   if(s.arr==='통과'||s.dep==='통과')return true;
-  // arr/dep 중 하나만 시각이 있으면 통과
-  return (hasTime(s.arr)&&!hasTime(s.dep))||(hasTime(s.dep)&&!hasTime(s.arr));
+  // arr/dep 중 하나만 시각이 있으면 통과형(정차 아님)
+  const oneSided=(hasTime(s.arr)&&!hasTime(s.dep))||(hasTime(s.dep)&&!hasTime(s.arr));
+  // 섹션 경계역(주요역)이라도 양쪽 시각이 다 있어야 정차. 한쪽만 있으면 통과 (예: 중앙선 풍기·문수)
+  return oneSided;
 }
 
 function selectTrainLine(){
@@ -1526,32 +1527,54 @@ function getRemainingStops(train, ticket){
   return stopsOnly.slice(ci).map(s=>s.s);
 }
 
-// 탑승 카드 LED 표시 순환 프레임: 이번역 → 다음역 → 행선지 → 남은 정차역(너비 맞춤 슬라이딩)
+// LED 표시 on/off (탑승 카드 LED 토글)
+function ledEnabled(){ return localStorage.getItem('nimbi_led_on')!=='0'; }
+function toggleTripLED(ev){
+  if(ev) ev.stopPropagation();
+  localStorage.setItem('nimbi_led_on', ledEnabled()?'0':'1');
+  if(typeof renderTickets==='function') renderTickets();
+  if(typeof updateHomeTripWidget==='function') updateHomeTripWidget();
+}
+
+// 탑승 카드 LED 표시 순환 프레임: 안내문구 → 이번역 → 다음역 → 행선지 → 남은 정차역(너비 맞춤 슬라이딩)
+// dur: 프레임 유지 시간(ms). 남은 정차역(하나씩 쌓기/전진)은 더 빠르게.
 function getTripLEDFrames(active, ledWidth){
   if(!active) return [];
   const {ticket,train,status,preBoard,minsUntilDep,preArr}=active;
+  const D_HEAD=3000, D_STOP=1600;
   if(preBoard){
     return [
-      {tag:'출발역', text:`${ticket.fromStn}`},
-      {tag:'행선지', text:`${ticket.toStn}행`},
-      {tag:'곧 출발', text:`${fmtEta(minsUntilDep)} 출발`},
+      {tag:'출발역', text:`${ticket.fromStn}`, dur:D_HEAD},
+      {tag:'행선지', text:`${ticket.toStn}행`, dur:D_HEAD},
+      {tag:'곧 출발', text:`${fmtEta(minsUntilDep)} 출발`, dur:D_HEAD},
     ];
   }
   if(preArr){
-    return [ {tag:'곧 도착', text:`${ticket.toStn} · 내리는 문 확인`} ];
+    return [
+      {tag:'안내', text:`잠시 후 ${ticket.toStn}역에 도착합니다`, dur:D_HEAD},
+      {tag:'곧 도착', text:`${ticket.toStn} · 내리는 문 확인`, dur:D_HEAD},
+    ];
   }
   const tl=getTripTimeline3(train,status,ticket);
   const frames=[];
   const cur = tl&&tl.cur ? tl.cur.name : (status&&status.atStn?status.atStn:null);
-  if(cur) frames.push({tag:'이번 역', text: cur + (cur===ticket.toStn?' · 내리는 문 확인':'')});
-  if(tl&&tl.next) frames.push({tag:'다음 역', text: tl.next.name});
-  frames.push({tag:'행선지', text:`${ticket.toStn}행`});
+  // 안내 문구 (정차 중 / 접근 중)
+  if(status&&status.atStn){
+    frames.push({tag:'안내', text:`${status.atStn}역에 정차 중입니다`, dur:D_HEAD});
+  } else if(tl&&tl.cur&&tl.cur.time){
+    const now=new Date(); const nowM=now.getHours()*60+now.getMinutes();
+    const mm=toMin(tl.cur.time); const d=mm!=null?((mm-nowM+1440)%1440):null;
+    if(d!=null && d<=5) frames.push({tag:'안내', text:`잠시 후 ${tl.cur.name}역에 도착합니다`, dur:D_HEAD});
+  }
+  if(cur) frames.push({tag:'이번 역', text: cur + (cur===ticket.toStn?' · 내리는 문 확인':''), dur:D_HEAD});
+  if(tl&&tl.next) frames.push({tag:'다음 역', text: tl.next.name, dur:D_HEAD});
+  frames.push({tag:'행선지', text:`${ticket.toStn}행`, dur:D_HEAD});
   const rem=getRemainingStops(train,ticket);
   if(rem.length){
     const wins = computeStopWindows(rem, ledWidth);
-    wins.forEach(w=>frames.push({tag:'남은 정차역', text:w}));
+    wins.forEach(w=>frames.push({tag:'남은 정차역', text:w, dur:D_STOP}));
   }
-  if(!frames.length) frames.push({tag:'이번 역', text:'-'});
+  if(!frames.length) frames.push({tag:'이번 역', text:'-', dur:D_HEAD});
   return frames;
 }
 
@@ -1582,16 +1605,24 @@ function computeStopWindows(stops, maxWidth){
   return out;
 }
 
-// LED 순환 갱신 (3초 간격, 화면에 떠있는 탑승 카드 LED를 직접 업데이트)
-let _ledFrameIdx=0;
+// LED 순환 갱신 (프레임별 가변 간격, 화면에 떠있는 탑승 카드 LED를 직접 업데이트)
+let _ledFrameIdx=0, _ledTimer=null;
+// 남은 정차역 창을 실제 LED "가용 폭"에 맞추기 위한 폭 측정 (상세=trip-led-scr, 간략=컨테이너-태그)
+function measureLedWidth(){
+  const scr=document.querySelector('.trip-led-scr');
+  if(scr && scr.clientWidth>10) return scr.clientWidth;
+  const mini=document.querySelector('.trip-mini-led');
+  if(mini){
+    const tag=mini.querySelector('.trip-mini-led-tag');
+    const w=mini.clientWidth - (tag?tag.offsetWidth:44) - 16;
+    if(w>40) return w;
+  }
+  return 240;
+}
 function updateTripLED(){
   const active = getActiveTripTicket();
-  if(!active) return;
-  // 남은 정차역 창을 실제 LED 폭에 맞추기 위해 폭 측정
-  const scrEl=document.querySelector('.trip-led-scr')||document.querySelector('.trip-mini-led-txt');
-  const width=scrEl?scrEl.clientWidth:240;
-  const frames = getTripLEDFrames(active, width);
-  if(!frames.length) return;
+  const frames = active ? getTripLEDFrames(active, measureLedWidth()) : [];
+  if(!frames.length) return 3000;
   const f = frames[_ledFrameIdx % frames.length];
   document.querySelectorAll('.trip-led').forEach(led=>{
     const tag=led.querySelector('.trip-led-tag'), txt=led.querySelector('.trip-led-txt');
@@ -1603,8 +1634,10 @@ function updateTripLED(){
     if(tag) tag.textContent=f.tag;
     if(txt) txt.textContent=f.text;
   });
+  return f.dur||3000;
 }
-setInterval(()=>{ _ledFrameIdx++; updateTripLED(); }, 3000);
+function _ledTick(){ _ledFrameIdx++; const d=updateTripLED(); _ledTimer=setTimeout(_ledTick, d); }
+_ledTimer=setTimeout(_ledTick, 3000);
 
 function updateTripProgressNotif(){
   if(Notification.permission!=='granted')return;
@@ -4393,7 +4426,6 @@ function openQRPopup(ticketId){
           <div class="rt-perf"></div>
           <div class="rt-qr" id="qr-canvas-wrap"></div>
           <div class="rt-id">${tk.id}</div>
-          <div class="rt-barcode">${genBarcodeHTML(tk.id+tk.trainNo)}</div>
           <div class="rt-actions">
             ${boardBtn}
             <button class="rt-act-btn" onclick="flipRailTicket()">🚆 편성·좌석 ⟳</button>
@@ -4431,10 +4463,17 @@ function flipRailTicket(){
       if(tk){ body.innerHTML=renderFormationContent(tk); body.dataset.rendered='1'; }
     }
   }
-  inner.style.height=(willFlip?front.offsetHeight:back.offsetHeight)+'px';
+  inner.style.height=(willFlip?front.offsetHeight:inner.offsetHeight)+'px';
   flip.classList.toggle('flipped', willFlip); // 클래스는 즉시 토글(연타 방지)
   requestAnimationFrame(()=>{
-    const h = willFlip ? Math.min(back.scrollHeight, Math.round(window.innerHeight*0.8)) : front.offsetHeight;
+    let h;
+    if(willFlip){
+      // 뒷면: 머리말 + 본문 실제 콘텐츠 높이 → 뷰포트 82%로 상한. 넘치면 본문이 스크롤
+      const head=back.querySelector('.rt-back-head');
+      const body=document.getElementById('rt-back-body');
+      const need=(head?head.offsetHeight:44)+(body?body.scrollHeight:0)+4;
+      h=Math.min(need, Math.round(window.innerHeight*0.82));
+    } else h=front.offsetHeight;
     inner.style.height=h+'px';
   });
 }
@@ -5431,7 +5470,7 @@ function renderTripWidget(active){
       <span class="trip-widget-grade" style="color:${gradeColor}">${train.grade}</span>
       <span class="trip-widget-no">${train.no}</span>
     </div>
-    <div class="trip-led"><span class="trip-led-tag">${ledLabel}</span><span class="trip-led-scr"><span class="trip-led-txt">${ledStn}${ledFinal}</span></span></div>
+    ${ledEnabled()?`<div class="trip-led"><span class="trip-led-tag">${ledLabel}</span><span class="trip-led-scr"><span class="trip-led-txt">${ledStn}${ledFinal}</span></span></div>`:''}
     <div class="trip-widget-state">${stateLabel}</div>
     ${arrivalStr?`<div class="trip-widget-arrival">${arrivalStr}</div>`:''}
     ${tlHtml}
@@ -5440,10 +5479,19 @@ function renderTripWidget(active){
       <div class="trip-widget-progress-labels"><span>${ticket.fromStn} ${ticket.depTime||''}</span><span>${ticket.toStn} ${ticket.arrTime||''}</span></div>
     </div>
     <div class="trip-widget-actions">
-      <button class="trip-widget-btn" onclick="event.stopPropagation();switchTab('map');setTimeout(()=>trackTrainOnMap('${train.no}'),120)">🗺️ 실시간 위치</button>
-      <button class="trip-widget-btn${liveActEnabled()?' on':''}" onclick="event.stopPropagation();toggleLiveActivity()">📲 라이브${liveActEnabled()?' 켜짐':''}</button>
+      <button class="trip-widget-btn" onclick="event.stopPropagation();goLiveTrack('${train.no}')">🗺️ 실시간 위치</button>
+      <button class="trip-widget-btn${ledEnabled()?' on':''}" onclick="event.stopPropagation();toggleTripLED(event)">💡 LED${ledEnabled()?' 켜짐':' 꺼짐'}</button>
+      <button class="trip-widget-btn${liveActEnabled()?' on':''}" onclick="event.stopPropagation();toggleLiveActivity()">📲 라이브</button>
     </div>
   </div>`;
+}
+// 실시간 위치: 열려있는 승차권 오버레이/QR 팝업을 닫고 노선도 탭으로 이동해 추적
+function goLiveTrack(no){
+  try{ closeQRPopup(); }catch(e){}
+  document.getElementById('fmt-popup-wrap')?.remove();
+  try{ closeMyPage(); }catch(e){}
+  switchTab('map');
+  setTimeout(()=>trackTrainOnMap(no),200);
 }
 
 // 홈(열차 탭)용 간략 여정 카드 (상세는 승차권 탭)
@@ -5473,7 +5521,7 @@ function renderTripWidgetCompact(active){
       <span class="trip-mini-no">${train.no}</span>
       <span class="trip-mini-go">승차권 ›</span>
     </div>
-    <div class="trip-mini-led"><span class="trip-mini-led-tag">${ledTag}</span><span class="trip-mini-led-txt">${led}</span></div>
+    ${ledEnabled()?`<div class="trip-mini-led"><span class="trip-mini-led-tag">${ledTag}</span><span class="trip-mini-led-txt">${led}</span></div>`:''}
     <div class="trip-mini-sub">${sub}</div>
   </div>`;
 }
@@ -5634,6 +5682,7 @@ function renderTickets(){
         <button class="btn qr-btn" onclick="event.stopPropagation();openQRPopup('${tk.id}')" title="QR·좌석 보기">🔲 QR</button>
       </div>
       <div class="ticket-card-actions">
+        <button class="btn" style="font-size:12px;padding:6px 12px" onclick="event.stopPropagation();jumpToTrain('${tk.trainNo}')">🕐 시간표</button>
         ${tk.status==='active'&&_ticketFilterTab==='upcoming'?`<button class="btn" style="font-size:12px;padding:6px 12px" onclick="event.stopPropagation();cancelTicket('${tk.id}')">예매 취소</button>`:''}
         <button class="btn" style="font-size:12px;padding:6px 12px" onclick="event.stopPropagation();deleteTicket('${tk.id}')">기록 삭제</button>
       </div>
@@ -6455,27 +6504,46 @@ function siNearSearch(q){
 
 function renderSINear(el){
   el.innerHTML=`<div style="margin-top:12px">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;gap:8px;flex-wrap:wrap">
       <div style="font-size:13px;font-weight:700;color:var(--text1)">가까운 역 TOP 5</div>
-      <label style="display:flex;align-items:center;gap:4px;font-size:11px;color:var(--text3);cursor:pointer">
-        <input type="checkbox" id="si-near-closed" onchange="_siNearShowClosed=this.checked;renderSINearList()" ${_siNearShowClosed?'checked':''}>
-        폐역 포함
-      </label>
+      <div style="display:flex;align-items:center;gap:10px">
+        <button onclick="requestNearLocation()" style="font-size:11px;font-weight:600;color:var(--accent);background:transparent;border:1px solid var(--accent);border-radius:14px;padding:4px 10px;cursor:pointer;font-family:var(--sans)">🔄 위치 다시 요청</button>
+        <label style="display:flex;align-items:center;gap:4px;font-size:11px;color:var(--text3);cursor:pointer">
+          <input type="checkbox" id="si-near-closed" onchange="_siNearShowClosed=this.checked;renderSINearList()" ${_siNearShowClosed?'checked':''}>
+          폐역 포함
+        </label>
+      </div>
     </div>
     <div id="si-near-list"><div style="background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:20px;color:var(--text3);font-size:13px;text-align:center">위치 정보 가져오는 중...</div></div>
   </div>`;
   if(!navigator.geolocation){document.getElementById('si-near-list').innerHTML='<div style="color:var(--text3);font-size:12px;padding:12px;text-align:center">위치 서비스 미지원</div>';return;}
   if(_siNearAll.length>0){renderSINearList();return;}
+  _fetchNearLocation();
+}
+// 위치 요청(최초/다시). 캐시 비우고 재요청 → 거절했던 경우 다시 권한 팝업 유도
+function requestNearLocation(){
+  _siNearAll=[]; _siNearLat=null; _siNearLon=null;
+  const l=document.getElementById('si-near-list');
+  if(l)l.innerHTML='<div style="background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:20px;color:var(--text3);font-size:13px;text-align:center">위치 정보 가져오는 중...</div>';
+  _fetchNearLocation();
+}
+function _fetchNearLocation(){
+  if(!navigator.geolocation)return;
   navigator.geolocation.getCurrentPosition(pos=>{
     const {latitude:lat,longitude:lon}=pos.coords;
     _siNearLat=lat; _siNearLon=lon;
-    if(typeof getNearestStations==='undefined'){document.getElementById('si-near-list').innerHTML='<div style="color:var(--red);font-size:12px;padding:12px">역 데이터 로드 안됨</div>';return;}
+    if(typeof getNearestStations==='undefined'){const l=document.getElementById('si-near-list');if(l)l.innerHTML='<div style="color:var(--red);font-size:12px;padding:12px">역 데이터 로드 안됨</div>';return;}
     _siNearAll=getNearestStations(lat,lon,50);
     renderSINearList();
   },err=>{
     const l=document.getElementById('si-near-list');
-    if(l)l.innerHTML=`<div style="color:var(--text3);font-size:12px;text-align:center;padding:16px">위치 권한 필요<br><small>${err.message}</small></div>`;
-  },{timeout:8000,maximumAge:60000});
+    const denied=err.code===1;
+    if(l)l.innerHTML=`<div style="background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:18px;text-align:center">
+      <div style="color:var(--text2);font-size:13px;font-weight:600;margin-bottom:6px">${denied?'위치 권한이 거부되어 있습니다':'위치를 가져오지 못했습니다'}</div>
+      <div style="color:var(--text3);font-size:11px;margin-bottom:12px">${denied?'실수로 거부하셨다면 아래 버튼으로 다시 요청하거나, 브라우저 주소창의 자물쇠(ⓘ) → 권한에서 위치를 허용해주세요.':err.message}</div>
+      <button onclick="requestNearLocation()" style="font-size:12px;font-weight:700;color:#fff;background:var(--accent);border:none;border-radius:10px;padding:9px 18px;cursor:pointer;font-family:var(--sans)">📍 위치 권한 다시 요청</button>
+    </div>`;
+  },{timeout:8000,maximumAge:60000,enableHighAccuracy:false});
 }
 
 function renderSINearList(){

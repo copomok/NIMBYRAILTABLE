@@ -1244,10 +1244,10 @@ button, select, input[type=range],
 .rt-flip.flipped .rt-flip-inner{transform:rotateY(180deg)}
 .rt-face{position:absolute;top:0;left:0;width:100%;backface-visibility:hidden;-webkit-backface-visibility:hidden}
 .rail-ticket.rt-front{position:relative;cursor:pointer}
-.rail-ticket.rt-back{transform:rotateY(180deg);overflow-y:auto;-webkit-overflow-scrolling:touch;max-height:80vh;padding:0}
-.rt-back-head{position:sticky;top:0;z-index:3;display:flex;align-items:center;gap:8px;padding:12px 14px;background:#141b26;border-bottom:1px solid rgba(255,255,255,.08)}
+.rail-ticket.rt-back{transform:rotateY(180deg);padding:0;height:100%;display:flex;flex-direction:column;overflow:hidden}
+.rt-back-head{flex-shrink:0;display:flex;align-items:center;gap:8px;padding:12px 14px;background:#141b26;border-bottom:1px solid rgba(255,255,255,.08)}
 .rt-back-head span{flex:1;font-size:12px;font-weight:700;color:var(--text1);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.rt-back-body{padding:6px 14px 20px}
+.rt-back-body{flex:1;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;padding:6px 14px 20px}
 
 /* ── 개표 게이트 통과 애니메이션 ── */
 .gate-overlay{position:fixed;inset:0;z-index:9800;display:flex;align-items:center;justify-content:center;background:radial-gradient(circle at 50% 40%,#0b2a1a,#05080d 70%);animation:gateFade .3s ease}
