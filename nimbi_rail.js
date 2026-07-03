@@ -695,7 +695,7 @@ function renderDetail(t){
           </div>
           <div class="detail-meta">${first?.s||''} ${depT} 발 → ${last?.s||''} ${arrT} 착</div>
           <div class="detail-meta" style="margin-top:2px">정차역 ${totalStops}개 &nbsp;·&nbsp; 소요시간 ${fmtDurKor(durMin(depT,arrT))}</div>
-          ${st.km>0?`<div class="detail-meta" style="margin-top:2px">총거리 ${fmtKm(st.km)} &nbsp;·&nbsp; 표정속도 ${fmtSpeed(st.speed)}</div>`:''}
+          ${st.km>0?`<div class="detail-meta" style="margin-top:2px">표정속도 ${fmtSpeed(st.speed)}</div>`:''}
         </div>
         <div style="display:flex;gap:4px;flex-shrink:0">
           <button class="share-btn" style="position:static" onclick="trackTrainOnMap('${t.no}')">🗺️</button>
@@ -4074,7 +4074,7 @@ function openBookingPopup(trainNo, fromStn, toStn, depTime, arrTime, travelDate)
           <div style="font-family:var(--mono);font-size:12px;color:var(--text2)" id="booking-clock"></div>
         </div>
         <div class="alarm-popup-sub">${fromStn} ${depTime||''} → ${toStn} ${arrTime||''}</div>
-        ${(()=>{const km=Math.round(routeDistanceKm(t,fromStn,toStn));const d=durMin(depTime,arrTime);return (km>0||d!=null)?`<div class="alarm-popup-sub" style="margin-top:-2px;color:var(--text3)">${km>0?'거리 '+fmtKm(km):''}${km>0&&d!=null?' · ':''}${d!=null?'소요 '+fmtDurKor(d):''}</div>`:'';})()}
+        ${(()=>{const d=durMin(depTime,arrTime);return d!=null?`<div class="alarm-popup-sub" style="margin-top:-2px;color:var(--text3)">소요 ${fmtDurKor(d)}</div>`:'';})()}
         <div class="booking-date-section">
           <div class="booking-section-label">탑승일</div>
           <input type="date" id="booking-date" value="${travelDate&&travelDate>=minDate?travelDate:minDate}" min="${minDate}" max="${maxDate}" class="booking-date-input">
@@ -4418,7 +4418,6 @@ function openQRPopup(ticketId){
           <div class="rt-meta">
             <div><span class="rt-k">날짜</span><span class="rt-v">${tk.travelDate}</span></div>
             <div><span class="rt-k">좌석</span><span class="rt-v">${tk.seatClassLabel} · ${tk.seats.join(', ')}</span></div>
-            <div><span class="rt-k">거리</span><span class="rt-v">${tkDistKm?fmtKm(tkDistKm):'-'}</span></div>
             <div><span class="rt-k">소요</span><span class="rt-v">${fmtDurKor(durMin(tk.depTime,tk.arrTime))}</span></div>
             <div><span class="rt-k">인원</span><span class="rt-v">${tk.passengerCount}명${discBadge?' · '+tk.discountLabel:''}</span></div>
             <div><span class="rt-k">운임</span><span class="rt-v">${fmtWon(tk.totalFare)}</span></div>
@@ -5673,7 +5672,7 @@ function renderTickets(){
       <div class="ticket-card-info">
         <div class="ticket-info-row"><span>탑승일</span><span>${tk.travelDate}</span></div>
         <div class="ticket-info-row"><span>좌석</span><span>${tk.seatClassLabel} · ${seatList}</span></div>
-        <div class="ticket-info-row"><span>거리 · 소요</span><span>${tkDistKm?fmtKm(tkDistKm):'-'} · ${fmtDurKor(durMin(tk.depTime,tk.arrTime))}</span></div>
+        <div class="ticket-info-row"><span>소요</span><span>${fmtDurKor(durMin(tk.depTime,tk.arrTime))}</span></div>
         <div class="ticket-info-row"><span>인원</span><span>${tk.passengerCount}명</span></div>
         <div class="ticket-info-row"><span>운임</span><span class="ticket-fare">${tk.totalFare.toLocaleString()}원</span></div>
       </div>
