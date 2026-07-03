@@ -242,10 +242,10 @@ const NOTICES = [
   {
     date:'2026-07-03',
     cat:'timetable',
-    title:'한강로↔순천 무궁화호 전 구간 시간표 신설 (1491~1494)',
-    body:`기존 한강로~회덕 구간만 운행하던 <strong>무궁화 1491~1494</strong>가 <strong>순천까지 전 구간</strong>으로 연장되었습니다.<br><br>
+    title:'한강로↔순천 무궁화호 신설 (1491~1496)',
+    body:`<strong>한강로~순천</strong>을 잇는 장거리 무궁화호 <strong>1491~1496</strong>(왕복 3편)이 신설되었습니다.<br><br>
 <div class="n-box">
-경부선 <strong>한강로~회덕</strong> · 호남선 <strong>회덕~광주</strong> · 경전선 <strong>광주~순천</strong>을 잇는 장거리 무궁화호입니다.<br>
+경부선 <strong>한강로~회덕</strong> · 호남선 <strong>회덕~광주</strong> · 경전선 <strong>광주~순천</strong>을 잇습니다.<br>
 한강로 ─ 남안양 ─ 천안 ─ 회덕 ─ 서대전 ─ 전주 ─ 정읍 ─ 장성 ─ 광주 ─ 빛가람 ─ 순천
 </div><br>
 <strong>■ 운행 시각</strong>
@@ -253,11 +253,11 @@ const NOTICES = [
 <tr><th>열차</th><th>방면</th><th>출발</th><th>도착</th></tr>
 <tr><td>무궁화 1491</td><td>순천행</td><td>한강로 06:00</td><td>순천 11:12</td></tr>
 <tr><td>무궁화 1493</td><td>순천행</td><td>한강로 13:20</td><td>순천 18:33</td></tr>
-<tr><td>무궁화 1495 <span class="n-highlight">신설·막차</span></td><td>순천행</td><td>한강로 17:51</td><td>순천 23:04</td></tr>
+<tr><td>무궁화 1495</td><td>순천행</td><td>한강로 17:51</td><td>순천 23:04</td></tr>
 <tr><td>무궁화 1492</td><td>한강로행</td><td>순천 05:57</td><td>한강로 11:13</td></tr>
 <tr><td>무궁화 1494</td><td>한강로행</td><td>순천 11:37</td><td>한강로 16:53</td></tr>
-<tr><td>무궁화 1496 <span class="n-highlight">신설·막차</span></td><td>한강로행</td><td>순천 18:26</td><td>한강로 23:29</td></tr>
+<tr><td>무궁화 1496</td><td>한강로행</td><td>순천 18:26</td><td>한강로 23:29</td></tr>
 </table><br>
-<span class="n-highlight">막차가 이른 점을 보완해 심야 왕복 1편(1495·1496)을 신설했습니다. 한강로~회덕 기존 시각은 유지되며, 통과·추월 검증을 거쳐 개활선 무단 추월 없이 동시 출발 간격도 확보했습니다.</span>`
+<span class="n-highlight">이른 아침부터 심야까지 하루 3왕복으로 운행합니다. 통과·추월 검증을 거쳐 개활선 무단 추월 없이 동시 출발 간격도 확보했습니다.</span>`
   }
 ];
