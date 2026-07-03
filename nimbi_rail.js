@@ -2293,7 +2293,7 @@ function showAllRunningTrains(){
   const runningTrains=ALL_TRAINS.filter(t=>{
     const st=getCurrentStatus(t);
     return st&&st.status==='running';
-  });
+  }).sort((a,b)=>(parseInt(a.no)||0)-(parseInt(b.no)||0));
   const chips=runningTrains.map(t=>{
     const c=GRADE_COLORS[t.grade]||'var(--accent)';
     return `<span onclick="jumpToTrain('${t.no}')" style="cursor:pointer;padding:2px 8px;border-radius:10px;border:1px solid ${c};color:${c};font-size:11px;background:rgba(0,0,0,.2)">${t.no}</span>`;
@@ -3604,11 +3604,11 @@ function renderStats(){
     lines.forEach(l=>{const ll=l.trim();lineCount[ll]=(lineCount[ll]||0)+1;});
   });
 
-  // 현재 운행 중
+  // 현재 운행 중 (열차번호 오름차순)
   const runningTrains=ALL_TRAINS.filter(t=>{
     const st=getCurrentStatus(t);
     return st&&st.status==='running';
-  });
+  }).sort((a,b)=>(parseInt(a.no)||0)-(parseInt(b.no)||0));
   const running=runningTrains.length;
 
   // 노선별 첫차/막차 계산
