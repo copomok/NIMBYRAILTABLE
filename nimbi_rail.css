@@ -614,7 +614,7 @@ tbody td{padding:10px 14px;font-size:13px;white-space:nowrap}
 
 /* ── 승차권 카드 ── */
 .ticket-list{display:flex;flex-direction:column;gap:14px}
-.ticket-card{background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:16px;position:relative}
+.ticket-card{background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:16px;position:relative;cursor:pointer}
 .ticket-card.ticket-cancelled{opacity:.55}
 
 /* ── 승차권 카드 뒤집기 (앞:승차권 / 뒤:편성·좌석) ── */
@@ -1237,6 +1237,17 @@ button, select, input[type=range],
 .rt-act-btn{flex:1;padding:11px 8px;border-radius:10px;border:1px solid var(--border);background:var(--bg3);color:var(--text1);font-size:13px;font-weight:700;font-family:var(--sans);cursor:pointer;touch-action:manipulation}
 .rt-act-board{border-color:#3fb950;background:linear-gradient(180deg,rgba(63,185,80,.22),rgba(63,185,80,.1));color:#7ee2a0}
 .rt-act-board:disabled{opacity:.5}
+
+/* ── QR 승차권 뒤집기 (앞:QR / 뒤:편성·좌석) ── */
+.rt-flip{width:100%;perspective:1700px}
+.rt-flip-inner{position:relative;transition:transform .6s cubic-bezier(.45,.05,.25,1),height .35s ease;transform-style:preserve-3d}
+.rt-flip.flipped .rt-flip-inner{transform:rotateY(180deg)}
+.rt-face{position:absolute;top:0;left:0;width:100%;backface-visibility:hidden;-webkit-backface-visibility:hidden}
+.rail-ticket.rt-front{position:relative;cursor:pointer}
+.rail-ticket.rt-back{transform:rotateY(180deg);overflow-y:auto;-webkit-overflow-scrolling:touch;max-height:80vh;padding:0}
+.rt-back-head{position:sticky;top:0;z-index:3;display:flex;align-items:center;gap:8px;padding:12px 14px;background:#141b26;border-bottom:1px solid rgba(255,255,255,.08)}
+.rt-back-head span{flex:1;font-size:12px;font-weight:700;color:var(--text1);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rt-back-body{padding:6px 14px 20px}
 
 /* ── 개표 게이트 통과 애니메이션 ── */
 .gate-overlay{position:fixed;inset:0;z-index:9800;display:flex;align-items:center;justify-content:center;background:radial-gradient(circle at 50% 40%,#0b2a1a,#05080d 70%);animation:gateFade .3s ease}

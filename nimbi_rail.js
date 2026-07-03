@@ -4361,40 +4361,52 @@ function openQRPopup(ticketId){
     ? `<button class="rt-act-btn rt-act-board" disabled>✓ 개표 완료</button>`
     : '';
 
+  window._qrTicketId = tk.id;
   const wrap = document.createElement('div');
   wrap.id = 'qr-popup-wrap';
   wrap.innerHTML = `
     <div class="rail-ticket-backdrop"></div>
     <div class="rail-ticket-wrap">
-      <div class="rail-ticket" style="--tk:${gradeC}">
-        <div class="rt-holo"></div>
-        <div class="rt-watermark"><span>${('NIMBIRAIL · 재판매금지 · '+tk.id+' · ').repeat(28)}</span></div>
-        <div class="rt-top">
-          <span class="rt-grade" style="color:${gradeC}">${tk.grade}</span>
-          <span class="rt-no">${tk.trainNo}</span>
-          <span style="margin-left:auto;display:flex;gap:6px;align-items:center">${discBadge}${boardBadge}</span>
+      <div class="rt-flip" id="rt-flip">
+       <div class="rt-flip-inner">
+        <div class="rail-ticket rt-face rt-front" style="--tk:${gradeC}" onclick="if(event.target.closest('.rt-act-btn'))return;flipRailTicket()">
+          <div class="rt-holo"></div>
+          <div class="rt-watermark"><span>${('NIMBIRAIL · 재판매금지 · '+tk.id+' · ').repeat(28)}</span></div>
+          <div class="rt-top">
+            <span class="rt-grade" style="color:${gradeC}">${tk.grade}</span>
+            <span class="rt-no">${tk.trainNo}</span>
+            <span style="margin-left:auto;display:flex;gap:6px;align-items:center">${discBadge}${boardBadge}</span>
+          </div>
+          <div class="rt-route">
+            <div class="rt-stn"><div class="rt-stn-name">${tk.fromStn}</div><div class="rt-stn-time">${tk.depTime||''}</div></div>
+            <div class="rt-arrow" style="color:${gradeC}">→</div>
+            <div class="rt-stn rt-stn-r"><div class="rt-stn-name">${tk.toStn}</div><div class="rt-stn-time">${tk.arrTime||''}</div></div>
+          </div>
+          <div class="rt-meta">
+            <div><span class="rt-k">날짜</span><span class="rt-v">${tk.travelDate}</span></div>
+            <div><span class="rt-k">좌석</span><span class="rt-v">${tk.seatClassLabel} · ${tk.seats.join(', ')}</span></div>
+            <div><span class="rt-k">거리</span><span class="rt-v">${tkDistKm?fmtKm(tkDistKm):'-'}</span></div>
+            <div><span class="rt-k">소요</span><span class="rt-v">${fmtDurKor(durMin(tk.depTime,tk.arrTime))}</span></div>
+            <div><span class="rt-k">인원</span><span class="rt-v">${tk.passengerCount}명${discBadge?' · '+tk.discountLabel:''}</span></div>
+            <div><span class="rt-k">운임</span><span class="rt-v">${fmtWon(tk.totalFare)}</span></div>
+          </div>
+          <div class="rt-perf"></div>
+          <div class="rt-qr" id="qr-canvas-wrap"></div>
+          <div class="rt-id">${tk.id}</div>
+          <div class="rt-barcode">${genBarcodeHTML(tk.id+tk.trainNo)}</div>
+          <div class="rt-actions">
+            ${boardBtn}
+            <button class="rt-act-btn" onclick="flipRailTicket()">🚆 편성·좌석 ⟳</button>
+          </div>
         </div>
-        <div class="rt-route">
-          <div class="rt-stn"><div class="rt-stn-name">${tk.fromStn}</div><div class="rt-stn-time">${tk.depTime||''}</div></div>
-          <div class="rt-arrow" style="color:${gradeC}">→</div>
-          <div class="rt-stn rt-stn-r"><div class="rt-stn-name">${tk.toStn}</div><div class="rt-stn-time">${tk.arrTime||''}</div></div>
+        <div class="rail-ticket rt-face rt-back" style="--tk:${gradeC}" id="rt-back">
+          <div class="rt-back-head">
+            <span>🚆 ${tk.grade} ${tk.trainNo} · ${tk.seatClassLabel} ${tk.seats.join(', ')}</span>
+            <button class="tcard-back-btn" onclick="flipRailTicket()">← 승차권</button>
+          </div>
+          <div class="rt-back-body" id="rt-back-body"></div>
         </div>
-        <div class="rt-meta">
-          <div><span class="rt-k">날짜</span><span class="rt-v">${tk.travelDate}</span></div>
-          <div><span class="rt-k">좌석</span><span class="rt-v">${tk.seatClassLabel} · ${tk.seats.join(', ')}</span></div>
-          <div><span class="rt-k">거리</span><span class="rt-v">${tkDistKm?fmtKm(tkDistKm):'-'}</span></div>
-          <div><span class="rt-k">소요</span><span class="rt-v">${fmtDurKor(durMin(tk.depTime,tk.arrTime))}</span></div>
-          <div><span class="rt-k">인원</span><span class="rt-v">${tk.passengerCount}명${discBadge?' · '+tk.discountLabel:''}</span></div>
-          <div><span class="rt-k">운임</span><span class="rt-v">${fmtWon(tk.totalFare)}</span></div>
-        </div>
-        <div class="rt-perf"></div>
-        <div class="rt-qr" id="qr-canvas-wrap"></div>
-        <div class="rt-id">${tk.id}</div>
-        <div class="rt-barcode">${genBarcodeHTML(tk.id+tk.trainNo)}</div>
-        <div class="rt-actions">
-          ${boardBtn}
-          <button class="rt-act-btn" onclick="openFormationPopup('${tk.id}')">🚆 편성·좌석</button>
-        </div>
+       </div>
       </div>
       <button class="alarm-popup-close" style="margin-top:12px" onclick="closeQRPopup()">닫기</button>
     </div>`;
@@ -4403,6 +4415,28 @@ function openQRPopup(ticketId){
   const canvas = generateQRCanvas(qrText, 225);
   canvas.style.cssText = 'display:block';
   document.getElementById('qr-canvas-wrap').appendChild(canvas);
+}
+// QR 승차권 뒤집기: 앞(QR) ↔ 뒤(편성·좌석). 뒷면은 최초 뒤집을 때 렌더.
+function flipRailTicket(){
+  const flip=document.getElementById('rt-flip'); if(!flip) return;
+  const inner=flip.querySelector('.rt-flip-inner');
+  const front=flip.querySelector('.rt-front');
+  const back=flip.querySelector('.rt-back');
+  if(!inner||!front||!back) return;
+  const willFlip=!flip.classList.contains('flipped');
+  if(willFlip){
+    const body=document.getElementById('rt-back-body');
+    if(body && !body.dataset.rendered){
+      const tk=loadTickets().find(t=>t.id===window._qrTicketId);
+      if(tk){ body.innerHTML=renderFormationContent(tk); body.dataset.rendered='1'; }
+    }
+  }
+  inner.style.height=(willFlip?front.offsetHeight:back.offsetHeight)+'px';
+  flip.classList.toggle('flipped', willFlip); // 클래스는 즉시 토글(연타 방지)
+  requestAnimationFrame(()=>{
+    const h = willFlip ? Math.min(back.scrollHeight, Math.round(window.innerHeight*0.8)) : front.offsetHeight;
+    inner.style.height=h+'px';
+  });
 }
 // 티켓 ID 기반 의사 바코드 생성 (연출용)
 function genBarcodeHTML(str){
@@ -5572,10 +5606,8 @@ function renderTickets(){
     const seatList=tk.seats.join(', ');
     const _tkt=ALL_TRAINS.find(x=>x.no===tk.trainNo);
     const tkDistKm=tk.distanceKm||(_tkt?Math.round(routeDistanceKm(_tkt,tk.fromStn,tk.toStn)):0);
-    return `<div class="tcard-flip" id="tcf-${tk.id}">
-     <div class="tcard-inner">
-      <div class="tcard-face tcard-front ticket-card${cancelledCls}" onclick="flipTicketCard('${tk.id}',event)">
-       <div class="ticket-card-top" style="border-color:var(--c-${gcCssVar(tk.grade)})">
+    return `<div class="ticket-card${cancelledCls}" onclick="openQRPopup('${tk.id}')">
+      <div class="ticket-card-top" style="border-color:var(--c-${gcCssVar(tk.grade)})">
         <span class="ticket-grade" style="color:var(--c-${gcCssVar(tk.grade)})">${tk.grade}</span>
         <span class="ticket-no">${tk.trainNo}</span>
         ${tk.status==='cancelled'?'<span class="ticket-status-badge">취소됨</span>'
@@ -5583,38 +5615,28 @@ function renderTickets(){
             if(bs==='active')return '<span class="rt-board-badge rt-board-active" style="margin-left:auto">● 탑승 중</span>';
             if(bs==='done')return '<span class="rt-board-badge rt-board-done" style="margin-left:auto">탑승 완료</span>';
             return '';})()}
-       </div>
-       <div class="ticket-card-route">
+      </div>
+      <div class="ticket-card-route">
         <div class="ticket-station"><span class="ticket-station-name">${tk.fromStn}</span><span class="ticket-time">${tk.depTime||'-'}</span></div>
         <div class="ticket-arrow">→</div>
         <div class="ticket-station"><span class="ticket-station-name">${tk.toStn}</span><span class="ticket-time">${tk.arrTime||'-'}</span></div>
-       </div>
-       <div class="ticket-card-divider"></div>
-       <div class="ticket-card-info">
+      </div>
+      <div class="ticket-card-divider"></div>
+      <div class="ticket-card-info">
         <div class="ticket-info-row"><span>탑승일</span><span>${tk.travelDate}</span></div>
         <div class="ticket-info-row"><span>좌석</span><span>${tk.seatClassLabel} · ${seatList}</span></div>
         <div class="ticket-info-row"><span>거리 · 소요</span><span>${tkDistKm?fmtKm(tkDistKm):'-'} · ${fmtDurKor(durMin(tk.depTime,tk.arrTime))}</span></div>
         <div class="ticket-info-row"><span>인원</span><span>${tk.passengerCount}명</span></div>
         <div class="ticket-info-row"><span>운임</span><span class="ticket-fare">${tk.totalFare.toLocaleString()}원</span></div>
-       </div>
-       <div class="ticket-card-id" style="display:flex;align-items:center;justify-content:space-between">
+      </div>
+      <div class="ticket-card-id" style="display:flex;align-items:center;justify-content:space-between">
         <span>예매번호 ${tk.id}</span>
-        <button class="btn qr-btn" onclick="event.stopPropagation();openQRPopup('${tk.id}')" title="QR코드 보기">🔲 QR</button>
-       </div>
-       <div class="ticket-card-actions">
+        <button class="btn qr-btn" onclick="event.stopPropagation();openQRPopup('${tk.id}')" title="QR·좌석 보기">🔲 QR</button>
+      </div>
+      <div class="ticket-card-actions">
         ${tk.status==='active'&&_ticketFilterTab==='upcoming'?`<button class="btn" style="font-size:12px;padding:6px 12px" onclick="event.stopPropagation();cancelTicket('${tk.id}')">예매 취소</button>`:''}
         <button class="btn" style="font-size:12px;padding:6px 12px" onclick="event.stopPropagation();deleteTicket('${tk.id}')">기록 삭제</button>
-       </div>
-       <div class="tcard-flip-hint">탭하여 좌석·편성 보기 ⟳</div>
       </div>
-      <div class="tcard-face tcard-back" id="tcback-${tk.id}">
-       <div class="tcard-back-head">
-        <span>🚆 ${tk.grade} ${tk.trainNo} · ${tk.seatClassLabel} ${seatList}</span>
-        <button class="tcard-back-btn" onclick="flipTicketCard('${tk.id}',event)">← 승차권</button>
-       </div>
-       <div class="tcard-back-body" id="tcbody-${tk.id}"></div>
-      </div>
-     </div>
     </div>`;
   }).join('');
 
