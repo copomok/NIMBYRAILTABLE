@@ -251,10 +251,10 @@ const NOTICES = [
 <strong>■ 운행 시각</strong>
 <table>
 <tr><th>열차</th><th>방면</th><th>출발</th><th>도착</th></tr>
-<tr><td>무궁화 1491</td><td>순천행</td><td>한강로 06:00</td><td>순천 11:12</td></tr>
-<tr><td>무궁화 1492</td><td>한강로행</td><td>순천 05:57</td><td>한강로 11:13</td></tr>
+<tr><td>무궁화 1491</td><td>순천행</td><td>한강로 06:02</td><td>순천 11:15</td></tr>
+<tr><td>무궁화 1492</td><td>한강로행</td><td>순천 05:56</td><td>한강로 10:59</td></tr>
 <tr><td>무궁화 1493</td><td>순천행</td><td>한강로 13:20</td><td>순천 18:33</td></tr>
-<tr><td>무궁화 1494</td><td>한강로행</td><td>순천 11:37</td><td>한강로 16:53</td></tr>
+<tr><td>무궁화 1494</td><td>한강로행</td><td>순천 11:38</td><td>한강로 16:41</td></tr>
 <tr><td>무궁화 1495</td><td>순천행</td><td>한강로 17:51</td><td>순천 23:04</td></tr>
 <tr><td>무궁화 1496</td><td>한강로행</td><td>순천 18:26</td><td>한강로 23:29</td></tr>
 </table><br>
