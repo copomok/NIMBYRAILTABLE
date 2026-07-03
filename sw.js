@@ -1,10 +1,11 @@
-const CACHE_NAME = 'nimbirail-1783073111';
+const CACHE_NAME = 'nimbirail-1783086338';
 const ASSETS = [
   '/NIMBYRAILTABLE/',
   '/NIMBYRAILTABLE/index.html',
   '/NIMBYRAILTABLE/nimbi_rail.css',
   '/NIMBYRAILTABLE/nimbi_rail.js',
   '/NIMBYRAILTABLE/nimbi_rail_data.js',
+  '/NIMBYRAILTABLE/nimbi_realplat.js',
   '/NIMBYRAILTABLE/nimbi_rail_notices.js',
   '/NIMBYRAILTABLE/manifest.json',
   '/NIMBYRAILTABLE/icon-192.png',
@@ -68,7 +69,7 @@ self.addEventListener('message', e => {
       badge: '/NIMBYRAILTABLE/icon-192.png',
       vibrate: [200, 100, 200],
       requireInteraction: false,
-      tag: tag || 'nimbirail-1783073111alarm',
+      tag: tag || 'nimbirail-1783086338alarm',
     });
   }
 });

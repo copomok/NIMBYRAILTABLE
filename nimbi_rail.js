@@ -6727,6 +6727,39 @@ function _gradeMatchesPlatform(trainGrade, platformGrades){
   return false;
 }
 
+// ── 실사용 승강장 (게임 DB 기반, nimbi_realplat.js) ──
+// trainName: 역 접미사 없는 역 이름 (REAL_PLAT 키). name: STATION_DB/PLATFORM_DB 키(역 포함).
+function _realPlatform(trainNo, trainName){
+  if(typeof REAL_PLAT==='undefined')return null;
+  const m=REAL_PLAT[trainNo]; if(!m)return null;
+  const v=m[trainName];
+  return (v==null)?null:v;
+}
+// 실데이터가 없는 정차만 휴리스틱(등급·방면·트윈)으로 폴백
+function _heuristicPlatform(name, trains, t){
+  if(typeof PLATFORM_DB==='undefined'||!PLATFORM_DB[name])return null;
+  const ps=Object.keys(PLATFORM_DB[name]).map(Number)
+    .filter(p=>{const i=PLATFORM_DB[name][String(p)];return i&&(i.g.length>0||i.l.length>0);})
+    .sort((a,b)=>a-b);
+  for(const p of ps){
+    if(_getFilteredTrainsForPlatform(name,trains,p).some(x=>x.no===t.no))return p;
+  }
+  return null;
+}
+// 열차가 이 역에서 실제 사용하는 승강장 (게임 DB 우선, 없으면 휴리스틱)
+function _platformForTrain(name, trainName, trains, t){
+  const r=_realPlatform(t.no, trainName);
+  if(r!=null)return r;
+  return _heuristicPlatform(name, trains, t);
+}
+// 이 역에 실제 정차(통과 제외)하는 열차 목록
+function _stationStoppingTrains(trainName){
+  return ALL_TRAINS.filter(t=>{
+    const s=t.stops.find(x=>x.s===trainName);
+    return s&&(hasTime(s.dep)||hasTime(s.arr))&&!isPassStop(t,trainName);
+  });
+}
+
 function renderSICard(name){
   const el=document.getElementById('si-card');
   if(!el)return;
@@ -6735,21 +6768,18 @@ function renderSICard(name){
   const d=typeof STATION_DB!=='undefined'?STATION_DB[name]:null;
   // ALL_TRAINS uses station names without 역 suffix (e.g. "영주"), STATION_DB uses "영주역"
   const trainName=name.endsWith('역')?name.slice(0,-1):name;
-  const trains=ALL_TRAINS.filter(t=>t.stops.some(s=>s.s===trainName&&(s.dep||s.arr)));
+  // 통과 열차 제외 — 정차 열차만 (승강장 안내 요건)
+  const trains=_stationStoppingTrains(trainName);
   const gc_count={};
   trains.forEach(t=>{const g=gc(t.grade);gc_count[g]=(gc_count[g]||0)+1;});
-  // Prefer PLATFORM_DB for platform list; filter out empty platforms; fallback to STATION_DB
+  // 실사용 승강장(게임 DB) 우선 — 실제 정차 열차들이 쓰는 홈 번호만 노출
   let platforms=[];
-  if(typeof PLATFORM_DB!=='undefined'&&PLATFORM_DB[name]){
-    // Candidates: non-empty platforms from PLATFORM_DB
-    const candidates=Object.keys(PLATFORM_DB[name]).map(Number)
-      .filter(p=>{const i=PLATFORM_DB[name][String(p)];return i&&(i.g.length>0||i.l.length>0);})
-      .sort((a,b)=>a-b);
-    // 문제 3: only show platforms with at least one matching train
-    platforms=candidates.filter(p=>_getFilteredTrainsForPlatform(name,trains,p).length>0);
-  } else if(d?.platforms?.length>0){
-    platforms=d.platforms;
+  {
+    const set=new Set();
+    trains.forEach(t=>{const p=_platformForTrain(name,trainName,trains,t);if(p!=null)set.add(p);});
+    platforms=[...set].sort((a,b)=>a-b);
   }
+  if(platforms.length===0&&d?.platforms?.length>0) platforms=d.platforms;
   // Reset selected platform if it was filtered out
   if(_siCardPlatform!==null&&!platforms.includes(_siCardPlatform)) _siCardPlatform=null;
   if(_siCardPlatform===null&&platforms.length>0) _siCardPlatform=platforms[0];
@@ -6851,7 +6881,7 @@ function selectSICardPlatform(name, p){
     b.style.color=bp===p?'#fff':'var(--text1)';
   });
   const trainName=name.endsWith('역')?name.slice(0,-1):name;
-  const trains=ALL_TRAINS.filter(t=>t.stops.some(s=>s.s===trainName&&(s.dep||s.arr)));
+  const trains=_stationStoppingTrains(trainName);
   const el=document.getElementById('si-platform-trains');
   if(el) el.innerHTML=_siPlatformTrainsHTML(name, trains);
 }
@@ -6951,23 +6981,22 @@ function _extractDestinations(lines, stationName, direction=null){
 function _siPlatformTrainsHTML(name, trains){
   const trainName=name.endsWith('역')?name.slice(0,-1):name;
   const pInfo=_siCardPlatform!==null?_getPlatformInfo(name,_siCardPlatform):null;
-  const hasData=pInfo!==null;
-  const dirFilter=_siCardPlatform!==null?_getDirectionForPlatform(name,_siCardPlatform):null;
-  // Use unified filter (grade + route + direction, with terminus trains exempt)
-  const filtered=_siCardPlatform!==null&&hasData
-    ?_getFilteredTrainsForPlatform(name,trains,_siCardPlatform)
+  // 선택 홈에 실제 배정된 열차만 (게임 DB 기준, 없으면 휴리스틱 폴백)
+  const filtered=_siCardPlatform!==null
+    ?trains.filter(t=>_platformForTrain(name,trainName,trains,t)===_siCardPlatform)
     :[...trains];
   const sorted=[...filtered].sort((a,b)=>{
     const sa=a.stops.find(x=>x.s===trainName), sb=b.stops.find(x=>x.s===trainName);
     return (toMin(sa?.dep||sa?.arr)||9999)-(toMin(sb?.dep||sb?.arr)||9999);
   });
-  const dests=hasData&&pInfo.l.length>0?_extractDestinations(pInfo.l,name,dirFilter):[];
+  // 방면·방향은 실제 배정된 열차에서 도출
+  const fdirs=new Set(sorted.map(t=>t.dir));
+  const dirLabel=(_siCardPlatform!==null&&fdirs.size===1)?(sorted[0].dir==='down'?'하행↓':'상행↑'):'';
+  const dests=_siCardPlatform!==null?[...new Set(sorted.map(t=>t.dest))].slice(0,3):[];
   const destsStr=dests.length>0?dests.join(' • ')+' 방면':'';
-  const dirLabel=dirFilter==='down'?'하행↓':dirFilter==='up'?'상행↑':'';
   const nameEsc=name.replace(/\\/g,'\\\\').replace(/'/g,"\\'");
   return `
     <div style="font-size:12px;font-weight:700;color:var(--text2);margin-bottom:${_siCardPlatform?'4':'10'}px">🚆 ${_siCardPlatform?`${_siCardPlatform}번 홈${dirLabel?' ('+dirLabel+')':''} 시간표`:'역 시간표'}</div>
-    ${_siCardPlatform&&!hasData?'<div style="font-size:10px;color:var(--text3);margin-bottom:8px">홈별 배정 데이터 없음 · 역 전체 운행 기준</div>':''}
     ${destsStr?`<div style="font-size:10px;color:var(--accent2);margin-bottom:8px">📍 ${destsStr}</div>`:''}
     ${sorted.length===0?'<div style="color:var(--text3);font-size:13px;text-align:center;padding:12px">운행 열차 없음</div>':''}
     ${(()=>{
@@ -7005,15 +7034,9 @@ function _siDepartureBoardHTML(name, trains){
   const now=new Date();
   const nowMin=now.getHours()*60+now.getMinutes();
   const clock=`${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
-  // 열차별 승강장 매핑
+  // 열차별 승강장 매핑 (게임 DB 우선, 없으면 휴리스틱)
   const platOf={};
-  if(typeof PLATFORM_DB!=='undefined' && PLATFORM_DB[name]){
-    Object.keys(PLATFORM_DB[name]).map(Number).sort((a,b)=>a-b).forEach(p=>{
-      const info=PLATFORM_DB[name][String(p)];
-      if(!info || (info.g.length===0 && info.l.length===0)) return;
-      _getFilteredTrainsForPlatform(name, trains, p).forEach(t=>{ if(platOf[t.no]===undefined) platOf[t.no]=p; });
-    });
-  }
+  trains.forEach(t=>{ const p=_platformForTrain(name, trainName, trains, t); if(p!=null) platOf[t.no]=p; });
   // 지금 이후 출발 열차 추출
   const rows=trains.map(t=>{
     const s=t.stops.find(x=>x.s===trainName);
