@@ -363,6 +363,7 @@ function updateMinimap(){
 }
 
 function switchTab(n){
+  try{ closeStationBoard(); }catch(e){}
   document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
   document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
   document.getElementById('tab-'+n).classList.add('active');
@@ -6469,19 +6470,19 @@ function openBookingWithDate(trainNo, from, to, depT, arrT, travelDate, isRound,
 // ══════════════════════════════════════════
 // 🚉 역 정보 탭
 // ══════════════════════════════════════════
-let _siSubTab='near', _siCurrent=null, _siCardPlatform=null, _siNearAll=[], _siNearShowClosed=false, _siNearLat=null, _siNearLon=null;
+let _siSubTab='near', _siCurrent=null, _siCardPlatform=null, _siNearAll=[], _siNearShowClosed=false, _siNearLat=null, _siNearLon=null, _siHideTerm=false, _siBoardTimer=null;
 
 function renderStationInfo(){
   const el=document.getElementById('result-stationinfo');
   if(!el)return;
   el.innerHTML=`
-    <div style="position:sticky;top:0;background:var(--bg);z-index:5;padding:8px 16px 4px">
+    <div style="position:sticky;top:0;background:var(--bg);z-index:5;padding:8px 0 4px">
       <div style="display:flex;gap:4px;background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:4px">
         <button class="si-tab${_siSubTab==='near'?' active':''}" onclick="setSITab('near')">📍 가까운 역</button>
         <button class="si-tab${_siSubTab==='detail'?' active':''}" onclick="setSITab('detail')">🏢 역 상세</button>
       </div>
     </div>
-    <div id="si-content" style="padding:0 16px 24px"></div>`;
+    <div id="si-content" style="padding:0 0 24px"></div>`;
   renderSIContent();
 }
 
@@ -6759,6 +6760,39 @@ function _stationStoppingTrains(trainName){
     return s&&(hasTime(s.dep)||hasTime(s.arr))&&!isPassStop(t,trainName);
   });
 }
+// 조회역이 이 열차의 종착역인가 (당역종착)
+function _isTerminusAt(t, trainName){
+  if(t.dest===trainName) return true;
+  const s=t.stops.find(x=>x.s===trainName);
+  return !!(s&&hasTime(s.arr)&&!hasTime(s.dep));
+}
+// 역 좌표 (base 이름 → STATION_DB)
+function _siStnCoord(base){
+  if(typeof STATION_DB==='undefined')return null;
+  const r=STATION_DB[base]||STATION_DB[base+'역'];
+  return (r&&r.lat!=null&&r.lon!=null)?r:null;
+}
+// 이 열차의 조회역 기준 직전/직후 정차역 (통과 제외)
+function _adjStopOf(t, trainName){
+  const stops=t.stops.filter(s=>(hasTime(s.arr)||hasTime(s.dep))&&!isPassStop(t,s.s));
+  const i=stops.findIndex(s=>s.s===trainName);
+  return {prev:i>0?stops[i-1].s:null, next:(i>=0&&i<stops.length-1)?stops[i+1].s:null};
+}
+// 후보 역 중 현재역에서 가장 가까운 역 (실좌표) — 급행이 소역 통과해도 완행 기준 최근접역 선택
+function _nearestStn(fromBase, cands){
+  const arr=[...new Set(cands.filter(Boolean))];
+  if(arr.length<=1) return arr[0]||null;
+  const cur=_siStnCoord(fromBase);
+  if(cur&&typeof haversineKm==='function'){
+    arr.sort((a,b)=>{
+      const ca=_siStnCoord(a), cb=_siStnCoord(b);
+      const da=ca?haversineKm(cur.lat,cur.lon,ca.lat,ca.lon):9e9;
+      const db=cb?haversineKm(cur.lat,cur.lon,cb.lat,cb.lon):9e9;
+      return da-db;
+    });
+  }
+  return arr[0];
+}
 
 function renderSICard(name){
   const el=document.getElementById('si-card');
@@ -6798,7 +6832,9 @@ function renderSICard(name){
           ).join('')}
         </div>
       </div>
-      <div style="padding:12px 0 4px">${_siDepartureBoardHTML(name, trains)}</div>
+      <div style="padding:12px 16px 4px">
+        <button class="si-board-btn" onclick="openStationBoard('${nameEsc}')">🚉 출발 안내 전광판 열기</button>
+      </div>
       ${platforms.length>0?`
       <div style="padding:12px 16px;border-bottom:1px solid var(--border)">
         <div style="font-size:12px;font-weight:700;color:var(--text2);margin-bottom:8px">🚉 홈 선택</div>
@@ -6880,6 +6916,14 @@ function selectSICardPlatform(name, p){
     b.style.background=bp===p?'var(--accent)':'var(--bg3)';
     b.style.color=bp===p?'#fff':'var(--text1)';
   });
+  const trainName=name.endsWith('역')?name.slice(0,-1):name;
+  const trains=_stationStoppingTrains(trainName);
+  const el=document.getElementById('si-platform-trains');
+  if(el) el.innerHTML=_siPlatformTrainsHTML(name, trains);
+}
+
+function toggleSITerm(name){
+  _siHideTerm=!_siHideTerm;
   const trainName=name.endsWith('역')?name.slice(0,-1):name;
   const trains=_stationStoppingTrains(trainName);
   const el=document.getElementById('si-platform-trains');
@@ -6980,11 +7024,13 @@ function _extractDestinations(lines, stationName, direction=null){
 
 function _siPlatformTrainsHTML(name, trains){
   const trainName=name.endsWith('역')?name.slice(0,-1):name;
-  const pInfo=_siCardPlatform!==null?_getPlatformInfo(name,_siCardPlatform):null;
-  // 선택 홈에 실제 배정된 열차만 (게임 DB 기준, 없으면 휴리스틱 폴백)
-  const filtered=_siCardPlatform!==null
+  const nameEsc=name.replace(/\\/g,'\\\\').replace(/'/g,"\\'");
+  // 선택 홈에 실제 배정된 열차 (게임 DB 기준, 없으면 휴리스틱 폴백)
+  const platTrains=_siCardPlatform!==null
     ?trains.filter(t=>_platformForTrain(name,trainName,trains,t)===_siCardPlatform)
     :[...trains];
+  // 당역종착 제외 필터 (#4)
+  const filtered=_siHideTerm?platTrains.filter(t=>!_isTerminusAt(t,trainName)):platTrains;
   const sorted=[...filtered].sort((a,b)=>{
     const sa=a.stops.find(x=>x.s===trainName), sb=b.stops.find(x=>x.s===trainName);
     return (toMin(sa?.dep||sa?.arr)||9999)-(toMin(sb?.dep||sb?.arr)||9999);
@@ -6992,12 +7038,23 @@ function _siPlatformTrainsHTML(name, trains){
   // 방면·방향은 실제 배정된 열차에서 도출
   const fdirs=new Set(sorted.map(t=>t.dir));
   const dirLabel=(_siCardPlatform!==null&&fdirs.size===1)?(sorted[0].dir==='down'?'하행↓':'상행↑'):'';
-  const dests=_siCardPlatform!==null?[...new Set(sorted.map(t=>t.dest))].slice(0,3):[];
+  const dests=_siCardPlatform!==null?[...new Set(sorted.filter(t=>!_isTerminusAt(t,trainName)).map(t=>t.dest))].slice(0,3):[];
   const destsStr=dests.length>0?dests.join(' • ')+' 방면':'';
-  const nameEsc=name.replace(/\\/g,'\\\\').replace(/'/g,"\\'");
+  // 이전/다음역 이동 (#5) — 홈 열차들의 직전/직후 정차역 중 최근접역
+  const nextC=[], prevC=[];
+  platTrains.forEach(t=>{const a=_adjStopOf(t,trainName); if(a.next)nextC.push(a.next); if(a.prev)prevC.push(a.prev);});
+  const prevStn=_nearestStn(trainName,prevC), nextStn=_nearestStn(trainName,nextC);
+  const navBtn=(stn,arrow)=>`<button onclick="openStationDetail('${stn.replace(/'/g,"\\'")}')" style="flex:1;min-width:0;padding:8px 10px;border-radius:9px;border:1px solid var(--border);background:var(--bg3);color:var(--text1);font-size:12.5px;font-weight:700;cursor:pointer;font-family:var(--sans);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${arrow==='prev'?'← '+stn:stn+' →'}</button>`;
+  const navHtml=(prevStn||nextStn)?`<div style="display:flex;gap:8px;margin-bottom:10px">${prevStn?navBtn(prevStn,'prev'):''}${nextStn?navBtn(nextStn,'next'):''}</div>`:'';
+  const termOn=_siHideTerm;
+  const filterBtn=`<button onclick="toggleSITerm('${nameEsc}')" style="padding:4px 10px;border-radius:14px;border:1px solid ${termOn?'var(--accent)':'var(--border)'};background:${termOn?'var(--accent)':'var(--bg3)'};color:${termOn?'#fff':'var(--text2)'};font-size:11px;font-weight:600;cursor:pointer;font-family:var(--sans);white-space:nowrap">당역종착 제외</button>`;
   return `
-    <div style="font-size:12px;font-weight:700;color:var(--text2);margin-bottom:${_siCardPlatform?'4':'10'}px">🚆 ${_siCardPlatform?`${_siCardPlatform}번 홈${dirLabel?' ('+dirLabel+')':''} 시간표`:'역 시간표'}</div>
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:${_siCardPlatform?'6':'10'}px">
+      <div style="font-size:12px;font-weight:700;color:var(--text2);flex:1">🚆 ${_siCardPlatform?`${_siCardPlatform}번 홈${dirLabel?' ('+dirLabel+')':''} 시간표`:'역 시간표'}</div>
+      ${filterBtn}
+    </div>
     ${destsStr?`<div style="font-size:10px;color:var(--accent2);margin-bottom:8px">📍 ${destsStr}</div>`:''}
+    ${navHtml}
     ${sorted.length===0?'<div style="color:var(--text3);font-size:13px;text-align:center;padding:12px">운행 열차 없음</div>':''}
     ${(()=>{
       const trainRow=t=>{
@@ -7005,13 +7062,17 @@ function _siPlatformTrainsHTML(name, trains){
         const time=s?.dep||s?.arr||'-';
         const dir=t.dir==='down'?'하행↓':'상행↑';
         const dirC=t.dir==='down'?'var(--accent)':'var(--red)';
+        const isTerm=_isTerminusAt(t,trainName);
+        const destHtml=isTerm
+          ?`<span style="color:var(--accent2)">당역종착</span>`
+          :`${t.dest}행`;
         return `<div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--border)22">
           <div style="font-size:15px;font-weight:700;font-family:var(--mono);min-width:46px">${time}</div>
           <div style="min-width:50px">
             <div style="font-size:12px;font-weight:700;color:var(--c-${gcCssVar(t.grade)})">${t.grade}</div>
             <div style="font-size:10px;color:var(--text3);font-family:var(--mono)">${t.no}</div>
           </div>
-          <div style="flex:1;font-size:13px;font-weight:600">${t.dest}행</div>
+          <div style="flex:1;font-size:13px;font-weight:600">${destHtml}</div>
           <div style="font-size:11px;font-weight:700;color:${dirC}">${dir}</div>
         </div>`;
       };
@@ -7029,7 +7090,8 @@ function _siPlatformTrainsHTML(name, trains){
 }
 
 // ── 역 전광판 (출발 안내 LED) ──
-function _siDepartureBoardHTML(name, trains){
+function _siDepartureBoardHTML(name, trains, limit){
+  limit=limit||6;
   const trainName=name.endsWith('역')?name.slice(0,-1):name;
   const now=new Date();
   const nowMin=now.getHours()*60+now.getMinutes();
@@ -7048,7 +7110,7 @@ function _siDepartureBoardHTML(name, trains){
   }).filter(Boolean)
     .filter(r=>r.diff>=-2)
     .sort((a,b)=>a.diff-b.diff)
-    .slice(0,6);
+    .slice(0,limit);
 
   const rowsHtml = rows.length ? rows.map(r=>{
     const t=r.t;
@@ -7077,6 +7139,34 @@ function _siDepartureBoardHTML(name, trains){
     <div class="stn-board-cols"><span style="width:52px">시각</span><span style="flex:1">방면 · 열차</span><span style="width:30px;text-align:center">홈</span><span style="width:56px;text-align:right">안내</span></div>
     ${rowsHtml}
   </div>`;
+}
+
+// ── 출발 안내 전광판 팝업 (QR처럼 별도 창) ──
+function openStationBoard(name){
+  if(typeof STATION_DB!=='undefined'&&!STATION_DB[name]&&STATION_DB[name+'역']) name=name+'역';
+  const trainName=name.endsWith('역')?name.slice(0,-1):name;
+  const old=document.getElementById('si-board-wrap'); if(old)old.remove();
+  const trains=_stationStoppingTrains(trainName);
+  const wrap=document.createElement('div');
+  wrap.id='si-board-wrap';
+  wrap.innerHTML=`
+    <div class="rail-ticket-backdrop" onclick="closeStationBoard()"></div>
+    <div class="si-board-popup" role="dialog" aria-label="${trainName}역 출발 안내">
+      <div class="si-board-popup-head">
+        <span>🚉 ${trainName} · 출발 안내</span>
+        <button class="si-board-close" onclick="closeStationBoard()" aria-label="닫기">✕</button>
+      </div>
+      <div id="si-board-live"></div>
+    </div>`;
+  document.body.appendChild(wrap);
+  const draw=()=>{const el=document.getElementById('si-board-live'); if(el)el.innerHTML=_siDepartureBoardHTML(name,trains,10);};
+  draw();
+  if(_siBoardTimer)clearInterval(_siBoardTimer);
+  _siBoardTimer=setInterval(draw,20000);
+}
+function closeStationBoard(){
+  const el=document.getElementById('si-board-wrap'); if(el)el.remove();
+  if(_siBoardTimer){clearInterval(_siBoardTimer);_siBoardTimer=null;}
 }
 
 function renderSIDelay(el){
