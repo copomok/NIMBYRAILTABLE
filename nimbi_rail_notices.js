@@ -219,5 +219,24 @@ const NOTICES = [
 📊 지연 예측 — 실제 운행 기록을 기반으로 시간대·노선별 지연 확률과 예상 지연 시간을 안내합니다.
 </div><br>
 <span class="n-highlight">자정을 넘겨 운행하는 열차의 소요시간이 올바르게 계산되도록 함께 개선되었습니다.</span>`
+  },
+  {
+    date:'2026-07-03',
+    cat:'timetable',
+    title:'개활선 무단 추월(역전) 구간 시간표 조정',
+    body:`느린 열차가 정차역이 아닌 <strong>역과 역 사이(개활선)</strong>에서 빠른 열차에 추월당하던 구간을 바로잡았습니다.<br><br>
+<div class="n-box">
+느린 열차를 직전 정차역에서 잠시 대피(정차)시켜 <strong>빠른 열차가 역에서 안전하게 추월</strong>하도록 조정했습니다. 각 열차의 종착 직전 구간만 소폭(3~4분) 늦춰지며, 그 외 시각은 변동이 없습니다.
+</div><br>
+<strong>■ 조정된 열차 (종착역 도착 3~4분 지연)</strong>
+<table>
+<tr><th>열차</th><th>구간</th><th>추월 열차</th><th>조정</th></tr>
+<tr><td>무궁화 1530</td><td>운암~전주</td><td>KTX-산천 564</td><td>+4분</td></tr>
+<tr><td>무궁화 1544</td><td>운암~전주</td><td>KTX-산천 582</td><td>+4분</td></tr>
+<tr><td>무궁화 1558</td><td>남안양~서울</td><td>ITX-새마을 1156</td><td>+4분</td></tr>
+<tr><td>무궁화 1562</td><td>남안양~서울</td><td>ITX-새마을 1160</td><td>+4분</td></tr>
+<tr><td>무궁화 1923</td><td>강진~완도</td><td>KTX 903</td><td>+3분</td></tr>
+<tr><td>무궁화 1931</td><td>강진~완도</td><td>KTX 915</td><td>+3분</td></tr>
+</table>`
   }
 ];
