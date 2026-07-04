@@ -2448,7 +2448,7 @@ function trackTrainOnMap(trainNo){
   if(!t) return;
 
   const lineMap = {
-    '경부선':'gyeongbu','경부고속선':'gyeongbuhs','호남선':'honam',
+    '경부선':'gyeongbu','경부고속선':'gyeongbuhs','호남고속선':'honamhs','호남선':'honam',
     '전라선':'jeolla','중앙선':'jungang','동해선':'donghae','영동선':'yeongdong',
     '강릉선':'gangreung','중부내륙선':'jungnaelyuk','경전선':'gyeongjeon'
   };
@@ -2746,6 +2746,16 @@ const GRADE_COLORS = {
   '무궁화호':'#f97316'
 };
 
+// 노선명 → MAP_LINES 키, 노선별 인접역 쌍 캐시 (구간 소속 판별용)
+const _lineNameToKey={'경부선':'gyeongbu','경부고속선':'gyeongbuhs','호남고속선':'honamhs','호남선':'honam','전라선':'jeolla','중앙선':'jungang','동해선':'donghae','영동선':'yeongdong','강릉선':'gangreung','중부내륙선':'jungnaelyuk','경전선':'gyeongjeon'};
+const _mapEdgeCache={};
+function _mapLineEdgeSet(key){
+  if(_mapEdgeCache[key])return _mapEdgeCache[key];
+  const ml=MAP_LINES[key], e=new Set();
+  if(ml)(ml.routes||[]).forEach(r=>{for(let i=0;i<r.stations.length-1;i++){e.add(r.stations[i].n+'|'+r.stations[i+1].n);e.add(r.stations[i+1].n+'|'+r.stations[i].n);}});
+  return _mapEdgeCache[key]=e;
+}
+
 function updateMapTrains(){
   if(!_mapCurrentLine)return;
   const svgEl=document.querySelector('#map-svg-wrap svg');
@@ -2785,6 +2795,12 @@ function updateMapTrains(){
     const posA=_mapStnPos[stnA];
     const posB=stnB?_mapStnPos[stnB]:null;
     if(!posA)return;
+    // 현재 구간이 이 열차가 이용하는 '다른' 노선의 인접 구간이면 그 노선 소속 → 이 지도에서 숨김
+    // (예: 호남고속선 KTX의 전주~정읍이 호남선 지도에 잘못 뜨는 것 방지. 단일 노선 급행은 영향 없음)
+    if(stnB){
+      const others=t.line.split('·').map(s=>s.trim()).filter(n=>n&&n!==line.name);
+      if(others.some(n=>{const k=_lineNameToKey[n];return k&&_mapLineEdgeSet(k).has(stnA+'|'+stnB);}))return;
+    }
     // 위치: atStn이면 그 역에, 이동 중이면 두 역 사이 중간
     let px,py;
     if(posB){
@@ -3060,6 +3076,20 @@ gyeongbuhs:{
     {n:'덕양',x:584,y:690},
     {n:'고암',x:561,y:704},
     {n:'창녕',x:558,y:713}
+    ]}
+  ]
+},
+
+honamhs:{
+  name:'호남고속선', color:'#26a69a',
+  routes:[
+    {color:'#26a69a', stations:[
+    {n:'천안',x:239,y:342},
+    {n:'정안',x:231,y:403},
+    {n:'공주',x:222,y:480},
+    {n:'전주',x:231,y:631},
+    {n:'정읍',x:167,y:704},
+    {n:'광주',x:155,y:831}
     ]}
   ]
 },
