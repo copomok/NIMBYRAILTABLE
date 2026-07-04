@@ -5369,6 +5369,17 @@ function openSeatSelectorFromBooking(trainNo){
 // 승차권 탭 렌더링
 let _ticketFilterTab='upcoming'; // upcoming | past | cancelled
 function setTicketFilter(f){_ticketFilterTab=f;renderTickets();}
+let _ticketView='list'; // list | calendar
+let _ticketCalYM=null;   // {y,m} 표시 중인 연·월 (m: 0-11)
+let _ticketCalSel=null;  // 선택한 날짜 'YYYY-MM-DD'
+function setTicketView(v){_ticketView=v;renderTickets();}
+function ticketCalShift(delta){
+  if(!_ticketCalYM){const n=new Date();_ticketCalYM={y:n.getFullYear(),m:n.getMonth()};}
+  let m=_ticketCalYM.m+delta, y=_ticketCalYM.y;
+  while(m<0){m+=12;y--;} while(m>11){m-=12;y++;}
+  _ticketCalYM={y,m}; _ticketCalSel=null; renderTickets();
+}
+function selectTicketCalDate(d){ _ticketCalSel=(_ticketCalSel===d?null:d); renderTickets(); }
 
 // ── 탑승 중인 열차 위젯 (승차권 탭 상단 고정 표시) ──
 function renderTripWidget(active){
@@ -5646,6 +5657,32 @@ function renderTickets(){
     <button class="ticket-filter-tab${_ticketFilterTab==='cancelled'?' active':''}" onclick="setTicketFilter('cancelled')">취소 ${cancelled.length}</button>
   </div>`;
 
+  const headerHTML=`
+    <div class="result-header">
+      <div class="result-title">🎫 내 승차권</div>
+      <div style="display:flex;align-items:center;gap:6px">
+        <span class="badge blue">${tickets.filter(t=>t.status==='active').length}건</span>
+        <div style="position:relative">
+          <button class="map-layer-btn" onclick="toggleTicketExportMenu()">내보내기 ▾</button>
+          <div id="ticket-export-menu" style="display:none;position:absolute;right:0;top:calc(100% + 4px);background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:4px;z-index:50;min-width:140px;box-shadow:0 4px 12px rgba(0,0,0,.3)">
+            <button class="btn" style="width:100%;text-align:left;padding:8px 12px;font-size:13px;border-radius:6px" onclick="exportTicketsCSV()">📄 CSV 다운로드</button>
+            <button class="btn" style="width:100%;text-align:left;padding:8px 12px;font-size:13px;border-radius:6px" onclick="exportTicketsPDF()">🖨️ PDF 인쇄</button>
+          </div>
+        </div>
+      </div>
+    </div>`;
+  const toggleHTML=`
+    <div class="ticket-view-toggle">
+      <button class="ticket-view-btn${_ticketView==='list'?' active':''}" onclick="setTicketView('list')">📋 목록</button>
+      <button class="ticket-view-btn${_ticketView==='calendar'?' active':''}" onclick="setTicketView('calendar')">📅 캘린더</button>
+    </div>`;
+
+  if(_ticketView==='calendar'){
+    el.innerHTML=`${tripWidget}${headerHTML}${toggleHTML}${renderTicketCalendarHTML(tickets)}`;
+    updateTripLED();
+    return;
+  }
+
   const list=_ticketFilterTab==='upcoming'?upcoming:_ticketFilterTab==='past'?past:cancelled;
   const sorted=[...list].sort((a,b)=>{
     if(_ticketFilterTab==='upcoming') return (a.travelDate+a.depTime).localeCompare(b.travelDate+b.depTime);
@@ -5653,11 +5690,18 @@ function renderTickets(){
   });
 
   if(!sorted.length){
-    el.innerHTML=`<div class="result-header"><div class="result-title">🎫 내 승차권</div></div>${tabs}<div class="empty"><div class="empty-icon">📭</div><p>해당하는 승차권이 없습니다.</p></div>`;
+    el.innerHTML=`${tripWidget}${headerHTML}${toggleHTML}${tabs}<div class="empty"><div class="empty-icon">📭</div><p>해당하는 승차권이 없습니다.</p></div>`;
     return;
   }
 
-  const cards=sorted.map(tk=>{
+  const cards=sorted.map(tk=>_ticketCardHTML(tk)).join('');
+
+  el.innerHTML=`${tripWidget}${headerHTML}${toggleHTML}${tabs}<div class="ticket-list">${cards}</div>`;
+  updateTripLED();
+}
+
+// 승차권 카드 HTML (목록·캘린더 공용)
+function _ticketCardHTML(tk){
     const c=gc(tk.grade);
     const cancelledCls=tk.status==='cancelled'?' ticket-cancelled':'';
     const seatList=tk.seats.join(', ');
@@ -5696,26 +5740,59 @@ function renderTickets(){
         <button class="btn" style="font-size:12px;padding:6px 12px" onclick="event.stopPropagation();deleteTicket('${tk.id}')">기록 삭제</button>
       </div>
     </div>`;
-  }).join('');
+}
 
-  el.innerHTML=`
-    ${tripWidget}
-    <div class="result-header">
-      <div class="result-title">🎫 내 승차권</div>
-      <div style="display:flex;align-items:center;gap:6px">
-        <span class="badge blue">${tickets.filter(t=>t.status==='active').length}건</span>
-        <div style="position:relative">
-          <button class="map-layer-btn" onclick="toggleTicketExportMenu()">내보내기 ▾</button>
-          <div id="ticket-export-menu" style="display:none;position:absolute;right:0;top:calc(100% + 4px);background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:4px;z-index:50;min-width:140px;box-shadow:0 4px 12px rgba(0,0,0,.3)">
-            <button class="btn" style="width:100%;text-align:left;padding:8px 12px;font-size:13px;border-radius:6px" onclick="exportTicketsCSV()">📄 CSV 다운로드</button>
-            <button class="btn" style="width:100%;text-align:left;padding:8px 12px;font-size:13px;border-radius:6px" onclick="exportTicketsPDF()">🖨️ PDF 인쇄</button>
-          </div>
-        </div>
-      </div>
+// 승차권 캘린더 뷰 (과거·미래 모두 표시)
+function renderTicketCalendarHTML(tickets){
+  if(!_ticketCalYM){const n=new Date();_ticketCalYM={y:n.getFullYear(),m:n.getMonth()};}
+  const {y,m}=_ticketCalYM;
+  const byDate={};
+  tickets.forEach(tk=>{ if(!tk.travelDate)return; (byDate[tk.travelDate]=byDate[tk.travelDate]||[]).push(tk); });
+  const monthCount=tickets.filter(tk=>tk.travelDate&&+tk.travelDate.slice(0,4)===y&&+tk.travelDate.slice(5,7)===m+1).length;
+  const first=new Date(y,m,1);
+  const startOffset=(first.getDay()+6)%7;           // 월=0
+  const daysInMonth=new Date(y,m+1,0).getDate();
+  const prevDays=new Date(y,m,0).getDate();
+  const todayStr=todayLocalStr();
+  const dowNames=['월','화','수','목','금','토','일'];
+  const dotFor=tk=> tk.status==='cancelled'
+    ? '<span class="tc-dot" style="background:var(--text3)"></span>'
+    : `<span class="tc-dot" style="background:var(--c-${gcCssVar(tk.grade)})"></span>`;
+  let gridHTML='';
+  for(let i=0;i<42;i++){
+    const dayNum=i-startOffset+1;
+    const dow=i%7;
+    let cy=y,cm=m,cd=dayNum,inMonth=true;
+    if(dayNum<1){cm=m-1;cd=prevDays+dayNum;inMonth=false;if(cm<0){cm=11;cy=y-1;}}
+    else if(dayNum>daysInMonth){cm=m+1;cd=dayNum-daysInMonth;inMonth=false;if(cm>11){cm=0;cy=y+1;}}
+    if(!inMonth){gridHTML+=`<div class="tc-cell tc-out"><span class="tc-num">${cd}</span></div>`;continue;}
+    const ds=`${cy}-${String(cm+1).padStart(2,'0')}-${String(cd).padStart(2,'0')}`;
+    const items=byDate[ds]||[];
+    const dots=items.slice(0,4).map(dotFor).join('');
+    const dowCls=dow===5?' tc-sat':dow===6?' tc-sun':'';
+    const clickable=items.length>0;
+    gridHTML+=`<div class="tc-cell${dowCls}${ds===todayStr?' tc-today':''}${ds===_ticketCalSel?' tc-sel':''}${clickable?' tc-has':''}" ${clickable?`onclick="selectTicketCalDate('${ds}')"`:''}>
+      <span class="tc-num">${cd}</span>
+      <span class="tc-dots">${dots}</span>
+    </div>`;
+  }
+  let detail;
+  if(_ticketCalSel&&byDate[_ticketCalSel]){
+    const items=[...byDate[_ticketCalSel]].sort((a,b)=>(a.depTime||'').localeCompare(b.depTime||''));
+    detail=`<div class="tc-detail"><div class="tc-detail-head">🎫 ${_ticketCalSel} · ${items.length}건</div><div class="ticket-list">${items.map(_ticketCardHTML).join('')}</div></div>`;
+  } else {
+    detail=`<div class="tc-hint">날짜의 점을 눌러 그날의 승차권을 확인하세요${monthCount?'':' · 이 달엔 승차권이 없습니다'}</div>`;
+  }
+  return `<div class="tc-wrap">
+    <div class="tc-header">
+      <button class="tc-nav" onclick="ticketCalShift(-1)" aria-label="이전 달">◀</button>
+      <div class="tc-title">${y}년 ${m+1}월 <span class="tc-count">(${monthCount}건)</span></div>
+      <button class="tc-nav" onclick="ticketCalShift(1)" aria-label="다음 달">▶</button>
     </div>
-    ${tabs}
-    <div class="ticket-list">${cards}</div>`;
-  updateTripLED();
+    <div class="tc-dow">${dowNames.map((d,i)=>`<span class="${i===5?'tc-sat':i===6?'tc-sun':''}">${d}</span>`).join('')}</div>
+    <div class="tc-grid">${gridHTML}</div>
+    ${detail}
+  </div>`;
 }
 
 function toggleTicketExportMenu(){
