@@ -5673,13 +5673,17 @@ function renderTripWidget(active){
                           : `${ticket.toStn} ${fmtEta(diff)} 도착`;
   }
 
-  // 013: 다음 정차역까지 실시간 카운트다운
+  // 013: 이번 정차역 도착 안내 (분 단위) — 헤더 우측 상단에 표시
   let nextEtaHtml='';
-  if(tl&&tl.next&&tl.next.time){
-    const nm=toMin(tl.next.time);
-    if(nm!==null){
-      let d=nm-nowM; if(d<0)d+=1440;
-      if(d<=180) nextEtaHtml=`<div class="trip-widget-nexteta" id="trip-next-eta" data-target="${nm}" data-name="${tl.next.name}">다음 정차 <b>${tl.next.name}</b> · 약 ${d}분 후</div>`;
+  if(tl&&tl.cur&&tl.cur.time){
+    const cm=toMin(tl.cur.time);
+    if(cm!==null){
+      let d=cm-nowM; if(d<0)d+=1440;
+      if(d<=180){
+        const atCur = status.atStn && status.atStn===tl.cur.name;
+        const etaTxt = atCur ? '정차 중' : (d<=0 ? '곧 도착' : `${d}분 후 도착 예정`);
+        nextEtaHtml=`<span class="trip-widget-head-eta"><span class="tw-eta-stn">이번 정차 ${tl.cur.name}</span><span class="tw-eta-min">${etaTxt}</span></span>`;
+      }
     }
   }
 
@@ -5712,10 +5716,10 @@ function renderTripWidget(active){
       <span class="trip-widget-label">탑승 중</span>
       <span class="trip-widget-grade" style="color:${gradeColor}">${train.grade}</span>
       <span class="trip-widget-no">${train.no}</span>
+      ${nextEtaHtml}
     </div>
     ${ledEnabled()?`<div class="trip-led"><span class="trip-led-tag">${ledLabel}</span><span class="trip-led-scr"><span class="trip-led-txt">${ledStn}${ledFinal}</span></span></div>`:''}
     <div class="trip-widget-state">${stateLabel}</div>
-    ${nextEtaHtml}
     ${arrivalStr?`<div class="trip-widget-arrival">${arrivalStr}</div>`:''}
     ${tlHtml}
     <div class="trip-widget-progress">
@@ -5737,16 +5741,7 @@ function goLiveTrack(no){
   switchTab('map');
   setTimeout(()=>trackTrainOnMap(no),200);
 }
-// 013: 다음 정차역 카운트다운 실시간 갱신 (mm:ss)
-setInterval(()=>{
-  const el=document.getElementById('trip-next-eta'); if(!el)return;
-  const tgt=parseInt(el.dataset.target); if(isNaN(tgt))return;
-  const n=new Date(); const nowSec=n.getHours()*3600+n.getMinutes()*60+n.getSeconds();
-  let sec=tgt*60-nowSec; if(sec< -3600) sec+=86400;
-  if(sec<=0){ el.innerHTML=`다음 정차 <b>${el.dataset.name}</b> · 곧 도착`; return; }
-  const m=Math.floor(sec/60), s=sec%60;
-  el.innerHTML=`다음 정차 <b>${el.dataset.name}</b> · ${m}:${String(s).padStart(2,'0')} 후`;
-},1000);
+// 013: 이번 정차역 안내는 분 단위로 표시하며, 위젯 30초 주기 재렌더로 갱신된다.
 
 // 홈(열차 탭)용 간략 여정 카드 (상세는 승차권 탭)
 function renderTripWidgetCompact(active){
@@ -6154,10 +6149,22 @@ function saveBookRouteCurrent(){
   const f=window._bookFrom, t=window._bookTo;
   if(!f||!t){ alert('출발역과 도착역을 먼저 선택해 주세요.'); return; }
   let list=loadBookRoutes();
-  if(list.some(r=>r.from===f&&r.to===t)) list=list.filter(r=>!(r.from===f&&r.to===t));
+  const already=list.some(r=>r.from===f&&r.to===t);
+  if(already) list=list.filter(r=>!(r.from===f&&r.to===t));
   else { list.unshift({from:f,to:t}); list=list.slice(0,8); }
   try{ localStorage.setItem('nimbi_bookroutes',JSON.stringify(list)); }catch(e){}
-  renderBookTab();
+  // 신규 등록 시 즐겨찾기(구간)에도 자동 등록
+  if(!already){
+    const favs=loadFavs();
+    const favId='route:'+f+':'+t;
+    if(!favs.some(x=>x.id===favId)){
+      favs.push({id:favId,type:'route',label:f+' → '+t,data:{from:f,to:t},cat:'etc',addedAt:Date.now()});
+      saveFavs(favs);
+      if(document.getElementById('panel-fav')?.classList.contains('active')) renderFavs();
+    }
+  }
+  // 즉시 반영: 현재 화면(메인·마이페이지)의 구간 저장 행만 그 자리에서 갱신
+  document.querySelectorAll('.book-fav-row').forEach(el=>{ el.outerHTML=_bookRoutesRowHTML(); });
 }
 function applyBookRoute(f,t){
   window._bookFrom=f; window._bookTo=t;
