@@ -1369,8 +1369,11 @@ button, select, input[type=range],
 .seat-dot{width:12px;height:12px;border-radius:3px;display:inline-block}
 .seatmap{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:14px 10px;overflow-x:auto}
 .seatmap-dir{text-align:center;font-size:11px;font-weight:700;color:var(--text3);margin-bottom:8px;letter-spacing:2px}
-.seatmap-face{text-align:center;font-size:10px;font-weight:700;color:var(--accent2);margin:8px 0 5px;letter-spacing:.5px;padding-top:6px;border-top:1px dashed var(--border)}
+.seatmap-face{text-align:center;font-size:16px;line-height:1;margin:8px 0 5px;padding-top:6px;border-top:1px dashed var(--border)}
 .seatmap-face:first-child{border-top:none;padding-top:0;margin-top:2px}
+.seatmap-face.fwd{color:#3fb950}
+.seatmap-face.rev{color:#e5734d}
+.seatmap-face-lbl{display:block;font-size:10px;font-weight:700;color:var(--text3);margin-top:2px;letter-spacing:.5px}
 .seatmap-grid{display:inline-flex;flex-direction:column;gap:5px;min-width:100%}
 .seatmap-row{display:flex;align-items:center;gap:5px;justify-content:center}
 .seatmap-rownum{width:20px;text-align:center;font-size:10px;color:var(--text3);font-family:var(--mono);flex-shrink:0}
@@ -1378,6 +1381,9 @@ button, select, input[type=range],
 .seat.aisle{width:12px;background:transparent;border:none}
 .seat.win::before{content:'';position:absolute;top:2px;bottom:2px;width:2px;border-radius:1px;background:#4a9eff88}
 .seat.win.wl::before{left:-4px}.seat.win.wr::before{right:-4px}
+/* 넓은 창(2열당 1창): 홀수 열의 창을 아래 열까지 이어 2열을 덮는다 */
+.seat.win.win-wide::before{bottom:auto;height:calc(200% + 1px);width:3px;background:#4a9effaa}
+.seatmap-grid.pick .seat.win.win-wide::before{height:calc(200% + 2px)}
 .seat.power{box-shadow:inset 0 0 0 1px rgba(240,180,41,.5)}
 .seat.power::after{content:'⚡';position:absolute;top:-1px;right:1px;font-size:7px;opacity:.7}
 .seat.mine{background:#3fb950;border-color:#3fb950;color:#04130a;box-shadow:0 0 0 3px rgba(63,185,80,.3);z-index:1}

@@ -4862,7 +4862,7 @@ function renderFormationContent(tk){
     <div class="fmt-train"><div class="fmt-loco"></div>${carsHtml}</div>
     ${platMsg}
     <div class="fmt-sec-label">💺 좌석 배치도 · ${myCar}호차</div>
-    ${renderSeatMap(comp, myCar, mySeat, amen)}
+    ${renderSeatMap(comp, myCar, mySeat, amen, tk.grade)}
   `;
 }
 // 승차권 카드 뒤집기 (앞↔뒤). 뒷면 편성/좌석은 최초 뒤집을 때 렌더
@@ -4898,7 +4898,12 @@ function selectFmtCar(car){
   const box=document.getElementById('fmt-seatmap');
   if(box) box.innerHTML=renderSeatMap(ctx.comp, car, ctx.mySeat, ctx.amen);
 }
-function renderSeatMap(comp, car, mySeat, amenMap){
+function renderSeatMap(comp, car, mySeat, amenMap, grade){
+  const _wide=_wideWindow(grade);
+  // 창문 클래스: 넓은 창은 홀수 열에만 2열 span 창, 짝수 열은 창(bar) 없음.
+  // 홀수 열이 마지막 열(아래 열 없음)이면 넓은 창 대신 1열 창으로.
+  const winCls=(side,r,total)=> !_wide ? `win ${side} power`
+    : (r%2===1 ? (r+1<=total?`win win-wide ${side} power`:`win ${side} power`) : `${side} power`);
   const c=comp.find(x=>x.car===car);
   if(!c) return '<div style="color:var(--text3);font-size:12px;text-align:center;padding:12px">배치도 정보 없음</div>';
   if(c.type==='free'){
@@ -4931,7 +4936,7 @@ function renderSeatMap(comp, car, mySeat, amenMap){
           const winSide=idx===0?'wl':'wr';
           const mine=isMineCar && mySeat.seatNum===n;
           const cls=['seat'];
-          if(isWindow) cls.push('win',winSide,'power');
+          if(isWindow) cls.push(...winCls(winSide,r,nRows).split(' '));
           if(mine) cls.push('mine');
           cells+=`<span class="${cls.join(' ')}">${n}</span>`;
           n++;
@@ -4964,7 +4969,7 @@ function renderSeatMap(comp, car, mySeat, amenMap){
     if(face!==prevFace){
       // 방향 그룹 헤더 (해당 방향 열 범위)
       let end=r; while(end+1<=rows && faceOf(end+1)===face) end++;
-      rowsHtml+=`<div class="seatmap-face">${r}–${end}열 · ${face==='fwd'?'순방향 ◀':'역방향 ▶'}</div>`;
+      rowsHtml+=`<div class="seatmap-face ${face}">${face==='fwd'?'▲':'▼'}<span class="seatmap-face-lbl">${r}–${end}열 · ${face==='fwd'?'순방향':'역방향'}</span></div>`;
       prevFace=face;
     }
     let cells='';
@@ -4976,7 +4981,7 @@ function renderSeatMap(comp, car, mySeat, amenMap){
         const winSide = idx===0?'wl':'wr';
         const mine = isMineCar && mySeat.row===r && String(mySeat.col)===String(col);
         const cls=['seat'];
-        if(isWindow){ cls.push('win',winSide,'power'); } // 창측 콘센트
+        if(isWindow){ cls.push(...winCls(winSide,r,rows).split(' ')); } // 창측 콘센트(넓은 창은 2열당 1창)
         if(mine) cls.push('mine');
         cells+=`<span class="${cls.join(' ')}">${col}</span>`;
       }
@@ -5337,6 +5342,8 @@ function seatSeqNum(car,row,col){ return (row-1)*((car.cols?car.cols.length:4))+
 function seatId(car,row,col){
   return car.numbered ? `${car.car}호차 ${seatSeqNum(car,row,col)}번` : `${car.car}호차 ${row}${col}`;
 }
+// 넓은 창(2열당 1창) 차량 판별 — KTX-산천 계열(산천·SRT)과 ITX-마음만 좁은 창(1열당 1창)
+function _wideWindow(grade){ return grade!=='KTX-산천' && grade!=='ITX-마음' && grade!=='SRT'; }
 
 // 혼잡도 알고리즘 → nimbi_congestion.js 참조
 // ── 좌석 선택 팝업 ──
@@ -5426,6 +5433,9 @@ function _renderSeatMap(wrap,t,trainNo,travelDate,seatClass,validCars,booked,com
     return total-bc;
   }
 
+  const _wide=_wideWindow(t.grade);
+  const winCls=(side,r,total)=> !_wide ? `win ${side} power`
+    : (r%2===1 ? (r+1<=total?`win win-wide ${side} power`:`win ${side} power`) : `${side} power`);
   function seatHTML(){
     const cols=car.cols;
     const half=Math.ceil(cols.length/2);
@@ -5436,7 +5446,7 @@ function _renderSeatMap(wrap,t,trainNo,travelDate,seatClass,validCars,booked,com
         const face=faceOf(r);
         if(face!==prevFace){
           let end=r; while(end+1<=car.rows && faceOf(end+1)===face) end++;
-          html+=`<div class="seatmap-face">${r}–${end}열 · ${face==='fwd'?'순방향 ◀':'역방향 ▶'}</div>`;
+          html+=`<div class="seatmap-face ${face}">${face==='fwd'?'▲':'▼'}<span class="seatmap-face-lbl">${r}–${end}열 · ${face==='fwd'?'순방향':'역방향'}</span></div>`;
           prevFace=face;
         }
       }
@@ -5449,7 +5459,7 @@ function _renderSeatMap(wrap,t,trainNo,travelDate,seatClass,validCars,booked,com
           const isB=booked.has(id), isS=_selectedSeats.includes(id);
           const isWin=idx===0||idx===cols.length-1, winSide=idx===0?'wl':'wr';
           const cls=['seat','seat-pick'];
-          if(isWin) cls.push('win',winSide,'power');
+          if(isWin) cls.push(...winCls(winSide,r,car.rows).split(' '));
           if(isB) cls.push('taken'); else if(isS) cls.push('sel');
           cells+=`<button class="${cls.join(' ')}" data-sid="${id}" ${isB?'disabled':''} onclick="toggleSeatBtn('${id}',${count})">${label}</button>`;
         }
