@@ -2551,7 +2551,7 @@ function trackTrainOnMap(trainNo){
   const lineMap = {
     '경부선':'gyeongbu','경부고속선':'gyeongbuhs','호남고속선':'honamhs','호남선':'honam',
     '전라선':'jeolla','중앙선':'jungang','동해선':'donghae','영동선':'yeongdong',
-    '강릉선':'gangreung','중부내륙선':'jungnaelyuk','경전선':'gyeongjeon','충북선':'chungbuk'
+    '강릉선':'gangreung','중부내륙선':'jungnaelyuk','경전선':'gyeongjeon','충북선':'chungbuk','장항선':'janghang'
   };
 
   // 현재 위치 기준으로 실제 운행 중인 노선 판단
@@ -2863,7 +2863,7 @@ const GRADE_COLORS = {
 };
 
 // 노선명 → MAP_LINES 키, 노선별 인접역 쌍 캐시 (구간 소속 판별용)
-const _lineNameToKey={'경부선':'gyeongbu','경부고속선':'gyeongbuhs','호남고속선':'honamhs','호남선':'honam','전라선':'jeolla','중앙선':'jungang','동해선':'donghae','영동선':'yeongdong','강릉선':'gangreung','중부내륙선':'jungnaelyuk','경전선':'gyeongjeon','충북선':'chungbuk'};
+const _lineNameToKey={'경부선':'gyeongbu','경부고속선':'gyeongbuhs','호남고속선':'honamhs','호남선':'honam','전라선':'jeolla','중앙선':'jungang','동해선':'donghae','영동선':'yeongdong','강릉선':'gangreung','중부내륙선':'jungnaelyuk','경전선':'gyeongjeon','충북선':'chungbuk','장항선':'janghang'};
 const _mapEdgeCache={};
 function _mapLineEdgeSet(key){
   if(_mapEdgeCache[key])return _mapEdgeCache[key];
@@ -3321,6 +3321,47 @@ chungbuk:{
     {n:'단양',x:522,y:294},
     {n:'풍기',x:566,y:322},
     {n:'영주',x:588,y:342}
+    ]}
+  ]
+},
+
+janghang:{
+  name:'장항선', color:'#9d7ad4',
+  routes:[
+    {color:'#9d7ad4', stations:[
+    {n:'천안',x:239,y:342},
+    {n:'아산',x:212,y:357},
+    {n:'예산',x:168,y:384},
+    {n:'홍북',x:136,y:396},
+    {n:'홍성',x:129,y:409},
+    {n:'광천',x:121,y:438},
+    {n:'청소',x:113,y:453},
+    {n:'주포',x:108,y:466},
+    {n:'보령',x:113,y:484},
+    {n:'서천',x:134,y:556},
+    {n:'군산',x:142,y:584},
+    {n:'대야',x:161,y:595},
+    {n:'익산',x:195,y:599},
+    {n:'삼례',x:223,y:602},
+    {n:'전주',x:231,y:631}
+    ]},
+    {color:'#9d7ad4', dash:true, stations:[
+    {n:'한강로',x:196,y:131},
+    {n:'남안양',x:190,y:176},
+    {n:'수원',x:204,y:208},
+    {n:'오산',x:220,y:243},
+    {n:'평택',x:225,y:289},
+    {n:'천안',x:239,y:342}
+    ]},
+    {color:'#9d7ad4', dash:true, stations:[
+    {n:'삼례',x:223,y:602},
+    {n:'봉동',x:231,y:595},
+    {n:'여산',x:224,y:563},
+    {n:'연무',x:227,y:542},
+    {n:'논산',x:224,y:518},
+    {n:'계룡',x:267,y:499},
+    {n:'남대전',x:294,y:493},
+    {n:'서대전',x:300,y:485}
     ]}
   ]
 },
