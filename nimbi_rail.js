@@ -1414,9 +1414,18 @@ function getActiveTripTicket(){
     const fi=t.stops.findIndex(s=>s.s===tk.fromStn);
     const ti=t.stops.findIndex(s=>s.s===tk.toStn);
     if(fi===-1||ti===-1)continue;
-    // 자정 보정 단순 처리: 탑승구간 시각 범위 안에 있는지만 확인
-    const inRange = (depM<=arrM) ? (nowM>=depM-2 && nowM<=arrM+2)
-                                  : (nowM>=depM-2 || nowM<=arrM+2); // 자정 넘는 경우
+    // 날짜 기준으로 탑승 구간 판정.
+    // 자정 넘는 열차는 '오늘 출발분(저녁, 자정 전)'과 '어제 출발분(새벽, 자정 후)'을
+    // 각각 해당 날짜에만 유효하도록 분리한다.
+    // (예: 어제 19:40 출발·오늘 0:52 도착 승차권이 오늘 저녁에 다시 뜨는 버그 방지)
+    let inRange;
+    if(depM<=arrM){
+      inRange = isToday && nowM>=depM-2 && nowM<=arrM+2;   // 당일 운행
+    } else if(isToday){
+      inRange = nowM>=depM-2;                              // 오늘 저녁 출발분 (자정 전)
+    } else {
+      inRange = nowM<=arrM+2;                              // 어제 출발·오늘 새벽 도착분 (자정 후)
+    }
     if(!inRange)continue;
 
     // 도착 5분 전: 위젯에 "도착 준비" 상태로 표시
