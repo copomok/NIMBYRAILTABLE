@@ -711,6 +711,7 @@ function renderDetail(t){
         통과역 숨기기
       </label>
       <div style="margin-left:auto;display:flex;gap:4px">
+        <button class="view-toggle-btn" onclick="showTrainRotation('${t.no}')" title="이 열차가 종착 후 이어서 운행하는 편성을 회차 기준으로 추정">🔁 운용</button>
         <button class="view-toggle-btn${_detailViewMode==='timeline'?' active':''}" onclick="setDetailView('timeline','${t.no}')">⏱ 타임라인</button>
         <button class="view-toggle-btn${_detailViewMode==='table'?' active':''}" onclick="setDetailView('table','${t.no}')">📋 표</button>
       </div>
@@ -2303,6 +2304,106 @@ function showAllRunningTrains(){
 
 
 
+// 096: 좌표·거리·번호 데이터 이상치 점검
+function checkDataAnomalies(){
+  const issues={dup:[],speed:[],nocoord:new Set()};
+  const seen={}; ALL_TRAINS.forEach(t=>{seen[t.no]=(seen[t.no]||0)+1;});
+  Object.entries(seen).forEach(([k,v])=>{ if(v>1) issues.dup.push(`${k} (${v}건)`); });
+  const coord=b=>{ if(typeof STATION_DB==='undefined')return null; const r=STATION_DB[b]||STATION_DB[b+'역']; return (r&&r.lat!=null)?r:null; };
+  // 인접 정차역 간 직선거리·속도 이상(좌표 오류 탐지) — 역쌍 단위로 중복 제거
+  const pairMax={};
+  ALL_TRAINS.forEach(t=>{
+    const stops=t.stops.filter(s=>hasTime(s.arr)||hasTime(s.dep));
+    for(let i=0;i<stops.length-1;i++){
+      const a=stops[i], b=stops[i+1];
+      const ca=coord(a.s), cb=coord(b.s);
+      if(!ca){issues.nocoord.add(a.s);continue;}
+      if(!cb){issues.nocoord.add(b.s);continue;}
+      if(typeof haversineKm!=='function')continue;
+      const km=haversineKm(ca.lat,ca.lon,cb.lat,cb.lon);
+      let dep=toMin(a.dep||a.arr), arr=toMin(b.arr||b.dep);
+      let mins=(dep!=null&&arr!=null)?(arr-dep):null; if(mins!=null&&mins<0)mins+=1440;
+      const kmh=(mins&&mins>0)?km/(mins/60):0;
+      // 인접역이 200km↑ 떨어졌거나 표정 450km/h↑ → 데이터(좌표) 이상
+      if(km>200||kmh>450){
+        const key=[a.s,b.s].sort().join('↔');
+        if(!pairMax[key]||km>pairMax[key].km) pairMax[key]={km,kmh,a:a.s,b:b.s};
+      }
+    }
+  });
+  Object.values(pairMax).sort((x,y)=>y.km-x.km).forEach(v=>issues.speed.push(`${v.a}↔${v.b}: 직선 ${v.km.toFixed(0)}km${v.kmh>450?` (${Math.round(v.kmh)}km/h)`:''}`));
+  return issues;
+}
+function runDataAnomalyCheck(){
+  const el=document.getElementById('stat-anomaly-result'); if(!el)return;
+  el.innerHTML='<span style="font-size:12px;color:var(--text3)">점검 중…</span>';
+  setTimeout(()=>{
+    const r=checkDataAnomalies();
+    const uniqSpeed=[...new Set(r.speed)];
+    const sec=(title,arr,color)=>arr.length?`<div style="margin-top:6px"><b style="color:${color}">${title} ${arr.length}건</b><div style="font-family:var(--mono);font-size:11px;color:var(--text2);margin-top:3px;line-height:1.6">${arr.slice(0,12).join('<br>')}${arr.length>12?'<br>… 외 '+(arr.length-12)+'건':''}</div></div>`:'';
+    const clean = !r.dup.length && !uniqSpeed.length && !r.nocoord.size;
+    el.innerHTML = clean
+      ? '<div style="font-size:13px;color:var(--green);font-weight:700">✅ 눈에 띄는 이상치가 없습니다</div>'
+      : sec('열차번호 중복', r.dup, 'var(--red)')
+        + sec('속도/거리 이상 구간', uniqSpeed, 'var(--orange)')
+        + ([...r.nocoord].length?`<div style="margin-top:6px"><b style="color:var(--text2)">좌표 없는 역 ${r.nocoord.size}곳</b><div style="font-family:var(--mono);font-size:11px;color:var(--text3);margin-top:3px">${[...r.nocoord].slice(0,20).join(', ')}</div></div>`:'');
+  },30);
+}
+
+// 042: 편성 운용(추정) — 종착 후 회차하여 이어가는 열차를 연쇄 추정
+function _rotStart(t){const s=t.stops.filter(x=>hasTime(x.arr)||hasTime(x.dep));return {stn:s[0].s, min:toMin(s[0].dep||s[0].arr)};}
+function _rotEnd(t){const s=t.stops.filter(x=>hasTime(x.arr)||hasTime(x.dep));return {stn:s[s.length-1].s, min:toMin(s[s.length-1].arr||s[s.length-1].dep)};}
+function _estimateRotation(startNo){
+  const start=ALL_TRAINS.find(x=>x.no===startNo); if(!start)return [];
+  const chain=[start]; const seen=new Set([start.no]);
+  // 앞으로: 종착역에서 회차(6~120분) 후 반대방향 동급 열차로 이어감
+  let cur=start;
+  for(let i=0;i<10;i++){
+    const e=_rotEnd(cur); if(e.min==null)break;
+    let best=null;
+    ALL_TRAINS.forEach(x=>{ if(seen.has(x.no)||x.grade!==cur.grade||x.dir===cur.dir)return;
+      const s=_rotStart(x); if(s.stn!==e.stn||s.min==null)return;
+      let d=s.min-e.min; if(d<0)d+=1440; if(d>=6&&d<=120&&(!best||d<best.d))best={x,d}; });
+    if(!best)break; chain.push(best.x); seen.add(best.x.no); cur=best.x;
+  }
+  // 뒤로: 시발역으로 회차 들어온 열차 추정
+  cur=start;
+  for(let i=0;i<10;i++){
+    const s=_rotStart(cur); if(s.min==null)break;
+    let best=null;
+    ALL_TRAINS.forEach(x=>{ if(seen.has(x.no)||x.grade!==cur.grade||x.dir===cur.dir)return;
+      const e=_rotEnd(x); if(e.stn!==s.stn||e.min==null)return;
+      let d=s.min-e.min; if(d<0)d+=1440; if(d>=6&&d<=120&&(!best||d<best.d))best={x,d}; });
+    if(!best)break; chain.unshift(best.x); seen.add(best.x.no); cur=best.x;
+  }
+  return chain;
+}
+function showTrainRotation(no){
+  document.getElementById('rotation-wrap')?.remove();
+  const chain=_estimateRotation(no);
+  const fmt=m=>{ if(m==null)return '-'; m=((m%1440)+1440)%1440; return Math.floor(m/60)+':'+String(m%60).padStart(2,'0'); };
+  const rows=chain.map((t,i)=>{
+    const s=_rotStart(t), e=_rotEnd(t);
+    const gap = i>0 ? (()=>{ let d=s.min-_rotEnd(chain[i-1]).min; if(d<0)d+=1440; return d; })() : null;
+    const c=`var(--c-${gcCssVar(t.grade)})`;
+    const hi = t.no===no;
+    return `${gap!=null?`<div class="rot-gap">↕ ${e.stn===s.stn?s.stn+' 회차':'회차'} ${gap}분</div>`:''}
+      <div class="rot-leg${hi?' rot-cur':''}" onclick="closeRotation();jumpToTrain('${t.no}')">
+        <div class="rot-leg-head"><span style="color:${c};font-weight:800">${t.grade}</span> <b>${t.no}</b>${hi?' <span class="rot-badge">이 열차</span>':''}</div>
+        <div class="rot-leg-body"><span>${s.stn} <span class="rot-t">${fmt(s.min)}</span></span> <span class="rot-arr">→</span> <span>${e.stn} <span class="rot-t">${fmt(e.min)}</span></span></div>
+      </div>`;
+  }).join('');
+  const wrap=document.createElement('div'); wrap.id='rotation-wrap';
+  wrap.innerHTML=`<div class="rail-ticket-backdrop" onclick="closeRotation()"></div>
+    <div class="rot-popup">
+      <div class="rot-popup-head"><span>🔁 편성 운용 (추정)</span><button class="si-board-close" onclick="closeRotation()">✕</button></div>
+      <div class="rot-note">종착역 회차를 기준으로 같은 편성의 하루 운행을 추정한 것입니다. 실제 편성 운용과 다를 수 있습니다.</div>
+      <div class="rot-list">${rows}</div>
+    </div>`;
+  document.body.appendChild(wrap);
+}
+function closeRotation(){ document.getElementById('rotation-wrap')?.remove(); }
+
 // ── 열차 상세 뷰 전환 ──
 function setDetailView(mode, trainNo){
   _detailViewMode = mode;
@@ -2569,6 +2670,21 @@ let _mapLayerMode = 'station'; // 'station': 역 우선, 'train': 열차 우선
 let _mapDirFilter = 'both'; // 'both': 전체, 'down': 하행만, 'up': 상행만
 let _mapGradeFilter = null; // null=전체, 'KTX', 'SRT', 'ITX', '무궁화'
 let _mapTrackedTrain = null; // 현재 추적 중인 열차 번호
+let _mapStatusColor = false;  // 038: 혼잡도에 따른 열차 상태색 표시 on/off
+function toggleMapStatusColor(){
+  _mapStatusColor=!_mapStatusColor;
+  const btn=document.getElementById('map-status-color-btn');
+  if(btn) btn.classList.toggle('active',_mapStatusColor);
+  if(_mapCurrentLine) updateMapTrains();
+}
+// 열차 혼잡도 → 상태색 (매진임박 빨강 · 혼잡 주황 · 보통 노랑 · 여유 초록)
+function _mapCongColor(t){
+  try{
+    const dep=t.stops[0]?.dep||t.stops[0]?.arr;
+    const rate=(typeof calcRealisticFillRate==='function')?calcRealisticFillRate(t.no,todayLocalStr(),dep,t.grade):0.5;
+    return rate>=0.9?'#ef4444':rate>=0.78?'#f97316':rate>=0.62?'#e3b341':'#3fb950';
+  }catch(e){ return GRADE_COLORS[t.grade]||'#888'; }
+}
 let _mapTimelineMin = null; // null=실시간, 0~1439=재생 시각(분)
 let _mapTimelinePlaying = false;
 let _mapTimelinePlayInterval = null;
@@ -2766,7 +2882,8 @@ function updateMapTrains(){
   if(old)old.remove();
 
   const now=new Date();
-  const nowMin = _mapTimelineMin !== null ? _mapTimelineMin : now.getHours()*60+now.getMinutes();
+  // 034: 초 단위까지 반영해 위치를 부드럽게 보간
+  const nowMin = _mapTimelineMin !== null ? _mapTimelineMin : now.getHours()*60+now.getMinutes()+now.getSeconds()/60;
   const line=MAP_LINES[_mapCurrentLine];
   if(!line)return;
 
@@ -2836,7 +2953,8 @@ function updateMapTrains(){
   const fs=Math.max(9, _mapSvgSize.w*0.016);
   let layerHtml='<g id="train-layer">';
   displayTrains.forEach(({t,px,py,status,stnA,stnB,posA,posB})=>{
-    const color=GRADE_COLORS[t.grade]||'#888';
+    const gradeColor=GRADE_COLORS[t.grade]||'#888';
+    const color=_mapStatusColor?_mapCongColor(t):gradeColor;
     const isTracked=!!(_mapTrackedTrain&&t.no===_mapTrackedTrain);
     const cr=isTracked?r*1.7:r;
 
@@ -2982,7 +3100,7 @@ setInterval(()=>{
   if(_mapCurrentLine&&document.getElementById('panel-map').classList.contains('active')){
     updateMapTrains();
   }
-},60000);
+},3500);
 
 const MAP_LINES = {
 
@@ -3804,6 +3922,12 @@ function renderStats(){
     <div class="stat-section">
       <div class="stat-section-title">현재 운행 중 열차</div>
       <div class="running-chips-wrap" style="display:flex;flex-wrap:wrap;gap:6px">${runningChips}</div>
+    </div>
+
+    <div class="stat-section">
+      <div class="stat-section-title">데이터 점검</div>
+      <button class="btn" style="font-size:12px;padding:6px 12px" onclick="runDataAnomalyCheck()">🔍 좌표·거리·번호 이상치 점검</button>
+      <div id="stat-anomaly-result" style="margin-top:8px"></div>
     </div>
 
     <div class="stat-section">
@@ -5218,6 +5342,46 @@ function seatId(car,row,col){
 // ── 좌석 선택 팝업 ──
 let _selectedSeats=[];
 let _seatCarIdx=0;
+// 003: 좌석 선호 (none|window|aisle) — 저장됨
+let _seatPref=(()=>{try{return localStorage.getItem('nimbi_seatpref')||'none';}catch(e){return 'none';}})();
+function setSeatPref(p){ _seatPref=(_seatPref===p?'none':p); try{localStorage.setItem('nimbi_seatpref',_seatPref);}catch(e){} switchSeatCar(_seatCarIdx); }
+// 003·004: 좌석 자동 배정 (선호/인접/마주보기)
+function _seatAutoPick(mode){
+  const wrap=document.getElementById('seat-selector-wrap'); if(!wrap)return;
+  const trainNo=wrap.dataset.trainNo, travelDate=wrap.dataset.travelDate, seatClass=wrap.dataset.seatClass;
+  const t=ALL_TRAINS.find(x=>x.no===trainNo); if(!t)return;
+  const composition=getCarComposition(getFormationType(t.grade,trainNo));
+  const validCars=getCarsForClass(composition,seatClass);
+  const car=validCars[_seatCarIdx]; if(!car||!car.cols){return;}
+  const booked=getBookedSeats(trainNo,travelDate), missing=new Set(car.missingSeats||[]);
+  const count=window._bookingPassengerCount||1, cols=car.cols, n=cols.length;
+  const half=Math.ceil(n/2);
+  const isWin=idx=>idx===0||idx===n-1;
+  const isAisle=idx=> n>2 && (idx===half-1||idx===half);
+  const avail=(r,col)=>!missing.has(`${r}${col}`)&&!booked.has(seatId(car,r,col));
+  let pick=[];
+  if(mode==='pref'){
+    const order=[];
+    for(let r=1;r<=car.rows;r++) cols.forEach((col,idx)=>{ if(avail(r,col)) order.push({r,col,idx}); });
+    const pref=order.filter(s=> _seatPref==='window'?isWin(s.idx): _seatPref==='aisle'?isAisle(s.idx):true);
+    const rest=order.filter(s=>!pref.includes(s));
+    pick=[...pref,...rest].slice(0,count).map(s=>seatId(car,s.r,s.col));
+  } else if(mode==='adjacent'){
+    outer: for(let r=1;r<=car.rows;r++) for(let s=0;s+count<=n;s++){
+      let ok=true; for(let k=0;k<count;k++){ if(!avail(r,cols[s+k])){ok=false;break;} }
+      if(ok){ for(let k=0;k<count;k++)pick.push(seatId(car,r,cols[s+k])); break outer; }
+    }
+  } else if(mode==='facing'){
+    outer2: for(let r=1;r<car.rows;r++) for(let c=0;c+1<n;c++){
+      if(avail(r,cols[c])&&avail(r,cols[c+1])&&avail(r+1,cols[c])&&avail(r+1,cols[c+1])){
+        pick.push(seatId(car,r,cols[c]),seatId(car,r,cols[c+1]),seatId(car,r+1,cols[c]),seatId(car,r+1,cols[c+1])); break outer2;
+      }
+    }
+  }
+  if(!pick.length){ alert('이 호차에서 조건에 맞는 좌석을 찾지 못했어요. 다른 호차를 확인해 주세요.'); return; }
+  _selectedSeats=pick.slice(0, mode==='facing'?4:count);
+  switchSeatCar(_seatCarIdx);
+}
 
 function openSeatSelector(trainNo, travelDate, seatClass){
   const t=ALL_TRAINS.find(x=>x.no===trainNo);
@@ -5323,6 +5487,15 @@ function _renderSeatMap(wrap,t,trainNo,travelDate,seatClass,validCars,booked,com
       <div style="font-size:11px;color:var(--text3)">창측 내측</div>
       <div style="font-size:11px;color:var(--text3);font-weight:700">◀ 진행방향</div>
       <div style="font-size:11px;color:var(--text3)">내측 창측</div>
+    </div>
+    <div class="seat-auto-bar">
+      <span class="seat-auto-label">선호</span>
+      <button class="seat-auto-chip${_seatPref==='window'?' on':''}" onclick="setSeatPref('window')">창측</button>
+      <button class="seat-auto-chip${_seatPref==='aisle'?' on':''}" onclick="setSeatPref('aisle')">복도</button>
+      <span class="seat-auto-sep"></span>
+      <button class="seat-auto-chip act" onclick="_seatAutoPick('pref')">✨ 선호 자동</button>
+      ${count>=2?`<button class="seat-auto-chip act" onclick="_seatAutoPick('adjacent')">👥 인접 ${count}석</button>`:''}
+      ${count===4?`<button class="seat-auto-chip act" onclick="_seatAutoPick('facing')">🔄 마주보기</button>`:''}
     </div>
     <div class="seat-map"><div class="seatmap-grid pick">${seatHTML()}</div></div>
     <div class="seat-footer">
@@ -5490,6 +5663,16 @@ function renderTripWidget(active){
                           : `${ticket.toStn} ${fmtEta(diff)} 도착`;
   }
 
+  // 013: 다음 정차역까지 실시간 카운트다운
+  let nextEtaHtml='';
+  if(tl&&tl.next&&tl.next.time){
+    const nm=toMin(tl.next.time);
+    if(nm!==null){
+      let d=nm-nowM; if(d<0)d+=1440;
+      if(d<=180) nextEtaHtml=`<div class="trip-widget-nexteta" id="trip-next-eta" data-target="${nm}" data-name="${tl.next.name}">다음 정차 <b>${tl.next.name}</b> · 약 ${d}분 후</div>`;
+    }
+  }
+
   const tlHtml = tl ? `
     <div class="trip-widget-timeline">
       ${tl.prev?`<div class="trip-tl-stop">
@@ -5522,6 +5705,7 @@ function renderTripWidget(active){
     </div>
     ${ledEnabled()?`<div class="trip-led"><span class="trip-led-tag">${ledLabel}</span><span class="trip-led-scr"><span class="trip-led-txt">${ledStn}${ledFinal}</span></span></div>`:''}
     <div class="trip-widget-state">${stateLabel}</div>
+    ${nextEtaHtml}
     ${arrivalStr?`<div class="trip-widget-arrival">${arrivalStr}</div>`:''}
     ${tlHtml}
     <div class="trip-widget-progress">
@@ -5543,6 +5727,16 @@ function goLiveTrack(no){
   switchTab('map');
   setTimeout(()=>trackTrainOnMap(no),200);
 }
+// 013: 다음 정차역 카운트다운 실시간 갱신 (mm:ss)
+setInterval(()=>{
+  const el=document.getElementById('trip-next-eta'); if(!el)return;
+  const tgt=parseInt(el.dataset.target); if(isNaN(tgt))return;
+  const n=new Date(); const nowSec=n.getHours()*3600+n.getMinutes()*60+n.getSeconds();
+  let sec=tgt*60-nowSec; if(sec< -3600) sec+=86400;
+  if(sec<=0){ el.innerHTML=`다음 정차 <b>${el.dataset.name}</b> · 곧 도착`; return; }
+  const m=Math.floor(sec/60), s=sec%60;
+  el.innerHTML=`다음 정차 <b>${el.dataset.name}</b> · ${m}:${String(s).padStart(2,'0')} 후`;
+},1000);
 
 // 홈(열차 탭)용 간략 여정 카드 (상세는 승차권 탭)
 function renderTripWidgetCompact(active){
@@ -5944,6 +6138,33 @@ function renderBookTab(){
   _renderBookTabInto(el);
 }
 
+// 002: 즐겨찾는 구간 원터치 재예매
+function loadBookRoutes(){ try{ return JSON.parse(localStorage.getItem('nimbi_bookroutes'))||[]; }catch(e){ return []; } }
+function saveBookRouteCurrent(){
+  const f=window._bookFrom, t=window._bookTo;
+  if(!f||!t){ alert('출발역과 도착역을 먼저 선택해 주세요.'); return; }
+  let list=loadBookRoutes();
+  if(list.some(r=>r.from===f&&r.to===t)) list=list.filter(r=>!(r.from===f&&r.to===t));
+  else { list.unshift({from:f,to:t}); list=list.slice(0,8); }
+  try{ localStorage.setItem('nimbi_bookroutes',JSON.stringify(list)); }catch(e){}
+  renderBookTab();
+}
+function applyBookRoute(f,t){
+  window._bookFrom=f; window._bookTo=t;
+  const fn=document.getElementById('book-from-name'), tn=document.getElementById('book-to-name');
+  if(fn)fn.textContent=f; if(tn)tn.textContent=t;
+  searchBookTrainsUI();
+}
+function _bookRoutesRowHTML(){
+  const list=loadBookRoutes();
+  const saved=window._bookFrom&&window._bookTo&&list.some(r=>r.from===window._bookFrom&&r.to===window._bookTo);
+  const chips=list.map(r=>`<button class="book-fav-chip" onclick="applyBookRoute('${r.from.replace(/'/g,"\\'")}','${r.to.replace(/'/g,"\\'")}')">${r.from}→${r.to}</button>`).join('');
+  return `<div class="book-fav-row">
+    <button class="book-fav-save${saved?' on':''}" onclick="saveBookRouteCurrent()">${saved?'★ 저장됨':'☆ 구간 저장'}</button>
+    ${chips||'<span class="book-fav-empty">자주 타는 구간을 저장하면 원터치로 재예매</span>'}
+  </div>`;
+}
+
 function _renderBookTabInto(el, resultId){
   resultId = resultId || "book-results";
   const toLocalDateStr = d => {
@@ -6003,7 +6224,7 @@ function _renderBookTabInto(el, resultId){
         <button class="book-search-btn" style="flex:2" onclick="searchBookTrainsUI()">열차 조회</button>
       </div>
     </div>
-
+    ${_bookRoutesRowHTML()}
     <div id="${resultId}"></div>`;
 
   // 역 선택 상태 복원
