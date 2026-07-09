@@ -3247,11 +3247,7 @@ gyeongbuhs:{
     {n:'포항',x:757,y:547}
     ]},
     {color:'#388bfd', stations:[
-    {n:'남대구',x:567,y:635},
-    {n:'이서',x:599,y:678},
-    {n:'풍각',x:587,y:685},
-    {n:'덕양',x:584,y:690},
-    {n:'고암',x:561,y:704},
+    {n:'청도',x:615,y:683},
     {n:'창녕',x:558,y:713}
     ]},
     {color:'#388bfd', dash:true, stations:[
@@ -3546,20 +3542,24 @@ jungnaelyuk:{
 // 인접 역이 너무 가까워 아이콘/텍스트가 겹치는 것 방지: 경로 방향 유지하며 최소 간격 확보
 function spreadMapRoutes(routes){
   const MIN=18;
+  // 역명 -> [{x0,y0,x,y}] — 동명이역(춘양 등)은 원좌표가 멀면 별개의 역으로 취급
   const adj={};
+  const find=(n,x,y)=>{const a=adj[n];if(a)for(const e of a){if(Math.hypot(e.x0-x,e.y0-y)<30)return e;}return null;};
+  const put=(n,x0,y0,x,y)=>{(adj[n]=adj[n]||[]).push({x0,y0,x,y});};
   return routes.map(r=>({...r, stations:r.stations.map((s,i,arr)=>{
-    if(adj[s.n]) return {...s, x:adj[s.n].x, y:adj[s.n].y};
-    if(i===0){ adj[s.n]={x:s.x,y:s.y}; return {...s}; }
-    const pp=arr[i-1], prev=adj[pp.n]||{x:pp.x,y:pp.y};
+    const hit=find(s.n,s.x,s.y);
+    if(hit) return {...s, x:hit.x, y:hit.y};
+    if(i===0){ put(s.n,s.x,s.y,s.x,s.y); return {...s}; }
+    const pp=arr[i-1], prev=find(pp.n,pp.x,pp.y)||{x:pp.x,y:pp.y};
     let dx=s.x-prev.x, dy=s.y-prev.y, dl=Math.hypot(dx,dy), nx=s.x, ny=s.y;
     if(dl<MIN){
       if(dl<0.01){
         const p2=arr[i-2]; let ux=0,uy=1;
-        if(p2){const q=adj[p2.n]||{x:p2.x,y:p2.y};const vx=prev.x-q.x,vy=prev.y-q.y,vl=Math.hypot(vx,vy);if(vl>0.01){ux=vx/vl;uy=vy/vl;}}
+        if(p2){const q=find(p2.n,p2.x,p2.y)||{x:p2.x,y:p2.y};const vx=prev.x-q.x,vy=prev.y-q.y,vl=Math.hypot(vx,vy);if(vl>0.01){ux=vx/vl;uy=vy/vl;}}
         nx=prev.x+ux*MIN; ny=prev.y+uy*MIN;
       } else { nx=prev.x+dx/dl*MIN; ny=prev.y+dy/dl*MIN; }
     }
-    adj[s.n]={x:nx,y:ny}; return {...s, x:nx, y:ny};
+    put(s.n,s.x,s.y,nx,ny); return {...s, x:nx, y:ny};
   })}));
 }
 // ── 노선도 확대/축소 ──
