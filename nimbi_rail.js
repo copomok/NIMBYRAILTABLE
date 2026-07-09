@@ -761,8 +761,8 @@ function renderDetail(t){
         통과역 숨기기
       </label>
       <div style="margin-left:auto;display:flex;gap:4px">
-        <button class="view-toggle-btn" onclick="showTrainRotation('${t.no}')" title="이 열차가 종착 후 이어서 운행하는 편성을 회차 기준으로 추정">🔁 운용</button>
-        <button class="view-toggle-btn" onclick="openTrainCompare('${t.no}')" title="같은 노선 다른 열차와 역별 시각 비교 — 대피·추월 지점 확인">⚖️ 비교</button>
+        <button class="view-toggle-btn" onclick="showTrainRotation('${t.no}')" title="편성 운용 추정 — 종착 후 이어 운행하는 열차">🔁</button>
+        <button class="view-toggle-btn" onclick="openTrainCompare('${t.no}')" title="열차 비교 — 대피·추월 지점 확인">⚖️</button>
         <button class="view-toggle-btn${_detailViewMode==='timeline'?' active':''}" onclick="setDetailView('timeline','${t.no}')">⏱ 타임라인</button>
         <button class="view-toggle-btn${_detailViewMode==='table'?' active':''}" onclick="setDetailView('table','${t.no}')">📋 표</button>
       </div>
@@ -2553,55 +2553,26 @@ function initMapZoom(){
   if(!wrap) return;
   _mapZoom = 1;
 
-  // 휠 줌
+  // 휠 줌 (새 레이아웃 줌으로 위임 — transform scale은 스크롤 영역이 안 늘어나 폐기)
   wrap.onwheel = e => {
     e.preventDefault();
-    const delta = e.deltaY > 0 ? 0.9 : 1.1;
-    setMapZoom(_mapZoom * delta, e.clientX, e.clientY);
+    mapZoom(e.deltaY > 0 ? -0.2 : 0.2);
   };
-
-  // 핀치 줌
-  let lastDist = 0;
-  wrap.ontouchstart = e => {
-    if(e.touches.length === 2){
-      lastDist = Math.hypot(
-        e.touches[0].clientX - e.touches[1].clientX,
-        e.touches[0].clientY - e.touches[1].clientY
-      );
-    }
-  };
-  wrap.ontouchmove = e => {
-    if(e.touches.length === 2){
-      e.preventDefault();
-      const dist = Math.hypot(
-        e.touches[0].clientX - e.touches[1].clientX,
-        e.touches[0].clientY - e.touches[1].clientY
-      );
-      if(lastDist > 0){
-        const cx = (e.touches[0].clientX + e.touches[1].clientX) / 2;
-        const cy = (e.touches[0].clientY + e.touches[1].clientY) / 2;
-        setMapZoom(_mapZoom * (dist / lastDist), cx, cy);
-      }
-      lastDist = dist;
-    }
-  };
-  wrap.ontouchend = () => { lastDist = 0; };
+  // (구) 핀치 property 핸들러 제거 — 새 _mapBindPinch(addEventListener)가 담당
+  wrap.ontouchstart = null;
+  wrap.ontouchmove = null;
+  wrap.ontouchend = null;
 }
 
-function setMapZoom(z, cx, cy){
-  _mapZoom = Math.max(0.5, Math.min(5, z));
-  const svg = document.querySelector('#map-svg-wrap svg');
-  if(!svg) return;
-  svg.style.transform = `scale(${_mapZoom})`;
-  svg.style.transformOrigin = cx && cy ? `${cx}px ${cy}px` : 'center center';
-  // 줌 버튼 업데이트
+// (구 API 위임) 다른 코드가 호출해도 새 줌으로 동작
+function setMapZoom(z){
+  _mapZoomLv = Math.max(1, Math.min(4, z));
+  _mapApplyZoom(true);
   const zl = document.getElementById('map-zoom-label');
-  if(zl) zl.textContent = Math.round(_mapZoom*100) + '%';
+  if(zl) zl.textContent = Math.round(_mapZoomLv*100) + '%';
 }
-
-function mapZoomIn(){ setMapZoom(_mapZoom * 1.2); }
-function mapZoomOut(){ setMapZoom(_mapZoom / 1.2); }
-function mapZoomReset(){ setMapZoom(1); }
+function mapZoomIn(){ mapZoom(0.35); }
+function mapZoomOut(){ mapZoom(-0.35); }
 
 // ── 노선도에서 열차 위치 추적 ──
 function trackTrainOnMap(trainNo){
@@ -3256,13 +3227,17 @@ gyeongbuhs:{
     {n:'남대구',x:567,y:635},
     {n:'포항',x:757,y:547}
     ]},
-    {color:'#388bfd', dash:true, stations:[
-    {n:'청도',x:615,y:683},
+    {color:'#388bfd', stations:[
+    {n:'남대구',x:567,y:635},
     {n:'이서',x:599,y:678},
     {n:'풍각',x:587,y:685},
     {n:'덕양',x:584,y:690},
     {n:'고암',x:561,y:704},
     {n:'창녕',x:558,y:713}
+    ]},
+    {color:'#388bfd', dash:true, stations:[
+    {n:'마포',x:187,y:140},
+    {n:'서울',x:198,y:124}
     ]}
   ]
 },
@@ -3364,6 +3339,10 @@ jungang:{
     {color:'#56d0e0', dash:true, stations:[
     {n:'건천',x:701,y:622},
     {n:'경주',x:732,y:627}
+    ]},
+    {color:'#56d0e0', dash:true, stations:[
+    {n:'신녕',x:628,y:565},
+    {n:'남대구',x:567,y:635}
     ]}
   ]
 },
@@ -3441,6 +3420,10 @@ donghae:{
     {n:'기장',x:728,y:801},
     {n:'해운대',x:711,y:824},
     {n:'부산',x:687,y:837}
+    ]},
+    {color:'#3fb994', dash:true, stations:[
+    {n:'안강',x:731,y:582},
+    {n:'건천',x:701,y:622}
     ]}
   ]
 },
@@ -3504,6 +3487,17 @@ gyeongjeon:{
     {n:'일로',x:85,y:915},
     {n:'남악',x:78,y:926},
     {n:'목포',x:60,y:932}
+    ]},
+    {color:'#ef4444', dash:true, stations:[
+    {n:'광주',x:155,y:831},
+    {n:'빛가람',x:153,y:866},
+    {n:'춘양',x:197,y:903},
+    {n:'보성',x:224,y:938}
+    ]},
+    {color:'#ef4444', dash:true, stations:[
+    {n:'함평',x:90,y:853},
+    {n:'다시',x:122,y:871},
+    {n:'춘양',x:197,y:903}
     ]}
   ]
 },
@@ -3549,6 +3543,61 @@ function spreadMapRoutes(routes){
     adj[s.n]={x:nx,y:ny}; return {...s, x:nx, y:ny};
   })}));
 }
+// ── 노선도 확대/축소 ──
+let _mapZoomLv=1;
+function _mapApplyZoom(keepCenter){
+  const wrap=document.getElementById('map-svg-wrap');
+  const svg=wrap?wrap.querySelector('svg'):null;
+  if(!svg)return;
+  // 중심 유지용 비율 기록
+  let rx=0.5,ry=0.5;
+  if(keepCenter&&wrap.scrollWidth>0){
+    rx=(wrap.scrollLeft+wrap.clientWidth/2)/wrap.scrollWidth;
+    ry=(wrap.scrollTop+wrap.clientHeight/2)/wrap.scrollHeight;
+  }
+  if(_mapZoomLv<=1.001){
+    svg.style.width='100%';
+    // 원래 min-width 복원 (svg 생성 시 인라인으로 지정돼 있음 — 건드리지 않음)
+  } else {
+    svg.style.width=(100*_mapZoomLv).toFixed(0)+'%';
+  }
+  if(keepCenter){
+    requestAnimationFrame(()=>{
+      wrap.scrollLeft=rx*wrap.scrollWidth-wrap.clientWidth/2;
+      wrap.scrollTop=ry*wrap.scrollHeight-wrap.clientHeight/2;
+    });
+  }
+}
+function mapZoom(d){
+  _mapZoomLv=Math.min(4,Math.max(1,+( _mapZoomLv+d).toFixed(2)));
+  _mapApplyZoom(true);
+  const zl=document.getElementById('map-zoom-label');
+  if(zl) zl.textContent=Math.round(_mapZoomLv*100)+'%';
+}
+function mapZoomReset(){ _mapZoomLv=1; _mapApplyZoom(false); const w=document.getElementById('map-svg-wrap'); if(w){w.scrollLeft=0;w.scrollTop=0;} }
+// 두 손가락 핀치 줌
+function _mapBindPinch(){
+  const wrap=document.getElementById('map-svg-wrap');
+  if(!wrap||wrap._pinchBound)return;
+  wrap._pinchBound=true;
+  let d0=0,z0=1;
+  wrap.addEventListener('touchstart',e=>{
+    if(e.touches.length===2){
+      d0=Math.hypot(e.touches[0].clientX-e.touches[1].clientX,e.touches[0].clientY-e.touches[1].clientY);
+      z0=_mapZoomLv;
+    }
+  },{passive:true});
+  wrap.addEventListener('touchmove',e=>{
+    if(e.touches.length===2&&d0>0){
+      e.preventDefault();
+      const d=Math.hypot(e.touches[0].clientX-e.touches[1].clientX,e.touches[0].clientY-e.touches[1].clientY);
+      _mapZoomLv=Math.min(4,Math.max(1,z0*d/d0));
+      _mapApplyZoom(true);
+    }
+  },{passive:false});
+  wrap.addEventListener('touchend',()=>{d0=0;},{passive:true});
+}
+
 // 전체 노선도 좌표 인덱스 (모든 MAP_LINES 역 → 원좌표, 추적 경로 오버레이용)
 let _mapGlobalPosCache=null;
 function _mapGlobalPos(){
@@ -3728,9 +3777,22 @@ function showMapLine(lineKey, btn){
     return d;
   }
 
-  // 🛰️ 관제 모드: 전 노선을 얇게, 역은 주요 허브만 라벨 — 열차 움직임이 주인공
+  // 🛰️ 관제 모드: 전 노선을 얇게, 라벨은 노선 종점·노선 간 교차역만 — 열차 움직임이 주인공
   const isAllView=lineKey==='all';
-  const _hubSet=isAllView?new Set(_majorStations(14)):null;
+  let _hubSet=null;
+  if(isAllView){
+    _hubSet=new Set();
+    const lineCnt={};
+    for(const ml of Object.values(MAP_LINES)){
+      const seen=new Set();
+      ml.routes.forEach(rt=>{
+        if(rt.stations.length){ _hubSet.add(rt.stations[0].n); _hubSet.add(rt.stations[rt.stations.length-1].n); }
+        rt.stations.forEach(s=>seen.add(s.n));
+      });
+      seen.forEach(n=>lineCnt[n]=(lineCnt[n]||0)+1);
+    }
+    Object.entries(lineCnt).forEach(([n,c])=>{ if(c>=2)_hubSet.add(n); });
+  }
   routes.forEach(r=>{
     const isBranch=r.dash||false;   // 지선/경유: 본선과 같은 색, 점선
     const d=smoothPath(r.stations, ox, oy);
@@ -3798,7 +3860,15 @@ function showMapLine(lineKey, btn){
   parts.push(`<text x="14" y="22" fill="${trackedView?_trkColor:line.color}" font-size="14" font-weight="700" font-family="Noto Sans KR,sans-serif">${trackedView?`${_trk.grade} ${_trk.no} · ${_trk.stops[0].s}→${_trk.stops[_trk.stops.length-1].s} 운행 구간`:line.name}</text>`);
   parts.push('</svg>');
 
+  // 줌 컨트롤 (좌상단 고정) — 렌더마다 리셋되지 않도록 현재 배율 유지
+  parts.unshift(`<div class="map-zoom-ctl">
+    <button onclick="mapZoom(0.35)" title="확대">＋</button>
+    <button onclick="mapZoom(-0.35)" title="축소">－</button>
+    <button onclick="mapZoomReset()" title="원래대로">⟲</button>
+  </div>`);
   document.getElementById('map-svg-wrap').innerHTML=parts.join('');
+  _mapApplyZoom();
+  _mapBindPinch();
 
   // 범례
   document.getElementById('map-legend').innerHTML=trackedView?`
@@ -8041,19 +8111,31 @@ function _nextDeps(stn,count){
 // ══════════════════════════════════════════
 // 🖥️ 터미널 뷰 — 주요역 4곳 발차 보드 동시 관전
 // ══════════════════════════════════════════
+// 전 역 자동완성 datalist (터미널 뷰·당일치기 공용)
+function _ensureStnDatalist(){
+  if(document.getElementById('stn-dl'))return;
+  _majorStations(1); // 캐시 초기화
+  const dl=document.createElement('datalist'); dl.id='stn-dl';
+  dl.innerHTML=_majorStnsCache.map(s=>`<option value="${s}">`).join('');
+  document.body.appendChild(dl);
+}
 let _termStns=null;
+function _termPick(i,inp){
+  const v=inp.value.trim();
+  if(_majorStnsCache&&_majorStnsCache.includes(v)){ _termStns[i]=v; _termFill(i); inp.blur(); }
+}
 function renderTerminalView(){
   const el=document.getElementById('result-terminal'); if(!el)return;
+  _ensureStnDatalist();
   if(!_termStns){ const m=_majorStations(30); _termStns=['서울','대전','남대구','부산'].filter(s=>m.includes(s)); while(_termStns.length<4)_termStns.push(m[_termStns.length]); }
-  const majors=_majorStations(30);
-  const opts=i=>majors.map(s=>`<option value="${s}"${_termStns[i]===s?' selected':''}>${s}</option>`).join('');
   el.innerHTML=`
     <div style="padding:14px 16px 24px">
-      <div style="font-size:12px;color:var(--text3);margin-bottom:10px">주요역 발차 보드 · 30초마다 자동 갱신 · 역을 바꿔 원하는 조합으로 관전하세요</div>
+      <div style="font-size:12px;color:var(--text3);margin-bottom:10px">주요역 발차 보드 · 30초마다 자동 갱신 · 역 이름을 지우고 직접 입력해 어느 역이든 볼 수 있습니다</div>
       <div class="term-grid">
         ${[0,1,2,3].map(i=>`
         <div class="term-board" id="term-b${i}">
-          <select class="term-sel" onchange="_termStns[${i}]=this.value;_termFill(${i})">${opts(i)}</select>
+          <input class="term-sel" list="stn-dl" value="${_termStns[i]}" placeholder="역 이름 검색"
+            onfocus="this.select()" onchange="_termPick(${i},this)">
           <div class="term-rows" id="term-rows-${i}"></div>
         </div>`).join('')}
       </div>
@@ -8083,17 +8165,20 @@ function _termFill(i){
 // 🌄 당일치기 추천 — 지금 출발해서 다녀올 코스
 // ══════════════════════════════════════════
 let _dtpOrigin='서울';
+function _dtpPick(inp){
+  const v=inp.value.trim();
+  if(_majorStnsCache&&_majorStnsCache.includes(v)){ _dtpOrigin=v; renderDaytrip(); }
+}
 function renderDaytrip(){
   const el=document.getElementById('result-daytrip'); if(!el)return;
-  const majors=_majorStations(30);
-  if(!majors.includes(_dtpOrigin))_dtpOrigin=majors[0];
+  _ensureStnDatalist();
+  if(!_majorStnsCache.includes(_dtpOrigin))_dtpOrigin=_majorStnsCache[0];
   el.innerHTML=`
     <div style="padding:14px 16px 24px">
-      <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;flex-wrap:wrap">
         <span style="font-size:13px;font-weight:700">출발역</span>
-        <select class="term-sel" style="flex:0 0 auto;min-width:110px" onchange="_dtpOrigin=this.value;renderDaytrip()">
-          ${majors.map(s=>`<option value="${s}"${_dtpOrigin===s?' selected':''}>${s}</option>`).join('')}
-        </select>
+        <input class="term-sel" list="stn-dl" style="flex:0 0 auto;width:130px;margin-bottom:0" value="${_dtpOrigin}"
+          placeholder="역 이름 검색" onfocus="this.select()" onchange="_dtpPick(this)">
         <span style="font-size:11.5px;color:var(--text3)">지금 이후 출발 · 직통 왕복 기준</span>
       </div>
       <div id="dtp-list">${_daytripHTML(_dtpOrigin)}</div>

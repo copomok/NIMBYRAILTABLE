@@ -1243,6 +1243,19 @@ button, select, input[type=range],
 .mtl-name.end{font-size:15.5px;font-weight:800}
 .mtl-endtag{font-size:10px;font-weight:800;padding:2px 7px;border-radius:8px;background:var(--mc,#888);color:#fff}
 
+/* ── 신규 기능 공통: 기존 탭과 동일한 좌우폭 ── */
+#result-terminal,#result-daytrip,#result-puzzle,#result-metrolines{max-width:860px;margin:0 auto}
+
+/* ── 열차 상세 툴바: 줄바꿈 방지(가로 스크롤) ── */
+.tl-toolbar{flex-wrap:nowrap!important;overflow-x:auto;-webkit-overflow-scrolling:touch}
+.tl-toolbar .view-toggle-btn{white-space:nowrap;flex-shrink:0}
+
+/* ── 노선도 줌 컨트롤 + 터치 개선 ── */
+.map-svg-wrap{touch-action:pan-x pan-y}
+.map-zoom-ctl{position:sticky;top:10px;left:10px;z-index:6;display:inline-flex;flex-direction:column;gap:6px;width:0;overflow:visible;float:left}
+.map-zoom-ctl button{width:34px;height:34px;border-radius:10px;border:1px solid var(--border);background:rgba(22,27,34,.92);color:var(--text1);font-size:17px;font-weight:800;cursor:pointer;font-family:var(--sans);touch-action:manipulation;box-shadow:0 2px 8px rgba(0,0,0,.4)}
+.map-zoom-ctl button:active{background:var(--accent);color:#fff}
+
 /* ── 🖥️ 터미널 뷰 ── */
 .term-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:10px}
 .term-board{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:10px 12px}
