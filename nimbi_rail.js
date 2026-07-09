@@ -375,6 +375,20 @@ function updateMinimap(){
   };
 }
 
+// ── 🚆/🚇 이용 모드 (기차/전철) ──
+let _appMode=(()=>{try{return localStorage.getItem('nimbi_mode')||'train';}catch(e){return 'train';}})();
+function setAppMode(m){
+  _appMode=m;
+  try{localStorage.setItem('nimbi_mode',m);}catch(e){}
+  _syncModeButtons();
+  if(m==='metro'&&typeof _siSubTab!=='undefined')_siSubTab='metro'; // 역 정보 탭 기본을 전철로
+  if(document.getElementById('panel-map')?.classList.contains('active')) renderMapTabForMode();
+  if(document.getElementById('panel-stationinfo')?.classList.contains('active')) renderStationInfo();
+}
+function _syncModeButtons(){
+  document.getElementById('mode-btn-train')?.classList.toggle('on',_appMode==='train');
+  document.getElementById('mode-btn-metro')?.classList.toggle('on',_appMode==='metro');
+}
 function switchTab(n){
   try{ closeStationBoard(); }catch(e){}
   document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
@@ -384,10 +398,7 @@ function switchTab(n){
   if(n==='map'){
     const content=document.getElementById('map-content');
     if(content) content.style.display='';
-    // 항상 현재 활성 노선 탭 렌더링 (초기엔 경부선)
-    const activeMapTab=document.querySelector('.map-line-tab.active')||document.querySelector('.map-line-tab');
-    const lineKey=(activeMapTab&&activeMapTab.getAttribute('onclick').match(/['"]([\w]+)['"]/)?.[1])||'gyeongbu';
-    showMapLine(lineKey, activeMapTab||document.querySelector('.map-line-tab'));
+    renderMapTabForMode();
   } else {
     // 다른 탭으로 이동 시 노선도 콘텐츠 숨기기
     _mapCurrentLine=null;
@@ -2936,7 +2947,8 @@ function updateMapTrains(){
     if(!posA)return;
     // 현재 구간이 이 열차가 이용하는 '다른' 노선의 인접 구간이면 그 노선 소속 → 이 지도에서 숨김
     // (예: 호남고속선 KTX의 전주~정읍이 호남선 지도에 잘못 뜨는 것 방지. 단일 노선 급행은 영향 없음)
-    if(stnB){
+    // 단, 추적 중인 열차는 운행 구간 전용 뷰이므로 어느 노선 구간이든 항상 표시
+    if(stnB && !(_mapTrackedTrain&&t.no===_mapTrackedTrain)){
       const others=t.line.split('·').map(s=>s.trim()).filter(n=>n&&n!==line.name);
       if(others.some(n=>{const k=_lineNameToKey[n];return k&&_mapLineEdgeSet(k).has(stnA+'|'+stnB);}))return;
     }
@@ -3144,7 +3156,7 @@ gyeongbu:{
     {n:'상당',x:321,y:400},
     {n:'문의',x:321,y:426},
     {n:'신탄진',x:305,y:448},
-    {n:'회덕',x:304,y:472},
+    {n:'회덕',x:305,y:465},
     {n:'대전',x:307,y:482},
     {n:'판암',x:312,y:487},
     {n:'세천',x:320,y:480},
@@ -3238,7 +3250,7 @@ honam:{
   name:'호남선', color:'#3fb950',
   routes:[
     {color:'#3fb950', stations:[
-    {n:'회덕',x:304,y:472},
+    {n:'회덕',x:305,y:465},
     {n:'서대전',x:300,y:485},
     {n:'남대전',x:294,y:493},
     {n:'계룡',x:267,y:499},
@@ -3509,27 +3521,115 @@ function _mapGlobalPos(){
         if(!g[s.n])g[s.n]={x:s.x,y:s.y};
   return _mapGlobalPosCache=g;
 }
+// 추적 열차의 운행 경로를 노선별 구간(run)으로 분할 — 각 run은 해당 노선 색의 route가 됨
+function _trackedRouteRuns(t){
+  const g=_mapGlobalPos();
+  const keyStns={};
+  for(const [k,ml] of Object.entries(MAP_LINES)) keyStns[k]=new Set(ml.routes.flatMap(r=>r.stations.map(s=>s.n)));
+  const myKeys=t.line.split('·').map(s=>_lineNameToKey[s.trim()]).filter(Boolean);
+  const segKey=(a,b)=>{
+    for(const k of myKeys){ if(keyStns[k].has(a)&&keyStns[k].has(b))return k; }
+    for(const k of Object.keys(MAP_LINES)){ if(keyStns[k].has(a)&&keyStns[k].has(b))return k; }
+    return null;
+  };
+  const runs=[]; let cur=null, prevNode=null;
+  for(const st of t.stops){
+    const q=g[st.s]; if(!q)continue;
+    const node={n:st.s,x:q.x,y:q.y};
+    if(prevNode){
+      const k=segKey(prevNode.n,st.s);
+      if(!cur||cur._k!==k){
+        cur={_k:k,color:(k&&MAP_LINES[k])?MAP_LINES[k].color:'#8b949e',stations:[prevNode]};
+        runs.push(cur);
+      }
+      cur.stations.push(node);
+    }
+    prevNode=node;
+  }
+  return runs;
+}
+// ── 노선도 탭 모드별 렌더 (기차: 기존 노선 탭 / 전철: 전철 노선 선택 바) ──
+let _metroMapRegion=null, _metroMapId=null;
+function renderMapTabForMode(){
+  const tabs=document.getElementById('map-line-tabs');
+  const controls=document.getElementById('map-controls-bar');
+  const filterPanel=document.getElementById('map-filter-panel');
+  let bar=document.getElementById('metro-line-bar');
+  if(_appMode==='metro'&&typeof METRO_LINES!=='undefined'){
+    if(tabs)tabs.style.display='none';
+    if(controls)controls.style.display='none';
+    if(filterPanel)filterPanel.style.display='none';
+    if(!bar){
+      bar=document.createElement('div'); bar.id='metro-line-bar';
+      tabs.parentNode.insertBefore(bar,tabs.nextSibling);
+    }
+    bar.style.display='';
+    const regions=[...new Set(METRO_LINES.map(l=>l.region))];
+    if(!_metroMapRegion)_metroMapRegion=regions[0];
+    const lines=METRO_LINES.filter(l=>l.region===_metroMapRegion);
+    if(!_metroMapId||!lines.some(l=>l.id===_metroMapId))_metroMapId=lines[0].id;
+    _renderMetroBar(bar);
+    showMapLine('metro:'+_metroMapId,null);
+  } else {
+    if(tabs)tabs.style.display='';
+    if(controls)controls.style.display='';
+    if(bar)bar.style.display='none';
+    const activeMapTab=document.querySelector('.map-line-tab.active')||document.querySelector('.map-line-tab');
+    const lineKey=(activeMapTab&&activeMapTab.getAttribute('onclick').match(/['"]([\w]+)['"]/)?.[1])||'gyeongbu';
+    showMapLine(lineKey, activeMapTab);
+  }
+}
+function _renderMetroBar(bar){
+  const regions=[...new Set(METRO_LINES.map(l=>l.region))];
+  const lines=METRO_LINES.filter(l=>l.region===_metroMapRegion);
+  const sel=METRO_LINES.find(l=>l.id===_metroMapId);
+  bar.innerHTML=`
+    <div style="display:flex;gap:6px;flex-wrap:wrap;margin:4px 0 6px">
+      ${regions.map(r=>`<button class="metro-region-chip${_metroMapRegion===r?' on':''}" onclick="setMetroMapRegion('${r}')">${r}</button>`).join('')}
+    </div>
+    <div style="display:flex;gap:6px;overflow-x:auto;-webkit-overflow-scrolling:touch;padding-bottom:6px">
+      ${lines.map(l=>`<button class="metro-line-chip${l.id===_metroMapId?' on':''}" style="--mc:${l.color}" onclick="showMetroMap('${l.id}')">${l.name}</button>`).join('')}
+    </div>
+    ${sel?`<div class="metro-map-info">
+      <span style="color:${sel.color};font-weight:800">🚇 ${sel.name}</span>
+      <span>${sel.loop?sel.from+' 기점 순환':sel.from+' ↔ '+sel.to} · ${sel.n}개역</span>
+      <span>첫차 <b>${sel.first}</b> · 막차 <b>${sel.last}</b></span>
+      <span>배차 러시 <b>${sel.hwPeak}분</b> · 평시 <b>${sel.hwOff}분</b></span>
+    </div>`:''}`;
+}
+function setMetroMapRegion(r){_metroMapRegion=r;_metroMapId=null;renderMapTabForMode();}
+function showMetroMap(id){
+  _metroMapId=id;
+  const bar=document.getElementById('metro-line-bar'); if(bar)_renderMetroBar(bar);
+  showMapLine('metro:'+id,null);
+}
+// METRO_LINES 항목 → MAP_LINES 형식 변환 (동일 렌더러 재사용)
+function _metroAsMapLine(id){
+  if(typeof METRO_LINES==='undefined')return null;
+  const l=METRO_LINES.find(x=>x.id===id);
+  if(!l||!l.xy)return null;
+  return {name:l.name,color:l.color,routes:[{color:l.color,stations:l.stations.map((n,i)=>({n,x:l.xy[i][0],y:l.xy[i][1]}))}]};
+}
 function showMapLine(lineKey, btn){
   document.querySelectorAll('.map-line-tab').forEach(t=>t.classList.remove('active'));
   if(btn)btn.classList.add('active');
-  const line=MAP_LINES[lineKey];
+  const line=(typeof lineKey==='string'&&lineKey.startsWith('metro:'))?_metroAsMapLine(lineKey.slice(6)):MAP_LINES[lineKey];
   if(!line)return;
 
-  const routes=spreadMapRoutes(line.routes);
+  // 추적 중이면: 열차가 실제 운행하는 구간만 노선별 색으로 렌더 (전체 노선 대신)
+  const _trk=_mapTrackedTrain?ALL_TRAINS.find(x=>x.no===_mapTrackedTrain):null;
+  let baseRoutes=line.routes, trackedView=false;
+  if(_trk){
+    const runs=_trackedRouteRuns(_trk);
+    if(runs.length){ baseRoutes=runs; trackedView=true; }
+  }
+  const routes=spreadMapRoutes(baseRoutes);
   // 좌표 범위
   let minX=9999,maxX=0,minY=9999,maxY=0;
   routes.forEach(r=>r.stations.forEach(s=>{
     minX=Math.min(minX,s.x);maxX=Math.max(maxX,s.x);
     minY=Math.min(minY,s.y);maxY=Math.max(maxY,s.y);
   }));
-  // 추적 중이면 추적 열차의 전 구간이 화면에 들어오도록 범위 확장
-  const _trk=_mapTrackedTrain?ALL_TRAINS.find(x=>x.no===_mapTrackedTrain):null;
-  if(_trk){
-    const g=_mapGlobalPos();
-    _trk.stops.forEach(s=>{const q=g[s.s];if(!q)return;
-      minX=Math.min(minX,q.x);maxX=Math.max(maxX,q.x);
-      minY=Math.min(minY,q.y);maxY=Math.max(maxY,q.y);});
-  }
   const pad=90;
   const svgW=maxX-minX+pad*2;
   const svgH=maxY-minY+pad*2;
@@ -3583,49 +3683,6 @@ function showMapLine(lineKey, btn){
     parts.push(`<path d="${d}" fill="none" stroke="${r.color}" stroke-width="${isBranch?4:5}" stroke-linecap="round" stroke-linejoin="round" ${isBranch?'stroke-dasharray="9,9"':''} opacity="${isBranch?0.85:1}"/>`);
   });
 
-  // ── 추적 열차 전체 운행 구간 오버레이 (노선별 색 구분) ──
-  if(_trk){
-    const g=_mapGlobalPos();
-    const P=n=> stnPos[n] || (g[n]?{x:g[n].x+ox,y:g[n].y+oy}:null);
-    const keyStns={};
-    for(const [k,ml] of Object.entries(MAP_LINES)) keyStns[k]=new Set(ml.routes.flatMap(r=>r.stations.map(s=>s.n)));
-    const myKeys=_trk.line.split('·').map(s=>_lineNameToKey[s.trim()]).filter(Boolean);
-    const segKey=(a,b)=>{
-      for(const k of myKeys){ if(keyStns[k].has(a)&&keyStns[k].has(b))return k; }
-      for(const k of Object.keys(MAP_LINES)){ if(keyStns[k].has(a)&&keyStns[k].has(b))return k; }
-      return null;
-    };
-    const flush=(key,pts)=>{
-      if(pts.length<2)return;
-      const col=key&&MAP_LINES[key]?MAP_LINES[key].color:'#8b949e';
-      const dd='M'+pts.map(p=>`${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(' L');
-      parts.push(`<path d="${dd}" fill="none" stroke="${col}" stroke-width="10" opacity="0.22" stroke-linecap="round" stroke-linejoin="round" pointer-events="none"/>`);
-      parts.push(`<path d="${dd}" fill="none" stroke="${col}" stroke-width="3" opacity="0.95" stroke-dasharray="1,8" stroke-linecap="round" pointer-events="none"/>`);
-    };
-    let runKey=null, runPts=[], started=false, prevN=null, prevP=null;
-    for(const st of _trk.stops){
-      const p=P(st.s); if(!p)continue;
-      if(prevN!==null){
-        const k=segKey(prevN,st.s);
-        if(!started){ runKey=k; runPts=[prevP,p]; started=true; }
-        else if(k===runKey){ runPts.push(p); }
-        else { flush(runKey,runPts); runKey=k; runPts=[prevP,p]; }
-      }
-      prevN=st.s; prevP=p;
-    }
-    if(started) flush(runKey,runPts);
-    // 현재 노선 밖 정차역 점 + 기·종점 라벨
-    const stopStns=_trk.stops.filter(s=>hasTime(s.arr)||hasTime(s.dep)).map(s=>s.s);
-    for(const n of new Set(stopStns)){
-      if(stnPos[n])continue; const p=P(n); if(!p)continue;
-      parts.push(`<circle cx="${p.x}" cy="${p.y}" r="3.5" fill="#161b22" stroke="#8b949e" stroke-width="1.5" pointer-events="none"/>`);
-    }
-    [ _trk.stops[0].s, _trk.stops[_trk.stops.length-1].s ].forEach(n=>{
-      const p=P(n); if(!p||stnPos[n])return;
-      parts.push(`<text x="${p.x}" y="${p.y-9}" text-anchor="middle" font-size="11" font-weight="700" fill="#c9d1d9" pointer-events="none">${n}</text>`);
-    });
-  }
-
   // 역 점 + 이름 (중복 없이)
   const rendered=new Set();
   routes.forEach(r=>{
@@ -3670,7 +3727,7 @@ function showMapLine(lineKey, btn){
         tx=x+(anchor==='start'?13:-13);
       }
       // 특정 역 텍스트 위치 수동 오버라이드
-      const manualOffset={'목포':[-16,0],'광주':[0,-14],'함평':[-14,0],'부산':[14,0]};
+      const manualOffset={'목포':[-16,0],'광주':[0,-14],'함평':[-14,0],'부산':[14,0],'회덕':[-14,0],'대전':[14,2]};
       if(manualOffset[s.n]){
         tx=x+manualOffset[s.n][0];
         ty=y+manualOffset[s.n][1]+4;
@@ -3680,7 +3737,7 @@ function showMapLine(lineKey, btn){
     });
   });
 
-  parts.push(`<text x="14" y="22" fill="${line.color}" font-size="14" font-weight="700" font-family="Noto Sans KR,sans-serif">${line.name}</text>`);
+  parts.push(`<text x="14" y="22" fill="${line.color}" font-size="14" font-weight="700" font-family="Noto Sans KR,sans-serif">${trackedView?`${_trk.grade} ${_trk.no} · ${_trk.stops[0].s}→${_trk.stops[_trk.stops.length-1].s} 운행 구간`:line.name}</text>`);
   parts.push('</svg>');
 
   document.getElementById('map-svg-wrap').innerHTML=parts.join('');
@@ -6208,6 +6265,7 @@ function openMyPage(){
   document.getElementById('my-backdrop').classList.add('open');
   document.getElementById('my-panel').classList.add('open');
   document.body.style.overflow='hidden';
+  _syncModeButtons();
 }
 function closeMyPage(){
   document.getElementById('my-backdrop').classList.remove('open');

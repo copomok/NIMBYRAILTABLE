@@ -35,6 +35,14 @@
     <button class="my-panel-close" onclick="closeMyPage()">✕</button>
   </div>
   <div class="my-menu-list">
+    <div class="my-mode-row">
+      <div class="my-mode-label">이용 모드</div>
+      <div class="my-mode-btns">
+        <button class="my-mode-btn" id="mode-btn-train" onclick="setAppMode('train')">🚆 기차</button>
+        <button class="my-mode-btn" id="mode-btn-metro" onclick="setAppMode('metro')">🚇 전철</button>
+      </div>
+      <div class="my-mode-desc" id="my-mode-desc">전철 모드에서는 노선도 탭에 전철 노선도가 표시됩니다</div>
+    </div>
     <div class="my-menu-item" onclick="openMySection('book')">
       <span class="my-menu-icon">🔍</span>
       <div class="my-menu-info">
@@ -333,7 +341,7 @@
       <button class="map-line-tab" onclick="showMapLine('gyeongjeon',this)">경전선</button>
     </div>
     <!-- 컨트롤 바 (항상 표시: 열차수 + 방향 + 필터 토글) -->
-    <div style="display:flex;align-items:center;gap:6px;padding:6px 0 4px;flex-wrap:wrap">
+    <div id="map-controls-bar" style="display:flex;align-items:center;gap:6px;padding:6px 0 4px;flex-wrap:wrap">
       <span id="map-train-count" class="badge blue" style="white-space:nowrap"></span>
       <!-- 역/열차 우선 (항상 표시) -->
       <button class="map-layer-btn" id="map-layer-btn" onclick="toggleMapLayer()">🚉 역 우선</button>
