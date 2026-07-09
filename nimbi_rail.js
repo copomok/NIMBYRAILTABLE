@@ -4676,6 +4676,18 @@ function flipRailTicket(){
       const tk=loadTickets().find(t=>t.id===window._qrTicketId);
       if(tk){ body.innerHTML=renderFormationContent(tk); body.dataset.rendered='1'; }
     }
+    // 뒤집기 완료 후 3D 해제(settled) — iPad 뒷면 스크롤·비침 수정
+    clearTimeout(flip._settleT);
+    flip._settleT=setTimeout(()=>{ if(flip.classList.contains('flipped')) flip.classList.add('settled'); },650);
+  } else {
+    // settled 해제는 transition 없이 즉시(펄럭임 방지) 원래 rotateY(180) 상태로 복귀 후 역회전
+    clearTimeout(flip._settleT);
+    if(flip.classList.contains('settled')){
+      inner.style.transition='none';
+      flip.classList.remove('settled');
+      void inner.offsetHeight;
+      inner.style.transition='';
+    }
   }
   inner.style.height=(willFlip?front.offsetHeight:inner.offsetHeight)+'px';
   flip.classList.toggle('flipped', willFlip); // 클래스는 즉시 토글(연타 방지)
@@ -4724,28 +4736,23 @@ function ticketBoardState(tk){
   if(isTicketPast(tk)) return 'done';
   return tk.board==='active' ? 'active' : 'none';
 }
-// 지금 개표(탑승) 가능한가 (오늘 열차 · 출발 30분 전~하차 전)
+// 지금 개표(탑승) 가능한가 — 열차 출발 후 10분 이내에만 (출발 전 불가)
 function canBoardTicket(tk){
   if(tk.status!=='active' || isTicketPast(tk)) return false;
-  const now=new Date(); const nowMin=now.getHours()*60+now.getMinutes();
-  const today=todayLocalStr(now);
-  const depM=toMin(tk.depTime), arrM=toMin(tk.arrTime);
-  const isOvernight = depM!==null && arrM!==null && depM>arrM;
-  if(tk.travelDate===today){
-    if(depM===null) return true;
-    return nowMin >= depM-30;
-  }
-  // 어제 출발 · 익일 도착 열차(현재 새벽에 운행 중)
-  const yd=new Date(now); yd.setDate(yd.getDate()-1);
-  if(isOvernight && tk.travelDate===todayLocalStr(yd)) return true;
-  return false;
+  const depM=toMin(tk.depTime);
+  if(depM===null || !tk.travelDate) return false;
+  const dep=new Date(tk.travelDate+'T00:00:00');
+  if(isNaN(dep.getTime())) return false;
+  dep.setMinutes(depM);
+  const sinceDep=(Date.now()-dep.getTime())/60000; // 출발 후 경과 분
+  return sinceDep>=0 && sinceDep<=10;
 }
 // 개표 실행 → 게이트 통과 연출 + 소리 → 상태 갱신
 function boardTicket(id){
   const tickets=loadTickets();
   const tk=tickets.find(t=>t.id===id);
   if(!tk) return;
-  if(!canBoardTicket(tk)){ alert('아직 개표할 수 없는 승차권입니다.\n(당일 열차 · 출발 30분 전부터 개표 가능)'); return; }
+  if(!canBoardTicket(tk)){ alert('지금은 개표할 수 없는 승차권입니다.\n(개표는 열차 출발 후 10분 이내에만 가능합니다)'); return; }
   tk.board='active';
   saveTickets(tickets);
   playGateSound();
@@ -4930,6 +4937,16 @@ function flipTicketCard(id, ev){
     if(body && !body.dataset.rendered){
       const tk=loadTickets().find(t=>t.id===id);
       if(tk){ body.innerHTML=renderFormationContent(tk); body.dataset.rendered='1'; }
+    }
+    clearTimeout(flip._settleT);
+    flip._settleT=setTimeout(()=>{ if(flip.classList.contains('flipped')) flip.classList.add('settled'); },650);
+  } else {
+    clearTimeout(flip._settleT);
+    if(flip.classList.contains('settled')){
+      inner.style.transition='none';
+      flip.classList.remove('settled');
+      void inner.offsetHeight;
+      inner.style.transition='';
     }
   }
   inner.style.height=(willFlip?front.offsetHeight:back.offsetHeight)+'px';
@@ -6016,8 +6033,8 @@ function _ticketCardHTML(tk){
       </div>
       <div class="ticket-card-actions">
         <button class="btn" style="font-size:12px;padding:6px 12px" onclick="event.stopPropagation();jumpToTrain('${tk.trainNo}')">🕐 시간표</button>
-        ${tk.status==='active'&&_ticketFilterTab==='upcoming'?`<button class="btn" style="font-size:12px;padding:6px 12px" onclick="event.stopPropagation();cancelTicket('${tk.id}')">예매 취소</button>`:''}
-        <button class="btn" style="font-size:12px;padding:6px 12px" onclick="event.stopPropagation();deleteTicket('${tk.id}')">기록 삭제</button>
+        ${tk.status==='active'&&_ticketFilterTab==='upcoming'?`<button class="btn" style="font-size:12px;padding:6px 12px" onclick="event.stopPropagation();cancelTicket('${tk.id}')">예매 취소</button>`
+          :`<button class="btn" style="font-size:12px;padding:6px 12px" onclick="event.stopPropagation();deleteTicket('${tk.id}')">기록 삭제</button>`}
       </div>
     </div>`;
 }
@@ -6866,7 +6883,9 @@ function openBookingWithDate(trainNo, from, to, depT, arrT, travelDate, isRound,
 // ══════════════════════════════════════════
 // 🚉 역 정보 탭
 // ══════════════════════════════════════════
-let _siSubTab='near', _siCurrent=null, _siCardPlatform=null, _siNearAll=[], _siNearShowClosed=false, _siNearLat=null, _siNearLon=null, _siHideTerm=false, _siBoardTimer=null;
+let _siSubTab='near', _siCurrent=null, _siCardPlatform=null, _siNearAll=[], _siNearShowClosed=false, _siNearLat=null, _siNearLon=null, _siHideTerm=false, _siUpcomingOnly=false, _siBoardTimer=null;
+// 운행일 기준(04:00~익일 03:59) 분 변환: 04:00=0 … 03:59=1439
+function _srvMin(m){ return ((m-240)%1440+1440)%1440; }
 
 function renderStationInfo(){
   const el=document.getElementById('result-stationinfo');
@@ -7326,6 +7345,14 @@ function toggleSITerm(name){
   if(el) el.innerHTML=_siPlatformTrainsHTML(name, trains);
 }
 
+function toggleSIUpcoming(name){
+  _siUpcomingOnly=!_siUpcomingOnly;
+  const trainName=name.endsWith('역')?name.slice(0,-1):name;
+  const trains=_stationStoppingTrains(trainName);
+  const el=document.getElementById('si-platform-trains');
+  if(el) el.innerHTML=_siPlatformTrainsHTML(name, trains);
+}
+
 function searchStation(name){
   const trainName=name.endsWith('역')?name.slice(0,-1):name;
   document.getElementById('input-station').value=trainName;
@@ -7426,10 +7453,35 @@ function _siPlatformTrainsHTML(name, trains){
     ?trains.filter(t=>_platformForTrain(name,trainName,trains,t)===_siCardPlatform)
     :[...trains];
   // 당역종착 제외 필터 (#4)
-  const filtered=_siHideTerm?platTrains.filter(t=>!_isTerminusAt(t,trainName)):platTrains;
+  let filtered=_siHideTerm?platTrains.filter(t=>!_isTerminusAt(t,trainName)):platTrains;
+  // 이후 열차만 필터 — 운행일(04:00~익일 03:59) 기준. 23:30에 0:40 열차는 '이후'로 취급
+  let svcEnded=false, firstNext=null;
+  if(_siUpcomingOnly){
+    const nowD=new Date();
+    const nowSrv=_srvMin(nowD.getHours()*60+nowD.getMinutes());
+    const upcoming=filtered.filter(t=>{
+      const s=t.stops.find(x=>x.s===trainName);
+      const m=toMin(s?.dep||s?.arr);
+      return m!==null && _srvMin(m)>=nowSrv;
+    });
+    if(upcoming.length===0 && filtered.length>0){
+      svcEnded=true;
+      // 익일(다음 운행일) 첫차 안내용
+      const byStart=[...filtered].sort((a,b)=>{
+        const sa=a.stops.find(x=>x.s===trainName), sb=b.stops.find(x=>x.s===trainName);
+        return _srvMin(toMin(sa?.dep||sa?.arr)||0)-_srvMin(toMin(sb?.dep||sb?.arr)||0);
+      });
+      const fs=byStart[0]?.stops.find(x=>x.s===trainName);
+      firstNext=fs?(fs.dep||fs.arr):null;
+    }
+    filtered=upcoming;
+  }
   const sorted=[...filtered].sort((a,b)=>{
     const sa=a.stops.find(x=>x.s===trainName), sb=b.stops.find(x=>x.s===trainName);
-    return (toMin(sa?.dep||sa?.arr)||9999)-(toMin(sb?.dep||sb?.arr)||9999);
+    const ka=toMin(sa?.dep||sa?.arr), kb=toMin(sb?.dep||sb?.arr);
+    // 이후 열차만 모드에서는 운행일 순서(04시 기준)로 정렬해 자정 넘는 열차가 뒤에 오도록
+    if(_siUpcomingOnly) return (ka===null?9999:_srvMin(ka))-(kb===null?9999:_srvMin(kb));
+    return (ka||9999)-(kb||9999);
   });
   // 방면·방향은 실제 배정된 열차에서 도출
   const fdirs=new Set(sorted.map(t=>t.dir));
@@ -7442,16 +7494,23 @@ function _siPlatformTrainsHTML(name, trains){
   const prevStn=_nearestStn(trainName,prevC), nextStn=_nearestStn(trainName,nextC);
   const navBtn=(stn,arrow)=>`<button onclick="openStationDetail('${stn.replace(/'/g,"\\'")}')" style="flex:1;min-width:0;padding:8px 10px;border-radius:9px;border:1px solid var(--border);background:var(--bg3);color:var(--text1);font-size:12.5px;font-weight:700;cursor:pointer;font-family:var(--sans);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${arrow==='prev'?'← '+stn:stn+' →'}</button>`;
   const navHtml=(prevStn||nextStn)?`<div style="display:flex;gap:8px;margin-bottom:10px">${prevStn?navBtn(prevStn,'prev'):''}${nextStn?navBtn(nextStn,'next'):''}</div>`:'';
-  const termOn=_siHideTerm;
-  const filterBtn=`<button onclick="toggleSITerm('${nameEsc}')" style="padding:4px 10px;border-radius:14px;border:1px solid ${termOn?'var(--accent)':'var(--border)'};background:${termOn?'var(--accent)':'var(--bg3)'};color:${termOn?'#fff':'var(--text2)'};font-size:11px;font-weight:600;cursor:pointer;font-family:var(--sans);white-space:nowrap">당역종착 제외</button>`;
+  const termOn=_siHideTerm, upcOn=_siUpcomingOnly;
+  const chip=(on,label,fn)=>`<button onclick="${fn}('${nameEsc}')" style="padding:4px 10px;border-radius:14px;border:1px solid ${on?'var(--accent)':'var(--border)'};background:${on?'var(--accent)':'var(--bg3)'};color:${on?'#fff':'var(--text2)'};font-size:11px;font-weight:600;cursor:pointer;font-family:var(--sans);white-space:nowrap">${label}</button>`;
+  const endedHtml=svcEnded
+    ?`<div style="text-align:center;padding:18px 12px;color:var(--text2);font-size:13px;line-height:1.7">
+        🌙 <b>금일 운행이 종료되었습니다</b><br>
+        <span style="font-size:11.5px;color:var(--text3)">운행일 기준 04:00~익일 03:59${firstNext?` · 익일 첫차 <b style="color:var(--accent);font-family:var(--mono)">${firstNext}</b>`:''}</span>
+      </div>`:'';
   return `
-    <div style="display:flex;align-items:center;gap:8px;margin-bottom:${_siCardPlatform?'6':'10'}px">
-      <div style="font-size:12px;font-weight:700;color:var(--text2);flex:1">🚆 ${_siCardPlatform?`${_siCardPlatform}번 홈${dirLabel?' ('+dirLabel+')':''} 시간표`:'역 시간표'}</div>
-      ${filterBtn}
+    <div style="display:flex;align-items:center;gap:6px;margin-bottom:${_siCardPlatform?'6':'10'}px;flex-wrap:wrap">
+      <div style="font-size:12px;font-weight:700;color:var(--text2);flex:1;min-width:120px">🚆 ${_siCardPlatform?`${_siCardPlatform}번 홈${dirLabel?' ('+dirLabel+')':''} 시간표`:'역 시간표'}</div>
+      ${chip(upcOn,'이후 열차만','toggleSIUpcoming')}
+      ${chip(termOn,'당역종착 제외','toggleSITerm')}
     </div>
     ${destsStr?`<div style="font-size:10px;color:var(--accent2);margin-bottom:8px">📍 ${destsStr}</div>`:''}
     ${navHtml}
-    ${sorted.length===0?'<div style="color:var(--text3);font-size:13px;text-align:center;padding:12px">운행 열차 없음</div>':''}
+    ${endedHtml}
+    ${sorted.length===0&&!svcEnded?'<div style="color:var(--text3);font-size:13px;text-align:center;padding:12px">운행 열차 없음</div>':''}
     ${(()=>{
       const trainRow=t=>{
         const s=t.stops.find(x=>x.s===trainName);

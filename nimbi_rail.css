@@ -688,6 +688,12 @@ tbody td{padding:10px 14px;font-size:13px;white-space:nowrap}
 .tcard-flip{perspective:1600px}
 .tcard-inner{position:relative;transition:transform .6s cubic-bezier(.45,.05,.25,1),height .35s ease;transform-style:preserve-3d}
 .tcard-flip.flipped .tcard-inner{transform:rotateY(180deg)}
+/* 뒤집기 완료 후 3D 컨텍스트 해제 (rt-flip과 동일한 iPad 수정) */
+.tcard-flip.flipped .tcard-front{pointer-events:none}
+.tcard-flip:not(.flipped) .tcard-back{pointer-events:none}
+.tcard-flip.flipped.settled .tcard-inner{transform:none}
+.tcard-flip.flipped.settled .tcard-front{display:none}
+.tcard-flip.flipped.settled .tcard-back{transform:none}
 .tcard-face{position:absolute;top:0;left:0;width:100%;backface-visibility:hidden;-webkit-backface-visibility:hidden}
 .tcard-front{position:relative;cursor:pointer}
 .tcard-front.ticket-card{margin:0}
@@ -1309,6 +1315,12 @@ button, select, input[type=range],
 .rt-flip{width:100%;perspective:1700px}
 .rt-flip-inner{position:relative;transition:transform .6s cubic-bezier(.45,.05,.25,1),height .35s ease;transform-style:preserve-3d}
 .rt-flip.flipped .rt-flip-inner{transform:rotateY(180deg)}
+/* 뒤집기 완료 후 3D 컨텍스트 해제 — iPad(사파리)에서 뒷면 스크롤 불가·앞면 비침(backface 버그) 수정 */
+.rt-flip.flipped .rt-face.rt-front{pointer-events:none}
+.rt-flip:not(.flipped) .rail-ticket.rt-back{pointer-events:none}
+.rt-flip.flipped.settled .rt-flip-inner{transform:none}
+.rt-flip.flipped.settled .rt-face.rt-front{display:none}
+.rt-flip.flipped.settled .rail-ticket.rt-back{transform:none}
 .rt-face{position:absolute;top:0;left:0;width:100%;backface-visibility:hidden;-webkit-backface-visibility:hidden}
 .rail-ticket.rt-front{position:relative;cursor:pointer}
 .rail-ticket.rt-back{transform:rotateY(180deg);padding:0;height:100%;display:flex;flex-direction:column;overflow:hidden}
