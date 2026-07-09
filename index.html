@@ -79,6 +79,30 @@
       </div>
       <span class="my-menu-arrow">›</span>
     </div>
+    <div class="my-menu-item" onclick="openMySection('daytrip')">
+      <span class="my-menu-icon">🌄</span>
+      <div class="my-menu-info">
+        <div class="my-menu-name">당일치기 추천</div>
+        <div class="my-menu-desc">지금 출발해서 다녀올 수 있는 코스</div>
+      </div>
+      <span class="my-menu-arrow">›</span>
+    </div>
+    <div class="my-menu-item" onclick="openMySection('terminal')">
+      <span class="my-menu-icon">🖥️</span>
+      <div class="my-menu-info">
+        <div class="my-menu-name">터미널 뷰</div>
+        <div class="my-menu-desc">주요역 4곳 발차 보드 동시 관전</div>
+      </div>
+      <span class="my-menu-arrow">›</span>
+    </div>
+    <div class="my-menu-item" onclick="openMySection('puzzle')">
+      <span class="my-menu-icon">🧩</span>
+      <div class="my-menu-info">
+        <div class="my-menu-name">오늘의 루트 퍼즐</div>
+        <div class="my-menu-desc">매일 바뀌는 경로 순서 맞추기</div>
+      </div>
+      <span class="my-menu-arrow">›</span>
+    </div>
 
   </div>
 </div>
@@ -336,6 +360,7 @@
       <button class="map-line-tab" onclick="showMapLine('gangreung',this)">강릉선</button>
       <button class="map-line-tab" onclick="showMapLine('jungnaelyuk',this)">중부내륙선</button>
       <button class="map-line-tab" onclick="showMapLine('gyeongjeon',this)">경전선</button>
+      <button class="map-line-tab" onclick="showMapLine('all',this)">🛰️ 관제</button>
     </div>
     <!-- 컨트롤 바 (항상 표시: 열차수 + 방향 + 필터 토글) -->
     <div id="map-controls-bar" style="display:flex;align-items:center;gap:6px;padding:6px 0 4px;flex-wrap:wrap">
