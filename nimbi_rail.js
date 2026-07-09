@@ -4857,8 +4857,15 @@ function flipRailTicket(){
       if(tk){ body.innerHTML=renderFormationContent(tk); body.dataset.rendered='1'; }
     }
     // 뒤집기 완료 후 3D 해제(settled) — iPad 뒷면 스크롤·비침 수정
+    // rotateY(180)→none 전환이 transition을 타면 역회전으로 보이므로 반드시 transition 없이 적용
     clearTimeout(flip._settleT);
-    flip._settleT=setTimeout(()=>{ if(flip.classList.contains('flipped')) flip.classList.add('settled'); },650);
+    flip._settleT=setTimeout(()=>{
+      if(!flip.classList.contains('flipped'))return;
+      inner.style.transition='none';
+      flip.classList.add('settled');
+      void inner.offsetHeight;
+      inner.style.transition='';
+    },650);
   } else {
     // settled 해제는 transition 없이 즉시(펄럭임 방지) 원래 rotateY(180) 상태로 복귀 후 역회전
     clearTimeout(flip._settleT);
@@ -5119,7 +5126,13 @@ function flipTicketCard(id, ev){
       if(tk){ body.innerHTML=renderFormationContent(tk); body.dataset.rendered='1'; }
     }
     clearTimeout(flip._settleT);
-    flip._settleT=setTimeout(()=>{ if(flip.classList.contains('flipped')) flip.classList.add('settled'); },650);
+    flip._settleT=setTimeout(()=>{
+      if(!flip.classList.contains('flipped'))return;
+      inner.style.transition='none';
+      flip.classList.add('settled');
+      void inner.offsetHeight;
+      inner.style.transition='';
+    },650);
   } else {
     clearTimeout(flip._settleT);
     if(flip.classList.contains('settled')){
