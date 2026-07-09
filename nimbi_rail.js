@@ -83,9 +83,22 @@ function addMinToClock(clockStr, add){ const m=toMin(clockStr); if(m==null)retur
 // ══════════════════════════════════════════
 // 📐 실좌표 기반 거리·운임
 // ══════════════════════════════════════════
+let _stnAliasMap=null;
 function _stnCoord(name){
   if(typeof STATION_DB==='undefined'||!name) return null;
   let d=STATION_DB[name]||STATION_DB[name+'역']||(name.endsWith('역')?STATION_DB[name.slice(0,-1)]:null);
+  if(!d){
+    // 별칭 폴백: "회덕" → "회덕역 / 대전차량기지" 처럼 부가 표기가 붙은 키 매칭
+    if(!_stnAliasMap){
+      _stnAliasMap={};
+      for(const k of Object.keys(STATION_DB)){
+        const stripped=k.replace(/\s*\/.*$/,'').trim();          // "회덕역"
+        if(stripped!==k){ _stnAliasMap[stripped]=k; _stnAliasMap[stripped.replace(/역$/,'')]=k; }
+      }
+    }
+    const ak=_stnAliasMap[name]||_stnAliasMap[name+'역'];
+    if(ak)d=STATION_DB[ak];
+  }
   return (d&&d.lat!=null&&d.lon!=null)?{lat:+d.lat,lon:+d.lon}:null;
 }
 // 좌표 객체 2개 간 거리 (nimbi_station_data.js의 haversineKm(4인자)와 이름 충돌 방지 위해 별도 명명)
@@ -2318,7 +2331,7 @@ function checkDataAnomalies(){
   const issues={dup:[],speed:[],nocoord:new Set()};
   const seen={}; ALL_TRAINS.forEach(t=>{seen[t.no]=(seen[t.no]||0)+1;});
   Object.entries(seen).forEach(([k,v])=>{ if(v>1) issues.dup.push(`${k} (${v}건)`); });
-  const coord=b=>{ if(typeof STATION_DB==='undefined')return null; const r=STATION_DB[b]||STATION_DB[b+'역']; return (r&&r.lat!=null)?r:null; };
+  const coord=b=>_stnCoord(b); // 별칭 폴백 포함(회덕역 / 대전차량기지 등)
   // 인접 정차역 간 직선거리·속도 이상(좌표 오류 탐지) — 역쌍 단위로 중복 제거
   const pairMax={};
   ALL_TRAINS.forEach(t=>{
@@ -3485,6 +3498,17 @@ function spreadMapRoutes(routes){
     adj[s.n]={x:nx,y:ny}; return {...s, x:nx, y:ny};
   })}));
 }
+// 전체 노선도 좌표 인덱스 (모든 MAP_LINES 역 → 원좌표, 추적 경로 오버레이용)
+let _mapGlobalPosCache=null;
+function _mapGlobalPos(){
+  if(_mapGlobalPosCache)return _mapGlobalPosCache;
+  const g={};
+  for(const ml of Object.values(MAP_LINES))
+    for(const r of ml.routes)
+      for(const s of r.stations)
+        if(!g[s.n])g[s.n]={x:s.x,y:s.y};
+  return _mapGlobalPosCache=g;
+}
 function showMapLine(lineKey, btn){
   document.querySelectorAll('.map-line-tab').forEach(t=>t.classList.remove('active'));
   if(btn)btn.classList.add('active');
@@ -3498,6 +3522,14 @@ function showMapLine(lineKey, btn){
     minX=Math.min(minX,s.x);maxX=Math.max(maxX,s.x);
     minY=Math.min(minY,s.y);maxY=Math.max(maxY,s.y);
   }));
+  // 추적 중이면 추적 열차의 전 구간이 화면에 들어오도록 범위 확장
+  const _trk=_mapTrackedTrain?ALL_TRAINS.find(x=>x.no===_mapTrackedTrain):null;
+  if(_trk){
+    const g=_mapGlobalPos();
+    _trk.stops.forEach(s=>{const q=g[s.s];if(!q)return;
+      minX=Math.min(minX,q.x);maxX=Math.max(maxX,q.x);
+      minY=Math.min(minY,q.y);maxY=Math.max(maxY,q.y);});
+  }
   const pad=90;
   const svgW=maxX-minX+pad*2;
   const svgH=maxY-minY+pad*2;
@@ -3550,6 +3582,49 @@ function showMapLine(lineKey, btn){
     const d=smoothPath(r.stations, ox, oy);
     parts.push(`<path d="${d}" fill="none" stroke="${r.color}" stroke-width="${isBranch?4:5}" stroke-linecap="round" stroke-linejoin="round" ${isBranch?'stroke-dasharray="9,9"':''} opacity="${isBranch?0.85:1}"/>`);
   });
+
+  // ── 추적 열차 전체 운행 구간 오버레이 (노선별 색 구분) ──
+  if(_trk){
+    const g=_mapGlobalPos();
+    const P=n=> stnPos[n] || (g[n]?{x:g[n].x+ox,y:g[n].y+oy}:null);
+    const keyStns={};
+    for(const [k,ml] of Object.entries(MAP_LINES)) keyStns[k]=new Set(ml.routes.flatMap(r=>r.stations.map(s=>s.n)));
+    const myKeys=_trk.line.split('·').map(s=>_lineNameToKey[s.trim()]).filter(Boolean);
+    const segKey=(a,b)=>{
+      for(const k of myKeys){ if(keyStns[k].has(a)&&keyStns[k].has(b))return k; }
+      for(const k of Object.keys(MAP_LINES)){ if(keyStns[k].has(a)&&keyStns[k].has(b))return k; }
+      return null;
+    };
+    const flush=(key,pts)=>{
+      if(pts.length<2)return;
+      const col=key&&MAP_LINES[key]?MAP_LINES[key].color:'#8b949e';
+      const dd='M'+pts.map(p=>`${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(' L');
+      parts.push(`<path d="${dd}" fill="none" stroke="${col}" stroke-width="10" opacity="0.22" stroke-linecap="round" stroke-linejoin="round" pointer-events="none"/>`);
+      parts.push(`<path d="${dd}" fill="none" stroke="${col}" stroke-width="3" opacity="0.95" stroke-dasharray="1,8" stroke-linecap="round" pointer-events="none"/>`);
+    };
+    let runKey=null, runPts=[], started=false, prevN=null, prevP=null;
+    for(const st of _trk.stops){
+      const p=P(st.s); if(!p)continue;
+      if(prevN!==null){
+        const k=segKey(prevN,st.s);
+        if(!started){ runKey=k; runPts=[prevP,p]; started=true; }
+        else if(k===runKey){ runPts.push(p); }
+        else { flush(runKey,runPts); runKey=k; runPts=[prevP,p]; }
+      }
+      prevN=st.s; prevP=p;
+    }
+    if(started) flush(runKey,runPts);
+    // 현재 노선 밖 정차역 점 + 기·종점 라벨
+    const stopStns=_trk.stops.filter(s=>hasTime(s.arr)||hasTime(s.dep)).map(s=>s.s);
+    for(const n of new Set(stopStns)){
+      if(stnPos[n])continue; const p=P(n); if(!p)continue;
+      parts.push(`<circle cx="${p.x}" cy="${p.y}" r="3.5" fill="#161b22" stroke="#8b949e" stroke-width="1.5" pointer-events="none"/>`);
+    }
+    [ _trk.stops[0].s, _trk.stops[_trk.stops.length-1].s ].forEach(n=>{
+      const p=P(n); if(!p||stnPos[n])return;
+      parts.push(`<text x="${p.x}" y="${p.y-9}" text-anchor="middle" font-size="11" font-weight="700" fill="#c9d1d9" pointer-events="none">${n}</text>`);
+    });
+  }
 
   // 역 점 + 이름 (중복 없이)
   const rendered=new Set();
@@ -3721,7 +3796,8 @@ function _clearTrainTracking(){
   // 오버레이 완전 제거
   const overlay=document.getElementById('map-track-overlay');
   if(overlay) overlay.remove();
-  // 전체 열차 다시 표시
+  // 지도 재렌더로 추적 경로 오버레이 제거 후 전체 열차 다시 표시
+  if(_mapCurrentLine) showMapLine(_mapCurrentLine, document.querySelector('.map-line-tab.active'));
   updateMapTrains();
 }
 
@@ -6895,6 +6971,7 @@ function renderStationInfo(){
       <div style="display:flex;gap:4px;background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:4px">
         <button class="si-tab${_siSubTab==='near'?' active':''}" onclick="setSITab('near')">📍 가까운 역</button>
         <button class="si-tab${_siSubTab==='detail'?' active':''}" onclick="setSITab('detail')">🏢 역 상세</button>
+        <button class="si-tab${_siSubTab==='metro'?' active':''}" onclick="setSITab('metro')">🚇 전철</button>
       </div>
     </div>
     <div id="si-content" style="padding:0 0 24px"></div>`;
@@ -6903,7 +6980,7 @@ function renderStationInfo(){
 
 function setSITab(t){
   _siSubTab=t;
-  document.querySelectorAll('.si-tab').forEach((b,i)=>b.classList.toggle('active',['near','detail'][i]===t));
+  document.querySelectorAll('.si-tab').forEach((b,i)=>b.classList.toggle('active',['near','detail','metro'][i]===t));
   renderSIContent();
 }
 
@@ -6911,7 +6988,53 @@ function renderSIContent(){
   const el=document.getElementById('si-content');
   if(!el)return;
   if(_siSubTab==='near') renderSINear(el);
+  else if(_siSubTab==='metro') renderSIMetro(el);
   else renderSIDetail(el);
+}
+
+// ── 🚇 전철 노선 안내 (nimbi_metro.js 기반) ──
+let _metroRegion='전체', _metroOpenId=null;
+function renderSIMetro(el){
+  if(typeof METRO_LINES==='undefined'){el.innerHTML='<div class="empty"><div class="empty-icon">🚇</div><p>전철 노선 데이터가 없습니다.</p></div>';return;}
+  const regions=['전체',...new Set(METRO_LINES.map(l=>l.region))];
+  const list=METRO_LINES.filter(l=>_metroRegion==='전체'||l.region===_metroRegion);
+  el.innerHTML=`
+    <div style="margin:10px 2px 4px;font-size:12px;color:var(--text3)">게임 내 전철 ${METRO_LINES.length}개 노선 · 노선 카드를 누르면 정차역을 볼 수 있습니다</div>
+    <div style="display:flex;gap:6px;flex-wrap:wrap;margin:8px 0 12px">
+      ${regions.map(r=>`<button class="metro-region-chip${_metroRegion===r?' on':''}" onclick="setMetroRegion('${r}')">${r}${r!=='전체'?` ${METRO_LINES.filter(l=>l.region===r).length}`:''}</button>`).join('')}
+    </div>
+    <div style="display:flex;flex-direction:column;gap:8px">${list.map(_metroCardHTML).join('')}</div>`;
+  if(_metroOpenId){const c=document.getElementById('metro-'+_metroOpenId);if(c)c.scrollIntoView({block:'center'});}
+}
+function _metroCardHTML(l){
+  const open=_metroOpenId===l.id;
+  return `<div class="metro-card${open?' open':''}" id="metro-${l.id}" style="border-left:4px solid ${l.color}" onclick="toggleMetroLine('${l.id}')">
+    <div class="metro-head">
+      <span class="metro-dot" style="background:${l.color}"></span>
+      <span class="metro-name">${l.name}</span>
+      ${l.loop?'<span class="metro-badge">순환</span>':''}
+      ${l.night?'<span class="metro-badge night">심야</span>':''}
+      <span class="metro-count">${l.n}개역</span>
+    </div>
+    <div class="metro-route">${l.loop?`${l.from} 기점 순환`:`${l.from} ↔ ${l.to}`}</div>
+    <div class="metro-info">
+      <span>첫차 <b>${l.first}</b></span>
+      <span>막차 <b>${l.last}</b></span>
+      <span>배차 러시 <b>${l.hwPeak}분</b> · 평시 <b>${l.hwOff}분</b></span>
+    </div>
+    ${open?`<div class="metro-detail" onclick="event.stopPropagation()">
+      ${l.patterns.length?`<div class="metro-pats">운행계통 ${l.patterns.map(p=>`<span>${p}</span>`).join('')}</div>`:''}
+      <div class="metro-stns">${l.stations.map(s=>`<span class="metro-stn" onclick="openStationDetail('${s.replace(/'/g,"\\'")}')">${s}</span>`).join('<span class="metro-sep">·</span>')}</div>
+    </div>`:''}
+  </div>`;
+}
+function setMetroRegion(r){_metroRegion=r;_metroOpenId=null;const el=document.getElementById('si-content');if(el)renderSIMetro(el);}
+function toggleMetroLine(id){_metroOpenId=_metroOpenId===id?null:id;const el=document.getElementById('si-content');if(el)renderSIMetro(el);}
+function openMetroLine(id){
+  _siSubTab='metro'; _metroOpenId=id;
+  const l=(typeof METRO_LINES!=='undefined')?METRO_LINES.find(x=>x.id===id):null;
+  if(l)_metroRegion=l.region;
+  renderStationInfo();
 }
 
 function siNearSearch(q){
@@ -7181,11 +7304,9 @@ function _isTerminusAt(t, trainName){
   const s=t.stops.find(x=>x.s===trainName);
   return !!(s&&hasTime(s.arr)&&!hasTime(s.dep));
 }
-// 역 좌표 (base 이름 → STATION_DB)
+// 역 좌표 (base 이름 → STATION_DB, 별칭 폴백 포함)
 function _siStnCoord(base){
-  if(typeof STATION_DB==='undefined')return null;
-  const r=STATION_DB[base]||STATION_DB[base+'역'];
-  return (r&&r.lat!=null&&r.lon!=null)?r:null;
+  return _stnCoord(base);
 }
 // 이 열차의 조회역 기준 직전/직후 정차역 (통과 제외)
 function _adjStopOf(t, trainName){
@@ -7246,6 +7367,14 @@ function renderSICard(name){
             `<span style="padding:3px 10px;border-radius:12px;font-size:11px;font-weight:600;border:1px solid var(--c-${GC_CSS_VAR[g]||'mgh'});color:var(--c-${GC_CSS_VAR[g]||'mgh'})">${g} ${n}편</span>`
           ).join('')}
         </div>
+        ${(()=>{ // 🚇 전철 연계 노선 칩
+          if(typeof METRO_LINES==='undefined')return '';
+          const ml=METRO_LINES.filter(l=>l.stations.includes(trainName));
+          if(!ml.length)return '';
+          return `<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px">
+            ${ml.map(l=>`<span onclick="openMetroLine('${l.id}')" style="cursor:pointer;padding:3px 10px;border-radius:12px;font-size:11px;font-weight:700;background:${l.color}1c;border:1px solid ${l.color};color:${l.color}">🚇 ${l.name}</span>`).join('')}
+          </div>`;
+        })()}
       </div>
       <div style="padding:12px 16px 4px">
         <button class="si-board-btn" onclick="openStationBoard('${nameEsc}')">🚉 출발 안내 전광판 열기</button>
