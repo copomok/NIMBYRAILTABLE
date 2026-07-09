@@ -6,7 +6,7 @@
 <title>님비레일 시간표</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="nimbi_rail.css?v=1783633698">
+<link rel="stylesheet" href="nimbi_rail.css?v=1783635721">
 <!-- PWA -->
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#161b22">
@@ -20,6 +20,7 @@
 <header>
   <div class="logo"><div class="logo-icon">🚆</div>님비레일 시간표</div>
   <span id="header-clock" style="font-family:var(--mono);font-size:14px;font-weight:600;color:var(--text1);letter-spacing:1px"></span>
+  <button class="hdr-refresh-btn" id="hdr-refresh" onclick="refreshCurrentTab()" title="현재 탭 새로고침">🔄</button>
   <button class="my-btn" onclick="openMyPage()" title="마이페이지">
     <span class="my-btn-line"></span>
     <span class="my-btn-line"></span>
@@ -98,8 +99,8 @@
     <div class="my-menu-item" onclick="openMySection('puzzle')">
       <span class="my-menu-icon">🧩</span>
       <div class="my-menu-info">
-        <div class="my-menu-name">오늘의 루트 퍼즐</div>
-        <div class="my-menu-desc">매일 바뀌는 경로 순서 맞추기</div>
+        <div class="my-menu-name">루트 퍼즐</div>
+        <div class="my-menu-desc">열차 경로 순서 맞추기 · 무제한 출제</div>
       </div>
       <span class="my-menu-arrow">›</span>
     </div>
@@ -347,6 +348,7 @@
   <div class="panel" id="panel-map">
     <!-- 노선 선택 탭 -->
     <div class="map-line-tabs" id="map-line-tabs">
+      <button class="map-line-tab ctrl" onclick="showMapLine('all',this)">🛰️ 관제</button>
       <button class="map-line-tab active" onclick="showMapLine('gyeongbu',this)">경부선</button>
       <button class="map-line-tab" onclick="showMapLine('gyeongbuhs',this)">경부고속선</button>
       <button class="map-line-tab" onclick="showMapLine('honamhs',this)">호남고속선</button>
@@ -360,7 +362,6 @@
       <button class="map-line-tab" onclick="showMapLine('gangreung',this)">강릉선</button>
       <button class="map-line-tab" onclick="showMapLine('jungnaelyuk',this)">중부내륙선</button>
       <button class="map-line-tab" onclick="showMapLine('gyeongjeon',this)">경전선</button>
-      <button class="map-line-tab" onclick="showMapLine('all',this)">🛰️ 관제</button>
     </div>
     <!-- 컨트롤 바 (항상 표시: 열차수 + 방향 + 필터 토글) -->
     <div id="map-controls-bar" style="display:flex;align-items:center;gap:6px;padding:6px 0 4px;flex-wrap:wrap">
@@ -465,15 +466,15 @@
   <button class="map-popup-close" onclick="closeMapPopup()">닫기</button>
 </div>
 
-<script src="nimbi_rail_data.js?v=1783633698"></script>
-<script src="nimbi_station_data.js?v=1783633698"></script>
-<script src="nimbi_metro.js?v=1783633698"></script>
-<script src="nimbi_platform_db.js?v=1783633698"></script>
-<script src="nimbi_realplat.js?v=1783633698"></script>
-<script src="nimbi_station_history.js?v=1783633698"></script>
-  <script src="nimbi_rail_notices.js?v=1783633698"></script>
-  <script src="nimbi_rail.js?v=1783633698"></script>
-  <script src="nimbi_congestion.js?v=1783633698"></script>
+<script src="nimbi_rail_data.js?v=1783635721"></script>
+<script src="nimbi_station_data.js?v=1783635721"></script>
+<script src="nimbi_metro.js?v=1783635721"></script>
+<script src="nimbi_platform_db.js?v=1783635721"></script>
+<script src="nimbi_realplat.js?v=1783635721"></script>
+<script src="nimbi_station_history.js?v=1783635721"></script>
+  <script src="nimbi_rail_notices.js?v=1783635721"></script>
+  <script src="nimbi_rail.js?v=1783635721"></script>
+  <script src="nimbi_congestion.js?v=1783635721"></script>
   <script>
   if('serviceWorker' in navigator){
     window.addEventListener('load', ()=>{

@@ -414,6 +414,19 @@ function _syncModeButtons(){
   document.getElementById('mode-btn-train')?.classList.toggle('on',_appMode==='train');
   document.getElementById('mode-btn-metro')?.classList.toggle('on',_appMode==='metro');
 }
+// 헤더 새로고침: 현재 활성 탭을 다시 렌더 (마이페이지 서브패널이 열려 있으면 그 섹션을 갱신)
+function refreshCurrentTab(){
+  const btn=document.getElementById('hdr-refresh');
+  if(btn){ btn.classList.add('spin'); setTimeout(()=>btn.classList.remove('spin'),650); }
+  const sub=document.getElementById('my-sub-panel');
+  if(sub&&sub.classList.contains('open')){
+    const title=document.getElementById('my-sub-title')?.textContent||'';
+    const sec=Object.entries(MY_TITLES).find(([k,v])=>v===title)?.[0];
+    if(sec){ openMySection(sec); return; }
+  }
+  const a=document.querySelector('.tab.active');
+  switchTab(a?a.id.replace('tab-',''):'train');
+}
 function switchTab(n){
   try{ closeStationBoard(); }catch(e){}
   document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
@@ -828,7 +841,7 @@ function searchByStation(){
   const fb=document.getElementById('fav-btn-station');
   if(fb)fb.style.display='';
   const afterLabel=afterMin!==null?` · ${afterRaw} 이후`:'';
-  el.innerHTML=`<div class="result-header"><div class="result-title">🏢 ${stn} 시간표${afterLabel}</div><span class="badge blue">${results.length}편</span><button class="btn" style="font-size:12px;padding:4px 8px" onclick="searchByStation()">🔄</button></div>
+  el.innerHTML=`<div class="result-header"><div class="result-title">🏢 ${stn} 시간표${afterLabel}</div><span class="badge blue">${results.length}편</span></div>
   <div class="table-wrap"><table><thead><tr><th>열차</th><th>등급</th><th>노선</th><th>방향</th><th>행선지</th><th>도착</th><th>출발</th></tr></thead><tbody>${rows}</tbody></table></div>
   <p class="hint">※ 열차번호 클릭 시 전체 운행 정보 · 흐린 행 = 통과</p>`;
   // 다음 열차 버튼 삽입
@@ -2941,8 +2954,14 @@ function updateMapTrains(){
     // prevStn 또는 nextStn 또는 atStn의 좌표 구하기
     const stnA=status.atStn||status.prevStn;
     const stnB=status.atStn?null:status.nextStn;
-    const posA=_mapStnPos[stnA];
-    const posB=stnB?_mapStnPos[stnB]:null;
+    let posA=_mapStnPos[stnA];
+    let posB=stnB?_mapStnPos[stnB]:null;
+    if(isAll){
+      // 관제: 동명이역 오배치 방지 — 열차 소속 노선의 좌표 우선
+      const lp=_mapLinePos(), mk=t.line.split('·').map(s=>_lineNameToKey[s.trim()]).filter(Boolean);
+      for(const k of mk){const q=lp[k]&&lp[k][stnA];if(q){posA={x:q.x+_mapSvgSize.ox,y:q.y+_mapSvgSize.oy};break;}}
+      if(stnB)for(const k of mk){const q=lp[k]&&lp[k][stnB];if(q){posB={x:q.x+_mapSvgSize.ox,y:q.y+_mapSvgSize.oy};break;}}
+    }
     if(!posA)return;
     // 현재 구간이 이 열차가 이용하는 '다른' 노선의 인접 구간이면 그 노선 소속 → 이 지도에서 숨김
     // (예: 호남고속선 KTX의 전주~정읍이 호남선 지도에 잘못 뜨는 것 방지. 단일 노선 급행은 영향 없음)
@@ -3545,6 +3564,23 @@ function spreadMapRoutes(routes){
 }
 // ── 노선도 확대/축소 ──
 let _mapZoomLv=1;
+let _mapZoomCtlHidden=(()=>{try{return localStorage.getItem('nimbi_zoomctl')==='hide';}catch(e){return false;}})();
+function _zoomCtlHTML(){
+  return _mapZoomCtlHidden
+    ? `<div class="map-zoom-ctl" id="map-zoom-ctl"><button onclick="toggleZoomCtl()" title="줌 버튼 펼치기" style="opacity:.55;font-size:14px">🔍</button></div>`
+    : `<div class="map-zoom-ctl" id="map-zoom-ctl">
+        <button onclick="mapZoom(0.35)" title="확대">＋</button>
+        <button onclick="mapZoom(-0.35)" title="축소">－</button>
+        <button onclick="mapZoomReset()" title="원래대로">⟲</button>
+        <button onclick="toggleZoomCtl()" title="버튼 접기" style="font-size:12px;opacity:.7">✕</button>
+      </div>`;
+}
+function toggleZoomCtl(){
+  _mapZoomCtlHidden=!_mapZoomCtlHidden;
+  try{localStorage.setItem('nimbi_zoomctl',_mapZoomCtlHidden?'hide':'show');}catch(e){}
+  const c=document.getElementById('map-zoom-ctl');
+  if(c)c.outerHTML=_zoomCtlHTML();
+}
 function _mapApplyZoom(keepCenter){
   const wrap=document.getElementById('map-svg-wrap');
   const svg=wrap?wrap.querySelector('svg'):null;
@@ -3609,9 +3645,23 @@ function _mapGlobalPos(){
         if(!g[s.n])g[s.n]={x:s.x,y:s.y};
   return _mapGlobalPosCache=g;
 }
+// 노선별 좌표 인덱스 — 동명이역(예: 영동선 춘양 vs 경전선 춘양)을 라인 컨텍스트로 구분
+let _mapLinePosCache=null;
+function _mapLinePos(){
+  if(_mapLinePosCache)return _mapLinePosCache;
+  const o={};
+  for(const [k,ml] of Object.entries(MAP_LINES)){
+    const m={};
+    ml.routes.forEach(r=>r.stations.forEach(s=>{if(!m[s.n])m[s.n]={x:s.x,y:s.y};}));
+    o[k]=m;
+  }
+  return _mapLinePosCache=o;
+}
 // 추적 열차의 운행 경로를 노선별 구간(run)으로 분할 — 각 run은 해당 노선 색의 route가 됨
+// 좌표는 구간이 속한 노선의 좌표를 우선 사용 (동명이역 오배치 방지)
 function _trackedRouteRuns(t){
   const g=_mapGlobalPos();
+  const lp=_mapLinePos();
   const keyStns={};
   for(const [k,ml] of Object.entries(MAP_LINES)) keyStns[k]=new Set(ml.routes.flatMap(r=>r.stations.map(s=>s.n)));
   const myKeys=t.line.split('·').map(s=>_lineNameToKey[s.trim()]).filter(Boolean);
@@ -3620,19 +3670,22 @@ function _trackedRouteRuns(t){
     for(const k of Object.keys(MAP_LINES)){ if(keyStns[k].has(a)&&keyStns[k].has(b))return k; }
     return null;
   };
-  const runs=[]; let cur=null, prevNode=null;
+  const posFor=(name,k)=>(k&&lp[k]&&lp[k][name])||g[name]||null;
+  const runs=[]; let cur=null, prevName=null;
   for(const st of t.stops){
-    const q=g[st.s]; if(!q)continue;
-    const node={n:st.s,x:q.x,y:q.y};
-    if(prevNode){
-      const k=segKey(prevNode.n,st.s);
-      if(!cur||cur._k!==k){
-        cur={_k:k,color:(k&&MAP_LINES[k])?MAP_LINES[k].color:'#8b949e',stations:[prevNode]};
-        runs.push(cur);
+    if(!g[st.s]&&!Object.keys(MAP_LINES).some(k=>lp[k][st.s]))continue;
+    if(prevName){
+      const k=segKey(prevName,st.s);
+      const p0=posFor(prevName,k), p1=posFor(st.s,k);
+      if(p0&&p1){
+        if(!cur||cur._k!==k){
+          cur={_k:k,color:(k&&MAP_LINES[k])?MAP_LINES[k].color:'#8b949e',stations:[{n:prevName,x:p0.x,y:p0.y}]};
+          runs.push(cur);
+        }
+        cur.stations.push({n:st.s,x:p1.x,y:p1.y});
       }
-      cur.stations.push(node);
     }
-    prevNode=node;
+    prevName=st.s;
   }
   return runs;
 }
@@ -3693,15 +3746,19 @@ function showMetroMap(id){
 }
 // METRO_LINES 항목 → MAP_LINES 형식 변환 (동일 렌더러 재사용)
 // 전철은 기차 대비 노선이 짧아 그대로 그리면 쪼그라듦 → 평균 역 간격이 32px 이상 되도록 좌표 확대
+// 좌표는 전부 위경도 투영값(동일 좌표계)이며, 지선은 별도 dash route
 function _metroAsMapLine(id){
   if(typeof METRO_LINES==='undefined')return null;
   const l=METRO_LINES.find(x=>x.id===id);
-  if(!l||!l.xy)return null;
+  if(!l)return null;
+  const srcRoutes=l.routes||[{stations:l.stations,xy:l.xy}];
   let segSum=0,segN=0;
-  for(let i=1;i<l.xy.length;i++){segSum+=Math.hypot(l.xy[i][0]-l.xy[i-1][0],l.xy[i][1]-l.xy[i-1][1]);segN++;}
+  srcRoutes.forEach(r=>{for(let i=1;i<r.xy.length;i++){segSum+=Math.hypot(r.xy[i][0]-r.xy[i-1][0],r.xy[i][1]-r.xy[i-1][1]);segN++;}});
   const avg=segN?segSum/segN:32;
   const f=Math.min(6,Math.max(1,32/Math.max(avg,1)));
-  return {name:l.name,color:l.color,isMetro:true,routes:[{color:l.color,stations:l.stations.map((n,i)=>({n,x:Math.round(l.xy[i][0]*f),y:Math.round(l.xy[i][1]*f)}))}]};
+  return {name:l.name,color:l.color,isMetro:true,
+    routes:srcRoutes.map(r=>({color:l.color,dash:!!r.dash,
+      stations:r.stations.map((n,i)=>({n,x:Math.round(r.xy[i][0]*f),y:Math.round(r.xy[i][1]*f)}))}))};
 }
 function showMapLine(lineKey, btn){
   document.querySelectorAll('.map-line-tab').forEach(t=>t.classList.remove('active'));
@@ -3803,8 +3860,10 @@ function showMapLine(lineKey, btn){
   const rendered=new Set();
   routes.forEach(r=>{
     r.stations.forEach((s,i)=>{
-      if(rendered.has(s.n))return;
-      rendered.add(s.n);
+      // 동명이역(춘양 등)은 좌표까지 같아야 중복 처리 — 위치가 다르면 각각 표시
+      const rkey=s.n+'@'+Math.round(s.x)+','+Math.round(s.y);
+      if(rendered.has(rkey))return;
+      rendered.add(rkey);
       const x=s.x+ox, y=s.y+oy;
       const isEnd=i===0||i===r.stations.length-1;
       // 관제 뷰: 허브역 외에는 아주 작은 점 + 라벨 생략
@@ -3860,12 +3919,8 @@ function showMapLine(lineKey, btn){
   parts.push(`<text x="14" y="22" fill="${trackedView?_trkColor:line.color}" font-size="14" font-weight="700" font-family="Noto Sans KR,sans-serif">${trackedView?`${_trk.grade} ${_trk.no} · ${_trk.stops[0].s}→${_trk.stops[_trk.stops.length-1].s} 운행 구간`:line.name}</text>`);
   parts.push('</svg>');
 
-  // 줌 컨트롤 (좌상단 고정) — 렌더마다 리셋되지 않도록 현재 배율 유지
-  parts.unshift(`<div class="map-zoom-ctl">
-    <button onclick="mapZoom(0.35)" title="확대">＋</button>
-    <button onclick="mapZoom(-0.35)" title="축소">－</button>
-    <button onclick="mapZoomReset()" title="원래대로">⟲</button>
-  </div>`);
+  // 줌 컨트롤 (좌상단 고정, 접기 가능) — 렌더마다 리셋되지 않도록 현재 배율 유지
+  parts.unshift(_zoomCtlHTML());
   document.getElementById('map-svg-wrap').innerHTML=parts.join('');
   _mapApplyZoom();
   _mapBindPinch();
@@ -4217,7 +4272,7 @@ function renderStats(){
     </div>`).join('');
 
   el.innerHTML=`
-    <div class="result-header"><div class="result-title">📊 운행 통계</div><button class="btn" style="font-size:12px;padding:4px 8px" onclick="renderStats()">🔄</button></div>
+    <div class="result-header"><div class="result-title">📊 운행 통계</div></div>
 
     <div class="stat-cards">
       <div class="stat-card"><div class="stat-card-num">${total}</div><div class="stat-card-label">전체 열차</div></div>
@@ -6433,7 +6488,7 @@ const MY_TITLES = {
   notice:'📢 공지사항',
   daytrip:'🌄 당일치기 추천',
   terminal:'🖥️ 터미널 뷰',
-  puzzle:'🧩 오늘의 루트 퍼즐',
+  puzzle:'🧩 루트 퍼즐',
 };
 
 function openMySection(section){
@@ -8111,31 +8166,45 @@ function _nextDeps(stn,count){
 // ══════════════════════════════════════════
 // 🖥️ 터미널 뷰 — 주요역 4곳 발차 보드 동시 관전
 // ══════════════════════════════════════════
-// 전 역 자동완성 datalist (터미널 뷰·당일치기 공용)
-function _ensureStnDatalist(){
-  if(document.getElementById('stn-dl'))return;
-  _majorStations(1); // 캐시 초기화
-  const dl=document.createElement('datalist'); dl.id='stn-dl';
-  dl.innerHTML=_majorStnsCache.map(s=>`<option value="${s}">`).join('');
-  document.body.appendChild(dl);
+// ── 공용 역 검색바 (기존 검색바 디자인·초성 검색 통일 — 앞으로 모든 역 검색은 이 컴포넌트 사용) ──
+function stnSearchBoxHTML(id,value,pickFn,ph){
+  return `<div class="autocomplete-wrap" style="min-width:0">
+    <input type="text" id="${id}" class="term-sel" style="margin-bottom:0" value="${value||''}" placeholder="${ph||'역 이름 (초성 가능)'}" autocomplete="off"
+      oninput="_stnAcShow('${id}','${pickFn}')" onfocus="this.select();_stnAcShow('${id}','${pickFn}')"
+      onblur="setTimeout(()=>{const d=document.getElementById('${id}-ac');if(d)d.style.display='none';},150)">
+    <div class="ac-dropdown" id="${id}-ac"></div>
+  </div>`;
+}
+function _stnAcShow(id,pickFn){
+  _majorStations(1); // 역 캐시 준비
+  const inp=document.getElementById(id); if(!inp)return;
+  const q=inp.value.trim();
+  const el=document.getElementById(id+'-ac'); if(!el)return;
+  const list=(q?_majorStnsCache.filter(n=>matchesQuery(n,q)):_majorStnsCache.slice(0,10)).slice(0,10);
+  const idEsc=id.replace(/'/g,"\\'");
+  el.innerHTML=list.map(n=>{
+    const nEsc=n.replace(/'/g,"\\'");
+    return `<div class="ac-item" onmousedown="event.preventDefault();document.getElementById('${idEsc}').value='${nEsc}';document.getElementById('${idEsc}-ac').style.display='none';window['${pickFn}']('${nEsc}','${idEsc}')">${n}</div>`;
+  }).join('');
+  el.className='ac-dropdown open';
+  el.style.display=list.length?'block':'none';
 }
 let _termStns=null;
-function _termPick(i,inp){
-  const v=inp.value.trim();
-  if(_majorStnsCache&&_majorStnsCache.includes(v)){ _termStns[i]=v; _termFill(i); inp.blur(); }
+function _termPickStn(name,id){
+  const i=+id.split('-').pop();
+  if(Number.isFinite(i)){ _termStns[i]=name; _termFill(i); }
 }
 function renderTerminalView(){
   const el=document.getElementById('result-terminal'); if(!el)return;
-  _ensureStnDatalist();
+  _majorStations(1);
   if(!_termStns){ const m=_majorStations(30); _termStns=['서울','대전','남대구','부산'].filter(s=>m.includes(s)); while(_termStns.length<4)_termStns.push(m[_termStns.length]); }
   el.innerHTML=`
     <div style="padding:14px 16px 24px">
-      <div style="font-size:12px;color:var(--text3);margin-bottom:10px">주요역 발차 보드 · 30초마다 자동 갱신 · 역 이름을 지우고 직접 입력해 어느 역이든 볼 수 있습니다</div>
+      <div style="font-size:12px;color:var(--text3);margin-bottom:10px">주요역 발차 보드 · 30초마다 자동 갱신 · 역 이름을 직접 검색해 어느 역이든 볼 수 있습니다</div>
       <div class="term-grid">
         ${[0,1,2,3].map(i=>`
         <div class="term-board" id="term-b${i}">
-          <input class="term-sel" list="stn-dl" value="${_termStns[i]}" placeholder="역 이름 검색"
-            onfocus="this.select()" onchange="_termPick(${i},this)">
+          ${stnSearchBoxHTML('term-inp-'+i,_termStns[i],'_termPickStn')}
           <div class="term-rows" id="term-rows-${i}"></div>
         </div>`).join('')}
       </div>
@@ -8165,20 +8234,18 @@ function _termFill(i){
 // 🌄 당일치기 추천 — 지금 출발해서 다녀올 코스
 // ══════════════════════════════════════════
 let _dtpOrigin='서울';
-function _dtpPick(inp){
-  const v=inp.value.trim();
-  if(_majorStnsCache&&_majorStnsCache.includes(v)){ _dtpOrigin=v; renderDaytrip(); }
+function _dtpPickStn(name){
+  _dtpOrigin=name; renderDaytrip();
 }
 function renderDaytrip(){
   const el=document.getElementById('result-daytrip'); if(!el)return;
-  _ensureStnDatalist();
+  _majorStations(1);
   if(!_majorStnsCache.includes(_dtpOrigin))_dtpOrigin=_majorStnsCache[0];
   el.innerHTML=`
     <div style="padding:14px 16px 24px">
       <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;flex-wrap:wrap">
         <span style="font-size:13px;font-weight:700">출발역</span>
-        <input class="term-sel" list="stn-dl" style="flex:0 0 auto;width:130px;margin-bottom:0" value="${_dtpOrigin}"
-          placeholder="역 이름 검색" onfocus="this.select()" onchange="_dtpPick(this)">
+        <div style="width:150px">${stnSearchBoxHTML('dtp-inp',_dtpOrigin,'_dtpPickStn')}</div>
         <span style="font-size:11.5px;color:var(--text3)">지금 이후 출발 · 직통 왕복 기준</span>
       </div>
       <div id="dtp-list">${_daytripHTML(_dtpOrigin)}</div>
@@ -8248,30 +8315,30 @@ function _daytripHTML(origin){
 }
 
 // ══════════════════════════════════════════
-// 🧩 오늘의 루트 퍼즐 — 경로 순서 맞추기 (매일 시드 고정)
+// 🧩 루트 퍼즐 — 경로 순서 맞추기 (무제한 출제)
 // ══════════════════════════════════════════
 let _puzState=null;
-function _mulberry(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
+function _puzSolvedCount(){
+  const today=todayLocalStr(new Date());
+  let saved=null; try{saved=JSON.parse(localStorage.getItem('nimbi_puzzle'));}catch(e){}
+  return (saved&&saved.date===today&&saved.solved)||0;
+}
+function _puzNew(){
+  const cands=ALL_TRAINS.filter(t=>t.stops.filter(s=>(hasTime(s.arr)||hasTime(s.dep))&&!isPassStop(t,s.s)).length>=8);
+  const t=cands[Math.floor(Math.random()*cands.length)];
+  const stops=t.stops.filter(s=>(hasTime(s.arr)||hasTime(s.dep))&&!isPassStop(t,s.s)).map(s=>s.s);
+  const N=6, pick=[0];
+  for(let k=1;k<N-1;k++)pick.push(Math.round(k*(stops.length-1)/(N-1)));
+  pick.push(stops.length-1);
+  const answer=[...new Set(pick)].map(i=>stops[i]);
+  const shuffled=[...answer];
+  for(let i=shuffled.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[shuffled[i],shuffled[j]]=[shuffled[j],shuffled[i]];}
+  _puzState={train:t.no,grade:t.grade,dest:t.dest,answer,shuffled,sel:[],solved:false,tries:0};
+  _puzDraw();
+}
 function renderRoutePuzzle(){
   const el=document.getElementById('result-puzzle'); if(!el)return;
-  const today=todayLocalStr(new Date());
-  if(!_puzState||_puzState.date!==today){
-    let h=0;for(const ch of today)h=(h*31+ch.charCodeAt(0))>>>0;
-    const rnd=_mulberry(h);
-    const cands=ALL_TRAINS.filter(t=>t.stops.filter(s=>(hasTime(s.arr)||hasTime(s.dep))&&!isPassStop(t,s.s)).length>=8);
-    const t=cands[Math.floor(rnd()*cands.length)];
-    const stops=t.stops.filter(s=>(hasTime(s.arr)||hasTime(s.dep))&&!isPassStop(t,s.s)).map(s=>s.s);
-    const N=6, pick=[0];
-    for(let k=1;k<N-1;k++)pick.push(Math.round(k*(stops.length-1)/(N-1)));
-    pick.push(stops.length-1);
-    const answer=[...new Set(pick)].map(i=>stops[i]);
-    const shuffled=[...answer];
-    for(let i=shuffled.length-1;i>0;i--){const j=Math.floor(rnd()*(i+1));[shuffled[i],shuffled[j]]=[shuffled[j],shuffled[i]];}
-    let saved=null; try{saved=JSON.parse(localStorage.getItem('nimbi_puzzle'));}catch(e){}
-    _puzState={date:today,train:t.no,grade:t.grade,dest:t.dest,answer,shuffled,sel:[],
-      solved:(saved&&saved.date===today&&saved.solved)||false,tries:(saved&&saved.date===today?saved.tries:0)||0};
-  }
-  _puzDraw();
+  _puzNew();
 }
 function _puzDraw(){
   const el=document.getElementById('result-puzzle'); if(!el)return;
@@ -8281,18 +8348,20 @@ function _puzDraw(){
     const used=p.sel.includes(s);
     return `<button class="puz-chip${used?' used':''}" ${used?'disabled':''} onclick="_puzPick('${s.replace(/'/g,"\\'")}')">${s}</button>`;
   }).join('');
+  const solvedN=_puzSolvedCount();
   el.innerHTML=`
     <div style="padding:14px 16px 24px">
       <div class="puz-card">
-        <div style="font-size:12px;color:var(--text3);margin-bottom:4px">${p.date} · 오늘의 문제 · 시도 ${p.tries}회</div>
+        <div style="font-size:12px;color:var(--text3);margin-bottom:4px">오늘 ${solvedN}문제 해결 · 이번 문제 시도 ${p.tries}회</div>
         <div style="font-size:15px;font-weight:800;margin-bottom:10px">🚆 ${p.grade} <span class="mono-sm">${p.train}</span> (${p.dest}행) 열차가 지나는 역을 <span style="color:var(--accent)">운행 순서대로</span> 눌러보세요</div>
         <div class="puz-slots">${slots}</div>
         <div class="puz-chips">${chips}</div>
         <div style="display:flex;gap:8px;margin-top:12px">
+          <button class="btn" style="flex:1" onclick="_puzNew()">🎲 다음 문제</button>
           <button class="btn" style="flex:1" onclick="_puzState.sel=[];_puzDraw()">↺ 다시 배열</button>
           ${p.sel.length===p.answer.length?`<button class="btn" style="flex:2;background:var(--accent);color:#fff;border-color:var(--accent)" onclick="_puzCheck()">정답 확인</button>`:''}
         </div>
-        <div id="puz-result" style="margin-top:10px">${p.solved?`<div class="puz-ok">✅ 오늘 퍼즐 완료! <span style="cursor:pointer;text-decoration:underline" onclick="closeMyPage();jumpToTrain('${p.train}')">열차 보기 →</span></div>`:''}</div>
+        <div id="puz-result" style="margin-top:10px">${p.solved?`<div class="puz-ok">✅ 정답! <span style="cursor:pointer;text-decoration:underline" onclick="closeMyPage();jumpToTrain('${p.train}')">열차 보기 →</span> · <span style="cursor:pointer;text-decoration:underline" onclick="_puzNew()">🎲 다음 문제</span></div>`:''}</div>
       </div>
     </div>`;
 }
@@ -8300,8 +8369,11 @@ function _puzPick(s){ if(_puzState.sel.length<_puzState.answer.length){_puzState
 function _puzCheck(){
   const p=_puzState; p.tries++;
   const ok=p.sel.join('|')===p.answer.join('|');
-  if(ok)p.solved=true;
-  try{localStorage.setItem('nimbi_puzzle',JSON.stringify({date:p.date,solved:p.solved,tries:p.tries}));}catch(e){}
+  if(ok){
+    p.solved=true;
+    const today=todayLocalStr(new Date());
+    try{localStorage.setItem('nimbi_puzzle',JSON.stringify({date:today,solved:_puzSolvedCount()+1}));}catch(e){}
+  }
   if(ok){_puzDraw();}
   else{
     const correct=p.sel.filter((s,i)=>s===p.answer[i]).length;
