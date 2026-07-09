@@ -7262,7 +7262,38 @@ function renderSIContent(){
 }
 
 // ── 🚇 전철 노선 탭 (전철 모드 전용) ──
-let _metroRegion='전체', _metroDetailId=null;
+let _metroRegion='전체', _metroDetailId=null, _metroPatSel=null;
+// 계통이 정차하는 역 집합 — 게임 DB 태그("노선명/계통" 또는 "노선명 (계통)") 기준
+function _metroPatStops(l,p){
+  const set=new Set();
+  if(typeof STATION_DB==='undefined')return set;
+  const tags=[l.name+'/'+p, l.name+' ('+p+')'];
+  const all=new Set((l.routes||[{stations:l.stations}]).flatMap(r=>r.stations));
+  for(const n of all){
+    const st=STATION_DB[n+'역']||STATION_DB[n];
+    if(st&&st.lines&&tags.some(t=>st.lines.includes(t)))set.add(n);
+  }
+  return set;
+}
+// 계통 운행 구간 시퀀스 — 각 route에서 첫 정차역~마지막 정차역 구간만 취하고, 구간 내 미정차역은 pass 표시
+function _metroPatSeq(l,p){
+  const stops=_metroPatStops(l,p);
+  if(!stops.size)return null;
+  const seq=[];
+  for(const r of (l.routes||[{stations:l.stations}])){
+    const idx=r.stations.map((s,i)=>stops.has(s)?i:-1).filter(i=>i>=0);
+    if(idx.length<2)continue; // 해당 route에 정차역 1개(분기역 등)뿐이면 운행 구간 아님
+    const a=idx[0], b=idx[idx.length-1];
+    if(seq.length&&seq[seq.length-1].n!==r.stations[a])seq.push({gap:true});
+    for(let i=a;i<=b;i++){
+      const n=r.stations[i];
+      if(seq.length&&seq[seq.length-1].n===n)continue; // 분기역 중복 제거
+      seq.push({n,stop:stops.has(n)});
+    }
+  }
+  return seq.filter(x=>!x.gap).length>=2?seq:null;
+}
+function setMetroPat(p){_metroPatSel=p;renderMetroLinesTab();}
 function renderMetroLinesTab(){
   const el=document.getElementById('result-metrolines');
   if(!el)return;
@@ -7298,6 +7329,12 @@ function _metroCardHTML(l){
 function _renderMetroLineDetail(el,id){
   const l=METRO_LINES.find(x=>x.id===id);
   if(!l){_metroDetailId=null;renderMetroLinesTab();return;}
+  if(_metroPatSel&&!l.patterns.includes(_metroPatSel))_metroPatSel=null;
+  const patSeq=_metroPatSel?_metroPatSeq(l,_metroPatSel):null;
+  if(_metroPatSel&&!patSeq)_metroPatSel=null;
+  const rows=patSeq||l.stations.map(n=>({n,stop:true}));
+  const stopRows=rows.filter(x=>!x.gap&&x.stop), passN=rows.filter(x=>!x.gap&&!x.stop).length;
+  const patInfo=patSeq?`<div style="margin:10px 2px 0;font-size:12px;color:var(--text2)"><b style="color:var(--text1)">${_metroPatSel}</b> · ${stopRows[0].n} ↔ ${stopRows[stopRows.length-1].n} · 정차 <b>${stopRows.length}</b>역${passN?` · 통과 ${passN}역 <span style="color:var(--text3)">(음영)</span>`:''}</div>`:'';
   el.innerHTML=`
     <div style="padding:14px 0 24px">
       <button onclick="closeMetroLineDetail()" style="margin-bottom:12px;padding:7px 14px;border-radius:10px;border:1px solid var(--border);background:var(--bg3);color:var(--text1);font-size:12.5px;font-weight:700;cursor:pointer;font-family:var(--sans)">← 노선 목록</button>
@@ -7315,27 +7352,30 @@ function _renderMetroLineDetail(el,id){
           <span>막차 <b>${l.last}</b></span>
           <span>배차 러시 <b>${l.hwPeak}분</b> · 평시 <b>${l.hwOff}분</b></span>
         </div>
-        ${l.patterns.length?`<div class="metro-pats" style="margin-top:8px">운행계통 ${l.patterns.map(p=>`<span>${p}</span>`).join('')}</div>`:''}
+        ${l.patterns.length?`<div class="metro-pats" style="margin-top:8px">운행계통 <span class="metro-pat-chip${!_metroPatSel?' on':''}" onclick="setMetroPat(null)">전체</span>${l.patterns.map(p=>`<span class="metro-pat-chip${_metroPatSel===p?' on':''}" onclick="setMetroPat('${p.replace(/'/g,"\\'")}')">${p}</span>`).join('')}</div>`:''}
+        ${patInfo}
         <div style="margin-top:10px">
           <button onclick="event.stopPropagation();showMetroOnMap('${l.id}')" style="padding:8px 14px;border-radius:10px;border:1px solid ${l.color};background:transparent;color:${l.color};font-size:12.5px;font-weight:700;cursor:pointer;font-family:var(--sans)">🗺️ 노선도에서 보기</button>
         </div>
       </div>
       <div class="mtl-tl" style="--mc:${l.color}">
-        ${l.stations.map((s,i)=>{
-          const isEnd=i===0||i===l.stations.length-1;
-          return `<div class="mtl-row" onclick="openStationDetail('${s.replace(/'/g,"\\'")}')">
+        ${rows.map((r,i)=>{
+          if(r.gap)return `<div class="mtl-gap">지선 · 경유 구간</div>`;
+          const isEnd=(i===0||i===rows.length-1)&&r.stop;
+          const cls=r.stop?'':' pass';
+          return `<div class="mtl-row${cls}" onclick="openStationDetail('${r.n.replace(/'/g,"\\'")}')">
             <span class="mtl-dot${isEnd?' end':''}"></span>
-            <span class="mtl-name${isEnd?' end':''}">${s}</span>
-            ${isEnd?`<span class="mtl-endtag">${i===0?'기점':'종점'}</span>`:''}
+            <span class="mtl-name${isEnd?' end':''}">${r.n}</span>
+            ${isEnd?`<span class="mtl-endtag">${i===0?'기점':'종점'}</span>`:(!r.stop?`<span class="mtl-passtag">통과</span>`:'')}
           </div>`;
         }).join('')}
       </div>
     </div>`;
   window.scrollTo(0,0);
 }
-function setMetroRegion(r){_metroRegion=r;_metroDetailId=null;renderMetroLinesTab();}
-function openMetroLineDetail(id){_metroDetailId=id;renderMetroLinesTab();}
-function closeMetroLineDetail(){_metroDetailId=null;renderMetroLinesTab();}
+function setMetroRegion(r){_metroRegion=r;_metroDetailId=null;_metroPatSel=null;renderMetroLinesTab();}
+function openMetroLineDetail(id){_metroDetailId=id;_metroPatSel=null;renderMetroLinesTab();}
+function closeMetroLineDetail(){_metroDetailId=null;_metroPatSel=null;renderMetroLinesTab();}
 function showMetroOnMap(id){
   const l=METRO_LINES.find(x=>x.id===id);
   if(l){_metroMapRegion=l.region;_metroMapId=id;}
