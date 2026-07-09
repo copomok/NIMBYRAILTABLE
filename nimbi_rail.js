@@ -3728,10 +3728,13 @@ function showMapLine(lineKey, btn){
     return d;
   }
 
+  // 🛰️ 관제 모드: 전 노선을 얇게, 역은 주요 허브만 라벨 — 열차 움직임이 주인공
+  const isAllView=lineKey==='all';
+  const _hubSet=isAllView?new Set(_majorStations(14)):null;
   routes.forEach(r=>{
     const isBranch=r.dash||false;   // 지선/경유: 본선과 같은 색, 점선
     const d=smoothPath(r.stations, ox, oy);
-    parts.push(`<path d="${d}" fill="none" stroke="${r.color}" stroke-width="${isBranch?4:5}" stroke-linecap="round" stroke-linejoin="round" ${isBranch?'stroke-dasharray="9,9"':''} opacity="${isBranch?0.85:1}"/>`);
+    parts.push(`<path d="${d}" fill="none" stroke="${r.color}" stroke-width="${isAllView?2.5:(isBranch?4:5)}" stroke-linecap="round" stroke-linejoin="round" ${isBranch?'stroke-dasharray="9,9"':''} opacity="${isAllView?0.75:(isBranch?0.85:1)}"/>`);
   });
 
   // 역 점 + 이름 (중복 없이)
@@ -3742,10 +3745,12 @@ function showMapLine(lineKey, btn){
       rendered.add(s.n);
       const x=s.x+ox, y=s.y+oy;
       const isEnd=i===0||i===r.stations.length-1;
+      // 관제 뷰: 허브역 외에는 아주 작은 점 + 라벨 생략
+      const isMinor=!!(_hubSet&&!_hubSet.has(s.n));
       // 추적 뷰: 미정차(통과)역은 작고 옅게
       const faded=!!(_trkStopSet&&!_trkStopSet.has(s.n));
-      const r2=faded?3.5:(isEnd?7:5);
-      const sw=faded?1.5:(isEnd?3:2);
+      const r2=isMinor?2.2:(faded?3.5:(isEnd?7:5));
+      const sw=isMinor?1.2:(faded?1.5:(isEnd?3:2));
       // 히트 영역
       parts.push(`<circle cx="${x}" cy="${y}" r="${r2+8}" fill="transparent" style="cursor:pointer" onclick="openMapPopup('${s.n}','${line.name}')"/>`);
       // 역 점
@@ -3786,7 +3791,7 @@ function showMapLine(lineKey, btn){
         ty=y+manualOffset[s.n][1]+4;
         anchor=manualOffset[s.n][0]<0?'end':manualOffset[s.n][0]>0?'start':'middle';
       }
-      parts.push(`<text x="${tx}" y="${ty}" fill="#e6edf3" font-size="${faded?9.5:(isEnd?12:11)}" font-weight="${isEnd?700:400}" ${faded?'opacity="0.4"':''} text-anchor="${anchor}" pointer-events="none" font-family="Noto Sans KR,sans-serif">${s.n}</text>`);
+      if(!isMinor) parts.push(`<text x="${tx}" y="${ty}" fill="#e6edf3" font-size="${faded?9.5:(isEnd?12:11)}" font-weight="${isEnd?700:400}" ${faded?'opacity="0.4"':''} text-anchor="${anchor}" pointer-events="none" font-family="Noto Sans KR,sans-serif">${s.n}</text>`);
     });
   });
 
