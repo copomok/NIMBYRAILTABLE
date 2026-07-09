@@ -32,17 +32,13 @@
 <div class="my-panel" id="my-panel">
   <div class="my-panel-header">
     <div class="my-panel-title">마이페이지</div>
+    <div class="my-mode-seg">
+      <button class="my-mode-seg-btn" id="mode-btn-train" onclick="setAppMode('train')">🚆 기차</button>
+      <button class="my-mode-seg-btn" id="mode-btn-metro" onclick="setAppMode('metro')">🚇 전철</button>
+    </div>
     <button class="my-panel-close" onclick="closeMyPage()">✕</button>
   </div>
   <div class="my-menu-list">
-    <div class="my-mode-row">
-      <div class="my-mode-label">이용 모드</div>
-      <div class="my-mode-btns">
-        <button class="my-mode-btn" id="mode-btn-train" onclick="setAppMode('train')">🚆 기차</button>
-        <button class="my-mode-btn" id="mode-btn-metro" onclick="setAppMode('metro')">🚇 전철</button>
-      </div>
-      <div class="my-mode-desc" id="my-mode-desc">전철 모드에서는 노선도 탭에 전철 노선도가 표시됩니다</div>
-    </div>
     <div class="my-menu-item" onclick="openMySection('book')">
       <span class="my-menu-icon">🔍</span>
       <div class="my-menu-info">
@@ -102,6 +98,7 @@
     <button class="tab active" onclick="switchTab('train')" id="tab-train">🔢 열차</button>
     <button class="tab" onclick="switchTab('station')" id="tab-station">🏢 시간표</button>
     <button class="tab" onclick="switchTab('route')" id="tab-route">🔍 출도착</button>
+    <button class="tab" onclick="switchTab('metrolines')" id="tab-metrolines" style="display:none">🚇 노선</button>
     <button class="tab" onclick="switchTab('map')" id="tab-map">🗺️ 노선도</button>
     <button class="tab" onclick="switchTab('stats')" id="tab-stats">📊 통계</button>
     <button class="tab" onclick="switchTab('notice')" id="tab-notice">📢 공지</button>
@@ -410,6 +407,9 @@
   </div>
   <div class="panel" id="panel-fav">
     <div id="result-fav"></div>
+  </div>
+  <div class="panel" id="panel-metrolines">
+    <div id="result-metrolines"></div>
   </div>
   <div class="panel" id="panel-stationinfo">
     <div id="result-stationinfo"></div>
