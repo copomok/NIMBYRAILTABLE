@@ -378,11 +378,17 @@ function updateMinimap(){
 // ── 🚆/🚇 이용 모드 (기차/전철) ──
 let _appMode=(()=>{try{return localStorage.getItem('nimbi_mode')||'train';}catch(e){return 'train';}})();
 const METRO_MODE_TABS=['metrolines','map','stationinfo']; // 전철 모드에서 보이는 메인 탭
+const TRAIN_MODE_TABS=['train','station','route','map','stats','notice','stationinfo','delay']; // 기차 모드 상단바 탭
+// 그 외 탭(book/alarm/fav/ticket 등)은 마이페이지 전용 — 항상 숨김 유지
 function _applyModeTabs(){
+  const visible=_appMode==='metro'?METRO_MODE_TABS:TRAIN_MODE_TABS;
   document.querySelectorAll('.tab').forEach(b=>{
     const id=(b.id||'').replace('tab-','');
-    if(_appMode==='metro') b.style.display=METRO_MODE_TABS.includes(id)?'':'none';
-    else b.style.display=id==='metrolines'?'none':'';
+    if(METRO_MODE_TABS.includes(id)||TRAIN_MODE_TABS.includes(id)){
+      b.style.display=visible.includes(id)?'':'none';
+    } else {
+      b.style.display='none';
+    }
   });
 }
 function setAppMode(m){
@@ -3596,7 +3602,7 @@ function renderMapTabForMode(){
     showMapLine('metro:'+_metroMapId,null);
   } else {
     if(tabs)tabs.style.display='';
-    if(controls)controls.style.display='';
+    if(controls)controls.style.display='flex'; // 원래 inline display:flex 복원 (버튼 줄바꿈 방지)
     if(bar)bar.style.display='none';
     const activeMapTab=document.querySelector('.map-line-tab.active')||document.querySelector('.map-line-tab');
     const lineKey=(activeMapTab&&activeMapTab.getAttribute('onclick').match(/['"]([\w]+)['"]/)?.[1])||'gyeongbu';
