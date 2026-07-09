@@ -1234,10 +1234,10 @@ button, select, input[type=range],
 
 /* ── 🚇 전철 노선 타임라인 (노선 탭 상세) ── */
 .mtl-tl{position:relative;margin:14px 4px 0;padding-left:26px}
-.mtl-tl::before{content:'';position:absolute;left:9px;top:14px;bottom:14px;width:5px;border-radius:3px;background:var(--mc,#888)}
-.mtl-row{position:relative;display:flex;align-items:center;gap:9px;padding:8px 0;cursor:pointer}
+.mtl-tl::before{content:'';position:absolute;left:9px;top:14px;bottom:14px;width:5px;border-radius:3px;background:var(--mc,#888);z-index:0}
+.mtl-row{position:relative;display:flex;align-items:center;gap:9px;padding:8px 0;cursor:pointer;z-index:1}
 .mtl-row:hover .mtl-name{color:var(--accent)}
-.mtl-dot{position:absolute;left:-23px;width:11px;height:11px;border-radius:50%;background:var(--bg1);border:3px solid var(--mc,#888);box-sizing:content-box}
+.mtl-dot{position:absolute;left:-23px;width:11px;height:11px;border-radius:50%;background:var(--bg);border:3px solid var(--mc,#888);box-sizing:content-box;z-index:2}
 .mtl-dot.end{width:13px;height:13px;left:-24px;background:#fff}
 .mtl-name{font-size:14px;font-weight:600;color:var(--text1)}
 .mtl-name.end{font-size:15.5px;font-weight:800}

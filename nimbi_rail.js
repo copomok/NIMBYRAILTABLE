@@ -3345,6 +3345,10 @@ jungang:{
     {n:'신녕',x:628,y:565},
     {n:'영천',x:657,y:590},
     {n:'건천',x:701,y:622}
+    ]},
+    {color:'#56d0e0', dash:true, stations:[
+    {n:'건천',x:701,y:622},
+    {n:'경주',x:732,y:627}
     ]}
   ]
 },
@@ -3624,11 +3628,16 @@ function showMetroMap(id){
   showMapLine('metro:'+id,null);
 }
 // METRO_LINES 항목 → MAP_LINES 형식 변환 (동일 렌더러 재사용)
+// 전철은 기차 대비 노선이 짧아 그대로 그리면 쪼그라듦 → 평균 역 간격이 32px 이상 되도록 좌표 확대
 function _metroAsMapLine(id){
   if(typeof METRO_LINES==='undefined')return null;
   const l=METRO_LINES.find(x=>x.id===id);
   if(!l||!l.xy)return null;
-  return {name:l.name,color:l.color,routes:[{color:l.color,stations:l.stations.map((n,i)=>({n,x:l.xy[i][0],y:l.xy[i][1]}))}]};
+  let segSum=0,segN=0;
+  for(let i=1;i<l.xy.length;i++){segSum+=Math.hypot(l.xy[i][0]-l.xy[i-1][0],l.xy[i][1]-l.xy[i-1][1]);segN++;}
+  const avg=segN?segSum/segN:32;
+  const f=Math.min(6,Math.max(1,32/Math.max(avg,1)));
+  return {name:l.name,color:l.color,isMetro:true,routes:[{color:l.color,stations:l.stations.map((n,i)=>({n,x:Math.round(l.xy[i][0]*f),y:Math.round(l.xy[i][1]*f)}))}]};
 }
 function showMapLine(lineKey, btn){
   document.querySelectorAll('.map-line-tab').forEach(t=>t.classList.remove('active'));
@@ -3663,7 +3672,7 @@ function showMapLine(lineKey, btn){
 
   const parts=[];
   // viewBox는 원본 좌표 그대로, width는 컨테이너에 맞게 100%
-  parts.push(`<svg viewBox="0 0 ${svgW} ${svgH}" width="100%" style="min-width:${Math.min(svgW,400)}px;display:block;overflow:hidden" xmlns="http://www.w3.org/2000/svg">`);
+  parts.push(`<svg viewBox="0 0 ${svgW} ${svgH}" width="100%" style="min-width:${line.isMetro?svgW:Math.min(svgW,400)}px;display:block;overflow:hidden" xmlns="http://www.w3.org/2000/svg">`);
   parts.push(`<rect width="${svgW}" height="${svgH}" fill="var(--bg1)"/>`);
   // 격자
   for(let x=0;x<svgW;x+=50)parts.push(`<line x1="${x}" y1="0" x2="${x}" y2="${svgH}" stroke="#21262d" stroke-width="1"/>`);
