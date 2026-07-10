@@ -3125,10 +3125,20 @@ function openMapPopup(stn, lineName){
   const gcc={}; trains.forEach(t=>{gcc[t.grade]=(gcc[t.grade]||0)+1;});
   const gradeStr=Object.entries(gcc).sort((a,b)=>b[1]-a[1]).map(([g,n])=>`${g} ${n}편`).join(' · ')||'경유 열차 없음';
   document.getElementById('map-popup-name').innerHTML=`<span>${stn}</span>`;
-  document.getElementById('map-popup-sub').textContent=(lineName?lineName+' · ':'')+`${trains.length}편 경유`;
-  document.getElementById('map-popup-trains').innerHTML=
-    `<div>${lineSet.slice(0,4).join(' · ')}${lineSet.length>4?' 외':''}</div>
-     <div style="margin-top:4px">${gradeStr}</div>`;
+  if(_appMode==='metro'){
+    // 전철 노선도: 환승 전철 노선 + 기차 환승 안내
+    const xf=_metroXferLines(stn, _metroMapId);
+    const chips=xf.map(l=>`<span onclick="closeMapPopup();showMetroMap('${l.id}')" style="cursor:pointer;display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:9px;background:var(--bg3);border:1px solid ${l.color};font-size:11px;font-weight:700;color:var(--text1)"><span style="width:8px;height:8px;border-radius:50%;background:${l.color};flex-shrink:0"></span>${l.name}</span>`).join('');
+    const trainNote=trains.length?`<div style="margin-top:6px">🚆 기차 환승 · ${gradeStr}</div>`:'';
+    document.getElementById('map-popup-sub').textContent=(lineName?lineName+' · ':'')+(xf.length?`환승 ${xf.length}개 노선`:'환승 노선 없음');
+    document.getElementById('map-popup-trains').innerHTML=
+      (xf.length?`<div style="display:flex;flex-wrap:wrap;gap:4px">${chips}</div>`:'')+trainNote;
+  } else {
+    document.getElementById('map-popup-sub').textContent=(lineName?lineName+' · ':'')+`${trains.length}편 경유`;
+    document.getElementById('map-popup-trains').innerHTML=
+      `<div>${lineSet.slice(0,4).join(' · ')}${lineSet.length>4?' 외':''}</div>
+       <div style="margin-top:4px">${gradeStr}</div>`;
+  }
   const popupBtn=document.querySelector('#map-popup .btn.btn-primary');
   if(popupBtn){ popupBtn.textContent='🚉 역 정보 보기'; popupBtn.onclick=(e)=>{if(e)e.preventDefault();goToMapStation();}; }
   document.getElementById('map-popup').style.display='block';
@@ -3756,9 +3766,24 @@ function _metroAsMapLine(id){
   srcRoutes.forEach(r=>{for(let i=1;i<r.xy.length;i++){segSum+=Math.hypot(r.xy[i][0]-r.xy[i-1][0],r.xy[i][1]-r.xy[i-1][1]);segN++;}});
   const avg=segN?segSum/segN:32;
   const f=Math.min(6,Math.max(1,32/Math.max(avg,1)));
-  return {name:l.name,color:l.color,isMetro:true,
+  return {name:l.name,color:l.color,isMetro:true,metroId:l.id,
     routes:srcRoutes.map(r=>({color:l.color,dash:!!r.dash,
       stations:r.stations.map((n,i)=>({n,x:Math.round(r.xy[i][0]*f),y:Math.round(r.xy[i][1]*f)}))}))};
+}
+// 역의 환승 전철 노선 목록 — 게임 DB 역 태그의 노선 기본명 기준, 현재 노선 제외
+let _metroNameIdx=null;
+function _metroXferLines(stn, excludeId){
+  if(typeof METRO_LINES==='undefined'||typeof STATION_DB==='undefined')return [];
+  if(!_metroNameIdx){_metroNameIdx={};METRO_LINES.forEach(l=>{_metroNameIdx[l.name]=l;});}
+  const st=STATION_DB[stn+'역']||STATION_DB[stn];
+  if(!st||!st.lines)return [];
+  const bases=[...new Set(st.lines.map(t=>t.split('/')[0].split(' (')[0].trim()))];
+  return bases.map(b=>_metroNameIdx[b]).filter(l=>l&&l.id!==excludeId);
+}
+// 기차(간선 열차) 정차역 여부 — _modeStnSetsInit의 집합 재사용
+function _isTrainStn(n){
+  _modeStnSetsInit();
+  return !!(_trainStnSet&&_trainStnSet.has(n));
 }
 function showMapLine(lineKey, btn){
   document.querySelectorAll('.map-line-tab').forEach(t=>t.classList.remove('active'));
@@ -3913,6 +3938,23 @@ function showMapLine(lineKey, btn){
         anchor=manualOffset[s.n][0]<0?'end':manualOffset[s.n][0]>0?'start':'middle';
       }
       if(!isMinor) parts.push(`<text x="${tx}" y="${ty}" fill="#e6edf3" font-size="${faded?9.5:(isEnd?12:11)}" font-weight="${isEnd?700:400}" ${faded?'opacity="0.4"':''} text-anchor="${anchor}" pointer-events="none" font-family="Noto Sans KR,sans-serif">${s.n}</text>`);
+      // 전철 노선도: 환승 노선 색 점 (역명 옆) + 기차 환승 표시
+      if(line.isMetro&&!isMinor&&!faded){
+        const xf=_metroXferLines(s.n, line.metroId);
+        const hasTrain=_isTrainStn(s.n);
+        if(xf.length||hasTrain){
+          const fs=isEnd?12:11, tw=s.n.length*fs; // 역명 폭 근사
+          let dx0, dy0=ty-3.5;
+          if(anchor==='start')dx0=tx+tw+5;
+          else if(anchor==='end')dx0=tx-tw-5-(xf.length-1)*8-(hasTrain?11:0);
+          else dx0=tx+tw/2+5;
+          xf.slice(0,5).forEach((l2,k)=>{
+            parts.push(`<circle cx="${dx0+k*8}" cy="${dy0}" r="3.1" fill="${l2.color}" stroke="#161b22" stroke-width="1" pointer-events="none"><title>${l2.name} 환승</title></circle>`);
+          });
+          if(xf.length>5)parts.push(`<text x="${dx0+5*8}" y="${dy0+3}" fill="#8b949e" font-size="8" pointer-events="none" font-family="Noto Sans KR,sans-serif">+${xf.length-5}</text>`);
+          if(hasTrain)parts.push(`<text x="${dx0+Math.min(xf.length,5)*8+(xf.length?2:0)}" y="${dy0+3.5}" font-size="9" pointer-events="none">🚆</text>`);
+        }
+      }
     });
   });
 
