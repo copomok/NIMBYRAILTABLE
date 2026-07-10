@@ -6738,6 +6738,7 @@ function _renderBookTabInto(el, resultId){
         <select id="book-transfer-sel" style="flex:1;background:var(--bg3);border:1px solid var(--border);border-radius:10px;color:var(--text1);font-family:var(--sans);font-size:14px;padding:0 12px;outline:none;cursor:pointer;color-scheme:dark">
           <option value="direct">직통</option>
           <option value="transfer">환승 포함</option>
+          <option value="adjacent">인접역 포함</option>
         </select>
         <button class="book-search-btn" style="flex:2" onclick="searchBookTrainsUI()">열차 조회</button>
       </div>
@@ -6880,11 +6881,42 @@ function confirmBookPassenger(){
 // 열차 조회
 function searchBookTrainsUI(){
   const sel=document.getElementById('book-transfer-sel');
-  const includeTransfer=sel?.value==='transfer';
-  searchBookTrains(includeTransfer);
+  searchBookTrains(sel?.value==='transfer', sel?.value==='adjacent');
+}
+// 인접역: 직선거리 km 이내의 기차 정차역 (서울-청량리, 대전-서대전 같은 관계용)
+function _nearbyTrainStations(name, km){
+  km=km||10;
+  const cur=_stnCoord(name);
+  if(!cur||typeof haversineKm!=='function')return [];
+  _modeStnSetsInit();
+  const out=[];
+  for(const s of (_trainStnSet||[])){
+    if(s===name)continue;
+    const c=_stnCoord(s);
+    if(!c)continue;
+    const d=haversineKm(cur.lat,cur.lon,c.lat,c.lon);
+    if(d<=km)out.push({n:s,d});
+  }
+  return out.sort((a,b)=>a.d-b.d);
+}
+// 인접역 안내 팝업 (코레일톡 스타일) — 확인 시 계속 진행
+function _bookAdjConfirm(msg,onOk){
+  const bd=document.createElement('div');
+  bd.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:9600;display:flex;align-items:center;justify-content:center;padding:24px';
+  bd.innerHTML=`<div style="background:var(--bg2);border:1px solid var(--border);border-radius:14px;max-width:340px;width:100%;padding:20px 18px">
+    <div style="font-size:15px;font-weight:800;margin-bottom:10px;color:var(--accent2)">이용 안내</div>
+    <div style="font-size:13.5px;line-height:1.7;color:var(--text1)">${msg}</div>
+    <div style="display:flex;gap:8px;margin-top:16px">
+      <button data-act="no" style="flex:1;padding:11px;border-radius:10px;border:1px solid var(--border);background:var(--bg3);color:var(--text1);font-size:13px;font-weight:700;cursor:pointer;font-family:var(--sans)">취소</button>
+      <button data-act="ok" style="flex:1;padding:11px;border-radius:10px;border:1px solid var(--accent);background:var(--accent);color:#fff;font-size:13px;font-weight:700;cursor:pointer;font-family:var(--sans)">확인</button>
+    </div></div>`;
+  document.body.appendChild(bd);
+  bd.querySelector('[data-act="ok"]').addEventListener('click',()=>{bd.remove();onOk();});
+  bd.querySelector('[data-act="no"]').addEventListener('click',()=>bd.remove());
+  bd.addEventListener('click',e=>{if(e.target===bd)bd.remove();});
 }
 
-function searchBookTrains(includeTransfer){
+function searchBookTrains(includeTransfer, includeAdj){
   const from = window._bookFrom;
   const to = window._bookTo;
   const dateGo = document.getElementById('book-date-go')?.value;
@@ -6912,46 +6944,75 @@ function searchBookTrains(includeTransfer){
   const nowMFilter = nowForFilter.getHours()*60+nowForFilter.getMinutes();
   // 오늘 날짜 예매일 때만 현재 시각 이전 열차 제외
   const isToday = (dateGo === todayLocalStr());
-  const trains = [];
-  ALL_TRAINS.forEach(t=>{
-    const stops = t.stops;
-    const fi = stops.findIndex(s=>s.s===from);
-    const ti = stops.findIndex(s=>s.s===to);
-    if(fi<0||ti<0||fi>=ti) return;
-    if(isPassStop(t,from)||isPassStop(t,to)) return;
-    const depStop = stops[fi], arrStop = stops[ti];
-    const depT = hasTime(depStop.dep)?depStop.dep:hasTime(depStop.arr)?depStop.arr:null;
-    const arrT = hasTime(arrStop.arr)?arrStop.arr:hasTime(arrStop.dep)?arrStop.dep:null;
-    if(!depT) return;
-    // 오늘이면 현재 시각 이전 출발 열차 제외
-    if(isToday && toMin(depT)!==null && toMin(depT)<nowMFilter) return;
-    trains.push({t, depT, arrT, dur:durStr(depT, arrT)});
-  });
+  // A→B 직통 스캔 (인접역 탐색에도 재사용)
+  const scanDirect=(A,B)=>{
+    const arr=[];
+    ALL_TRAINS.forEach(t=>{
+      const stops=t.stops;
+      const fi=stops.findIndex(s=>s.s===A);
+      const ti=stops.findIndex(s=>s.s===B);
+      if(fi<0||ti<0||fi>=ti) return;
+      if(isPassStop(t,A)||isPassStop(t,B)) return;
+      const depStop=stops[fi], arrStop=stops[ti];
+      const depT=hasTime(depStop.dep)?depStop.dep:hasTime(depStop.arr)?depStop.arr:null;
+      const arrT=hasTime(arrStop.arr)?arrStop.arr:hasTime(arrStop.dep)?arrStop.dep:null;
+      if(!depT) return;
+      if(isToday && toMin(depT)!==null && toMin(depT)<nowMFilter) return;
+      arr.push({t, depT, arrT, dur:durStr(depT, arrT)});
+    });
+    return arr;
+  };
+  const trains = scanDirect(from,to).map(e=>({...e, aFrom:from, aTo:to, adj:false}));
+
+  // 인접역 포함: 출발/도착역 반경 10km 내 기차역 발착 열차 (조회역 미정차 열차만)
+  if(includeAdj){
+    const stopsAt=(t,stn)=>{const i=t.stops.findIndex(s=>s.s===stn);return i>=0&&!isPassStop(t,stn);};
+    const seen=new Set(trains.map(e=>e.t.no));
+    for(const nb of _nearbyTrainStations(from)){
+      scanDirect(nb.n,to).forEach(e=>{
+        if(seen.has(e.t.no)||stopsAt(e.t,from))return;
+        seen.add(e.t.no);
+        trains.push({...e, aFrom:nb.n, aTo:to, adj:true, miss:from});
+      });
+    }
+    for(const nb of _nearbyTrainStations(to)){
+      scanDirect(from,nb.n).forEach(e=>{
+        if(seen.has(e.t.no)||stopsAt(e.t,to))return;
+        seen.add(e.t.no);
+        trains.push({...e, aFrom:from, aTo:nb.n, adj:true, miss:to});
+      });
+    }
+  }
   trains.sort((a,b)=>(toMin(a.depT)||0)-(toMin(b.depT)||0));
 
   if(!trains.length){
     if(includeTransfer){
       searchBookTransfers(from, to, dateGo, el);
     } else {
-      el.innerHTML=`<div class="empty"><div class="empty-icon">🔍</div><p>${from} → ${to} 직통 열차가 없습니다.<br><small style="color:var(--text3)">환승 포함 버튼으로 환승편을 검색하세요</small></p></div>`;
+      el.innerHTML=`<div class="empty"><div class="empty-icon">🔍</div><p>${from} → ${to} ${includeAdj?'직통·인접역':'직통'} 열차가 없습니다.<br><small style="color:var(--text3)">환승 포함${includeAdj?'':' · 인접역 포함'} 옵션으로 다시 검색해보세요</small></p></div>`;
     }
     return;
   }
+  const adjCount=trains.filter(e=>e.adj).length;
 
   // inline onclick 제거 → data 속성 저장 후 addEventListener로 등록 (iOS Safari 호환)
-  const rows = trains.map(({t,depT,arrT,dur})=>`
-    <div class="book-train-row" data-train-no="${t.no}" data-dep="${depT}" data-arr="${arrT||''}" data-from="${from}" data-to="${to}" data-date="${dateGo}">
+  const rows = trains.map(({t,depT,arrT,dur,aFrom,aTo,adj,miss})=>`
+    <div class="book-train-row" data-train-no="${t.no}" data-dep="${depT}" data-arr="${arrT||''}" data-from="${aFrom}" data-to="${aTo}" data-date="${dateGo}" ${adj?`data-adj="1" data-miss="${miss}"`:''} ${adj?'style="opacity:.78"':''}>
       <div style="flex:1;min-width:0">
         <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px">
           <span style="font-size:13px;font-weight:700;color:var(--c-${gcCssVar(t.grade)})">${t.grade}</span>
           <span style="font-size:13px;color:var(--text2);font-family:var(--mono)">${t.no}</span>
+          ${adj?`<span style="font-size:9.5px;font-weight:800;padding:1px 7px;border-radius:8px;background:rgba(249,115,22,.12);border:1px solid var(--orange);color:var(--orange)">인접역</span>`:''}
         </div>
         <div style="display:flex;align-items:baseline;gap:6px">
           <span style="font-size:17px;font-weight:700;font-family:var(--mono)">${depT}</span>
+          ${adj&&aFrom!==from?`<span style="font-size:10.5px;color:var(--orange);font-weight:700">${aFrom}</span>`:''}
           <span style="color:var(--text3);font-size:12px">→</span>
           <span style="font-size:17px;font-weight:700;font-family:var(--mono);color:var(--green)">${arrT||'-'}</span>
+          ${adj&&aTo!==to?`<span style="font-size:10.5px;color:var(--orange);font-weight:700">${aTo}</span>`:''}
           <span style="font-size:11px;color:var(--text3);font-family:var(--mono)">${dur}</span>
         </div>
+        ${adj?`<div style="font-size:10.5px;color:var(--text3);margin-top:3px">${miss}역 미정차 · ${aFrom!==from?aFrom+' 출발':aTo+' 도착'}</div>`:''}
       </div>
       <div style="display:flex;align-items:center;gap:8px;flex-shrink:0">
         <div class="seat-avail-btn" data-no="${t.no}"
@@ -6965,6 +7026,7 @@ function searchBookTrains(includeTransfer){
     <div class="result-header" style="margin-top:16px">
       <div class="result-title">${from} → ${to}</div>
       <span class="badge blue">${trains.length}편</span>
+      ${adjCount?`<span class="badge" style="border-color:var(--orange);color:var(--orange)">인접역 ${adjCount}편</span>`:''}
       <span class="badge" style="background:var(--bg3)">${tripLabel}</span>
     </div>
     <div class="book-train-list">${rows}</div>
@@ -6973,7 +7035,11 @@ function searchBookTrains(includeTransfer){
   // addEventListener 방식으로 클릭 등록 (iOS Safari: overflow-y:auto 내부 div onclick 미동작 방지)
   el.querySelectorAll('.book-train-row[data-train-no]').forEach(row=>{
     row.addEventListener('click', ()=>{
-      openBookTrainDetail(row.dataset.trainNo, row.dataset.from||from, row.dataset.to||to, row.dataset.dep||'', row.dataset.arr||'', row.dataset.date||dateGo);
+      const go=()=>openBookTrainDetail(row.dataset.trainNo, row.dataset.from||from, row.dataset.to||to, row.dataset.dep||'', row.dataset.arr||'', row.dataset.date||dateGo);
+      if(row.dataset.adj){
+        const miss=row.dataset.miss, aF=row.dataset.from, aT=row.dataset.to;
+        _bookAdjConfirm(`출발역은 <b>${aF}역</b>이고 도착역은 <b>${aT}역</b>입니다.<br><br><b>${miss}역</b>은 정차하지 않습니다.`, go);
+      } else go();
     });
   });
 
