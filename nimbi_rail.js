@@ -5578,13 +5578,20 @@ function confirmPassRegister(){
   passes.push({ id:'pass_'+Date.now(), from, to, name:name||(from+'→'+to), createdAt:Date.now() });
   savePasses(passes);
   closePassRegisterPopup();
-  renderTickets();
+  _refreshPassViews();
+}
+
+// 정기권 목록이 보이는 모든 화면 갱신 (마이페이지 정기권 섹션 + 승차권 화면)
+function _refreshPassViews(){
+  const my=document.getElementById('result-pass-my');
+  if(my)my.innerHTML=renderPassSection();
+  if(document.getElementById('result-ticket'))renderTickets();
 }
 
 function deletePass(id){
   if(!confirm('이 정기권을 삭제하시겠습니까?')) return;
   savePasses(loadPasses().filter(p=>p.id!==id));
-  renderTickets();
+  _refreshPassViews();
 }
 
 // 정기권으로 빠른 예매 팝업 열기
@@ -5595,13 +5602,13 @@ function openPassBookingPopup(passId){
   window._bookFrom=pass.from; window._bookTo=pass.to; window._activePassId=passId;
   openMySection('book');
   setTimeout(()=>{
-    searchBookTrains();
-    // 날짜를 내일로 설정 (정기권은 특정 날짜가 아닌 요일 기반)
+    // 날짜를 내일로 먼저 설정 (정기권은 요일 기반 — 오늘로 두면 현재 시각 이후 필터에 걸림)
     const dateEl=document.getElementById('book-date-go');
     if(dateEl){
       const d=new Date(); d.setDate(d.getDate()+1);
       dateEl.value=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
     }
+    searchBookTrains(false,false);
   },200);
 }
 function closePassBookingPopup(){document.getElementById('pass-booking-wrap')?.remove();}
@@ -6881,6 +6888,7 @@ function confirmBookPassenger(){
 
 // 열차 조회
 function searchBookTrainsUI(){
+  window._activePassId=null; // 사용자가 직접 조회하면 정기권 예매 흐름 해제
   const sel=document.getElementById('book-transfer-sel');
   searchBookTrains(sel?.value==='transfer', sel?.value==='adjacent');
 }
@@ -7076,10 +7084,17 @@ function searchBookTrains(includeTransfer, includeAdj){
       <span class="badge" style="background:var(--bg3)">${tripLabel}</span>
     </div>
     <div class="book-train-list">${rows}</div>
-    ${_bookRoundTrip&&dateBack?`<p class="hint" style="margin-top:8px">※ 왕복 복편(${to}→${from}, ${dateBack})은 예매 후 별도 조회해주세요</p>`:''}`;
+    ${_bookRoundTrip&&dateBack?`<p class="hint" style="margin-top:8px">※ 왕복: 가는 열차 예매 완료 후 복편(${to}→${from}, ${dateBack}) 조회가 자동으로 열립니다</p>`:''}`;
+
+  // 환승 포함: 직통 결과 아래에 환승 경로도 함께 표시
+  if(includeTransfer){
+    const xd=document.createElement('div');
+    el.appendChild(xd);
+    searchBookTransfers(from, to, dateGo, xd, true);
+  }
 
   // addEventListener 방식으로 클릭 등록 (iOS Safari: overflow-y:auto 내부 div onclick 미동작 방지)
-  el.querySelectorAll('.book-train-row[data-train-no]').forEach(row=>{
+  el.querySelectorAll('.book-train-row[data-train-no]:not(.book-xfer-card)').forEach(row=>{
     row.addEventListener('click', ()=>{
       const go=()=>openBookTrainDetail(row.dataset.trainNo, row.dataset.from||from, row.dataset.to||to, row.dataset.dep||'', row.dataset.arr||'', row.dataset.date||dateGo);
       if(row.dataset.adj){
@@ -7185,7 +7200,7 @@ function openBookTrainDetail(trainNo, from, to, depT, arrT, travelDate){
 
 
 // ── 열차 예매 탭 환승 탐색 ──
-function searchBookTransfers(from, to, dateGo, el){
+function searchBookTransfers(from, to, dateGo, el, append){
   const MIN_WAIT=3, MAX_WAIT=60;
   const nowForFilter=new Date();
   const nowMFilter=nowForFilter.getHours()*60+nowForFilter.getMinutes();
@@ -7249,7 +7264,7 @@ function searchBookTransfers(from, to, dateGo, el){
   }).sort((a,b)=>a.totalM-b.totalM).slice(0,5);
 
   if(!transfers.length){
-    el.innerHTML=`<div class="empty"><div class="empty-icon">🚫</div><p>${from} → ${to} 운행 가능한 경로가 없습니다</p></div>`;
+    el.innerHTML=append?'':`<div class="empty"><div class="empty-icon">🚫</div><p>${from} → ${to} 운행 가능한 경로가 없습니다</p></div>`;
     return;
   }
 
@@ -7274,7 +7289,8 @@ function searchBookTransfers(from, to, dateGo, el){
     // inline onclick 제거 → data 속성 저장 후 addEventListener (iOS Safari 호환)
     return `<div class="book-train-row book-xfer-card"
       data-train-no="${firstLeg.t.no}" data-dep="${firstLeg.depT}" data-arr="${firstLeg.arrT||''}"
-      data-from="${firstLeg.from}" data-to="${firstLeg.to}" data-date="${dateGo}">
+      data-from="${firstLeg.from}" data-to="${firstLeg.to}" data-date="${dateGo}"
+      data-no2="${lastLeg.t.no}" data-xstn="${firstLeg.to}" data-dep2="${lastLeg.depT}" data-arr2="${lastLeg.arrT||''}" data-final="${lastLeg.to}">
       <div style="flex:1">
         <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
           <span style="font-size:11px;font-weight:600;padding:2px 8px;border-radius:10px;background:rgba(210,153,34,.15);color:#d29922;border:1px solid rgba(210,153,34,.3)">1회 환승</span>
@@ -7293,30 +7309,34 @@ function searchBookTransfers(from, to, dateGo, el){
   const tripLabel=dateGo;
   el.innerHTML=`
     <div class="result-header" style="margin-top:16px">
-      <div class="result-title">${from} → ${to} · 환승</div>
+      <div class="result-title">${append?'🔄 환승 경로':`${from} → ${to} · 환승`}</div>
       <span class="badge blue">${transfers.length}건</span>
       <span class="badge" style="background:var(--bg3)">${tripLabel}</span>
     </div>
     <div class="book-train-list">${cards}</div>`;
 
-  // addEventListener 방식으로 클릭 등록 (iOS Safari 호환)
-  el.querySelectorAll('.book-train-row[data-train-no]').forEach(row=>{
-    row.addEventListener('click', ()=>{
-      openBookTrainDetail(row.dataset.trainNo, row.dataset.from, row.dataset.to, row.dataset.dep||'', row.dataset.arr||'', row.dataset.date||dateGo);
-    });
+  // 환승 카드 클릭 → 두 구간 예매 상세(openBookXferDetail)
+  const openXfer=row=>openBookXferDetail(
+    row.dataset.trainNo, row.dataset.no2,
+    row.dataset.from, row.dataset.xstn, row.dataset.final,
+    row.dataset.dep||'', row.dataset.arr||'',
+    row.dataset.dep2||'', row.dataset.arr2||'',
+    row.dataset.date||dateGo);
+  el.querySelectorAll('.book-train-row.book-xfer-card').forEach(row=>{
+    row.addEventListener('click', ()=>openXfer(row));
   });
   el.querySelectorAll('.xfer-avail[data-no]').forEach(btn=>{
     const row=btn.closest('.book-train-row');
     if(!row) return;
     btn.addEventListener('click', e=>{
       e.stopPropagation();
-      openBookTrainDetail(row.dataset.trainNo, row.dataset.from, row.dataset.to, row.dataset.dep||'', row.dataset.arr||'', row.dataset.date||dateGo);
+      openXfer(row);
     });
   });
 
   // 환승 결과 가용 버튼 비동기 업데이트
   setTimeout(()=>{
-    transfers.forEach(legs=>{
+    transfers.forEach(({legs})=>{
       const t=legs[0].t;
       const ft=getFormationType(t.grade,t.no);
       const comp=getCarComposition(ft);
@@ -7392,21 +7412,24 @@ function openBookXferDetail(no1,no2,from,xStn,to,depT1,arrT1,depT2,arrT2,travelD
 }
 
 // 날짜 지정 예매 (열차 예매 탭에서 호출)
-// isRound='true': 편도 예매 완료 후 복편 조회 화면 자동 실행
+// isRound: 왕복이면 편도(가는편) 예매 완료 후 복편 조회 화면 자동 실행
 function openBookingWithDate(trainNo, from, to, depT, arrT, travelDate, isRound, dateBack){
   // 예매 완료 후 콜백: 왕복이면 복편 조회로 이동
-  window._afterBookingCallback = (isRound==='true' && dateBack) ? ()=>{
+  const wantRound=(isRound===true||isRound==='true')&&dateBack;
+  window._afterBookingCallback = wantRound ? ()=>{
     setTimeout(()=>{
-      openMySection('book');
+      _bookRoundTrip=false; // 복편은 편도로 조회
       window._bookFrom = to;
       window._bookTo = from;
-      window._bookRoundTrip = false;
-      renderBookTab();
+      openMySection('book'); // 마이페이지 예매 화면 재렌더 (역·편도 상태 반영)
       setTimeout(()=>{
         const dEl = document.getElementById('book-date-go');
         if(dEl) dEl.value = dateBack;
-        searchBookTrains();
-      }, 100);
+        searchBookTrains(false,false);
+        const resEl=document.getElementById('my-book-results');
+        if(resEl)resEl.insertAdjacentHTML('afterbegin',
+          `<div style="margin-top:14px;padding:10px 14px;border-radius:10px;background:rgba(56,139,253,.1);border:1px solid var(--accent);font-size:12.5px;color:var(--accent2)">🔁 가는 열차 예매 완료 — <b>복편(${to} → ${from} · ${dateBack})</b>을 선택해 주세요</div>`);
+      }, 150);
     }, 300);
   } : null;
 
