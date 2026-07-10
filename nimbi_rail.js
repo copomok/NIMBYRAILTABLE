@@ -7855,10 +7855,7 @@ function renderSICard(name){
       </div>
       ${_appMode!=='metro'?`<div style="padding:12px 16px 4px">
         <button class="si-board-btn" onclick="openStationBoard('${nameEsc}')">🚉 출발 안내 전광판 열기</button>
-      </div>
-      ${metroLines.length?`<div style="padding:8px 16px 4px">
-        <button class="si-board-btn" onclick="switchModeStation('metro','${nameEsc}')">🚇 전철 ${trainName}역으로 전환</button>
-      </div>`:''}`:''}
+      </div>`:''}
       ${_appMode==='metro'?(()=>{ // 🚇 전철: 노선(route)별 전역/다음역 — 경유 노선·지선 분기 모두 표시
         if(typeof METRO_LINES==='undefined')return '';
         const rows=[];
@@ -7904,6 +7901,9 @@ function renderSICard(name){
       </div>`:''}
       ${_appMode!=='metro'?`<div id="si-platform-trains" style="padding:14px 16px">
         ${_siPlatformTrainsHTML(name, trains)}
+      </div>`:''}
+      ${_appMode!=='metro'&&metroLines.length?`<div style="padding:0 16px 12px">
+        <button class="si-board-btn" onclick="switchModeStation('metro','${nameEsc}')">🚇 전철 ${trainName}역으로 전환</button>
       </div>`:''}
       ${d&&d.lat&&d.lon?`
       <div style="border-top:1px solid var(--border)">
