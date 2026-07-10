@@ -1632,7 +1632,7 @@ function getTripLEDFrames(active, ledWidth){
   if(preBoard){
     return [
       {tag:'출발역', text:`${ticket.fromStn}`, dur:D_HEAD},
-      {tag:'행선지', text:`${ticket.toStn}행`, dur:D_HEAD},
+      {tag:'행선지', text:`${train.dest}행`, dur:D_HEAD},
       {tag:'곧 출발', text:`${fmtEta(minsUntilDep)} 출발`, dur:D_HEAD},
     ];
   }
@@ -1667,7 +1667,7 @@ function getTripLEDFrames(active, ledWidth){
     // 평상시: 이번역 → 다음역 → 행선지 → 남은 정차역
     if(cur) frames.push({tag:'이번 역', text: cur + (cur===ticket.toStn?' · 내리는 문 확인':''), dur:D_HEAD});
     if(tl&&tl.next) frames.push({tag:'다음 역', text: tl.next.name, dur:D_HEAD});
-    frames.push({tag:'행선지', text:`${ticket.toStn}행`, dur:D_HEAD});
+    frames.push({tag:'행선지', text:`${train.dest}행`, dur:D_HEAD});
     remFrames.forEach(f=>frames.push(f));
   }
   if(!frames.length) frames.push({tag:'이번 역', text:'-', dur:D_HEAD});
@@ -7224,6 +7224,7 @@ function searchBookTrains(includeTransfer, includeAdj){
         <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px">
           <span style="font-size:13px;font-weight:700;color:var(--c-${gcCssVar(t.grade)})">${t.grade}</span>
           <span style="font-size:13px;color:var(--text2);font-family:var(--mono)">${t.no}</span>
+          <span style="font-size:12px;font-weight:600;color:var(--text1)">${t.dest}행</span>
           ${adj?`<span style="font-size:9.5px;font-weight:800;padding:1px 7px;border-radius:8px;background:rgba(249,115,22,.12);border:1px solid var(--orange);color:var(--orange)">인접역</span>`:''}
         </div>
         <div style="display:flex;align-items:baseline;gap:6px">
