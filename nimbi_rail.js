@@ -6740,6 +6740,7 @@ function _renderBookTabInto(el, resultId){
           <option value="transfer">환승 포함</option>
           <option value="adjacent">인접역 포함</option>
         </select>
+        <button onclick="openAdjInfo()" title="인접역 취급 기준·목록" style="flex-shrink:0;width:42px;border-radius:10px;border:1px solid var(--border);background:var(--bg3);color:var(--text2);font-size:15px;font-weight:700;cursor:pointer;font-family:var(--sans)">ⓘ</button>
         <button class="book-search-btn" style="flex:2" onclick="searchBookTrainsUI()">열차 조회</button>
       </div>
     </div>
@@ -6898,6 +6899,51 @@ function _nearbyTrainStations(name, km){
     if(d<=km)out.push({n:s,d});
   }
   return out.sort((a,b)=>a.d-b.d);
+}
+// 인접역 취급 기준·전체 목록 팝업 (예매 화면 ⓘ 버튼)
+let _adjPairsCache=null;
+function _adjPairs(){
+  if(_adjPairsCache)return _adjPairsCache;
+  _modeStnSetsInit();
+  const seen=new Set(), pairs=[];
+  for(const s of (_trainStnSet||[])){
+    for(const nb of _nearbyTrainStations(s)){
+      const key=[s,nb.n].sort().join('|');
+      if(seen.has(key))continue;
+      seen.add(key);
+      pairs.push({a:s,b:nb.n,d:nb.d});
+    }
+  }
+  pairs.sort((x,y)=>x.d-y.d);
+  return _adjPairsCache=pairs;
+}
+function openAdjInfo(){
+  const pairs=_adjPairs();
+  const rows=pairs.map(p=>`<div style="display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid var(--border)33;font-size:13px">
+    <span style="flex:1;font-weight:700">${p.a} <span style="color:var(--text3);font-weight:400">↔</span> ${p.b}</span>
+    <span style="font-family:var(--mono);font-size:11px;color:var(--text3)">${p.d.toFixed(1)}km</span>
+  </div>`).join('');
+  const bd=document.createElement('div');
+  bd.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:9600;display:flex;align-items:center;justify-content:center;padding:24px';
+  bd.innerHTML=`<div style="background:var(--bg2);border:1px solid var(--border);border-radius:14px;max-width:360px;width:100%;max-height:80vh;display:flex;flex-direction:column;overflow:hidden">
+    <div style="padding:18px 18px 12px;flex-shrink:0">
+      <div style="font-size:15px;font-weight:800;margin-bottom:10px;color:var(--accent2)">ⓘ 인접역 안내</div>
+      <div class="n-box" style="background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:10px 12px;font-size:12px;line-height:1.7;color:var(--text2)">
+        <b style="color:var(--text1)">취급 기준</b><br>
+        · 직선거리 <b style="color:var(--accent2)">10km 이내</b>의 기차 정차역<br>
+        · 조회한 역에 정차하는 열차는 제외 (같은 노선 중복 방지)<br>
+        · 인접역 열차는 <span style="color:var(--orange)">인접역</span> 표시와 함께 결과에 포함되며, 예매는 실제 발착역 기준으로 진행됩니다
+      </div>
+      <div style="font-size:12px;font-weight:700;color:var(--text2);margin-top:12px">인접역 취급 목록 (${pairs.length}쌍 · 거리순)</div>
+    </div>
+    <div style="overflow-y:auto;padding:0 18px;flex:1;min-height:0">${rows||'<div style="color:var(--text3);font-size:12px;padding:8px 0">해당 없음</div>'}</div>
+    <div style="padding:12px 18px 16px;flex-shrink:0">
+      <button data-act="close" style="width:100%;padding:11px;border-radius:10px;border:1px solid var(--accent);background:var(--accent);color:#fff;font-size:13px;font-weight:700;cursor:pointer;font-family:var(--sans)">닫기</button>
+    </div>
+  </div>`;
+  document.body.appendChild(bd);
+  bd.querySelector('[data-act="close"]').addEventListener('click',()=>bd.remove());
+  bd.addEventListener('click',e=>{if(e.target===bd)bd.remove();});
 }
 // 인접역 안내 팝업 (코레일톡 스타일) — 확인 시 계속 진행
 function _bookAdjConfirm(msg,onOk){
