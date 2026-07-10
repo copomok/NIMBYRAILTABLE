@@ -7265,7 +7265,10 @@ function searchBookTrains(includeTransfer, includeAdj){
   // addEventListener 방식으로 클릭 등록 (iOS Safari: overflow-y:auto 내부 div onclick 미동작 방지)
   el.querySelectorAll('.book-train-row[data-train-no]:not(.book-xfer-card)').forEach(row=>{
     row.addEventListener('click', ()=>{
-      const go=()=>openBookTrainDetail(row.dataset.trainNo, row.dataset.from||from, row.dataset.to||to, row.dataset.dep||'', row.dataset.arr||'', row.dataset.date||dateGo);
+      // 정기권 예매 흐름: 중간 요금 시트를 건너뛰고 바로 요일·등급 선택창을 연다
+      const go=()=> window._activePassId
+        ? openPassDaySelector(window._activePassId, row.dataset.trainNo, row.dataset.from||from, row.dataset.to||to, row.dataset.dep||'', row.dataset.arr||'')
+        : openBookTrainDetail(row.dataset.trainNo, row.dataset.from||from, row.dataset.to||to, row.dataset.dep||'', row.dataset.arr||'', row.dataset.date||dateGo);
       if(row.dataset.adj){
         const miss=row.dataset.miss, aF=row.dataset.from, aT=row.dataset.to;
         _bookAdjConfirm(`출발역은 <b>${aF}역</b>이고 도착역은 <b>${aT}역</b>입니다.<br><br><b>${miss}역</b>은 정차하지 않습니다.`, go);

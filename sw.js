@@ -1,4 +1,4 @@
-const CACHE_NAME = 'nimbirail-20260710192652';
+const CACHE_NAME = 'nimbirail-20260710231649';
 const ASSETS = [
   '/NIMBYRAILTABLE/',
   '/NIMBYRAILTABLE/index.html',
@@ -70,7 +70,7 @@ self.addEventListener('message', e => {
       badge: '/NIMBYRAILTABLE/icon-192.png',
       vibrate: [200, 100, 200],
       requireInteraction: false,
-      tag: tag || 'nimbirail-20260710192652alarm',
+      tag: tag || 'nimbirail-20260710231649alarm',
     });
   }
 });
