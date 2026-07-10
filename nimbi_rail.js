@@ -425,7 +425,19 @@ function refreshCurrentTab(){
     if(sec){ openMySection(sec); return; }
   }
   const a=document.querySelector('.tab.active');
-  switchTab(a?a.id.replace('tab-',''):'train');
+  const id=a?a.id.replace('tab-',''):'train';
+  switchTab(id); // 노선도·통계·공지·역정보 등은 switchTab이 재렌더
+  // 검색형 탭은 현재 입력값 그대로 재검색해야 결과가 갱신됨
+  try{
+    if(id==='train'){
+      if(document.getElementById('input-trainno')?.value.trim())searchByTrain();
+      else if(document.getElementById('sel-line-train')?.value)selectTrainLine();
+    } else if(id==='station'){
+      if(document.getElementById('input-station')?.value.trim())searchByStation();
+    } else if(id==='route'){
+      if(document.getElementById('input-from')?.value.trim()&&document.getElementById('input-to')?.value.trim())searchByRoute();
+    }
+  }catch(e){}
 }
 function switchTab(n){
   try{ closeStationBoard(); }catch(e){}
