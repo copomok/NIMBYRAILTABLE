@@ -7501,8 +7501,13 @@ function _modeStnSetsInit(){
   }
   if(!_metroStnSet&&typeof METRO_LINES!=='undefined'){
     _metroStnSet=new Set();
-    METRO_LINES.forEach(l=>l.stations.forEach(n=>_metroStnSet.add(n)));
+    METRO_LINES.forEach(l=>(l.routes||[{stations:l.stations}]).forEach(r=>r.stations.forEach(n=>_metroStnSet.add(n))));
   }
+}
+// 모드 전환 + 같은 역 상세 열기 (전철↔기차 병행역 빠른 이동)
+function switchModeStation(mode,name){
+  setAppMode(mode);
+  openStationDetail(name);
 }
 function _stnBaseName(n){return String(n).replace(/\s*\/.*$/,'').trim().replace(/역$/,'');}
 function renderSINear(el){
@@ -7812,21 +7817,25 @@ function renderSICard(name){
   if(_siCardPlatform!==null&&!platforms.includes(_siCardPlatform)) _siCardPlatform=null;
   if(_siCardPlatform===null&&platforms.length>0) _siCardPlatform=platforms[0];
   const nameEsc=name.replace(/\\/g,'\\\\').replace(/'/g,"\\'");
+  // 이 역을 지나는 전철 노선 (지선 포함)
+  const metroLines=typeof METRO_LINES!=='undefined'
+    ?METRO_LINES.filter(l=>(l.routes||[{stations:l.stations}]).some(r=>r.stations.includes(trainName)))
+    :[];
   el.innerHTML=`
     <div style="background:var(--bg2);border:1px solid var(--border);border-radius:14px;overflow:hidden">
       <div style="padding:16px;border-bottom:1px solid var(--border)">
         <div style="display:flex;align-items:flex-start;justify-content:space-between">
           <div style="font-size:22px;font-weight:700">${trainName}</div>
-          <div style="font-size:11px;color:var(--text2);text-align:right">${platforms.length>0?platforms.length+'개 홈<br>':''}${trains.length}편 경유</div>
+          <div style="font-size:11px;color:var(--text2);text-align:right">${_appMode==='metro'
+            ?(metroLines.length?`${metroLines.length}개 노선`:'')
+            :`${platforms.length>0?platforms.length+'개 홈<br>':''}${trains.length}편 경유`}</div>
         </div>
         ${d?`<div id="si-addr" data-lat="${d.lat}" data-lon="${d.lon}" style="font-size:11px;color:var(--text3);margin-top:4px">📍 ${d.addr||'주소 확인 중…'}</div>`:''}
         ${(()=>{ // 모드별 라벨: 기차 모드 = 열차 등급만 (편수·약호 없이), 전철 모드 = 전철 노선만
           if(_appMode==='metro'){
-            if(typeof METRO_LINES==='undefined')return '';
-            const ml=METRO_LINES.filter(l=>l.routes?l.routes.some(r=>r.stations.includes(trainName)):l.stations.includes(trainName));
-            if(!ml.length)return '';
+            if(!metroLines.length)return '';
             return `<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:10px">
-              ${ml.map(l=>`<span onclick="openMetroLine('${l.id}')" style="cursor:pointer;padding:3px 10px;border-radius:12px;font-size:11px;font-weight:700;background:${l.color}1c;border:1px solid ${l.color};color:${l.color}">🚇 ${l.name}</span>`).join('')}
+              ${metroLines.map(l=>`<span onclick="openMetroLine('${l.id}')" style="cursor:pointer;padding:3px 10px;border-radius:12px;font-size:11px;font-weight:700;background:${l.color}1c;border:1px solid ${l.color};color:${l.color}">🚇 ${l.name}</span>`).join('')}
             </div>`;
           }
           const grades=[...new Set(trains.map(t=>t.grade))];
@@ -7844,9 +7853,12 @@ function renderSICard(name){
           </div>`;
         })()}
       </div>
-      <div style="padding:12px 16px 4px">
+      ${_appMode!=='metro'?`<div style="padding:12px 16px 4px">
         <button class="si-board-btn" onclick="openStationBoard('${nameEsc}')">🚉 출발 안내 전광판 열기</button>
       </div>
+      ${metroLines.length?`<div style="padding:8px 16px 4px">
+        <button class="si-board-btn" onclick="switchModeStation('metro','${nameEsc}')">🚇 전철 ${trainName}역으로 전환</button>
+      </div>`:''}`:''}
       ${_appMode==='metro'?(()=>{ // 🚇 전철: 노선(route)별 전역/다음역 — 경유 노선·지선 분기 모두 표시
         if(typeof METRO_LINES==='undefined')return '';
         const rows=[];
@@ -7873,7 +7885,10 @@ function renderSICard(name){
           </div>`).join('')}
         </div>`;
       })():''}
-      ${platforms.length>0?`
+      ${_appMode==='metro'&&_isTrainStn(trainName)?`<div style="padding:12px 16px 4px">
+        <button class="si-board-btn" onclick="switchModeStation('train','${nameEsc}')">🚆 기차 ${trainName}역으로 전환</button>
+      </div>`:''}
+      ${_appMode!=='metro'&&platforms.length>0?`
       <div style="padding:12px 16px;border-bottom:1px solid var(--border)">
         <div style="font-size:12px;font-weight:700;color:var(--text2);margin-bottom:8px">🚉 홈 선택</div>
         <div style="overflow-x:auto;-webkit-overflow-scrolling:touch;padding-bottom:2px">
@@ -7887,9 +7902,9 @@ function renderSICard(name){
           </div>
         </div>
       </div>`:''}
-      <div id="si-platform-trains" style="padding:14px 16px">
+      ${_appMode!=='metro'?`<div id="si-platform-trains" style="padding:14px 16px">
         ${_siPlatformTrainsHTML(name, trains)}
-      </div>
+      </div>`:''}
       ${d&&d.lat&&d.lon?`
       <div style="border-top:1px solid var(--border)">
         <button onclick="toggleStationMap()" style="width:100%;padding:11px 16px;background:transparent;border:none;color:var(--text2);font-size:12px;font-weight:600;cursor:pointer;font-family:var(--sans);display:flex;align-items:center;justify-content:space-between">
