@@ -5501,7 +5501,7 @@ function openPassRegisterPopup(){
 
   const wrap = document.createElement('div');
   wrap.id = 'pass-register-wrap';
-  wrap.style.cssText = 'position:fixed;inset:0;z-index:9400;display:flex;align-items:center;justify-content:center';
+  wrap.style.cssText = 'position:fixed;inset:0;z-index:9950;display:flex;align-items:center;justify-content:center';
   wrap.innerHTML = `
     <div style="position:fixed;inset:0;background:rgba(0,0,0,.6);backdrop-filter:blur(2px);z-index:0" onclick="closePassRegisterPopup()"></div>
     <div style="position:relative;z-index:2;background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:20px;width:90vw;max-width:360px;box-shadow:0 8px 32px rgba(0,0,0,.6);max-height:90vh;overflow-y:auto">
@@ -5525,10 +5525,17 @@ function openPassRegisterPopup(){
       <div class="booking-section-label">이름 (선택)</div>
       <input type="text" id="pass-name" placeholder="예: 출근길, 주말 여행" autocomplete="off"
         style="width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:6px;color:var(--text1);font-family:var(--sans);font-size:13px;padding:8px 12px;outline:none;margin-bottom:4px">
-      <button class="btn btn-primary booking-confirm-btn" style="margin-top:12px;width:100%;justify-content:center" onclick="confirmPassRegister()">등록하기</button>
-      <button class="alarm-popup-close" style="margin-top:8px" onclick="closePassRegisterPopup()">취소</button>
+      <button class="btn btn-primary booking-confirm-btn" id="pass-reg-confirm" style="margin-top:12px;width:100%;justify-content:center;touch-action:manipulation">등록하기</button>
+      <button class="alarm-popup-close" id="pass-reg-cancel" style="margin-top:8px;touch-action:manipulation">취소</button>
     </div>`;
   document.body.appendChild(wrap);
+  if(typeof addMobileTap==='function'){
+    addMobileTap(document.getElementById('pass-reg-confirm'),confirmPassRegister);
+    addMobileTap(document.getElementById('pass-reg-cancel'),closePassRegisterPopup);
+  } else {
+    document.getElementById('pass-reg-confirm').onclick=confirmPassRegister;
+    document.getElementById('pass-reg-cancel').onclick=closePassRegisterPopup;
+  }
   (()=>{const cl=document.getElementById('pass-reg-clock');if(!cl)return;
     const tick=()=>{const n=new Date();if(cl)cl.textContent=`${String(n.getHours()).padStart(2,'0')}:${String(n.getMinutes()).padStart(2,'0')}:${String(n.getSeconds()).padStart(2,'0')}`;};
     tick();const ti=setInterval(tick,1000);
@@ -5629,43 +5636,55 @@ function openPassDaySelector(passId,trainNo,from,to,depT,arrT){
   }).join('');
   const wrap=document.createElement('div');
   wrap.id='pass-day-wrap';
-  wrap.style.cssText='position:fixed;inset:0;z-index:9400;display:flex;align-items:center;justify-content:center;pointer-events:auto';
+  // z-index는 예매 상세 시트(9901)보다 위 · 버튼은 스크롤 영역 밖 고정 (모바일 탭 씹힘 방지)
+  wrap.style.cssText='position:fixed;inset:0;z-index:9950;display:flex;align-items:center;justify-content:center;pointer-events:auto';
   wrap.innerHTML=`
     <div style="position:fixed;inset:0;background:rgba(0,0,0,.65);backdrop-filter:blur(2px);z-index:0" onclick="closePassDaySelector()"></div>
-    <div style="position:relative;z-index:2;background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:20px;width:90vw;max-width:380px;box-shadow:0 8px 32px rgba(0,0,0,.6);max-height:90vh;overflow-y:auto">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
-        <div style="font-size:15px;font-weight:700">🎟️ 정기권 예매</div>
-        <div style="font-family:var(--mono);font-size:12px;color:var(--text2)" id="pass-day-clock"></div>
+    <div style="position:relative;z-index:2;background:var(--bg2);border:1px solid var(--border);border-radius:14px;width:90vw;max-width:380px;box-shadow:0 8px 32px rgba(0,0,0,.6);max-height:90vh;display:flex;flex-direction:column;overflow:hidden">
+      <div style="flex:1;min-height:0;overflow-y:auto;padding:20px 20px 4px">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
+          <div style="font-size:15px;font-weight:700">🎟️ 정기권 예매</div>
+          <div style="font-family:var(--mono);font-size:12px;color:var(--text2)" id="pass-day-clock"></div>
+        </div>
+        <div style="font-size:12px;color:var(--text2);margin-bottom:14px">${pass.name} · ${from} → ${to}</div>
+        <div style="background:var(--bg3);border-radius:10px;padding:12px 14px;margin-bottom:14px">
+          <div style="color:var(--c-${gcCssVar(t.grade)});font-weight:700;margin-bottom:4px">${t.grade} ${trainNo}</div>
+          <div style="font-family:var(--mono);font-size:13px">${depT} → ${arrT||'-'} · ${durStr(depT,arrT)}</div>
+        </div>
+        <div class="booking-section-label">매주 반복 요일 선택 (복수 선택)</div>
+        <div style="display:flex;gap:6px;margin-bottom:10px">
+          ${DAY_NAMES.map((d,i)=>`<button data-day="${i}"
+            style="flex:1;padding:10px 2px;border-radius:8px;border:1.5px solid var(--border);background:var(--bg3);color:var(--text2);font-size:14px;font-weight:600;cursor:pointer;transition:all .15s;touch-action:manipulation"
+            onclick="togglePassDay(this)">${d}</button>`).join('')}
+        </div>
+        <div id="pass-day-preview" style="font-size:12px;color:var(--text3);margin-bottom:14px;min-height:16px"></div>
+        <div class="booking-section-label">좌석 등급</div>
+        <div class="booking-seat-options" style="margin-bottom:14px">${fareHtml}</div>
+        <div class="booking-section-label">인원</div>
+        <div class="booking-passenger-control" style="margin-bottom:8px">
+          <button class="booking-stepper-btn" onclick="changePassengerCount(-1)">−</button>
+          <span id="booking-passenger-count">1</span>
+          <button class="booking-stepper-btn" onclick="changePassengerCount(1)">+</button>
+        </div>
       </div>
-      <div style="font-size:12px;color:var(--text2);margin-bottom:14px">${pass.name} · ${from} → ${to}</div>
-      <div style="background:var(--bg3);border-radius:10px;padding:12px 14px;margin-bottom:14px">
-        <div style="color:var(--c-${gcCssVar(t.grade)});font-weight:700;margin-bottom:4px">${t.grade} ${trainNo}</div>
-        <div style="font-family:var(--mono);font-size:13px">${depT} → ${arrT||'-'} · ${durStr(depT,arrT)}</div>
+      <div style="flex-shrink:0;padding:10px 20px 18px;border-top:1px solid var(--border)">
+        <button id="pass-day-confirm" disabled
+          style="width:100%;padding:13px;border-radius:10px;border:none;background:var(--accent);color:#fff;font-size:14px;font-weight:700;cursor:pointer;opacity:.5;touch-action:manipulation">
+          요일과 좌석 등급을 선택하세요
+        </button>
+        <button id="pass-day-cancel" class="alarm-popup-close" style="margin-top:8px;width:100%;touch-action:manipulation">취소</button>
       </div>
-      <div class="booking-section-label">매주 반복 요일 선택 (복수 선택)</div>
-      <div style="display:flex;gap:6px;margin-bottom:10px">
-        ${DAY_NAMES.map((d,i)=>`<button data-day="${i}"
-          style="flex:1;padding:10px 2px;border-radius:8px;border:1.5px solid var(--border);background:var(--bg3);color:var(--text2);font-size:14px;font-weight:600;cursor:pointer;transition:all .15s"
-          onclick="togglePassDay(this)">${d}</button>`).join('')}
-      </div>
-      <div id="pass-day-preview" style="font-size:12px;color:var(--text3);margin-bottom:14px;min-height:16px"></div>
-      <div class="booking-section-label">좌석 등급</div>
-      <div class="booking-seat-options" style="margin-bottom:14px">${fareHtml}</div>
-      <div class="booking-section-label">인원</div>
-      <div class="booking-passenger-control" style="margin-bottom:16px">
-        <button class="booking-stepper-btn" onclick="changePassengerCount(-1)">−</button>
-        <span id="booking-passenger-count">1</span>
-        <button class="booking-stepper-btn" onclick="changePassengerCount(1)">+</button>
-      </div>
-      <button id="pass-day-confirm" disabled
-        style="width:100%;padding:13px;border-radius:10px;border:none;background:var(--accent);color:#fff;font-size:14px;font-weight:700;cursor:pointer;opacity:.5"
-        onclick="confirmPassDayBooking('${passId}','${trainNo}','${from}','${to}','${depT}','${arrT||''}')">
-        🎫 정기권 예매하기
-      </button>
-      <button class="alarm-popup-close" style="margin-top:8px;width:100%" onclick="closePassDaySelector()">취소</button>
     </div>`;
   document.body.appendChild(wrap);
   window._bookingSeatClass=null; window._bookingPassengerCount=1; window._selectedPassDays=[];
+  // 모바일 탭 호환 등록 (inline onclick 대신)
+  if(typeof addMobileTap==='function'){
+    addMobileTap(document.getElementById('pass-day-confirm'),()=>confirmPassDayBooking(passId,trainNo,from,to,depT,arrT||''));
+    addMobileTap(document.getElementById('pass-day-cancel'),closePassDaySelector);
+  } else {
+    document.getElementById('pass-day-confirm').onclick=()=>confirmPassDayBooking(passId,trainNo,from,to,depT,arrT||'');
+    document.getElementById('pass-day-cancel').onclick=closePassDaySelector;
+  }
   const cl=document.getElementById('pass-day-clock');
   const tick=()=>{const n=new Date();if(cl)cl.textContent=`${String(n.getHours()).padStart(2,'0')}:${String(n.getMinutes()).padStart(2,'0')}:${String(n.getSeconds()).padStart(2,'0')}`;};
   tick(); const ti=setInterval(tick,1000);
@@ -5698,7 +5717,11 @@ function updatePassDayConfirm(){
   const preview=document.getElementById('pass-day-preview');
   if(preview)preview.textContent=dates.length?`앞으로 4주 · ${dates.length}장 예매 예정 (${dates.slice(0,2).join(', ')}${dates.length>2?` 외 ${dates.length-2}건`:''})` :'';
   const btn=document.getElementById('pass-day-confirm');
-  if(btn){const ok=dates.length>0&&!!window._bookingSeatClass;btn.disabled=!ok;btn.style.opacity=ok?'1':'0.5';}
+  if(btn){
+    const ok=dates.length>0&&!!window._bookingSeatClass;
+    btn.disabled=!ok;btn.style.opacity=ok?'1':'0.5';
+    btn.textContent=ok?'🎫 정기권 예매하기':'요일과 좌석 등급을 선택하세요';
+  }
 }
 
 function closePassDaySelector(){document.getElementById('pass-day-wrap')?.remove();}
@@ -5720,11 +5743,11 @@ function confirmPassDayBooking(passId,trainNo,from,to,depT,arrT){
       return !(arrM!==null&&arrM<=eD||eA!==null&&eA<=depM);
     });
     if(conflict)continue;
-    const seat=assignSeat(t,seatClass);
+    const seats=Array.from({length:count},()=>randomSeat(seatClass,trainNo));
     const id='NB'+date.replace(/-/g,'')+Math.random().toString(36).slice(2,6).toUpperCase();
     tickets.push({id,trainNo,grade:t.grade,fromStn:from,toStn:to,depTime:depT,arrTime:arrT||'',
       travelDate:date,seatClass,seatClassLabel:SEAT_CLASSES[seatClass].label,
-      seats:[seat],passengerCount:count,fare:fare*count,status:'active',bookedAt:Date.now(),isPass:true,passId});
+      seats,passengerCount:count,farePerPerson:fare,totalFare:fare*count,status:'active',bookedAt:Date.now(),isPass:true,passId});
     created++;
   }
   saveTickets(tickets); closePassDaySelector(); window._activePassId=null;
@@ -6742,12 +6765,12 @@ function _renderBookTabInto(el, resultId){
 
       <!-- 직통/환승 선택 + 조회 버튼 -->
       <div style="display:flex;gap:8px;margin-bottom:0">
-        <select id="book-transfer-sel" style="flex:1;background:var(--bg3);border:1px solid var(--border);border-radius:10px;color:var(--text1);font-family:var(--sans);font-size:14px;padding:0 12px;outline:none;cursor:pointer;color-scheme:dark">
+        <select id="book-transfer-sel" onchange="_toggleAdjInfoBtn(this)" style="flex:1;background:var(--bg3);border:1px solid var(--border);border-radius:10px;color:var(--text1);font-family:var(--sans);font-size:14px;padding:0 12px;outline:none;cursor:pointer;color-scheme:dark">
           <option value="direct">직통</option>
           <option value="transfer">환승 포함</option>
           <option value="adjacent">인접역 포함</option>
         </select>
-        <button onclick="openAdjInfo()" title="인접역 취급 기준·목록" style="flex-shrink:0;width:42px;border-radius:10px;border:1px solid var(--border);background:var(--bg3);color:var(--text2);font-size:15px;font-weight:700;cursor:pointer;font-family:var(--sans)">ⓘ</button>
+        <button id="adj-info-btn" onclick="openAdjInfo()" title="인접역 취급 기준·검색" style="display:none;flex-shrink:0;width:42px;border-radius:10px;border:1px solid var(--border);background:var(--bg3);color:var(--text2);font-size:15px;font-weight:700;cursor:pointer;font-family:var(--sans)">ⓘ</button>
         <button class="book-search-btn" style="flex:2" onclick="searchBookTrainsUI()">열차 조회</button>
       </div>
     </div>
@@ -6908,50 +6931,58 @@ function _nearbyTrainStations(name, km){
   }
   return out.sort((a,b)=>a.d-b.d);
 }
-// 인접역 취급 기준·전체 목록 팝업 (예매 화면 ⓘ 버튼)
-let _adjPairsCache=null;
-function _adjPairs(){
-  if(_adjPairsCache)return _adjPairsCache;
-  _modeStnSetsInit();
-  const seen=new Set(), pairs=[];
-  for(const s of (_trainStnSet||[])){
-    for(const nb of _nearbyTrainStations(s)){
-      const key=[s,nb.n].sort().join('|');
-      if(seen.has(key))continue;
-      seen.add(key);
-      pairs.push({a:s,b:nb.n,d:nb.d});
-    }
-  }
-  pairs.sort((x,y)=>x.d-y.d);
-  return _adjPairsCache=pairs;
+// 인접역 ⓘ 버튼: '인접역 포함' 선택 시에만 표시
+function _toggleAdjInfoBtn(sel){
+  const btn=document.getElementById('adj-info-btn');
+  if(btn)btn.style.display=(sel&&sel.value==='adjacent')?'':'none';
 }
+// 인접역 취급 기준 + 역명 검색 팝업 (예매 화면 ⓘ 버튼)
 function openAdjInfo(){
-  const pairs=_adjPairs();
-  const rows=pairs.map(p=>`<div style="display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid var(--border)33;font-size:13px">
-    <span style="flex:1;font-weight:700">${p.a} <span style="color:var(--text3);font-weight:400">↔</span> ${p.b}</span>
-    <span style="font-family:var(--mono);font-size:11px;color:var(--text3)">${p.d.toFixed(1)}km</span>
-  </div>`).join('');
   const bd=document.createElement('div');
-  bd.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:9600;display:flex;align-items:center;justify-content:center;padding:24px';
+  bd.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:9950;display:flex;align-items:center;justify-content:center;padding:24px';
   bd.innerHTML=`<div style="background:var(--bg2);border:1px solid var(--border);border-radius:14px;max-width:360px;width:100%;max-height:80vh;display:flex;flex-direction:column;overflow:hidden">
-    <div style="padding:18px 18px 12px;flex-shrink:0">
+    <div style="padding:18px 18px 10px;flex-shrink:0">
       <div style="font-size:15px;font-weight:800;margin-bottom:10px;color:var(--accent2)">ⓘ 인접역 안내</div>
-      <div class="n-box" style="background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:10px 12px;font-size:12px;line-height:1.7;color:var(--text2)">
+      <div style="background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:10px 12px;font-size:12px;line-height:1.7;color:var(--text2)">
         <b style="color:var(--text1)">취급 기준</b><br>
         · 직선거리 <b style="color:var(--accent2)">10km 이내</b>의 기차 정차역<br>
         · 조회한 역에 정차하는 열차는 제외 (같은 노선 중복 방지)<br>
         · 인접역 열차는 <span style="color:var(--orange)">인접역</span> 표시와 함께 결과에 포함되며, 예매는 실제 발착역 기준으로 진행됩니다
       </div>
-      <div style="font-size:12px;font-weight:700;color:var(--text2);margin-top:12px">인접역 취급 목록 (${pairs.length}쌍 · 거리순)</div>
+      <input id="adj-info-inp" type="text" placeholder="역 이름 검색 (초성 가능, 예: ㅅㅇ)" autocomplete="off"
+        style="width:100%;box-sizing:border-box;margin-top:12px;background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:10px 14px;color:var(--text1);font-size:14px;font-family:var(--sans);outline:none">
     </div>
-    <div style="overflow-y:auto;padding:0 18px;flex:1;min-height:0">${rows||'<div style="color:var(--text3);font-size:12px;padding:8px 0">해당 없음</div>'}</div>
-    <div style="padding:12px 18px 16px;flex-shrink:0">
-      <button data-act="close" style="width:100%;padding:11px;border-radius:10px;border:1px solid var(--accent);background:var(--accent);color:#fff;font-size:13px;font-weight:700;cursor:pointer;font-family:var(--sans)">닫기</button>
+    <div id="adj-info-results" style="overflow-y:auto;padding:0 18px;flex:1;min-height:0">
+      <div style="color:var(--text3);font-size:12px;padding:6px 0 12px">역 이름을 입력하면 그 역의 인접역과 거리가 표시됩니다.</div>
+    </div>
+    <div style="padding:12px 18px 16px;flex-shrink:0;border-top:1px solid var(--border)">
+      <button data-act="close" style="width:100%;padding:11px;border-radius:10px;border:1px solid var(--accent);background:var(--accent);color:#fff;font-size:13px;font-weight:700;cursor:pointer;font-family:var(--sans);touch-action:manipulation">닫기</button>
     </div>
   </div>`;
   document.body.appendChild(bd);
   bd.querySelector('[data-act="close"]').addEventListener('click',()=>bd.remove());
   bd.addEventListener('click',e=>{if(e.target===bd)bd.remove();});
+  const inp=bd.querySelector('#adj-info-inp'), res=bd.querySelector('#adj-info-results');
+  inp.addEventListener('input',()=>{
+    const q=inp.value.trim();
+    if(!q){res.innerHTML='<div style="color:var(--text3);font-size:12px;padding:6px 0 12px">역 이름을 입력하면 그 역의 인접역과 거리가 표시됩니다.</div>';return;}
+    _modeStnSetsInit();
+    const cands=[...(_trainStnSet||[])].filter(s=>matchesQuery(s,q)).sort((a,b)=>a.length-b.length).slice(0,3);
+    if(!cands.length){res.innerHTML='<div style="color:var(--text3);font-size:12px;padding:6px 0 12px">일치하는 기차역이 없습니다.</div>';return;}
+    res.innerHTML=cands.map(stn=>{
+      const nbs=_nearbyTrainStations(stn);
+      const rows=nbs.length?nbs.map(nb=>`<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--border)33;font-size:13px">
+          <span style="flex:1;font-weight:600">${nb.n}</span>
+          <span style="font-family:var(--mono);font-size:11px;color:var(--text3)">${nb.d.toFixed(1)}km</span>
+        </div>`).join('')
+        :'<div style="color:var(--text3);font-size:12px;padding:4px 0 8px">10km 이내 인접역 없음</div>';
+      return `<div style="margin-bottom:12px">
+        <div style="font-size:13px;font-weight:800;padding:6px 0 2px;color:var(--accent2)">🚉 ${stn} <span style="font-weight:400;color:var(--text3);font-size:11px">인접역 ${nbs.length}곳</span></div>
+        ${rows}
+      </div>`;
+    }).join('');
+  });
+  setTimeout(()=>inp.focus(),50);
 }
 // 인접역 안내 팝업 (코레일톡 스타일) — 확인 시 계속 진행
 function _bookAdjConfirm(msg,onOk){
