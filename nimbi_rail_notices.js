@@ -340,5 +340,37 @@ const NOTICES = [
 새 기능의 역 검색은 기존 검색과 동일하게 <strong>초성 검색</strong>(예: ㅅㅇ → 서울)을 지원합니다.<br>
 또한 화면 우상단 ☰ 왼쪽에 <strong>🔄 새로고침 버튼</strong>이 생겨, 어느 탭에서든 현재 화면을 바로 갱신할 수 있습니다.
 </div>`
+  },
+  {
+    date:'2026-07-10',
+    cat:'timetable',
+    title:'🕐 시간표 대개정 — 호남고속선·장항선·전라선·충북선·순천 계통',
+    body:`실제 운행 기록을 바탕으로 여러 계통의 시간표를 신설·정비했습니다. 모든 시각은 <strong>시발역 출발 기준</strong>입니다.<br><br>
+
+<strong>■ 신설·대개편</strong>
+<table>
+<tr><th>계통</th><th>열차</th><th>구간</th><th>편수</th><th>내용</th></tr>
+<tr><td>호남고속선 KTX</td><td>401~460</td><td>마포 ↔ 목포</td><td>60</td><td>마포 착발로 재편</td></tr>
+<tr><td>충북선 막차</td><td>1429·1430</td><td>대전 ↔ 영주</td><td>2</td><td>22시대 막차 신설</td></tr>
+</table>
+<span class="n-highlight" style="display:block;margin:8px 0">호남고속선 KTX는 급행(99분)·일반(103분)·완행(111분) 세 계통, 마포~목포 하루 60편(왕복 30회)입니다. 하행 첫차 401 마포 05:35 / 막차 459 마포 23:18, 상행 첫차 402 목포 05:48 / 막차 460 목포 23:25.</span>
+
+<strong>■ 인게임 실측 시각 반영 (정비)</strong>
+<table>
+<tr><th>계통</th><th>열차</th><th>구간</th><th>편수</th><th>비고</th></tr>
+<tr><td>장항선(서대전)</td><td>1461~1466</td><td>한강로 ↔ 서대전</td><td>6</td><td>정차 시각 정비</td></tr>
+<tr><td>장항선(전주)</td><td>1471~1490</td><td>한강로 ↔ 전주</td><td>20</td><td>정차 시각 정비</td></tr>
+<tr><td>전라선 KTX</td><td>551~582</td><td>서울 ↔ 여수</td><td>32</td><td>통과역 이동시각 정렬</td></tr>
+<tr><td>충북선</td><td>1401~1428</td><td>대전 ↔ 영주</td><td>28</td><td>정차 시각 정비</td></tr>
+<tr><td>순천 계통</td><td>1491~1496</td><td>한강로 ↔ 순천</td><td>6</td><td>35정차 대장정, 시각 정비</td></tr>
+</table>
+
+<strong>■ 운용상 개별 조정</strong>
+<table>
+<tr><th>열차</th><th>변경 전</th><th>변경 후</th><th>비고</th></tr>
+<tr><td>무궁화 1463</td><td>한강로 14:27</td><td>한강로 14:07</td><td>20분 앞당김</td></tr>
+<tr><td>무궁화 1487</td><td>한강로 17:58</td><td>한강로 17:50</td><td>8분 앞당김(운용)</td></tr>
+</table>
+<span class="n-warn" style="display:block;margin-top:8px">모든 변경 시각은 통과·추월 재검증(개활선 무단추월 0건)과 기존 열차와의 시격 점검을 거쳤습니다. 세부 시각은 각 열차 조회에서 확인하실 수 있습니다.</span>`
   }
 ];
