@@ -5080,10 +5080,10 @@ function openQRPopup(ticketId){
           <div class="rt-meta">
             <div><span class="rt-k">날짜</span><span class="rt-v">${tk.travelDate}</span></div>
             <div><span class="rt-k">등급</span><span class="rt-v">${tk.seatClassLabel}</span></div>
-            <div><span class="rt-k">좌석</span><span class="rt-v">${seatSummary(tk.seats)}</span></div>
             <div><span class="rt-k">소요</span><span class="rt-v">${fmtDurKor(durMin(tk.depTime,tk.arrTime))}</span></div>
-            <div><span class="rt-k">인원</span><span class="rt-v">${tk.passengerCount}명${discBadge?' · '+tk.discountLabel:''}</span></div>
+            <div><span class="rt-k">좌석</span><span class="rt-v">${seatSummary(tk.seats)}</span></div>
             <div><span class="rt-k">운임</span><span class="rt-v">${fmtWon(tk.totalFare)}</span></div>
+            <div><span class="rt-k">인원</span><span class="rt-v">${tk.passengerCount}명${discBadge?' · '+tk.discountLabel:''}</span></div>
           </div>
           <div class="rt-perf"></div>
           <div class="rt-qr" id="qr-canvas-wrap"></div>
@@ -5440,10 +5440,7 @@ function renderSeatMap(comp, car, mySeat, amenMap, grade, mySeats){
   const _wide=_wideWindow(grade);
   // 창문 클래스: 넓은 창은 홀수 열에만 2열 span 창, 짝수 열은 창(bar) 없음.
   // 홀수 열이 마지막 열(아래 열 없음)이면 넓은 창 대신 1열 창으로.
-  // 넓은 창: 맨 앞열은 1열짜리 단독 창, 이후로는 짝수열에서 시작하는 2열 걸침 창([2·3],[4·5]…)
-  const winCls=(side,r,total)=> !_wide ? `win ${side}`
-    : (r===1 ? `win ${side}`
-      : (r%2===0 ? (r+1<=total?`win win-wide ${side}`:`win ${side}`) : `${side}`));
+  const winCls=(side,r,total)=>_winClass(grade,side,r,total);
   const c=comp.find(x=>x.car===car);
   if(!c) return '<div style="color:var(--text3);font-size:12px;text-align:center;padding:12px">배치도 정보 없음</div>';
   if(c.type==='free'){
@@ -5946,6 +5943,19 @@ function seatId(car,row,col){
 }
 // 넓은 창(2열당 1창) 차량 판별 — KTX-산천 계열(산천·SRT)과 ITX-마음만 좁은 창(1열당 1창)
 function _wideWindow(grade){ return grade!=='KTX-산천' && grade!=='ITX-마음' && grade!=='SRT'; }
+// 창문 배치 클래스 — 무궁화: 전 구간 2열 정렬창 / KTX 계열: 좌·우 한 열씩 엇갈린 걸침창 / 그 외: 좌석당 1창
+function _winClass(grade, side, r, total){
+  if(!_wideWindow(grade)) return `win ${side}`;
+  if(grade==='무궁화호'){ // [1·2],[3·4]… 양쪽 동일
+    return r%2===1 ? (r+1<=total?`win win-wide ${side}`:`win ${side}`) : `${side}`;
+  }
+  // KTX 계열 걸침: 왼쪽은 홀수행 시작, 오른쪽은 맨앞 단독 + 짝수행 시작 (좌우 엇갈림)
+  if(side==='wl'){
+    return r%2===1 ? (r+1<=total?`win win-wide ${side}`:`win ${side}`) : `${side}`;
+  }
+  if(r===1) return `win ${side}`;
+  return r%2===0 ? (r+1<=total?`win win-wide ${side}`:`win ${side}`) : `${side}`;
+}
 // 콘센트(전원) 위치 — 등급별
 function _seatPower(grade, r, isWindow, totalRows){
   if(grade==='ITX-마음'||grade==='KTX-이음') return true;      // 전좌석
@@ -6070,10 +6080,7 @@ function _renderSeatMap(wrap,t,trainNo,travelDate,seatClass,validCars,booked,com
   }
 
   const _wide=_wideWindow(t.grade);
-  // 넓은 창: 맨 앞열은 1열짜리 단독 창, 이후로는 짝수열에서 시작하는 2열 걸침 창([2·3],[4·5]…)
-  const winCls=(side,r,total)=> !_wide ? `win ${side}`
-    : (r===1 ? `win ${side}`
-      : (r%2===0 ? (r+1<=total?`win win-wide ${side}`:`win ${side}`) : `${side}`));
+  const winCls=(side,r,total)=>_winClass(t.grade,side,r,total);
   function seatHTML(){
     const cols=car.cols;
     const half=Math.ceil(cols.length/2);
