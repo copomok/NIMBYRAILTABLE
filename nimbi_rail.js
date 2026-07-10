@@ -7414,10 +7414,16 @@ function _renderMetroLineDetail(el,id){
           if(r.gap)return `<div class="mtl-gap">지선 · 경유 구간</div>`;
           const isEnd=(i===0||i===rows.length-1)&&r.stop;
           const cls=r.stop?'':' pass';
+          // 환승 노선 칩 (누르면 해당 노선 상세로) + 기차 환승
+          const xf=_metroXferLines(r.n,l.id), hasTrain=_isTrainStn(r.n);
+          const xferHTML=(xf.length||hasTrain)?`<span class="mtl-xfers">${
+            xf.map(x=>`<span class="mtl-xfer" style="--xc:${x.color}" title="${x.name} 환승" onclick="event.stopPropagation();openMetroLine('${x.id}')"><i></i>${x.name}</span>`).join('')
+          }${hasTrain?`<span class="mtl-xfer train" title="기차 환승">🚆</span>`:''}</span>`:'';
           return `<div class="mtl-row${cls}" onclick="openStationDetail('${r.n.replace(/'/g,"\\'")}')">
             <span class="mtl-dot${isEnd?' end':''}"></span>
             <span class="mtl-name${isEnd?' end':''}">${r.n}</span>
             ${isEnd?`<span class="mtl-endtag">${i===0?'기점':'종점'}</span>`:(!r.stop?`<span class="mtl-passtag">통과</span>`:'')}
+            ${xferHTML}
           </div>`;
         }).join('')}
       </div>
