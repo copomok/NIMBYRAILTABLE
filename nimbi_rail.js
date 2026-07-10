@@ -2435,7 +2435,31 @@ function runDataAnomalyCheck(){
   },30);
 }
 
-// 042: 편성 운용(추정) — 종착 후 회차하여 이어가는 열차를 연쇄 추정
+// 042-C: 확정 운용표 — 호남고속선 KTX 10편성 + 충북선 5편성 (조건: 착발역 복귀·짝수·목포 5–10/60+ 회차)
+const CONFIRMED_ROTATION = (()=>{
+  const sets=[
+    {id:'호남 1', seq:['401','416','423','434','441','454']},
+    {id:'호남 2', seq:['402','409','430','437','446','453']},
+    {id:'호남 3', seq:['403','412','419','426','433','444','451','460']},
+    {id:'호남 4', seq:['404','411','420','427','436','443','452','459']},
+    {id:'호남 5', seq:['405','414','421','432','439','448']},
+    {id:'호남 6', seq:['406','413','424','431','442','455']},
+    {id:'호남 7', seq:['407','418','425','438','445','456']},
+    {id:'호남 8', seq:['408','415','422','429','440','447']},
+    {id:'호남 9', seq:['410','417','428','435','450','457']},
+    {id:'호남 10', seq:['449','458']},
+    {id:'충북 1', seq:['1401','1406','1411','1416','1423','1428']},
+    {id:'충북 2', seq:['1402','1405','1410','1419','1424','1429']},
+    {id:'충북 3', seq:['1403','1408','1413','1418','1421','1426']},
+    {id:'충북 4', seq:['1404','1409','1414','1417','1422','1427']},
+    {id:'충북 5', seq:['1407','1412','1415','1420','1425','1430']},
+  ];
+  const m={};
+  sets.forEach(s=>s.seq.forEach((no,i)=>{ m[no]={id:s.id, seq:s.seq, idx:i}; }));
+  return m;
+})();
+
+// 042: 편성 운용 — 확정 운용표 우선, 없으면 종착 회차 기반 추정
 function _rotStart(t){const s=t.stops.filter(x=>hasTime(x.arr)||hasTime(x.dep));return {stn:s[0].s, min:toMin(s[0].dep||s[0].arr)};}
 function _rotEnd(t){const s=t.stops.filter(x=>hasTime(x.arr)||hasTime(x.dep));return {stn:s[s.length-1].s, min:toMin(s[s.length-1].arr||s[s.length-1].dep)};}
 function _estimateRotation(startNo){
@@ -2465,7 +2489,10 @@ function _estimateRotation(startNo){
 }
 function showTrainRotation(no){
   document.getElementById('rotation-wrap')?.remove();
-  const chain=_estimateRotation(no);
+  const conf=CONFIRMED_ROTATION[no];
+  let chain, confirmed=false, setId=null;
+  if(conf){ chain=conf.seq.map(n=>ALL_TRAINS.find(x=>x.no===n)).filter(Boolean); confirmed=chain.length===conf.seq.length; setId=conf.id; }
+  if(!confirmed){ chain=_estimateRotation(no); }
   const fmt=m=>{ if(m==null)return '-'; m=((m%1440)+1440)%1440; return Math.floor(m/60)+':'+String(m%60).padStart(2,'0'); };
   const rows=chain.map((t,i)=>{
     const s=_rotStart(t), e=_rotEnd(t);
@@ -2481,8 +2508,10 @@ function showTrainRotation(no){
   const wrap=document.createElement('div'); wrap.id='rotation-wrap';
   wrap.innerHTML=`<div class="rail-ticket-backdrop" onclick="closeRotation()"></div>
     <div class="rot-popup">
-      <div class="rot-popup-head"><span>🔁 편성 운용 (추정)</span><button class="si-board-close" onclick="closeRotation()">✕</button></div>
-      <div class="rot-note">종착역 회차를 기준으로 같은 편성의 하루 운행을 추정한 것입니다. 실제 편성 운용과 다를 수 있습니다.</div>
+      <div class="rot-popup-head"><span>🔁 편성 운용 ${confirmed?'(확정)':'(추정)'}</span><button class="si-board-close" onclick="closeRotation()">✕</button></div>
+      <div class="rot-note">${confirmed
+        ? `확정 운용표 · <b>${setId}</b> 편성 · 하루 ${chain.length}회 운용 · 착발역 복귀`
+        : '종착역 회차를 기준으로 같은 편성의 하루 운행을 추정한 것입니다. 실제 편성 운용과 다를 수 있습니다.'}</div>
       <div class="rot-list">${rows}</div>
     </div>`;
   document.body.appendChild(wrap);
