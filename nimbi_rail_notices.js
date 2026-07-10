@@ -372,5 +372,19 @@ const NOTICES = [
 <tr><td>무궁화 1487</td><td>한강로 17:58</td><td>한강로 17:50</td><td>8분 앞당김(운용)</td></tr>
 </table>
 <span class="n-warn" style="display:block;margin-top:8px">모든 변경 시각은 통과·추월 재검증(개활선 무단추월 0건)과 기존 열차와의 시격 점검을 거쳤습니다. 세부 시각은 각 열차 조회에서 확인하실 수 있습니다.</span>`
+  },
+  {
+    date:'2026-07-10',
+    cat:'timetable',
+    title:'📋 신설·개정 열차 전체 시각표 (참조용 페이지)',
+    body:`이번 시간표 대개정으로 <strong>신설·정비된 156편</strong>의 전 정차 시각을 계통별 표로 정리한 참조 페이지를 공개합니다.<br><br>
+<div class="n-box">
+계통별(호남고속선 KTX·장항선·전라선 KTX·충북선·순천 계통)로 <strong>하행/상행 시각표</strong>가 정리되어 있으며,<br>
+· 행 = 역명(운행 순서), 열 = 열차번호<br>
+· 통과역 시각은 흐리게 표시<br>
+· 역명·열차번호는 스크롤해도 고정
+</div><br>
+<a href="https://claude.ai/code/artifact/3aec6ea0-542e-44df-8a2c-c6f25bea8d25" target="_blank" rel="noopener noreferrer" style="display:inline-block;padding:10px 18px;border-radius:10px;background:var(--accent);color:#fff;font-weight:700;text-decoration:none">🔗 전체 시각표 열기</a><br><br>
+<span class="n-highlight">모든 시각은 통과·추월 재검증을 거친 값이며, 세부 역별 시각은 각 열차 조회에서도 확인하실 수 있습니다.</span>`
   }
 ];
