@@ -7847,6 +7847,32 @@ function renderSICard(name){
       <div style="padding:12px 16px 4px">
         <button class="si-board-btn" onclick="openStationBoard('${nameEsc}')">🚉 출발 안내 전광판 열기</button>
       </div>
+      ${_appMode==='metro'?(()=>{ // 🚇 전철: 노선(route)별 전역/다음역 — 경유 노선·지선 분기 모두 표시
+        if(typeof METRO_LINES==='undefined')return '';
+        const rows=[];
+        METRO_LINES.forEach(l=>{
+          (l.routes||[{stations:l.stations}]).forEach(r=>{
+            const i=r.stations.indexOf(trainName);
+            if(i<0)return;
+            const prev=i>0?r.stations[i-1]:null, next=i<r.stations.length-1?r.stations[i+1]:null;
+            if(!prev&&!next)return;
+            rows.push({l,dash:!!r.dash,prev,next});
+          });
+        });
+        const seen=new Set(), uniq=[];
+        rows.forEach(x=>{const k=x.l.id+'|'+(x.prev||'')+'|'+(x.next||'');if(!seen.has(k)){seen.add(k);uniq.push(x);}});
+        if(!uniq.length)return '';
+        const btn=(stn,arrow)=>stn
+          ?`<button onclick="openStationDetail('${stn.replace(/'/g,"\\'")}')" style="flex:1;min-width:0;padding:7px 10px;border-radius:9px;border:1px solid var(--border);background:var(--bg3);color:var(--text1);font-size:12px;font-weight:700;cursor:pointer;font-family:var(--sans);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:${arrow==='prev'?'left':'right'}">${arrow==='prev'?'← '+stn:stn+' →'}</button>`
+          :`<span style="flex:1;min-width:0;padding:7px 10px;font-size:11px;color:var(--text3);text-align:${arrow==='prev'?'left':'right'}">${arrow==='prev'?'기점':'종점'}</span>`;
+        return `<div style="padding:12px 16px;border-bottom:1px solid var(--border)">
+          <div style="font-size:12px;font-weight:700;color:var(--text2);margin-bottom:8px">🚇 전역 · 다음역</div>
+          ${uniq.map(x=>`<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+            <span style="flex-shrink:0;display:inline-flex;align-items:center;gap:5px;width:86px;font-size:11px;font-weight:700;color:${x.l.color};overflow:hidden"><span style="width:8px;height:8px;border-radius:50%;background:${x.l.color};flex-shrink:0"></span><span style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${x.l.name}${x.dash?' ·지선':''}</span></span>
+            ${btn(x.prev,'prev')}${btn(x.next,'next')}
+          </div>`).join('')}
+        </div>`;
+      })():''}
       ${platforms.length>0?`
       <div style="padding:12px 16px;border-bottom:1px solid var(--border)">
         <div style="font-size:12px;font-weight:700;color:var(--text2);margin-bottom:8px">🚉 홈 선택</div>
