@@ -5079,7 +5079,8 @@ function openQRPopup(ticketId){
           </div>
           <div class="rt-meta">
             <div><span class="rt-k">날짜</span><span class="rt-v">${tk.travelDate}</span></div>
-            <div><span class="rt-k">좌석</span><span class="rt-v">${tk.seatClassLabel} · ${tk.seats.join(', ')}</span></div>
+            <div><span class="rt-k">등급</span><span class="rt-v">${tk.seatClassLabel}</span></div>
+            <div><span class="rt-k">좌석</span><span class="rt-v">${seatSummary(tk.seats)}</span></div>
             <div><span class="rt-k">소요</span><span class="rt-v">${fmtDurKor(durMin(tk.depTime,tk.arrTime))}</span></div>
             <div><span class="rt-k">인원</span><span class="rt-v">${tk.passengerCount}명${discBadge?' · '+tk.discountLabel:''}</span></div>
             <div><span class="rt-k">운임</span><span class="rt-v">${fmtWon(tk.totalFare)}</span></div>
@@ -5094,7 +5095,7 @@ function openQRPopup(ticketId){
         </div>
         <div class="rail-ticket rt-face rt-back" style="--tk:${gradeC}" id="rt-back">
           <div class="rt-back-head">
-            <span>🚆 ${tk.grade} ${tk.trainNo} · ${tk.seatClassLabel} ${tk.seats.join(', ')}</span>
+            <span>🚆 ${tk.grade} ${tk.trainNo} · ${tk.seatClassLabel} ${seatSummary(tk.seats)}</span>
             <button class="tcard-back-btn" onclick="flipRailTicket()">← 승차권</button>
           </div>
           <div class="rt-back-body" id="rt-back-body"></div>
@@ -5282,6 +5283,13 @@ function parseSeat(str){
   if(nm) return { car, seatNum:parseInt(nm[1]) };
   return car!==null ? { car } : null;
 }
+function parseSeats(seats){ return (seats||[]).map(parseSeat).filter(Boolean); }
+// 좌석 요약: 1석은 그대로, 다인석은 "첫좌석 외 N석"
+function seatSummary(seats){
+  if(!seats||!seats.length) return '-';
+  if(seats.length===1) return String(seats[0]);
+  return `${seats[0]} 외 ${seats.length-1}석`;
+}
 function openFormationPopup(ticketId){
   const tk=loadTickets().find(t=>t.id===ticketId);
   if(!tk){ return; }
@@ -5289,14 +5297,15 @@ function openFormationPopup(ticketId){
   const formType=getFormationType(tk.grade, tk.trainNo);
   const comp=getCarComposition(formType);
   const amen=getCarAmenities(formType, comp);
-  const mySeat=parseSeat(tk.seats && tk.seats[0]);
+  const mySeats=parseSeats(tk.seats);
+  const mySeat=mySeats[0]||null;
   const myCar = mySeat ? mySeat.car : null;
   const gradeC=`var(--c-${gcCssVar(tk.grade)})`;
-  window._fmtCtx={ formType, comp, amen, mySeat, tk };
+  window._fmtCtx={ formType, comp, amen, mySeat, mySeats, tk };
 
   // 편성도 (차량 카드들)
   const carsHtml=comp.map(c=>{
-    const isMine = myCar!==null && c.car===myCar;
+    const isMine = mySeats.some(s=>s.car===c.car);
     const a=(amen[c.car]||[]).map(x=>x.emoji).join('');
     return `<div class="fmt-car t-${c.type}${isMine?' sel':''}" onclick="selectFmtCar(${c.car})" id="fmt-car-${c.car}">
       ${isMine?'<span class="fmt-car-mine">내 좌석</span>':''}
@@ -5327,7 +5336,7 @@ function openFormationPopup(ticketId){
         <div class="fmt-head">
           <span class="fmt-head-grade" style="color:${gradeC}">${tk.grade}</span>
           <span class="fmt-head-no">${tk.trainNo}</span>
-          <span style="font-size:12px;color:var(--text2)">${tk.seatClassLabel} · ${(tk.seats||[]).join(', ')}</span>
+          <span style="font-size:12px;color:var(--text2)">${tk.seatClassLabel} · ${seatSummary(tk.seats)}</span>
           <button class="fmt-head-close" onclick="closeFormationPopup()">✕</button>
         </div>
         <div class="fmt-body">
@@ -5347,10 +5356,11 @@ function renderFormationContent(tk){
   const formType=getFormationType(tk.grade, tk.trainNo);
   const comp=getCarComposition(formType);
   const amen=getCarAmenities(formType, comp);
-  const mySeat=parseSeat(tk.seats && tk.seats[0]);
+  const mySeats=parseSeats(tk.seats);
+  const mySeat=mySeats[0]||null;
   const myCar = mySeat ? mySeat.car : (comp.find(c=>c.type!=='free')?.car||1);
   const carsHtml=comp.map(c=>{
-    const isMine = mySeat && c.car===mySeat.car;
+    const isMine = mySeats.some(s=>s.car===c.car);
     const a=(amen[c.car]||[]).map(x=>x.emoji).join('');
     return `<div class="fmt-car t-${c.type}${isMine?' sel':''}">
       ${isMine?'<span class="fmt-car-mine">내 좌석</span>':''}
@@ -5374,7 +5384,7 @@ function renderFormationContent(tk){
     <div class="fmt-train"><div class="fmt-loco"></div>${carsHtml}</div>
     ${platMsg}
     <div class="fmt-sec-label">💺 좌석 배치도 · ${myCar}호차</div>
-    ${renderSeatMap(comp, myCar, mySeat, amen, tk.grade)}
+    ${renderSeatMap(comp, myCar, mySeat, amen, tk.grade, mySeats)}
   `;
 }
 // 승차권 카드 뒤집기 (앞↔뒤). 뒷면 편성/좌석은 최초 뒤집을 때 렌더
@@ -5424,20 +5434,24 @@ function selectFmtCar(car){
   const myCar = ctx.mySeat ? ctx.mySeat.car : null;
   if(myCar!==null){ const mEl=document.getElementById('fmt-car-'+myCar); if(mEl) mEl.classList.add('sel'); }
   const box=document.getElementById('fmt-seatmap');
-  if(box) box.innerHTML=renderSeatMap(ctx.comp, car, ctx.mySeat, ctx.amen, ctx.tk&&ctx.tk.grade);
+  if(box) box.innerHTML=renderSeatMap(ctx.comp, car, ctx.mySeat, ctx.amen, ctx.tk&&ctx.tk.grade, ctx.mySeats);
 }
-function renderSeatMap(comp, car, mySeat, amenMap, grade){
+function renderSeatMap(comp, car, mySeat, amenMap, grade, mySeats){
   const _wide=_wideWindow(grade);
   // 창문 클래스: 넓은 창은 홀수 열에만 2열 span 창, 짝수 열은 창(bar) 없음.
   // 홀수 열이 마지막 열(아래 열 없음)이면 넓은 창 대신 1열 창으로.
+  // 넓은 창: 맨 앞열은 1열짜리 단독 창, 이후로는 짝수열에서 시작하는 2열 걸침 창([2·3],[4·5]…)
   const winCls=(side,r,total)=> !_wide ? `win ${side}`
-    : (r%2===1 ? (r+1<=total?`win win-wide ${side}`:`win ${side}`) : `${side}`);
+    : (r===1 ? `win ${side}`
+      : (r%2===0 ? (r+1<=total?`win win-wide ${side}`:`win ${side}`) : `${side}`));
   const c=comp.find(x=>x.car===car);
   if(!c) return '<div style="color:var(--text3);font-size:12px;text-align:center;padding:12px">배치도 정보 없음</div>';
   if(c.type==='free'){
     return `<div class="seatmap"><div class="seatmap-caption">🚉 <b>${car}호차 · 자유석</b><br><span style="color:var(--text3)">지정 좌석이 없는 입석/자유석 칸입니다.</span></div></div>`;
   }
-  const isMineCar = mySeat && mySeat.car===car;
+  const _seats = (mySeats&&mySeats.length)?mySeats:(mySeat?[mySeat]:[]);
+  const carSeats = _seats.filter(s=>s&&s.car===car);
+  const isMineCar = carSeats.length>0;
   const amenTags=(amenMap[car]||[]).map(a=>`${a.emoji} ${a.label}`).join(' · ');
   const legend=`
     <div class="seat-legend">
@@ -5462,7 +5476,7 @@ function renderSeatMap(comp, car, mySeat, amenMap, grade){
         else{
           const isWindow=idx===0||idx===per-1;
           const winSide=idx===0?'wl':'wr';
-          const mine=isMineCar && mySeat.seatNum===n;
+          const mine=carSeats.some(s=>s.seatNum===n);
           const cls=['seat'];
           if(isWindow) cls.push(...winCls(winSide,r,nRows).split(' '));
           if(_seatPower(grade,r,isWindow,nRows)) cls.push('power');
@@ -5474,11 +5488,11 @@ function renderSeatMap(comp, car, mySeat, amenMap, grade){
       }
       rowsHtml+=`<div class="seatmap-row">${cells}</div>`;
     }
-    const seatStr=isMineCar&&mySeat.seatNum?`${car}호차 ${mySeat.seatNum}번`:'';
+    const seatStr=carSeats.map(s=>s.seatNum+'번').filter(x=>x!=='undefined번').join(', ');
     return `${legend}
     <div class="seatmap">
       <div class="seatmap-grid">${rowsHtml}</div>
-      ${isMineCar&&mySeat.seatNum?`<div class="seatmap-caption">내 좌석 <b>${seatStr}</b> · 창측/콘센트 표시 참고</div>`
+      ${isMineCar&&seatStr?`<div class="seatmap-caption">내 좌석 <b>${car}호차 ${seatStr}</b> · 창측/콘센트 표시 참고</div>`
         :`<div class="seatmap-caption" style="color:var(--text3)">${car}호차 배치도 (좌석 1~${total}번)</div>`}
     </div>`;
   }
@@ -5502,7 +5516,7 @@ function renderSeatMap(comp, car, mySeat, amenMap, grade){
       else {
         const isWindow = idx===0 || idx===cols.length-1;
         const winSide = idx===0?'wl':'wr';
-        const mine = isMineCar && mySeat.row===r && String(mySeat.col)===String(col);
+        const mine = carSeats.some(s=>s.row===r && String(s.col)===String(col));
         const cls=['seat'];
         if(isWindow){ cls.push(...winCls(winSide,r,rows).split(' ')); }
         if(_seatPower(grade,r,isWindow,rows)) cls.push('power');
@@ -5517,13 +5531,13 @@ function renderSeatMap(comp, car, mySeat, amenMap, grade){
     });
     rowsHtml+=`<div class="seatmap-row"><span class="seatmap-rownum">${r}</span>${cells}</div>`;
   }
-  const seatStr=isMineCar?`${car}호차 ${mySeat.row}${mySeat.col}`:'';
+  const seatStr=carSeats.map(s=>`${s.row}${s.col}`).join(', ');
   return `${legend}
     <div class="seatmap">
       ${showDir?'<div class="seatmap-dir-legend"><span class="seatmap-arrow fwd">▲</span>순방향 <span class="seatmap-arrow rev">▽</span>역방향</div>':''}
       <div class="seatmap-grid">${rowsHtml}</div>
-      ${isMineCar?`<div class="seatmap-caption">내 좌석 <b>${seatStr}</b> · 창측/콘센트 표시 참고</div>`
-        :`<div class="seatmap-caption" style="color:var(--text3)">${car}호차 배치도 (내 좌석은 ${mySeat?mySeat.car+'호차':'-'})</div>`}
+      ${isMineCar?`<div class="seatmap-caption">내 좌석 <b>${car}호차 ${seatStr}</b> · 창측/콘센트 표시 참고</div>`
+        :`<div class="seatmap-caption" style="color:var(--text3)">${car}호차 배치도 (내 좌석은 ${_seats[0]?_seats[0].car+'호차':'-'})</div>`}
     </div>`;
 }
 function closeFormationPopup(){ document.getElementById('fmt-popup-wrap')?.remove(); }
@@ -5948,12 +5962,15 @@ let _seatCarIdx=0;
 // 003: 좌석 선호 (다중) — pos:창측/복도, dir:순/역방향, zone:앞/뒤, pw:콘센트 — 저장됨
 let _seatPrefs=(()=>{try{const s=localStorage.getItem('nimbi_seatprefs');return new Set(s?JSON.parse(s):[]);}catch(e){return new Set();}})();
 const _PREF_GROUP={window:'pos',aisle:'pos',fwd:'dir',rev:'dir',front:'zone',rear:'zone',power:'pw'};
+let _seatPrefOpen=false;
 function toggleSeatPref(p){
   if(_seatPrefs.has(p)) _seatPrefs.delete(p);
   else { const g=_PREF_GROUP[p]; for(const x of [..._seatPrefs]) if(_PREF_GROUP[x]===g) _seatPrefs.delete(x); _seatPrefs.add(p); }
   try{localStorage.setItem('nimbi_seatprefs',JSON.stringify([..._seatPrefs]));}catch(e){}
   switchSeatCar(_seatCarIdx);
 }
+function toggleSeatPrefPanel(){ _seatPrefOpen=!_seatPrefOpen; const p=document.getElementById('seat-pref-panel'); if(p)p.classList.toggle('open',_seatPrefOpen); const b=document.getElementById('pref-toggle-btn'); if(b)b.classList.toggle('open',_seatPrefOpen); }
+function clearSeatPrefs(){ _seatPrefs.clear(); try{localStorage.setItem('nimbi_seatprefs','[]');}catch(e){} switchSeatCar(_seatCarIdx); }
 // 003·004: 좌석 자동 배정 (선호/인접/마주보기)
 function _seatAutoPick(mode){
   const wrap=document.getElementById('seat-selector-wrap'); if(!wrap)return;
@@ -5987,9 +6004,10 @@ function _seatAutoPick(mode){
     const order=[];
     for(let r=1;r<=car.rows;r++) cols.forEach((col,idx)=>{ if(avail(r,col)) order.push({r,col,idx}); });
     let pool=order.filter(matches);
-    if(pool.length<count) pool=order; // 조건 만족 좌석이 부족하면 전체에서 배정
-    for(let i=pool.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [pool[i],pool[j]]=[pool[j],pool[i]]; } // 100% 랜덤
+    if(!pool.length){ alert('선호 조건에 맞는 빈 좌석이 이 호차에 없습니다.\n조건을 줄이거나 다른 호차를 확인해 주세요.'); return; }
+    for(let i=pool.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [pool[i],pool[j]]=[pool[j],pool[i]]; } // 조건 내 랜덤
     pick=pool.slice(0,count).map(s=>seatId(car,s.r,s.col));
+    if(pick.length<count){ setTimeout(()=>alert(`선호 조건에 맞는 좌석이 ${pick.length}석뿐입니다.\n나머지는 직접 선택하거나 조건을 줄여 주세요.`),50); }
   } else if(mode==='adjacent'){
     outer: for(let r=1;r<=car.rows;r++) for(let s=0;s+count<=n;s++){
       let ok=true; for(let k=0;k<count;k++){ if(!avail(r,cols[s+k])){ok=false;break;} }
@@ -6052,8 +6070,10 @@ function _renderSeatMap(wrap,t,trainNo,travelDate,seatClass,validCars,booked,com
   }
 
   const _wide=_wideWindow(t.grade);
+  // 넓은 창: 맨 앞열은 1열짜리 단독 창, 이후로는 짝수열에서 시작하는 2열 걸침 창([2·3],[4·5]…)
   const winCls=(side,r,total)=> !_wide ? `win ${side}`
-    : (r%2===1 ? (r+1<=total?`win win-wide ${side}`:`win ${side}`) : `${side}`);
+    : (r===1 ? `win ${side}`
+      : (r%2===0 ? (r+1<=total?`win win-wide ${side}`:`win ${side}`) : `${side}`));
   function seatHTML(){
     const cols=car.cols;
     const half=Math.ceil(cols.length/2);
@@ -6116,7 +6136,12 @@ function _renderSeatMap(wrap,t,trainNo,travelDate,seatClass,validCars,booked,com
       <div style="font-size:11px;color:var(--text3)">내측 창측</div>
     </div>
     <div class="seat-auto-bar">
-      <span class="seat-auto-label">선호</span>
+      <button class="seat-auto-chip act" onclick="_seatAutoPick('pref')">✨ 자동 배정</button>
+      ${count>=2?`<button class="seat-auto-chip act" onclick="_seatAutoPick('adjacent')">👥 인접</button>`:''}
+      ${count===4?`<button class="seat-auto-chip act" onclick="_seatAutoPick('facing')">🔄 마주</button>`:''}
+      <button class="seat-auto-chip pref-toggle${_seatPrefs.size?' on':''}${_seatPrefOpen?' open':''}" id="pref-toggle-btn" onclick="toggleSeatPrefPanel()">🎯 선호${_seatPrefs.size?` (${_seatPrefs.size})`:''} <span class="pref-caret">▾</span></button>
+    </div>
+    <div class="seat-pref-panel${_seatPrefOpen?' open':''}" id="seat-pref-panel">
       <button class="seat-auto-chip${_seatPrefs.has('window')?' on':''}" onclick="toggleSeatPref('window')">🪟 창측</button>
       ${car.cols.length>2?`<button class="seat-auto-chip${_seatPrefs.has('aisle')?' on':''}" onclick="toggleSeatPref('aisle')">🚶 복도</button>`:''}
       <button class="seat-auto-chip${_seatPrefs.has('power')?' on':''}" onclick="toggleSeatPref('power')">⚡ 콘센트</button>
@@ -6124,10 +6149,7 @@ function _renderSeatMap(wrap,t,trainNo,travelDate,seatClass,validCars,booked,com
       <button class="seat-auto-chip${_seatPrefs.has('rear')?' on':''}" onclick="toggleSeatPref('rear')">⬇ 뒤쪽</button>
       ${showDir?`<button class="seat-auto-chip${_seatPrefs.has('fwd')?' on':''}" onclick="toggleSeatPref('fwd')">▲ 순방향</button>
       <button class="seat-auto-chip${_seatPrefs.has('rev')?' on':''}" onclick="toggleSeatPref('rev')">▽ 역방향</button>`:''}
-      <span class="seat-auto-sep"></span>
-      <button class="seat-auto-chip act" onclick="_seatAutoPick('pref')">✨ 선호 자동</button>
-      ${count>=2?`<button class="seat-auto-chip act" onclick="_seatAutoPick('adjacent')">👥 인접 ${count}석</button>`:''}
-      ${count===4?`<button class="seat-auto-chip act" onclick="_seatAutoPick('facing')">🔄 마주보기</button>`:''}
+      ${_seatPrefs.size?`<button class="seat-auto-chip pref-clear" onclick="clearSeatPrefs()">✕ 초기화</button>`:''}
     </div>
     <div class="seat-map">${isFreeCar
       ? `<div class="seatmap"><div class="seatmap-caption" style="margin-top:48px;font-size:13px">🚉 <b>${car.car}호차 · ${car.label||'자유석'}</b><br><br><span style="color:var(--text3)">지정 좌석이 없는 입석·자유석 전용 칸입니다.<br>좌석 선택 없이 예매해 주세요.</span></div></div>`
@@ -6240,7 +6262,7 @@ function renderTripWidget(active){
         <span style="color:var(--text3)">→</span>
         <span>${ticket.toStn} <span style="font-family:var(--mono);color:var(--green)">${ticket.arrTime||''}</span> 도착</span>
       </div>
-      <div class="trip-widget-preboard-seat">${ticket.seatClassLabel} · ${ticket.seats.join(', ')}</div>
+      <div class="trip-widget-preboard-seat">${ticket.seatClassLabel} · ${seatSummary(ticket.seats)}</div>
     </div>`;
   }
 
@@ -6261,7 +6283,7 @@ function renderTripWidget(active){
         <span style="color:var(--text3)">→</span>
         <span>${ticket.toStn} <span style="font-family:var(--mono);color:var(--green)">${ticket.arrTime||''}</span> 도착</span>
       </div>
-      <div class="trip-widget-preboard-seat">${ticket.seatClassLabel} · ${ticket.seats.join(', ')}</div>
+      <div class="trip-widget-preboard-seat">${ticket.seatClassLabel} · ${seatSummary(ticket.seats)}</div>
     </div>`;
   }
 
@@ -6558,7 +6580,7 @@ function renderTickets(){
 function _ticketCardHTML(tk){
     const c=gc(tk.grade);
     const cancelledCls=tk.status==='cancelled'?' ticket-cancelled':'';
-    const seatList=tk.seats.join(', ');
+    const seatList=seatSummary(tk.seats);
     const _tkt=ALL_TRAINS.find(x=>x.no===tk.trainNo);
     const tkDistKm=tk.distanceKm||(_tkt?Math.round(routeDistanceKm(_tkt,tk.fromStn,tk.toStn)):0);
     return `<div class="ticket-card${cancelledCls}" onclick="openQRPopup('${tk.id}')">
@@ -6579,7 +6601,8 @@ function _ticketCardHTML(tk){
       <div class="ticket-card-divider"></div>
       <div class="ticket-card-info">
         <div class="ticket-info-row"><span>탑승일</span><span>${tk.travelDate}</span></div>
-        <div class="ticket-info-row"><span>좌석</span><span>${tk.seatClassLabel} · ${seatList}</span></div>
+        <div class="ticket-info-row"><span>등급</span><span>${tk.seatClassLabel}</span></div>
+        <div class="ticket-info-row"><span>좌석</span><span>${seatList}</span></div>
         <div class="ticket-info-row"><span>소요</span><span>${fmtDurKor(durMin(tk.depTime,tk.arrTime))}</span></div>
         <div class="ticket-info-row"><span>인원</span><span>${tk.passengerCount}명</span></div>
         <div class="ticket-info-row"><span>운임</span><span class="ticket-fare">${tk.totalFare.toLocaleString()}원</span></div>
