@@ -7831,7 +7831,7 @@ function renderSICard(name){
           }
           const grades=[...new Set(trains.map(t=>t.grade))];
           if(!grades.length)return '';
-          const ORD=['KTX','KTX-산천','KTX-이음','ITX-청춘','ITX-새마을','ITX-마음','무궁화호'];
+          const ORD=['KTX','SRT','KTX-산천','KTX-이음','ITX-청춘','ITX-새마을','ITX-마음','무궁화호'];
           grades.sort((a,b)=>{
             const ia=ORD.indexOf(a), ib=ORD.indexOf(b);
             return (ia<0?99:ia)-(ib<0?99:ib);
