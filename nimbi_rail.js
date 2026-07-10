@@ -5791,17 +5791,22 @@ function renderPassSection(){
 // 🪑 열차 편성 & 좌석 배치 시스템
 // ══════════════════════════════════════════
 function getFormationType(grade, trainNo){
+  const n=parseInt(trainNo);
   if(grade==='KTX-이음') return 'ktx-eum';
-  if(grade==='KTX-산천') return 'ktx-sancheon';
+  if(grade==='KTX-산천'){
+    if(n>=251&&n<=258) return 'ktx-sancheon-4'; // 한강로-창녕 4량
+    return 'ktx-sancheon';
+  }
   if(grade==='KTX'){
-    const n=parseInt(trainNo);
+    if(n>=401&&n<=460) return 'ktx-mokpo'; // 마포-목포 10량
     if((n>=501&&n<=529)||(n>=701&&n<=773)) return 'ktx-eum';
     if((n>=151&&n<=181)||(n>=231&&n<=258)||(n>=551&&n<=582)) return 'ktx-sancheon';
     return 'ktx-1';
   }
   if(grade==='SRT') return 'ktx-sancheon';
   if(grade==='ITX-청춘') return 'itx-cc';
-  if(grade==='ITX-새마을'||grade==='ITX-마음') return 'itx-sm';
+  if(grade==='ITX-새마을') return 'itx-sm';
+  if(grade==='ITX-마음') return 'itx-maum'; // 한강로-충주 4량
   if(grade==='무궁화호') return 'mgh';
   return 'mgh';
 }
@@ -5826,6 +5831,21 @@ function getCarComposition(formType){
         {car:9,type:'free',label:'자유석',totalSeats:0},
         {car:10,type:'free',label:'자유석',totalSeats:0},
       ];
+    case 'ktx-sancheon-4':
+      // KTX-산천 한강로-창녕 4량: 특실1 + 일반2 + 자유석1
+      return [
+        {car:1,type:'special',label:'특실',rows:11,cols:['A','B','C'],totalSeats:33},
+        {car:2,type:'general',label:'일반실',rows:15,cols:['A','B','C','D'],revRows:0,totalSeats:60},
+        {car:3,type:'general',label:'일반실',rows:15,cols:['A','B','C','D'],revRows:0,totalSeats:60},
+        {car:4,type:'free',label:'자유석',totalSeats:0},
+      ];
+    case 'ktx-mokpo':
+      // KTX 마포-목포 10량: 특실1 + 일반8(1~4열 역방향) + 자유석1
+      return [
+        {car:1,type:'special',label:'특실',rows:11,cols:['A','B','C'],totalSeats:33},
+        ...Array.from({length:8},(_,i)=>({car:i+2,type:'general',label:'일반실',rows:15,cols:['A','B','C','D'],revRows:4,totalSeats:60})),
+        {car:10,type:'free',label:'자유석',totalSeats:0},
+      ];
     case 'ktx-eum':
       // 일반실: 1~19열 전부 순방향, 19열은 A·B만 (C·D 없음)
       return [
@@ -5839,10 +5859,20 @@ function getCarComposition(formType){
       return Array.from({length:10},(_,i)=>({car:i+1,type:'general',label:'일반실',rows:13,cols:['A','B','C','D'],revRows:0,totalSeats:52}));
     case 'itx-sm':
       return Array.from({length:6},(_,i)=>({car:i+1,type:'general',label:'일반실',rows:13,cols:['A','B','C','D'],revRows:0,totalSeats:52}));
+    case 'itx-maum':
+      // ITX-마음 한강로-충주 4량
+      return Array.from({length:4},(_,i)=>({car:i+1,type:'general',label:'일반실',rows:13,cols:['A','B','C','D'],revRows:0,totalSeats:52}));
     case 'mgh':
     default:
-      // 무궁화: 좌석 1~72 연번, 4석 1열 (18열)
-      return Array.from({length:8},(_,i)=>({car:i+1,type:'general',label:'일반실',numbered:true,rows:18,cols:['1','2','3','4'],perRow:4,totalSeats:72}));
+      // 무궁화 6량: 4호차 카페객차(입석·좌석0), 나머지 5량 좌석 1~72 연번 4석 1열(18열)
+      return [
+        {car:1,type:'general',label:'일반실',numbered:true,rows:18,cols:['1','2','3','4'],perRow:4,totalSeats:72},
+        {car:2,type:'general',label:'일반실',numbered:true,rows:18,cols:['1','2','3','4'],perRow:4,totalSeats:72},
+        {car:3,type:'general',label:'일반실',numbered:true,rows:18,cols:['1','2','3','4'],perRow:4,totalSeats:72},
+        {car:4,type:'free',label:'카페객차',cafe:true,totalSeats:0},
+        {car:5,type:'general',label:'일반실',numbered:true,rows:18,cols:['1','2','3','4'],perRow:4,totalSeats:72},
+        {car:6,type:'general',label:'일반실',numbered:true,rows:18,cols:['1','2','3','4'],perRow:4,totalSeats:72},
+      ];
   }
 }
 
