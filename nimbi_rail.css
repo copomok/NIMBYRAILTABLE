@@ -1539,6 +1539,13 @@ button, select, input[type=range],
 .seat.seat-pick.taken{opacity:.25;cursor:not-allowed;background:var(--bg3)}
 .seat.seat-pick.sel{background:#3fb950;border-color:#3fb950;color:#04130a;box-shadow:0 0 0 3px rgba(63,185,80,.3);z-index:1}
 .seatmap-grid.pick .seat.aisle{width:16px}
+/* 통로 방향 화살표 (열별 순/역방향) */
+.seat.aisle.seatmap-arrow{font-size:12px;font-weight:900;line-height:1;background:transparent;border:none}
+.seatmap-grid.pick .seat.aisle.seatmap-arrow{width:18px;font-size:14px}
+.seatmap-arrow.fwd{color:#3fb950}
+.seatmap-arrow.rev{color:#e5734d}
+.seatmap-dir-legend{text-align:center;font-size:10px;font-weight:700;color:var(--text3);margin-bottom:8px;display:flex;gap:10px;justify-content:center;align-items:center}
+.seatmap-dir-legend .seatmap-arrow{font-size:12px}
 
 /* ── 역 전광판 (출발 안내 LED) ── */
 .stn-board{background:#05080c;border:1px solid #1b2a36;border-radius:12px;padding:10px 12px 12px;margin:0 16px 4px;box-shadow:inset 0 0 30px rgba(0,40,80,.25)}

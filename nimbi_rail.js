@@ -4808,8 +4808,19 @@ function selectSeatClass(btn,cls){
   const confirmBtn=document.getElementById('booking-confirm-btn');
   if(confirmBtn){confirmBtn.disabled=false;confirmBtn.style.opacity='1';confirmBtn.textContent='🎫 예매하기';}
   const sb=document.getElementById('booking-seat-select-btn');
-  if(sb){sb.disabled=false;sb.style.opacity='1';sb.style.cursor='pointer';window._preselectedSeats=null;
-    const d=document.getElementById('booking-seat-display');if(d)d.textContent='자동 배정';}
+  const d=document.getElementById('booking-seat-display');
+  window._preselectedSeats=null;
+  const isStanding = cls==='standing';
+  if(sb){
+    // 입석/자유석: 지정 좌석이 없으므로 좌석 선택 버튼을 막고 안내로 대체
+    sb.disabled=isStanding;
+    sb.style.opacity=isStanding?'.55':'1';
+    sb.style.cursor=isStanding?'not-allowed':'pointer';
+    sb.innerHTML=isStanding
+      ? '🚉 입석·자유석 전용 칸 <span style="color:var(--text3);font-weight:400">— 좌석 지정 없음</span>'
+      : '🪑 직접 선택 — <span id="booking-seat-display" style="color:var(--accent2)">자동 배정</span>';
+  }
+  if(!isStanding && d) d.textContent='자동 배정';
 }
 function changePassengerCount(delta){
   let n=(window._bookingPassengerCount||1)+delta;
@@ -5465,7 +5476,6 @@ function renderSeatMap(comp, car, mySeat, amenMap, grade){
     const seatStr=isMineCar&&mySeat.seatNum?`${car}호차 ${mySeat.seatNum}번`:'';
     return `${legend}
     <div class="seatmap">
-      <div class="seatmap-dir">◀ 진행방향</div>
       <div class="seatmap-grid">${rowsHtml}</div>
       ${isMineCar&&mySeat.seatNum?`<div class="seatmap-caption">내 좌석 <b>${seatStr}</b> · 창측/콘센트 표시 참고</div>`
         :`<div class="seatmap-caption" style="color:var(--text3)">${car}호차 배치도 (좌석 1~${total}번)</div>`}
@@ -5479,16 +5489,11 @@ function renderSeatMap(comp, car, mySeat, amenMap, grade){
   const missing=new Set(c.missingSeats||[]);
   const half=Math.ceil(cols.length/2); // 통로 위치
   const faceOf = r => r<=revRows ? 'rev' : 'fwd';
+  const showDir = revRows>0; // 역방향 좌석이 있을 때만 방향 화살표
 
-  let rowsHtml='', prevFace=null;
+  let rowsHtml='';
   for(let r=1;r<=rows;r++){
     const face=faceOf(r);
-    if(face!==prevFace){
-      // 방향 그룹 헤더 (해당 방향 열 범위)
-      let end=r; while(end+1<=rows && faceOf(end+1)===face) end++;
-      rowsHtml+=`<div class="seatmap-face ${face}">${face==='fwd'?'▲':'▼'}<span class="seatmap-face-lbl">${r}–${end}열 · ${face==='fwd'?'순방향':'역방향'}</span></div>`;
-      prevFace=face;
-    }
     let cells='';
     cols.forEach((col,idx)=>{
       const code=`${r}${col}`;
@@ -5502,14 +5507,18 @@ function renderSeatMap(comp, car, mySeat, amenMap, grade){
         if(mine) cls.push('mine');
         cells+=`<span class="${cls.join(' ')}">${col}</span>`;
       }
-      if(idx===half-1 && cols.length>2) cells+='<span class="seat aisle"></span>';
+      if(idx===half-1 && cols.length>2){
+        cells+= showDir
+          ? `<span class="seat aisle seatmap-arrow ${face}">${face==='fwd'?'▲':'▽'}</span>`
+          : '<span class="seat aisle"></span>';
+      }
     });
     rowsHtml+=`<div class="seatmap-row"><span class="seatmap-rownum">${r}</span>${cells}</div>`;
   }
   const seatStr=isMineCar?`${car}호차 ${mySeat.row}${mySeat.col}`:'';
   return `${legend}
     <div class="seatmap">
-      <div class="seatmap-dir">◀ 진행방향</div>
+      ${showDir?'<div class="seatmap-dir-legend"><span class="seatmap-arrow fwd">▲</span>순방향 <span class="seatmap-arrow rev">▽</span>역방향</div>':''}
       <div class="seatmap-grid">${rowsHtml}</div>
       ${isMineCar?`<div class="seatmap-caption">내 좌석 <b>${seatStr}</b> · 창측/콘센트 표시 참고</div>`
         :`<div class="seatmap-caption" style="color:var(--text3)">${car}호차 배치도 (내 좌석은 ${mySeat?mySeat.car+'호차':'-'})</div>`}
@@ -5989,11 +5998,12 @@ function _renderSeatMap(wrap,t,trainNo,travelDate,seatClass,validCars,booked,com
   const car=validCars[_seatCarIdx];
   const count=window._bookingPassengerCount||1;
   const missing=new Set(car.missingSeats||[]);
+  const isFreeCar = car.type==='free' || !car.rows; // 자유석/입석 칸: 지정 좌석 없음
   const isKtxType=['ktx-1','ktx-sancheon','ktx-eum'].includes(getFormationType(t.grade,trainNo));
 
-  // 방향 표시: 앞쪽 revRows열=역방향(▽), 나머지=순방향(▲). revRows=0이면 방향 표시 없음.
+  // 방향 표시: 역방향 좌석이 있는 칸(revRows>0)만 통로에 열별 화살표. 역방향 없는 칸(KTX 이외 등)은 방향 미표시.
   const revRows=car.revRows||0;
-  const showDir=isKtxType && revRows>0;
+  const showDir=revRows>0;
 
   // 잔여석 한 번에 계산 (getCarRemaining 반복 호출 방지)
   function calcRem(c){
@@ -6017,16 +6027,9 @@ function _renderSeatMap(wrap,t,trainNo,travelDate,seatClass,validCars,booked,com
     const cols=car.cols;
     const half=Math.ceil(cols.length/2);
     const faceOf=r=>r<=revRows?'rev':'fwd';
-    let html='', prevFace=null;
+    let html='';
     for(let r=1;r<=car.rows;r++){
-      if(showDir){
-        const face=faceOf(r);
-        if(face!==prevFace){
-          let end=r; while(end+1<=car.rows && faceOf(end+1)===face) end++;
-          html+=`<div class="seatmap-face ${face}">${face==='fwd'?'▲':'▼'}<span class="seatmap-face-lbl">${r}–${end}열 · ${face==='fwd'?'순방향':'역방향'}</span></div>`;
-          prevFace=face;
-        }
-      }
+      const face=faceOf(r);
       let cells='';
       cols.forEach((col,idx)=>{
         if(missing.has(`${r}${col}`)){ cells+='<span class="seat seat-pick seat-empty" style="visibility:hidden"></span>'; }
@@ -6040,7 +6043,11 @@ function _renderSeatMap(wrap,t,trainNo,travelDate,seatClass,validCars,booked,com
           if(isB) cls.push('taken'); else if(isS) cls.push('sel');
           cells+=`<button class="${cls.join(' ')}" data-sid="${id}" ${isB?'disabled':''} onclick="toggleSeatBtn('${id}',${count})">${label}</button>`;
         }
-        if(idx===half-1 && cols.length>2) cells+='<span class="seat aisle"></span>';
+        if(idx===half-1 && cols.length>2){
+          cells+= showDir
+            ? `<span class="seat aisle seatmap-arrow ${face}">${face==='fwd'?'▲':'▽'}</span>`
+            : '<span class="seat aisle"></span>';
+        }
       });
       html+=`<div class="seatmap-row"><span class="seatmap-rownum">${r}</span>${cells}</div>`;
     }
@@ -6069,10 +6076,11 @@ function _renderSeatMap(wrap,t,trainNo,travelDate,seatClass,validCars,booked,com
       <span class="seat-legend-item"><span class="seat-dot booked"></span>예약됨</span>
       <span class="seat-legend-item">▮ 창측</span>
       <span class="seat-legend-item">⚡ 콘센트</span>
+      ${showDir?'<span class="seat-legend-item"><span class="seatmap-arrow fwd">▲</span>순방향 <span class="seatmap-arrow rev">▽</span>역방향</span>':''}
     </div>
     <div class="seat-label-row">
       <div style="font-size:11px;color:var(--text3)">창측 내측</div>
-      <div style="font-size:11px;color:var(--text3);font-weight:700">◀ 진행방향</div>
+      <div></div>
       <div style="font-size:11px;color:var(--text3)">내측 창측</div>
     </div>
     <div class="seat-auto-bar">
@@ -6084,7 +6092,9 @@ function _renderSeatMap(wrap,t,trainNo,travelDate,seatClass,validCars,booked,com
       ${count>=2?`<button class="seat-auto-chip act" onclick="_seatAutoPick('adjacent')">👥 인접 ${count}석</button>`:''}
       ${count===4?`<button class="seat-auto-chip act" onclick="_seatAutoPick('facing')">🔄 마주보기</button>`:''}
     </div>
-    <div class="seat-map"><div class="seatmap-grid pick">${seatHTML()}</div></div>
+    <div class="seat-map">${isFreeCar
+      ? `<div class="seatmap"><div class="seatmap-caption" style="margin-top:48px;font-size:13px">🚉 <b>${car.car}호차 · ${car.label||'자유석'}</b><br><br><span style="color:var(--text3)">지정 좌석이 없는 입석·자유석 전용 칸입니다.<br>좌석 선택 없이 예매해 주세요.</span></div></div>`
+      : `<div class="seatmap-grid pick">${seatHTML()}</div>`}</div>
     <div class="seat-footer">
       <div id="seat-footer-info" style="flex:1;font-size:12px;color:var(--text2)">좌석을 선택해주세요 (${count}명)</div>
       <button class="seat-confirm-btn" id="seat-confirm-btn" disabled style="opacity:.5"
@@ -6151,6 +6161,7 @@ function openSeatSelectorFromBooking(trainNo){
   const travelDate=dateInp?.value||window._currentTravelDate||todayLocalStr();
   const seatClass=window._bookingSeatClass||'general';
   if(!window._bookingSeatClass){alert('좌석 등급을 먼저 선택해주세요.');return;}
+  if(seatClass==='standing'){alert('입석·자유석은 지정 좌석이 없는 전용 칸입니다.\n좌석 선택 없이 예매하시면 됩니다.');return;}
   window._bookingPassengerCount = window._bookingPassengerCount||_bookPassengerCount||1;
   openSeatSelector(trainNo,travelDate,seatClass);
 }
