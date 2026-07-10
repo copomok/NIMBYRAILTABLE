@@ -7800,8 +7800,6 @@ function renderSICard(name){
   const trainName=name.endsWith('역')?name.slice(0,-1):name;
   // 통과 열차 제외 — 정차 열차만 (승강장 안내 요건)
   const trains=_stationStoppingTrains(trainName);
-  const gc_count={};
-  trains.forEach(t=>{const g=gc(t.grade);gc_count[g]=(gc_count[g]||0)+1;});
   // 실사용 승강장(게임 DB) 우선 — 실제 정차 열차들이 쓰는 홈 번호만 노출
   let platforms=[];
   {
@@ -7822,17 +7820,27 @@ function renderSICard(name){
           <div style="font-size:11px;color:var(--text2);text-align:right">${platforms.length>0?platforms.length+'개 홈<br>':''}${trains.length}편 경유</div>
         </div>
         ${d?`<div id="si-addr" data-lat="${d.lat}" data-lon="${d.lon}" style="font-size:11px;color:var(--text3);margin-top:4px">📍 ${d.addr||'주소 확인 중…'}</div>`:''}
-        <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:10px">
-          ${Object.entries(gc_count).map(([g,n])=>
-            `<span style="padding:3px 10px;border-radius:12px;font-size:11px;font-weight:600;border:1px solid var(--c-${GC_CSS_VAR[g]||'mgh'});color:var(--c-${GC_CSS_VAR[g]||'mgh'})">${g} ${n}편</span>`
-          ).join('')}
-        </div>
-        ${(()=>{ // 🚇 전철 연계 노선 칩
-          if(typeof METRO_LINES==='undefined')return '';
-          const ml=METRO_LINES.filter(l=>l.stations.includes(trainName));
-          if(!ml.length)return '';
-          return `<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px">
-            ${ml.map(l=>`<span onclick="openMetroLine('${l.id}')" style="cursor:pointer;padding:3px 10px;border-radius:12px;font-size:11px;font-weight:700;background:${l.color}1c;border:1px solid ${l.color};color:${l.color}">🚇 ${l.name}</span>`).join('')}
+        ${(()=>{ // 모드별 라벨: 기차 모드 = 열차 등급만 (편수·약호 없이), 전철 모드 = 전철 노선만
+          if(_appMode==='metro'){
+            if(typeof METRO_LINES==='undefined')return '';
+            const ml=METRO_LINES.filter(l=>l.routes?l.routes.some(r=>r.stations.includes(trainName)):l.stations.includes(trainName));
+            if(!ml.length)return '';
+            return `<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:10px">
+              ${ml.map(l=>`<span onclick="openMetroLine('${l.id}')" style="cursor:pointer;padding:3px 10px;border-radius:12px;font-size:11px;font-weight:700;background:${l.color}1c;border:1px solid ${l.color};color:${l.color}">🚇 ${l.name}</span>`).join('')}
+            </div>`;
+          }
+          const grades=[...new Set(trains.map(t=>t.grade))];
+          if(!grades.length)return '';
+          const ORD=['KTX','KTX-산천','KTX-이음','ITX-청춘','ITX-새마을','ITX-마음','무궁화호'];
+          grades.sort((a,b)=>{
+            const ia=ORD.indexOf(a), ib=ORD.indexOf(b);
+            return (ia<0?99:ia)-(ib<0?99:ib);
+          });
+          return `<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:10px">
+            ${grades.map(g=>{
+              const c=GC_CSS_VAR[gc(g)]||'mgh';
+              return `<span style="padding:3px 10px;border-radius:12px;font-size:11px;font-weight:600;border:1px solid var(--c-${c});color:var(--c-${c})">${g}</span>`;
+            }).join('')}
           </div>`;
         })()}
       </div>
