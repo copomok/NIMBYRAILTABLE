@@ -5794,7 +5794,7 @@ function getFormationType(grade, trainNo){
   const n=parseInt(trainNo);
   if(grade==='KTX-이음') return 'ktx-eum';
   if(grade==='KTX-산천'){
-    if(n>=251&&n<=258) return 'ktx-sancheon-4'; // 한강로-창녕 4량
+    if((n>=251&&n<=258)||n===260) return 'ktx-sancheon-4'; // 한강로-창녕 4량
     return 'ktx-sancheon';
   }
   if(grade==='KTX'){
