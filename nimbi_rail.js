@@ -3785,6 +3785,37 @@ function _isTrainStn(n){
   _modeStnSetsInit();
   return !!(_trainStnSet&&_trainStnSet.has(n));
 }
+// 노선 전체의 역별 환승 표시 맵 — 같은 환승 노선이 3역 이상 연속되면 선로 공유로 보고
+// 구간 양끝(노선이 갈라지는 역)에만 표시한다. 1~2역 공유는 모든 역에 표시.
+function _metroXferMap(l){
+  const res={};
+  if(!l||typeof METRO_LINES==='undefined')return res;
+  const routes=l.routes||[{stations:l.stations}];
+  const uniq=[...new Set(routes.flatMap(r=>r.stations))];
+  const raw={};   // 역 -> 환승 노선 배열 (전체)
+  uniq.forEach(n=>{raw[n]=_metroXferLines(n,l.id);});
+  const cand={};  // id -> line
+  uniq.forEach(n=>raw[n].forEach(x=>{cand[x.id]=x;}));
+  const show={};  // 역 -> 표시할 노선 id Set
+  uniq.forEach(n=>{show[n]=new Set();});
+  for(const x of Object.values(cand)){
+    const has=n=>raw[n]&&raw[n].some(y=>y.id===x.id);
+    for(const r of routes){
+      const st=r.stations;
+      let i=0;
+      while(i<st.length){
+        if(!has(st[i])){i++;continue;}
+        let j=i;
+        while(j+1<st.length&&has(st[j+1]))j++;
+        if(j-i+1>=3){ show[st[i]].add(x.id); show[st[j]].add(x.id); }
+        else { for(let k=i;k<=j;k++)show[st[k]].add(x.id); }
+        i=j+1;
+      }
+    }
+  }
+  uniq.forEach(n=>{res[n]=raw[n].filter(x=>show[n].has(x.id));});
+  return res;
+}
 function showMapLine(lineKey, btn){
   document.querySelectorAll('.map-line-tab').forEach(t=>t.classList.remove('active'));
   if(btn)btn.classList.add('active');
@@ -3883,6 +3914,8 @@ function showMapLine(lineKey, btn){
 
   // 역 점 + 이름 (중복 없이)
   const rendered=new Set();
+  // 전철: 역별 환승 표시 맵 (선로 공유 구간은 양끝만)
+  const _xferMap=(line.isMetro&&typeof METRO_LINES!=='undefined')?_metroXferMap(METRO_LINES.find(x=>x.id===line.metroId)):null;
   routes.forEach(r=>{
     r.stations.forEach((s,i)=>{
       // 동명이역(춘양 등)은 좌표까지 같아야 중복 처리 — 위치가 다르면 각각 표시
@@ -3940,7 +3973,7 @@ function showMapLine(lineKey, btn){
       if(!isMinor) parts.push(`<text x="${tx}" y="${ty}" fill="#e6edf3" font-size="${faded?9.5:(isEnd?12:11)}" font-weight="${isEnd?700:400}" ${faded?'opacity="0.4"':''} text-anchor="${anchor}" pointer-events="none" font-family="Noto Sans KR,sans-serif">${s.n}</text>`);
       // 전철 노선도: 환승 노선 색 점 (역명 옆) + 기차 환승 표시
       if(line.isMetro&&!isMinor&&!faded){
-        const xf=_metroXferLines(s.n, line.metroId);
+        const xf=(_xferMap&&_xferMap[s.n])||[];
         const hasTrain=_isTrainStn(s.n);
         if(xf.length||hasTrain){
           const fs=isEnd?12:11, tw=s.n.length*fs; // 역명 폭 근사
@@ -7410,12 +7443,12 @@ function _renderMetroLineDetail(el,id){
         </div>
       </div>
       <div class="mtl-tl" style="--mc:${l.color}">
-        ${rows.map((r,i)=>{
+        ${(()=>{const _xm=_metroXferMap(l);return rows.map((r,i)=>{
           if(r.gap)return `<div class="mtl-gap">지선 · 경유 구간</div>`;
           const isEnd=(i===0||i===rows.length-1)&&r.stop;
           const cls=r.stop?'':' pass';
-          // 환승 노선 칩 (누르면 해당 노선 상세로) + 기차 환승
-          const xf=_metroXferLines(r.n,l.id), hasTrain=_isTrainStn(r.n);
+          // 환승 노선 칩 (누르면 해당 노선 상세로) + 기차 환승 — 선로 공유 구간은 양끝만
+          const xf=_xm[r.n]||[], hasTrain=_isTrainStn(r.n);
           const xferHTML=(xf.length||hasTrain)?`<span class="mtl-xfers">${
             xf.map(x=>`<span class="mtl-xfer" style="--xc:${x.color}" title="${x.name} 환승" onclick="event.stopPropagation();openMetroLine('${x.id}')"><i></i>${x.name}</span>`).join('')
           }${hasTrain?`<span class="mtl-xfer train" title="기차 환승">🚆</span>`:''}</span>`:'';
@@ -7425,7 +7458,7 @@ function _renderMetroLineDetail(el,id){
             ${isEnd?`<span class="mtl-endtag">${i===0?'기점':'종점'}</span>`:(!r.stop?`<span class="mtl-passtag">통과</span>`:'')}
             ${xferHTML}
           </div>`;
-        }).join('')}
+        }).join('');})()}
       </div>
     </div>`;
   window.scrollTo(0,0);
