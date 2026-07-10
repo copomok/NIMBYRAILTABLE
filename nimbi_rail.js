@@ -7276,20 +7276,29 @@ function _metroPatStops(l,p){
   return set;
 }
 // 계통 운행 구간 시퀀스 — 각 route에서 첫 정차역~마지막 정차역 구간만 취하고, 구간 내 미정차역은 pass 표시
+// 계통 역을 가장 많이 담은 route부터 순회, 이미 담은 역은 건너뜀 (계통별 route가 겹치는 노선 대응)
 function _metroPatSeq(l,p){
   const stops=_metroPatStops(l,p);
   if(!stops.size)return null;
-  const seq=[];
-  for(const r of (l.routes||[{stations:l.stations}])){
+  const routes=(l.routes||[{stations:l.stations}]).slice()
+    .sort((a,b)=>b.stations.filter(s=>stops.has(s)).length-a.stations.filter(s=>stops.has(s)).length);
+  const seq=[]; const seen=new Set();
+  for(const r of routes){
     const idx=r.stations.map((s,i)=>stops.has(s)?i:-1).filter(i=>i>=0);
     if(idx.length<2)continue; // 해당 route에 정차역 1개(분기역 등)뿐이면 운행 구간 아님
     const a=idx[0], b=idx[idx.length-1];
-    if(seq.length&&seq[seq.length-1].n!==r.stations[a])seq.push({gap:true});
+    const seg=[];
     for(let i=a;i<=b;i++){
       const n=r.stations[i];
-      if(seq.length&&seq[seq.length-1].n===n)continue; // 분기역 중복 제거
-      seq.push({n,stop:stops.has(n)});
+      if(seen.has(n))continue; // 다른 route에서 이미 표시한 역
+      seg.push({n,stop:stops.has(n)});
     }
+    if(!seg.filter(x=>x.stop).length)continue;
+    // 분기역에서 이어지면 연속, 아니면 구분선
+    const cont=seq.length&&seen.has(r.stations[a])&&seq[seq.length-1].n===r.stations[a];
+    if(seq.length&&!cont)seq.push({gap:true});
+    for(const x of seg){seq.push(x);seen.add(x.n);}
+    r.stations.slice(a,b+1).forEach(n=>seen.add(n));
   }
   return seq.filter(x=>!x.gap).length>=2?seq:null;
 }
