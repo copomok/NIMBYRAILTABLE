@@ -5424,14 +5424,14 @@ function selectFmtCar(car){
   const myCar = ctx.mySeat ? ctx.mySeat.car : null;
   if(myCar!==null){ const mEl=document.getElementById('fmt-car-'+myCar); if(mEl) mEl.classList.add('sel'); }
   const box=document.getElementById('fmt-seatmap');
-  if(box) box.innerHTML=renderSeatMap(ctx.comp, car, ctx.mySeat, ctx.amen);
+  if(box) box.innerHTML=renderSeatMap(ctx.comp, car, ctx.mySeat, ctx.amen, ctx.tk&&ctx.tk.grade);
 }
 function renderSeatMap(comp, car, mySeat, amenMap, grade){
   const _wide=_wideWindow(grade);
   // 창문 클래스: 넓은 창은 홀수 열에만 2열 span 창, 짝수 열은 창(bar) 없음.
   // 홀수 열이 마지막 열(아래 열 없음)이면 넓은 창 대신 1열 창으로.
-  const winCls=(side,r,total)=> !_wide ? `win ${side} power`
-    : (r%2===1 ? (r+1<=total?`win win-wide ${side} power`:`win ${side} power`) : `${side} power`);
+  const winCls=(side,r,total)=> !_wide ? `win ${side}`
+    : (r%2===1 ? (r+1<=total?`win win-wide ${side}`:`win ${side}`) : `${side}`);
   const c=comp.find(x=>x.car===car);
   if(!c) return '<div style="color:var(--text3);font-size:12px;text-align:center;padding:12px">배치도 정보 없음</div>';
   if(c.type==='free'){
@@ -5465,6 +5465,7 @@ function renderSeatMap(comp, car, mySeat, amenMap, grade){
           const mine=isMineCar && mySeat.seatNum===n;
           const cls=['seat'];
           if(isWindow) cls.push(...winCls(winSide,r,nRows).split(' '));
+          if(_seatPower(grade,r,isWindow,nRows)) cls.push('power');
           if(mine) cls.push('mine');
           cells+=`<span class="${cls.join(' ')}">${n}</span>`;
           n++;
@@ -5503,7 +5504,8 @@ function renderSeatMap(comp, car, mySeat, amenMap, grade){
         const winSide = idx===0?'wl':'wr';
         const mine = isMineCar && mySeat.row===r && String(mySeat.col)===String(col);
         const cls=['seat'];
-        if(isWindow){ cls.push(...winCls(winSide,r,rows).split(' ')); } // 창측 콘센트(넓은 창은 2열당 1창)
+        if(isWindow){ cls.push(...winCls(winSide,r,rows).split(' ')); }
+        if(_seatPower(grade,r,isWindow,rows)) cls.push('power');
         if(mine) cls.push('mine');
         cells+=`<span class="${cls.join(' ')}">${col}</span>`;
       }
@@ -5930,14 +5932,28 @@ function seatId(car,row,col){
 }
 // 넓은 창(2열당 1창) 차량 판별 — KTX-산천 계열(산천·SRT)과 ITX-마음만 좁은 창(1열당 1창)
 function _wideWindow(grade){ return grade!=='KTX-산천' && grade!=='ITX-마음' && grade!=='SRT'; }
+// 콘센트(전원) 위치 — 등급별
+function _seatPower(grade, r, isWindow, totalRows){
+  if(grade==='ITX-마음'||grade==='KTX-이음') return true;      // 전좌석
+  if(!isWindow) return false;                                  // 이하 창측 자리만
+  if(grade==='무궁화호') return r===1||r===totalRows;          // 맨앞·맨뒷열 창가
+  if(grade==='ITX-새마을') return r<=3||r>totalRows-3;         // 앞 3열·뒤 3열 창가
+  return r%2===1;                                              // KTX 계열: 창틀 만나는 홀수열 창가
+}
 
 // 혼잡도 알고리즘 → nimbi_congestion.js 참조
 // ── 좌석 선택 팝업 ──
 let _selectedSeats=[];
 let _seatCarIdx=0;
-// 003: 좌석 선호 (none|window|aisle) — 저장됨
-let _seatPref=(()=>{try{return localStorage.getItem('nimbi_seatpref')||'none';}catch(e){return 'none';}})();
-function setSeatPref(p){ _seatPref=(_seatPref===p?'none':p); try{localStorage.setItem('nimbi_seatpref',_seatPref);}catch(e){} switchSeatCar(_seatCarIdx); }
+// 003: 좌석 선호 (다중) — pos:창측/복도, dir:순/역방향, zone:앞/뒤, pw:콘센트 — 저장됨
+let _seatPrefs=(()=>{try{const s=localStorage.getItem('nimbi_seatprefs');return new Set(s?JSON.parse(s):[]);}catch(e){return new Set();}})();
+const _PREF_GROUP={window:'pos',aisle:'pos',fwd:'dir',rev:'dir',front:'zone',rear:'zone',power:'pw'};
+function toggleSeatPref(p){
+  if(_seatPrefs.has(p)) _seatPrefs.delete(p);
+  else { const g=_PREF_GROUP[p]; for(const x of [..._seatPrefs]) if(_PREF_GROUP[x]===g) _seatPrefs.delete(x); _seatPrefs.add(p); }
+  try{localStorage.setItem('nimbi_seatprefs',JSON.stringify([..._seatPrefs]));}catch(e){}
+  switchSeatCar(_seatCarIdx);
+}
 // 003·004: 좌석 자동 배정 (선호/인접/마주보기)
 function _seatAutoPick(mode){
   const wrap=document.getElementById('seat-selector-wrap'); if(!wrap)return;
@@ -5954,11 +5970,26 @@ function _seatAutoPick(mode){
   const avail=(r,col)=>!missing.has(`${r}${col}`)&&!booked.has(seatId(car,r,col));
   let pick=[];
   if(mode==='pref'){
+    const revRows=car.revRows||0;
+    const faceOf=r=> r<=revRows?'rev':'fwd';
+    const matches=s=>{
+      for(const p of _seatPrefs){
+        if(p==='window' && !isWin(s.idx)) return false;
+        if(p==='aisle'  && !isAisle(s.idx)) return false;
+        if(p==='fwd'    && faceOf(s.r)!=='fwd') return false;
+        if(p==='rev'    && faceOf(s.r)!=='rev') return false;
+        if(p==='front'  && s.r>Math.ceil(car.rows/2)) return false;
+        if(p==='rear'   && s.r<=Math.floor(car.rows/2)) return false;
+        if(p==='power'  && !_seatPower(t.grade,s.r,isWin(s.idx),car.rows)) return false;
+      }
+      return true;
+    };
     const order=[];
     for(let r=1;r<=car.rows;r++) cols.forEach((col,idx)=>{ if(avail(r,col)) order.push({r,col,idx}); });
-    const pref=order.filter(s=> _seatPref==='window'?isWin(s.idx): _seatPref==='aisle'?isAisle(s.idx):true);
-    const rest=order.filter(s=>!pref.includes(s));
-    pick=[...pref,...rest].slice(0,count).map(s=>seatId(car,s.r,s.col));
+    let pool=order.filter(matches);
+    if(pool.length<count) pool=order; // 조건 만족 좌석이 부족하면 전체에서 배정
+    for(let i=pool.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [pool[i],pool[j]]=[pool[j],pool[i]]; } // 100% 랜덤
+    pick=pool.slice(0,count).map(s=>seatId(car,s.r,s.col));
   } else if(mode==='adjacent'){
     outer: for(let r=1;r<=car.rows;r++) for(let s=0;s+count<=n;s++){
       let ok=true; for(let k=0;k<count;k++){ if(!avail(r,cols[s+k])){ok=false;break;} }
@@ -6021,8 +6052,8 @@ function _renderSeatMap(wrap,t,trainNo,travelDate,seatClass,validCars,booked,com
   }
 
   const _wide=_wideWindow(t.grade);
-  const winCls=(side,r,total)=> !_wide ? `win ${side} power`
-    : (r%2===1 ? (r+1<=total?`win win-wide ${side} power`:`win ${side} power`) : `${side} power`);
+  const winCls=(side,r,total)=> !_wide ? `win ${side}`
+    : (r%2===1 ? (r+1<=total?`win win-wide ${side}`:`win ${side}`) : `${side}`);
   function seatHTML(){
     const cols=car.cols;
     const half=Math.ceil(cols.length/2);
@@ -6040,6 +6071,7 @@ function _renderSeatMap(wrap,t,trainNo,travelDate,seatClass,validCars,booked,com
           const isWin=idx===0||idx===cols.length-1, winSide=idx===0?'wl':'wr';
           const cls=['seat','seat-pick'];
           if(isWin) cls.push(...winCls(winSide,r,car.rows).split(' '));
+          if(_seatPower(t.grade,r,isWin,car.rows)) cls.push('power');
           if(isB) cls.push('taken'); else if(isS) cls.push('sel');
           cells+=`<button class="${cls.join(' ')}" data-sid="${id}" ${isB?'disabled':''} onclick="toggleSeatBtn('${id}',${count})">${label}</button>`;
         }
@@ -6085,8 +6117,13 @@ function _renderSeatMap(wrap,t,trainNo,travelDate,seatClass,validCars,booked,com
     </div>
     <div class="seat-auto-bar">
       <span class="seat-auto-label">선호</span>
-      <button class="seat-auto-chip${_seatPref==='window'?' on':''}" onclick="setSeatPref('window')">창측</button>
-      <button class="seat-auto-chip${_seatPref==='aisle'?' on':''}" onclick="setSeatPref('aisle')">복도</button>
+      <button class="seat-auto-chip${_seatPrefs.has('window')?' on':''}" onclick="toggleSeatPref('window')">🪟 창측</button>
+      ${car.cols.length>2?`<button class="seat-auto-chip${_seatPrefs.has('aisle')?' on':''}" onclick="toggleSeatPref('aisle')">🚶 복도</button>`:''}
+      <button class="seat-auto-chip${_seatPrefs.has('power')?' on':''}" onclick="toggleSeatPref('power')">⚡ 콘센트</button>
+      <button class="seat-auto-chip${_seatPrefs.has('front')?' on':''}" onclick="toggleSeatPref('front')">⬆ 앞쪽</button>
+      <button class="seat-auto-chip${_seatPrefs.has('rear')?' on':''}" onclick="toggleSeatPref('rear')">⬇ 뒤쪽</button>
+      ${showDir?`<button class="seat-auto-chip${_seatPrefs.has('fwd')?' on':''}" onclick="toggleSeatPref('fwd')">▲ 순방향</button>
+      <button class="seat-auto-chip${_seatPrefs.has('rev')?' on':''}" onclick="toggleSeatPref('rev')">▽ 역방향</button>`:''}
       <span class="seat-auto-sep"></span>
       <button class="seat-auto-chip act" onclick="_seatAutoPick('pref')">✨ 선호 자동</button>
       ${count>=2?`<button class="seat-auto-chip act" onclick="_seatAutoPick('adjacent')">👥 인접 ${count}석</button>`:''}
