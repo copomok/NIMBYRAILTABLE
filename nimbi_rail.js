@@ -3657,7 +3657,7 @@ sobaek:{
     {n:'남무주',x:359,y:620},
     {n:'계북',x:351,y:643},
     {n:'장계',x:343,y:659},
-    {n:'장수',x:328,y:684},
+    {n:'장수(전북)',x:328,y:684},
     {n:'남산서',x:307,y:705},
     {n:'보절',x:300,y:723},
     {n:'남원',x:292,y:754},
@@ -3690,7 +3690,7 @@ taebaek:{
     {n:'제천',x:488,y:249},
     {n:'어상천',x:524,y:258},
     {n:'영월',x:554,y:234},
-    {n:'신동',x:587,y:226},
+    {n:'신동(태백)',x:587,y:226},
     {n:'무릉',x:624,y:216},
     {n:'사북',x:635,y:221},
     {n:'고한',x:642,y:228},
@@ -3708,7 +3708,7 @@ jeongseon:{
   routes:[
     {color:'#f43f5e', stations:[
     {n:'평창',x:549,y:142},
-    {n:'북평',x:579,y:157},
+    {n:'북평(정선)',x:579,y:157},
     {n:'정선',x:600,y:174},
     {n:'화암',x:632,y:195},
     {n:'사북',x:635,y:221}
@@ -4063,17 +4063,18 @@ function showMapLine(lineKey, btn){
   const isAllView=lineKey==='all';
   let _hubSet=null;
   if(isAllView){
+    // 허브 = 노선 종착역 + 분기/환승역. 렌더에 쓰는 spread 좌표 기반 키로 판정하여
+    // 동명이역(같은 이름·다른 위치)은 별개 취급 → 오강조 방지. (spread가 공유역은
+    // 동일 좌표로 스냅하므로 환승역은 여러 route에 같은 키로 등장 → 카운트≥2)
     _hubSet=new Set();
-    const lineCnt={};
-    for(const ml of Object.values(MAP_LINES)){
+    const kf=s=>s.n+'@'+Math.round(s.x)+','+Math.round(s.y);
+    const cnt={};
+    routes.forEach(rt=>{
+      if(rt.stations.length){ _hubSet.add(kf(rt.stations[0])); _hubSet.add(kf(rt.stations[rt.stations.length-1])); }
       const seen=new Set();
-      ml.routes.forEach(rt=>{
-        if(rt.stations.length){ _hubSet.add(rt.stations[0].n); _hubSet.add(rt.stations[rt.stations.length-1].n); }
-        rt.stations.forEach(s=>seen.add(s.n));
-      });
-      seen.forEach(n=>lineCnt[n]=(lineCnt[n]||0)+1);
-    }
-    Object.entries(lineCnt).forEach(([n,c])=>{ if(c>=2)_hubSet.add(n); });
+      rt.stations.forEach(s=>{const k=kf(s); if(!seen.has(k)){seen.add(k); cnt[k]=(cnt[k]||0)+1;}});
+    });
+    Object.entries(cnt).forEach(([k,c])=>{ if(c>=2)_hubSet.add(k); });
   }
   routes.forEach(r=>{
     const isBranch=r.dash||false;   // 지선/경유: 본선과 같은 색, 점선
@@ -4093,8 +4094,8 @@ function showMapLine(lineKey, btn){
       rendered.add(rkey);
       const x=s.x+ox, y=s.y+oy;
       const isEnd=i===0||i===r.stations.length-1;
-      // 관제 뷰: 허브역 외에는 아주 작은 점 + 라벨 생략
-      const isMinor=!!(_hubSet&&!_hubSet.has(s.n));
+      // 관제 뷰: 허브역 외에는 아주 작은 점 + 라벨 생략 (좌표 기반 키로 동명이역 구분)
+      const isMinor=!!(_hubSet&&!_hubSet.has(rkey));
       // 추적 뷰: 미정차(통과)역은 작고 옅게
       const faded=!!(_trkStopSet&&!_trkStopSet.has(s.n));
       const r2=isMinor?2.2:(faded?3.5:(isEnd?7:5));
