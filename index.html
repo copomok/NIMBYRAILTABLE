@@ -6,7 +6,7 @@
 <title>님비레일 시간표</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="nimbi_rail.css?v=20260711103840">
+<link rel="stylesheet" href="nimbi_rail.css?v=20260711133923">
 <!-- PWA -->
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#161b22">
@@ -362,6 +362,7 @@
       <button class="map-line-tab" onclick="showMapLine('gangreung',this)">강릉선</button>
       <button class="map-line-tab" onclick="showMapLine('jungnaelyuk',this)">중부내륙선</button>
       <button class="map-line-tab" onclick="showMapLine('gyeongjeon',this)">경전선</button>
+      <button class="map-line-tab" onclick="showMapLine('nambunaelyuk',this)">남부내륙선</button>
     </div>
     <!-- 컨트롤 바 (항상 표시: 열차수 + 방향 + 필터 토글) -->
     <div id="map-controls-bar" style="display:flex;align-items:center;gap:6px;padding:6px 0 4px;flex-wrap:wrap">
@@ -466,15 +467,15 @@
   <button class="map-popup-close" onclick="closeMapPopup()">닫기</button>
 </div>
 
-<script src="nimbi_rail_data.js?v=20260711103840"></script>
-<script src="nimbi_station_data.js?v=20260711103840"></script>
-<script src="nimbi_metro.js?v=20260711103840"></script>
-<script src="nimbi_platform_db.js?v=20260711103840"></script>
-<script src="nimbi_realplat.js?v=20260711103840"></script>
-<script src="nimbi_station_history.js?v=20260711103840"></script>
-  <script src="nimbi_rail_notices.js?v=20260711103840"></script>
-  <script src="nimbi_rail.js?v=20260711103840"></script>
-  <script src="nimbi_congestion.js?v=20260711103840"></script>
+<script src="nimbi_rail_data.js?v=20260711133923"></script>
+<script src="nimbi_station_data.js?v=20260711133923"></script>
+<script src="nimbi_metro.js?v=20260711133923"></script>
+<script src="nimbi_platform_db.js?v=20260711133923"></script>
+<script src="nimbi_realplat.js?v=20260711133923"></script>
+<script src="nimbi_station_history.js?v=20260711133923"></script>
+  <script src="nimbi_rail_notices.js?v=20260711133923"></script>
+  <script src="nimbi_rail.js?v=20260711133923"></script>
+  <script src="nimbi_congestion.js?v=20260711133923"></script>
   <script>
   if('serviceWorker' in navigator){
     window.addEventListener('load', ()=>{

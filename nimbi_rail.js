@@ -2636,7 +2636,7 @@ function trackTrainOnMap(trainNo){
   const lineMap = {
     '경부선':'gyeongbu','경부고속선':'gyeongbuhs','호남고속선':'honamhs','호남선':'honam',
     '전라선':'jeolla','중앙선':'jungang','동해선':'donghae','영동선':'yeongdong',
-    '강릉선':'gangreung','중부내륙선':'jungnaelyuk','경전선':'gyeongjeon','충북선':'chungbuk','장항선':'janghang'
+    '강릉선':'gangreung','중부내륙선':'jungnaelyuk','경전선':'gyeongjeon','충북선':'chungbuk','장항선':'janghang','남부내륙선':'nambunaelyuk'
   };
 
   // 현재 위치 기준으로 실제 운행 중인 노선 판단
@@ -2948,7 +2948,7 @@ const GRADE_COLORS = {
 };
 
 // 노선명 → MAP_LINES 키, 노선별 인접역 쌍 캐시 (구간 소속 판별용)
-const _lineNameToKey={'경부선':'gyeongbu','경부고속선':'gyeongbuhs','호남고속선':'honamhs','호남선':'honam','전라선':'jeolla','중앙선':'jungang','동해선':'donghae','영동선':'yeongdong','강릉선':'gangreung','중부내륙선':'jungnaelyuk','경전선':'gyeongjeon','충북선':'chungbuk','장항선':'janghang'};
+const _lineNameToKey={'경부선':'gyeongbu','경부고속선':'gyeongbuhs','호남고속선':'honamhs','호남선':'honam','전라선':'jeolla','중앙선':'jungang','동해선':'donghae','영동선':'yeongdong','강릉선':'gangreung','중부내륙선':'jungnaelyuk','경전선':'gyeongjeon','충북선':'chungbuk','장항선':'janghang','남부내륙선':'nambunaelyuk'};
 const _mapEdgeCache={};
 function _mapLineEdgeSet(key){
   if(_mapEdgeCache[key])return _mapEdgeCache[key];
@@ -3584,6 +3584,30 @@ jungnaelyuk:{
     {n:'상주',x:482,y:457},
     {n:'청리',x:471,y:481},
     {n:'김천',x:470,y:542}
+    ]}
+  ]
+},
+
+nambunaelyuk:{
+  name:'남부내륙선', color:'#f97316',
+  routes:[
+    {color:'#f97316', stations:[
+    {n:'약목',x:526,y:568},
+    {n:'성주',x:507,y:601},
+    {n:'운수',x:504,y:640},
+    {n:'고령',x:505,y:657},
+    {n:'쌍림',x:500,y:674},
+    {n:'합천',x:482,y:706},
+    {n:'대양',x:481,y:721},
+    {n:'쌍백',x:475,y:743},
+    {n:'삼가',x:470,y:752},
+    {n:'단성',x:433,y:782},
+    {n:'사천',x:462,y:849},
+    {n:'고성',x:518,y:879},
+    {n:'안정',x:537,y:888},
+    {n:'통영',x:540,y:910},
+    {n:'사등',x:555,y:905},
+    {n:'고현',x:588,y:904}
     ]}
   ]
 },
