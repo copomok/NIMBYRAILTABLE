@@ -361,10 +361,10 @@ const NOTICES = [
 <tr><td>장항선(서대전)</td><td>1461~1466</td><td>한강로 ↔ 서대전</td><td>6</td><td>정차 시각 정비</td></tr>
 <tr><td>장항선(전주)</td><td>1471~1490</td><td>한강로 ↔ 전주</td><td>20</td><td>정차 시각 정비</td></tr>
 <tr><td>전라선 KTX</td><td>551~582</td><td>서울 ↔ 여수</td><td>32</td><td>통과역 이동시각 정렬</td></tr>
-<tr><td>충북선</td><td>1401~1430</td><td>대전 ↔ 영주</td><td>30</td><td>전 정차역 정차 1분 이상 확대(소요 하행 137·상행 132분)</td></tr>
+<tr><td>충북선</td><td>1401~1430</td><td>대전 ↔ 영주</td><td>30</td><td>인게임 실측 반영·전 역 정차 시간 통일(소요 약 121분)</td></tr>
 <tr><td>순천 계통</td><td>1491~1496</td><td>한강로 ↔ 순천</td><td>6</td><td>35정차 대장정, 시각 정비</td></tr>
 </table>
-<span class="n-highlight" style="display:block;margin:8px 0">충북선(영주↔대전 무궁화 30편)은 정차 시간이 너무 짧았던 점을 바로잡아 <strong>전 정차역 정차를 1분 이상으로 확대</strong>했습니다. 이에 따라 소요시간이 늘었으며(하행 137분·상행 132분), 시발역 출발 시각은 유지하되 운용이 맞물리는 <strong>6편(1402·1408·1413·1416·1421·1426)</strong>의 출발 시각만 소폭 조정했습니다.</span>
+<span class="n-highlight" style="display:block;margin:8px 0">충북선(영주↔대전 무궁화 30편)은 인게임 실측 시각표에 맞춰 전 구간을 재정비하고 <strong>역별 정차 시간을 통일</strong>했습니다. 상·하행 소요 약 121분이며, 전 열차 통과·추월·교행 및 편성 회차(최소 15분)를 재검증했습니다.</span>
 
 <strong>■ 운용상 개별 조정</strong>
 <table>
