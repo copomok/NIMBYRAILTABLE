@@ -2,7 +2,7 @@
 
 // KTX-산천/이음은 KTX와 동일하게 취급
 const GC={'KTX':'KTX','KTX-산천':'KTX','KTX-이음':'KTX','SRT':'SRT','ITX-새마을':'ITX','ITX-마음':'ITX','ITX-청춘':'ITXCC','무궁화호':'MGH'};
-const GL={'KTX':'KTX','KTX-산천':'KTX-산천','KTX-이음':'KTX-이음','SRT':'SRT','ITX-새마을':'ITX-새마을','ITX-마음':'ITX-마음','ITX-청춘':'ITX-청춘','무궁화호':'무궁화'};
+const GL={'KTX':'KTX','KTX-산천':'KTX-산천','KTX-이음':'KTX-이음','SRT':'SRT','ITX-새마을':'ITX-새마을','ITX-마음':'ITX-마음','ITX-청춘':'ITX-청춘','무궁화호':'무궁화','남도해양':'남도해양'};
 function gc(g){return GC[g]||'MGH';}
 // 등급 필터 매칭: select 값(전체/KTX/SRT/ITX-새마을/ITX-청춘/무궁화호)과 열차 등급 비교
 // KTX는 산천·이음 포함, ITX-새마을은 ITX-마음 포함(동일 등급군)
@@ -114,7 +114,7 @@ function havPt(a,b){
 //   STATION_DB의 단일 좌표가 한쪽만 가리킴 → 노선별 소요시간 기반으로 위치/거리 추정
 const UNTRUSTED_COORDS=new Set(['장성','장흥','춘양']);
 // 등급별 대표 표정속도(km/h) — 좌표 없는 구간을 시간으로 환산할 때 사용
-const GRADE_KMH={'KTX':190,'KTX-산천':190,'KTX-이음':150,'SRT':190,'ITX-새마을':100,'ITX-마음':100,'ITX-청춘':100,'무궁화호':75};
+const GRADE_KMH={'KTX':190,'KTX-산천':190,'KTX-이음':150,'SRT':190,'ITX-새마을':100,'ITX-마음':100,'ITX-청춘':100,'무궁화호':75,'남도해양':75};
 
 // 열차 경로(fromStn~toStn) 실제 거리(km).
 // 좌표 이상치/미확보 구간은 "해당 열차의 소요시간 × 구간 평균속도"로 추정.
@@ -2945,7 +2945,8 @@ const GRADE_COLORS = {
   'SRT':'#a855f7',
   'ITX-새마을':'#ef4444','ITX-마음':'#ef4444',
   'ITX-청춘':'#22c55e',
-  '무궁화호':'#f97316'
+  '무궁화호':'#f97316',
+  '남도해양':'#14b8a6'
 };
 
 // 노선명 → MAP_LINES 키, 노선별 인접역 쌍 캐시 (구간 소속 판별용)
@@ -2989,7 +2990,7 @@ function updateMapTrains(){
         'KTX':['KTX','KTX-산천','KTX-이음'],
         'SRT':['SRT'],
         'ITX':['ITX-새마을','ITX-마음','ITX-청춘'],
-        '무궁화':['무궁화호']
+        '무궁화':['무궁화호','남도해양']
       };
       if(!gradeMatch[_mapGradeFilter]?.includes(t.grade))return;
     }
@@ -4752,6 +4753,7 @@ function availableSeatClasses(grade){
   if(grade==='KTX'||grade==='KTX-산천'||grade==='SRT') return ['special','general','standing'];
   if(grade==='KTX-이음') return ['premium','general','standing'];
   if(grade==='무궁화호') return ['general','standing'];
+  if(grade==='남도해양') return ['general']; // 관광열차: 전석 지정
   return ['general','standing']; // ITX-새마을, ITX-마음, ITX-청춘
 }
 
@@ -4766,6 +4768,7 @@ const FARE_TABLE={
   'ITX-마음': {base:2800, rate:92,  min:4800},
   'ITX-청춘': {base:2400, rate:74,  min:4200},
   '무궁화호': {base:2600, rate:63,  min:2600},
+  '남도해양': {base:2800, rate:96,  min:4800}, // 관광열차: 새마을급 운임
 };
 function calcFare(t, fromStn, toStn, seatClass){
   const tb=FARE_TABLE[t.grade]||{base:3000,rate:90,min:3000};
@@ -5987,7 +5990,7 @@ function getFormationType(grade, trainNo){
   if(grade==='ITX-청춘') return 'itx-cc';
   if(grade==='ITX-새마을') return 'itx-sm';
   if(grade==='ITX-마음') return 'itx-maum'; // 한강로-충주 4량
-  if(grade==='무궁화호') return 'mgh';
+  if(grade==='무궁화호'||grade==='남도해양') return 'mgh';
   return 'mgh';
 }
 
@@ -6075,7 +6078,7 @@ function _wideWindow(grade){ return grade!=='KTX-산천' && grade!=='ITX-마음'
 // 창문 배치 클래스 — 무궁화: 전 구간 2열 정렬창 / KTX 계열: 좌·우 한 열씩 엇갈린 걸침창 / 그 외: 좌석당 1창
 function _winClass(grade, side, r, total){
   if(!_wideWindow(grade)) return `win ${side}`;
-  if(grade==='무궁화호'){ // [1·2],[3·4]… 양쪽 동일
+  if(grade==='무궁화호'||grade==='남도해양'){ // [1·2],[3·4]… 양쪽 동일
     return r%2===1 ? (r+1<=total?`win win-wide ${side}`:`win ${side}`) : `${side}`;
   }
   // KTX 계열 걸침: 왼쪽은 홀수행 시작, 오른쪽은 맨앞 단독 + 짝수행 시작 (좌우 엇갈림)
@@ -6089,7 +6092,7 @@ function _winClass(grade, side, r, total){
 function _seatPower(grade, r, isWindow, totalRows){
   if(grade==='ITX-마음'||grade==='KTX-이음') return true;      // 전좌석
   if(!isWindow) return false;                                  // 이하 창측 자리만
-  if(grade==='무궁화호') return r===1||r===totalRows;          // 맨앞·맨뒷열 창가
+  if(grade==='무궁화호'||grade==='남도해양') return r===1||r===totalRows; // 맨앞·맨뒷열 창가
   if(grade==='ITX-새마을') return r<=3||r>totalRows-3;         // 앞 3열·뒤 3열 창가
   return r%2===1;                                              // KTX 계열: 창틀 만나는 홀수열 창가
 }
