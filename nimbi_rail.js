@@ -1,7 +1,7 @@
 
 
 // KTX-산천/이음은 KTX와 동일하게 취급
-const GC={'KTX':'KTX','KTX-산천':'KTX','KTX-이음':'KTX','SRT':'SRT','ITX-새마을':'ITX','ITX-마음':'ITX','ITX-청춘':'ITXCC','무궁화호':'MGH'};
+const GC={'KTX':'KTX','KTX-산천':'KTX','KTX-이음':'KTX','SRT':'SRT','ITX-새마을':'ITX','ITX-마음':'ITX','ITX-청춘':'ITXCC','무궁화호':'MGH','남도해양':'MGH'};
 const GL={'KTX':'KTX','KTX-산천':'KTX-산천','KTX-이음':'KTX-이음','SRT':'SRT','ITX-새마을':'ITX-새마을','ITX-마음':'ITX-마음','ITX-청춘':'ITX-청춘','무궁화호':'무궁화','남도해양':'남도해양'};
 function gc(g){return GC[g]||'MGH';}
 // 등급 필터 매칭: select 값(전체/KTX/SRT/ITX-새마을/ITX-청춘/무궁화호)과 열차 등급 비교
