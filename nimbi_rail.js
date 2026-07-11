@@ -2636,7 +2636,8 @@ function trackTrainOnMap(trainNo){
   const lineMap = {
     '경부선':'gyeongbu','경부고속선':'gyeongbuhs','호남고속선':'honamhs','호남선':'honam',
     '전라선':'jeolla','중앙선':'jungang','동해선':'donghae','영동선':'yeongdong',
-    '강릉선':'gangreung','중부내륙선':'jungnaelyuk','경전선':'gyeongjeon','충북선':'chungbuk','장항선':'janghang','남부내륙선':'nambunaelyuk'
+    '강릉선':'gangreung','중부내륙선':'jungnaelyuk','경전선':'gyeongjeon','충북선':'chungbuk','장항선':'janghang','남부내륙선':'nambunaelyuk',
+    '태안선':'taean','소백선':'sobaek','경북선':'gyeongbuk','태백선':'taebaek','정선선':'jeongseon'
   };
 
   // 현재 위치 기준으로 실제 운행 중인 노선 판단
@@ -2948,7 +2949,7 @@ const GRADE_COLORS = {
 };
 
 // 노선명 → MAP_LINES 키, 노선별 인접역 쌍 캐시 (구간 소속 판별용)
-const _lineNameToKey={'경부선':'gyeongbu','경부고속선':'gyeongbuhs','호남고속선':'honamhs','호남선':'honam','전라선':'jeolla','중앙선':'jungang','동해선':'donghae','영동선':'yeongdong','강릉선':'gangreung','중부내륙선':'jungnaelyuk','경전선':'gyeongjeon','충북선':'chungbuk','장항선':'janghang','남부내륙선':'nambunaelyuk'};
+const _lineNameToKey={'경부선':'gyeongbu','경부고속선':'gyeongbuhs','호남고속선':'honamhs','호남선':'honam','전라선':'jeolla','중앙선':'jungang','동해선':'donghae','영동선':'yeongdong','강릉선':'gangreung','중부내륙선':'jungnaelyuk','경전선':'gyeongjeon','충북선':'chungbuk','장항선':'janghang','남부내륙선':'nambunaelyuk','태안선':'taean','소백선':'sobaek','경북선':'gyeongbuk','태백선':'taebaek','정선선':'jeongseon'};
 const _mapEdgeCache={};
 function _mapLineEdgeSet(key){
   if(_mapEdgeCache[key])return _mapEdgeCache[key];
@@ -3408,6 +3409,8 @@ jungang:{
     ]},
     {color:'#56d0e0', dash:true, stations:[
     {n:'신녕',x:628,y:565},
+    {n:'하양',x:635,y:606},
+    {n:'경산',x:616,y:636},
     {n:'남대구',x:567,y:635}
     ]}
   ]
@@ -3622,6 +3625,93 @@ nambunaelyuk:{
     {n:'단성',x:433,y:782},
     {n:'진주',x:466,y:820},
     {n:'사천',x:462,y:849}
+    ]}
+  ]
+},
+
+taean:{
+  name:'태안선', color:'#d946ef',
+  routes:[
+    {color:'#d946ef', stations:[
+    {n:'아산',x:212,y:357},
+    {n:'합덕',x:150,y:347},
+    {n:'당진',x:122,y:323},
+    {n:'승산',x:100,y:324},
+    {n:'서산',x:78,y:352},
+    {n:'태안',x:44,y:364},
+    {n:'남면',x:41,y:384},
+    {n:'창기',x:50,y:414},
+    {n:'안면도',x:53,y:430},
+    {n:'고남',x:67,y:458},
+    {n:'보령',x:113,y:484}
+    ]}
+  ]
+},
+
+sobaek:{
+  name:'소백선', color:'#4f46e5',
+  routes:[
+    {color:'#4f46e5', stations:[
+    {n:'영동',x:389,y:528},
+    {n:'무주',x:363,y:578},
+    {n:'남무주',x:359,y:620},
+    {n:'계북',x:351,y:643},
+    {n:'장계',x:343,y:659},
+    {n:'장수',x:328,y:684},
+    {n:'남산서',x:307,y:705},
+    {n:'보절',x:300,y:723},
+    {n:'남원',x:292,y:754},
+    {n:'곡성',x:276,y:791},
+    {n:'옥과',x:238,y:794},
+    {n:'고서',x:205,y:807},
+    {n:'광주',x:155,y:831}
+    ]}
+  ]
+},
+
+gyeongbuk:{
+  name:'경북선', color:'#0ea5e9',
+  routes:[
+    {color:'#0ea5e9', stations:[
+    {n:'상주',x:482,y:457},
+    {n:'남문경',x:493,y:412},
+    {n:'용궁',x:514,y:396},
+    {n:'예천',x:548,y:388},
+    {n:'장수',x:576,y:353},
+    {n:'영주',x:588,y:342}
+    ]}
+  ]
+},
+
+taebaek:{
+  name:'태백선', color:'#64748b',
+  routes:[
+    {color:'#64748b', stations:[
+    {n:'제천',x:488,y:249},
+    {n:'어상천',x:524,y:258},
+    {n:'영월',x:554,y:234},
+    {n:'신동',x:587,y:226},
+    {n:'무릉',x:624,y:216},
+    {n:'사북',x:635,y:221},
+    {n:'고한',x:642,y:228},
+    {n:'태백황지',x:673,y:233},
+    {n:'도계',x:687,y:217},
+    {n:'고사리',x:692,y:205},
+    {n:'미로',x:702,y:170},
+    {n:'삼척',x:714,y:156}
+    ]}
+  ]
+},
+
+jeongseon:{
+  name:'정선선', color:'#f43f5e',
+  routes:[
+    {color:'#f43f5e', stations:[
+    {n:'평창',x:549,y:142},
+    {n:'북평',x:579,y:157},
+    {n:'정선',x:600,y:174},
+    {n:'화암',x:632,y:195},
+    {n:'사북',x:635,y:221}
     ]}
   ]
 },
