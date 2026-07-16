@@ -6910,6 +6910,8 @@ const ACCT_KEYS=['nimbi_alarms','nimbi_alarm_groups','nimbi_seat_watches','nimbi
 const ACCT_PREFIXES=['nimbi_history_'];
 const ACCT_EMOJIS=['🚆','🚄','🚅','🚇','🚉','🎫','⭐','🧭','🗺️','🌄','🐧','🦊','🐻','🐰','🐱','🌟'];
 function _acctEsc(s){return String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+// 표시용 인사말: 닉네임 뒤에 '님' (이미 '님'으로 끝나면 그대로)
+function _acctGreet(name){const n=String(name==null?'':name);return _acctEsc(n)+(/님\s*$/.test(n)?'':'님');}
 function _acctIsKey(k){return ACCT_KEYS.includes(k)||ACCT_PREFIXES.some(p=>k.startsWith(p));}
 function acctReg(){try{return JSON.parse(localStorage.getItem(ACCT_REG_KEY))||[];}catch(e){return[];}}
 function acctSaveReg(list){try{localStorage.setItem(ACCT_REG_KEY,JSON.stringify(list));}catch(e){}}
@@ -6926,11 +6928,15 @@ function acctInit(){
   let reg=acctReg();
   if(!reg.length){
     const id=_acctUid();
-    reg=[{id,name:'나의 계정',emoji:'🚆',created:Date.now()}];
+    reg=[{id,name:'여행객',emoji:'🚆',created:Date.now()}];
     acctSaveReg(reg); localStorage.setItem(ACCT_ACTIVE_KEY,id);
     acctSaveSlot(id,acctSnapshotLive());
-  } else if(!reg.find(a=>a.id===acctActiveId())){
-    localStorage.setItem(ACCT_ACTIVE_KEY,reg[0].id);
+  } else {
+    // 초기 자동생성 기본명 '나의 계정' → 인사말에 어울리는 '여행객'으로 이관
+    let changed=false;
+    reg.forEach(a=>{if(a.name==='나의 계정'){a.name='여행객';changed=true;}});
+    if(changed)acctSaveReg(reg);
+    if(!reg.find(a=>a.id===acctActiveId()))localStorage.setItem(ACCT_ACTIVE_KEY,reg[0].id);
   }
 }
 function acctSwitch(id){
@@ -6986,7 +6992,7 @@ function updateAccountCard(){
   const a=acctActive(); const n=acctReg().length;
   if(!a){el.innerHTML=`<div class="acct-card-inner"><span class="acct-avatar">👤</span><div class="acct-info"><div class="acct-name">로그인</div><div class="acct-sub">계정을 만들어 기록을 연동하세요</div></div><span class="my-menu-arrow">›</span></div>`;return;}
   const s=_acctSummary();
-  el.innerHTML=`<div class="acct-card-inner"><span class="acct-avatar">${a.emoji}</span><div class="acct-info"><div class="acct-name">${_acctEsc(a.name)}</div><div class="acct-sub">🎫${s.tickets} ⭐${s.favs}${n>1?' · '+n+'개 계정':''} · 동기화 코드로 연동</div></div><span class="my-menu-arrow">›</span></div>`;
+  el.innerHTML=`<div class="acct-card-inner"><span class="acct-avatar">${a.emoji}</span><div class="acct-info"><div class="acct-name">${_acctGreet(a.name)}</div><div class="acct-sub">🎫${s.tickets} ⭐${s.favs}${n>1?' · '+n+'개 계정':''} · 동기화 코드로 연동</div></div><span class="my-menu-arrow">›</span></div>`;
 }
 function renderAccountSection(){
   const el=document.getElementById('my-sub-content'); if(!el)return;
@@ -6995,7 +7001,7 @@ function renderAccountSection(){
   el.innerHTML=`<div class="acct-sec" id="acct-sec">
     <div class="acct-big">
       <span class="acct-avatar">${a?a.emoji:'👤'}</span>
-      <div class="acct-info"><div class="acct-name" style="font-size:18px">${a?_acctEsc(a.name):'계정 없음'}</div>
+      <div class="acct-info"><div class="acct-name" style="font-size:18px">${a?_acctGreet(a.name):'계정 없음'}</div>
         <div class="acct-sub">이 기기의 활성 계정 · 🎫${s.tickets} 승차권 · ⭐${s.favs} 즐겨찾기 · 🎟️${s.passes} 정기권 · 🔔${s.alarms} 알람</div></div>
       <button class="btn-pass-toggle" onclick="acctUiEditToggle()">✏️ 편집</button>
     </div>
@@ -7013,7 +7019,7 @@ function renderAccountSection(){
     <h3>👥 계정 전환</h3>
     ${others.length?others.map(x=>{const sd=acctLoadSlot(x.id);let tc=0,fc=0;try{tc=(JSON.parse(sd.nimbi_tickets||'[]')||[]).length;fc=(JSON.parse(sd.nimbi_favs||'[]')||[]).length;}catch(e){}
       return `<div class="acct-row"><span class="acct-avatar" style="width:38px;height:38px;font-size:20px">${x.emoji}</span>
-        <div class="acct-info"><div class="acct-name" style="font-size:14px">${_acctEsc(x.name)}</div><div class="acct-sub">🎫${tc} ⭐${fc}</div></div>
+        <div class="acct-info"><div class="acct-name" style="font-size:14px">${_acctGreet(x.name)}</div><div class="acct-sub">🎫${tc} ⭐${fc}</div></div>
         <button class="btn-pass-toggle" onclick="acctSwitch('${x.id}')">전환</button>
         <button class="btn-pass-toggle" style="color:var(--red)" onclick="acctDelete('${x.id}')">삭제</button></div>`;}).join(''):'<p class="hint" style="font-size:12px;color:var(--text3);margin-bottom:8px">다른 계정이 없습니다.</p>'}
     <button class="btn" style="width:100%;justify-content:center;background:var(--bg2);color:var(--text);border:1px dashed var(--border)" onclick="acctUiNewToggle()">＋ 새 계정 만들기</button>
@@ -7031,7 +7037,7 @@ function acctUiEditToggle(){
   const a=acctActive(); if(!a)return; _acctPickEmoji=a.emoji;
   box.style.display='block';
   box.innerHTML=`<div style="padding:12px;background:var(--bg2);border:1px solid var(--border);border-radius:10px;margin-bottom:8px">
-    <input class="acct-input" id="acct-edit-name" maxlength="20" value="${_acctEsc(a.name)}" placeholder="계정 이름">
+    <input class="acct-input" id="acct-edit-name" maxlength="20" value="${_acctEsc(a.name)}" placeholder="닉네임">
     ${_acctEmojiPicker(a.emoji,'acctPick')}
     <button class="btn btn-primary" style="width:100%;justify-content:center" onclick="acctRename('${a.id}',document.getElementById('acct-edit-name').value.trim()||'계정',_acctPickEmoji);acctUiEditToggle()">저장</button></div>`;
 }
@@ -7040,7 +7046,7 @@ function acctUiNewToggle(){
   if(box.style.display!=='none'){box.style.display='none';return;}
   _acctPickEmoji='🚆'; box.style.display='block';
   box.innerHTML=`<div style="padding:12px;background:var(--bg2);border:1px solid var(--border);border-radius:10px">
-    <input class="acct-input" id="acct-new-name" maxlength="20" placeholder="새 계정 이름">
+    <input class="acct-input" id="acct-new-name" maxlength="20" placeholder="새 계정 닉네임">
     ${_acctEmojiPicker('🚆','acctPick')}
     <p class="hint" style="font-size:11px;color:var(--text3);margin:4px 0 8px">새 계정은 빈 상태로 시작합니다. 현재 계정의 기록은 그대로 보존됩니다.</p>
     <button class="btn btn-primary" style="width:100%;justify-content:center" onclick="acctCreate(document.getElementById('acct-new-name').value.trim()||'새 계정',_acctPickEmoji)">만들고 전환</button></div>`;
