@@ -1632,3 +1632,6 @@ button, select, input[type=range],
 .manboard-card.shake{animation:manboardShake .3s}
 @keyframes manboardShake{0%,100%{transform:translateX(0)}20%{transform:translateX(-8px)}40%{transform:translateX(7px)}60%{transform:translateX(-5px)}80%{transform:translateX(3px)}}
 .rt-act-manual{background:var(--orange)!important}
+/* 동기화 짧은 코드 */
+.acct-shortcode{font-family:var(--mono);font-size:30px;font-weight:700;letter-spacing:8px;text-align:center;color:var(--accent2);background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:16px 10px;word-break:break-all}
+.acct-shortcode-load{font-size:14px;letter-spacing:normal;color:var(--text3);font-weight:400}

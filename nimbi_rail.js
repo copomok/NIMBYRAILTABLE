@@ -7056,21 +7056,49 @@ function acctDelete(id){
   if(acctActiveId()===id){const nid=reg[0].id;acctApply(acctLoadSlot(nid));localStorage.setItem(ACCT_ACTIVE_KEY,nid);location.reload();return;}
   renderAccountSection();
 }
-function acctExportCode(){
-  const a=acctActive(); if(!a)return '';
-  const payload={v:1,id:a.id,name:a.name,emoji:a.emoji,data:acctSnapshotLive()};
-  try{return btoa(unescape(encodeURIComponent(JSON.stringify(payload))));}catch(e){return '';}
+// ── 동기화 릴레이 (짧은 코드) ──
+const ACCT_RELAY_DEFAULT=''; // 배포한 Cloudflare Worker URL을 넣으면 전 기기 무설정 사용
+function acctRelayUrl(){ let u=''; try{u=localStorage.getItem('nimbi_relay_url')||'';}catch(e){} return (u||ACCT_RELAY_DEFAULT||'').replace(/\/+$/,''); }
+function acctSetRelayUrl(u){ try{localStorage.setItem('nimbi_relay_url',(u||'').trim());}catch(e){} }
+function _acctPayload(){ const a=acctActive(); if(!a)return null; return {v:1,id:a.id,name:a.name,emoji:a.emoji,data:acctSnapshotLive()}; }
+function acctExportCodeLocal(){ const p=_acctPayload(); if(!p)return ''; try{return btoa(unescape(encodeURIComponent(JSON.stringify(p))));}catch(e){return '';} }
+async function acctUploadCode(){ // 릴레이에 올리고 짧은 코드 반환
+  const url=acctRelayUrl(); if(!url) throw new Error('no-relay');
+  const p=_acctPayload(); if(!p) throw new Error('계정이 없습니다.');
+  const res=await fetch(url+'/',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(p)});
+  let j=null; try{j=await res.json();}catch(e){}
+  if(!res.ok||!j||!j.code) throw new Error((j&&j.error)||('업로드 실패('+res.status+')'));
+  return j.code;
 }
-function acctImportCode(code){
-  let payload; try{payload=JSON.parse(decodeURIComponent(escape(atob((code||'').trim()))));}catch(e){return{ok:false,msg:'코드 형식이 올바르지 않습니다.'};}
-  if(!payload||!payload.id||typeof payload.data!=='object')return{ok:false,msg:'유효한 동기화 코드가 아닙니다.'};
+async function acctDownloadPayload(code){
+  const url=acctRelayUrl(); if(!url) throw new Error('no-relay');
+  const res=await fetch(url+'/'+encodeURIComponent(code));
+  if(res.status===404) throw new Error('코드를 찾을 수 없어요(만료되었거나 오타).');
+  if(!res.ok) throw new Error('다운로드 실패('+res.status+')');
+  return await res.json();
+}
+// 페이로드를 계정에 반영(업서트 후 새로고침)
+function _acctApplyPayload(payload){
+  if(!payload||!payload.id||typeof payload.data!=='object') return {ok:false,msg:'유효한 동기화 데이터가 아닙니다.'};
   const cur=acctActiveId(); if(cur)acctSaveSlot(cur,acctSnapshotLive());
   let reg=acctReg(); let a=reg.find(x=>x.id===payload.id);
   if(a){a.name=payload.name||a.name;a.emoji=payload.emoji||a.emoji;}
   else reg.push({id:payload.id,name:(payload.name||'가져온 계정').slice(0,20),emoji:payload.emoji||'🚆',created:Date.now()});
   acctSaveReg(reg); acctSaveSlot(payload.id,payload.data);
   acctApply(payload.data); localStorage.setItem(ACCT_ACTIVE_KEY,payload.id); location.reload();
-  return{ok:true};
+  return {ok:true};
+}
+// 가져오기 — 짧은 코드(릴레이) 또는 레거시 base64 자동 판별
+async function acctImportCode(code){
+  code=(code||'').trim();
+  let payload=null;
+  if(/^[A-Za-z0-9]{4,12}$/.test(code)){
+    if(!acctRelayUrl()) return {ok:false,msg:'짧은 코드를 쓰려면 먼저 아래 동기화 서버 설정을 완료하세요.'};
+    try{ payload=await acctDownloadPayload(code); }catch(e){ return {ok:false,msg:e.message}; }
+  } else {
+    try{ payload=JSON.parse(decodeURIComponent(escape(atob(code)))); }catch(e){ return {ok:false,msg:'코드 형식이 올바르지 않습니다.'}; }
+  }
+  return _acctApplyPayload(payload);
 }
 // 계정별 기록 요약(개수)
 function _acctSummary(){
@@ -7109,6 +7137,8 @@ function renderAccountSection(){
     </div>
     <div id="acct-export" style="display:none;margin-bottom:8px"></div>
     <div id="acct-import" style="display:none;margin-bottom:8px"></div>
+    <div style="text-align:right"><button class="manboard-cancel" style="color:var(--text2);margin-top:0" onclick="acctUiRelayToggle()">⚙️ 동기화 서버 설정</button></div>
+    <div id="acct-relay" style="display:none;margin-bottom:8px"></div>
 
     <h3>👥 계정 전환</h3>
     ${others.length?others.map(x=>{const sd=acctLoadSlot(x.id);let tc=0,fc=0;try{tc=(JSON.parse(sd.nimbi_tickets||'[]')||[]).length;fc=(JSON.parse(sd.nimbi_favs||'[]')||[]).length;}catch(e){}
@@ -7156,35 +7186,76 @@ function acctUiNewToggle(){
     <p class="hint" style="font-size:11px;color:var(--text3);margin:4px 0 8px">새 계정은 빈 상태로 시작합니다. 현재 계정의 기록은 그대로 보존됩니다.</p>
     <button class="btn btn-primary" style="width:100%;justify-content:center" onclick="acctCreate(document.getElementById('acct-new-name').value.trim()||'새 계정',_acctPickEmoji)">만들고 전환</button></div>`;
 }
-function acctUiShowExport(){
+async function acctUiShowExport(){
   const box=document.getElementById('acct-export'); if(!box)return;
-  document.getElementById('acct-import').style.display='none';
-  const code=acctExportCode();
+  const imp=document.getElementById('acct-import'); if(imp)imp.style.display='none';
   box.style.display='block';
-  box.innerHTML=`<textarea class="acct-code" readonly onclick="this.select()">${_acctEsc(code)}</textarea>
-    <button class="btn btn-primary" style="width:100%;justify-content:center;margin-top:6px" onclick="acctUiCopy(this)">📋 코드 복사</button>
-    <p class="hint" style="font-size:11px;color:var(--text3);margin-top:6px">이 코드를 다른 기기의 '코드로 가져오기'에 붙여넣으면 기록이 그대로 옮겨집니다.</p>`;
+  if(acctRelayUrl()){
+    box.innerHTML=`<div class="acct-shortcode acct-shortcode-load">코드 생성 중…</div>`;
+    try{
+      const code=await acctUploadCode();
+      box.innerHTML=`<div class="acct-shortcode">${_acctEsc(code)}</div>
+        <button class="btn btn-primary" style="width:100%;justify-content:center;margin-top:8px" onclick="acctUiCopyCode(this,'${_acctEsc(code)}')">📋 코드 복사</button>
+        <p class="hint" style="font-size:11px;color:var(--text3);margin-top:6px">다른 기기의 '코드로 가져오기'에 이 <b>${code.length}자 코드</b>를 입력하면 기록이 그대로 옮겨집니다. (180일 후 만료)</p>`;
+    }catch(e){
+      box.innerHTML=`<p class="hint" style="font-size:12px;color:var(--red)">동기화 서버 연결 실패: ${_acctEsc(e.message||e)}</p>
+        <p class="hint" style="font-size:11px;color:var(--text3);margin-top:4px">아래 ⚙️ 동기화 서버 설정을 확인하세요.</p>`;
+    }
+  } else {
+    const code=acctExportCodeLocal();
+    box.innerHTML=`<textarea class="acct-code" readonly onclick="this.select()">${_acctEsc(code)}</textarea>
+      <button class="btn btn-primary" style="width:100%;justify-content:center;margin-top:6px" onclick="acctUiCopyCode(this,null)">📋 코드 복사</button>
+      <p class="hint" style="font-size:11px;color:var(--text3);margin-top:6px">⚙️ 동기화 서버를 설정하면 <b>6자 짧은 코드</b>로 바뀝니다. (지금은 서버 없이 쓰는 로컬 코드)</p>`;
+  }
 }
-function acctUiCopy(btn){
-  const ta=document.getElementById('acct-export').querySelector('textarea'); if(!ta)return;
-  const done=()=>{btn.textContent='✅ 복사됨';setTimeout(()=>{btn.textContent='📋 코드 복사';},1500);};
-  try{navigator.clipboard.writeText(ta.value).then(done,()=>{ta.select();document.execCommand('copy');done();});}
-  catch(e){ta.select();try{document.execCommand('copy');done();}catch(_){}}
+function acctUiCopyCode(btn,short){
+  const ta=document.getElementById('acct-export')&&document.getElementById('acct-export').querySelector('textarea');
+  const text=short||(ta?ta.value:'');
+  const done=()=>{const o=btn.textContent;btn.textContent='✅ 복사됨';setTimeout(()=>{btn.textContent=o;},1500);};
+  try{navigator.clipboard.writeText(text).then(done,()=>{if(ta){ta.select();document.execCommand('copy');}done();});}
+  catch(e){if(ta){ta.select();try{document.execCommand('copy');}catch(_){}}done();}
 }
 function acctUiImportToggle(){
   const box=document.getElementById('acct-import'); if(!box)return;
-  document.getElementById('acct-export').style.display='none';
+  const exp=document.getElementById('acct-export'); if(exp)exp.style.display='none';
   if(box.style.display!=='none'){box.style.display='none';return;}
   box.style.display='block';
-  box.innerHTML=`<textarea class="acct-code" id="acct-import-code" placeholder="다른 기기에서 내보낸 동기화 코드를 붙여넣으세요"></textarea>
-    <button class="btn btn-primary" style="width:100%;justify-content:center;margin-top:6px" onclick="acctUiDoImport()">📥 가져오기 (로그인)</button>
-    <p class="hint" style="font-size:11px;color:var(--text3);margin-top:6px">같은 계정 코드를 가져오면 기존 계정이 갱신되고, 새 계정 코드면 계정이 추가됩니다.</p>`;
+  box.innerHTML=`<input class="acct-input" id="acct-import-code" placeholder="6자 코드 (또는 로컬 코드 붙여넣기)" style="font-family:var(--mono);text-align:center;letter-spacing:2px;text-transform:uppercase">
+    <button class="btn btn-primary" style="width:100%;justify-content:center;margin-top:8px" onclick="acctUiDoImport(this)">📥 가져오기 (로그인)</button>
+    <p class="hint" style="font-size:11px;color:var(--text3);margin-top:6px">같은 계정 코드면 기존 계정이 갱신되고, 새 계정 코드면 계정이 추가됩니다.</p>`;
 }
-function acctUiDoImport(){
-  const v=(document.getElementById('acct-import-code')||{}).value||'';
-  if(!v.trim()){alert('코드를 붙여넣어 주세요.');return;}
-  const r=acctImportCode(v);
-  if(!r.ok)alert(r.msg||'가져오기에 실패했습니다.');
+async function acctUiDoImport(btn){
+  const el=document.getElementById('acct-import-code'); const v=(el&&el.value)||'';
+  if(!v.trim()){alert('코드를 입력해 주세요.');return;}
+  if(btn){btn.disabled=true;btn.textContent='가져오는 중…';}
+  const r=await acctImportCode(v);
+  if(!r||!r.ok){ if(btn){btn.disabled=false;btn.textContent='📥 가져오기 (로그인)';} alert((r&&r.msg)||'가져오기에 실패했습니다.'); }
+}
+// ⚙️ 동기화 서버(릴레이) 설정
+function acctUiRelayToggle(){
+  const box=document.getElementById('acct-relay'); if(!box)return;
+  if(box.style.display!=='none'){box.style.display='none';return;}
+  box.style.display='block';
+  let stored=''; try{stored=localStorage.getItem('nimbi_relay_url')||'';}catch(e){}
+  box.innerHTML=`<div style="padding:12px;background:var(--bg2);border:1px solid var(--border);border-radius:10px">
+    <p class="hint" style="font-size:11px;color:var(--text2);margin-bottom:8px">짧은 코드(6자)를 쓰려면 무료 Cloudflare Worker 주소가 필요합니다. 저장소의 <b>sync-worker/README.md</b> 5분 가이드를 따라 배포하세요.</p>
+    <input class="acct-input" id="acct-relay-url" placeholder="https://nimbi-sync.xxx.workers.dev" value="${_acctEsc(stored)}">
+    <div style="display:flex;gap:6px;margin-top:6px">
+      <button class="btn btn-primary" style="flex:1;justify-content:center" onclick="acctUiSaveRelay()">저장</button>
+      <button class="btn" style="flex:1;justify-content:center;background:var(--bg3);color:var(--text)" onclick="acctUiTestRelay()">연결 테스트</button>
+    </div>
+    <div id="acct-relay-msg" style="font-size:11px;margin-top:6px"></div></div>`;
+}
+function acctUiSaveRelay(){
+  const v=(document.getElementById('acct-relay-url')||{}).value||''; acctSetRelayUrl(v);
+  const m=document.getElementById('acct-relay-msg'); if(m){m.style.color='var(--green)';m.textContent=v.trim()?'✅ 저장됨. 이제 짧은 코드로 내보내기/가져오기가 됩니다.':'주소를 비웠습니다(서버 없이 로컬 코드 사용).';}
+}
+async function acctUiTestRelay(){
+  const v=(document.getElementById('acct-relay-url')||{}).value||''; const m=document.getElementById('acct-relay-msg'); if(!m)return;
+  if(!v.trim()){m.style.color='var(--red)';m.textContent='주소를 입력하세요.';return;}
+  m.style.color='var(--text2)';m.textContent='테스트 중…';
+  try{ const res=await fetch(v.replace(/\/+$/,'')+'/'); const j=await res.json(); if(j&&(j.ok||j.service)){m.style.color='var(--green)';m.textContent='✅ 연결 성공';}else{m.style.color='var(--red)';m.textContent='응답이 이상합니다. 주소를 확인하세요.';} }
+  catch(e){ m.style.color='var(--red)';m.textContent='연결 실패: '+(e.message||e); }
 }
 
 const MY_TITLES = {
