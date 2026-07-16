@@ -5219,6 +5219,8 @@ function openQRPopup(ticketId){
     ? `<button class="rt-act-btn rt-act-board" onclick="boardTicket('${tk.id}')">🎫 탑승하기 (개표)</button>`
     : bs==='active'
     ? `<button class="rt-act-btn rt-act-board" disabled>✓ 개표 완료</button>`
+    : canManualBoard(tk)
+    ? `<button class="rt-act-btn rt-act-board rt-act-manual" onclick="openManualBoard('${tk.id}')">🖐️ 수개표 (개표 놓침)</button>`
     : '';
 
   window._qrTicketId = tk.id;
@@ -5367,13 +5369,25 @@ function canBoardTicket(tk){
   const sinceDep=(Date.now()-dep.getTime())/60000; // 출발 후 경과 분
   return sinceDep>=0 && sinceDep<=10;
 }
-// 개표 실행 → 게이트 통과 연출 + 소리 → 상태 갱신
-function boardTicket(id){
+// 수개표 가능 — 정상 개표창(출발 후 10분)을 놓쳤지만 아직 운행 중(하차 전)일 때
+function canManualBoard(tk){
+  if(tk.status!=='active' || isTicketPast(tk)) return false;
+  if(ticketBoardState(tk)!=='none') return false;
+  const depM=toMin(tk.depTime);
+  if(depM===null || !tk.travelDate) return false;
+  const dep=new Date(tk.travelDate+'T00:00:00');
+  if(isNaN(dep.getTime())) return false;
+  dep.setMinutes(depM);
+  const sinceDep=(Date.now()-dep.getTime())/60000;
+  return sinceDep>10; // 정상창(0~10분) 이후 ~ 하차 전
+}
+// 개표 확정 (상태 갱신 + 연출) — 정상/수개표 공통
+function _doBoard(id, manual){
   const tickets=loadTickets();
   const tk=tickets.find(t=>t.id===id);
   if(!tk) return;
-  if(!canBoardTicket(tk)){ alert('지금은 개표할 수 없는 승차권입니다.\n(개표는 열차 출발 후 10분 이내에만 가능합니다)'); return; }
   tk.board='active';
+  if(manual) tk.manualBoard=true;
   saveTickets(tickets);
   playGateSound();
   if(navigator.vibrate) try{ navigator.vibrate([30,40,30]); }catch(e){}
@@ -5381,7 +5395,15 @@ function boardTicket(id){
     if(document.getElementById('qr-popup-wrap')) openQRPopup(id);
     if(typeof renderTickets==='function') renderTickets();
     if(typeof updateHomeTripWidget==='function') updateHomeTripWidget();
-  });
+  }, manual);
+}
+// 개표 실행 → 게이트 통과 연출 + 소리 → 상태 갱신
+function boardTicket(id){
+  const tickets=loadTickets();
+  const tk=tickets.find(t=>t.id===id);
+  if(!tk) return;
+  if(!canBoardTicket(tk)){ alert('지금은 개표할 수 없는 승차권입니다.\n(개표는 열차 출발 후 10분 이내에만 가능합니다)'); return; }
+  _doBoard(id, false);
 }
 // 개표음 (WebAudio, 실제 개찰구 "삑" 2음)
 function playGateSound(){
@@ -5403,7 +5425,7 @@ function playGateSound(){
   }catch(e){}
 }
 // 게이트 통과 애니메이션 오버레이
-function showGateAnimation(tk, done){
+function showGateAnimation(tk, done, manual){
   document.getElementById('gate-overlay')?.remove();
   const ov=document.createElement('div');
   ov.id='gate-overlay'; ov.className='gate-overlay';
@@ -5412,10 +5434,79 @@ function showGateAnimation(tk, done){
     <div class="gate-lamp"></div>
     <div class="gate-door left"></div>
     <div class="gate-door right"></div>
-    <div class="gate-check">✓ 개표 완료 · ${tk.fromStn} 승차</div>
+    <div class="gate-check">✓ ${manual?'수개표':'개표'} 완료 · ${tk.fromStn} 승차</div>
   </div>`;
   document.body.appendChild(ov);
   setTimeout(()=>{ ov.remove(); if(done) done(); }, 1750);
+}
+
+// 🖐️ 수개표 미니게임 — 개표 도장 타이밍 (초록 구간에 도장 3회)
+let _manBoard=null;
+function openManualBoard(id){
+  const tickets=loadTickets(); const tk=tickets.find(t=>t.id===id); if(!tk)return;
+  if(!canManualBoard(tk)){ alert('지금은 수개표할 수 없는 승차권입니다.'); return; }
+  closeManualBoard();
+  const ov=document.createElement('div'); ov.id='manboard-overlay'; ov.className='manboard-overlay';
+  ov.innerHTML=`<div class="manboard-card">
+    <div class="manboard-title">🖐️ 수개표</div>
+    <div class="manboard-desc">개표 시간을 놓쳤어요.<br>움직이는 표시가 <b style="color:var(--green)">초록 구간</b>에 올 때 도장을 찍어 승무원 확인을 받으세요.</div>
+    <div class="manboard-count"><span id="manboard-dots"></span> <span id="manboard-num">0 / 3</span></div>
+    <div class="manboard-track" id="manboard-track">
+      <div class="manboard-zone" id="manboard-zone"></div>
+      <div class="manboard-marker" id="manboard-marker"></div>
+    </div>
+    <button class="btn btn-primary manboard-hit" id="manboard-hit" onclick="manBoardHit()">🖐️ 도장 찍기</button>
+    <button class="manboard-cancel" onclick="closeManualBoard()">취소</button>
+  </div>`;
+  document.body.appendChild(ov);
+  _manBoard={id, pos:0, dir:1, speed:0.9, need:3, done:0, zone:[0,0], lock:false, raf:null};
+  _manBoardSetZone(); _manBoardRender();
+  const marker=document.getElementById('manboard-marker');
+  const step=()=>{ if(!_manBoard)return;
+    if(!_manBoard.lock){ _manBoard.pos+=_manBoard.dir*_manBoard.speed;
+      if(_manBoard.pos>=100){_manBoard.pos=100;_manBoard.dir=-1;}
+      if(_manBoard.pos<=0){_manBoard.pos=0;_manBoard.dir=1;}
+      if(marker)marker.style.left=_manBoard.pos+'%'; }
+    _manBoard.raf=requestAnimationFrame(step); };
+  _manBoard.raf=requestAnimationFrame(step);
+}
+function _manBoardSetZone(){
+  if(!_manBoard)return;
+  const widths=[20,15,11]; const w=widths[Math.min(_manBoard.done,2)];
+  const center=25+Math.random()*50;
+  const a=Math.max(2,center-w/2), b=Math.min(98,center+w/2);
+  _manBoard.zone=[a,b]; _manBoard.speed=0.9+_manBoard.done*0.35;
+  const z=document.getElementById('manboard-zone'); if(z){z.style.left=a+'%';z.style.width=(b-a)+'%';}
+}
+function _manBoardRender(){
+  if(!_manBoard)return;
+  const num=document.getElementById('manboard-num'); if(num)num.textContent=_manBoard.done+' / '+_manBoard.need;
+  const dots=document.getElementById('manboard-dots'); if(dots)dots.textContent='●'.repeat(_manBoard.done)+'○'.repeat(_manBoard.need-_manBoard.done);
+}
+function manBoardHit(){
+  if(!_manBoard||_manBoard.lock)return;
+  const {pos,zone}=_manBoard;
+  const mk=document.getElementById('manboard-marker');
+  if(pos>=zone[0]&&pos<=zone[1]){
+    _manBoard.done++; _manBoardRender(); _manBoard.lock=true;
+    if(mk)mk.classList.add('stamp');
+    try{playGateSound();}catch(e){}
+    if(_manBoard.done>=_manBoard.need){
+      const id=_manBoard.id;
+      setTimeout(()=>{ closeManualBoard(); _doBoard(id,true); }, 430);
+      return;
+    }
+    setTimeout(()=>{ if(!_manBoard)return; if(mk)mk.classList.remove('stamp'); _manBoardSetZone(); _manBoard.lock=false; }, 400);
+  } else {
+    const card=document.querySelector('.manboard-card');
+    if(card){ card.classList.remove('shake'); void card.offsetWidth; card.classList.add('shake'); }
+    if(navigator.vibrate)try{navigator.vibrate(60);}catch(e){}
+  }
+}
+function closeManualBoard(){
+  if(_manBoard&&_manBoard.raf)cancelAnimationFrame(_manBoard.raf);
+  _manBoard=null;
+  document.getElementById('manboard-overlay')?.remove();
 }
 
 // ══════════════════════════════════════════
@@ -7002,10 +7093,13 @@ function renderAccountSection(){
     <div class="acct-big">
       <span class="acct-avatar">${a?a.emoji:'👤'}</span>
       <div class="acct-info"><div class="acct-name" style="font-size:18px">${a?_acctGreet(a.name):'계정 없음'}</div>
-        <div class="acct-sub">이 기기의 활성 계정 · 🎫${s.tickets} 승차권 · ⭐${s.favs} 즐겨찾기 · 🎟️${s.passes} 정기권 · 🔔${s.alarms} 알람</div></div>
+        <div class="acct-sub">이 기기의 활성 계정</div></div>
       <button class="btn-pass-toggle" onclick="acctUiEditToggle()">✏️ 편집</button>
     </div>
     <div id="acct-edit" style="display:none"></div>
+
+    <h3>📊 내 기록</h3>
+    ${_acctRecRows()}
 
     <h3>🔗 기기 간 연동</h3>
     <p class="hint" style="margin:0 0 10px;font-size:12px;color:var(--text2)">이 계정의 승차권·즐겨찾기·알람 등 모든 기록을 다른 기기로 옮기려면 <b>동기화 코드</b>를 내보내고, 다른 기기에서 가져오세요.</p>
@@ -7025,6 +7119,17 @@ function renderAccountSection(){
     <button class="btn" style="width:100%;justify-content:center;background:var(--bg2);color:var(--text);border:1px dashed var(--border)" onclick="acctUiNewToggle()">＋ 새 계정 만들기</button>
     <div id="acct-new" style="display:none;margin-top:8px"></div>
   </div>`;
+}
+// 계정 기록 요약을 '아이콘 라벨 개수' 행으로 (탭하면 해당 섹션으로)
+function _acctRecRows(){
+  const recs=[
+    {e:'🎫',l:'승차권',k:'nimbi_tickets',u:'매',s:'ticket'},
+    {e:'🎟️',l:'정기권',k:'nimbi_passes',u:'매',s:'pass'},
+    {e:'⭐',l:'즐겨찾기',k:'nimbi_favs',u:'개',s:'fav'},
+    {e:'🔔',l:'승하차 알람',k:'nimbi_alarms',u:'개',s:'alarm'},
+  ];
+  const cnt=k=>{try{const v=JSON.parse(localStorage.getItem(k));return Array.isArray(v)?v.length:0;}catch(e){return 0;}};
+  return recs.map(r=>`<div class="acct-rec" onclick="openMySection('${r.s}')"><span class="acct-rec-ic">${r.e}</span><span class="acct-rec-label">${r.l}</span><span class="acct-rec-cnt">${cnt(r.k)}${r.u}</span><span class="my-menu-arrow">›</span></div>`).join('');
 }
 function _acctEmojiPicker(cur,cb){
   return `<div class="acct-emoji-pick">${ACCT_EMOJIS.map(e=>`<button class="${e===cur?'sel':''}" onclick="${cb}('${e}',this)">${e}</button>`).join('')}</div>`;

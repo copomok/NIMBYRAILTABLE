@@ -1609,3 +1609,26 @@ button, select, input[type=range],
 .acct-emoji-pick button.sel{border-color:var(--accent);background:var(--bg3)}
 .acct-input{width:100%;padding:10px 12px;background:var(--bg);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:14px;font-family:var(--sans);margin-bottom:2px}
 .acct-code{width:100%;min-height:78px;padding:10px;background:var(--bg);border:1px solid var(--border);border-radius:8px;color:var(--text2);font-family:var(--mono);font-size:11px;word-break:break-all;resize:vertical}
+/* 계정 기록 행 */
+.acct-rec{display:flex;align-items:center;gap:10px;padding:12px 14px;background:var(--bg2);border:1px solid var(--border);border-radius:10px;margin-bottom:8px;cursor:pointer;transition:border-color .15s}
+.acct-rec:hover{border-color:var(--accent)}
+.acct-rec-ic{font-size:20px;width:26px;text-align:center;flex-shrink:0}
+.acct-rec-label{flex:1;font-weight:600;color:var(--text);font-size:14px}
+.acct-rec-cnt{font-weight:700;color:var(--accent);font-family:var(--mono);font-size:14px}
+/* 🖐️ 수개표 미니게임 */
+.manboard-overlay{position:fixed;inset:0;z-index:9700;background:rgba(0,0,0,.72);display:flex;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(3px)}
+.manboard-card{width:100%;max-width:360px;background:var(--bg2);border:1px solid var(--border);border-radius:16px;padding:24px 20px;text-align:center;animation:manboardIn .2s ease}
+@keyframes manboardIn{from{transform:scale(.9);opacity:0}to{transform:scale(1);opacity:1}}
+.manboard-title{font-size:20px;font-weight:800;margin-bottom:8px;color:var(--text)}
+.manboard-desc{font-size:13px;color:var(--text2);line-height:1.6;margin-bottom:16px}
+.manboard-count{font-size:15px;font-weight:700;margin-bottom:12px;letter-spacing:3px;color:var(--text)}
+.manboard-count #manboard-dots{color:var(--accent)}
+.manboard-track{position:relative;height:48px;background:var(--bg);border:1px solid var(--border);border-radius:10px;overflow:hidden;margin-bottom:18px}
+.manboard-zone{position:absolute;top:0;bottom:0;background:var(--green);opacity:.32;border-left:2px solid var(--green);border-right:2px solid var(--green)}
+.manboard-marker{position:absolute;top:0;bottom:0;left:0;width:5px;margin-left:-2.5px;background:var(--accent2);box-shadow:0 0 8px var(--accent2);border-radius:3px}
+.manboard-marker.stamp{background:var(--green);box-shadow:0 0 16px var(--green);width:10px;margin-left:-5px}
+.manboard-hit{width:100%;justify-content:center;font-size:15px;padding:13px}
+.manboard-cancel{margin-top:10px;background:none;border:none;color:var(--text3);font-size:13px;cursor:pointer;font-family:var(--sans)}
+.manboard-card.shake{animation:manboardShake .3s}
+@keyframes manboardShake{0%,100%{transform:translateX(0)}20%{transform:translateX(-8px)}40%{transform:translateX(7px)}60%{transform:translateX(-5px)}80%{transform:translateX(3px)}}
+.rt-act-manual{background:var(--orange)!important}
