@@ -6885,6 +6885,7 @@ function openMyPage(){
   document.getElementById('my-panel').classList.add('open');
   document.body.style.overflow='hidden';
   _syncModeButtons();
+  try{updateAccountCard();}catch(e){}
 }
 function closeMyPage(){
   document.getElementById('my-backdrop').classList.remove('open');
@@ -6897,7 +6898,186 @@ function closeMySubPanel(){
   if(window._mySubClockTimer){clearInterval(window._mySubClockTimer);window._mySubClockTimer=null;}
 }
 
+// ══════════════════════════════════════════
+// 👤 계정(로컬 프로필) 기능 — 서버 없이 여러 계정을 기기 내 프로필로 관리,
+//    로그인=프로필 전환, 기기 간 연동은 동기화 코드(내보내기/가져오기)로.
+// ══════════════════════════════════════════
+const ACCT_REG_KEY='nimbi_accounts';
+const ACCT_ACTIVE_KEY='nimbi_account_active';
+const ACCT_DATA_PREFIX='nimbi_acct_data_';
+// 계정에 연동되는 개인기록 키 (기기 UI 설정 nimbi_mode/led/zoom 등은 제외)
+const ACCT_KEYS=['nimbi_alarms','nimbi_alarm_groups','nimbi_seat_watches','nimbi_favs','nimbi_fav_groups','nimbi_notice_read','nimbi_tickets','nimbi_passes','nimbi_seatprefs','nimbi_bookroutes','nimbi_puzzle'];
+const ACCT_PREFIXES=['nimbi_history_'];
+const ACCT_EMOJIS=['🚆','🚄','🚅','🚇','🚉','🎫','⭐','🧭','🗺️','🌄','🐧','🦊','🐻','🐰','🐱','🌟'];
+function _acctEsc(s){return String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+function _acctIsKey(k){return ACCT_KEYS.includes(k)||ACCT_PREFIXES.some(p=>k.startsWith(p));}
+function acctReg(){try{return JSON.parse(localStorage.getItem(ACCT_REG_KEY))||[];}catch(e){return[];}}
+function acctSaveReg(list){try{localStorage.setItem(ACCT_REG_KEY,JSON.stringify(list));}catch(e){}}
+function acctActiveId(){return localStorage.getItem(ACCT_ACTIVE_KEY)||'';}
+function acctActive(){const id=acctActiveId();return acctReg().find(a=>a.id===id)||null;}
+function _acctUid(){return 'a'+Date.now().toString(36)+Math.random().toString(36).slice(2,7);}
+function acctSnapshotLive(){const snap={};for(let i=0;i<localStorage.length;i++){const k=localStorage.key(i);if(_acctIsKey(k))snap[k]=localStorage.getItem(k);}return snap;}
+function acctApply(snap){const del=[];for(let i=0;i<localStorage.length;i++){const k=localStorage.key(i);if(_acctIsKey(k))del.push(k);}del.forEach(k=>localStorage.removeItem(k));Object.keys(snap||{}).forEach(k=>{try{localStorage.setItem(k,snap[k]);}catch(e){}});}
+function _acctSlot(id){return ACCT_DATA_PREFIX+id;}
+function acctSaveSlot(id,snap){try{localStorage.setItem(_acctSlot(id),JSON.stringify(snap));}catch(e){}}
+function acctLoadSlot(id){try{return JSON.parse(localStorage.getItem(_acctSlot(id)))||{};}catch(e){return{};}}
+// 최초 실행: 계정 없으면 기존 로컬 데이터로 기본 계정 생성(데이터 보존)
+function acctInit(){
+  let reg=acctReg();
+  if(!reg.length){
+    const id=_acctUid();
+    reg=[{id,name:'나의 계정',emoji:'🚆',created:Date.now()}];
+    acctSaveReg(reg); localStorage.setItem(ACCT_ACTIVE_KEY,id);
+    acctSaveSlot(id,acctSnapshotLive());
+  } else if(!reg.find(a=>a.id===acctActiveId())){
+    localStorage.setItem(ACCT_ACTIVE_KEY,reg[0].id);
+  }
+}
+function acctSwitch(id){
+  const cur=acctActiveId(); if(id===cur){closeMySubPanel();return;}
+  if(cur)acctSaveSlot(cur,acctSnapshotLive());
+  acctApply(acctLoadSlot(id)); localStorage.setItem(ACCT_ACTIVE_KEY,id); location.reload();
+}
+function acctCreate(name,emoji){
+  const cur=acctActiveId(); if(cur)acctSaveSlot(cur,acctSnapshotLive());
+  const id=_acctUid(); const reg=acctReg();
+  reg.push({id,name:(name||'새 계정').slice(0,20),emoji:emoji||'🚆',created:Date.now()}); acctSaveReg(reg);
+  acctSaveSlot(id,{}); acctApply({}); localStorage.setItem(ACCT_ACTIVE_KEY,id); location.reload();
+}
+function acctRename(id,name,emoji){
+  const reg=acctReg(); const a=reg.find(x=>x.id===id); if(!a)return;
+  if(name!=null)a.name=name.slice(0,20); if(emoji)a.emoji=emoji; acctSaveReg(reg);
+  updateAccountCard(); if(document.getElementById('acct-sec'))renderAccountSection();
+}
+function acctDelete(id){
+  let reg=acctReg();
+  if(reg.length<=1){alert('마지막 계정은 삭제할 수 없습니다.');return;}
+  const a=reg.find(x=>x.id===id); if(!a)return;
+  if(!confirm(`'${a.name}' 계정과 그 안의 모든 기록(승차권·즐겨찾기·알람 등)을 이 기기에서 삭제할까요?`))return;
+  reg=reg.filter(x=>x.id!==id); acctSaveReg(reg);
+  try{localStorage.removeItem(_acctSlot(id));}catch(e){}
+  if(acctActiveId()===id){const nid=reg[0].id;acctApply(acctLoadSlot(nid));localStorage.setItem(ACCT_ACTIVE_KEY,nid);location.reload();return;}
+  renderAccountSection();
+}
+function acctExportCode(){
+  const a=acctActive(); if(!a)return '';
+  const payload={v:1,id:a.id,name:a.name,emoji:a.emoji,data:acctSnapshotLive()};
+  try{return btoa(unescape(encodeURIComponent(JSON.stringify(payload))));}catch(e){return '';}
+}
+function acctImportCode(code){
+  let payload; try{payload=JSON.parse(decodeURIComponent(escape(atob((code||'').trim()))));}catch(e){return{ok:false,msg:'코드 형식이 올바르지 않습니다.'};}
+  if(!payload||!payload.id||typeof payload.data!=='object')return{ok:false,msg:'유효한 동기화 코드가 아닙니다.'};
+  const cur=acctActiveId(); if(cur)acctSaveSlot(cur,acctSnapshotLive());
+  let reg=acctReg(); let a=reg.find(x=>x.id===payload.id);
+  if(a){a.name=payload.name||a.name;a.emoji=payload.emoji||a.emoji;}
+  else reg.push({id:payload.id,name:(payload.name||'가져온 계정').slice(0,20),emoji:payload.emoji||'🚆',created:Date.now()});
+  acctSaveReg(reg); acctSaveSlot(payload.id,payload.data);
+  acctApply(payload.data); localStorage.setItem(ACCT_ACTIVE_KEY,payload.id); location.reload();
+  return{ok:true};
+}
+// 계정별 기록 요약(개수)
+function _acctSummary(){
+  const cnt=k=>{try{const v=JSON.parse(localStorage.getItem(k));return Array.isArray(v)?v.length:0;}catch(e){return 0;}};
+  return {tickets:cnt('nimbi_tickets'),favs:cnt('nimbi_favs'),passes:cnt('nimbi_passes'),alarms:cnt('nimbi_alarms')};
+}
+// ── 계정 UI ──
+function updateAccountCard(){
+  const el=document.getElementById('acct-card'); if(!el)return;
+  const a=acctActive(); const n=acctReg().length;
+  if(!a){el.innerHTML=`<div class="acct-card-inner"><span class="acct-avatar">👤</span><div class="acct-info"><div class="acct-name">로그인</div><div class="acct-sub">계정을 만들어 기록을 연동하세요</div></div><span class="my-menu-arrow">›</span></div>`;return;}
+  const s=_acctSummary();
+  el.innerHTML=`<div class="acct-card-inner"><span class="acct-avatar">${a.emoji}</span><div class="acct-info"><div class="acct-name">${_acctEsc(a.name)}</div><div class="acct-sub">🎫${s.tickets} ⭐${s.favs}${n>1?' · '+n+'개 계정':''} · 동기화 코드로 연동</div></div><span class="my-menu-arrow">›</span></div>`;
+}
+function renderAccountSection(){
+  const el=document.getElementById('my-sub-content'); if(!el)return;
+  const a=acctActive(); const reg=acctReg(); const s=_acctSummary();
+  const others=reg.filter(x=>x.id!==(a&&a.id));
+  el.innerHTML=`<div class="acct-sec" id="acct-sec">
+    <div class="acct-big">
+      <span class="acct-avatar">${a?a.emoji:'👤'}</span>
+      <div class="acct-info"><div class="acct-name" style="font-size:18px">${a?_acctEsc(a.name):'계정 없음'}</div>
+        <div class="acct-sub">이 기기의 활성 계정 · 🎫${s.tickets} 승차권 · ⭐${s.favs} 즐겨찾기 · 🎟️${s.passes} 정기권 · 🔔${s.alarms} 알람</div></div>
+      <button class="btn-pass-toggle" onclick="acctUiEditToggle()">✏️ 편집</button>
+    </div>
+    <div id="acct-edit" style="display:none"></div>
+
+    <h3>🔗 기기 간 연동</h3>
+    <p class="hint" style="margin:0 0 10px;font-size:12px;color:var(--text2)">이 계정의 승차권·즐겨찾기·알람 등 모든 기록을 다른 기기로 옮기려면 <b>동기화 코드</b>를 내보내고, 다른 기기에서 가져오세요.</p>
+    <div style="display:flex;gap:8px;margin-bottom:8px">
+      <button class="btn btn-primary" style="flex:1;justify-content:center" onclick="acctUiShowExport()">📤 동기화 코드 내보내기</button>
+      <button class="btn" style="flex:1;justify-content:center;background:var(--bg3);color:var(--text)" onclick="acctUiImportToggle()">📥 코드로 가져오기</button>
+    </div>
+    <div id="acct-export" style="display:none;margin-bottom:8px"></div>
+    <div id="acct-import" style="display:none;margin-bottom:8px"></div>
+
+    <h3>👥 계정 전환</h3>
+    ${others.length?others.map(x=>{const sd=acctLoadSlot(x.id);let tc=0,fc=0;try{tc=(JSON.parse(sd.nimbi_tickets||'[]')||[]).length;fc=(JSON.parse(sd.nimbi_favs||'[]')||[]).length;}catch(e){}
+      return `<div class="acct-row"><span class="acct-avatar" style="width:38px;height:38px;font-size:20px">${x.emoji}</span>
+        <div class="acct-info"><div class="acct-name" style="font-size:14px">${_acctEsc(x.name)}</div><div class="acct-sub">🎫${tc} ⭐${fc}</div></div>
+        <button class="btn-pass-toggle" onclick="acctSwitch('${x.id}')">전환</button>
+        <button class="btn-pass-toggle" style="color:var(--red)" onclick="acctDelete('${x.id}')">삭제</button></div>`;}).join(''):'<p class="hint" style="font-size:12px;color:var(--text3);margin-bottom:8px">다른 계정이 없습니다.</p>'}
+    <button class="btn" style="width:100%;justify-content:center;background:var(--bg2);color:var(--text);border:1px dashed var(--border)" onclick="acctUiNewToggle()">＋ 새 계정 만들기</button>
+    <div id="acct-new" style="display:none;margin-top:8px"></div>
+  </div>`;
+}
+function _acctEmojiPicker(cur,cb){
+  return `<div class="acct-emoji-pick">${ACCT_EMOJIS.map(e=>`<button class="${e===cur?'sel':''}" onclick="${cb}('${e}',this)">${e}</button>`).join('')}</div>`;
+}
+let _acctPickEmoji='🚆';
+function acctPick(e,btn){ _acctPickEmoji=e; const box=btn.parentElement; box.querySelectorAll('button').forEach(b=>b.classList.remove('sel')); btn.classList.add('sel'); }
+function acctUiEditToggle(){
+  const box=document.getElementById('acct-edit'); if(!box)return;
+  if(box.style.display!=='none'){box.style.display='none';return;}
+  const a=acctActive(); if(!a)return; _acctPickEmoji=a.emoji;
+  box.style.display='block';
+  box.innerHTML=`<div style="padding:12px;background:var(--bg2);border:1px solid var(--border);border-radius:10px;margin-bottom:8px">
+    <input class="acct-input" id="acct-edit-name" maxlength="20" value="${_acctEsc(a.name)}" placeholder="계정 이름">
+    ${_acctEmojiPicker(a.emoji,'acctPick')}
+    <button class="btn btn-primary" style="width:100%;justify-content:center" onclick="acctRename('${a.id}',document.getElementById('acct-edit-name').value.trim()||'계정',_acctPickEmoji);acctUiEditToggle()">저장</button></div>`;
+}
+function acctUiNewToggle(){
+  const box=document.getElementById('acct-new'); if(!box)return;
+  if(box.style.display!=='none'){box.style.display='none';return;}
+  _acctPickEmoji='🚆'; box.style.display='block';
+  box.innerHTML=`<div style="padding:12px;background:var(--bg2);border:1px solid var(--border);border-radius:10px">
+    <input class="acct-input" id="acct-new-name" maxlength="20" placeholder="새 계정 이름">
+    ${_acctEmojiPicker('🚆','acctPick')}
+    <p class="hint" style="font-size:11px;color:var(--text3);margin:4px 0 8px">새 계정은 빈 상태로 시작합니다. 현재 계정의 기록은 그대로 보존됩니다.</p>
+    <button class="btn btn-primary" style="width:100%;justify-content:center" onclick="acctCreate(document.getElementById('acct-new-name').value.trim()||'새 계정',_acctPickEmoji)">만들고 전환</button></div>`;
+}
+function acctUiShowExport(){
+  const box=document.getElementById('acct-export'); if(!box)return;
+  document.getElementById('acct-import').style.display='none';
+  const code=acctExportCode();
+  box.style.display='block';
+  box.innerHTML=`<textarea class="acct-code" readonly onclick="this.select()">${_acctEsc(code)}</textarea>
+    <button class="btn btn-primary" style="width:100%;justify-content:center;margin-top:6px" onclick="acctUiCopy(this)">📋 코드 복사</button>
+    <p class="hint" style="font-size:11px;color:var(--text3);margin-top:6px">이 코드를 다른 기기의 '코드로 가져오기'에 붙여넣으면 기록이 그대로 옮겨집니다.</p>`;
+}
+function acctUiCopy(btn){
+  const ta=document.getElementById('acct-export').querySelector('textarea'); if(!ta)return;
+  const done=()=>{btn.textContent='✅ 복사됨';setTimeout(()=>{btn.textContent='📋 코드 복사';},1500);};
+  try{navigator.clipboard.writeText(ta.value).then(done,()=>{ta.select();document.execCommand('copy');done();});}
+  catch(e){ta.select();try{document.execCommand('copy');done();}catch(_){}}
+}
+function acctUiImportToggle(){
+  const box=document.getElementById('acct-import'); if(!box)return;
+  document.getElementById('acct-export').style.display='none';
+  if(box.style.display!=='none'){box.style.display='none';return;}
+  box.style.display='block';
+  box.innerHTML=`<textarea class="acct-code" id="acct-import-code" placeholder="다른 기기에서 내보낸 동기화 코드를 붙여넣으세요"></textarea>
+    <button class="btn btn-primary" style="width:100%;justify-content:center;margin-top:6px" onclick="acctUiDoImport()">📥 가져오기 (로그인)</button>
+    <p class="hint" style="font-size:11px;color:var(--text3);margin-top:6px">같은 계정 코드를 가져오면 기존 계정이 갱신되고, 새 계정 코드면 계정이 추가됩니다.</p>`;
+}
+function acctUiDoImport(){
+  const v=(document.getElementById('acct-import-code')||{}).value||'';
+  if(!v.trim()){alert('코드를 붙여넣어 주세요.');return;}
+  const r=acctImportCode(v);
+  if(!r.ok)alert(r.msg||'가져오기에 실패했습니다.');
+}
+
 const MY_TITLES = {
+  account:'👤 내 계정',
   book:'🎫 열차 예매',
   ticket:'🎟️ 승차권 조회',
   pass:'🎟️ 정기권 예매',
@@ -6925,7 +7105,9 @@ function openMySection(section){
   if(!contentEl) return;
   contentEl.innerHTML = '';
   // 서브패널 전체화면으로 콘텐츠 렌더링 (탭 이동 없음)
-  if(section==='book'){
+  if(section==='account'){
+    renderAccountSection();
+  } else if(section==='book'){
     contentEl.innerHTML = '<div style="padding:0"><div id="my-result-book"></div></div>';
     renderMyBookTab();
   } else if(section==='ticket'){
@@ -9129,3 +9311,6 @@ function renderTrainCompare(noA,noB){
     </div>
     ${rows}`;
 }
+
+// 계정(로컬 프로필) 초기화 — 최초 실행 시 기존 데이터로 기본 계정 생성
+try{acctInit();}catch(e){}
