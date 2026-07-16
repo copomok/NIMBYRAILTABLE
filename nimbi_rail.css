@@ -7,7 +7,7 @@
   --accent:#388bfd;--accent2:#58a6ff;
   --green:#3fb950;--orange:#f97316;--red:#f85149;
   --radius:8px;--mono:'JetBrains Mono',monospace;--sans:'Noto Sans KR',sans-serif;
-  --c-ktx:#3b82f6;--c-srt:#a855f7;--c-itxsm:#ef4444;--c-itxcc:#22c55e;--c-mgh:#f97316;
+  --c-ktx:#3b82f6;--c-srt:#a855f7;--c-itxsm:#ef4444;--c-itxcc:#22c55e;--c-mgh:#f97316;--c-ndh:#38bdf8;
 }
 *{box-sizing:border-box;margin:0;padding:0}
 body{background:var(--bg);color:var(--text);font-family:var(--sans);font-size:14px;min-height:100vh}
@@ -47,12 +47,14 @@ select option{background:var(--bg3)}
 .g-ITX{background:rgba(239,68,68,.18);color:var(--c-itxsm);border:1px solid rgba(239,68,68,.4)}
 .g-ITXCC{background:rgba(34,197,94,.18);color:var(--c-itxcc);border:1px solid rgba(34,197,94,.4)}
 .g-MGH{background:rgba(249,115,22,.18);color:var(--c-mgh);border:1px solid rgba(249,115,22,.4)}
+.g-NDH{background:rgba(56,189,248,.18);color:var(--c-ndh);border:1px solid rgba(56,189,248,.4)}
 .tc{display:inline-flex;align-items:center;border-radius:5px;padding:2px 9px;font-family:var(--mono);font-size:12px;font-weight:600;cursor:pointer;transition:all .12s;border:1px solid}
 .tc-KTX{background:rgba(59,130,246,.12);color:var(--c-ktx);border-color:rgba(59,130,246,.35)}.tc-KTX:hover{background:rgba(59,130,246,.22)}
 .tc-SRT{background:rgba(168,85,247,.12);color:var(--c-srt);border-color:rgba(168,85,247,.35)}.tc-SRT:hover{background:rgba(168,85,247,.22)}
 .tc-ITX{background:rgba(239,68,68,.12);color:var(--c-itxsm);border-color:rgba(239,68,68,.35)}.tc-ITX:hover{background:rgba(239,68,68,.22)}
 .tc-ITXCC{background:rgba(34,197,94,.12);color:var(--c-itxcc);border-color:rgba(34,197,94,.35)}.tc-ITXCC:hover{background:rgba(34,197,94,.22)}
 .tc-MGH{background:rgba(249,115,22,.12);color:var(--c-mgh);border-color:rgba(249,115,22,.35)}.tc-MGH:hover{background:rgba(249,115,22,.22)}
+.tc-NDH{background:rgba(56,189,248,.12);color:var(--c-ndh);border-color:rgba(56,189,248,.35)}.tc-NDH:hover{background:rgba(56,189,248,.22)}
 .dir{display:inline-flex;align-items:center;gap:4px;font-size:12px}
 .dir.down{color:var(--accent2)}.dir.up{color:var(--orange)}
 .dir-dot{width:6px;height:6px;border-radius:50%}

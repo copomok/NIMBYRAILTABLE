@@ -1,7 +1,7 @@
 
 
 // KTX-산천/이음은 KTX와 동일하게 취급
-const GC={'KTX':'KTX','KTX-산천':'KTX','KTX-이음':'KTX','SRT':'SRT','ITX-새마을':'ITX','ITX-마음':'ITX','ITX-청춘':'ITXCC','무궁화호':'MGH','남도해양':'MGH'};
+const GC={'KTX':'KTX','KTX-산천':'KTX','KTX-이음':'KTX','SRT':'SRT','ITX-새마을':'ITX','ITX-마음':'ITX','ITX-청춘':'ITXCC','무궁화호':'MGH','남도해양':'NDH'};
 const GL={'KTX':'KTX','KTX-산천':'KTX-산천','KTX-이음':'KTX-이음','SRT':'SRT','ITX-새마을':'ITX-새마을','ITX-마음':'ITX-마음','ITX-청춘':'ITX-청춘','무궁화호':'무궁화','남도해양':'남도해양'};
 function gc(g){return GC[g]||'MGH';}
 // 등급 필터 매칭: select 값(전체/KTX/SRT/ITX-새마을/ITX-청춘/무궁화호)과 열차 등급 비교
@@ -16,7 +16,7 @@ function gradeMatch(trainGrade, filterVal){
   return trainGrade===filterVal;
 }
 // gc() → CSS 변수명 (KTX-산천/이음 모두 파란색)
-const GC_CSS_VAR={'KTX':'ktx','SRT':'srt','ITX':'itxsm','ITXCC':'itxcc','MGH':'mgh'};
+const GC_CSS_VAR={'KTX':'ktx','SRT':'srt','ITX':'itxsm','ITXCC':'itxcc','MGH':'mgh','NDH':'ndh'};
 function gcCssVar(g){return GC_CSS_VAR[gc(g)]||'mgh';}
 function gradeHtml(g){return `<span class="grade g-${gc(g)}">${GL[g]||g}</span>`;}
 function lineChipHtml(line){
@@ -2979,7 +2979,7 @@ const GRADE_COLORS = {
   'ITX-새마을':'#ef4444','ITX-마음':'#ef4444',
   'ITX-청춘':'#22c55e',
   '무궁화호':'#f97316',
-  '남도해양':'#14b8a6'
+  '남도해양':'#38bdf8'
 };
 
 // 노선명 → MAP_LINES 키, 노선별 인접역 쌍 캐시 (구간 소속 판별용)
