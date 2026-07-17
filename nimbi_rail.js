@@ -4015,13 +4015,15 @@ function _metroRegionAsMapLine(region){
   lines.forEach(l=>{(l.routes||[{stations:l.stations,xy:l.xy}]).forEach(r=>{
     for(let i=1;i<r.xy.length;i++){segSum+=Math.hypot(r.xy[i][0]-r.xy[i-1][0],r.xy[i][1]-r.xy[i-1][1]);segN++;}});});
   const avg=segN?segSum/segN:32;
-  const f=Math.min(6,Math.max(1,26/Math.max(avg,1)));
+  // 권역 지도는 실좌표(위경도 투영)를 그대로 겹쳐 그린다. 밀림(spread) 없이 그리므로
+  // 배율을 넉넉히 키워 조밀역 겹침을 줄인다(노선별 배율을 쓰면 환승역이 어긋나므로 공용 배율).
+  const f=Math.min(7,Math.max(3,44/Math.max(avg,1)));
   const routes=[];
   lines.forEach(l=>{(l.routes||[{stations:l.stations,xy:l.xy}]).forEach(r=>{
     routes.push({color:l.color,dash:!!r.dash,
       stations:r.stations.map((n,i)=>({n,x:Math.round(r.xy[i][0]*f),y:Math.round(r.xy[i][1]*f)}))});
   });});
-  return _metroRegionCache[region]={name:region+' 권역 전체',color:'#8b949e',isMetro:true,allView:true,metroRegion:region,lineCount:lines.length,routes};
+  return _metroRegionCache[region]={name:region+' 권역 전체',color:'#8b949e',isMetro:true,allView:true,metroRegion:region,noSpread:true,lineCount:lines.length,routes};
 }
 // 역의 환승 전철 노선 목록 — 게임 DB 역 태그의 노선 기본명 기준, 현재 노선 제외
 let _metroNameIdx=null;
@@ -4090,7 +4092,9 @@ function showMapLine(lineKey, btn){
       _trkStopSet=new Set(_trk.stops.filter(s=>(hasTime(s.arr)||hasTime(s.dep))&&!isPassStop(_trk,s.s)).map(s=>s.s));
     }
   }
-  const routes=spreadMapRoutes(baseRoutes);
+  // 권역 전체 지도는 밀림 왜곡 방지를 위해 실좌표 그대로(공용 배율이 조밀 노선을
+  // MIN 미만으로 압축→spread가 역을 밀어 어긋남). 그 외에는 기존대로 밀림 적용.
+  const routes=(line&&line.noSpread)?baseRoutes:spreadMapRoutes(baseRoutes);
   // 좌표 범위
   let minX=9999,maxX=0,minY=9999,maxY=0;
   routes.forEach(r=>r.stations.forEach(s=>{
