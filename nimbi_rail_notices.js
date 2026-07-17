@@ -387,5 +387,85 @@ const NOTICES = [
 </div><br>
 <a href="https://claude.ai/code/artifact/3aec6ea0-542e-44df-8a2c-c6f25bea8d25" target="_blank" rel="noopener noreferrer" style="display:inline-block;padding:10px 18px;border-radius:10px;background:var(--accent);color:#fff;font-weight:700;text-decoration:none">🔗 전체 시각표 열기</a><br><br>
 <span class="n-highlight">모든 시각은 통과·추월 재검증을 거친 값이며, 세부 역별 시각은 각 열차 조회에서도 확인하실 수 있습니다.</span>`
+  },
+  {
+    date:'2026-07-12',
+    cat:'timetable',
+    title:'🕐 남부내륙선 개통 — 약목~거제 9개 계통 운행 개시',
+    body:`경부선 <strong>약목</strong>에서 분기해 성주·고령·합천·진주·통영을 거쳐 <strong>거제(고현)</strong>까지 잇는 <strong>남부내륙선</strong> 여객 운행을 시작합니다. KTX·ITX-새마을·무궁화호·남도해양(S-Train)까지 <strong>총 9개 계통·148편</strong>이 투입되어, 수도권·대구·대전·호남에서 거제를 직결합니다. 모든 시각은 <strong>시발역 출발 기준</strong>입니다.<br><br>
+
+<strong>■ 고속·특급 (KTX·ITX-새마을)</strong>
+<table>
+<tr><th>계통</th><th>등급</th><th>편수</th><th>첫차(하행/상행)</th></tr>
+<tr><td>마포 ↔ 장유</td><td>KTX-산천</td><td>14</td><td>마포 04:43 / 장유 05:46</td></tr>
+<tr><td>한강로 ↔ 고현</td><td>KTX-산천</td><td>20</td><td>한강로 05:48 / 고현 06:25</td></tr>
+<tr><td>대전 ↔ 고현</td><td>ITX-새마을</td><td>20</td><td>대전 04:44 / 고현 05:49</td></tr>
+<tr><td>한강로 ↔ 고현</td><td>ITX-새마을</td><td>12</td><td>한강로 05:13 / 고현 06:30</td></tr>
+</table>
+
+<strong>■ 일반·관광 (무궁화호·남도해양)</strong>
+<table>
+<tr><th>계통</th><th>등급</th><th>편수</th><th>첫차(하행/상행)</th></tr>
+<tr><td>남대구 ↔ 순천</td><td>무궁화호</td><td>28</td><td>남대구 05:00 / 순천 05:56</td></tr>
+<tr><td>남대구 ↔ 고현</td><td>무궁화호</td><td>14</td><td>남대구 05:30 / 고현 07:46</td></tr>
+<tr><td>진주 ↔ 고현</td><td>무궁화호</td><td>14</td><td>진주 05:23 / 고현 07:05</td></tr>
+<tr><td>순천 ↔ 고현</td><td>무궁화호</td><td>12</td><td>고현 05:30 / 순천 06:53</td></tr>
+<tr><td>목포 ↔ 고현</td><td>남도해양</td><td>14</td><td>목포 05:47 / 고현 08:59</td></tr>
+</table>
+<span class="n-highlight" style="display:block;margin:8px 0">목포 ↔ 고현 <strong>남도해양(S-Train)</strong>은 경전선·남부내륙선을 잇는 관광전용 열차입니다. 남해안의 경관을 따라 목포에서 거제까지 하루 왕복 7회 운행합니다.</span>
+
+<strong>■ 전 계통 시각표 (참조 페이지)</strong><br>
+9개 계통 148편의 하행·상행 전 정차/통과 시각을 계통별 표로 정리했습니다.<br><br>
+<a href="https://claude.ai/code/artifact/58718991-6650-4e71-a94c-45c504256133" target="_blank" rel="noopener noreferrer" style="display:inline-block;padding:10px 18px;border-radius:10px;background:var(--accent);color:#fff;font-weight:700;text-decoration:none">🔗 남부내륙선 전체 시각표 열기</a><br><br>
+<span class="n-warn" style="display:block">행=역(운행 순서)·열=열차번호이며, 통과역 시각은 흐리게 표시됩니다. 세부 착·발 시각은 앱의 각 열차 조회에서 확인하실 수 있습니다.</span>`
+  },
+  {
+    date:'2026-07-15',
+    cat:'update',
+    title:'👤 계정 기능이 추가되었습니다',
+    body:`이제 <strong>마이페이지</strong>에서 나만의 계정을 만들어 승차권·즐겨찾기·알람을 계정별로 관리할 수 있습니다.<br><br>
+<div class="n-box">
+계정마다 아래 개인기록이 <strong>따로</strong> 보관됩니다.<br><br>
+🎫 승차권 · 정기권<br>
+⭐ 즐겨찾기(그룹 포함)<br>
+🔔 열차 알람 · 좌석 감시<br>
+🕐 이용 기록 · 예매 경로<br>
+🧩 퍼즐 진행 상황
+</div><br>
+<strong>■ 여러 계정 전환</strong><br>
+가족이 한 기기를 함께 쓰거나 용도별로 기록을 나누고 싶을 때, 계정을 여러 개 만들고 <span class="n-highlight">탭 한 번으로 전환</span>할 수 있습니다. 계정마다 이름과 아바타 이모지를 지정할 수 있어요.<br><br>
+<strong>■ 다른 기기로 연동</strong><br>
+새 휴대폰·태블릿으로 기록을 그대로 옮기려면 <strong>동기화 코드</strong>를 쓰세요. 기존 기기에서 <strong>📤 동기화 코드 내보내기</strong>로 코드를 만든 뒤, 새 기기에서 <strong>📥 코드로 가져오기</strong>에 입력하면 승차권부터 즐겨찾기까지 한 번에 이동합니다.<br><br>
+<span class="n-warn" style="display:block">별도의 회원가입·비밀번호는 없습니다. 모든 기록은 기기 안에 저장되며, 연동할 때만 동기화 코드로 오갑니다.</span>`
+  },
+  {
+    date:'2026-07-17',
+    cat:'timetable',
+    title:'🕐 시간표 개정 — 수도권·강원·호남 8개 계통 신설·확충',
+    body:`실제 운행 다이어에 맞춰 <strong>8개 계통·114편</strong>을 신설·확충했습니다. 수도권과 부산·목포·전주를 잇는 KTX부터 강원권 ITX-새마을, 소백선 무궁화호까지 포함됩니다. 모든 시각은 <strong>시발역 출발 기준</strong>입니다.<br><br>
+
+<strong>■ 고속열차 (KTX·KTX-이음·KTX-산천)</strong>
+<table>
+<tr><th>계통</th><th>등급</th><th>편수</th><th>하행 첫차</th></tr>
+<tr><td>서인천 ↔ 부산</td><td>KTX</td><td>16</td><td>서인천 06:05</td></tr>
+<tr><td>서인천 ↔ 목포</td><td>KTX</td><td>12</td><td>서인천 05:20</td></tr>
+<tr><td>마포 ↔ 전주 <span style="font-size:11px;color:var(--text2)">(호남선)</span></td><td>KTX</td><td>16</td><td>마포 05:15</td></tr>
+<tr><td>마포 ↔ 전주 <span style="font-size:11px;color:var(--text2)">(장항선)</span></td><td>KTX-이음</td><td>16</td><td>마포 05:30</td></tr>
+<tr><td>한강로 ↔ 태안</td><td>KTX-산천</td><td>10</td><td>한강로 06:21</td></tr>
+</table>
+
+<strong>■ 특급·일반 (ITX-새마을·무궁화호)</strong>
+<table>
+<tr><th>계통</th><th>등급</th><th>편수</th><th>하행 첫차</th></tr>
+<tr><td>강릉 ↔ 부산</td><td>ITX-새마을</td><td>16</td><td>강릉 06:04</td></tr>
+<tr><td>강릉 ↔ 영주</td><td>ITX-새마을</td><td>16</td><td>강릉 05:30</td></tr>
+<tr><td>영동 ↔ 광주</td><td>무궁화호</td><td>12</td><td>영동 06:00</td></tr>
+</table>
+<span class="n-highlight" style="display:block;margin:8px 0">강릉 ↔ 영주 ITX-새마을(영동선·태백선)은 강릉·동해·삼척·도계·<strong>태백황지·황지·춘양</strong>·봉화·영주에 정차합니다. 태백·봉화 산간 구간을 잇는 계통입니다.</span>
+
+<strong>■ 전 계통 시각표 (참조 페이지)</strong><br>
+8개 계통 114편의 하행·상행 전 정차/통과 시각을 계통별 표로 정리했습니다.<br><br>
+<a href="https://claude.ai/code/artifact/f5fd7b80-efbb-4f83-9edd-ff37396205b6" target="_blank" rel="noopener noreferrer" style="display:inline-block;padding:10px 18px;border-radius:10px;background:var(--accent);color:#fff;font-weight:700;text-decoration:none">🔗 7월 17일 개정 전체 시각표 열기</a><br><br>
+<span class="n-warn" style="display:block">모든 시각은 통과·추월 재검증을 거친 값입니다. 세부 착·발 시각은 앱의 각 열차 조회에서 확인하실 수 있습니다.</span>`
   }
 ];
