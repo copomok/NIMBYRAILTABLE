@@ -374,7 +374,7 @@ function updateMinimap(){
 // ── 🚆/🚇 이용 모드 (기차/전철) ──
 let _appMode=(()=>{try{return localStorage.getItem('nimbi_mode')||'train';}catch(e){return 'train';}})();
 const METRO_MODE_TABS=['metrolines','map','stationinfo']; // 전철 모드에서 보이는 메인 탭
-const TRAIN_MODE_TABS=['train','station','route','map','stats','notice','stationinfo','delay']; // 기차 모드 상단바 탭
+const TRAIN_MODE_TABS=['train','station','route','ops','map','stats','notice','stationinfo','delay']; // 기차 모드 상단바 탭
 // 그 외 탭(book/alarm/fav/ticket 등)은 마이페이지 전용 — 항상 숨김 유지
 function _applyModeTabs(){
   const visible=_appMode==='metro'?METRO_MODE_TABS:TRAIN_MODE_TABS;
@@ -466,7 +466,8 @@ function switchTab(n){
   if(n==='book') renderBookTab();
   if(n==='delay'){const el=document.getElementById('result-delay');if(el)renderSIDelay(el);}
   if(n==='metrolines') renderMetroLinesTab();
-  
+  if(n==='ops') renderOpsTab();
+
 }
 
 // ── 통과 판별 ──
@@ -3944,9 +3945,9 @@ function renderMapTabForMode(){
     const regions=[...new Set(METRO_LINES.map(l=>l.region))];
     if(!_metroMapRegion)_metroMapRegion=regions[0];
     const lines=METRO_LINES.filter(l=>l.region===_metroMapRegion);
-    if(!_metroMapId||!lines.some(l=>l.id===_metroMapId))_metroMapId=lines[0].id;
+    if(_metroMapId!=='__all__'&&(!_metroMapId||!lines.some(l=>l.id===_metroMapId)))_metroMapId=lines[0].id;
     _renderMetroBar(bar);
-    showMapLine('metro:'+_metroMapId,null);
+    showMapLine(_metroMapId==='__all__'?'metroall:'+_metroMapRegion:'metro:'+_metroMapId,null);
   } else {
     if(tabs)tabs.style.display='';
     if(controls)controls.style.display='flex'; // 원래 inline display:flex 복원 (버튼 줄바꿈 방지)
@@ -3959,26 +3960,32 @@ function renderMapTabForMode(){
 function _renderMetroBar(bar){
   const regions=[...new Set(METRO_LINES.map(l=>l.region))];
   const lines=METRO_LINES.filter(l=>l.region===_metroMapRegion);
-  const sel=METRO_LINES.find(l=>l.id===_metroMapId);
+  const isAll=_metroMapId==='__all__';
+  const sel=isAll?null:METRO_LINES.find(l=>l.id===_metroMapId);
   bar.innerHTML=`
     <div style="display:flex;gap:6px;flex-wrap:wrap;margin:4px 0 6px">
       ${regions.map(r=>`<button class="metro-region-chip${_metroMapRegion===r?' on':''}" onclick="setMetroMapRegion('${r}')">${r}</button>`).join('')}
     </div>
     <div style="display:flex;gap:6px;overflow-x:auto;-webkit-overflow-scrolling:touch;padding-bottom:6px">
+      <button class="metro-line-chip metro-all-chip${isAll?' on':''}" onclick="showMetroMap('__all__')">🗺️ 권역 전체</button>
       ${lines.map(l=>`<button class="metro-line-chip${l.id===_metroMapId?' on':''}" style="--mc:${l.color}" onclick="showMetroMap('${l.id}')">${l.name}</button>`).join('')}
     </div>
-    ${sel?`<div class="metro-map-info">
+    ${isAll?`<div class="metro-map-info">
+      <span style="font-weight:800">🗺️ ${_metroMapRegion} 권역 전체</span>
+      <span>${lines.length}개 노선 통합 · 종착·환승역만 표기</span>
+      <span style="color:var(--text2)">노선 개별 보기는 위 칩에서 선택</span>
+    </div>`:sel?`<div class="metro-map-info">
       <span style="color:${sel.color};font-weight:800">🚇 ${sel.name}</span>
       <span>${sel.loop?sel.from+' 기점 순환':sel.from+' ↔ '+sel.to} · ${sel.n}개역</span>
       <span>첫차 <b>${sel.first}</b> · 막차 <b>${sel.last}</b></span>
       <span>배차 러시 <b>${sel.hwPeak}분</b> · 평시 <b>${sel.hwOff}분</b></span>
     </div>`:''}`;
 }
-function setMetroMapRegion(r){_metroMapRegion=r;_metroMapId=null;renderMapTabForMode();}
+function setMetroMapRegion(r){const keep=_metroMapId==='__all__';_metroMapRegion=r;_metroMapId=keep?'__all__':null;renderMapTabForMode();}
 function showMetroMap(id){
   _metroMapId=id;
   const bar=document.getElementById('metro-line-bar'); if(bar)_renderMetroBar(bar);
-  showMapLine('metro:'+id,null);
+  showMapLine(id==='__all__'?'metroall:'+_metroMapRegion:'metro:'+id,null);
 }
 // METRO_LINES 항목 → MAP_LINES 형식 변환 (동일 렌더러 재사용)
 // 전철은 기차 대비 노선이 짧아 그대로 그리면 쪼그라듦 → 평균 역 간격이 32px 이상 되도록 좌표 확대
@@ -3995,6 +4002,26 @@ function _metroAsMapLine(id){
   return {name:l.name,color:l.color,isMetro:true,metroId:l.id,
     routes:srcRoutes.map(r=>({color:l.color,dash:!!r.dash,
       stations:r.stations.map((n,i)=>({n,x:Math.round(r.xy[i][0]*f),y:Math.round(r.xy[i][1]*f)}))}))};
+}
+// 권역 전체 전철 노선도 — 해당 권역 전 노선을 한 좌표계로 겹쳐 그림(관제 모드처럼).
+// 라벨은 종착·환승역만(showMapLine의 isAllView 허브 로직이 처리). 좌표는 전 노선 공통 스케일.
+let _metroRegionCache={};
+function _metroRegionAsMapLine(region){
+  if(typeof METRO_LINES==='undefined')return null;
+  if(_metroRegionCache[region])return _metroRegionCache[region];
+  const lines=METRO_LINES.filter(l=>l.region===region);
+  if(!lines.length)return null;
+  let segSum=0,segN=0;
+  lines.forEach(l=>{(l.routes||[{stations:l.stations,xy:l.xy}]).forEach(r=>{
+    for(let i=1;i<r.xy.length;i++){segSum+=Math.hypot(r.xy[i][0]-r.xy[i-1][0],r.xy[i][1]-r.xy[i-1][1]);segN++;}});});
+  const avg=segN?segSum/segN:32;
+  const f=Math.min(6,Math.max(1,26/Math.max(avg,1)));
+  const routes=[];
+  lines.forEach(l=>{(l.routes||[{stations:l.stations,xy:l.xy}]).forEach(r=>{
+    routes.push({color:l.color,dash:!!r.dash,
+      stations:r.stations.map((n,i)=>({n,x:Math.round(r.xy[i][0]*f),y:Math.round(r.xy[i][1]*f)}))});
+  });});
+  return _metroRegionCache[region]={name:region+' 권역 전체',color:'#8b949e',isMetro:true,allView:true,metroRegion:region,lineCount:lines.length,routes};
 }
 // 역의 환승 전철 노선 목록 — 게임 DB 역 태그의 노선 기본명 기준, 현재 노선 제외
 let _metroNameIdx=null;
@@ -4045,7 +4072,8 @@ function _metroXferMap(l){
 function showMapLine(lineKey, btn){
   document.querySelectorAll('.map-line-tab').forEach(t=>t.classList.remove('active'));
   if(btn)btn.classList.add('active');
-  const line=(typeof lineKey==='string'&&lineKey.startsWith('metro:'))?_metroAsMapLine(lineKey.slice(6))
+  const line=(typeof lineKey==='string'&&lineKey.startsWith('metroall:'))?_metroRegionAsMapLine(lineKey.slice(9))
+    :(typeof lineKey==='string'&&lineKey.startsWith('metro:'))?_metroAsMapLine(lineKey.slice(6))
     :(lineKey==='all'?_allAsMapLine():MAP_LINES[lineKey]);
   if(!line)return;
 
@@ -4116,8 +4144,8 @@ function showMapLine(lineKey, btn){
     return d;
   }
 
-  // 🛰️ 관제 모드: 전 노선을 얇게, 라벨은 노선 종점·노선 간 교차역만 — 열차 움직임이 주인공
-  const isAllView=lineKey==='all';
+  // 🛰️ 관제 모드/권역 전체: 전 노선을 얇게, 라벨은 노선 종점·노선 간 교차(환승)역만
+  const isAllView=lineKey==='all'||!!(line&&line.allView);
   let _hubSet=null;
   if(isAllView){
     // 허브 = 노선 종착역 + 분기/환승역. 렌더에 쓰는 spread 좌표 기반 키로 판정하여
@@ -9519,3 +9547,183 @@ function renderTrainCompare(noA,noB){
 
 // 계정(로컬 프로필) 초기화 — 최초 실행 시 기존 데이터로 기본 계정 생성
 try{acctInit();}catch(e){}
+
+// ══════════════════════════════════════════
+// 🔁 열차 운용 탭 — 시간-거리 다이어그램 + 편성 운용 흐름도
+// ══════════════════════════════════════════
+let _opsView='diagram';   // 'diagram' | 'rake'
+let _opsCorridor=null;    // 다이어그램 대상 MAP_LINES 키
+let _opsGrades=null;      // 등급 필터(Set) — null이면 전체 표시
+let _opsGroup=null;       // 흐름도 편성 그룹 프리픽스
+function OPS_x(m){if(m==null)return null;return m<240?m+1440:m;} // 04:00~28:00 → 240~1680 (자정 넘김 연속)
+function _opsEsc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+function _fmtM(m){if(m==null)return '-';m=((m%1440)+1440)%1440;return Math.floor(m/60)+':'+String(m%60).padStart(2,'0');}
+
+// 코리도(노선) 역 순서 + 누적 거리(스키매틱 경로 길이)
+const _opsCorCache={};
+function _opsCorridorData(key){
+  if(_opsCorCache[key]!==undefined)return _opsCorCache[key];
+  const ml=(typeof MAP_LINES!=='undefined')?MAP_LINES[key]:null;
+  if(!ml||!ml.routes){return _opsCorCache[key]=null;}
+  const main=ml.routes.filter(r=>!r.dash).sort((a,b)=>b.stations.length-a.stations.length)[0]||ml.routes[0];
+  const sts=main.stations;
+  if(!sts||sts.length<3){return _opsCorCache[key]=null;}
+  const dist=[0];
+  for(let i=1;i<sts.length;i++)dist[i]=dist[i-1]+Math.hypot(sts[i].x-sts[i-1].x,sts[i].y-sts[i-1].y);
+  const total=dist[dist.length-1]||1;
+  const dm={},names=[];
+  sts.forEach((s,i)=>{if(!(s.n in dm)){dm[s.n]=dist[i];names.push(s.n);}});
+  return _opsCorCache[key]={key,name:ml.name,color:ml.color,names,dm,total};
+}
+// 열차의 코리도 상 정차점 (시각·거리)
+function _opsTrainPts(t,cor){
+  const pts=[];
+  t.stops.forEach(s=>{
+    if(!(s.s in cor.dm))return;
+    const tm=hasTime(s.dep)?toMin(s.dep):(hasTime(s.arr)?toMin(s.arr):null);
+    if(tm==null)return;
+    pts.push({stn:s.s,d:cor.dm[s.s],t:OPS_x(tm),pass:isPassStop(t,s.s)});
+  });
+  return pts;
+}
+// 코리도 후보 목록 — 정차 열차 3개 이상, 편수 내림차순
+let _opsCorridorList=null;
+function _opsCorridors(){
+  if(_opsCorridorList)return _opsCorridorList;
+  const list=[];
+  for(const key of Object.keys(MAP_LINES)){
+    const cor=_opsCorridorData(key); if(!cor)continue;
+    let nT=0; for(const t of ALL_TRAINS){if(_opsTrainPts(t,cor).length>=3)nT++;}
+    if(nT>0)list.push({key,name:cor.name,n:nT});
+  }
+  list.sort((a,b)=>b.n-a.n);
+  return _opsCorridorList=list;
+}
+function _curCorridorGrades(){
+  const cor=_opsCorridorData(_opsCorridor); if(!cor)return [];
+  return [...new Set(ALL_TRAINS.filter(t=>_opsTrainPts(t,cor).length>=3).map(t=>t.grade))];
+}
+function _opsToggleGrade(g){
+  if(_opsGrades===null)_opsGrades=new Set(_curCorridorGrades());
+  if(_opsGrades.has(g))_opsGrades.delete(g); else _opsGrades.add(g);
+  if(_opsGrades.size===0||_opsGrades.size>=_curCorridorGrades().length)_opsGrades=null;
+  renderOpsTab();
+}
+
+function renderOpsTab(){
+  const host=document.getElementById('ops-container'); if(!host)return;
+  host.innerHTML=`<div class="ops-viewtoggle">
+    <button class="ops-vt${_opsView==='diagram'?' on':''}" onclick="_opsView='diagram';renderOpsTab()">📈 운행 다이어그램</button>
+    <button class="ops-vt${_opsView==='rake'?' on':''}" onclick="_opsView='rake';renderOpsTab()">🔁 편성 운용 흐름도</button>
+  </div><div id="ops-body"></div>`;
+  const body=document.getElementById('ops-body');
+  if(_opsView==='diagram')renderOpsDiagram(body); else renderOpsRake(body);
+}
+
+function renderOpsDiagram(host){
+  if(typeof MAP_LINES==='undefined'){host.innerHTML='<div class="empty"><div class="empty-icon">📈</div><p>노선 데이터가 없습니다.</p></div>';return;}
+  const cors=_opsCorridors();
+  if(!cors.length){host.innerHTML='<div class="empty"><div class="empty-icon">📈</div><p>표시할 운행 노선이 없습니다.</p></div>';return;}
+  if(!_opsCorridor||!cors.some(c=>c.key===_opsCorridor))_opsCorridor=cors[0].key;
+  const cor=_opsCorridorData(_opsCorridor);
+  const trains=[]; for(const t of ALL_TRAINS){const pts=_opsTrainPts(t,cor);if(pts.length>=3)trains.push({t,pts});}
+  const gset=[...new Set(trains.map(o=>o.t.grade))];
+  const showT=trains.filter(o=>!_opsGrades||_opsGrades.has(o.t.grade));
+
+  let h=`<div class="ops-toolbar">
+    <select class="ops-sel" onchange="_opsCorridor=this.value;_opsGrades=null;renderOpsTab()">
+      ${cors.map(c=>`<option value="${c.key}"${c.key===_opsCorridor?' selected':''}>${_opsEsc(c.name)} · ${c.n}편</option>`).join('')}
+    </select>
+    <span class="ops-count">${showT.length}편 표시</span>
+  </div>`;
+  h+=`<div class="ops-legend">${gset.map(g=>`<button class="ops-gchip${(!_opsGrades||_opsGrades.has(g))?' on':''}" style="--gc:${GRADE_COLORS[g]||'#8b949e'}" onclick="_opsToggleGrade('${_opsEsc(g)}')">${_opsEsc(g)}</button>`).join('')}</div>`;
+
+  const L=66,T=26,R=16,B=10;
+  const pxPerMin=1.06, plotW=Math.round(1440*pxPerMin);
+  const plotH=Math.max(440, cor.names.length*22);
+  const W=L+plotW+R, H=T+plotH+B;
+  const X=m=>L+(m-240)*pxPerMin;
+  const Y=d=>T+d/cor.total*plotH;
+  const s=[];
+  s.push(`<svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" xmlns="http://www.w3.org/2000/svg" class="ops-diagram-svg">`);
+  s.push(`<rect x="0" y="0" width="${W}" height="${H}" fill="var(--bg)"/>`);
+  for(let hh=4;hh<=28;hh++){const x=X(hh*60);
+    s.push(`<line x1="${x}" y1="${T}" x2="${x}" y2="${T+plotH}" stroke="var(--border)" stroke-width="${hh%2?0.5:1}" opacity="0.55"/>`);
+    s.push(`<text x="${x}" y="${T-7}" fill="var(--text2)" font-size="10" text-anchor="middle">${String(hh%24).padStart(2,'0')}</text>`);}
+  let lastY=-99;
+  cor.names.forEach(n=>{const y=Y(cor.dm[n]);
+    s.push(`<line x1="${L}" y1="${y}" x2="${L+plotW}" y2="${y}" stroke="var(--border)" stroke-width="0.5" opacity="0.4"/>`);
+    if(y-lastY>=10){s.push(`<text x="${L-6}" y="${y+3}" fill="var(--text2)" font-size="9.5" text-anchor="end">${_opsEsc(n)}</text>`);lastY=y;}});
+  const now=new Date();let nm=now.getHours()*60+now.getMinutes();let nx=nm<240?nm+1440:nm;
+  if(nx>=240&&nx<=1680){const x=X(nx);s.push(`<line x1="${x}" y1="${T}" x2="${x}" y2="${T+plotH}" stroke="var(--red)" stroke-width="1.3" opacity="0.9"/>`);s.push(`<text x="${x}" y="${T+plotH+8}" fill="var(--red)" font-size="9" text-anchor="middle">지금</text>`);}
+  showT.forEach(o=>{
+    const c=GRADE_COLORS[o.t.grade]||'#8b949e';
+    const pl=o.pts.map(p=>`${X(p.t).toFixed(1)},${Y(p.d).toFixed(1)}`).join(' ');
+    s.push(`<polyline points="${pl}" fill="none" stroke="transparent" stroke-width="7" style="cursor:pointer" onclick="jumpToTrain('${o.t.no}')"><title>${_opsEsc(o.t.grade)} ${o.t.no} · ${_opsEsc(o.t.stops[0].s)}→${_opsEsc(o.t.dest)}</title></polyline>`);
+    s.push(`<polyline points="${pl}" fill="none" stroke="${c}" stroke-width="1.4" opacity="0.85" pointer-events="none"/>`);
+    o.pts.forEach(p=>{if(!p.pass)s.push(`<circle cx="${X(p.t).toFixed(1)}" cy="${Y(p.d).toFixed(1)}" r="1.5" fill="${c}" pointer-events="none"/>`);});
+  });
+  s.push('</svg>');
+  h+=`<div class="ops-diagram-scroll">${s.join('')}</div>`;
+  h+=`<p class="ops-hint">가로축 = 시각(04→28시) · 세로축 = <b>${_opsEsc(cor.name)}</b> 역(거리순) · 선 하나 = 열차 1편 · 기울기가 급할수록 고속 · 교차점 = 교행/추월 · 선을 누르면 열차 상세로 이동</p>`;
+  host.innerHTML=h;
+}
+
+// ── 편성 운용 흐름도 ──
+let _rakeGroupsCache=null;
+function _rakeNum(id){const m=id.match(/(\d+)/);return m?+m[1]:0;}
+function _rakeGroups(){
+  if(_rakeGroupsCache)return _rakeGroupsCache;
+  const byId={}; Object.values(CONFIRMED_ROTATION).forEach(r=>{byId[r.id]=r.seq;});
+  const groups={};
+  Object.entries(byId).forEach(([id,seq])=>{
+    const g=id.replace(/\s*\d+(\([^)]*\))?\s*$/,'').trim()||id;
+    (groups[g]=groups[g]||[]).push({id,seq});
+  });
+  const arr=Object.entries(groups).map(([g,rakes])=>{
+    rakes.sort((a,b)=>_rakeNum(a.id)-_rakeNum(b.id));
+    const minNo=Math.min(...rakes.flatMap(r=>r.seq.map(n=>+n)));
+    return {g,rakes,minNo};
+  });
+  arr.sort((a,b)=>a.minNo-b.minNo);
+  return _rakeGroupsCache=arr;
+}
+function renderOpsRake(host){
+  if(typeof CONFIRMED_ROTATION==='undefined'){host.innerHTML='<div class="empty"><div class="empty-icon">🔁</div><p>운용 데이터가 없습니다.</p></div>';return;}
+  const groups=_rakeGroups();
+  if(!groups.length){host.innerHTML='<div class="empty"><div class="empty-icon">🔁</div><p>확정 운용표가 없습니다.</p></div>';return;}
+  if(!_opsGroup||!groups.some(x=>x.g===_opsGroup))_opsGroup=groups[0].g;
+  const grp=groups.find(x=>x.g===_opsGroup);
+  let h=`<div class="ops-toolbar">
+    <select class="ops-sel" onchange="_opsGroup=this.value;renderOpsTab()">
+      ${groups.map(x=>`<option value="${_opsEsc(x.g)}"${x.g===_opsGroup?' selected':''}>${_opsEsc(x.g)} · ${x.rakes.length}편성</option>`).join('')}
+    </select>
+    <span class="ops-count">${grp.rakes.reduce((a,r)=>a+r.seq.length,0)}편 운행</span>
+  </div>`;
+  const ruler=[];
+  for(let hh=4;hh<=28;hh+=2){const pct=(hh*60-240)/1440*100;ruler.push(`<span class="ops-tick" style="left:${pct}%">${String(hh%24).padStart(2,'0')}</span>`);}
+  h+=`<div class="ops-ruler-wrap"><div class="ops-ruler">${ruler.join('')}</div></div>`;
+  h+=`<div class="ops-rakes">`;
+  grp.rakes.forEach(rk=>{
+    const legs=rk.seq.map(no=>ALL_TRAINS.find(t=>t.no===no)).filter(Boolean);
+    if(!legs.length)return;
+    const blocks=legs.map(t=>{
+      const st=_rotStart(t),e=_rotEnd(t);
+      let a=OPS_x(st.min),b=OPS_x(e.min);
+      if(b==null||a==null)return '';
+      if(b<a)b=1680; // 자정 넘김 방어
+      const left=(a-240)/1440*100, w=Math.max(0.7,(b-a)/1440*100);
+      const c=GRADE_COLORS[t.grade]||'#8b949e';
+      return `<div class="ops-blk" style="left:${left}%;width:${w}%;--gc:${c}" onclick="jumpToTrain('${t.no}')" title="${_opsEsc(t.grade)} ${t.no} · ${_opsEsc(st.stn)} ${_fmtM(st.min)} → ${_opsEsc(e.stn)} ${_fmtM(e.min)}">${w>5?`<span>${t.no}</span>`:''}</div>`;
+    }).join('');
+    const jubak=/주박/.test(rk.id);
+    const first=_rotStart(legs[0]);
+    h+=`<div class="ops-rake">
+      <div class="ops-rake-label"><b>${_opsEsc(rk.id.replace(/\(.*\)/,''))}</b>${jubak?' <span class="ops-jubak">주박</span>':''}<span class="ops-rake-n">${_opsEsc(first.stn)} 기점 · ${legs.length}회</span></div>
+      <div class="ops-rake-track">${blocks}</div>
+    </div>`;
+  });
+  h+=`</div>`;
+  h+=`<p class="ops-hint">한 줄 = 편성 1개의 하루 운용 · 블록 = 열차 1편(가로 위치·길이 = 운행 시간대) · 블록 사이 빈 구간 = 회차·주박 · 블록을 누르면 열차 상세로 이동</p>`;
+  host.innerHTML=h;
+}

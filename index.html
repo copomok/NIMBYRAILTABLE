@@ -6,7 +6,7 @@
 <title>님비레일 시간표</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="nimbi_rail.css?v=20260717045521">
+<link rel="stylesheet" href="nimbi_rail.css?v=20260717051900">
 <!-- PWA -->
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#161b22">
@@ -124,6 +124,7 @@
     <button class="tab active" onclick="switchTab('train')" id="tab-train">🔢 열차</button>
     <button class="tab" onclick="switchTab('station')" id="tab-station">🏢 시간표</button>
     <button class="tab" onclick="switchTab('route')" id="tab-route">🔍 출도착</button>
+    <button class="tab" onclick="switchTab('ops')" id="tab-ops">🔁 운용</button>
     <button class="tab" onclick="switchTab('metrolines')" id="tab-metrolines" style="display:none">🚇 노선</button>
     <button class="tab" onclick="switchTab('map')" id="tab-map">🗺️ 노선도</button>
     <button class="tab" onclick="switchTab('stats')" id="tab-stats">📊 통계</button>
@@ -348,6 +349,9 @@
     
     <div id="result-route"></div>
   </div>
+  <div class="panel" id="panel-ops">
+    <div id="ops-container"></div>
+  </div>
   <div class="panel" id="panel-map">
     <!-- 노선 선택 탭 -->
     <div class="map-line-tabs" id="map-line-tabs">
@@ -475,15 +479,15 @@
   <button class="map-popup-close" onclick="closeMapPopup()">닫기</button>
 </div>
 
-<script src="nimbi_rail_data.js?v=20260717045521"></script>
-<script src="nimbi_station_data.js?v=20260717045521"></script>
-<script src="nimbi_metro.js?v=20260717045521"></script>
-<script src="nimbi_platform_db.js?v=20260717045521"></script>
-<script src="nimbi_realplat.js?v=20260717045521"></script>
-<script src="nimbi_station_history.js?v=20260717045521"></script>
-  <script src="nimbi_rail_notices.js?v=20260717045521"></script>
-  <script src="nimbi_rail.js?v=20260717045521"></script>
-  <script src="nimbi_congestion.js?v=20260717045521"></script>
+<script src="nimbi_rail_data.js?v=20260717051900"></script>
+<script src="nimbi_station_data.js?v=20260717051900"></script>
+<script src="nimbi_metro.js?v=20260717051900"></script>
+<script src="nimbi_platform_db.js?v=20260717051900"></script>
+<script src="nimbi_realplat.js?v=20260717051900"></script>
+<script src="nimbi_station_history.js?v=20260717051900"></script>
+  <script src="nimbi_rail_notices.js?v=20260717051900"></script>
+  <script src="nimbi_rail.js?v=20260717051900"></script>
+  <script src="nimbi_congestion.js?v=20260717051900"></script>
   <script>
   if('serviceWorker' in navigator){
     window.addEventListener('load', ()=>{
