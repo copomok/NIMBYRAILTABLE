@@ -6960,37 +6960,53 @@ function _ticketCardHTML(tk){
     </div>`;
 }
 
-// 🔄 환승 여정 카드 — xferGroup으로 묶인 선행·후행 승차권을 하나의 카드로 표시
+// 🔄 환승 승차권 카드 — xferGroup으로 묶인 선행·후행을 코레일톡식으로 표시
+//    (출발›환승›도착 3역 타임라인 + 하단 선행/후행 요약)
 function _xferTicketCardHTML(legs){
   legs=[...legs].sort((a,b)=>(a.xferSeq||0)-(b.xferSeq||0));
-  const g=legs[0];
+  const lead=legs[0], follow=legs[legs.length-1], g=lead;
   const allCancelled=legs.every(t=>t.status==='cancelled');
   const totalFare=legs.reduce((a,t)=>a+(t.totalFare||0),0);
   const cancelledCls=allCancelled?' ticket-cancelled':'';
-  const legRows=legs.map(tk=>{
+  const origin=lead.fromStn, via=lead.toStn, dest=follow.toStn;
+  const oDep=lead.depTime||'-', vArr=lead.arrTime||'-', vDep=follow.depTime||'-', dArr=follow.arrTime||'-';
+  const route=`<div class="xfer-tk-route-line">
+    <div class="xfer-tk-stn">
+      <span class="xfer-tk-stn-name">${origin}</span>
+      <span class="xfer-tk-stn-t">${oDep}</span>
+    </div>
+    <span class="xfer-tk-gt">›</span>
+    <div class="xfer-tk-stn xfer-tk-stn-via">
+      <span class="xfer-tk-stn-name">${via}</span>
+      <span class="xfer-tk-stn-t">${vArr}</span>
+      <span class="xfer-tk-stn-t2">${vDep}</span>
+    </div>
+    <span class="xfer-tk-gt">›</span>
+    <div class="xfer-tk-stn">
+      <span class="xfer-tk-stn-name">${dest}</span>
+      <span class="xfer-tk-stn-t">${dArr}</span>
+    </div>
+  </div>`;
+  const legLines=legs.map(tk=>{
     const seatList=seatSummary(tk.seats);
-    const bs=tk.status==='cancelled'?'':ticketBoardState(tk);
-    const badge=bs==='active'?'<span class="rt-board-badge rt-board-active" style="margin-left:auto">● 탑승 중</span>'
-      :bs==='done'?'<span class="rt-board-badge rt-board-done" style="margin-left:auto">탑승 완료</span>':'';
-    return `<div class="xfer-tk-leg" onclick="event.stopPropagation();openQRPopup('${tk.id}')">
-      <div class="xfer-tk-leg-head">
-        <span class="xfer-role-tag ${tk.xferSeq===1?'lead':'follow'}">${tk.xferSeq===1?'선행':'후행'}</span>
-        <span style="color:var(--c-${gcCssVar(tk.grade)});font-weight:700">${tk.grade} ${tk.trainNo}</span>
-        ${badge||'<span style="margin-left:auto"></span>'}
-      </div>
-      <div class="xfer-tk-leg-body">
-        <span class="xfer-tk-route"><b>${tk.fromStn}</b> <span class="tk-t">${tk.depTime||'-'}</span> → <b>${tk.toStn}</b> <span class="tk-t">${tk.arrTime||'-'}</span></span>
-        <span class="xfer-tk-seat">${tk.seatClassLabel} · ${seatList}</span>
-      </div>
+    return `<div class="xfer-tk-legline" onclick="event.stopPropagation();openQRPopup('${tk.id}')">
+      <span class="xfer-role-tag ${tk.xferSeq===1?'lead':'follow'}">${tk.xferSeq===1?'선행':'후행'}</span>
+      <span class="xfer-tk-legtrain" style="color:var(--c-${gcCssVar(tk.grade)})">${tk.grade} ${tk.trainNo}</span>
+      <span class="xfer-tk-legseat">${tk.seatClassLabel} ${seatList}</span>
     </div>`;
-  }).join(`<div class="xfer-tk-conn">🔄 ${g.xferVia} 환승</div>`);
+  }).join('');
+  const statusBadge=allCancelled?'<span class="ticket-status-badge" style="margin-left:auto">취소됨</span>'
+    :(()=>{const st=legs.map(l=>ticketBoardState(l));
+      if(st.includes('active'))return '<span class="rt-board-badge rt-board-active" style="margin-left:auto">● 탑승 중</span>';
+      if(st.every(s=>s==='done'))return '<span class="rt-board-badge rt-board-done" style="margin-left:auto">탑승 완료</span>';
+      return '';})();
   return `<div class="ticket-card xfer-ticket-card${cancelledCls}">
     <div class="ticket-card-top" style="border-color:#d29922">
-      <span class="ticket-grade" style="color:#d29922">🔄 환승 여정</span>
-      <span class="ticket-no" style="font-size:12px;color:var(--text2)">${g.xferOrigin} → ${g.xferVia} → ${g.xferDest}</span>
-      ${allCancelled?'<span class="ticket-status-badge" style="margin-left:auto">취소됨</span>':''}
+      <span class="ticket-grade" style="color:#d29922">🔄 환승 승차권</span>
+      ${statusBadge}
     </div>
-    ${legRows}
+    ${route}
+    <div class="xfer-tk-legs">${legLines}</div>
     <div class="ticket-card-divider"></div>
     <div class="ticket-card-info">
       <div class="ticket-info-row"><span>탑승일</span><span>${g.travelDate}</span></div>
