@@ -6900,7 +6900,17 @@ function renderTickets(){
     return;
   }
 
-  const cards=sorted.map(tk=>_ticketCardHTML(tk)).join('');
+  // 환승 승차권(xferGroup)은 하나의 여정 카드로 묶어 표시
+  const _xfRendered=new Set();
+  const cards=sorted.map(tk=>{
+    if(tk.xferGroup){
+      if(_xfRendered.has(tk.xferGroup))return '';
+      _xfRendered.add(tk.xferGroup);
+      const legs=sorted.filter(x=>x.xferGroup===tk.xferGroup);
+      return legs.length>1?_xferTicketCardHTML(legs):_ticketCardHTML(tk);
+    }
+    return _ticketCardHTML(tk);
+  }).join('');
 
   el.innerHTML=`${tripWidget}${headerHTML}${toggleHTML}${tabs}<div class="ticket-list">${cards}</div>`;
   updateTripLED();
@@ -6948,6 +6958,76 @@ function _ticketCardHTML(tk){
           :`<button class="btn" style="font-size:12px;padding:6px 12px" onclick="event.stopPropagation();deleteTicket('${tk.id}')">기록 삭제</button>`}
       </div>
     </div>`;
+}
+
+// 🔄 환승 여정 카드 — xferGroup으로 묶인 선행·후행 승차권을 하나의 카드로 표시
+function _xferTicketCardHTML(legs){
+  legs=[...legs].sort((a,b)=>(a.xferSeq||0)-(b.xferSeq||0));
+  const g=legs[0];
+  const allCancelled=legs.every(t=>t.status==='cancelled');
+  const totalFare=legs.reduce((a,t)=>a+(t.totalFare||0),0);
+  const cancelledCls=allCancelled?' ticket-cancelled':'';
+  const legRows=legs.map(tk=>{
+    const seatList=seatSummary(tk.seats);
+    const bs=tk.status==='cancelled'?'':ticketBoardState(tk);
+    const badge=bs==='active'?'<span class="rt-board-badge rt-board-active" style="margin-left:auto">● 탑승 중</span>'
+      :bs==='done'?'<span class="rt-board-badge rt-board-done" style="margin-left:auto">탑승 완료</span>':'';
+    return `<div class="xfer-tk-leg" onclick="event.stopPropagation();openQRPopup('${tk.id}')">
+      <div class="xfer-tk-leg-head">
+        <span class="xfer-role-tag ${tk.xferSeq===1?'lead':'follow'}">${tk.xferSeq===1?'선행':'후행'}</span>
+        <span style="color:var(--c-${gcCssVar(tk.grade)});font-weight:700">${tk.grade} ${tk.trainNo}</span>
+        ${badge||'<span style="margin-left:auto"></span>'}
+      </div>
+      <div class="xfer-tk-leg-body">
+        <span class="xfer-tk-route"><b>${tk.fromStn}</b> <span class="tk-t">${tk.depTime||'-'}</span> → <b>${tk.toStn}</b> <span class="tk-t">${tk.arrTime||'-'}</span></span>
+        <span class="xfer-tk-seat">${tk.seatClassLabel} · ${seatList}</span>
+      </div>
+    </div>`;
+  }).join(`<div class="xfer-tk-conn">🔄 ${g.xferVia} 환승</div>`);
+  return `<div class="ticket-card xfer-ticket-card${cancelledCls}">
+    <div class="ticket-card-top" style="border-color:#d29922">
+      <span class="ticket-grade" style="color:#d29922">🔄 환승 여정</span>
+      <span class="ticket-no" style="font-size:12px;color:var(--text2)">${g.xferOrigin} → ${g.xferVia} → ${g.xferDest}</span>
+      ${allCancelled?'<span class="ticket-status-badge" style="margin-left:auto">취소됨</span>':''}
+    </div>
+    ${legRows}
+    <div class="ticket-card-divider"></div>
+    <div class="ticket-card-info">
+      <div class="ticket-info-row"><span>탑승일</span><span>${g.travelDate}</span></div>
+      <div class="ticket-info-row"><span>인원</span><span>${g.passengerCount}명</span></div>
+      <div class="ticket-info-row"><span>총 운임</span><span class="ticket-fare">${totalFare.toLocaleString()}원</span></div>
+    </div>
+    <div class="ticket-card-actions">
+      <button class="btn" style="font-size:12px;padding:6px 12px" onclick="event.stopPropagation();jumpToTrain('${g.trainNo}')">🕐 시간표</button>
+      ${!allCancelled&&_ticketFilterTab==='upcoming'?`<button class="btn" style="font-size:12px;padding:6px 12px" onclick="event.stopPropagation();cancelXferGroup('${g.xferGroup}')">환승 전체 취소</button>`
+        :`<button class="btn" style="font-size:12px;padding:6px 12px" onclick="event.stopPropagation();deleteXferGroup('${g.xferGroup}')">기록 삭제</button>`}
+    </div>
+  </div>`;
+}
+function cancelXferGroup(grp){
+  const tickets=loadTickets();
+  const legs=tickets.filter(t=>t.xferGroup===grp&&t.status==='active');
+  if(!legs.length)return;
+  // 선행 열차가 이미 출발했으면 전체 취소 불가
+  const now=new Date(); const nowM=now.getHours()*60+now.getMinutes();
+  const lead=legs.slice().sort((a,b)=>(a.xferSeq||0)-(b.xferSeq||0))[0];
+  const dM=toMin(lead.depTime);
+  if(lead.travelDate===todayLocalStr(now)&&dM!==null&&dM<=nowM){
+    alert(`이미 출발한 환승 여정은 취소할 수 없습니다.\n\n${lead.fromStn} ${lead.depTime} 출발`);return;
+  }
+  if(!confirm(`환승 여정(${lead.xferOrigin}→${lead.xferVia}→${lead.xferDest})을 전체 취소하시겠습니까?\n선행·후행 승차권이 모두 취소됩니다.`))return;
+  legs.forEach(tk=>{ tk.status='cancelled'; });
+  saveTickets(tickets);
+  try{ const alarms=loadAlarms(); const stns=new Set(); legs.forEach(l=>{stns.add(l.fromStn);stns.add(l.toStn);});
+    const nos=new Set(legs.map(l=>l.trainNo));
+    saveAlarms(alarms.filter(a=>!(nos.has(a.trainNo)&&stns.has(a.stn)))); }catch(e){}
+  renderTickets(); if(typeof renderAlarmIfOpen==='function')renderAlarmIfOpen();
+}
+function deleteXferGroup(grp){
+  if(!confirm('이 환승 여정 기록을 삭제하시겠습니까?'))return;
+  const tickets=loadTickets().filter(t=>t.xferGroup!==grp);
+  saveTickets(tickets);
+  renderTickets();
 }
 
 // 승차권 캘린더 뷰 (과거·미래 모두 표시)
@@ -8069,8 +8149,6 @@ function searchBookTransfers(from, to, dateGo, el, append){
         ${legsHtml}
       </div>
       <div style="display:flex;align-items:center;gap:8px;flex-shrink:0">
-        <button class="seat-avail-btn xfer-avail" data-no="${firstLeg.t.no}"
-          style="min-width:52px;padding:6px 10px;border-radius:6px;border:1.5px solid var(--border);background:transparent;color:var(--text3);font-size:12px;font-weight:600;font-family:var(--sans);cursor:pointer;touch-action:manipulation">　</button>
         <div class="book-train-chevron">›</div>
       </div>
     </div>`;
@@ -8095,32 +8173,6 @@ function searchBookTransfers(from, to, dateGo, el, append){
   el.querySelectorAll('.book-train-row.book-xfer-card').forEach(row=>{
     row.addEventListener('click', ()=>openXfer(row));
   });
-  el.querySelectorAll('.xfer-avail[data-no]').forEach(btn=>{
-    const row=btn.closest('.book-train-row');
-    if(!row) return;
-    btn.addEventListener('click', e=>{
-      e.stopPropagation();
-      openXfer(row);
-    });
-  });
-
-  // 환승 결과 가용 버튼 비동기 업데이트
-  setTimeout(()=>{
-    transfers.forEach(({legs})=>{
-      const t=legs[0].t;
-      const ft=getFormationType(t.grade,t.no);
-      const comp=getCarComposition(ft);
-      const cong=getCongestionLevel(t.no,dateGo,comp);
-      const btn=el.querySelector(`.xfer-avail[data-no="${t.no}"]`);
-      if(!btn)return;
-      const r=cong.rate||0;
-      const base='min-width:52px;padding:6px 10px;border-radius:6px;border:1.5px solid;background:transparent;font-size:12px;font-weight:700;font-family:var(--sans);cursor:pointer';
-      if(r>=0.98){btn.textContent='매진';btn.style.cssText=base+';color:var(--red);border-color:var(--red)';}
-      else if(r>=0.80){btn.textContent='혼잡';btn.style.cssText=base+';color:var(--orange);border-color:var(--orange)';}
-      else if(r>=0.50){btn.textContent='보통';btn.style.cssText=base+';color:var(--accent2);border-color:var(--accent)';}
-      else{btn.textContent='여유';btn.style.cssText=base+';color:var(--green);border-color:var(--green)';}
-    });
-  },0);
 }
 
 function _bookDetailConfirm(trainNo,from,to,depT,arrT,travelDate){
