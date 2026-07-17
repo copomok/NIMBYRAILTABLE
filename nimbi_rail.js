@@ -9966,7 +9966,8 @@ function renderOpsRake(host){
 // ══════════════════════════════════════════
 // 🔍 전철 경로 검색 — 출발·도착역 최소환승 경로 안내
 // ══════════════════════════════════════════
-let _mrFrom='', _mrTo='';
+let _mrFrom='', _mrTo='', _mrMode='transfer';
+function setMrMode(m){_mrMode=m;document.querySelectorAll('.mr-mode-chip').forEach(c=>c.classList.toggle('on',c.dataset.mode===m));if(_mrFrom&&_mrTo)searchMetroRoute();}
 let _metroGraphCache=null;
 function _metroGraph(){
   if(_metroGraphCache)return _metroGraphCache;
@@ -10001,12 +10002,13 @@ function _mrSwap(){
   if(a&&b){const t=a.value;a.value=b.value;b.value=t;_mrFrom=a.value.trim();_mrTo=b.value.trim();}
   if(_mrFrom&&_mrTo)searchMetroRoute();
 }
-// 최소환승 우선(환승 페널티 T) 다익스트라 — 상태=(역,노선)
-function _metroFindRoute(from,to){
+// 상태=(역,노선) 다익스트라. mode='transfer'(최소환승) | 'time'(최소시간)
+function _metroFindRoute(from,to,mode){
   const G=_metroGraph();
   if(!G.stnLines[from]||!G.stnLines[to])return {err:'noStn'};
   if(from===to)return {err:'same'};
-  const T=5; // 환승 1회 = 역 5개 페널티(환승 최소화 우선)
+  // 최소환승: 환승을 크게 페널티(역수는 부차) / 최소시간: 환승≈2정거장 시간(총 소요 최소)
+  const T=(mode==='time')?1.9:100;
   const dist={}, prev={}, seen=new Set(); const pq=[];
   G.stnLines[from].forEach(lid=>{const k=from+'|'+lid;dist[k]=0;prev[k]=null;pq.push({k,stn:from,lid,d:0});});
   let best=null,bestD=Infinity;
@@ -10068,6 +10070,10 @@ function renderMetroRouteTab(){
         </div>
       </div>
       <button class="btn btn-primary" style="width:100%;justify-content:center;margin-top:4px" onclick="_mrFrom=document.getElementById('mr-from').value.trim();_mrTo=document.getElementById('mr-to').value.trim();searchMetroRoute()">🔍 경로 검색</button>
+      <div class="mr-modes">
+        <button class="mr-mode-chip${_mrMode==='transfer'?' on':''}" data-mode="transfer" onclick="setMrMode('transfer')">🔄 최소 환승</button>
+        <button class="mr-mode-chip${_mrMode==='time'?' on':''}" data-mode="time" onclick="setMrMode('time')">⏱️ 최소 시간</button>
+      </div>
     </div>
     <div id="mr-result"></div>`;
 }
@@ -10075,7 +10081,7 @@ function searchMetroRoute(){
   const out=document.getElementById('mr-result'); if(!out)return;
   const from=(_mrFrom||'').trim(), to=(_mrTo||'').trim();
   if(!from||!to){out.innerHTML='<div class="mr-hint">출발역과 도착역을 모두 입력하세요.</div>';return;}
-  const r=_metroFindRoute(from,to);
+  const r=_metroFindRoute(from,to,_mrMode);
   if(r.err==='same'){out.innerHTML='<div class="mr-hint">출발역과 도착역이 같습니다.</div>';return;}
   if(r.err==='noStn'){const bad=_metroGraph().stnLines[from]?to:from;out.innerHTML=`<div class="mr-hint">전철 노선에 <b>${_opsEsc(bad)}</b> 역이 없습니다. 역명을 확인하세요.</div>`;return;}
   if(r.err||!r.segments||!r.segments.length){out.innerHTML='<div class="mr-hint">경로를 찾을 수 없습니다.</div>';return;}
@@ -10100,5 +10106,5 @@ function searchMetroRoute(){
       <span class="badge" style="background:var(--bg3)">${r.stops}개역 · 약 ${mins}분</span>
     </div>
     <div class="mr-segs">${segHtml}</div>
-    <p class="ops-hint">환승 최소 경로 기준(소요는 역당 약 2분·환승 4분 추정). 실제 열차 시각은 노선 탭에서 확인하세요.</p>`;
+    <p class="ops-hint">${_mrMode==='time'?'최소 시간':'최소 환승'} 경로 기준(소요는 역당 약 2분·환승 4분 추정). 실제 열차 시각은 노선 탭에서 확인하세요.</p>`;
 }
