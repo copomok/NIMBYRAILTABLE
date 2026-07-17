@@ -1667,6 +1667,11 @@ button, select, input[type=range],
 .ops-blk span{font-size:9.5px;color:#fff;font-weight:700;white-space:nowrap;text-shadow:0 1px 1px rgba(0,0,0,.4);font-variant-numeric:tabular-nums}
 .metro-all-chip{background:var(--bg3);color:var(--text);border:1px dashed var(--border);font-weight:700}
 .metro-all-chip.on{background:var(--accent);color:#fff;border-style:solid}
+.metro-pick-chip{background:var(--bg3);color:var(--text);border:1px dashed var(--border);font-weight:700}
+.metro-pick-chip.on{background:#7c5cff;color:#fff;border-style:solid;border-color:#7c5cff}
+.metro-pick-chip b{font-family:var(--mono)}
+.metro-line-chip.picked{box-shadow:0 0 0 2px rgba(124,92,255,.35)}
+.metro-pick-clear{padding:3px 10px;border-radius:12px;border:1px solid var(--border);background:var(--bg3);color:var(--text2);font-size:11.5px;font-weight:700;cursor:pointer;font-family:var(--sans);touch-action:manipulation}
 @media(max-width:560px){.ops-rake-label{width:96px}.ops-ruler-wrap{padding-left:104px}}
 
 /* ── 🔄 통합 환승 예매 시트 ── */

@@ -486,5 +486,17 @@ const NOTICES = [
 <strong>■ 권역 전체 노선도 (전철 모드 · 노선도)</strong><br>
 노선도 상단에서 <span class="n-highlight">🗺️ 권역 전체</span>를 누르면 해당 권역(수도권·영남·충청·호남)의 모든 전철 노선을 한 화면에 겹쳐 볼 수 있습니다. 화면이 복잡해지지 않도록 <strong>역 이름은 시·종착역에만</strong> 표시되며, 개별 노선은 기존처럼 칩에서 선택할 수 있습니다.<br><br>
 <span class="n-warn" style="display:block">운용 탭은 기차 모드 상단, 권역 전체 노선도는 전철 모드 노선도에서 이용하실 수 있습니다.</span>`
+  },
+  {
+    date:'2026-07-17',
+    cat:'update',
+    title:'노선도 겹쳐보기 추가 · 권역 전체 확대/축소 개선',
+    body:`전철 노선도에 두 가지 개선이 적용되었습니다.<br><br>
+
+<strong>■ 노선 겹쳐보기</strong><br>
+노선도 상단의 <span class="n-highlight">🔀 겹쳐보기</span>를 누른 뒤 원하는 노선 칩들을 골라, <strong>특정 노선 몇 개만</strong> 한 화면에 겹쳐 볼 수 있습니다. 권역에 상관없이 자유롭게 조합할 수 있고, 고른 노선끼리의 <span class="n-highlight">환승역과 시·종착역</span>이 표시되어 노선 간 관계를 비교하기 좋습니다. <strong>✕ 전체 해제</strong>로 선택을 초기화할 수 있습니다.<br><br>
+
+<strong>■ 권역 전체 노선도 확대/축소 수정</strong><br>
+권역 전체 노선도에서 <span class="n-highlight">확대/축소(＋ －)</span>가 적용되지 않던 문제를 바로잡았습니다. 이제 겹쳐보기와 권역 전체 노선도에서도 원하는 만큼 확대해 세부 구간을 살펴볼 수 있습니다.`
   }
 ];

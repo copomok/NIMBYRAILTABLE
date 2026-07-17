@@ -3829,11 +3829,23 @@ function _mapApplyZoom(keepCenter){
     rx=(wrap.scrollLeft+wrap.clientWidth/2)/wrap.scrollWidth;
     ry=(wrap.scrollTop+wrap.clientHeight/2)/wrap.scrollHeight;
   }
+  const vbW=+svg.dataset.svgw||(svg.viewBox&&svg.viewBox.baseVal?svg.viewBox.baseVal.width:0)||0;
+  const isMetro=svg.dataset.metro==='1';
+  // 기준 폭: 권역/전체 노선도(isMetro)는 원본 뷰박스 폭, 개별 노선은 컨테이너 폭(최대 400)
+  const base=isMetro?vbW:Math.max(wrap.clientWidth||0,Math.min(vbW,400));
   if(_mapZoomLv<=1.001){
-    svg.style.width='100%';
-    // 원래 min-width 복원 (svg 생성 시 인라인으로 지정돼 있음 — 건드리지 않음)
+    if(isMetro){
+      // 원본 크기로 복원 (min-width 인라인 지정값과 동일)
+      svg.style.width=vbW+'px';
+      svg.style.minWidth=vbW+'px';
+    } else {
+      svg.style.width='100%';
+      svg.style.minWidth=Math.min(vbW,400)+'px';
+    }
   } else {
-    svg.style.width=(100*_mapZoomLv).toFixed(0)+'%';
+    const w=Math.round(base*_mapZoomLv);
+    svg.style.width=w+'px';
+    svg.style.minWidth=w+'px';
   }
   if(keepCenter){
     requestAnimationFrame(()=>{
@@ -3946,9 +3958,9 @@ function renderMapTabForMode(){
     const regions=[...new Set(METRO_LINES.map(l=>l.region))];
     if(!_metroMapRegion)_metroMapRegion=regions[0];
     const lines=METRO_LINES.filter(l=>l.region===_metroMapRegion);
-    if(_metroMapId!=='__all__'&&(!_metroMapId||!lines.some(l=>l.id===_metroMapId)))_metroMapId=lines[0].id;
+    if(_metroMapId!=='__all__'&&_metroMapId!=='__pick__'&&(!_metroMapId||!lines.some(l=>l.id===_metroMapId)))_metroMapId=lines[0].id;
     _renderMetroBar(bar);
-    showMapLine(_metroMapId==='__all__'?'metroall:'+_metroMapRegion:'metro:'+_metroMapId,null);
+    showMapLine(_metroMapId==='__all__'?'metroall:'+_metroMapRegion:_metroMapId==='__pick__'?'metropick:':'metro:'+_metroMapId,null);
   } else {
     if(tabs)tabs.style.display='';
     if(controls)controls.style.display='flex'; // 원래 inline display:flex 복원 (버튼 줄바꿈 방지)
@@ -3965,20 +3977,30 @@ function _metroHeadway(o){
   const both=[peak,off].filter(Boolean).join(' · ');
   return both?`배차 ${both}`:'배차 정보 준비 중';
 }
+let _metroPickSet=new Set();
 function _renderMetroBar(bar){
   const regions=[...new Set(METRO_LINES.map(l=>l.region))];
   const lines=METRO_LINES.filter(l=>l.region===_metroMapRegion);
   const isAll=_metroMapId==='__all__';
-  const sel=isAll?null:METRO_LINES.find(l=>l.id===_metroMapId);
+  const isPick=_metroMapId==='__pick__';
+  const sel=(isAll||isPick)?null:METRO_LINES.find(l=>l.id===_metroMapId);
+  const pickNames=[...METRO_LINES].filter(l=>_metroPickSet.has(l.id));
   bar.innerHTML=`
     <div style="display:flex;gap:6px;flex-wrap:wrap;margin:4px 0 6px">
       ${regions.map(r=>`<button class="metro-region-chip${_metroMapRegion===r?' on':''}" onclick="setMetroMapRegion('${r}')">${r}</button>`).join('')}
     </div>
     <div style="display:flex;gap:6px;overflow-x:auto;-webkit-overflow-scrolling:touch;padding-bottom:6px">
       <button class="metro-line-chip metro-all-chip${isAll?' on':''}" onclick="showMetroMap('__all__')">🗺️ 권역 전체</button>
-      ${lines.map(l=>`<button class="metro-line-chip${l.id===_metroMapId?' on':''}" style="--mc:${l.color}" onclick="showMetroMap('${l.id}')">${l.name}</button>`).join('')}
+      <button class="metro-line-chip metro-pick-chip${isPick?' on':''}" onclick="toggleMetroPickMode()">🔀 겹쳐보기${_metroPickSet.size?` <b>${_metroPickSet.size}</b>`:''}</button>
+      ${lines.map(l=>{const on=isPick?_metroPickSet.has(l.id):l.id===_metroMapId;return `<button class="metro-line-chip${on?' on':''}${isPick&&_metroPickSet.has(l.id)?' picked':''}" style="--mc:${l.color}" onclick="${isPick?`toggleMetroPick('${l.id}')`:`showMetroMap('${l.id}')`}">${isPick&&_metroPickSet.has(l.id)?'✓ ':''}${l.name}</button>`;}).join('')}
     </div>
-    ${isAll?`<div class="metro-map-info">
+    ${isPick?`<div class="metro-map-info">
+      <span style="font-weight:800">🔀 노선 겹쳐보기</span>
+      ${_metroPickSet.size?`<span>${pickNames.map(l=>`<span style="color:${l.color};font-weight:700">${l.name}</span>`).join(' + ')}</span>
+      <span style="color:var(--text2)">환승역·시종착역만 표기 · 칩을 눌러 노선 추가/제거</span>
+      <span><button class="metro-pick-clear" onclick="clearMetroPick()">✕ 전체 해제</button></span>`
+      :`<span style="color:var(--text2)">겹쳐 볼 노선을 위 칩에서 선택하세요 (여러 권역 혼합 가능)</span>`}
+    </div>`:isAll?`<div class="metro-map-info">
       <span style="font-weight:800">🗺️ ${_metroMapRegion} 권역 전체</span>
       <span>${lines.length}개 노선 통합 · 시·종착역만 표기</span>
       <span style="color:var(--text2)">노선 개별 보기는 위 칩에서 선택</span>
@@ -3989,11 +4011,30 @@ function _renderMetroBar(bar){
       <span>${_metroHeadway(sel)}</span>
     </div>`:''}`;
 }
-function setMetroMapRegion(r){const keep=_metroMapId==='__all__';_metroMapRegion=r;_metroMapId=keep?'__all__':null;renderMapTabForMode();}
+function setMetroMapRegion(r){const keep=_metroMapId==='__all__';_metroMapRegion=r;_metroMapId=keep?'__all__':(_metroMapId==='__pick__'?'__pick__':null);renderMapTabForMode();}
 function showMetroMap(id){
   _metroMapId=id;
   const bar=document.getElementById('metro-line-bar'); if(bar)_renderMetroBar(bar);
   showMapLine(id==='__all__'?'metroall:'+_metroMapRegion:'metro:'+id,null);
+}
+// 겹쳐보기 모드 토글 — 여러 노선을 골라 한 좌표계에 겹쳐 그림
+function toggleMetroPickMode(){
+  if(_metroMapId==='__pick__'){ _metroMapId=null; renderMapTabForMode(); return; }
+  const prev=_metroMapId;
+  _metroMapId='__pick__';
+  // 처음 진입 시 방금 보던 개별 노선을 시드로 추가(빈 화면 방지)
+  if(!_metroPickSet.size&&prev&&prev!=='__all__'&&METRO_LINES.some(l=>l.id===prev))_metroPickSet.add(prev);
+  renderMapTabForMode();
+}
+function toggleMetroPick(id){
+  if(_metroPickSet.has(id))_metroPickSet.delete(id); else _metroPickSet.add(id);
+  const bar=document.getElementById('metro-line-bar'); if(bar)_renderMetroBar(bar);
+  showMapLine('metropick:',null);
+}
+function clearMetroPick(){
+  _metroPickSet.clear();
+  const bar=document.getElementById('metro-line-bar'); if(bar)_renderMetroBar(bar);
+  showMapLine('metropick:',null);
 }
 // METRO_LINES 항목 → MAP_LINES 형식 변환 (동일 렌더러 재사용)
 // 전철은 기차 대비 노선이 짧아 그대로 그리면 쪼그라듦 → 평균 역 간격이 32px 이상 되도록 좌표 확대
@@ -4032,6 +4073,24 @@ function _metroRegionAsMapLine(region){
       stations:r.stations.map((n,i)=>({n,x:Math.round(r.xy[i][0]*f),y:Math.round(r.xy[i][1]*f)}))});
   });});
   return _metroRegionCache[region]={name:region+' 권역 전체',color:'#8b949e',isMetro:true,allView:true,metroRegion:region,noSpread:true,lineCount:lines.length,routes};
+}
+// 겹쳐보기 — 사용자가 고른 노선들(_metroPickSet)만 한 좌표계에 겹쳐 그림.
+// 권역과 무관하게 여러 노선 혼합 가능. 라벨은 시·종착역 + 고른 노선끼리의 환승역(좌표 공유).
+function _metroPickAsMapLine(){
+  if(typeof METRO_LINES==='undefined')return null;
+  const lines=METRO_LINES.filter(l=>_metroPickSet.has(l.id));
+  if(!lines.length)return null;
+  let segSum=0,segN=0;
+  lines.forEach(l=>{(l.routes||[{stations:l.stations,xy:l.xy}]).forEach(r=>{
+    for(let i=1;i<r.xy.length;i++){segSum+=Math.hypot(r.xy[i][0]-r.xy[i-1][0],r.xy[i][1]-r.xy[i-1][1]);segN++;}});});
+  const avg=segN?segSum/segN:32;
+  const f=Math.min(7,Math.max(3,44/Math.max(avg,1)));
+  const routes=[];
+  lines.forEach(l=>{(l.routes||[{stations:l.stations,xy:l.xy}]).forEach(r=>{
+    routes.push({color:l.color,dash:!!r.dash,
+      stations:r.stations.map((n,i)=>({n,x:Math.round(r.xy[i][0]*f),y:Math.round(r.xy[i][1]*f)}))});
+  });});
+  return {name:'겹쳐보기',color:'#8b949e',isMetro:true,allView:true,noSpread:true,metroPick:true,lineCount:lines.length,routes};
 }
 // 역의 환승 전철 노선 목록 — 게임 DB 역 태그의 노선 기본명 기준, 현재 노선 제외
 let _metroNameIdx=null;
@@ -4083,9 +4142,10 @@ function showMapLine(lineKey, btn){
   document.querySelectorAll('.map-line-tab').forEach(t=>t.classList.remove('active'));
   if(btn)btn.classList.add('active');
   const line=(typeof lineKey==='string'&&lineKey.startsWith('metroall:'))?_metroRegionAsMapLine(lineKey.slice(9))
+    :(typeof lineKey==='string'&&lineKey.startsWith('metropick:'))?_metroPickAsMapLine()
     :(typeof lineKey==='string'&&lineKey.startsWith('metro:'))?_metroAsMapLine(lineKey.slice(6))
     :(lineKey==='all'?_allAsMapLine():MAP_LINES[lineKey]);
-  if(!line)return;
+  if(!line){ const wrap=document.getElementById('map-svg-wrap'); if(wrap&&typeof lineKey==='string'&&lineKey.startsWith('metropick:'))wrap.innerHTML='<div style="padding:40px 16px;text-align:center;color:var(--text2)">겹쳐 볼 노선을 칩에서 선택하세요</div>'; return; }
 
   // 추적 중이면: 열차가 실제 운행하는 구간만, 열차 등급 색으로 통일해 렌더
   const _trk=_mapTrackedTrain?ALL_TRAINS.find(x=>x.no===_mapTrackedTrain):null;
@@ -4116,7 +4176,7 @@ function showMapLine(lineKey, btn){
 
   const parts=[];
   // viewBox는 원본 좌표 그대로, width는 컨테이너에 맞게 100%
-  parts.push(`<svg viewBox="0 0 ${svgW} ${svgH}" width="100%" style="min-width:${line.isMetro?svgW:Math.min(svgW,400)}px;display:block;overflow:hidden" xmlns="http://www.w3.org/2000/svg">`);
+  parts.push(`<svg viewBox="0 0 ${svgW} ${svgH}" width="100%" data-svgw="${svgW}" data-metro="${line.isMetro?1:0}" style="min-width:${line.isMetro?svgW:Math.min(svgW,400)}px;display:block;overflow:hidden" xmlns="http://www.w3.org/2000/svg">`);
   parts.push(`<rect width="${svgW}" height="${svgH}" fill="var(--bg1)"/>`);
   // 격자
   for(let x=0;x<svgW;x+=50)parts.push(`<line x1="${x}" y1="0" x2="${x}" y2="${svgH}" stroke="#21262d" stroke-width="1"/>`);
