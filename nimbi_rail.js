@@ -2493,12 +2493,13 @@ const CONFIRMED_ROTATION = (()=>{
     {id:"강릉부산 3", seq:["1203","1208","1211","1216"]},
     {id:"강릉부산 4(부산주박)", seq:["1204","1213"]},
     {id:"강릉부산 5", seq:["1205","1210"]},
-    {id:"서인천목포 1", seq:["461","464","467","470"]},
+    {id:"서인천목포 1", seq:["461","466","469","470"]},
     {id:"서인천목포 2(목포주박)", seq:["462","465","468","471"]},
-    {id:"서인천목포 3", seq:["463","466","469","472"]},
-    {id:"서인천부산 1", seq:["151","154","157","160","163","164"]},
-    {id:"서인천부산 2(부산주박)", seq:["152","155","158","161"]},
-    {id:"서인천부산 3", seq:["153","156","159","162","165","166"]},
+    {id:"서인천목포 3", seq:["463","464","467","472"]},
+    {id:"서인천부산 1", seq:["151","156","161","164"]},
+    {id:"서인천부산 2(부산주박)", seq:["152","159","162","165"]},
+    {id:"서인천부산 3", seq:["153","154","157","160","163","166"]},
+    {id:"서인천부산 4", seq:["155","158"]},
     {id:"마포장항전주 1", seq:["601","608","611","614"]},
     {id:"마포장항전주 2(전주주박)", seq:["602","605","606","609","612","615"]},
     {id:"마포장항전주 3", seq:["603","604","607","610","613","616"]},
@@ -8612,7 +8613,8 @@ let _trainStnSet=null,_metroStnSet=null;
 function _modeStnSetsInit(){
   if(!_trainStnSet&&typeof ALL_TRAINS!=='undefined'){
     _trainStnSet=new Set();
-    ALL_TRAINS.forEach(t=>t.stops.forEach(s=>{if(hasTime(s.arr)||hasTime(s.dep))_trainStnSet.add(s.s);}));
+    // 한 편이라도 실제 '정차'하는 역만 기차역으로 취급 — 통과만 하는 역은 제외
+    ALL_TRAINS.forEach(t=>t.stops.forEach(s=>{if((hasTime(s.arr)||hasTime(s.dep))&&!isPassStop(t,s.s))_trainStnSet.add(s.s);}));
   }
   if(!_metroStnSet&&typeof METRO_LINES!=='undefined'){
     _metroStnSet=new Set();
