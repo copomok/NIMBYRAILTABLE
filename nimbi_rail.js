@@ -3957,6 +3957,13 @@ function renderMapTabForMode(){
     showMapLine(lineKey, activeMapTab);
   }
 }
+// 배차 표시 — hwPeak/hwOff 누락 노선은 'undefined분' 대신 있는 값만 표기
+function _metroHeadway(o){
+  const peak=(o&&o.hwPeak!=null)?`러시 <b>${o.hwPeak}분</b>`:'';
+  const off=(o&&o.hwOff!=null)?`평시 <b>${o.hwOff}분</b>`:'';
+  const both=[peak,off].filter(Boolean).join(' · ');
+  return both?`배차 ${both}`:'배차 정보 준비 중';
+}
 function _renderMetroBar(bar){
   const regions=[...new Set(METRO_LINES.map(l=>l.region))];
   const lines=METRO_LINES.filter(l=>l.region===_metroMapRegion);
@@ -3978,7 +3985,7 @@ function _renderMetroBar(bar){
       <span style="color:${sel.color};font-weight:800">🚇 ${sel.name}</span>
       <span>${sel.loop?sel.from+' 기점 순환':sel.from+' ↔ '+sel.to} · ${sel.n}개역</span>
       <span>첫차 <b>${sel.first}</b> · 막차 <b>${sel.last}</b></span>
-      <span>배차 러시 <b>${sel.hwPeak}분</b> · 평시 <b>${sel.hwOff}분</b></span>
+      <span>${_metroHeadway(sel)}</span>
     </div>`:''}`;
 }
 function setMetroMapRegion(r){const keep=_metroMapId==='__all__';_metroMapRegion=r;_metroMapId=keep?'__all__':null;renderMapTabForMode();}
@@ -8524,7 +8531,7 @@ function _metroCardHTML(l){
     <div class="metro-info">
       <span>첫차 <b>${l.first}</b></span>
       <span>막차 <b>${l.last}</b></span>
-      <span>배차 러시 <b>${l.hwPeak}분</b> · 평시 <b>${l.hwOff}분</b></span>
+      <span>${_metroHeadway(l)}</span>
     </div>
   </div>`;
 }
@@ -8553,7 +8560,7 @@ function _renderMetroLineDetail(el,id){
         <div class="metro-info">
           <span>첫차 <b>${l.first}</b></span>
           <span>막차 <b>${l.last}</b></span>
-          <span>배차 러시 <b>${l.hwPeak}분</b> · 평시 <b>${l.hwOff}분</b></span>
+          <span>${_metroHeadway(l)}</span>
         </div>
         ${l.patterns.length?`<div class="metro-pats" style="margin-top:8px">운행계통 <span class="metro-pat-chip${!_metroPatSel?' on':''}" onclick="setMetroPat(null)">전체</span>${l.patterns.map(p=>`<span class="metro-pat-chip${_metroPatSel===p?' on':''}" onclick="setMetroPat('${p.replace(/'/g,"\\'")}')">${p}</span>`).join('')}</div>`:''}
         ${patInfo}
