@@ -409,7 +409,7 @@ const NOTICES = [
 <tr><td>남대구 ↔ 순천</td><td>무궁화호</td><td>28</td><td>남대구 05:00 / 순천 05:56</td></tr>
 <tr><td>남대구 ↔ 고현</td><td>무궁화호</td><td>14</td><td>남대구 05:30 / 고현 07:46</td></tr>
 <tr><td>진주 ↔ 고현</td><td>무궁화호</td><td>14</td><td>진주 05:23 / 고현 07:05</td></tr>
-<tr><td>순천 ↔ 고현</td><td>무궁화호</td><td>12</td><td>고현 05:30 / 순천 06:53</td></tr>
+<tr><td>순천 ↔ 고현</td><td>무궁화호</td><td>12</td><td>순천 06:53 / 고현 05:30</td></tr>
 <tr><td>목포 ↔ 고현</td><td>남도해양</td><td>14</td><td>목포 05:47 / 고현 08:59</td></tr>
 </table>
 <span class="n-highlight" style="display:block;margin:8px 0">목포 ↔ 고현 <strong>남도해양(S-Train)</strong>은 경전선·남부내륙선을 잇는 관광전용 열차입니다. 남해안의 경관을 따라 목포에서 거제까지 하루 왕복 7회 운행합니다.</span>
