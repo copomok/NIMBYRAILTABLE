@@ -1652,12 +1652,12 @@ button, select, input[type=range],
 .ops-diagram-scroll{overflow:auto;-webkit-overflow-scrolling:touch;border:1px solid var(--border);border-radius:var(--radius);background:var(--bg)}
 .ops-diagram-svg{display:block}
 .ops-hint{margin-top:10px;color:var(--text3);font-size:11.5px;line-height:1.6}
-.ops-ruler-wrap{padding-left:112px}
+.ops-ruler-wrap{padding-left:128px}
 .ops-ruler{position:relative;height:16px;margin-bottom:4px}
 .ops-tick{position:absolute;transform:translateX(-50%);font-size:10px;color:var(--text2);font-variant-numeric:tabular-nums}
 .ops-rakes{display:flex;flex-direction:column;gap:7px}
 .ops-rake{display:flex;align-items:stretch;gap:8px}
-.ops-rake-label{width:104px;flex:none;font-size:11.5px;line-height:1.3;display:flex;flex-direction:column;justify-content:center;gap:1px}
+.ops-rake-label{width:120px;flex:none;font-size:11.5px;line-height:1.3;display:flex;flex-direction:column;justify-content:center;gap:2px}
 .ops-rake-label b{font-size:12px;color:var(--text)}
 .ops-rake-n{color:var(--text3);font-size:10.5px}
 .ops-jubak{display:inline-block;font-size:9.5px;background:var(--bg3);color:var(--orange);border-radius:4px;padding:0 4px;margin-left:3px;vertical-align:middle}
@@ -1667,4 +1667,4 @@ button, select, input[type=range],
 .ops-blk span{font-size:9.5px;color:#fff;font-weight:700;white-space:nowrap;text-shadow:0 1px 1px rgba(0,0,0,.4);font-variant-numeric:tabular-nums}
 .metro-all-chip{background:var(--bg3);color:var(--text);border:1px dashed var(--border);font-weight:700}
 .metro-all-chip.on{background:var(--accent);color:#fff;border-style:solid}
-@media(max-width:560px){.ops-rake-label{width:84px}.ops-ruler-wrap{padding-left:92px}}
+@media(max-width:560px){.ops-rake-label{width:96px}.ops-ruler-wrap{padding-left:104px}}

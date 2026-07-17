@@ -3972,7 +3972,7 @@ function _renderMetroBar(bar){
     </div>
     ${isAll?`<div class="metro-map-info">
       <span style="font-weight:800">🗺️ ${_metroMapRegion} 권역 전체</span>
-      <span>${lines.length}개 노선 통합 · 종착·환승역만 표기</span>
+      <span>${lines.length}개 노선 통합 · 시·종착역만 표기</span>
       <span style="color:var(--text2)">노선 개별 보기는 위 칩에서 선택</span>
     </div>`:sel?`<div class="metro-map-info">
       <span style="color:${sel.color};font-weight:800">🚇 ${sel.name}</span>
@@ -4153,13 +4153,21 @@ function showMapLine(lineKey, btn){
     // 동일 좌표로 스냅하므로 환승역은 여러 route에 같은 키로 등장 → 카운트≥2)
     _hubSet=new Set();
     const kf=s=>s.n+'@'+Math.round(s.x)+','+Math.round(s.y);
-    const cnt={};
-    routes.forEach(rt=>{
-      if(rt.stations.length){ _hubSet.add(kf(rt.stations[0])); _hubSet.add(kf(rt.stations[rt.stations.length-1])); }
-      const seen=new Set();
-      rt.stations.forEach(s=>{const k=kf(s); if(!seen.has(k)){seen.add(k); cnt[k]=(cnt[k]||0)+1;}});
-    });
-    Object.entries(cnt).forEach(([k,c])=>{ if(c>=2)_hubSet.add(k); });
+    if(line&&line.metroRegion&&typeof METRO_LINES!=='undefined'){
+      // 권역 전체 전철 노선도: 붐빔 방지 — 라벨은 각 노선의 시·종착역만
+      const termNames=new Set();
+      METRO_LINES.filter(l=>l.region===line.metroRegion).forEach(l=>{if(l.from)termNames.add(l.from);if(l.to)termNames.add(l.to);});
+      routes.forEach(rt=>rt.stations.forEach(s=>{ if(termNames.has(s.n))_hubSet.add(kf(s)); }));
+    } else {
+      // 관제 모드: 노선 종착역 + 분기/환승역(좌표 공유 카운트≥2)
+      const cnt={};
+      routes.forEach(rt=>{
+        if(rt.stations.length){ _hubSet.add(kf(rt.stations[0])); _hubSet.add(kf(rt.stations[rt.stations.length-1])); }
+        const seen=new Set();
+        rt.stations.forEach(s=>{const k=kf(s); if(!seen.has(k)){seen.add(k); cnt[k]=(cnt[k]||0)+1;}});
+      });
+      Object.entries(cnt).forEach(([k,c])=>{ if(c>=2)_hubSet.add(k); });
+    }
   }
   routes.forEach(r=>{
     const isBranch=r.dash||false;   // 지선/경유: 본선과 같은 색, 점선
@@ -9671,17 +9679,23 @@ function renderOpsDiagram(host){
 
 // ── 편성 운용 흐름도 ──
 let _rakeGroupsCache=null;
-function _rakeNum(id){const m=id.match(/(\d+)/);return m?+m[1]:0;}
+// 편성 소속(기점)역 = 하행(홈→원단) 열차의 출발역(boundary[0]). 대전→남대구 열차는
+// 하행 origin=대전 → '대전 소속'이며 남대구에서 주박으로 표시된다.
+function _rakeHome(seq){
+  for(const no of seq){const t=ALL_TRAINS.find(x=>x.no===no);if(t&&t.dir==='down'&&t.boundary&&t.boundary[0])return t.boundary[0];}
+  const f=ALL_TRAINS.find(x=>x.no===seq[0]);
+  return (f&&f.boundary&&f.boundary[0])||(f?_rotStart(f).stn:'기타');
+}
 function _rakeGroups(){
   if(_rakeGroupsCache)return _rakeGroupsCache;
   const byId={}; Object.values(CONFIRMED_ROTATION).forEach(r=>{byId[r.id]=r.seq;});
   const groups={};
   Object.entries(byId).forEach(([id,seq])=>{
-    const g=id.replace(/\s*\d+(\([^)]*\))?\s*$/,'').trim()||id;
-    (groups[g]=groups[g]||[]).push({id,seq});
+    const home=_rakeHome(seq);
+    (groups[home]=groups[home]||[]).push({id,seq,home});
   });
   const arr=Object.entries(groups).map(([g,rakes])=>{
-    rakes.sort((a,b)=>_rakeNum(a.id)-_rakeNum(b.id));
+    rakes.sort((a,b)=>Math.min(...a.seq.map(Number))-Math.min(...b.seq.map(Number)));
     const minNo=Math.min(...rakes.flatMap(r=>r.seq.map(n=>+n)));
     return {g,rakes,minNo};
   });
@@ -9696,7 +9710,7 @@ function renderOpsRake(host){
   const grp=groups.find(x=>x.g===_opsGroup);
   let h=`<div class="ops-toolbar">
     <select class="ops-sel" onchange="_opsGroup=this.value;renderOpsTab()">
-      ${groups.map(x=>`<option value="${_opsEsc(x.g)}"${x.g===_opsGroup?' selected':''}>${_opsEsc(x.g)} · ${x.rakes.length}편성</option>`).join('')}
+      ${groups.map(x=>`<option value="${_opsEsc(x.g)}"${x.g===_opsGroup?' selected':''}>${_opsEsc(x.g)} 소속 · ${x.rakes.length}편성</option>`).join('')}
     </select>
     <span class="ops-count">${grp.rakes.reduce((a,r)=>a+r.seq.length,0)}편 운행</span>
   </div>`;
@@ -9716,10 +9730,10 @@ function renderOpsRake(host){
       const c=GRADE_COLORS[t.grade]||'#8b949e';
       return `<div class="ops-blk" style="left:${left}%;width:${w}%;--gc:${c}" onclick="jumpToTrain('${t.no}')" title="${_opsEsc(t.grade)} ${t.no} · ${_opsEsc(st.stn)} ${_fmtM(st.min)} → ${_opsEsc(e.stn)} ${_fmtM(e.min)}">${w>5?`<span>${t.no}</span>`:''}</div>`;
     }).join('');
-    const jubak=/주박/.test(rk.id);
-    const first=_rotStart(legs[0]);
+    const jm=rk.id.match(/\(([^)]*?)주박\)/);
+    const jubakStn=jm?jm[1]:null;
     h+=`<div class="ops-rake">
-      <div class="ops-rake-label"><b>${_opsEsc(rk.id.replace(/\(.*\)/,''))}</b>${jubak?' <span class="ops-jubak">주박</span>':''}<span class="ops-rake-n">${_opsEsc(first.stn)} 기점 · ${legs.length}회</span></div>
+      <div class="ops-rake-label"><b>${_opsEsc(rk.id.replace(/\(.*\)/,'').trim())}</b>${jubakStn?` <span class="ops-jubak">${_opsEsc(jubakStn)} 주박</span>`:''}<span class="ops-rake-n">${legs.length}회 운용</span></div>
       <div class="ops-rake-track">${blocks}</div>
     </div>`;
   });

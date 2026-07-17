@@ -467,5 +467,24 @@ const NOTICES = [
 8개 계통 114편의 하행·상행 전 정차/통과 시각을 계통별 표로 정리했습니다.<br><br>
 <a href="https://claude.ai/code/artifact/f5fd7b80-efbb-4f83-9edd-ff37396205b6" target="_blank" rel="noopener noreferrer" style="display:inline-block;padding:10px 18px;border-radius:10px;background:var(--accent);color:#fff;font-weight:700;text-decoration:none">🔗 7월 17일 개정 전체 시각표 열기</a><br><br>
 <span class="n-warn" style="display:block">모든 시각은 통과·추월 재검증을 거친 값입니다. 세부 착·발 시각은 앱의 각 열차 조회에서 확인하실 수 있습니다.</span>`
+  },
+  {
+    date:'2026-07-17',
+    cat:'update',
+    title:'운용 탭과 권역 전체 노선도가 추가되었습니다',
+    body:`열차가 하루 동안 어떻게 움직이는지 깊이 들여다볼 수 있는 <strong>운용 탭</strong>과, 권역별 전철 노선을 한눈에 보는 <strong>권역 전체 노선도</strong>가 새로 생겼습니다.<br><br>
+
+<strong>■ 운용 탭 (상단 🔁 운용)</strong><br>
+두 가지 보기를 제공합니다.<br><br>
+<div class="n-box">
+<strong>📈 운행 다이어그램</strong><br>
+가로축은 시각(04~28시), 세로축은 노선의 역(거리순)입니다. 열차 한 편이 대각선 한 줄로 그려져, 선의 <span class="n-highlight">기울기로 속도</span>를, 선이 <span class="n-highlight">교차하는 지점으로 교행·추월</span>을 한눈에 볼 수 있습니다. 노선과 등급을 골라 볼 수 있고, 선을 누르면 그 열차 상세로 이동합니다.<br><br>
+<strong>🔁 편성 운용 흐름도</strong><br>
+편성(차량) 한 대가 하루에 어떤 열차로 이어 운행하는지를 가로 타임라인으로 보여줍니다. 블록 하나가 열차 한 편이며, 블록 사이 빈 구간은 회차·주박입니다. <span class="n-highlight">소속(기점)역별</span>로 편성을 묶어 보며, 블록을 누르면 열차 상세로 이동합니다.
+</div><br>
+
+<strong>■ 권역 전체 노선도 (전철 모드 · 노선도)</strong><br>
+노선도 상단에서 <span class="n-highlight">🗺️ 권역 전체</span>를 누르면 해당 권역(수도권·영남·충청·호남)의 모든 전철 노선을 한 화면에 겹쳐 볼 수 있습니다. 화면이 복잡해지지 않도록 <strong>역 이름은 시·종착역에만</strong> 표시되며, 개별 노선은 기존처럼 칩에서 선택할 수 있습니다.<br><br>
+<span class="n-warn" style="display:block">운용 탭은 기차 모드 상단, 권역 전체 노선도는 전철 모드 노선도에서 이용하실 수 있습니다.</span>`
   }
 ];
