@@ -306,13 +306,9 @@ function updateNoticeBadge(){
       if(!dot){dot=document.createElement('span');dot.className='notice-badge-dot';tab.appendChild(dot);}
     } else if(dot){dot.remove();}
   }
-  // 마이페이지 버튼 뱃지
+  // 마이페이지(햄버거) 버튼 뱃지는 공지와 무관 — 공지 미열람으로 인한 알림 점 제거
   const myBtn=document.querySelector('.my-btn');
-  if(!myBtn)return;
-  let myDot=myBtn.querySelector('.notice-badge-dot');
-  if(cnt>0){
-    if(!myDot){myDot=document.createElement('span');myDot.className='notice-badge-dot';myBtn.appendChild(myDot);}
-  } else if(myDot){myDot.remove();}
+  if(myBtn){const myDot=myBtn.querySelector('.notice-badge-dot');if(myDot)myDot.remove();}
 }
 window.addEventListener('load',()=>setTimeout(updateNoticeBadge,300));
 

@@ -108,7 +108,7 @@ const NOTICES = [
   {
     date:'2026-06-21',
     cat:'update',
-    title:'🎫 승차권 탭이 새로 생겼습니다',
+    title:'승차권 탭이 새로 생겼습니다',
     body:`이제 가상으로 승차권을 예매하고 관리할 수 있는 <strong>승차권 탭</strong>이 추가되었습니다.<br><br>
 
 <strong>🎫 예매하기</strong><br>
@@ -130,7 +130,7 @@ const NOTICES = [
   {
     date:'2026-06-23',
     cat:'update',
-    title:'🔖 마이페이지 · 열차 예매 탭 신설',
+    title:'마이페이지 · 열차 예매 탭 신설',
     body:`님비레일 시간표에 <strong>마이페이지</strong>와 <strong>열차 예매</strong> 기능이 새로 추가되었습니다.<br><br>
 
 <strong>☰ 마이페이지 (우측 상단 버튼)</strong><br>
@@ -252,7 +252,7 @@ const NOTICES = [
   {
     date:'2026-07-03',
     cat:'timetable',
-    title:'한강로↔순천 무궁화호 신설 (1491~1496)',
+    title:'한강로~순천 무궁화호 신설 (1491~1496)',
     body:`<strong>한강로~순천</strong>을 잇는 장거리 무궁화호 <strong>1491~1496</strong>(왕복 3편)이 신설되었습니다.<br><br>
 <div class="n-box">
 경부선 <strong>한강로~회덕</strong> · 호남선 <strong>회덕~광주</strong> · 경전선 <strong>광주~순천</strong>을 잇습니다.<br>
@@ -298,7 +298,7 @@ const NOTICES = [
   {
     date:'2026-07-10',
     cat:'update',
-    title:'🚇 전철 모드가 새로 생겼습니다',
+    title:'전철 모드가 새로 생겼습니다',
     body:`이제 기차뿐 아니라 <strong>수도권·지방 전철</strong>도 님비레일 시간표에서 확인하실 수 있습니다.<br><br>
 <div class="n-box">
 마이페이지(우상단 ☰) 상단의 <strong>🚆 기차 / 🚇 전철</strong> 토글로 모드를 전환합니다.<br>
@@ -314,7 +314,7 @@ const NOTICES = [
   {
     date:'2026-07-10',
     cat:'update',
-    title:'🛰️ 관제 모드 · 열차 추적 뷰가 새로 생겼습니다',
+    title:'관제 모드 · 열차 추적 뷰가 새로 생겼습니다',
     body:`노선도 탭이 크게 확장되었습니다.<br><br>
 <strong>■ 🛰️ 관제 모드</strong><br>
 노선 탭 맨 앞의 <span class="n-highlight">🛰️ 관제</span>를 누르면 <strong>전국 모든 노선을 한 화면</strong>에 띄우고, 운행 중인 열차 전체의 실시간 위치를 조망할 수 있습니다. 주요 역(종점·환승역)만 이름을 표시해 넓은 화면에서도 읽기 쉽게 구성했습니다.<br><br>
@@ -326,7 +326,7 @@ const NOTICES = [
   {
     date:'2026-07-10',
     cat:'update',
-    title:'🖥️ 터미널 뷰 · 🌄 당일치기 · 🧩 루트 퍼즐 · ⚖️ 열차 비교가 새로 생겼습니다',
+    title:'터미널 뷰 · 당일치기 · 루트 퍼즐 · 열차 비교가 새로 생겼습니다',
     body:`마이페이지에 즐길 거리와 조회 도구 4종이 추가되었습니다.<br><br>
 <strong>■ 🖥️ 터미널 뷰</strong><br>
 역을 검색하면 그 역의 <strong>출발/도착 전광판</strong>이 실제 역사 전광판처럼 표시됩니다. 두 역을 나란히 띄워 비교할 수도 있습니다.<br><br>
@@ -344,7 +344,7 @@ const NOTICES = [
   {
     date:'2026-07-10',
     cat:'timetable',
-    title:'🕐 시간표 대개정 — 호남고속선·장항선·전라선·충북선·순천 계통',
+    title:'시간표 대개정 — 호남고속선·장항선·전라선·충북선·순천 계통',
     body:`실제 운행 기록을 바탕으로 여러 계통의 시간표를 신설·정비했습니다. 모든 시각은 <strong>시발역 출발 기준</strong>입니다.<br><br>
 
 <strong>■ 신설·대개편</strong>
@@ -377,7 +377,7 @@ const NOTICES = [
   {
     date:'2026-07-10',
     cat:'timetable',
-    title:'📋 신설·개정 열차 전체 시각표 (참조용 페이지)',
+    title:'신설·개정 열차 전체 시각표 (참조용 페이지)',
     body:`이번 시간표 대개정으로 <strong>신설·정비된 156편</strong>의 전 정차 시각을 계통별 표로 정리한 참조 페이지를 공개합니다.<br><br>
 <div class="n-box">
 계통별(호남고속선 KTX·장항선·전라선 KTX·충북선·순천 계통)로 <strong>하행/상행 시각표</strong>가 정리되어 있으며,<br>
@@ -391,7 +391,7 @@ const NOTICES = [
   {
     date:'2026-07-12',
     cat:'timetable',
-    title:'🕐 남부내륙선 개통 — 약목~거제 9개 계통 운행 개시',
+    title:'남부내륙선 개통 — 약목~거제 9개 계통 운행 개시',
     body:`경부선 <strong>약목</strong>에서 분기해 성주·고령·합천·진주·통영을 거쳐 <strong>거제(고현)</strong>까지 잇는 <strong>남부내륙선</strong> 여객 운행을 시작합니다. KTX·ITX-새마을·무궁화호·남도해양(S-Train)까지 <strong>총 9개 계통·148편</strong>이 투입되어, 수도권·대구·대전·호남에서 거제를 직결합니다. 모든 시각은 <strong>시발역 출발 기준</strong>입니다.<br><br>
 
 <strong>■ 고속·특급 (KTX·ITX-새마을)</strong>
@@ -422,7 +422,7 @@ const NOTICES = [
   {
     date:'2026-07-15',
     cat:'update',
-    title:'👤 계정 기능이 추가되었습니다',
+    title:'계정 기능이 추가되었습니다',
     body:`이제 <strong>마이페이지</strong>에서 나만의 계정을 만들어 승차권·즐겨찾기·알람을 계정별로 관리할 수 있습니다.<br><br>
 <div class="n-box">
 계정마다 아래 개인기록이 <strong>따로</strong> 보관됩니다.<br><br>
@@ -441,7 +441,7 @@ const NOTICES = [
   {
     date:'2026-07-17',
     cat:'timetable',
-    title:'🕐 시간표 개정 — 수도권·강원·호남 8개 계통 신설·확충',
+    title:'시간표 개정 — 수도권·강원·호남 8개 계통 신설·확충',
     body:`실제 운행 다이어에 맞춰 <strong>8개 계통·114편</strong>을 신설·확충했습니다. 수도권과 부산·목포·전주를 잇는 KTX부터 강원권 ITX-새마을, 소백선 무궁화호까지 포함됩니다. 모든 시각은 <strong>시발역 출발 기준</strong>입니다.<br><br>
 
 <strong>■ 고속열차 (KTX·KTX-이음·KTX-산천)</strong>
