@@ -488,6 +488,15 @@ function isPassStop(t, stn){
   return oneSided;
 }
 
+// 열차 탭 노선 드롭다운을 노선도(MAP_LINES)와 동일하게 자동 생성 — 하드코딩 누락·중복 방지
+function _populateTrainLineSelect(){
+  const sel=document.getElementById('sel-line-train');
+  if(!sel||typeof MAP_LINES==='undefined')return;
+  const cur=sel.value;
+  const names=Object.values(MAP_LINES).map(l=>l.name);
+  sel.innerHTML='<option value="">노선 선택</option>'+names.map(n=>`<option value="${n}">${n}</option>`).join('');
+  if(cur&&names.includes(cur))sel.value=cur;
+}
 function selectTrainLine(){
   const line=document.getElementById('sel-line-train').value;
   const listEl=document.getElementById('train-line-list');
@@ -787,6 +796,7 @@ function renderDetail(t){
           ${st.km>0?`<div class="detail-meta" style="margin-top:2px">표정속도 ${fmtSpeed(st.speed)}</div>`:''}
         </div>
         <div style="display:flex;gap:4px;flex-shrink:0">
+          <button class="share-btn" style="position:static" onclick="openJourney('${t.no}')" title="탑승 여정 — 실시간 승차 화면">🚆</button>
           <button class="share-btn" style="position:static" onclick="trackTrainOnMap('${t.no}')">🗺️</button>
           <button class="share-btn" style="position:static" onclick="shareTrainLink('${t.no}')">🔗</button>
         </div>
@@ -1816,6 +1826,7 @@ function startTripProgressTracking(){
 // 기존에 떠 있던 진행 알림이 있다면 정리
 window.addEventListener('load',()=>{
   setTimeout(()=>{ if(typeof clearTripProgressNotif==='function') clearTripProgressNotif(); },1000);
+  if(typeof _populateTrainLineSelect==='function') _populateTrainLineSelect();
 });
 
 function checkAlarms(){
@@ -10255,4 +10266,140 @@ function searchMetroRoute(){
     </div>
     <div class="mr-segs">${segHtml}</div>
     <p class="ops-hint">${_mrMode==='time'?'최소 시간':'최소 환승'} 경로 기준(소요는 역당 약 2분·환승 4분 추정). 실제 열차 시각은 노선 탭에서 확인하세요.</p>`;
+}
+
+// ══════════════════════════════════════════
+// 🚆 탑승 여정 — 실시간 승차 화면 (기존 위치 계산 재활용, 몰입형)
+// ══════════════════════════════════════════
+let _journeyNo=null, _journeyTimer=null;
+// 시각 있는 정차/통과역을 자정 보정된 분으로 반환
+function _journeyStops(t){
+  const raw=[];
+  t.stops.forEach(s=>{ if(hasTime(s.arr)||hasTime(s.dep))raw.push(s); });
+  if(!raw.length)return [];
+  const originStn=raw[0].s, termStn=raw[raw.length-1].s;
+  let offset=0, prevM=-1;
+  return raw.map(s=>{
+    const ra=toMin(s.arr), rd=toMin(s.dep);
+    const rm=ra??rd;
+    if(rm!==null&&prevM>=0&&rm<prevM-60)offset+=1440;
+    if(rm!==null)prevM=rm;
+    const isOrigin=s.s===originStn, isTerm=s.s===termStn;
+    return {s:s.s, arr:s.arr, dep:s.dep,
+      normArr:ra!==null?ra+offset:null, normDep:rd!==null?rd+offset:null,
+      isPass:!isOrigin&&!isTerm&&isPassStop(t,s.s), isOrigin, isTerm};
+  });
+}
+function openJourney(no){
+  const t=ALL_TRAINS.find(x=>x.no===no); if(!t)return;
+  _journeyNo=no;
+  let ov=document.getElementById('journey-overlay');
+  if(!ov){
+    ov=document.createElement('div'); ov.id='journey-overlay'; ov.className='journey-overlay';
+    ov.innerHTML=`<div class="journey-sheet"><button class="journey-close" onclick="closeJourney()" aria-label="닫기">✕</button><div id="journey-body"></div></div>`;
+    ov.addEventListener('click',e=>{ if(e.target===ov)closeJourney(); });
+    document.body.appendChild(ov);
+  }
+  ov.classList.add('open');
+  document.body.style.overflow='hidden';
+  const jb=document.getElementById('journey-body'); if(jb)jb._scrolledOnce=false;
+  _renderJourney();
+  if(_journeyTimer)clearInterval(_journeyTimer);
+  _journeyTimer=setInterval(_renderJourney,5000);
+}
+function closeJourney(){
+  const ov=document.getElementById('journey-overlay');
+  if(ov)ov.classList.remove('open');
+  document.body.style.overflow='';
+  if(_journeyTimer){clearInterval(_journeyTimer);_journeyTimer=null;}
+  _journeyNo=null;
+}
+function _renderJourney(){
+  const body=document.getElementById('journey-body'); if(!body||!_journeyNo)return;
+  const t=ALL_TRAINS.find(x=>x.no===_journeyNo); if(!t)return;
+  const stops=_journeyStops(t); if(!stops.length){body.innerHTML='<div class="empty">시각 정보가 없습니다.</div>';return;}
+  const status=getCurrentStatus(t);
+  const firstM=stops[0].normDep??stops[0].normArr;
+  const lastItem=stops[stops.length-1];
+  const lastM=lastItem.normArr??lastItem.normDep;
+  const now=new Date();
+  let nowMin=now.getHours()*60+now.getMinutes()+now.getSeconds()/60;
+  let nowM=nowMin;
+  if(lastM>=1440&&nowMin<firstM){ const sh=nowMin+1440; if(nowMin<240||sh<=lastM)nowM=sh; }
+  const c=(typeof GRADE_COLORS!=='undefined'&&GRADE_COLORS[t.grade])||'#8b949e';
+  const gl=(typeof GL!=='undefined'&&GL[t.grade])||t.grade;
+  // 진행률
+  let prog=0, phase='before';
+  if(status&&status.status==='done'){prog=100;phase='done';}
+  else if(status&&status.status==='running'){prog=Math.max(1,Math.min(99,(nowM-firstM)/(lastM-firstM)*100));phase='running';}
+  else {prog=0;phase='before';}
+  // 통과역 인지 위치 계산: 정차 중(dwell)·다음 실제 정차역(nextReal)을 직접 산출
+  let dwellIdx=-1, nextRealIdx=-1;
+  if(phase==='running'){
+    for(let i=0;i<stops.length;i++){
+      const st=stops[i]; if(st.isPass)continue;
+      const a=st.normArr, d=st.normDep;
+      if(a!=null&&d!=null&&a!==d&&nowM>=a&&nowM<=d){dwellIdx=i;break;}
+    }
+    for(let i=0;i<stops.length;i++){
+      const st=stops[i]; if(st.isPass)continue;
+      const a=st.normArr??st.normDep;
+      if(a!=null&&a>nowM){nextRealIdx=i;break;}
+    }
+  }
+  // 상태 문구
+  let head='', sub='';
+  if(phase==='running'){
+    if(status&&status.passStn){head=`${_opsEsc(status.passStn)} 통과 중`;}
+    else if(dwellIdx>=0){head=`${_opsEsc(stops[dwellIdx].s)} 정차 중`;}
+    else if(nextRealIdx>=0){head=`${_opsEsc(stops[nextRealIdx].s)} 방면 이동 중`;}
+    else head='운행 중';
+    if(nextRealIdx>=0){
+      const dm=Math.round((stops[nextRealIdx].normArr??stops[nextRealIdx].normDep)-nowM);
+      sub=dm<=0?`곧 ${_opsEsc(stops[nextRealIdx].s)} 도착`:`다음 정차 ${_opsEsc(stops[nextRealIdx].s)} · 약 ${dm}분 후 도착`;
+    }
+  } else if(phase==='before'){
+    head='운행 준비 중';
+    sub=(status&&status.etaMin!=null)?fmtEtaKor(status.etaMin):'';
+  } else { head='운행 종료'; sub=`${_opsEsc(stops[0].s)} → ${_opsEsc(lastItem.s)} 운행 완료`; }
+  // 타임라인
+  const li=stops.map((st,idx)=>{
+    const leaveM=st.normDep??st.normArr;
+    const passed=(phase==='done')||(leaveM!=null&&nowM>leaveM+0.01);
+    const isCur=phase==='running'&&idx===dwellIdx;
+    const isNext=phase==='running'&&idx===nextRealIdx&&dwellIdx<0;
+    const plat=(typeof _realPlatform==='function')?_realPlatform(t.no,st.s):null;
+    const tArr=hasTime(st.arr)?st.arr:'', tDep=hasTime(st.dep)?st.dep:'';
+    const timeTxt=st.isOrigin?`${tDep||tArr} 출발`:st.isTerm?`${tArr||tDep} 도착`:(tArr&&tDep&&tArr!==tDep?`${tArr}–${tDep}`:(tArr||tDep));
+    const cls=['jr-stop'];
+    if(st.isPass)cls.push('pass'); if(passed&&!isCur)cls.push('done'); if(isCur)cls.push('cur'); if(isNext)cls.push('next');
+    const nameCls=st.isOrigin?'jr-origin':st.isTerm?'jr-term':'';
+    const badge=isCur?'<span class="jr-badge cur">현재</span>':isNext?'<span class="jr-badge next">다음</span>':'';
+    const platTxt=(!st.isPass&&plat!=null)?`<span class="jr-plat">${plat}번</span>`:'';
+    return `<div class="${cls.join(' ')}" style="--gc:${c}">
+      <div class="jr-dot"></div>
+      <div class="jr-info"><span class="jr-name ${nameCls}">${_opsEsc(st.s)}${st.isPass?' <span class="jr-passtag">통과</span>':''}${badge}</span>${platTxt}</div>
+      <div class="jr-time">${timeTxt}</div>
+    </div>`;
+  }).join('');
+  const depT=stops[0].dep||stops[0].arr, arrT=lastItem.arr||lastItem.dep;
+  body.innerHTML=`
+    <div class="jr-header" style="--gc:${c}">
+      <div class="jr-h-top">
+        <span class="jr-grade" style="background:${c}">${_opsEsc(gl)}</span>
+        <span class="jr-no">${_opsEsc(t.no)}</span>
+        <span class="jr-dest">${_opsEsc(t.dest)}행</span>
+      </div>
+      <div class="jr-route">${_opsEsc(stops[0].s)} ${depT} → ${_opsEsc(lastItem.s)} ${arrT}</div>
+      <div class="jr-status jr-${phase}">
+        <div class="jr-status-head">${head}</div>
+        ${sub?`<div class="jr-status-sub">${sub}</div>`:''}
+      </div>
+      <div class="jr-progress"><div class="jr-progress-fill" style="width:${prog}%;background:${c}"></div></div>
+    </div>
+    <div class="jr-timeline">${li}</div>
+    <p class="jr-foot">약 5초마다 자동 갱신 · 실제 게임 내 시각 기준</p>`;
+  // 현재 위치로 스크롤
+  const cur=body.querySelector('.jr-stop.cur')||body.querySelector('.jr-stop.next');
+  if(cur&&!body._scrolledOnce){ cur.scrollIntoView({block:'center'}); body._scrolledOnce=true; }
 }
