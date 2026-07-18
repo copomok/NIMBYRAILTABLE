@@ -1853,14 +1853,19 @@ button, select, input[type=range],
 .bk-delay-note{margin-top:4px;font-size:11.5px;color:var(--text2);line-height:1.5}
 .bk-delay-live{color:#ffb454;font-weight:700}
 .ticket-delay-est{display:block;margin-top:2px;font-size:11px;font-weight:700;color:#f85149}
+.ticket-refund{margin:8px 0 2px;padding:8px 11px;border-radius:9px;font-size:12.5px;font-weight:700;display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.ticket-refund span{font-size:10.5px;font-weight:500;opacity:.85}
+.ticket-refund.elig{background:color-mix(in srgb,#3fb950 14%,var(--bg2));border:1px solid color-mix(in srgb,#3fb950 45%,var(--border));color:#3fd08a}
+.ticket-refund.elig b{color:#3fd08a}
+.ticket-refund.noelig{background:var(--bg3);border:1px solid var(--border);color:var(--text3)}
 .book-delay-tag{font-size:9.5px;font-weight:800;padding:1px 7px;border-radius:8px}
 .book-delay-tag.live{background:rgba(248,81,73,.14);border:1px solid #f85149;color:#ff6b6b}
 .book-delay-tag.est{background:rgba(255,180,84,.12);border:1px solid #ffb454;color:#ffb454}
 /* 탑승 여정 지연 시각 — 지연된 역은 실제/예정 시각을 빨간 텍스트로 */
 .jr-time-late{color:#ff6b6b!important;font-weight:700}
 .jr-time-diff{font-size:10.5px;opacity:.85}
-.jr-delay-cause{margin-top:4px;font-size:12px;font-weight:600;color:#ffb454}
-.jr-delay-cause .jr-wx{color:#ff6b6b;font-weight:700}
+.jr-log-cause{font-size:11.5px;font-weight:700;color:#ffb454;padding:2px 0 5px;margin-bottom:4px;border-bottom:1px dashed var(--border)}
+.jr-log-cause .jr-wx{color:#ff6b6b}
 .jr-log{margin-top:6px}
 .jr-log summary{font-size:11.5px;font-weight:700;color:var(--text2);cursor:pointer;list-style:none;padding:3px 0}
 .jr-log summary::-webkit-details-marker{display:none}

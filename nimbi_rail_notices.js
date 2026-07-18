@@ -590,8 +590,12 @@ const NOTICES = [
 🕘 <strong>시간대</strong> — 출퇴근(07~09·18~20시)엔 승객 집중으로 지연↑<br>
 🌦️ <strong>요일·날씨</strong> — 날마다 날씨가 달라져 <span class="n-highlight">비·폭설</span> 날은 지연이 늘고, 드문 <span class="n-warn">태풍·기상특보</span> 날에만 30분 이상 대규모 지연이 나타납니다<br>
 🔁 <strong>회차 연쇄</strong> — 앞 편성이 크게 늦고 회차 시간이 짧으면, 다음 열차가 그 지연을 이어받습니다<br>
-📋 <strong>원인·관제 로그</strong> — 탑승 여정에서 지연 원인과 역·시각별 <strong>관제 로그</strong>를 확인할 수 있습니다
+📋 <strong>원인·지연 기록</strong> — 탑승 여정에서 지연 <strong>원인</strong>과 역·시각별 <strong>지연 기록</strong>을 확인할 수 있습니다<br>
+🚉 <strong>단선 교행</strong> — 인게임 유일 단선 구간(영동선 영주~소천)에서만 교행 대기 지연이 발생합니다
 </div><br>
+
+<strong>■ 30분 이상 지연 시 전액 환불</strong><br>
+승차권을 <strong>30분 이상 지연</strong>한 열차는 <span class="n-highlight">전액 환불 대상</span>으로 승차권 조회에 표시됩니다. 다만 예매 시점에 <strong>이미 10분 이상 지연 중이었거나, 장시간 지연 예보(상시 지연 '높음')가 있던 열차</strong>는 제외됩니다.<br><br>
 <span class="n-warn" style="display:block"><strong>시간표 조회 화면은 언제나 정시 그대로</strong>입니다. 시뮬레이션은 라이브 화면에만 적용되며, 실제 운행과 무관한 예측 기반 연출입니다.</span>`
   }
 ];

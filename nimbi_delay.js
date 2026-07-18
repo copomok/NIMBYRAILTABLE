@@ -73,12 +73,33 @@ let _simModelCache=null;
 function _simModel(){
   if(_simModelCache)return _simModelCache;
   const EXC=new Set(['남안양','수원','오산','평택','천안']); // 경부선 남안양~천안: 별개 선로
-  const metro=new Set();
-  if(typeof METRO_LINES!=='undefined')METRO_LINES.forEach(l=>(l.routes||[{stations:l.stations}]).forEach(r=>r.stations.forEach(n=>metro.add(n))));
-  EXC.forEach(n=>metro.delete(n));
+  // 전철 노선별 역 집합(같은 노선 판정용) — EXC 제외
+  const lineSets=[];
+  if(typeof METRO_LINES!=='undefined')METRO_LINES.forEach(l=>{
+    const set=new Set();
+    (l.routes||[{stations:l.stations}]).forEach(r=>r.stations.forEach(n=>{ if(!EXC.has(n))set.add(n); }));
+    if(set.size)lineSets.push(set);
+  });
   const load={};
   ALL_TRAINS.forEach(t=>t.stops.forEach(s=>{if(hasTime(s.arr)||hasTime(s.dep))load[s.s]=(load[s.s]||0)+1;}));
-  return _simModelCache={metro,load};
+  return _simModelCache={lineSets,load};
+}
+// 전철 병행 구간 판정: 같은 전철 노선과 '3개 이상 연속' 공유되는 구간만 true.
+// (경부고속선·호남고속선처럼 드문드문 겹치는 역은 병행으로 보지 않음)
+function _metroParSections(timed){
+  const {lineSets}=_simModel();
+  const secN=timed.length-1;
+  const par=new Array(Math.max(0,secN)).fill(false);
+  const S=timed.map(s=>s.s);
+  for(const set of lineSets){
+    let j=0;
+    while(j<S.length){
+      if(set.has(S[j])){ let k=j; while(k+1<S.length&&set.has(S[k+1]))k++;
+        if(k-j+1>=3){ for(let s=j;s<k;s++)par[s]=true; } j=k+1; }
+      else j++;
+    }
+  }
+  return par;
 }
 const _SIM_CONG_REF=280, _SIM_REC_RATE=0.12, _SIM_REC_CAP=1.5;
 
@@ -135,9 +156,10 @@ function _computeProfile(t){
     if(rm==null){m.push(m.length?m[m.length-1]:0);continue;}
     if(prev>=0&&rm<prev-60)off+=1440; m.push(rm+off); prev=rm; }
   const ctx=_simDayContext();
-  const {metro,load}=_simModel();
+  const {load}=_simModel();
   const secN=timed.length-1;
-  let ms=0,cs=0; for(let i=0;i<timed.length;i++){cs+=load[timed[i].s]||0;if(i<secN&&metro.has(timed[i].s)&&metro.has(timed[i+1].s))ms++;}
+  const metroParArr=_metroParSections(timed);   // 같은 노선 3연속 공유 구간만 true
+  let ms=0,cs=0; for(let i=0;i<timed.length;i++){cs+=load[timed[i].s]||0;if(i<secN&&metroParArr[i])ms++;}
   const metroFrac=ms/Math.max(1,secN), congNorm=Math.min(1,(cs/timed.length)/_SIM_CONG_REF);
   const causeFactor=0.6+0.9*(0.5*metroFrac+0.5*congNorm);
   const runMin=Math.max(1,m[m.length-1]-m[0]);
@@ -168,7 +190,7 @@ function _computeProfile(t){
     let cur=inherited;
     for(let i=0;i<secN;i++){
       const dt=Math.max(1,m[i+1]-m[i]);
-      const metroPar=metro.has(timed[i].s)&&metro.has(timed[i+1].s);
+      const metroPar=metroParArr[i];   // 같은 전철 노선 3연속 공유 구간만
       const singleTrack=_isSingleTrack(timed[i].s, timed[i+1].s);   // 단선 교행 대기 구간
       const cong=Math.min(1,(((load[timed[i].s]||0)+(load[timed[i+1].s]||0))/2)/_SIM_CONG_REF);
       const rush=ctx.weekend?false:_isRush(m[i]);
@@ -238,4 +260,20 @@ function _simEventLog(t){
     if(e.delta>0)return `[${clk}] ${st} · ${e.cause} +${Math.round(e.delta)}분`;
     return `[${clk}] ${st} · ${e.cause||'운전 정리'} −${Math.abs(Math.round(e.delta))}분`;
   });
+}
+// 지연 보상: 30분 이상 지연 = 전액 환불 원칙.
+//  단, 예매 시 (①장시간 지연 예보가 있던 열차 / ②이미 10분 이상 지연 중이던 열차)는 제외.
+//  반환: null(해당 없음) | {eligible:true, delay} | {eligible:false, reason}
+function _simRefundInfo(tk){
+  if(!_simDelayOn||!tk)return null;
+  const t=(typeof ALL_TRAINS!=='undefined')&&ALL_TRAINS.find(x=>x.no===tk.trainNo); if(!t)return null;
+  const pr=_simProfile(t); const fin=pr.cd.length?pr.cd[pr.cd.length-1]:0;
+  if(fin<30)return null;                                  // 30분 미만: 보상 대상 아님
+  // 예외1: 예매 시점에 이미 장시간 지연 예보(상시 지연 '높음')가 뜨던 노선·등급
+  const f=_delayForecast(t.line,t.grade);
+  if(f.level==='high'&&f.max>=15)return {eligible:false,reason:'예매 시 장시간 지연 예보 열차'};
+  // 예외2: 예매 시점에 이미 10분 이상 지연 중이던 열차
+  if(tk.bookedAt){ const d=new Date(tk.bookedAt); const pm=d.getHours()*60+d.getMinutes();
+    if(_simDelay(t,pm)>=10)return {eligible:false,reason:'예매 시 이미 10분 이상 지연'}; }
+  return {eligible:true, delay:fin};
 }

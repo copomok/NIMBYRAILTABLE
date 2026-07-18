@@ -7108,6 +7108,10 @@ function _ticketCardHTML(tk){
         <div class="ticket-arrow">→</div>
         <div class="ticket-station"><span class="ticket-station-name">${tk.toStn}</span><span class="ticket-time">${tk.arrTime||'-'}</span>${de}</div>
       </div>`;})()}
+      ${(()=>{const ri=(typeof _simRefundInfo==='function')?_simRefundInfo(tk):null; if(!ri)return '';
+        return ri.eligible
+          ?`<div class="ticket-refund elig">🎫 <b>${ri.delay}분 지연</b> · 전액 환불 대상 <span>30분 이상 지연 승차권</span></div>`
+          :`<div class="ticket-refund noelig">30분 이상 지연이나 환불 제외 <span>${_opsEsc(ri.reason)}</span></div>`;})()}
       <div class="ticket-card-divider"></div>
       <div class="ticket-card-info">
         <div class="ticket-info-row"><span>탑승일</span><span>${tk.travelDate}</span></div>
@@ -10612,8 +10616,9 @@ function _renderJourney(){
   const _wx=(_simDelayOn&&typeof _simDayContext==='function')?_simDayContext().weather:'맑음';
   const delayBadge=(_simDelayOn&&dly>0&&phase==='running')
     ?`<div class="jr-delay-live">🔴 현재 약 <b>${dly}분</b> 지연 운행 중</div>`
-      +(_dlyCause?`<div class="jr-delay-cause">원인 · ${_opsEsc(_dlyCause)}${_wx!=='맑음'?` <span class="jr-wx">· ${_opsEsc(_wx)}</span>`:''}</div>`:'')
-      +(_dlyLog.length?`<details class="jr-log"><summary>관제 로그 ${_dlyLog.length}건</summary><div class="jr-log-body">${_dlyLog.slice(0,12).map(l=>`<div>${_opsEsc(l)}</div>`).join('')}</div></details>`:'')
+      +(_dlyLog.length?`<details class="jr-log"><summary>지연 기록 보기</summary><div class="jr-log-body">`
+        +((_dlyCause||_wx!=='맑음')?`<div class="jr-log-cause">🔎 원인 · ${_opsEsc(_dlyCause||'복합 요인')}${_wx!=='맑음'?` · <span class="jr-wx">${_opsEsc(_wx)}</span>`:''}</div>`:'')
+        +_dlyLog.slice(0,16).map(l=>`<div>${_opsEsc(l)}</div>`).join('')+`</div></details>`:'')
       +`<div class="jr-delay-caveat">지연 정보는 실제 운행 상황과 차이가 있을 수 있습니다</div>`:'';
   body.innerHTML=`
     <div class="jr-header" style="--gc:${c}">
