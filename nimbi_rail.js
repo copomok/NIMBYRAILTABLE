@@ -10476,14 +10476,21 @@ function openJourney(no){
   document.body.style.overflow='hidden';
   const jb=document.getElementById('journey-body'); if(jb)jb._scrolledOnce=false;
   _renderJourney();
-  if(_journeyTimer)clearInterval(_journeyTimer);
-  _journeyTimer=setInterval(_renderJourney,5000);
+  _scheduleJourneyTick();
+}
+// 매분 0초에 맞춰 갱신 스케줄링
+function _scheduleJourneyTick(){
+  if(_journeyTimer)clearTimeout(_journeyTimer);
+  if(!_journeyNo)return;
+  const now=new Date();
+  const ms=(60-now.getSeconds())*1000-now.getMilliseconds();
+  _journeyTimer=setTimeout(()=>{ _renderJourney(); _scheduleJourneyTick(); }, ms);
 }
 function closeJourney(){
   const ov=document.getElementById('journey-overlay');
   if(ov)ov.classList.remove('open');
   document.body.style.overflow='';
-  if(_journeyTimer){clearInterval(_journeyTimer);_journeyTimer=null;}
+  if(_journeyTimer){clearTimeout(_journeyTimer);_journeyTimer=null;}
   _journeyNo=null;
 }
 function _renderJourney(){
@@ -10576,7 +10583,7 @@ function _renderJourney(){
     </div>
     <div class="jr-scroll">
       <div class="jr-timeline">${li}</div>
-      <p class="jr-foot">약 5초마다 자동 갱신 · 실제 게임 내 시각 기준</p>
+      <p class="jr-foot">매분 자동 갱신 · 실제 게임 내 시각 기준</p>
     </div>`;
   const sc=body.querySelector('.jr-scroll');
   if(sc){
