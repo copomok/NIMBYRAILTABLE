@@ -1963,3 +1963,14 @@ button.ol-row{width:100%;background:none;border:none;border-top:1px dashed var(-
 button.ol-row:hover{background:var(--bg3)}
 .ol-cz{display:none;color:#ffb454;font-weight:600}
 .ui-pc .ol-cz{display:inline}
+
+/* 전망 리스트 리디자인: 등급 칩 + 심각도 배지 */
+button.ol-row{display:flex;align-items:center;gap:8px;padding:7px 4px}
+.ol-grade{flex-shrink:0;color:#fff;border-radius:6px;padding:2px 7px;font-size:10.5px;font-weight:800;line-height:1.5}
+.ol-no{font-weight:800;color:var(--text1);font-variant-numeric:tabular-nums}
+.ol-arr{color:var(--text3);margin:0 3px;font-size:10px}
+.ol-rng{flex-shrink:0;padding:2px 9px;border-radius:10px;font-size:11.5px;font-weight:700}
+.ol-sev-y{background:rgba(234,197,79,.14);color:#eac54f}
+.ol-sev-o{background:rgba(249,115,22,.14);color:#f97316}
+.ol-sev-r{background:rgba(248,81,73,.16);color:#ff6b6b}
+.ol-cz{flex-shrink:0;font-size:11px}

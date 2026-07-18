@@ -9885,7 +9885,9 @@ function _outlookHTML(){
   const rows=o.rows.map(r=>{
     const lo=Math.max(1,Math.round(r.est*0.6)), hi=Math.max(lo+2,Math.round(r.est*1.25));
     const rng=r.est<5?`${r.est}분 내외`:`${lo}~${hi}분`;
-    return `<button class="ol-row" onclick="openJourney('${_opsEsc(r.t.no)}')"><span class="ol-tr">${_opsEsc(gl(r.t.grade))} ${_opsEsc(r.t.no)}</span><span class="ol-route">${_opsEsc(r.t.stops[0].s)}→${_opsEsc(r.t.dest)}</span><span class="ol-rng">${rng}${r.cause?`<span class="ol-cz"> (${_opsEsc(r.cause)})</span>`:''}</span></button>`;
+    const gc=(typeof GRADE_COLORS!=='undefined'&&GRADE_COLORS[r.t.grade])||'#888';
+    const sev=r.est>=15?'r':r.est>=8?'o':'y';
+    return `<button class="ol-row" onclick="openJourney('${_opsEsc(r.t.no)}')"><span class="ol-grade" style="background:${gc}">${_opsEsc(gl(r.t.grade))}</span><span class="ol-no">${_opsEsc(r.t.no)}</span><span class="ol-route">${_opsEsc(r.t.stops[0].s)}<span class="ol-arr">→</span>${_opsEsc(r.t.dest)}</span><span class="ol-rng ol-sev-${sev}">${rng}</span>${r.cause?`<span class="ol-cz">(${_opsEsc(r.cause)})</span>`:''}</button>`;
   }).join('');
   return `<div class="outlook-card${bad?' bad':''}">
     <div class="ol-head">${wxIco} 오늘의 운행 전망 <span class="ol-wx">${_opsEsc(o.ctx.weather)}${o.ctx.weekend?' · 주말':''}</span></div>
