@@ -581,8 +581,8 @@ const NOTICES = [
 📋 <strong>지연 예측 탭</strong> — 지금 지연 운행 중인 열차 목록(누르면 여정)
 </div><br>
 
-<strong>■ 지연은 이렇게 생깁니다</strong><br>
-실제처럼 <span class="n-highlight">열차가 몰리는 혼잡 구간</span>과 <span class="n-highlight">전철과 병행하는 구간</span>에서 지연이 커집니다. 별개 선로를 쓰는 경부선 남안양~천안 구간은 전철 병행에서 제외됩니다. 그래서 수도권·간선 혼잡 노선일수록 지연이 잦고, 한산한 지방 단선은 거의 정시로 운행합니다.<br><br>
+<strong>■ 지연은 이렇게 정해집니다</strong><br>
+지연 확률·크기는 <strong>인게임 지연 예측(노선·등급별)</strong>을 그대로 기반으로 합니다. 여기에 <span class="n-highlight">열차가 몰리는 혼잡 구간</span>과 <span class="n-highlight">전철과 병행하는 구간</span>을 <strong>참고</strong>해 "어느 노선에서 주로 지연되는지" 확률을 가감합니다. (별개 선로인 경부선 남안양~천안은 전철 병행에서 제외) 그래서 수도권·간선 혼잡 노선일수록 지연이 잦고, 한산한 지방 단선은 거의 정시로 운행합니다.<br><br>
 지연은 출발 직후 0에서 서서히 누적되며, 같은 열차는 그날 하루 같은 값을 유지합니다(매일 조금씩 달라짐).<br><br>
 <span class="n-warn" style="display:block"><strong>시간표 조회 화면은 언제나 정시 그대로</strong>입니다. 시뮬레이션은 라이브 화면에만 적용되며, 실제 운행과 무관한 예측 기반 연출입니다.</span>`
   }

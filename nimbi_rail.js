@@ -9687,26 +9687,27 @@ function _simModel(){
   return _simModelCache={metro,load};
 }
 const _SIM_CONG_REF=280; // 혼잡도 기준(간선 트렁크 ≈ 1.0)
-const _SIM_GF={'KTX':0.55,'SRT':0.5,'ITX-새마을':1.0,'ITX-청춘':1.0,'ITX-마음':1.0,'남도해양':1.1,'무궁화호':1.2};
-// 이 열차의 오늘 목표 지연분 D(및 원인 점수) — 결정적, 원인 기반
+// 이 열차의 오늘 목표 지연분 D(및 지연 여부) — 결정적.
+// 기반 = 인게임 지연 예측(_delayForecast: 노선·등급별 확률·범위).
+// 참고 보정 = 어느 구간에서 주로 지연되는지(전철 병행·혼잡 구간)로 '확률'만 가감.
 function _simTargetDelay(t){
-  const {metro,load}=_simModel();
+  const f=_delayForecast(t.line,t.grade);                // 인게임 예측(기반)
   const timed=t.stops.filter(s=>hasTime(s.arr)||hasTime(s.dep));
-  if(timed.length<2) return {D:0,delayed:false,E:0};
+  if(timed.length<2||!f.prob) return {D:0,delayed:false};
+  const {metro,load}=_simModel();
   let sec=0, metroSec=0, congSum=0;
   for(let i=0;i<timed.length;i++){
     congSum+=load[timed[i].s]||0;
     if(i<timed.length-1){ sec++; if(metro.has(timed[i].s)&&metro.has(timed[i+1].s))metroSec++; }
   }
-  const metroFrac=metroSec/Math.max(1,sec);              // ① 전철 병행 구간 비율
-  const congNorm=Math.min(1,(congSum/timed.length)/_SIM_CONG_REF); // ② 혼잡(운행 집중) 구간
-  const gf=_SIM_GF[_delayGradeFamily(t.grade)]||1;
-  const E=(7*metroFrac+6*congNorm)*gf;                   // 원인 기반 기대 지연(분)
+  const metroFrac=metroSec/Math.max(1,sec);              // ① 전철 병행 구간 비율(참고)
+  const congNorm=Math.min(1,(congSum/timed.length)/_SIM_CONG_REF); // ② 혼잡 구간(참고)
+  const causeFactor=0.6+0.9*(0.5*metroFrac+0.5*congNorm);// 0.6~1.5배 — 구간 특성으로 확률 보정
+  const effProb=Math.min(95, f.prob*causeFactor);
   const seed=_simSeed(t.no);
   const r1=_seededRand(seed+0.137), r2=_seededRand(seed+7.31);
-  const p=Math.max(0.03,Math.min(0.9,E/20));
-  if(r1>=p) return {D:0,delayed:false,E};
-  return {D:Math.max(1,Math.round(E*(0.55+0.9*r2))),delayed:true,E};
+  if(r1*100>=effProb) return {D:0,delayed:false};
+  return {D:Math.max(1,Math.round(f.min+r2*(f.max-f.min))),delayed:true}; // 크기는 예측 범위 그대로
 }
 // 현재 시각(clock, 분) 기준 누적 지연분 — 출발 직후 0에서 D까지 서서히 증가
 function _simDelay(t, clock){
