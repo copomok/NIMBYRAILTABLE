@@ -598,5 +598,55 @@ const NOTICES = [
 <strong>■ 30분 이상 지연 시 전액 환불</strong><br>
 승차권을 <strong>30분 이상 지연</strong>한 열차는 <span class="n-highlight">전액 환불 대상</span>으로 승차권 조회에 표시됩니다. 다만 예매 시점에 <strong>이미 10분 이상 지연 중이었거나, 장시간 지연 예보(상시 지연 '높음')가 있던 열차</strong>는 제외됩니다.<br><br>
 <span class="n-warn" style="display:block"><strong>시간표 조회 화면은 언제나 정시 그대로</strong>입니다. 시뮬레이션은 라이브 화면에만 적용되며, 실제 운행과 무관한 예측 기반 연출입니다.</span>`
+  },
+  {
+    date:'2026-07-18',
+    cat:'timetable',
+    title:'청량리~태백황지 무궁화호 시간표 개정',
+    body:`태백황지역 <strong>회차 시간 부족</strong>(1분)을 해소하기 위해 상행 무궁화호 5편의 출발 시각을 조정합니다.<br><br>
+<table><tr><th>열차</th><th>태백황지 출발</th><th>청량리 도착</th></tr>
+<tr><td>#1692</td><td>7:54 → <strong>7:57</strong></td><td>10:15</td></tr>
+<tr><td>#1694</td><td>10:49 → <strong>10:52</strong></td><td>13:10</td></tr>
+<tr><td>#1696</td><td>13:49 → <strong>13:52</strong></td><td>16:10</td></tr>
+<tr><td>#1698</td><td>16:54 → <strong>16:57</strong></td><td>19:16</td></tr>
+<tr><td>#1700</td><td>20:09 출발</td><td>22:29</td></tr></table><br>
+전 정차역 시각이 3분씩 늦춰지며, 태백황지 회차 여유가 <span class="n-highlight">4분</span>으로 확보됩니다.<br><br>
+<div class="n-box">개정에 따른 통과·추월 검증 결과, 후속 KTX-이음·ITX와의 간섭을 피하기 위해 #1698(도농 대피 1분 연장)·#1700(중랑 대피 2분 연장) 및 KTX-이음 #704(원주 도착 +1분)·ITX-새마을 #1086(도농 이후 +1분)이 소폭 조정되었습니다.</div>`
+  },
+  {
+    date:'2026-07-18',
+    cat:'update',
+    title:'국악와인열차 운행 개시 · 열차 운용표 대량 등재',
+    body:`<strong>■ 국악와인열차</strong><br>
+대전~남대구 간 무궁화호 14편(#1381~#1400 중 2개 편성 운용분)이 관광열차 <span class="n-highlight">국악와인열차</span>로 전환되었습니다.<br><br>
+남도해양(S-Train)과 같은 관광열차 계열로, <strong>등급·좌석·운임은 무궁화호와 동일</strong>하게 취급됩니다. 시간표·예매 화면에서 전용 등급 색상으로 표시됩니다.<br><br>
+<strong>■ 열차 운용표 등재 (31개 편성)</strong><br>
+실제 편성 운용표가 앱에 등재되어, 열차 정보의 <span class="n-highlight">🔁 편성 운용</span>에서 확정 운용을 볼 수 있습니다.<br>
+<div class="n-box">
+🚉 <strong>행신 소속</strong> (서울역 착발) — 15개 편성 · 전주/대전(서대전) 출도착분은 각각 전주·대전 주박<br>
+🚉 <strong>보은 주박</strong> — 2개 편성<br>
+🚉 <strong>영주 소속</strong> — 3개 편성 (태백황지 왕복·부산 직통 포함)<br>
+🚉 <strong>대전 소속</strong> — 3개 편성 (1·2편성 국악와인열차)<br>
+🚉 <strong>전주 소속</strong> — 8개 편성 · 목포/여수 출도착분은 각각 목포·여수 주박
+</div>`
+  },
+  {
+    date:'2026-07-18',
+    cat:'update',
+    title:'지연 시뮬레이션 대개편 — 관제 운영 시뮬레이터',
+    body:`지연 시뮬레이션이 단순 확률 모델에서 <strong>상태 기반 관제 운영 시뮬레이터</strong>로 개편되었습니다. 인게임 운행 기록 기반 예측은 그대로 유지하면서, 실제 철도 관제와 같은 운영 요소가 추가됐습니다.<br><br>
+<strong>■ 등급별 회복 운전</strong><br>
+열차는 역간 여유 시분을 사용해 지연을 회복합니다. 등급별 회복률이 달라, 같은 지연이라도 회복 속도가 다릅니다.<br>
+<div class="n-box">🚄 KTX·SRT 50~70% (선로 우선권) · 🚈 ITX 30~50% · 🚂 새마을 20~40% · 🚃 무궁화·관광열차 10~30%</div><br>
+우선순위가 낮은 새마을·무궁화는 <span class="n-highlight">대피선 대기·추월 대기·선행 열차 지연</span>의 영향을 더 자주 받습니다.<br><br>
+<strong>■ 기상 7종</strong><br>
+영업일(04:00~03:59)마다 날씨가 정해집니다: ☀️맑음 · 🌫️안개 · 💨강풍 · 🌡️폭염 · 🌧️비 · ❄️폭설 · 🌀태풍. 악천후일수록 서행이 잦고 회복이 더뎌 지연이 누적됩니다.<br><br>
+<strong>■ 오늘의 운행 전망 (사전 예측)</strong><br>
+지연 예측 탭 상단에서 <span class="n-highlight">오늘 지연이 예상되는 열차 목록과 예상 범위</span>를 미리 안내합니다. 예측은 확정이 아니며 기상 호전에 따라 정상 운행될 수 있습니다.<br><br>
+<strong>■ 지연 기록 라이프사이클</strong><br>
+탑승 여정의 '지연 기록 보기'에서 <strong>최초 원인 → 전파 원인 → 회복 여부 → 종착 지연 → 영향 열차(다음 회차)</strong>와 구간별 기록을 모두 확인할 수 있습니다. 드물게 <span class="n-warn">차량 고장</span> 같은 특수 상황도 발생합니다.<br><br>
+<strong>■ 지연 시각 3단계 색</strong><br>
+여정 타임라인의 지연 시각이 <span style="color:#eac54f;font-weight:700">~2분 노랑</span> · <span style="color:#f97316;font-weight:700">3~10분 주황</span> · <span style="color:#ff6b6b;font-weight:700">10분 초과 빨강</span>으로 구분됩니다.<br><br>
+<div class="n-box">대부분의 열차는 정시~2분, 3~10분은 비교적 흔하게, 10~20분은 가끔, <strong>30분 이상은 태풍·차량 고장 등 특수 상황에서만</strong> 발생합니다. 승객 혼잡만으로 10분 이상 지연되지 않습니다.</div>`
   }
 ];

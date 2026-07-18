@@ -7,7 +7,7 @@
   --accent:#388bfd;--accent2:#58a6ff;
   --green:#3fb950;--orange:#f97316;--red:#f85149;
   --radius:8px;--mono:'JetBrains Mono',monospace;--sans:'Noto Sans KR',sans-serif;
-  --c-ktx:#3b82f6;--c-srt:#a855f7;--c-itxsm:#ef4444;--c-itxcc:#22c55e;--c-mgh:#f97316;--c-ndh:#38bdf8;
+  --c-ktx:#3b82f6;--c-srt:#a855f7;--c-itxsm:#ef4444;--c-itxcc:#22c55e;--c-mgh:#f97316;--c-ndh:#38bdf8;--c-gaw:#343d68;
 }
 *{box-sizing:border-box;margin:0;padding:0}
 body{background:var(--bg);color:var(--text);font-family:var(--sans);font-size:14px;min-height:100vh}
@@ -48,6 +48,7 @@ select option{background:var(--bg3)}
 .g-ITXCC{background:rgba(34,197,94,.18);color:var(--c-itxcc);border:1px solid rgba(34,197,94,.4)}
 .g-MGH{background:rgba(249,115,22,.18);color:var(--c-mgh);border:1px solid rgba(249,115,22,.4)}
 .g-NDH{background:rgba(56,189,248,.18);color:var(--c-ndh);border:1px solid rgba(56,189,248,.4)}
+.g-GAW{background:#343d68;color:#cdd6ff;border:1px solid #4a568c}
 .tc{display:inline-flex;align-items:center;border-radius:5px;padding:2px 9px;font-family:var(--mono);font-size:12px;font-weight:600;cursor:pointer;transition:all .12s;border:1px solid}
 .tc-KTX{background:rgba(59,130,246,.12);color:var(--c-ktx);border-color:rgba(59,130,246,.35)}.tc-KTX:hover{background:rgba(59,130,246,.22)}
 .tc-SRT{background:rgba(168,85,247,.12);color:var(--c-srt);border-color:rgba(168,85,247,.35)}.tc-SRT:hover{background:rgba(168,85,247,.22)}
@@ -55,6 +56,7 @@ select option{background:var(--bg3)}
 .tc-ITXCC{background:rgba(34,197,94,.12);color:var(--c-itxcc);border-color:rgba(34,197,94,.35)}.tc-ITXCC:hover{background:rgba(34,197,94,.22)}
 .tc-MGH{background:rgba(249,115,22,.12);color:var(--c-mgh);border-color:rgba(249,115,22,.35)}.tc-MGH:hover{background:rgba(249,115,22,.22)}
 .tc-NDH{background:rgba(56,189,248,.12);color:var(--c-ndh);border-color:rgba(56,189,248,.35)}.tc-NDH:hover{background:rgba(56,189,248,.22)}
+.tc-GAW{background:rgba(52,61,104,.35);color:#aab4e0;border-color:rgba(74,86,140,.6)}.tc-GAW:hover{background:rgba(52,61,104,.55)}
 .dir{display:inline-flex;align-items:center;gap:4px;font-size:12px}
 .dir.down{color:var(--accent2)}.dir.up{color:var(--orange)}
 .dir-dot{width:6px;height:6px;border-radius:50%}
@@ -1863,9 +1865,19 @@ button, select, input[type=range],
 .book-delay-tag.est{background:rgba(255,180,84,.12);border:1px solid #ffb454;color:#ffb454}
 /* 탑승 여정 지연 시각 — 지연된 역은 실제/예정 시각을 빨간 텍스트로 */
 .jr-time-late{color:#ff6b6b!important;font-weight:700}
+/* 지연 3단계 색: ~2분 노랑 · 3~10분 주황 · 10분 초과 빨강 */
+.jr-late-y{color:#eac54f!important;font-weight:700}
+.jr-late-o{color:#f97316!important;font-weight:700}
+.jr-late-r{color:#ff6b6b!important;font-weight:700}
 .jr-time-diff{font-size:10.5px;opacity:.85}
 .jr-log-cause{font-size:11.5px;font-weight:700;color:#ffb454;padding:2px 0 5px;margin-bottom:4px;border-bottom:1px dashed var(--border)}
 .jr-log-cause .jr-wx{color:#ff6b6b}
+/* 지연 라이프사이클 리포트(최초·전파·회복·종착·영향) */
+.jr-log-report{padding:2px 0 6px;margin-bottom:5px;border-bottom:1px dashed var(--border)}
+.jr-log-report div{font-family:inherit!important;font-size:11.5px!important;color:var(--text1)!important}
+.jr-log-report .jr-rk{display:inline-block;min-width:58px;font-weight:700;color:var(--text3);margin-right:6px}
+.jr-log-report .jr-wx{color:#ff6b6b;font-weight:700}
+.jr-log-sec{font-weight:700;color:var(--text3)!important;font-family:inherit!important;padding:2px 0}
 .jr-log{margin-top:6px}
 .jr-log summary{font-size:11.5px;font-weight:700;color:var(--text2);cursor:pointer;list-style:none;padding:3px 0}
 .jr-log summary::-webkit-details-marker{display:none}
@@ -1875,6 +1887,19 @@ button, select, input[type=range],
 .jr-log-body div{font-size:11px;font-family:var(--mono);color:var(--text2);line-height:1.7}
 .jr-delay-caveat{margin-top:5px;font-size:11px;color:var(--text3);line-height:1.4}
 /* 지연 예측 탭: 지연 운행 중 목록 */
+/* 오늘의 운행 전망(사전 예측) */
+.outlook-card{margin-bottom:14px;background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:12px 14px}
+.outlook-card.bad{border-color:color-mix(in srgb,var(--orange) 45%,var(--border))}
+.ol-head{font-size:13px;font-weight:800;color:var(--text1);margin-bottom:4px}
+.ol-wx{font-size:11px;font-weight:700;color:var(--orange);margin-left:4px}
+.outlook-card:not(.bad) .ol-wx{color:var(--green)}
+.ol-desc{font-size:11.5px;color:var(--text2);margin-bottom:8px}
+.ol-row{display:flex;align-items:center;gap:8px;padding:4px 0;border-top:1px dashed var(--border);font-size:12px}
+.ol-tr{font-weight:700;color:var(--text1);white-space:nowrap}
+.ol-route{flex:1;color:var(--text3);font-size:11px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ol-rng{font-weight:700;color:var(--orange);font-variant-numeric:tabular-nums;white-space:nowrap}
+.ol-more{font-size:11px;color:var(--text3);padding-top:4px}
+.ol-caveat{font-size:10.5px;color:var(--text3);margin-top:8px;padding-top:6px;border-top:1px dashed var(--border)}
 .delayed-list{margin-bottom:14px;background:var(--bg2);border:1px solid color-mix(in srgb,var(--red) 30%,var(--border));border-radius:12px;padding:12px 12px 8px}
 .delayed-head{font-size:13.5px;font-weight:800;color:var(--text1);margin-bottom:8px}
 .delayed-head b{color:var(--red);font-family:var(--mono)}

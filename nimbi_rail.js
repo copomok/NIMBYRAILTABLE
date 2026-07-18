@@ -1,8 +1,8 @@
 
 
 // KTX-산천/이음은 KTX와 동일하게 취급
-const GC={'KTX':'KTX','KTX-산천':'KTX','KTX-이음':'KTX','SRT':'SRT','ITX-새마을':'ITX','ITX-마음':'ITX','ITX-청춘':'ITXCC','무궁화호':'MGH','남도해양':'NDH'};
-const GL={'KTX':'KTX','KTX-산천':'KTX-산천','KTX-이음':'KTX-이음','SRT':'SRT','ITX-새마을':'ITX-새마을','ITX-마음':'ITX-마음','ITX-청춘':'ITX-청춘','무궁화호':'무궁화','남도해양':'남도해양'};
+const GC={'KTX':'KTX','KTX-산천':'KTX','KTX-이음':'KTX','SRT':'SRT','ITX-새마을':'ITX','ITX-마음':'ITX','ITX-청춘':'ITXCC','무궁화호':'MGH','남도해양':'NDH','국악와인':'GAW'};
+const GL={'KTX':'KTX','KTX-산천':'KTX-산천','KTX-이음':'KTX-이음','SRT':'SRT','ITX-새마을':'ITX-새마을','ITX-마음':'ITX-마음','ITX-청춘':'ITX-청춘','무궁화호':'무궁화','남도해양':'남도해양','국악와인':'국악와인'};
 function gc(g){return GC[g]||'MGH';}
 // 등급 필터 매칭: select 값(전체/KTX/SRT/ITX-새마을/ITX-청춘/무궁화호)과 열차 등급 비교
 // KTX는 산천·이음 포함, ITX-새마을은 ITX-마음 포함(동일 등급군)
@@ -16,7 +16,7 @@ function gradeMatch(trainGrade, filterVal){
   return trainGrade===filterVal;
 }
 // gc() → CSS 변수명 (KTX-산천/이음 모두 파란색)
-const GC_CSS_VAR={'KTX':'ktx','SRT':'srt','ITX':'itxsm','ITXCC':'itxcc','MGH':'mgh','NDH':'ndh'};
+const GC_CSS_VAR={'KTX':'ktx','SRT':'srt','ITX':'itxsm','ITXCC':'itxcc','MGH':'mgh','NDH':'ndh','GAW':'gaw'};
 function gcCssVar(g){return GC_CSS_VAR[gc(g)]||'mgh';}
 function gradeHtml(g){return `<span class="grade g-${gc(g)}">${GL[g]||g}</span>`;}
 function lineChipHtml(line){
@@ -114,7 +114,7 @@ function havPt(a,b){
 //   STATION_DB의 단일 좌표가 한쪽만 가리킴 → 노선별 소요시간 기반으로 위치/거리 추정
 const UNTRUSTED_COORDS=new Set(['장성','장흥','춘양']);
 // 등급별 대표 표정속도(km/h) — 좌표 없는 구간을 시간으로 환산할 때 사용
-const GRADE_KMH={'KTX':190,'KTX-산천':190,'KTX-이음':150,'SRT':190,'ITX-새마을':100,'ITX-마음':100,'ITX-청춘':100,'무궁화호':75,'남도해양':75};
+const GRADE_KMH={'KTX':190,'KTX-산천':190,'KTX-이음':150,'SRT':190,'ITX-새마을':100,'ITX-마음':100,'ITX-청춘':100,'무궁화호':75,'남도해양':75,'국악와인':75};
 
 // 열차 경로(fromStn~toStn) 실제 거리(km).
 // 좌표 이상치/미확보 구간은 "해당 열차의 소요시간 × 구간 평균속도"로 추정.
@@ -2541,6 +2541,42 @@ const CONFIRMED_ROTATION = (()=>{
     {id:"마포-장유 4(장유주박)", seq:["204","209"]},
     {id:"청량리-태백황지 1", seq:["1691","1692","1695","1696","1699","1700"]},
     {id:"청량리-태백황지 2", seq:["1693","1694","1697","1698"]},
+    // 행신 소속 (서울역 착발) — 전주/서대전·대전 출도착은 각각 전주·대전 주박
+    {id:"행신 1", seq:["1351","1354","1355","1358","1359","1364"]},
+    {id:"행신 2(대전주박)", seq:["1352","1371","1374","1563","1570","1379"]},
+    {id:"행신 3", seq:["1353","1356","1357","1362","1569","1574"]},
+    {id:"행신 4(대전주박)", seq:["1372","1553","1560","1365"]},
+    {id:"행신 5", seq:["1551","1558","1373","1376"]},
+    {id:"행신 6(전주주박)", seq:["1552","1555","1562","1565"]},
+    {id:"행신 7(전주주박)", seq:["1554","1557","1564","1571"]},
+    {id:"행신 8(전주주박)", seq:["1556","1559","1566","1573"]},
+    {id:"행신 9", seq:["1561","1572"]},
+    {id:"행신 10", seq:["1361","1366"]},
+    {id:"행신 11", seq:["1363","1380"]},          // 대전 착 → 서대전 발(회송)
+    {id:"행신 12", seq:["1301","1304","1375","1378"]},
+    {id:"행신 13(전주주박)", seq:["1567","1568"]},
+    {id:"행신 14(부산주박)", seq:["1302","1305"]},
+    {id:"행신 15", seq:["1303","1306"]},
+    // 보은 주박
+    {id:"보은 1(보은주박)", seq:["1892","1891","1894","1893","1896","1897"]},
+    {id:"보은 2", seq:["1895","1898"]},
+    // 영주 소속
+    {id:"영주 1", seq:["1622","1623","1624","1625","1626","1627","1628","1629","1630","1631"]},
+    {id:"영주 2(태백황지주박)", seq:["1621","1634","1641","1642","1633","1632"]},
+    {id:"영주 3", seq:["1636","1643","1644","1635"]},
+    // 대전 소속 — 1·2편성 국악와인열차
+    {id:"대전 1(국악와인)", seq:["1381","1384","1385","1388","1391","1394","1397","1400"]},
+    {id:"대전 2(국악와인·남대구주박)", seq:["1382","1387","1390","1393","1396","1399"]},
+    {id:"대전 3", seq:["1383","1386"]},
+    // 전주 소속 — 목포/여수 출도착은 각각 목포·여수 주박
+    {id:"전주 1", seq:["1581","1584","1585","1588","1589","1592","1595","1598"]},
+    {id:"전주 2(목포주박)", seq:["1582","1583","1586","1587","1590","1593","1594","1597"]},
+    {id:"전주 3", seq:["1521","1526","1529","1534","1591","1596"]},
+    {id:"전주 4", seq:["1523","1528","1531","1536","1539","1544"]},
+    {id:"전주 5(여수주박)", seq:["1522","1525","1530","1533","1540","1543"]},
+    {id:"전주 6(여수주박)", seq:["1524","1527","1532","1535"]},
+    {id:"전주 7", seq:["1537","1542"]},
+    {id:"전주 8(여수주박)", seq:["1538","1541"]},
   ];
   const m={};
   sets.forEach(s=>s.seq.forEach((no,i)=>{ m[no]={id:s.id, seq:s.seq, idx:i}; }));
@@ -3034,7 +3070,8 @@ const GRADE_COLORS = {
   'ITX-새마을':'#ef4444','ITX-마음':'#ef4444',
   'ITX-청춘':'#22c55e',
   '무궁화호':'#f97316',
-  '남도해양':'#38bdf8'
+  '남도해양':'#38bdf8',
+  '국악와인':'#343d68'
 };
 
 // 노선명 → MAP_LINES 키, 노선별 인접역 쌍 캐시 (구간 소속 판별용)
@@ -3079,7 +3116,7 @@ function updateMapTrains(){
         'KTX':['KTX','KTX-산천','KTX-이음'],
         'SRT':['SRT'],
         'ITX':['ITX-새마을','ITX-마음','ITX-청춘'],
-        '무궁화':['무궁화호','남도해양']
+        '무궁화':['무궁화호','남도해양','국악와인']
       };
       if(!gradeMatch[_mapGradeFilter]?.includes(t.grade))return;
     }
@@ -5013,7 +5050,7 @@ function availableSeatClasses(grade){
   if(grade==='KTX'||grade==='KTX-산천'||grade==='SRT') return ['special','general','standing'];
   if(grade==='KTX-이음') return ['premium','general','standing'];
   if(grade==='무궁화호') return ['general','standing'];
-  if(grade==='남도해양') return ['general']; // 관광열차: 전석 지정
+  if(grade==='남도해양'||grade==='국악와인') return ['general']; // 관광열차: 전석 지정
   return ['general','standing']; // ITX-새마을, ITX-마음, ITX-청춘
 }
 
@@ -5029,6 +5066,7 @@ const FARE_TABLE={
   'ITX-청춘': {base:2400, rate:74,  min:4200},
   '무궁화호': {base:2600, rate:63,  min:2600},
   '남도해양': {base:2800, rate:96,  min:4800}, // 관광열차: 새마을급 운임
+  '국악와인': {base:2800, rate:96,  min:4800}, // 관광열차: 새마을급 운임
 };
 function calcFare(t, fromStn, toStn, seatClass){
   const tb=FARE_TABLE[t.grade]||{base:3000,rate:90,min:3000};
@@ -6342,7 +6380,7 @@ function getFormationType(grade, trainNo){
   if(grade==='ITX-청춘') return 'itx-cc';
   if(grade==='ITX-새마을') return 'itx-sm';
   if(grade==='ITX-마음') return 'itx-maum'; // 한강로-충주 4량
-  if(grade==='무궁화호'||grade==='남도해양') return 'mgh';
+  if(grade==='무궁화호'||grade==='남도해양'||grade==='국악와인') return 'mgh';
   return 'mgh';
 }
 
@@ -6430,7 +6468,7 @@ function _wideWindow(grade){ return grade!=='KTX-산천' && grade!=='ITX-마음'
 // 창문 배치 클래스 — 무궁화: 전 구간 2열 정렬창 / KTX 계열: 좌·우 한 열씩 엇갈린 걸침창 / 그 외: 좌석당 1창
 function _winClass(grade, side, r, total){
   if(!_wideWindow(grade)) return `win ${side}`;
-  if(grade==='무궁화호'||grade==='남도해양'){ // [1·2],[3·4]… 양쪽 동일
+  if(grade==='무궁화호'||grade==='남도해양'||grade==='국악와인'){ // [1·2],[3·4]… 양쪽 동일
     return r%2===1 ? (r+1<=total?`win win-wide ${side}`:`win ${side}`) : `${side}`;
   }
   // KTX 계열 걸침: 왼쪽은 홀수행 시작, 오른쪽은 맨앞 단독 + 짝수행 시작 (좌우 엇갈림)
@@ -6444,7 +6482,7 @@ function _winClass(grade, side, r, total){
 function _seatPower(grade, r, isWindow, totalRows){
   if(grade==='ITX-마음'||grade==='KTX-이음') return true;      // 전좌석
   if(!isWindow) return false;                                  // 이하 창측 자리만
-  if(grade==='무궁화호'||grade==='남도해양') return r===1||r===totalRows; // 맨앞·맨뒷열 창가
+  if(grade==='무궁화호'||grade==='남도해양'||grade==='국악와인') return r===1||r===totalRows; // 맨앞·맨뒷열 창가
   if(grade==='ITX-새마을') return r<=3||r>totalRows-3;         // 앞 3열·뒤 3열 창가
   return r%2===1;                                              // KTX 계열: 창틀 만나는 홀수열 창가
 }
@@ -9678,6 +9716,24 @@ function toggleSimDelay(){
   if(_siBoardName&&typeof _drawStationBoard==='function')_drawStationBoard();
   if(typeof updateMapTrains==='function'&&_mapCurrentLine)updateMapTrains();
 }
+function _outlookHTML(){
+  if(!_simDelayOn||typeof _simOutlook!=='function')return '';
+  const o=_simOutlook(8); if(!o)return '';
+  const wxIco={'맑음':'☀️','안개':'🌫️','강풍':'💨','폭염':'🌡️','비':'🌧️','폭설':'❄️','태풍':'🌀'}[o.ctx.weather]||'🌤️';
+  const bad=o.ctx.weather!=='맑음';
+  const gl=g=>(typeof GL!=='undefined'&&GL[g])||g;
+  const rows=o.rows.map(r=>{
+    const lo=Math.max(1,Math.round(r.est*0.6)), hi=Math.max(lo+2,Math.round(r.est*1.25));
+    const rng=r.est<5?`${r.est}분 내외`:`${lo}~${hi}분`;
+    return `<div class="ol-row"><span class="ol-tr">${_opsEsc(gl(r.t.grade))} ${_opsEsc(r.t.no)}</span><span class="ol-route">${_opsEsc(r.t.stops[0].s)}→${_opsEsc(r.t.dest)}</span><span class="ol-rng">${rng}</span></div>`;
+  }).join('');
+  return `<div class="outlook-card${bad?' bad':''}">
+    <div class="ol-head">${wxIco} 오늘의 운행 전망 <span class="ol-wx">${_opsEsc(o.ctx.weather)}${o.ctx.weekend?' · 주말':''}</span></div>
+    ${o.rows.length?`<div class="ol-desc">${bad?`${_opsEsc(o.ctx.weather)}의 영향으로 다음 열차의 지연이 예상됩니다.`:'다음 열차의 지연이 예상됩니다.'}</div>${rows}${o.total>o.rows.length?`<div class="ol-more">외 ${o.total-o.rows.length}편</div>`:''}`
+      :`<div class="ol-desc">현재 지연이 예보된 열차가 없습니다. 전 열차 정상 운행이 예상됩니다.</div>`}
+    <div class="ol-caveat">예측은 확정이 아니며, 기상 호전 등에 따라 정상 운행으로 변경될 수 있습니다.</div>
+  </div>`;
+}
 function renderSIDelay(el){
   const model=DELAY_MODEL;
   el.innerHTML=`<div style="margin-top:12px">
@@ -9691,6 +9747,7 @@ function renderSIDelay(el){
     <div style="background:var(--bg3);border-radius:10px;padding:10px 14px;margin-bottom:14px;font-size:12px;color:var(--text2);line-height:1.6">
       📊 Mysterious Enterprise 운행 기록 기반 · 지방 단선은 열차 수가 적어 지연↓${_simDelayOn?' · <b style="color:var(--red)">시뮬레이션 ON</b>':''}
     </div>
+    ${_outlookHTML()}
     ${_delayedTrainsHTML()}
     ${model.map(d=>{
       const lv=d.prob<25?'low':d.prob<40?'med':'high';
@@ -10600,7 +10657,7 @@ function _renderJourney(){
     return `<div class="${cls.join(' ')}" style="--gc:${c}">
       <div class="jr-dot"></div>
       <div class="jr-info"><span class="jr-name ${nameCls}">${_opsEsc(st.s)}${st.isPass?' <span class="jr-passtag">통과</span>':''}${badge}</span>${platTxt}</div>
-      <div class="jr-time${dStop>0?' jr-time-late':''}">${timeTxt}${dStop>0?` <span class="jr-time-diff">(+${dStop})</span>`:''}</div>
+      <div class="jr-time${dStop>0?(dStop<=2?' jr-late-y':dStop<=10?' jr-late-o':' jr-late-r'):''}">${timeTxt}${dStop>0?` <span class="jr-time-diff">(+${dStop})</span>`:''}</div>
     </div>`;
   }).join('');
   const depT=stops[0].dep||stops[0].arr, arrT=lastItem.arr||lastItem.dep;
@@ -10611,14 +10668,22 @@ function _renderJourney(){
     if(termD>0) arrAdj=` <span class="jr-eta-adj">${addMinToClock(arrT,termD)} 도착 예정 (+${termD})</span>`;
     else if(phase==='before'&&finalD>0) arrAdj=` <span class="jr-eta-adj">${finalD}분 지연 예상</span>`;
   }
-  const _dlyCause=(_simDelayOn&&dly>0&&phase!=='before'&&typeof _simCauseSummary==='function')?_simCauseSummary(t):'';
   const _dlyLog=(_simDelayOn&&dly>0&&phase!=='before'&&typeof _simEventLog==='function')?_simEventLog(t):[];
   const _wx=(_simDelayOn&&typeof _simDayContext==='function')?_simDayContext().weather:'맑음';
+  const _rep=(_simDelayOn&&dly>0&&phase!=='before'&&typeof _simDelayReport==='function')?_simDelayReport(t):null;
+  const _repHTML=_rep?`<div class="jr-log-report">
+        ${_rep.first?`<div><span class="jr-rk">최초 원인</span>${_opsEsc(_rep.first)}${_wx!=='맑음'?` · <span class="jr-wx">${_opsEsc(_wx)}</span>`:''}</div>`:''}
+        ${_rep.spread.length?`<div><span class="jr-rk">전파 원인</span>${_opsEsc(_rep.spread.join(' · '))}</div>`:''}
+        <div><span class="jr-rk">회복 운전</span>${_rep.recovered>0?`약 ${_rep.recovered}분 회복`:'회복 없음'}</div>
+        <div><span class="jr-rk">종착 지연</span>${_rep.final>0?`약 ${_rep.final}분 예상`:'정시 도착 예상'}</div>
+        ${_rep.affects?`<div><span class="jr-rk">영향 열차</span>다음 회차 ${_opsEsc(_rep.affects)} 열차 지연 우려</div>`:''}
+      </div>`:'';
   const delayBadge=(_simDelayOn&&dly>0&&phase==='running')
     ?`<div class="jr-delay-live">🔴 현재 약 <b>${dly}분</b> 지연 운행 중</div>`
-      +(_dlyLog.length?`<details class="jr-log"><summary>지연 기록 보기</summary><div class="jr-log-body">`
-        +((_dlyCause||_wx!=='맑음')?`<div class="jr-log-cause">🔎 원인 · ${_opsEsc(_dlyCause||'복합 요인')}${_wx!=='맑음'?` · <span class="jr-wx">${_opsEsc(_wx)}</span>`:''}</div>`:'')
-        +_dlyLog.slice(0,16).map(l=>`<div>${_opsEsc(l)}</div>`).join('')+`</div></details>`:'')
+      +((_dlyLog.length||_repHTML)?`<details class="jr-log"><summary>지연 기록 보기</summary><div class="jr-log-body">`
+        +_repHTML
+        +(_dlyLog.length?`<div class="jr-log-sec">구간별 기록</div>`+_dlyLog.slice(0,16).map(l=>`<div>${_opsEsc(l)}</div>`).join(''):'')
+        +`</div></details>`:'')
       +`<div class="jr-delay-caveat">지연 정보는 실제 운행 상황과 차이가 있을 수 있습니다</div>`:'';
   body.innerHTML=`
     <div class="jr-header" style="--gc:${c}">

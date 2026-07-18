@@ -2,9 +2,10 @@
 // 🚦 님비레일 지연 예보·시뮬레이션 엔진 (nimbi_rail.js에서 분리)
 //  기반  : 인게임 발췌 지연 예측(DELAY_MODEL) — 노선·등급별 확률/범위(주기반)
 //  보정  : 구간 특성(전철 병행·혼잡) · 거리(소요) · 시간대(러시) · 요일/날씨(일 단위)
-//  전파  : 편성 회차 연쇄(선행 편성 지연 상속) · 원인 추적/로그
-//  성질  : 결정적(열차+운행일 시드) · 하루 단위 캐시 · 점진 회복(구간 상한)
-//  분포  : 대부분 정시~2분, 5~10분 드묾, 15분+ 희귀, 30분+ 는 악천후/재해일만
+//  전파  : 편성 회차 연쇄(선행 편성 지연 상속) · 원인 추적/로그(발생→전파→회복→종착→회차)
+//  성질  : 결정적(열차+운행일 시드) · 하루 단위 캐시 · 등급별 회복 운전(KTX>ITX>새마을>무궁화)
+//  기상  : 맑음·안개·강풍·폭염·비·폭설·태풍 — 일 단위 결정, 서행·회복 저해 반영
+//  분포  : 대부분 정시~2분, 3~10분 비교적 흔함, 10~20분 가끔, 30분+ 는 태풍·차량 고장 등 특수 상황만
 // ═══════════════════════════════════════════════════════════════
 
 // ── 인게임 발췌 지연 예측 ──
@@ -23,10 +24,10 @@ const DELAY_MODEL=[
 ];
 const _DELAY_DEFAULT={'KTX':{prob:22,min:2,max:6},'SRT':{prob:18,min:2,max:5},
   'ITX-새마을':{prob:35,min:4,max:13},'ITX-청춘':{prob:30,min:4,max:12},
-  'ITX-마음':{prob:30,min:4,max:12},'남도해양':{prob:34,min:4,max:13},'무궁화호':{prob:38,min:5,max:15}};
+  'ITX-마음':{prob:30,min:4,max:12},'남도해양':{prob:34,min:4,max:13},'국악와인':{prob:34,min:4,max:13},'무궁화호':{prob:38,min:5,max:15}};
 function _delayGradeFamily(g){ if(/KTX/.test(g))return 'KTX'; if(g==='SRT')return 'SRT';
   if(g==='ITX-새마을')return 'ITX-새마을'; if(g==='ITX-청춘')return 'ITX-청춘';
-  if(g==='ITX-마음')return 'ITX-마음'; if(g==='남도해양')return '남도해양'; return '무궁화호'; }
+  if(g==='ITX-마음')return 'ITX-마음'; if(g==='남도해양')return '남도해양'; if(g==='국악와인')return '국악와인'; return '무궁화호'; }
 function _delayLevel(prob){ return prob<25?'low':prob<40?'med':'high'; }
 function _delayForecast(line,grade){
   const fam=_delayGradeFamily(grade);
@@ -58,15 +59,29 @@ function _simDayContext(){
   const d=new Date(); if(d.getHours()<4)d.setDate(d.getDate()-1);
   const dow=d.getDay(), weekend=(dow===0||dow===6);
   const w=_simDaySeed(3.71);
-  let weather,probMult,magMult,bigCap;
-  if(w<0.70){ weather='맑음'; probMult=1.0; magMult=1.0; bigCap=15; }        // 대부분의 날
-  else if(w<0.90){ weather='비'; probMult=1.15; magMult=1.15; bigCap=20; }
-  else if(w<0.975){ weather='폭우·폭설'; probMult=1.35; magMult=1.4; bigCap=30; }
-  else { weather='태풍·기상특보'; probMult=1.7; magMult=1.9; bigCap=42; }    // 드문 재해일에만 30분+
+  // 기상 유형별 특성: probMult(발생확률) · magMult(지연크기) · bigCap(상한) · recW(회복 저해)
+  //   sagGate(서행 발생 게이트) · sagLabel(원인명) · wxBig(대형 지연 유발 여부)
+  let wx;
+  if(w<0.60)       wx={weather:'맑음', probMult:1.0, magMult:1.0, bigCap:15, recW:1.0, sagGate:0,    sagLabel:null,               wxBig:false};
+  else if(w<0.70)  wx={weather:'안개', probMult:1.1, magMult:1.05,bigCap:13, recW:0.9, sagGate:0.26, sagLabel:'안개 서행',        wxBig:false};
+  else if(w<0.78)  wx={weather:'강풍', probMult:1.18,magMult:1.2, bigCap:20, recW:0.8, sagGate:0.34, sagLabel:'강풍 서행',        wxBig:true};
+  else if(w<0.85)  wx={weather:'폭염', probMult:1.1, magMult:1.1, bigCap:15, recW:0.88,sagGate:0.24, sagLabel:'폭염 레일온도 서행', wxBig:false};
+  else if(w<0.93)  wx={weather:'비',   probMult:1.15,magMult:1.15,bigCap:20, recW:0.8, sagGate:0.32, sagLabel:'우천 서행',        wxBig:true};
+  else if(w<0.975) wx={weather:'폭설', probMult:1.35,magMult:1.4, bigCap:30, recW:0.55,sagGate:0.55, sagLabel:'폭설 제설 지연',    wxBig:true};
+  else             wx={weather:'태풍', probMult:1.7, magMult:1.9, bigCap:42, recW:0.4, sagGate:0.78, sagLabel:'태풍 서행',        wxBig:true};
   const rushMult=weekend?1.12:1.5;
-  return (_simCtxDay=day, _simCtxCache={day,dow,weekend,weather,probMult,magMult,bigCap,rushMult});
+  return (_simCtxDay=day, _simCtxCache=Object.assign({day,dow,weekend,rushMult},wx));
 }
 function _isRush(minOfDay){ const h=Math.floor((((minOfDay%1440)+1440)%1440)/60); return (h>=7&&h<9)||(h>=18&&h<20); }
+
+// ── 등급별 운행 특성: 회복률(역간 여유 시분 활용률)·선로 우선권 ──
+//  KTX/SRT 50~70% · ITX 30~50% · 새마을 20~40% · 무궁화(관광 포함) 10~30%
+function _gradeOps(grade){
+  if(/KTX|SRT/.test(grade))   return {rec:[0.50,0.70], prio:3};  // 고속: 높은 회복·선로 우선권
+  if(/^ITX/.test(grade))      return {rec:[0.30,0.50], prio:2};  // ITX: 중간 (일부 구간 KTX 양보)
+  if(/새마을/.test(grade))     return {rec:[0.20,0.40], prio:1};
+  return {rec:[0.10,0.30], prio:0};                              // 무궁화·관광열차: 낮은 우선순위
+}
 
 // ── 혼잡/전철 병행 모델 ──
 let _simModelCache=null;
@@ -104,13 +119,20 @@ function _metroParSections(timed){
 const _SIM_CONG_REF=280, _SIM_REC_RATE=0.12, _SIM_REC_CAP=1.5;
 
 // ── 편성 회차 선행열차 맵(같은 날 연쇄 지연) ──
-let _simRotPredCache=null;
+let _simRotPredCache=null,_simRotSuccCache=null;
 function _simRotPred(){
   if(_simRotPredCache)return _simRotPredCache;
   const pred={};
   if(typeof CONFIRMED_ROTATION!=='undefined')Object.values(CONFIRMED_ROTATION).forEach(r=>{
     const seq=r.seq||[]; for(let i=1;i<seq.length;i++)pred[seq[i]]=seq[i-1]; });
   return _simRotPredCache=pred;
+}
+function _simRotSucc(){
+  if(_simRotSuccCache)return _simRotSuccCache;
+  const succ={};
+  if(typeof CONFIRMED_ROTATION!=='undefined')Object.values(CONFIRMED_ROTATION).forEach(r=>{
+    const seq=r.seq||[]; for(let i=0;i<seq.length-1;i++)succ[seq[i]]=seq[i+1]; });
+  return _simRotSuccCache=succ;
 }
 // 선행 편성(pt) 종착 → 이 열차(t) 첫 출발 사이 스케줄 여유(분). 회차가 아니면 null.
 function _turnaroundBuffer(pt, t){
@@ -128,18 +150,27 @@ function _turnaroundBuffer(pt, t){
 const _SIM_SINGLE_TRACK=new Set(['영주','봉화','법전','춘양','소천']);
 function _isSingleTrack(a,b){ return _SIM_SINGLE_TRACK.has(a)&&_SIM_SINGLE_TRACK.has(b); }
 // ── 지연 원인 태그 ──
+//  운행(신호·점유·대피·추월·교행) / 차량 / 역(승객) / 기상 — 우선순위 낮은 등급일수록 운행 원인↑
 const _CAUSE_MISC=['신호 대기','선행 열차 간격 조정','운전 정리 지시','승강장 혼선'];
-function _sectionCause(rush, metroPar, congHi, weather, r, singleTrack){
-  if(singleTrack && r<0.7) return '단선 교행 대기';   // 단선 구간에서만
-  if(weather!=='맑음'){                                 // 악천후일수록 서행 잦음
-    const g=weather==='비'?0.3:weather==='폭우·폭설'?0.55:0.78;
-    if(r<g) return weather==='비'?'우천 서행':'기상 악화 서행';
-  }
+const _CAUSE_LOWPRIO=['대피선 대기','추월 대기','선행 열차 지연','KTX 통과 대기'];
+function _sectionCause(rush, metroPar, congHi, ctx, r, singleTrack, prio){
+  if(singleTrack && r<0.7) return '단선 교행 대기';       // 단선 구간(영동선 영주~소천)에서만
+  if(ctx.sagGate && r<ctx.sagGate) return ctx.sagLabel;   // 기상 서행(악천후일수록 잦음)
   if(rush) return '출퇴근 승객 집중';
   if(metroPar) return '전철 병행 구간 혼잡';
   if(congHi) return '승차 혼잡';
+  // 새마을·무궁화 등 낮은 우선순위: 대피·추월·선행 열차 영향이 잦음
+  if(prio<=1 && r<0.45) return _CAUSE_LOWPRIO[Math.floor(r*47)%_CAUSE_LOWPRIO.length];
   return _CAUSE_MISC[Math.floor(r*_CAUSE_MISC.length)%_CAUSE_MISC.length];
 }
+// 크게 누적될 수 있는 원인(그 외는 소폭에 그침)
+function _isBigCause(cause, ctx){
+  if(cause==='단선 교행 대기')return true;
+  if(cause===ctx.sagLabel)return !!ctx.wxBig;             // 강풍·비·폭설·태풍 서행만 대형
+  return false;
+}
+// 중간 크기 원인(운행 계열: 대피·추월·선행 지연)
+function _isMidCause(cause){ return _CAUSE_LOWPRIO.includes(cause); }
 
 // ── 지연 프로파일(핵심) ── 역별 누적 지연 cd[] + 원인/로그
 let _simProfileCache={};
@@ -188,13 +219,23 @@ function _computeProfile(t){
   let dominant=null;
   if(inherited>0){ events.push({idx:0,delta:Math.round(inherited),cause:'전 편성 회차 지연'}); dominant='회차 지연'; }
 
-  if(flagged||surprise||inherited>0){
+  // 드문 차량 이벤트(경미한 고장·응급조치): 날씨 무관 특수 상황 — 30분+ 가능 경로
+  const rVeh=_seededRand(seed+7.77);
+  const vehSec=rVeh<0.008?Math.floor(_seededRand(seed+8.31)*secN):-1;
+
+  // 등급별 회복 특성: 역간 여유 시분 활용률(KTX 50~70% … 무궁화 10~30%) + 선로 우선권
+  const go=_gradeOps(t.grade);
+  const recFrac=go.rec[0]+(go.rec[1]-go.rec[0])*_seededRand(seed+4.44);
+  const recCap=Math.min(2, 0.9+0.4*go.prio);              // 한 구간 최대 회복(한 번에 크게 안 줄음)
+  const prioMult=[1.25,1.1,1.0,0.85][go.prio];            // 낮은 우선순위=지연 사건 잦음
+
+  if(flagged||surprise||inherited>0||vehSec>=0){
     // 대형 원인(기상 서행·단선 교행)은 인게임 범위까지 커질 수 있음
     const bigUnit=(flagged?Math.max(0.6,(f.max||6)/11):0.6)*(0.6+0.4*lenFactor)*severity*ctx.magMult;
-    // 소형 원인(전철 병행·승차 혼잡·출퇴근 집중)은 소폭 → 회복으로 웬만해선 2분 이하로 끝남
+    // 소형 원인(전철 병행·승차 혼잡·출퇴근 집중 등)은 소폭 → 회복으로 웬만해선 2분 이하로 끝남
     const smallUnit=0.45+0.5*severity;
-    const evBase=(flagged?Math.min(0.34,effProb/100*0.45+0.06):0.05)*(0.6+0.5*severity);
-    let cur=inherited;
+    const evBase=(flagged?Math.min(0.34,effProb/100*0.45+0.06):0.05)*(0.6+0.5*severity)*prioMult;
+    let cur=inherited, recTotal=0;
     for(let i=0;i<secN;i++){
       const dt=Math.max(1,m[i+1]-m[i]);
       const metroPar=metroParArr[i];   // 같은 전철 노선 3연속 공유 구간만
@@ -206,25 +247,31 @@ function _computeProfile(t){
       const ra=_seededRand(seed+i*2.7+0.5), rb=_seededRand(seed+i*2.7+1.9), rc=_seededRand(seed+i*2.7+3.3), rd=_seededRand(seed+i*2.7+5.1);
       const pInc=evBase*(0.35+exposure*1.3);
       let inc=0, cause=null;
-      if(ra<pInc){
-        cause=_sectionCause(rush, metroPar, congHi, ctx.weather, rd, singleTrack);
-        const big=(cause==='단선 교행 대기'||cause==='우천 서행'||cause==='기상 악화 서행');
-        inc=big ? bigUnit*(0.6+rb) : smallUnit*(0.5+0.6*rb); }
-      // 회복: 지연이 있고 여유 구간일 때만, 구간 소요·상한으로 조금씩만.
-      // 악천후 중에는 회복이 더뎌 지연이 누적(드문 재해일에 30분+ 발생 여지).
-      const recW=ctx.weather==='맑음'?1:ctx.weather==='비'?0.85:ctx.weather==='폭우·폭설'?0.6:0.4;
+      if(i===vehSec){                          // 차량 고장: 크게, 이후 서서히 회복
+        inc=Math.min(ctx.bigCap, (8+_seededRand(seed+9.9)*14)*(0.7+0.3*ctx.magMult));
+        cause='차량 고장 응급조치';
+      } else if(ra<pInc){
+        cause=_sectionCause(rush, metroPar, congHi, ctx, rd, singleTrack, go.prio);
+        inc=_isBigCause(cause,ctx) ? bigUnit*(0.6+rb)
+          : _isMidCause(cause)     ? Math.min(5, bigUnit*0.55*(0.6+rb)+smallUnit*0.5)
+          :                          smallUnit*(0.5+0.6*rb); }
+      // 회복 운전: 역간 여유 시분(≈소요의 16%)을 등급별 회복률만큼 사용.
+      // 악천후 중에는 회복이 더뎌 지연이 누적(재해일에 30분+ 발생 여지).
       let rec=0;
-      if(cur>0 && inc===0 && rc<(0.35+0.4*(1-exposure))*recW) rec=Math.min(cur,_SIM_REC_RATE*dt,_SIM_REC_CAP)*(0.5+0.5*rc)*recW;
+      if(cur>0 && inc===0 && rc<(0.32+0.4*(1-exposure))*ctx.recW*(0.9+0.05*go.prio))
+        rec=Math.min(cur, 0.16*dt*recFrac, recCap)*(0.5+0.5*rc)*ctx.recW;
       cur=Math.max(0, Math.min(ctx.bigCap, cur+inc-rec));
-      cd.push(cur);
+      cd.push(cur); recTotal+=rec;
       if(inc>=0.5&&cause){ events.push({idx:i+1,delta:+inc.toFixed(1),cause}); if(!dominant||inc>2)dominant=dominant&&inc<=2?dominant:cause; }
-      else if(rec>=0.5) events.push({idx:i+1,delta:-+rec.toFixed(1),cause:'운전 정리 회복'});
+      else if(rec>=0.5) events.push({idx:i+1,delta:-+rec.toFixed(1),cause:'회복 운전'});
     }
     if(!dominant){ const anyInc=events.find(e=>e.delta>0); dominant=anyInc?anyInc.cause:null; }
-  } else { for(let i=0;i<secN;i++)cd.push(0); }
+    var _recTotal=recTotal;
+  } else { for(let i=0;i<secN;i++)cd.push(0); var _recTotal=0; }
 
   return {cd:cd.map(v=>Math.round(v)), m, firstM:m[0], lastM:m[m.length-1],
-    predictedFlag:flagged, cause:dominant, events, weather:ctx.weather};
+    predictedFlag:flagged, cause:dominant, events, weather:ctx.weather,
+    inheritedFrom:(inherited>0&&predNo)?predNo:null, recovered:Math.round(_recTotal)};
 }
 
 // ── 조회 API ──
@@ -272,6 +319,39 @@ function _simEventLog(t){
     if(e.delta>0)return `[${clk}] ${st} · ${e.cause} +${Math.round(e.delta)}분`;
     return `[${clk}] ${st} · ${e.cause||'운전 정리'} −${Math.abs(Math.round(e.delta))}분`;
   });
+}
+// 지연 라이프사이클 요약 — 최초 원인·전파 원인·회복 여부·최종 지연·영향 열차
+function _simDelayReport(t){
+  if(!_simDelayOn)return null;
+  const pr=_simProfile(t); if(!pr.cd||!pr.cd.length)return null;
+  const fin=pr.cd[pr.cd.length-1]||0;
+  const incs=(pr.events||[]).filter(e=>e.delta>0);
+  if(!incs.length&&fin<=0&&!(pr.recovered>0))return null;
+  const first=pr.inheritedFrom?`전 편성 회차 지연 (${pr.inheritedFrom} 열차)`:(incs[0]?incs[0].cause:null);
+  const spread=[]; incs.forEach(e=>{ if(e.cause!==((incs[0]||{}).cause)&&e.cause!=='전 편성 회차 지연'&&!spread.includes(e.cause))spread.push(e.cause); });
+  // 영향을 받은 열차: 다음 회차 편성이 회차 여유보다 큰 지연을 이어받는 경우
+  let affects=null;
+  const succNo=_simRotSucc()[t.no];
+  if(succNo&&fin>0&&typeof ALL_TRAINS!=='undefined'){
+    const nt=ALL_TRAINS.find(x=>x.no===succNo);
+    if(nt){ const buf=_turnaroundBuffer(t,nt); if(buf!=null&&fin>Math.max(3,buf))affects=succNo; }
+  }
+  return {first, spread:spread.slice(0,3), recovered:pr.recovered||0, final:fin, affects};
+}
+// 오늘의 사전 예측(영업일 전망) — 기상·예보 기반으로 지연 예상 열차 목록 생성
+function _simOutlook(limit){
+  if(!_simDelayOn)return null;
+  const ctx=_simDayContext();
+  const rows=[];
+  if(typeof ALL_TRAINS!=='undefined')ALL_TRAINS.forEach(t=>{
+    const pr=_simProfile(t); if(!pr.predictedFlag)return;
+    const fin=pr.cd.length?pr.cd[pr.cd.length-1]:0;
+    const peak=pr.cd.length?Math.max.apply(null,pr.cd):0;
+    const est=Math.max(fin,peak); if(est<3)return;
+    rows.push({t,est});
+  });
+  rows.sort((a,b)=>b.est-a.est);
+  return {ctx, rows:rows.slice(0,limit||8), total:rows.length};
 }
 // 지연 보상: 30분 이상 지연 = 전액 환불 원칙.
 //  단, 예매 시 (①장시간 지연 예보가 있던 열차 / ②이미 10분 이상 지연 중이던 열차)는 제외.
