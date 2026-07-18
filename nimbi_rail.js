@@ -7772,36 +7772,53 @@ function _renderWatchView(){
   const host=document.getElementById('watch-view'); if(!host)return;
   const n=new Date(), nowM=n.getHours()*60+n.getMinutes();
   const running=_watchPickTrains(nowM);
-  if(_watchTrainNo&&!running.find(t=>t.no===_watchTrainNo))_watchTrainNo=null;
   const _jn=(typeof _journeyNo!=='undefined')?_journeyNo:null; // 선언 전 호출 대비
   if(!_watchTrainNo&&(_jn&&running.find(t=>t.no===_jn)))_watchTrainNo=_jn;
   if(!_watchTrainNo&&running.length)_watchTrainNo=running[0].no;
-  const t=running.find(x=>x.no===_watchTrainNo);
+  const t=ALL_TRAINS.find(x=>x.no===_watchTrainNo);
   const gl=g=>(typeof GL!=='undefined'&&GL[g])||g;
   let card='';
   if(t){
     const d=_simDelayOn?_simDelay(t,nowM):0;
-    const st=getCurrentStatus(t,nowM-d);
+    const st=getCurrentStatus(t,nowM-d)||{};
     const timed=t.stops.filter(s=>hasTime(s.arr)||hasTime(s.dep));
-    const last=timed[timed.length-1];
+    const first=timed[0], last=timed[timed.length-1];
     const termD=_simDelayOn?_simDelayAtStop(t,timed.length-1):0;
     const eta=addMinToClock(last.arr||last.dep,termD);
-    const nextStn=st.atStn||st.nextStn||'';
-    const plat=(nextStn&&typeof _realPlatform==='function')?_realPlatform(t.no,nextStn):null;
+    let body='';
+    if(st.status==='running'){
+      const nextStn=st.atStn||st.nextStn||'';
+      const plat=(nextStn&&typeof _realPlatform==='function')?_realPlatform(t.no,nextStn):null;
+      body=`<div class="wv-row">${st.atStn?`🚉 ${_opsEsc(st.atStn)} 정차 중`:`▶ 다음 ${_opsEsc(st.nextStn||'-')}`}${plat!=null?` · ${plat}번`:''}</div>
+      <div class="wv-row ${d>0?'wv-late':''}">${d>0?`🔴 약 ${d}분 지연`:'🟢 정시 운행'}</div>
+      <div class="wv-row">🏁 ${_opsEsc(last.s)} ${eta} 도착${termD>0?` (+${termD})`:''}</div>`;
+    } else if(st.status==='before'){
+      body=`<div class="wv-row">🕐 출발 전</div>
+      <div class="wv-row">${_opsEsc(first.s)} ${first.dep||first.arr} 출발 예정</div>`;
+    } else {
+      body=`<div class="wv-row">☑️ 운행 종료</div>
+      <div class="wv-row">${_opsEsc(first.s)} → ${_opsEsc(last.s)} ${last.arr||last.dep} 착</div>`;
+    }
     card=`<div class="wv-card" style="--gc:${GRADE_COLORS[t.grade]||'#888'}">
       <div class="wv-head"><span class="wv-grade">${_opsEsc(gl(t.grade))}</span> <b>${_opsEsc(t.no)}</b> <span class="wv-dest">${_opsEsc(t.dest)}행</span></div>
-      <div class="wv-row">${st.atStn?`🚉 ${_opsEsc(st.atStn)} 정차 중`:`▶ 다음 ${_opsEsc(st.nextStn||'-')}`}${plat!=null?` · ${plat}번`:''}</div>
-      <div class="wv-row ${d>0?'wv-late':''}">${d>0?`🔴 약 ${d}분 지연`:'🟢 정시 운행'}</div>
-      <div class="wv-row">🏁 ${_opsEsc(last.s)} ${eta} 도착${termD>0?` (+${termD})`:''}</div>
+      ${body}
     </div>`;
-  } else card=`<div class="wv-card"><div class="wv-row">운행 중인 열차가 없습니다</div></div>`;
+  } else card=`<div class="wv-card"><div class="wv-row">열차 번호를 입력하세요</div></div>`;
   host.innerHTML=`
     <div class="wv-clock">${String(n.getHours()).padStart(2,'0')}:${String(n.getMinutes()).padStart(2,'0')}</div>
     ${card}
-    <select class="wv-sel" onchange="_watchTrainNo=this.value;_renderWatchView()">
-      ${running.map(x=>`<option value="${_opsEsc(x.no)}"${x.no===_watchTrainNo?' selected':''}>${_opsEsc(gl(x.grade))} ${_opsEsc(x.no)} ${_opsEsc(x.dest)}행</option>`).join('')}
-    </select>
+    <div class="wv-inrow">
+      <input class="wv-input" id="wv-no" inputmode="numeric" placeholder="열차 번호" value="${_opsEsc(_watchTrainNo||'')}" onkeydown="if(event.key==='Enter')_watchGo()">
+      <button class="wv-go" onclick="_watchGo()">조회</button>
+    </div>
     <button class="wv-exit" onclick="setUiMode('mobile')">📱 모바일 모드</button>`;
+}
+function _watchGo(){
+  const el=document.getElementById('wv-no'); const v=el?String(el.value).trim():'';
+  if(!v)return;
+  const t=ALL_TRAINS.find(x=>x.no===v);
+  if(!t){ el.value=''; el.placeholder='없는 번호'; return; }
+  _watchTrainNo=t.no; _renderWatchView();
 }
 
 // ── 🖥️ PC 모드: 키보드 조작 (+/- 줌 · WASD/방향키 노선도 이동) ──
@@ -9850,7 +9867,7 @@ function toggleSimDelay(){
 }
 function _outlookHTML(){
   if(!_simDelayOn||typeof _simOutlook!=='function')return '';
-  const o=_simOutlook(8); if(!o)return '';
+  const o=_simOutlook(window._olAll?10000:8); if(!o)return '';
   const wxIco={'맑음':'☀️','안개':'🌫️','강풍':'💨','폭염':'🌡️','비':'🌧️','폭설':'❄️','태풍':'🌀'}[o.ctx.weather]||'🌤️';
   const bad=o.ctx.weather!=='맑음';
   const gl=g=>(typeof GL!=='undefined'&&GL[g])||g;
@@ -9861,7 +9878,7 @@ function _outlookHTML(){
   }).join('');
   return `<div class="outlook-card${bad?' bad':''}">
     <div class="ol-head">${wxIco} 오늘의 운행 전망 <span class="ol-wx">${_opsEsc(o.ctx.weather)}${o.ctx.weekend?' · 주말':''}</span></div>
-    ${o.rows.length?`<div class="ol-desc">${bad?`${_opsEsc(o.ctx.weather)}의 영향으로 다음 열차의 지연이 예상됩니다.`:'다음 열차의 지연이 예상됩니다.'}</div>${rows}${o.total>o.rows.length?`<div class="ol-more">외 ${o.total-o.rows.length}편</div>`:''}`
+    ${o.rows.length?`<div class="ol-desc">${bad?`${_opsEsc(o.ctx.weather)}의 영향으로 다음 열차의 지연이 예상됩니다.`:'다음 열차의 지연이 예상됩니다.'}</div>${rows}${o.total>8?`<button class="ol-allbtn" onclick="window._olAll=!window._olAll;var e=document.getElementById('result-delay');if(e)renderSIDelay(e)">${window._olAll?'접기 ▲':`전체 ${o.total}편 보기 ▼`}</button>`:''}`
       :`<div class="ol-desc">현재 지연이 예보된 열차가 없습니다. 전 열차 정상 운행이 예상됩니다.</div>`}
     <div class="ol-caveat">예측은 확정이 아니며, 기상 호전 등에 따라 정상 운행으로 변경될 수 있습니다.</div>
   </div>`;
@@ -9876,11 +9893,10 @@ function renderSIDelay(el){
       </div>
       <button class="sim-switch${_simDelayOn?' on':''}" onclick="toggleSimDelay()" role="switch" aria-checked="${_simDelayOn}"><span class="sim-knob"></span></button>
     </div>
-    <div style="background:var(--bg3);border-radius:10px;padding:10px 14px;margin-bottom:14px;font-size:12px;color:var(--text2);line-height:1.6">
-      📊 Mysterious Enterprise 운행 기록 기반 · 지방 단선은 열차 수가 적어 지연↓${_simDelayOn?' · <b style="color:var(--red)">시뮬레이션 ON</b>':''}
-    </div>
     ${_outlookHTML()}
     ${_delayedTrainsHTML()}
+    <details class="fc-fold"${_simDelayOn?'':' open'}>
+    <summary>📊 노선별 지연 예보 <span class="fc-fold-sub">Mysterious Enterprise 운행 기록 기반 · ${model.length}개 노선</span></summary>
     ${model.map(d=>{
       const lv=d.prob<25?'low':d.prob<40?'med':'high';
       const lc=lv==='low'?'var(--green)':lv==='med'?'var(--orange)':'var(--red)';
@@ -9898,6 +9914,7 @@ function renderSIDelay(el){
         </div>
       </div>`;
     }).join('')}
+    </details>
   </div>`;
 }
 

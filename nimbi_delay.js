@@ -44,7 +44,9 @@ function _delayForecast(line,grade){
 
 // ── 시드/공용 ──
 let _simDelayOn=(()=>{try{return localStorage.getItem('nimbi_simdelay')==='1';}catch(e){return false;}})();
-function _simDayKey(){ const d=new Date(); if(d.getHours()<4)d.setDate(d.getDate()-1);
+let _simDayKeyOverride=null; // 운행 전망 0시 갱신용 임시 키(라이브 표시는 04시 기준 유지)
+function _simDayKey(){ if(_simDayKeyOverride)return _simDayKeyOverride;
+  const d=new Date(); if(d.getHours()<4)d.setDate(d.getDate()-1);
   return d.getFullYear()*10000+(d.getMonth()+1)*100+d.getDate(); }
 function _seededRand(seed){ const x=Math.sin(seed)*10000; return x-Math.floor(x); }
 function _simSeed(no){ const s=String(no)+':'+_simDayKey(); let h=2166136261;
@@ -294,9 +296,9 @@ function _computeProfile(t){
 }
 
 // ── 조회 API ──
-function _simDelayAtStop(t, idx){ if(!_simDelayOn)return 0; const cd=_simProfile(t).cd; return (idx>=0&&idx<cd.length)?cd[idx]:0; }
+function _simDelayAtStop(t, idx){ if(!_simDelayOn||_simExpired(t))return 0; const cd=_simProfile(t).cd; return (idx>=0&&idx<cd.length)?cd[idx]:0; }
 function _simDelay(t, clock){
-  if(!_simDelayOn) return 0;
+  if(!_simDelayOn||_simExpired(t)) return 0;
   const pr=_simProfile(t); const {cd,m,firstM,lastM}=pr;
   if(!cd.length||firstM==null) return 0;
   let nowM=clock;
@@ -309,7 +311,7 @@ function _simDelay(t, clock){
   return cd[cd.length-1];
 }
 // '지연 예상' 라벨용(예측된 열차만). 회차/서프라이즈만인 열차는 라벨 없이 실시간 지연으로만 노출.
-function _simFinalDelay(t){ if(!_simDelayOn)return 0; const pr=_simProfile(t);
+function _simFinalDelay(t){ if(!_simDelayOn||_simExpired(t))return 0; const pr=_simProfile(t);
   return (pr.predictedFlag&&pr.cd.length)?(pr.cd[pr.cd.length-1]||0):0; }
 function _liveDelayOf(t){
   if(!_simDelayOn)return 0;
@@ -321,14 +323,14 @@ function _liveDelayOf(t){
 }
 // 지연 원인 요약(대표 + 부가) · 최대 2개
 function _simCauseSummary(t){
-  if(!_simDelayOn)return '';
+  if(!_simDelayOn||_simExpired(t))return '';
   const pr=_simProfile(t); if(!pr.events||!pr.events.length)return '';
   const seen=[]; pr.events.filter(e=>e.delta>0).forEach(e=>{ if(!seen.includes(e.cause))seen.push(e.cause); });
   return seen.slice(0,2).join(' · ');
 }
 // 관제 로그(코레일톡식) — 시각·역·원인
 function _simEventLog(t){
-  if(!_simDelayOn)return [];
+  if(!_simDelayOn||_simExpired(t))return [];
   const pr=_simProfile(t); if(!pr.events||!pr.events.length)return [];
   const timed=t.stops.filter(s=>hasTime(s.arr)||hasTime(s.dep));
   const fmt=mm=>{const v=(((mm%1440)+1440)%1440);return String(Math.floor(v/60)).padStart(2,'0')+':'+String(Math.round(v%60)).padStart(2,'0');};
@@ -341,7 +343,7 @@ function _simEventLog(t){
 }
 // 지연 라이프사이클 요약 — 최초 원인·전파 원인·회복 여부·최종 지연·영향 열차
 function _simDelayReport(t){
-  if(!_simDelayOn)return null;
+  if(!_simDelayOn||_simExpired(t))return null;
   const pr=_simProfile(t); if(!pr.cd||!pr.cd.length)return null;
   const fin=pr.cd[pr.cd.length-1]||0;
   const incs=(pr.events||[]).filter(e=>e.delta>0);
@@ -360,17 +362,31 @@ function _simDelayReport(t){
 // 오늘의 사전 예측(영업일 전망) — 기상·예보 기반으로 지연 예상 열차 목록 생성
 function _simOutlook(limit){
   if(!_simDelayOn)return null;
-  const ctx=_simDayContext();
-  const rows=[];
-  if(typeof ALL_TRAINS!=='undefined')ALL_TRAINS.forEach(t=>{
-    const pr=_simProfile(t); if(!pr.predictedFlag)return;
-    const fin=pr.cd.length?pr.cd[pr.cd.length-1]:0;
-    const peak=pr.cd.length?Math.max.apply(null,pr.cd):0;
-    const est=Math.max(fin,peak); if(est<3)return;
-    rows.push({t,est});
-  });
-  rows.sort((a,b)=>b.est-a.est);
-  return {ctx, rows:rows.slice(0,limit||8), total:rows.length};
+  // 전망은 매일 0시에 새 영업일 기준으로 갱신.
+  // (익일까지 운행 중인 열차의 실지연 표시는 04시 전까지 전일 기준 그대로 유지)
+  const d0=new Date();
+  if(d0.getHours()<4)_simDayKeyOverride=d0.getFullYear()*10000+(d0.getMonth()+1)*100+d0.getDate();
+  try{
+    const ctx=_simDayContext();
+    const rows=[];
+    if(typeof ALL_TRAINS!=='undefined')ALL_TRAINS.forEach(t=>{
+      const pr=_simProfile(t); if(!pr.predictedFlag)return;
+      const fin=pr.cd.length?pr.cd[pr.cd.length-1]:0;
+      const peak=pr.cd.length?Math.max.apply(null,pr.cd):0;
+      const est=Math.max(fin,peak); if(est<3)return;
+      rows.push({t,est});
+    });
+    rows.sort((a,b)=>b.est-a.est);
+    return {ctx, rows:rows.slice(0,limit||8), total:rows.length};
+  } finally { _simDayKeyOverride=null; }
+}
+// 운행 종료 후 2시간 경과 시 지연 정보 소멸(다음 영업일 04시에 새로 추산)
+function _simExpired(t){
+  const pr=_simProfile(t); if(!pr.cd.length||pr.lastM==null)return false;
+  const n=new Date();
+  const svNow=((n.getHours()*60+n.getMinutes()-240)+1440)%1440;           // 영업일(04시) 기준 분
+  const svEnd=(((pr.lastM-240)%1440)+1440)%1440+(pr.cd[pr.cd.length-1]||0)+120;
+  return svNow>svEnd;
 }
 // 지연 보상: 30분 이상 지연 = 전액 환불 원칙.
 //  단, 예매 시 (①장시간 지연 예보가 있던 열차 / ②이미 10분 이상 지연 중이던 열차)는 제외.
