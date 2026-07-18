@@ -527,5 +527,25 @@ const NOTICES = [
 
 <strong>■ 운행 준비중 열차 출발 안내</strong><br>
 운행 준비중인 열차에도 운행 중 열차처럼 <span class="n-highlight">"약 N분 후 출발 예정"</span> 문구가 함께 표시됩니다.`
+  },
+  {
+    date:'2026-07-18',
+    cat:'update',
+    title:'탑승 여정·역 전광판·다이어그램 등 4가지 기능 추가',
+    body:`실제 열차를 타는 듯한 경험을 위해 기존 기능을 확장한 <strong>네 가지</strong>가 추가되었습니다.<br><br>
+
+<strong>■ 🚆 탑승 여정 (실시간 승차 화면)</strong><br>
+열차 상세 오른쪽 위 <span class="n-highlight">🚆</span> 버튼을 누르면, 그 열차의 <strong>현재 위치·진행률·다음 정차역까지 남은 시간</strong>과 전 정차역 타임라인(승강장·통과역 표시, 지나온 역은 흐리게, 현재역은 강조)이 한 화면에 뜹니다. 약 5초마다 자동 갱신됩니다.<br><br>
+
+<strong>■ 🚉 역 실시간 전광판 (도착 추가)</strong><br>
+역 정보의 <strong>출발 안내 전광판</strong>에 <span class="n-highlight">도착(ARRIVALS)</span> 탭이 생겼습니다. 출발/도착을 전환하며 승강장·행선지(또는 출발지)·안내 상태를 실제 역 전광판처럼 볼 수 있습니다.<br><br>
+
+<strong>■ 📈 운행 다이어그램 상호작용</strong><br>
+다이어그램에서 <strong>열차 선을 누르면 그 열차만 강조</strong>되고 나머지는 흐려집니다. 동시에 그 열차의 <span style="color:#ef4444;font-weight:700">교행</span>·<span style="color:#f0883e;font-weight:700">추월</span> 지점이 표시되고, 어느 역에서 몇 시에 어떤 열차와 만나는지 목록으로 정리됩니다.<br><br>
+
+<strong>■ 🔍 출도착 "지금 출발" 안내</strong><br>
+출도착 검색 결과에 현재 시각 기준 <span class="n-highlight">"N분 후 출발"</span> 배지가 표시됩니다. <strong>⏱ 지금</strong> 버튼과 함께 지금 탈 수 있는 열차를 바로 확인하세요.<br><br>
+
+<span class="n-warn" style="display:block">더불어 열차 탭의 노선 선택 목록이 노선도의 전체 노선과 일치하도록 개선되어, 그동안 목록에서 빠져 있던 호남고속선·장항선·태안선·소백선·경북선·태백선·정선선·영동선·충북선·남부내륙선도 선택할 수 있습니다.</span>`
   }
 ];

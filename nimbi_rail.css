@@ -1591,6 +1591,10 @@ button, select, input[type=range],
   border-radius:8px;cursor:pointer;font-size:14px;font-weight:700;flex-shrink:0}
 .si-board-close:hover{color:#fff;border-color:#2b4152}
 .si-board-popup .stn-board{border:none;box-shadow:none;margin:6px 6px 14px;background:transparent}
+.si-board-tabs{display:flex;gap:8px;padding:10px 14px 2px}
+.si-board-tab{flex:1;padding:8px 0;border-radius:9px;border:1px solid #1b2a36;background:#0a1620;color:#6f93a8;
+  font-family:var(--mono);font-size:13px;font-weight:800;cursor:pointer;letter-spacing:1px}
+.si-board-tab.on{background:#12314a;border-color:#2b6da0;color:#ffbf34;text-shadow:0 0 6px rgba(255,176,32,.35)}
 
 /* 👤 계정(로컬 프로필) */
 .acct-card{cursor:pointer}
@@ -1785,3 +1789,22 @@ button, select, input[type=range],
 .jr-time{font-size:12px;font-family:var(--mono);color:var(--text2);white-space:nowrap}
 .jr-stop.cur .jr-time{color:var(--text1);font-weight:700}
 .jr-foot{padding:4px 18px 18px;font-size:11px;color:var(--text3);text-align:center}
+
+/* 운용 다이어그램 선택 강조 바 */
+.ops-selbar{margin:8px 0 6px;padding:10px 12px;border-radius:12px;background:var(--bg2);border:1px solid var(--border);border-left:4px solid var(--gc,#888)}
+.ops-selbar-head{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
+.ops-selbar-title{font-size:13px;font-weight:700;color:var(--text1);display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.ops-sel-chip{color:#fff;font-family:var(--mono);font-size:12px;font-weight:800;padding:2px 8px;border-radius:7px}
+.ops-selbar-x{background:var(--bg3);border:1px solid var(--border);color:var(--text2);font-size:11.5px;font-weight:700;padding:4px 10px;border-radius:10px;cursor:pointer;white-space:nowrap}
+.ops-selbar-meta{margin-top:6px;font-size:12px;font-weight:700}
+.ops-meet-list{margin-top:6px;display:flex;flex-direction:column;gap:2px;max-height:120px;overflow-y:auto}
+.ops-meet-row{font-size:11.5px;color:var(--text2)}
+.ops-meet-row b{font-family:var(--mono);color:var(--text1)}
+.ops-selbar-btns{margin-top:8px;display:flex;gap:6px}
+.ops-selbar-btns button{flex:1;padding:7px 0;border-radius:9px;border:1px solid var(--border);background:var(--bg3);color:var(--text1);font-size:12px;font-weight:700;cursor:pointer}
+.ops-selbar-btns button:hover{border-color:var(--gc,#888)}
+
+/* 출도착 결과 실시간 출발 배지 */
+.rt-badge{margin-top:3px;font-size:10px;font-weight:800;font-family:var(--sans);padding:1px 6px;border-radius:8px;display:inline-block;white-space:nowrap}
+.rt-badge.rt-ok{background:rgba(56,139,253,.16);color:var(--accent);border:1px solid rgba(56,139,253,.35)}
+.rt-badge.rt-soon{background:rgba(63,185,80,.18);color:var(--green);border:1px solid rgba(63,185,80,.4)}
