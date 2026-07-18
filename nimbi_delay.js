@@ -221,9 +221,7 @@ function _computeProfile(t){
   let dominant=null;
   if(inherited>0){ events.push({idx:0,delta:Math.round(inherited),cause:'전 편성 회차 지연'}); dominant='회차 지연'; }
 
-  // 드문 차량 이벤트(경미한 고장·응급조치): 날씨 무관 특수 상황 — 30분+ 가능 경로
-  const rVeh=_seededRand(seed+7.77);
-  const vehSec=rVeh<0.008?Math.floor(_seededRand(seed+8.31)*secN):-1;
+  // 차량 고장은 사전 곡선에 넣지 않는다 — 운행 중 돌발 이벤트로만 발생(_simVeh)
 
   // 등급별 회복 특성: 역간 여유 시분 활용률(KTX 50~70% … 무궁화 10~30%) + 선로 우선권
   const go=_gradeOps(t.grade);
@@ -233,7 +231,7 @@ function _computeProfile(t){
   const dwell=timed.map(s=>{const a=toMin(s.arr),d=toMin(s.dep);
     return (a!=null&&d!=null)?((d-a+1440)%1440):0;});
 
-  if(flagged||surprise||inherited>0||vehSec>=0){
+  if(flagged||surprise||inherited>0){
     // 대형 원인(기상 서행·단선 교행)은 인게임 범위까지 커질 수 있음
     const bigUnit=(flagged?Math.max(0.6,(f.max||6)/11):0.6)*(0.6+0.4*lenFactor)*severity*ctx.magMult;
     // 소형 원인(전철 병행·승차 혼잡·출퇴근 집중 등)은 소폭 → 회복으로 웬만해선 2분 이하로 끝남
@@ -254,10 +252,7 @@ function _computeProfile(t){
       const ra=_seededRand(seed+i*2.7+0.5), rb=_seededRand(seed+i*2.7+1.9), rc=_seededRand(seed+i*2.7+3.3), rd=_seededRand(seed+i*2.7+5.1);
       const pInc=evBase*(0.35+exposure*1.3);
       let inc=0, cause=null;
-      if(i===vehSec){                          // 차량 고장: 크게, 이후 서서히 회복
-        inc=Math.min(ctx.bigCap, (8+_seededRand(seed+9.9)*14)*(0.7+0.3*ctx.magMult));
-        cause='차량 고장 응급조치';
-      } else if(ra<pInc){
+      if(ra<pInc){
         cause=_sectionCause(rush, metroPar, congHi, ctx, rd, singleTrack, go.prio);
         inc=_isBigCause(cause,ctx) ? bigUnit*(0.6+rb)
           : _isMidCause(cause)     ? Math.min(5, bigUnit*0.55*(0.6+rb)+smallUnit*0.5)
@@ -295,11 +290,74 @@ function _computeProfile(t){
     inheritedFrom:(inherited>0&&predNo)?predNo:null, recovered:Math.round(_recTotal)};
 }
 
+// ══ 하이브리드 상태 시스템 ══
+// 기본 곡선(cd)=시드 기반 '초기 예측(성향)'. 과거는 확정·불변, 미래는 10분 버킷마다
+// 예측이 흔들리며 역에 접근할수록 실제값으로 수렴한다("과거는 고정, 미래는 항상 변한다").
+// 돌발 차량 고장은 사전 곡선에 없고 운행 중 그 구간에 도달해야만 나타난다(극소수).
+function _svMin(m){ return ((m-240)%1440+1440)%1440; }
+function _simNowM(){ const n=new Date(); return n.getHours()*60+n.getMinutes(); }
+function _simNowFor(pr){ let nm=_simNowM();          // 열차 m[] 축 기준 '지금'(자정 보정)
+  if(pr.lastM>=1440&&nm<pr.firstM){ const sh=nm+1440; if(nm<240||sh<=pr.lastM)nm=sh; }
+  return nm; }
+let _simVehCache={};
+function _simVeh(t){ // 돌발 차량 고장 응급조치: 운행 중 이벤트 전용(극소수, 하루 약 0.4%)
+  const key=t.no+':'+_simDayKey();
+  if(key in _simVehCache)return _simVehCache[key];
+  let v=null;
+  const pr=_simProfile(t);
+  if(pr.cd.length>=4){
+    const seed=_simSeed(t.no)+321.77;
+    if(_seededRand(seed)<0.004){
+      const sec=1+Math.floor(_seededRand(seed+1.9)*(pr.cd.length-2));
+      const amt=Math.round(6+_seededRand(seed+3.3)*12);
+      v={sec,amt};
+    }
+  }
+  return _simVehCache[key]=v;
+}
+// Actual(실제): 기본 곡선 + 발생한 차량 이벤트. 이벤트 이후는 역당 1분씩만 회복.
+function _simActualArr(t){
+  const pr=_simProfile(t); const veh=_simVeh(t);
+  if(!veh) return pr.cd;
+  const cap=_simDayContext().bigCap+veh.amt;
+  return pr.cd.map((v,i)=> i>=veh.sec ? Math.round(Math.min(cap, v+Math.max(0, veh.amt-(i-veh.sec)))) : v);
+}
+// 표시 배열: 과거·현재=Actual(확정) · 미래=Predicted(버킷별 변동, 역당 회복 상한 유지)
+let _simViewCache={},_simViewBucket=-1;
+function _simViewArr(t){
+  const pr=_simProfile(t); if(!pr.cd.length)return pr.cd;
+  const bucket=Math.floor(_svMin(_simNowM())/10);
+  if(bucket!==_simViewBucket){ _simViewCache={}; _simViewBucket=bucket; }
+  const key=t.no+':'+_simDayKey();
+  if(_simViewCache[key])return _simViewCache[key];
+  const nm=_simNowFor(pr);
+  const ctx=_simDayContext();
+  const veh=_simVeh(t), vehOn=!!(veh&&pr.m[veh.sec]!=null&&nm>=pr.m[veh.sec]); // 도달 후에만 존재
+  const act=_simActualArr(t);
+  const seed=_simSeed(t.no);
+  const vol=0.9+(ctx.probMult-1)*2.5;                  // 악천후일수록 예측 변동↑
+  const out=new Array(pr.cd.length);
+  let prev=null;
+  for(let i=0;i<pr.cd.length;i++){
+    const base=vehOn?act[i]:pr.cd[i];
+    if(pr.m[i]<=nm){ out[i]=base; }                    // 지나간 구간: 확정, 절대 불변
+    else{
+      const conv=Math.min(1,(pr.m[i]-nm)/60);          // 접근할수록 실제로 수렴
+      const r=_seededRand(seed+i*7.77+bucket*0.9131)-0.5;
+      let v=base + r*2*vol*conv;
+      if(prev!=null) v=Math.max(v, prev-_SIM_REC_HARD); // 역당 회복 1분 안팎 상한 유지
+      out[i]=Math.max(0, Math.round(v));
+    }
+    prev=out[i];
+  }
+  return _simViewCache[key]=out;
+}
+
 // ── 조회 API ──
-function _simDelayAtStop(t, idx){ if(!_simDelayOn||_simExpired(t))return 0; const cd=_simProfile(t).cd; return (idx>=0&&idx<cd.length)?cd[idx]:0; }
+function _simDelayAtStop(t, idx){ if(!_simDelayOn||_simExpired(t))return 0; const cd=_simViewArr(t); return (idx>=0&&idx<cd.length)?cd[idx]:0; }
 function _simDelay(t, clock){
   if(!_simDelayOn||_simExpired(t)) return 0;
-  const pr=_simProfile(t); const {cd,m,firstM,lastM}=pr;
+  const pr=_simProfile(t); const cd=_simViewArr(t); const {m,firstM,lastM}=pr;
   if(!cd.length||firstM==null) return 0;
   let nowM=clock;
   if(lastM>=1440&&clock<firstM){ const sh=clock+1440; if(clock<240||sh<=lastM)nowM=sh; }
@@ -312,7 +370,8 @@ function _simDelay(t, clock){
 }
 // '지연 예상' 라벨용(예측된 열차만). 회차/서프라이즈만인 열차는 라벨 없이 실시간 지연으로만 노출.
 function _simFinalDelay(t){ if(!_simDelayOn||_simExpired(t))return 0; const pr=_simProfile(t);
-  return (pr.predictedFlag&&pr.cd.length)?(pr.cd[pr.cd.length-1]||0):0; }
+  if(!pr.predictedFlag||!pr.cd.length)return 0;
+  const v=_simViewArr(t); return v[v.length-1]||0; }
 function _liveDelayOf(t){
   if(!_simDelayOn)return 0;
   const n=new Date(); const nm=n.getHours()*60+n.getMinutes();
@@ -331,15 +390,21 @@ function _simCauseSummary(t){
 // 관제 로그(코레일톡식) — 시각·역·원인
 function _simEventLog(t){
   if(!_simDelayOn||_simExpired(t))return [];
-  const pr=_simProfile(t); if(!pr.events||!pr.events.length)return [];
+  const pr=_simProfile(t); if(!pr.cd.length)return [];
   const timed=t.stops.filter(s=>hasTime(s.arr)||hasTime(s.dep));
   const fmt=mm=>{const v=(((mm%1440)+1440)%1440);return String(Math.floor(v/60)).padStart(2,'0')+':'+String(Math.round(v%60)).padStart(2,'0');};
-  return pr.events.map(e=>{
+  const lines=(pr.events||[]).map(e=>({m:pr.m[e.idx]||0, s:(()=>{
     const st=timed[e.idx]?timed[e.idx].s:'';
     const clk=pr.m[e.idx]!=null?fmt(pr.m[e.idx]+(e.delta>0?e.delta:0)):'';
     if(e.delta>0)return `[${clk}] ${st} · ${e.cause} +${Math.round(e.delta)}분`;
     return `[${clk}] ${st} · ${e.cause||'운전 정리'} −${Math.abs(Math.round(e.delta))}분`;
-  });
+  })()}));
+  // 돌발 차량 이벤트: 실제 발생(그 구간 도달) 후에만 기록에 나타남
+  const veh=_simVeh(t);
+  if(veh&&pr.m[veh.sec]!=null&&_simNowFor(pr)>=pr.m[veh.sec])
+    lines.push({m:pr.m[veh.sec], s:`[${fmt(pr.m[veh.sec])}] ${timed[veh.sec]?timed[veh.sec].s:''} · 차량 고장 응급조치 +${veh.amt}분`});
+  lines.sort((a,b)=>a.m-b.m);
+  return lines.map(x=>x.s);
 }
 // 지연 라이프사이클 요약 — 최초 원인·전파 원인·회복 여부·최종 지연·영향 열차
 function _simDelayReport(t){
@@ -394,7 +459,7 @@ function _simExpired(t){
 function _simRefundInfo(tk){
   if(!_simDelayOn||!tk)return null;
   const t=(typeof ALL_TRAINS!=='undefined')&&ALL_TRAINS.find(x=>x.no===tk.trainNo); if(!t)return null;
-  const pr=_simProfile(t); const fin=pr.cd.length?pr.cd[pr.cd.length-1]:0;
+  const act=_simActualArr(t); const fin=act.length?act[act.length-1]:0; // 실제 지연 기준
   if(fin<30)return null;                                  // 30분 미만: 보상 대상 아님
   // 예외1: 예매 시점에 이미 장시간 지연 예보(상시 지연 '높음')가 뜨던 노선·등급
   const f=_delayForecast(t.line,t.grade);
