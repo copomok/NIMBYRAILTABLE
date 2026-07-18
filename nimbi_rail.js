@@ -794,6 +794,7 @@ function renderDetail(t){
           <div class="detail-meta">${first?.s||''} ${depT} 발 → ${last?.s||''} ${arrT} 착</div>
           <div class="detail-meta" style="margin-top:2px">정차역 ${totalStops}개 &nbsp;·&nbsp; 소요시간 ${fmtDurKor(durMin(depT,arrT))}</div>
           ${st.km>0?`<div class="detail-meta" style="margin-top:2px">표정속도 ${fmtSpeed(st.speed)}</div>`:''}
+          ${_delayMetaHTML(t)}
         </div>
         <div style="display:flex;gap:4px;flex-shrink:0">
           <button class="share-btn" style="position:static" onclick="trackTrainOnMap('${t.no}')">🗺️</button>
@@ -802,7 +803,6 @@ function renderDetail(t){
       </div>
     </div>
     ${statusBanner}
-    ${_delayChipHTML(t)}
     <div class="tl-toolbar">
       <label style="font-size:12px;color:var(--text2);display:flex;align-items:center;gap:6px;cursor:pointer">
         <input type="checkbox" id="hide-pass-${t.no}" onchange="togglePassRows('${t.no}')" style="cursor:pointer">
@@ -3238,12 +3238,13 @@ function openMapTrainPopup(t, status){
     `${originStn}(${depTime}) → ${terminusStn}(${arrTime})`;
   document.getElementById('map-popup-trains').innerHTML=
     `<div>현재위치: <b>${posText}</b></div>
-     <div style="margin-top:4px">${t.line} · ${t.dest}행</div>`;
-  // 버튼을 열차 조회로 변경
+     <div style="margin-top:4px">${t.line} · ${t.dest}행</div>
+     <button class="btn" style="width:100%;margin-top:10px;font-size:12px" onclick="event.stopPropagation();closeMapPopup();jumpToTrain('${t.no}')">🔢 열차 조회로 이동</button>`;
+  // 주 버튼 = 탑승 여정
   const popupBtn=document.querySelector('#map-popup .btn.btn-primary');
   if(popupBtn){
-    popupBtn.textContent='🔢 열차 조회';
-    popupBtn.onclick=(e)=>{e.preventDefault();jumpToTrain(t.no);closeMapPopup();};
+    popupBtn.textContent='🚆 탑승 여정';
+    popupBtn.onclick=(e)=>{e.preventDefault();closeMapPopup();openJourney(t.no);};
   }
   document.getElementById('map-popup').style.display='block';
   document.getElementById('map-backdrop').style.display='block';
@@ -9646,10 +9647,15 @@ function _delayForecast(line,grade){
     color:lv==='low'?'#3fb950':lv==='med'?'#f97316':'#f85149',
     label:lv==='low'?'낮음':lv==='med'?'보통':'높음'};
 }
-// 열차 상세/여정용 지연 예보 칩
+// 탑승 여정 헤더용 지연 예보 칩
 function _delayChipHTML(t){
   const f=_delayForecast(t.line,t.grade);
   return `<div class="delay-chip" style="--dc:${f.color}"><span class="delay-dot"></span><b>지연 예보 ${f.label}</b><span class="delay-meta">확률 ${f.prob}% · 예상 +${f.min}~${f.max}분</span></div>`;
+}
+// 열차 상세 메타줄용 지연 예보(배너가 아닌 정보 한 줄로)
+function _delayMetaHTML(t){
+  const f=_delayForecast(t.line,t.grade);
+  return `<div class="detail-meta" style="margin-top:2px">지연 예보 <b style="color:${f.color}">${f.label}</b> <span style="color:var(--text3)">·</span> 확률 ${f.prob}% <span style="color:var(--text3)">·</span> 예상 +${f.min}~${f.max}분</div>`;
 }
 function renderSIDelay(el){
   const model=DELAY_MODEL;
@@ -10566,9 +10572,15 @@ function _renderJourney(){
       <div class="jr-progress"><div class="jr-progress-fill" style="width:${prog}%;background:${c}"></div></div>
       ${phase!=='done'?_delayChipHTML(t):''}
     </div>
-    <div class="jr-timeline">${li}</div>
-    <p class="jr-foot">약 5초마다 자동 갱신 · 실제 게임 내 시각 기준</p>`;
-  // 현재 위치로 스크롤
+    <div class="jr-scroll">
+      <div class="jr-timeline">${li}</div>
+      <p class="jr-foot">약 5초마다 자동 갱신 · 실제 게임 내 시각 기준</p>
+    </div>`;
+  // 현재 위치로 스크롤(타임라인 영역만)
   const cur=body.querySelector('.jr-stop.cur')||body.querySelector('.jr-stop.next');
-  if(cur&&!body._scrolledOnce){ cur.scrollIntoView({block:'center'}); body._scrolledOnce=true; }
+  const sc=body.querySelector('.jr-scroll');
+  if(cur&&sc&&!body._scrolledOnce){
+    sc.scrollTop=Math.max(0,cur.offsetTop-sc.clientHeight/2+cur.offsetHeight/2);
+    body._scrolledOnce=true;
+  }
 }
