@@ -63,14 +63,22 @@ function _simDayContext(){
   const w=_simDaySeed(3.71);
   // 기상 유형별 특성: probMult(발생확률) · magMult(지연크기) · bigCap(상한) · recW(회복 저해)
   //   sagGate(서행 발생 게이트) · sagLabel(원인명) · wxBig(대형 지연 유발 여부)
+  // 계절(실제 날짜의 월) 반영: 여름=비·태풍↑/폭설 없음, 겨울=폭설↑/폭염·태풍 없음,
+  // 가을=안개↑·9월 태풍, 봄=온화. [맑음,안개,강풍,폭염,비,폭설] 누적 경계, 나머지=태풍.
+  const mo=d.getMonth()+1;
+  const CUT= (mo>=6&&mo<=8)?[0.45,0.50,0.58,0.74,0.955,0.955]
+           : (mo>=3&&mo<=5)?[0.58,0.68,0.78,0.80,0.93,0.995]
+           : (mo>=9&&mo<=10)?[0.60,0.72,0.80,0.82,0.96,0.96]
+           : (mo===11)?[0.58,0.70,0.79,0.81,0.92,0.99]
+           : [0.50,0.60,0.72,0.72,0.80,1.0];
   let wx;
-  if(w<0.60)       wx={weather:'맑음', probMult:1.0, magMult:1.0, bigCap:15, recW:1.0, sagGate:0,    sagLabel:null,               wxBig:false};
-  else if(w<0.70)  wx={weather:'안개', probMult:1.1, magMult:1.05,bigCap:13, recW:0.9, sagGate:0.26, sagLabel:'안개 서행',        wxBig:false};
-  else if(w<0.78)  wx={weather:'강풍', probMult:1.18,magMult:1.2, bigCap:20, recW:0.8, sagGate:0.34, sagLabel:'강풍 서행',        wxBig:true};
-  else if(w<0.85)  wx={weather:'폭염', probMult:1.1, magMult:1.1, bigCap:15, recW:0.88,sagGate:0.24, sagLabel:'폭염 레일온도 서행', wxBig:false};
-  else if(w<0.93)  wx={weather:'비',   probMult:1.15,magMult:1.15,bigCap:20, recW:0.8, sagGate:0.32, sagLabel:'우천 서행',        wxBig:true};
-  else if(w<0.975) wx={weather:'폭설', probMult:1.35,magMult:1.4, bigCap:30, recW:0.55,sagGate:0.55, sagLabel:'폭설 제설 지연',    wxBig:true};
-  else             wx={weather:'태풍', probMult:1.7, magMult:1.9, bigCap:42, recW:0.4, sagGate:0.78, sagLabel:'태풍 서행',        wxBig:true};
+  if(w<CUT[0])      wx={weather:'맑음', probMult:1.0, magMult:1.0, bigCap:15, recW:1.0, sagGate:0,    sagLabel:null,               wxBig:false};
+  else if(w<CUT[1]) wx={weather:'안개', probMult:1.1, magMult:1.05,bigCap:13, recW:0.9, sagGate:0.26, sagLabel:'안개 서행',        wxBig:false};
+  else if(w<CUT[2]) wx={weather:'강풍', probMult:1.18,magMult:1.2, bigCap:20, recW:0.8, sagGate:0.34, sagLabel:'강풍 서행',        wxBig:true};
+  else if(w<CUT[3]) wx={weather:'폭염', probMult:1.1, magMult:1.1, bigCap:15, recW:0.88,sagGate:0.24, sagLabel:'폭염 레일온도 서행', wxBig:false};
+  else if(w<CUT[4]) wx={weather:'비',   probMult:1.15,magMult:1.15,bigCap:20, recW:0.8, sagGate:0.32, sagLabel:'우천 서행',        wxBig:true};
+  else if(w<CUT[5]) wx={weather:'폭설', probMult:1.35,magMult:1.4, bigCap:30, recW:0.55,sagGate:0.55, sagLabel:'폭설 제설 지연',    wxBig:true};
+  else              wx={weather:'태풍', probMult:1.7, magMult:1.9, bigCap:42, recW:0.4, sagGate:0.78, sagLabel:'태풍 서행',        wxBig:true};
   const rushMult=weekend?1.12:1.5;
   return (_simCtxDay=day, _simCtxCache=Object.assign({day,dow,weekend,rushMult},wx));
 }
@@ -219,7 +227,7 @@ function _computeProfile(t){
   const events=[];
   const cd=[Math.round(inherited)];
   let dominant=null;
-  if(inherited>0){ events.push({idx:0,delta:Math.round(inherited),cause:'전 편성 회차 지연'}); dominant='회차 지연'; }
+  if(inherited>0){ events.push({idx:0,delta:Math.round(inherited),cause:'전 편성 회차 지연(원인 열차 '+predNo+')'}); dominant='회차 지연'; }
 
   // 차량 고장은 사전 곡선에 넣지 않는다 — 운행 중 돌발 이벤트로만 발생(_simVeh)
 
@@ -299,6 +307,62 @@ function _simNowM(){ const n=new Date(); return n.getHours()*60+n.getMinutes(); 
 function _simNowFor(pr){ let nm=_simNowM();          // 열차 m[] 축 기준 '지금'(자정 보정)
   if(pr.lastM>=1440&&nm<pr.firstM){ const sh=nm+1440; if(nm<240||sh<=pr.lastM)nm=sh; }
   return nm; }
+// ── 관제 계층(Dispatch Layer): 승강장 점유 상호작용 ──
+// 같은 역·같은 승강장(REAL_PLAT)을 내 도착 직전(6분 이내)에 떠나는 선행 열차가
+// 지연되어 승강장을 아직 점유 중이면, 입선 대기 지연이 발생한다(+최대 3분, 이후 역당 1분 회복).
+// 원인 열차를 반드시 기록한다. 재귀 없음(선행 열차의 기본 곡선만 참조 — 1단계 전파).
+let _platIdxCache=null,_platIdxDay=null;
+function _platIndex(){
+  const day=_simDayKey();
+  if(_platIdxCache&&_platIdxDay===day)return _platIdxCache;
+  const idx={};
+  if(typeof ALL_TRAINS!=='undefined'&&typeof REAL_PLAT!=='undefined')ALL_TRAINS.forEach(u=>{
+    const rp=REAL_PLAT[u.no]; if(!rp)return;
+    const timed=u.stops.filter(s=>hasTime(s.arr)||hasTime(s.dep));
+    timed.forEach((s,i)=>{
+      const p=rp[s.s]; if(p==null)return;
+      const dep=toMin(hasTime(s.dep)?s.dep:s.arr); if(dep==null)return;
+      (idx[s.s+':'+p]=idx[s.s+':'+p]||[]).push({no:u.no,idx:i,dep:_svMin(dep)});
+    });
+  });
+  Object.values(idx).forEach(a=>a.sort((x,y)=>x.dep-y.dep));
+  return (_platIdxDay=day,_platIdxCache=idx);
+}
+let _dispCache={};
+function _dispatchInfo(t){ // {adj:[역별 가산], events:[{m,txt}]} — 일 단위 결정적, Lazy 캐시
+  const key=t.no+':'+_simDayKey();
+  if(_dispCache[key])return _dispCache[key];
+  const pr=_simProfile(t);
+  const out={adj:null,events:[]};
+  if(!pr.cd.length){return _dispCache[key]=out;}
+  const rp=(typeof REAL_PLAT!=='undefined')&&REAL_PLAT[t.no];
+  if(!rp){return _dispCache[key]=out;}
+  const timed=t.stops.filter(s=>hasTime(s.arr)||hasTime(s.dep));
+  const idx=_platIndex();
+  let adj=null,hits=0;
+  for(let i=1;i<timed.length&&hits<2;i++){       // 시발역 제외, 열차당 최대 2건
+    const p=rp[timed[i].s]; if(p==null)continue;
+    const arrRaw=toMin(hasTime(timed[i].arr)?timed[i].arr:timed[i].dep); if(arrRaw==null)continue;
+    const myArr=_svMin(arrRaw)+(pr.cd[i]||0);
+    const list=idx[timed[i].s+':'+p]; if(!list)continue;
+    for(const u of list){
+      if(u.no===t.no)continue;
+      const gap=_svMin(arrRaw)-u.dep;
+      if(gap<0||gap>=6)continue;                  // 내 도착 직전 6분 내 출발 예정인 선행만
+      const ut=ALL_TRAINS.find(x=>x.no===u.no); if(!ut)continue;
+      const ucd=_simProfile(ut).cd; const ud=ucd[u.idx]||0; if(ud<=0)continue;
+      const overlap=(u.dep+ud)-myArr;             // 선행 실제 출발 − 내 실제 도착
+      if(overlap<=0.5)continue;
+      const w=Math.min(3,Math.ceil(overlap));
+      if(!adj)adj=new Array(pr.cd.length).fill(0);
+      for(let j=i;j<pr.cd.length;j++)adj[j]+=Math.max(0,w-(j-i)); // 이후 역당 1분씩 회복
+      out.events.push({m:pr.m[i]||0,txt:`${timed[i].s} ${p}번 승강장 점유 대기 · 원인 열차 ${ut.grade} ${ut.no} +${w}분`});
+      hits++;break;                               // 역당 1건
+    }
+  }
+  out.adj=adj;
+  return _dispCache[key]=out;
+}
 let _simVehCache={};
 function _simVeh(t){ // 돌발 차량 고장 응급조치: 운행 중 이벤트 전용(극소수, 하루 약 0.4%)
   const key=t.no+':'+_simDayKey();
@@ -315,12 +379,18 @@ function _simVeh(t){ // 돌발 차량 고장 응급조치: 운행 중 이벤트 
   }
   return _simVehCache[key]=v;
 }
-// Actual(실제): 기본 곡선 + 발생한 차량 이벤트. 이벤트 이후는 역당 1분씩만 회복.
+// Sched(계획 예측): 기본 곡선 + 관제 계층(승강장 점유) 전파 — 사전 예측 가능 지연
+function _simSchedArr(t){
+  const pr=_simProfile(t); const dis=_dispatchInfo(t);
+  if(!dis.adj) return pr.cd;
+  return pr.cd.map((v,i)=>v+(dis.adj[i]||0));
+}
+// Actual(실제): Sched + 발생한 돌발 차량 이벤트. 이벤트 이후는 역당 1분씩만 회복.
 function _simActualArr(t){
-  const pr=_simProfile(t); const veh=_simVeh(t);
-  if(!veh) return pr.cd;
+  const sched=_simSchedArr(t); const veh=_simVeh(t);
+  if(!veh) return sched;
   const cap=_simDayContext().bigCap+veh.amt;
-  return pr.cd.map((v,i)=> i>=veh.sec ? Math.round(Math.min(cap, v+Math.max(0, veh.amt-(i-veh.sec)))) : v);
+  return sched.map((v,i)=> i>=veh.sec ? Math.round(Math.min(cap, v+Math.max(0, veh.amt-(i-veh.sec)))) : v);
 }
 // 표시 배열: 과거·현재=Actual(확정) · 미래=Predicted(버킷별 변동, 역당 회복 상한 유지)
 let _simViewCache={},_simViewBucket=-1;
@@ -333,13 +403,13 @@ function _simViewArr(t){
   const nm=_simNowFor(pr);
   const ctx=_simDayContext();
   const veh=_simVeh(t), vehOn=!!(veh&&pr.m[veh.sec]!=null&&nm>=pr.m[veh.sec]); // 도달 후에만 존재
-  const act=_simActualArr(t);
+  const act=_simActualArr(t), sched=_simSchedArr(t);
   const seed=_simSeed(t.no);
   const vol=0.9+(ctx.probMult-1)*2.5;                  // 악천후일수록 예측 변동↑
   const out=new Array(pr.cd.length);
   let prev=null;
   for(let i=0;i<pr.cd.length;i++){
-    const base=vehOn?act[i]:pr.cd[i];
+    const base=vehOn?act[i]:sched[i];
     if(pr.m[i]<=nm){ out[i]=base; }                    // 지나간 구간: 확정, 절대 불변
     else{
       const conv=Math.min(1,(pr.m[i]-nm)/60);          // 접근할수록 실제로 수렴
@@ -399,6 +469,14 @@ function _simEventLog(t){
     if(e.delta>0)return `[${clk}] ${st} · ${e.cause} +${Math.round(e.delta)}분`;
     return `[${clk}] ${st} · ${e.cause||'운전 정리'} −${Math.abs(Math.round(e.delta))}분`;
   })()}));
+  // 승강장 점유 전파(원인 열차 기록): 그 역 도달 후에만 표시
+  const nmL=_simNowFor(pr);
+  const dis=_dispatchInfo(t);
+  dis.events.forEach(e=>{ if(nmL>=e.m) lines.push({m:e.m, s:`[${fmt(e.m)}] ${e.txt}`}); });
+  // 관제 개입: 8분+ 피크 후 첫 회복은 관제 우선권 부여로 기록
+  const peak=Math.max.apply(null,pr.cd), peakIdx=pr.cd.indexOf(peak);
+  if(peak>=8){ const f=lines.find(x=>x.s.includes('회복 운전')&&x.m>(pr.m[peakIdx]||0));
+    if(f) f.s=f.s.replace('회복 운전','관제 우선권 부여 · 회복 운전'); }
   // 돌발 차량 이벤트: 실제 발생(그 구간 도달) 후에만 기록에 나타남
   const veh=_simVeh(t);
   if(veh&&pr.m[veh.sec]!=null&&_simNowFor(pr)>=pr.m[veh.sec])
