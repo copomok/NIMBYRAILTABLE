@@ -561,5 +561,24 @@ const NOTICES = [
 출발·도착 전광판의 각 열차 옆에 <span style="color:#3fb950;font-weight:700">초록</span>·<span style="color:#f97316;font-weight:700">주황</span>·<span style="color:#f85149;font-weight:700">빨강</span> 점으로 지연 위험을 표시합니다.<br><br>
 
 <div class="n-box">지연 예보는 Mysterious Enterprise 운행 경향을 바탕으로 한 <strong>예측값</strong>이며, 실제 지연과 다를 수 있습니다. 지방 단선·고속열차는 지연이 적은 편입니다.</div>`
+  },
+  {
+    date:'2026-07-18',
+    cat:'update',
+    title:'지연 시뮬레이션 (실험적)',
+    body:`지연 예보를 <strong>실제 운행에 반영</strong>하는 시뮬레이션 기능이 추가되었습니다.<br><br>
+
+<strong>■ 켜는 법</strong><br>
+<span class="n-highlight">지연 예측 탭</span> 상단의 <strong>🔴 지연 시뮬레이션</strong> 스위치를 켜면 적용됩니다. (기본 꺼짐)<br><br>
+
+<strong>■ 무엇이 달라지나</strong><br>
+켜면 예보 확률·범위를 바탕으로 각 열차에 <strong>오늘의 실제 지연</strong>이 부여되어, 다음 화면에 반영됩니다.<br>
+<div class="n-box">
+🗺️ <strong>노선도</strong> — 열차가 지연된 실제 위치에 표시<br>
+🚆 <strong>탑승 여정</strong> — "약 N분 지연 운행 중" · 도착 지연 예상<br>
+🚉 <strong>전광판</strong> — 정시 대신 "N분 지연" 표시
+</div><br>
+지연은 출발 직후 0에서 서서히 누적되며, 같은 열차는 그날 하루 동안 같은 값을 유지합니다(매일 조금씩 달라짐).<br><br>
+<span class="n-warn" style="display:block"><strong>시간표 조회 화면은 언제나 정시 그대로</strong>입니다. 시뮬레이션은 라이브 화면(노선도·여정·전광판)에만 적용되며, 실제 운행과는 무관한 예측 기반 연출입니다.</span>`
   }
 ];

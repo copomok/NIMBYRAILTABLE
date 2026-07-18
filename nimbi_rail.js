@@ -3066,7 +3066,8 @@ function updateMapTrains(){
   const running=[];
   ALL_TRAINS.forEach(t=>{
     if(!isAll&&!t.line.includes(line.name))return;
-    const status=getCurrentStatus(t, nowMin);
+    const tNow=nowMin-_simDelay(t, nowMin);   // 지연 시뮬: 열차는 지연분만큼 뒤처진 위치
+    const status=getCurrentStatus(t, tNow);
     if(!status||status.status!=='running')return;
     // 방향 필터
     if(_mapDirFilter==='down'&&t.dir!=='down')return;
@@ -3112,8 +3113,8 @@ function updateMapTrains(){
         const depA=toMin(all[iA].dep||all[iA].arr);
         const arrB=toMin(all[iB].arr||all[iB].dep);
         if(depA!==null&&arrB!==null&&arrB>depA){
-          let nM=nowMin;
-          if(depA>nowMin+60)nM+=1440; // 자정 보정
+          let nM=tNow;
+          if(depA>tNow+60)nM+=1440; // 자정 보정
           progress=Math.min(1,Math.max(0,(nM-depA)/(arrB-depA)));
         }
       }
@@ -9494,6 +9495,8 @@ function _siDepartureBoardHTML(name, trains, limit){
     if(r.diff<=0){ st='출발'; cls='sb-st-board'; }
     else if(r.diff<=5){ st=`${r.diff}분 후`; cls='sb-st-soon'; }
     else { st='정시'; cls='sb-st-sched'; }
+    const sdly=_simDelay(t, nowMin);
+    if(sdly>0){ st=`${sdly}분 지연`; cls='sb-st-delay'; }
     const isTerm = t.dest===trainName || (()=>{const s=t.stops.find(x=>x.s===trainName);return s&&s.arr&&!s.dep;})();
     const df=_delayForecast(t.line,t.grade);
     return `<div class="stn-board-row">
@@ -9547,6 +9550,8 @@ function _siArrivalBoardHTML(name, trains, limit){
     if(r.diff<=0){ st='도착'; cls='sb-st-board'; }
     else if(r.diff<=5){ st=`${r.diff}분 후`; cls='sb-st-soon'; }
     else { st='정시'; cls='sb-st-sched'; }
+    const sdly=_simDelay(t, nowMin);
+    if(sdly>0){ st=`${sdly}분 지연`; cls='sb-st-delay'; }
     const df=_delayForecast(t.line,t.grade);
     return `<div class="stn-board-row">
       <span class="sb-time">${r.arrStr}</span>
@@ -9655,11 +9660,61 @@ function _delayMetaHTML(t){
   const f=_delayForecast(t.line,t.grade);
   return `<div class="detail-meta" style="margin-top:2px">지연 예보 <b style="color:${f.color}">${f.label}</b> <span style="color:var(--text3)">·</span> 확률 ${f.prob}% <span style="color:var(--text3)">·</span> 예상 +${f.min}~${f.max}분</div>`;
 }
+
+// ── 지연 시뮬레이션 (옵트인) ──
+// 예보 확률·범위로 각 열차의 '오늘 실제 지연'을 결정적으로 확정하고 라이브 위치에 반영.
+let _simDelayOn=(()=>{try{return localStorage.getItem('nimbi_simdelay')==='1';}catch(e){return false;}})();
+// 운행일 키(04시 경계) — 시드에 넣어 하루 단위로 지연 패턴이 달라지게
+function _simDayKey(){ const d=new Date(); if(d.getHours()<4)d.setDate(d.getDate()-1);
+  return d.getFullYear()*10000+(d.getMonth()+1)*100+d.getDate(); }
+function _seededRand(seed){ const x=Math.sin(seed)*10000; return x-Math.floor(x); }
+function _simSeed(no){ const s=String(no)+':'+_simDayKey(); let h=2166136261;
+  for(let i=0;i<s.length;i++){ h^=s.charCodeAt(i); h=Math.imul(h,16777619); } return (h>>>0)/1000; }
+// 이 열차의 오늘 목표 지연분 D(및 지연 여부) — 결정적
+function _simTargetDelay(t){
+  const f=_delayForecast(t.line,t.grade);
+  const base=_simSeed(t.no);
+  const r1=_seededRand(base+0.137), r2=_seededRand(base+7.31);
+  if(r1*100>=f.prob) return {D:0,delayed:false};
+  return {D:Math.max(1,Math.round(f.min+r2*(f.max-f.min))),delayed:true};
+}
+// 현재 시각(clock, 분) 기준 누적 지연분 — 출발 직후 0에서 D까지 서서히 증가
+function _simDelay(t, clock){
+  if(!_simDelayOn) return 0;
+  const tg=_simTargetDelay(t); if(!tg.delayed) return 0;
+  const stops=t.stops.filter(s=>hasTime(s.arr)||hasTime(s.dep));
+  if(stops.length<2) return 0;
+  let off=0,prev=-1,firstM=null,lastM=null;
+  for(const s of stops){ const rm=toMin(hasTime(s.dep)?s.dep:s.arr); if(rm==null)continue;
+    if(prev>=0&&rm<prev-60)off+=1440; const m=rm+off; if(firstM==null)firstM=m; lastM=m; prev=rm; }
+  if(firstM==null) return 0;
+  let nowM=clock;
+  if(lastM>=1440&&clock<firstM){ const sh=clock+1440; if(clock<240||sh<=lastM)nowM=sh; }
+  if(nowM<=firstM) return 0;
+  const span=Math.max(1,lastM-firstM), ramp=Math.min(90,span*0.6);
+  return Math.round(tg.D*Math.min(1,(nowM-firstM)/ramp));
+}
+function toggleSimDelay(){
+  _simDelayOn=!_simDelayOn;
+  try{localStorage.setItem('nimbi_simdelay',_simDelayOn?'1':'0');}catch(e){}
+  if(typeof renderSIContent==='function'){const el=document.getElementById('result-delay'); if(el&&document.getElementById('panel-delay')?.classList.contains('active'))renderSIDelay(el);}
+  const de=document.getElementById('result-delay'); if(de&&de.offsetParent!==null)renderSIDelay(de);
+  if(_journeyNo&&typeof _renderJourney==='function'){const b=document.getElementById('journey-body'); if(b)b._scrolledOnce=true; _renderJourney();}
+  if(_siBoardName&&typeof _drawStationBoard==='function')_drawStationBoard();
+  if(typeof updateMapTrains==='function'&&_mapCurrentLine)updateMapTrains();
+}
 function renderSIDelay(el){
   const model=DELAY_MODEL;
   el.innerHTML=`<div style="margin-top:12px">
+    <div class="sim-toggle-card">
+      <div class="sim-toggle-info">
+        <div class="sim-toggle-title">🔴 지연 시뮬레이션</div>
+        <div class="sim-toggle-desc">예보 확률을 바탕으로 각 열차에 실제 지연을 부여해 <b>지도·탑승 여정·전광판</b>의 위치·시각에 반영합니다. 시간표 조회는 정시 그대로입니다.</div>
+      </div>
+      <button class="sim-switch${_simDelayOn?' on':''}" onclick="toggleSimDelay()" role="switch" aria-checked="${_simDelayOn}"><span class="sim-knob"></span></button>
+    </div>
     <div style="background:var(--bg3);border-radius:10px;padding:10px 14px;margin-bottom:14px;font-size:12px;color:var(--text2);line-height:1.6">
-      📊 Mysterious Enterprise 운행 기록 기반 · 지방 단선은 열차 수가 적어 지연↓
+      📊 Mysterious Enterprise 운행 기록 기반 · 지방 단선은 열차 수가 적어 지연↓${_simDelayOn?' · <b style="color:var(--red)">시뮬레이션 ON</b>':''}
     </div>
     ${model.map(d=>{
       const lv=d.prob<25?'low':d.prob<40?'med':'high';
@@ -10501,12 +10556,16 @@ function _renderJourney(){
   const _firstRender=!body._scrolledOnce;
   const t=ALL_TRAINS.find(x=>x.no===_journeyNo); if(!t)return;
   const stops=_journeyStops(t); if(!stops.length){body.innerHTML='<div class="empty">시각 정보가 없습니다.</div>';return;}
-  const status=getCurrentStatus(t);
   const firstM=stops[0].normDep??stops[0].normArr;
   const lastItem=stops[stops.length-1];
   const lastM=lastItem.normArr??lastItem.normDep;
   const now=new Date();
-  let nowMin=now.getHours()*60+now.getMinutes()+now.getSeconds()/60;
+  const realNowMin=now.getHours()*60+now.getMinutes()+now.getSeconds()/60;
+  // 지연 시뮬 반영: 열차는 dly분 뒤처진 위치에 있음 → 유효시각 = 실제시각 - dly
+  const dly=_simDelay(t, realNowMin);
+  const finalD=_simDelayOn?_simTargetDelay(t).D:0;
+  let nowMin=realNowMin-dly;
+  const status=getCurrentStatus(t, nowMin);
   let nowM=nowMin;
   if(lastM>=1440&&nowMin<firstM){ const sh=nowMin+1440; if(nowMin<240||sh<=lastM)nowM=sh; }
   const c=(typeof GRADE_COLORS!=='undefined'&&GRADE_COLORS[t.grade])||'#8b949e';
@@ -10566,6 +10625,8 @@ function _renderJourney(){
     </div>`;
   }).join('');
   const depT=stops[0].dep||stops[0].arr, arrT=lastItem.arr||lastItem.dep;
+  const arrAdj=(_simDelayOn&&finalD>0&&phase!=='done')?` <span class="jr-eta-adj">지연 예상 +${finalD}분</span>`:'';
+  const delayBadge=(_simDelayOn&&dly>0&&phase==='running')?`<div class="jr-delay-live">🔴 약 <b>${dly}분</b> 지연 운행 중</div>`:'';
   body.innerHTML=`
     <div class="jr-header" style="--gc:${c}">
       <div class="jr-h-top">
@@ -10573,10 +10634,11 @@ function _renderJourney(){
         <span class="jr-no">${_opsEsc(t.no)}</span>
         <span class="jr-dest">${_opsEsc(t.dest)}행</span>
       </div>
-      <div class="jr-route">${_opsEsc(stops[0].s)} ${depT} → ${_opsEsc(lastItem.s)} ${arrT}</div>
-      <div class="jr-status jr-${phase}">
+      <div class="jr-route">${_opsEsc(stops[0].s)} ${depT} → ${_opsEsc(lastItem.s)} ${arrT}${arrAdj}</div>
+      <div class="jr-status jr-${phase}${(_simDelayOn&&dly>0&&phase==='running')?' jr-delayed':''}">
         <div class="jr-status-head">${head}</div>
         ${sub?`<div class="jr-status-sub">${sub}</div>`:''}
+        ${delayBadge}
       </div>
       <div class="jr-progress"><div class="jr-progress-fill" style="width:${prog}%;background:${c}"></div></div>
       ${phase!=='done'?_delayChipHTML(t):''}

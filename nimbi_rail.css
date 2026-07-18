@@ -1573,6 +1573,7 @@ button, select, input[type=range],
 .sb-st-soon{color:#ff6b6b;animation:ledBlink 1s steps(2) infinite}
 .sb-st-board{color:#3fd08a}
 .sb-st-sched{color:#8b949e}
+.sb-st-delay{color:#ffb454;font-weight:800}
 .stn-board-empty{text-align:center;color:#3a5a70;font-size:12px;padding:14px;font-family:var(--mono)}
 /* 출발 안내 전광판 버튼 · 팝업 */
 .si-board-btn{width:100%;padding:12px;border-radius:11px;border:1px solid #1b2a36;
@@ -1828,3 +1829,19 @@ button, select, input[type=range],
 .jr-header .delay-chip{margin-top:12px}
 /* 전광판 지연 위험 점 */
 .sb-risk{display:inline-block;width:6px;height:6px;border-radius:50%;vertical-align:middle;margin-left:3px}
+
+/* 지연 시뮬레이션 토글 카드 */
+.sim-toggle-card{display:flex;align-items:center;gap:12px;padding:14px 16px;margin-bottom:12px;background:var(--bg2);border:1px solid var(--border);border-radius:12px}
+.sim-toggle-info{flex:1;min-width:0}
+.sim-toggle-title{font-size:14px;font-weight:800;color:var(--text1)}
+.sim-toggle-desc{margin-top:4px;font-size:11.5px;color:var(--text2);line-height:1.5}
+.sim-toggle-desc b{color:var(--text1)}
+.sim-switch{flex-shrink:0;width:52px;height:30px;border-radius:16px;border:1px solid var(--border);background:var(--bg3);position:relative;cursor:pointer;transition:background .2s,border-color .2s}
+.sim-switch.on{background:var(--red);border-color:var(--red)}
+.sim-knob{position:absolute;top:3px;left:3px;width:22px;height:22px;border-radius:50%;background:#fff;transition:left .2s;box-shadow:0 1px 3px rgba(0,0,0,.4)}
+.sim-switch.on .sim-knob{left:25px}
+/* 탑승 여정 지연 표시 */
+.jr-status.jr-delayed{border-color:color-mix(in srgb,#ffb454 55%,var(--border));background:color-mix(in srgb,#ffb454 9%,var(--bg2))}
+.jr-delay-live{margin-top:6px;font-size:13px;font-weight:700;color:#ffb454}
+.jr-delay-live b{font-family:var(--mono)}
+.jr-eta-adj{color:#ffb454;font-weight:700;font-family:var(--sans)}
