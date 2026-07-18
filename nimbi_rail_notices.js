@@ -498,5 +498,18 @@ const NOTICES = [
 
 <strong>■ 권역 전체 노선도 확대/축소 수정</strong><br>
 권역 전체 노선도에서 <span class="n-highlight">확대/축소(＋ －)</span>가 적용되지 않던 문제를 바로잡았습니다. 이제 겹쳐보기와 권역 전체 노선도에서도 원하는 만큼 확대해 세부 구간을 살펴볼 수 있습니다.`
+  },
+  {
+    date:'2026-07-18',
+    cat:'route',
+    title:'제주선이 노선도에 추가되었습니다',
+    body:`기차 노선도에 <strong>제주선</strong>이 새로 추가되었습니다.<br><br>
+
+<strong>■ 운행 구간</strong><br>
+<div class="n-box">장흥 — 강진 — 완도 — 노화 — 추자 — <strong>제주</strong></div>
+<span class="n-highlight">작천 — 강진</span> 지선도 함께 표기됩니다.<br><br>
+
+해당 구간을 운행하는 <strong>부산–제주 KTX</strong>와 <strong>목포–완도 무궁화호</strong>의 소속 노선에 제주선이 반영되어, 열차 조회·노선도 추적에서 제주선 구간을 확인하실 수 있습니다.<br><br>
+<span style="color:var(--text2)">기차 모드 · 노선도 탭 상단에서 제주선을 선택해 보세요.</span>`
   }
 ];
