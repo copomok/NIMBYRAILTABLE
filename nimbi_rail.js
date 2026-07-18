@@ -802,6 +802,7 @@ function renderDetail(t){
       </div>
     </div>
     ${statusBanner}
+    ${_delayChipHTML(t)}
     <div class="tl-toolbar">
       <label style="font-size:12px;color:var(--text2);display:flex;align-items:center;gap:6px;cursor:pointer">
         <input type="checkbox" id="hide-pass-${t.no}" onchange="togglePassRows('${t.no}')" style="cursor:pointer">
@@ -9495,11 +9496,12 @@ function _siDepartureBoardHTML(name, trains, limit){
     else if(r.diff<=5){ st=`${r.diff}분 후`; cls='sb-st-soon'; }
     else { st='정시'; cls='sb-st-sched'; }
     const isTerm = t.dest===trainName || (()=>{const s=t.stops.find(x=>x.s===trainName);return s&&s.arr&&!s.dep;})();
+    const df=_delayForecast(t.line,t.grade);
     return `<div class="stn-board-row">
       <span class="sb-time">${r.depStr}</span>
       <span class="sb-info">
         <span class="sb-dest">${isTerm?'당역종착':t.dest+'행'}</span>
-        <span class="sb-train">${t.grade} ${t.no}</span>
+        <span class="sb-train">${t.grade} ${t.no} <span class="sb-risk" style="background:${df.color}" title="지연 위험 ${df.label}"></span></span>
       </span>
       <span class="sb-plat ${plat?'':'none'}">${plat||'–'}</span>
       <span class="sb-status ${cls}">${st}</span>
@@ -9546,11 +9548,12 @@ function _siArrivalBoardHTML(name, trains, limit){
     if(r.diff<=0){ st='도착'; cls='sb-st-board'; }
     else if(r.diff<=5){ st=`${r.diff}분 후`; cls='sb-st-soon'; }
     else { st='정시'; cls='sb-st-sched'; }
+    const df=_delayForecast(t.line,t.grade);
     return `<div class="stn-board-row">
       <span class="sb-time">${r.arrStr}</span>
       <span class="sb-info">
         <span class="sb-dest">${r.isTerm?'당역종착':(r.fromStn?r.fromStn+' 발':t.dest+'행')}</span>
-        <span class="sb-train">${t.grade} ${t.no}</span>
+        <span class="sb-train">${t.grade} ${t.no} <span class="sb-risk" style="background:${df.color}" title="지연 위험 ${df.label}"></span></span>
       </span>
       <span class="sb-plat ${plat?'':'none'}">${plat||'–'}</span>
       <span class="sb-status ${cls}">${st}</span>
@@ -9608,20 +9611,48 @@ function closeStationBoard(){
   _siBoardName=null; _siBoardTrains=null;
 }
 
+// ── 지연 예측 모델 (노선·등급별 확률/예상 지연) ──
+const DELAY_MODEL=[
+  {name:'경부고속선 KTX',prob:18,min:2,max:5,c:'#3b82f6'},
+  {name:'호남고속선 KTX',prob:20,min:2,max:6,c:'#3b82f6'},
+  {name:'강릉선 KTX',prob:28,min:3,max:8,c:'#3b82f6'},
+  {name:'중앙선 KTX',prob:32,min:3,max:10,c:'#3b82f6'},
+  {name:'경부고속선 SRT',prob:16,min:2,max:5,c:'#a855f7'},
+  {name:'경부선 ITX-새마을',prob:38,min:5,max:15,c:'#ef4444'},
+  {name:'경부선 무궁화호',prob:42,min:5,max:18,c:'#f97316'},
+  {name:'호남선 무궁화호',prob:40,min:5,max:16,c:'#f97316'},
+  {name:'중앙선 무궁화호',prob:30,min:4,max:12,c:'#f97316'},
+  {name:'경전선 무궁화호',prob:25,min:3,max:10,c:'#f97316'},
+  {name:'동해선 무궁화호',prob:22,min:3,max:8,c:'#f97316'},
+];
+// 모델에 없는 노선·등급 조합의 기본값(등급 계열별 일반 경향)
+const _DELAY_DEFAULT={'KTX':{prob:22,min:2,max:6},'SRT':{prob:18,min:2,max:5},
+  'ITX-새마을':{prob:35,min:4,max:13},'ITX-청춘':{prob:30,min:4,max:12},
+  'ITX-마음':{prob:30,min:4,max:12},'남도해양':{prob:34,min:4,max:13},'무궁화호':{prob:38,min:5,max:15}};
+function _delayGradeFamily(g){ if(/KTX/.test(g))return 'KTX'; if(g==='SRT')return 'SRT';
+  if(g==='ITX-새마을')return 'ITX-새마을'; if(g==='ITX-청춘')return 'ITX-청춘';
+  if(g==='ITX-마음')return 'ITX-마음'; if(g==='남도해양')return '남도해양'; return '무궁화호'; }
+function _delayLevel(prob){ return prob<25?'low':prob<40?'med':'high'; }
+// 열차(노선·등급)의 지연 예보 — 지나는 노선 중 가장 위험한 값, 없으면 등급 기본값
+function _delayForecast(line,grade){
+  const fam=_delayGradeFamily(grade);
+  const parts=(line||'').split('·').map(s=>s.trim());
+  let best=null;
+  DELAY_MODEL.forEach(d=>{ const sp=d.name.lastIndexOf(' '); const dl=d.name.slice(0,sp), dg=d.name.slice(sp+1);
+    if(dg===fam&&parts.includes(dl)){ if(!best||d.prob>best.prob)best=d; } });
+  const base=best?{prob:best.prob,min:best.min,max:best.max}:(_DELAY_DEFAULT[fam]||_DELAY_DEFAULT['무궁화호']);
+  const lv=_delayLevel(base.prob);
+  return {prob:base.prob,min:base.min,max:base.max,level:lv,
+    color:lv==='low'?'#3fb950':lv==='med'?'#f97316':'#f85149',
+    label:lv==='low'?'낮음':lv==='med'?'보통':'높음'};
+}
+// 열차 상세/여정용 지연 예보 칩
+function _delayChipHTML(t){
+  const f=_delayForecast(t.line,t.grade);
+  return `<div class="delay-chip" style="--dc:${f.color}"><span class="delay-dot"></span><b>지연 예보 ${f.label}</b><span class="delay-meta">확률 ${f.prob}% · 예상 +${f.min}~${f.max}분</span></div>`;
+}
 function renderSIDelay(el){
-  const model=[
-    {name:'경부고속선 KTX',prob:18,min:2,max:5,c:'#3b82f6'},
-    {name:'호남고속선 KTX',prob:20,min:2,max:6,c:'#3b82f6'},
-    {name:'강릉선 KTX',prob:28,min:3,max:8,c:'#3b82f6'},
-    {name:'중앙선 KTX',prob:32,min:3,max:10,c:'#3b82f6'},
-    {name:'경부고속선 SRT',prob:16,min:2,max:5,c:'#a855f7'},
-    {name:'경부선 ITX-새마을',prob:38,min:5,max:15,c:'#ef4444'},
-    {name:'경부선 무궁화호',prob:42,min:5,max:18,c:'#f97316'},
-    {name:'호남선 무궁화호',prob:40,min:5,max:16,c:'#f97316'},
-    {name:'중앙선 무궁화호',prob:30,min:4,max:12,c:'#f97316'},
-    {name:'경전선 무궁화호',prob:25,min:3,max:10,c:'#f97316'},
-    {name:'동해선 무궁화호',prob:22,min:3,max:8,c:'#f97316'},
-  ];
+  const model=DELAY_MODEL;
   el.innerHTML=`<div style="margin-top:12px">
     <div style="background:var(--bg3);border-radius:10px;padding:10px 14px;margin-bottom:14px;font-size:12px;color:var(--text2);line-height:1.6">
       📊 Mysterious Enterprise 운행 기록 기반 · 지방 단선은 열차 수가 적어 지연↓
@@ -10533,6 +10564,7 @@ function _renderJourney(){
         ${sub?`<div class="jr-status-sub">${sub}</div>`:''}
       </div>
       <div class="jr-progress"><div class="jr-progress-fill" style="width:${prog}%;background:${c}"></div></div>
+      ${phase!=='done'?_delayChipHTML(t):''}
     </div>
     <div class="jr-timeline">${li}</div>
     <p class="jr-foot">약 5초마다 자동 갱신 · 실제 게임 내 시각 기준</p>`;

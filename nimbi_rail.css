@@ -1808,3 +1808,13 @@ button, select, input[type=range],
 .rt-badge{margin-top:3px;font-size:10px;font-weight:800;font-family:var(--sans);padding:1px 6px;border-radius:8px;display:inline-block;white-space:nowrap}
 .rt-badge.rt-ok{background:rgba(56,139,253,.16);color:var(--accent);border:1px solid rgba(56,139,253,.35)}
 .rt-badge.rt-soon{background:rgba(63,185,80,.18);color:var(--green);border:1px solid rgba(63,185,80,.4)}
+
+/* 지연 예보 칩 (열차 상세·탑승 여정) */
+.delay-chip{display:flex;align-items:center;gap:7px;flex-wrap:wrap;margin:8px 0 2px;padding:8px 12px;border-radius:10px;
+  background:color-mix(in srgb,var(--dc) 10%,var(--bg2));border:1px solid color-mix(in srgb,var(--dc) 35%,var(--border));font-size:12px}
+.delay-chip .delay-dot{width:8px;height:8px;border-radius:50%;background:var(--dc);flex-shrink:0}
+.delay-chip b{color:var(--dc);font-weight:800}
+.delay-chip .delay-meta{color:var(--text2);font-family:var(--mono);font-size:11px}
+.jr-header .delay-chip{margin-top:12px}
+/* 전광판 지연 위험 점 */
+.sb-risk{display:inline-block;width:6px;height:6px;border-radius:50%;vertical-align:middle;margin-left:3px}

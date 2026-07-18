@@ -547,5 +547,19 @@ const NOTICES = [
 출도착 검색 결과에 현재 시각 기준 <span class="n-highlight">"N분 후 출발"</span> 배지가 표시됩니다. <strong>⏱ 지금</strong> 버튼과 함께 지금 탈 수 있는 열차를 바로 확인하세요.<br><br>
 
 <span class="n-warn" style="display:block">더불어 열차 탭의 노선 선택 목록이 노선도의 전체 노선과 일치하도록 개선되어, 그동안 목록에서 빠져 있던 호남고속선·장항선·태안선·소백선·경북선·태백선·정선선·영동선·충북선·남부내륙선도 선택할 수 있습니다.</span>`
+  },
+  {
+    date:'2026-07-18',
+    cat:'update',
+    title:'지연 예보를 열차 화면에서 바로 확인',
+    body:`지금까지 <strong>지연 예측</strong> 탭에서만 볼 수 있던 노선·등급별 지연 정보를, 이제 열차를 보는 화면에서 바로 확인할 수 있습니다.<br><br>
+
+<strong>■ 열차 상세 · 탑승 여정</strong><br>
+각 열차에 <span class="n-highlight">지연 예보</span> 칩이 표시됩니다. 그 열차가 지나는 노선과 등급을 바탕으로 <strong>지연 위험(낮음/보통/높음)·확률·예상 지연(+분)</strong>을 안내합니다.<br><br>
+
+<strong>■ 역 전광판</strong><br>
+출발·도착 전광판의 각 열차 옆에 <span style="color:#3fb950;font-weight:700">초록</span>·<span style="color:#f97316;font-weight:700">주황</span>·<span style="color:#f85149;font-weight:700">빨강</span> 점으로 지연 위험을 표시합니다.<br><br>
+
+<div class="n-box">지연 예보는 Mysterious Enterprise 운행 경향을 바탕으로 한 <strong>예측값</strong>이며, 실제 지연과 다를 수 있습니다. 지방 단선·고속열차는 지연이 적은 편입니다.</div>`
   }
 ];
