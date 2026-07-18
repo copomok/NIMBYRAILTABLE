@@ -796,7 +796,6 @@ function renderDetail(t){
           ${st.km>0?`<div class="detail-meta" style="margin-top:2px">표정속도 ${fmtSpeed(st.speed)}</div>`:''}
         </div>
         <div style="display:flex;gap:4px;flex-shrink:0">
-          <button class="share-btn" style="position:static" onclick="openJourney('${t.no}')" title="탑승 여정 — 실시간 승차 화면">🚆</button>
           <button class="share-btn" style="position:static" onclick="trackTrainOnMap('${t.no}')">🗺️</button>
           <button class="share-btn" style="position:static" onclick="shareTrainLink('${t.no}')">🔗</button>
         </div>
@@ -7120,7 +7119,7 @@ function _ticketCardHTML(tk){
         <button class="btn qr-btn" onclick="event.stopPropagation();openQRPopup('${tk.id}')" title="QR·좌석 보기">🔲 QR</button>
       </div>
       <div class="ticket-card-actions">
-        <button class="btn" style="font-size:12px;padding:6px 12px" onclick="event.stopPropagation();jumpToTrain('${tk.trainNo}')">🕐 시간표</button>
+        <button class="btn" style="font-size:12px;padding:6px 12px" onclick="event.stopPropagation();openJourney('${tk.trainNo}')">🚆 시간표</button>
         ${tk.status==='active'&&_ticketFilterTab==='upcoming'?`<button class="btn" style="font-size:12px;padding:6px 12px" onclick="event.stopPropagation();cancelTicket('${tk.id}')">예매 취소</button>`
           :`<button class="btn" style="font-size:12px;padding:6px 12px" onclick="event.stopPropagation();deleteTicket('${tk.id}')">기록 삭제</button>`}
       </div>
@@ -7181,7 +7180,7 @@ function _xferTicketCardHTML(legs){
       <div class="ticket-info-row"><span>총 운임</span><span class="ticket-fare">${totalFare.toLocaleString()}원</span></div>
     </div>
     <div class="ticket-card-actions">
-      <button class="btn" style="font-size:12px;padding:6px 12px" onclick="event.stopPropagation();jumpToTrain('${g.trainNo}')">🕐 시간표</button>
+      <button class="btn" style="font-size:12px;padding:6px 12px" onclick="event.stopPropagation();openJourney('${g.trainNo}')">🚆 시간표</button>
       ${!allCancelled&&_ticketFilterTab==='upcoming'?`<button class="btn" style="font-size:12px;padding:6px 12px" onclick="event.stopPropagation();cancelXferGroup('${g.xferGroup}')">환승 전체 취소</button>`
         :`<button class="btn" style="font-size:12px;padding:6px 12px" onclick="event.stopPropagation();deleteXferGroup('${g.xferGroup}')">기록 삭제</button>`}
     </div>
@@ -9532,10 +9531,9 @@ function _siArrivalBoardHTML(name, trains, limit){
     const arrStr=s.arr; if(!arrStr||!hasTime(arrStr)) return null; // 도착 시각 있는 열차만(출발역 제외)
     const m=toMin(arrStr); if(m===null) return null;
     let diff=m-nowMin; if(diff< -180) diff+=1440;
-    // 어디서 오는지: 이 역 직전 정차역
-    const idx=t.stops.findIndex(x=>x.s===trainName);
+    // 어디서 오는지: 이 열차의 첫 출발역(기점)
     let fromStn=null;
-    for(let i=idx-1;i>=0;i--){ if(hasTime(t.stops[i].dep)||hasTime(t.stops[i].arr)){ if(!isPassStop(t,t.stops[i].s)){fromStn=t.stops[i].s;break;} } }
+    for(let i=0;i<t.stops.length;i++){ if(hasTime(t.stops[i].dep)||hasTime(t.stops[i].arr)){ fromStn=t.stops[i].s; break; } }
     const isTerm=(t.dest===trainName)||(!hasTime(s.dep));
     return {t,arrStr,m,diff,fromStn,isTerm};
   }).filter(Boolean)
@@ -10061,6 +10059,11 @@ function _opsCorridorData(key){
   sts.forEach((s,i)=>{if(!(s.n in dm)){dm[s.n]=dist[i];names.push(s.n);}});
   return _opsCorCache[key]={key,name:ml.name,color:ml.color,names,dm,total};
 }
+// 열차가 실제로 이 코리도(노선)를 운행하는지 — line 필드에 노선명이 있어야 함.
+// (정차역 이름만 겹치는 타 노선 열차 오표시 방지: 경부고속선 KTX가 경부선에 뜨던 문제)
+function _opsTrainOnCorridor(t,cor){
+  return !!(t.line&&cor&&t.line.split('·').some(l=>l.trim()===cor.name));
+}
 // 열차의 코리도 상 정차점 (시각·거리)
 function _opsTrainPts(t,cor){
   const pts=[];
@@ -10079,7 +10082,7 @@ function _opsCorridors(){
   const list=[];
   for(const key of Object.keys(MAP_LINES)){
     const cor=_opsCorridorData(key); if(!cor)continue;
-    let nT=0; for(const t of ALL_TRAINS){if(_opsTrainPts(t,cor).length>=3)nT++;}
+    let nT=0; for(const t of ALL_TRAINS){if(_opsTrainOnCorridor(t,cor)&&_opsTrainPts(t,cor).length>=3)nT++;}
     if(nT>0)list.push({key,name:cor.name,n:nT});
   }
   list.sort((a,b)=>b.n-a.n);
@@ -10087,7 +10090,7 @@ function _opsCorridors(){
 }
 function _curCorridorGrades(){
   const cor=_opsCorridorData(_opsCorridor); if(!cor)return [];
-  return [...new Set(ALL_TRAINS.filter(t=>_opsTrainPts(t,cor).length>=3).map(t=>t.grade))];
+  return [...new Set(ALL_TRAINS.filter(t=>_opsTrainOnCorridor(t,cor)&&_opsTrainPts(t,cor).length>=3).map(t=>t.grade))];
 }
 function _opsToggleGrade(g){
   if(_opsGrades===null)_opsGrades=new Set(_curCorridorGrades());
@@ -10112,7 +10115,7 @@ function renderOpsDiagram(host){
   if(!cors.length){host.innerHTML='<div class="empty"><div class="empty-icon">📈</div><p>표시할 운행 노선이 없습니다.</p></div>';return;}
   if(!_opsCorridor||!cors.some(c=>c.key===_opsCorridor))_opsCorridor=cors[0].key;
   const cor=_opsCorridorData(_opsCorridor);
-  const trains=[]; for(const t of ALL_TRAINS){const pts=_opsTrainPts(t,cor);if(pts.length>=3)trains.push({t,pts});}
+  const trains=[]; for(const t of ALL_TRAINS){if(!_opsTrainOnCorridor(t,cor))continue;const pts=_opsTrainPts(t,cor);if(pts.length>=3)trains.push({t,pts});}
   const gset=[...new Set(trains.map(o=>o.t.grade))];
   const showT=trains.filter(o=>!_opsGrades||_opsGrades.has(o.t.grade));
 
