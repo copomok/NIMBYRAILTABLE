@@ -78,7 +78,7 @@ function fmtDurKor(min){ if(min==null||min<0)return '-'; const h=Math.floor(min/
 function fmtSpeed(kmh){ if(kmh==null||!isFinite(kmh)||kmh<=0)return '-'; return `${Math.round(kmh)} km/h`; }
 // 남은시간 + 도착시각: "12분 후 (14:30)"
 function fmtEta(mins, clockStr){ if(mins==null)return '-'; const t=mins<=0?'곧':(mins===1?'1분 후':`${mins}분 후`); return clockStr?`${t} (${clockStr})`:t; }
-function addMinToClock(clockStr, add){ const m=toMin(clockStr); if(m==null)return ''; let x=(m+add)%1440; if(x<0)x+=1440; return `${String(Math.floor(x/60)).padStart(2,'0')}:${String(x%60).padStart(2,'0')}`; }
+function addMinToClock(clockStr, add){ const m=toMin(clockStr); if(m==null)return ''; let x=(m+add)%1440; if(x<0)x+=1440; return `${Math.floor(x/60)}:${String(x%60).padStart(2,'0')}`; }
 
 // ══════════════════════════════════════════
 // 📐 실좌표 기반 거리·운임
@@ -10840,7 +10840,7 @@ function _renderJourney(){
         +(_dlyLog.length?`<div class="jr-log-sec">구간별 기록</div>`+_dlyLog.slice(0,16).map(l=>`<div>${_opsEsc(l)}</div>`).join(''):'')
         +`</div></details>`:'')
       +`<div class="jr-delay-caveat">지연 정보는 실제 운행 상황과 차이가 있을 수 있습니다</div>`:'';
-  body.innerHTML=`
+  const _jrHTML=`
     <div class="jr-header" style="--gc:${c}">
       <div class="jr-h-top">
         <span class="jr-grade" style="background:${c}">${_opsEsc(gl)}</span>
@@ -10854,12 +10854,14 @@ function _renderJourney(){
         ${delayBadge}
       </div>
       <div class="jr-progress"><div class="jr-progress-fill" style="width:${prog}%;background:${c}"></div></div>
-      ${phase!=='done'?_delayChipHTML(t):''}
     </div>
     <div class="jr-scroll">
       <div class="jr-timeline">${li}</div>
       <p class="jr-foot">매분 자동 갱신 · 실제 게임 내 시각 기준</p>
     </div>`;
+  if(body._lastJrHTML===_jrHTML) return;   // 내용 동일하면 재렌더 생략(깜빡임 방지)
+  body._lastJrHTML=_jrHTML;
+  body.innerHTML=_jrHTML;
   const sc=body.querySelector('.jr-scroll');
   if(sc){
     if(_firstRender){
