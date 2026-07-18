@@ -549,6 +549,7 @@ function searchByTrain(){
 // 출발까지 남은 시간 한국어 표기 (운행 준비중 열차용)
 function fmtEtaKor(m){
   if(m==null)return '';
+  m=Math.round(m);
   if(m<=0)return '곧 출발 예정';
   if(m<60)return `약 ${m}분 후 출발 예정`;
   const h=Math.floor(m/60), mm=m%60;
@@ -8087,6 +8088,7 @@ function searchBookTrains(includeTransfer, includeAdj){
           <span style="font-size:13px;color:var(--text2);font-family:var(--mono)">${t.no}</span>
           <span style="font-size:12px;font-weight:600;color:var(--text1)">${t.dest}행</span>
           ${adj?`<span style="font-size:9.5px;font-weight:800;padding:1px 7px;border-radius:8px;background:rgba(249,115,22,.12);border:1px solid var(--orange);color:var(--orange)">인접역</span>`:''}
+          ${(()=>{const live=_liveDelayOf(t),est=_simFinalDelay(t);return live>0?`<span class="book-delay-tag live">${live}분 지연</span>`:est>0?`<span class="book-delay-tag est">${est}분 지연 예상</span>`:'';})()}
         </div>
         <div style="display:flex;align-items:baseline;gap:6px">
           <span style="font-size:17px;font-weight:700;font-family:var(--mono)">${depT}</span>
@@ -9686,32 +9688,42 @@ function _simModel(){
   return _simModelCache={metro,load};
 }
 const _SIM_CONG_REF=280; // 혼잡도 기준(간선 트렁크 ≈ 1.0)
-// 이 열차의 오늘 목표 지연분 D(및 지연 여부) — 결정적.
-// 기반 = 인게임 지연 예측(_delayForecast: 노선·등급별 확률·범위).
-// 참고 보정 = 어느 구간에서 주로 지연되는지(전철 병행·혼잡 구간)로 '확률'만 가감.
-function _simTargetDelay(t){
-  const f=_delayForecast(t.line,t.grade);                // 인게임 예측(기반)
+// 이 열차의 오늘 지연 스펙(결정적, 하루 단위 캐시).
+// 기반 = 인게임 지연 예측(_delayForecast). 참고 보정 = 전철 병행·혼잡 구간으로 확률 가감.
+// 반환: {peak: 운행 중 최대 지연, final: 종착 도착 지연(회복 반영), predicted: '지연 예상' 라벨용}
+//  - 예측 열차라도 회복해 일찍/정시 도착 가능(final<peak, 때때로 0)
+//  - 예측엔 없던 열차도 소폭 지연 가능(surprise; predicted=0)
+let _simSpecCache={};
+function _simSpec(t){
+  const key=t.no+':'+_simDayKey();
+  if(_simSpecCache[key])return _simSpecCache[key];
+  const f=_delayForecast(t.line,t.grade);
   const timed=t.stops.filter(s=>hasTime(s.arr)||hasTime(s.dep));
-  if(timed.length<2||!f.prob) return {D:0,delayed:false};
-  const {metro,load}=_simModel();
-  let sec=0, metroSec=0, congSum=0;
-  for(let i=0;i<timed.length;i++){
-    congSum+=load[timed[i].s]||0;
-    if(i<timed.length-1){ sec++; if(metro.has(timed[i].s)&&metro.has(timed[i+1].s))metroSec++; }
+  let spec={peak:0,final:0,predicted:0};
+  if(timed.length>=2&&f.prob){
+    const {metro,load}=_simModel();
+    let sec=0, metroSec=0, congSum=0;
+    for(let i=0;i<timed.length;i++){ congSum+=load[timed[i].s]||0;
+      if(i<timed.length-1){ sec++; if(metro.has(timed[i].s)&&metro.has(timed[i+1].s))metroSec++; } }
+    const metroFrac=metroSec/Math.max(1,sec);
+    const congNorm=Math.min(1,(congSum/timed.length)/_SIM_CONG_REF);
+    const causeFactor=0.6+0.9*(0.5*metroFrac+0.5*congNorm);
+    const effProb=Math.min(95, f.prob*causeFactor);
+    const seed=_simSeed(t.no);
+    const r1=_seededRand(seed+0.137), r2=_seededRand(seed+7.31), r3=_seededRand(seed+3.91), r4=_seededRand(seed+11.2), r5=_seededRand(seed+5.55);
+    let peak=0, predicted=0;
+    if(r1*100<effProb){ peak=Math.max(1,Math.round(f.min+r2*(f.max-f.min))); predicted=peak; } // 예측된 지연
+    else if(r4<0.07){ peak=1+Math.round(r5*2); predicted=0; }                                   // 예측 밖 소폭 지연
+    // 회복: 종착 지연 = peak×recovery. r3에 따라 완전(=peak)~정시(0)까지.
+    const recovery=Math.max(0,Math.min(1, r3*1.25-0.12));
+    spec={peak, final:Math.round(peak*recovery), predicted};
   }
-  const metroFrac=metroSec/Math.max(1,sec);              // ① 전철 병행 구간 비율(참고)
-  const congNorm=Math.min(1,(congSum/timed.length)/_SIM_CONG_REF); // ② 혼잡 구간(참고)
-  const causeFactor=0.6+0.9*(0.5*metroFrac+0.5*congNorm);// 0.6~1.5배 — 구간 특성으로 확률 보정
-  const effProb=Math.min(95, f.prob*causeFactor);
-  const seed=_simSeed(t.no);
-  const r1=_seededRand(seed+0.137), r2=_seededRand(seed+7.31);
-  if(r1*100>=effProb) return {D:0,delayed:false};
-  return {D:Math.max(1,Math.round(f.min+r2*(f.max-f.min))),delayed:true}; // 크기는 예측 범위 그대로
+  return _simSpecCache[key]=spec;
 }
-// 현재 시각(clock, 분) 기준 누적 지연분 — 출발 직후 0에서 D까지 서서히 증가
+// 현재 시각(clock) 기준 지연분 — 상승(0→peak) 후 회복(peak→final)
 function _simDelay(t, clock){
   if(!_simDelayOn) return 0;
-  const tg=_simTargetDelay(t); if(!tg.delayed) return 0;
+  const sp=_simSpec(t); if(!sp.peak) return 0;
   const stops=t.stops.filter(s=>hasTime(s.arr)||hasTime(s.dep));
   if(stops.length<2) return 0;
   let off=0,prev=-1,firstM=null,lastM=null;
@@ -9721,11 +9733,13 @@ function _simDelay(t, clock){
   let nowM=clock;
   if(lastM>=1440&&clock<firstM){ const sh=clock+1440; if(clock<240||sh<=lastM)nowM=sh; }
   if(nowM<=firstM) return 0;
-  const span=Math.max(1,lastM-firstM), ramp=Math.min(90,span*0.6);
-  return Math.round(tg.D*Math.min(1,(nowM-firstM)/ramp));
+  const fr=Math.min(1,(nowM-firstM)/Math.max(1,lastM-firstM));
+  const up=0.55;
+  const cur=fr<=up?sp.peak*(fr/up):sp.peak+(sp.final-sp.peak)*((fr-up)/(1-up));
+  return Math.round(cur);
 }
-// 이 열차의 오늘 예상 총 지연분(운행 여부와 무관) — 시뮬 OFF면 0
-function _simFinalDelay(t){ return _simDelayOn?(_simTargetDelay(t).D||0):0; }
+// '지연 예상' 라벨용 예측 지연(운행 여부 무관). 예측 밖 소폭 지연은 라벨에 넣지 않음.
+function _simFinalDelay(t){ return _simDelayOn?(_simSpec(t).predicted||0):0; }
 // 현재 지연 운행 중이면 그 지연분, 아니면 0
 function _liveDelayOf(t){
   if(!_simDelayOn)return 0;
@@ -10640,7 +10654,7 @@ function _renderJourney(){
   const realNowMin=now.getHours()*60+now.getMinutes()+now.getSeconds()/60;
   // 지연 시뮬 반영: 열차는 dly분 뒤처진 위치에 있음 → 유효시각 = 실제시각 - dly
   const dly=_simDelay(t, realNowMin);
-  const finalD=_simDelayOn?_simTargetDelay(t).D:0;
+  const finalD=_simFinalDelay(t);
   let nowMin=realNowMin-dly;
   const status=getCurrentStatus(t, nowMin);
   let nowM=nowMin;
@@ -10690,9 +10704,9 @@ function _renderJourney(){
     const plat=(typeof _realPlatform==='function')?_realPlatform(t.no,st.s):null;
     const tArr=hasTime(st.arr)?st.arr:'', tDep=hasTime(st.dep)?st.dep:'';
     const timeTxt=st.isOrigin?`${tDep||tArr} 출발`:st.isTerm?`${tArr||tDep} 도착`:(tArr&&tDep&&tArr!==tDep?`${tArr}–${tDep}`:(tArr||tDep));
-    // 지연 반영 시각(코레일톡식): 아직 지나지 않은 역만 빨간 괄호로
+    // 지연 반영 시각(코레일톡식): 아직 지나지 않은 역(통과역 포함)에 빨간 괄호로
     let adjTxt='';
-    if(_simDelayOn&&dly>0&&phase==='running'&&!passed&&!st.isPass){
+    if(_simDelayOn&&dly>0&&phase==='running'&&!passed){
       const aA=tArr?addMinToClock(tArr,dly):'', aD=tDep?addMinToClock(tDep,dly):'';
       const adj=st.isOrigin?aD:st.isTerm?aA:(aA&&aD&&tArr!==tDep?`${aA}–${aD}`:(aA||aD));
       if(adj)adjTxt=`<div class="jr-time-adj">(${adj})</div>`;
@@ -10709,7 +10723,11 @@ function _renderJourney(){
     </div>`;
   }).join('');
   const depT=stops[0].dep||stops[0].arr, arrT=lastItem.arr||lastItem.dep;
-  const arrAdj=(_simDelayOn&&finalD>0&&phase!=='done')?` <span class="jr-eta-adj">${finalD}분 지연 예상</span>`:'';
+  let arrAdj='';
+  if(_simDelayOn){
+    if(phase==='running'&&dly>0) arrAdj=` <span class="jr-eta-adj">(${addMinToClock(arrT,dly)} 도착)</span>`;
+    else if(phase==='before'&&finalD>0) arrAdj=` <span class="jr-eta-adj">${finalD}분 지연 예상</span>`;
+  }
   const delayBadge=(_simDelayOn&&dly>0&&phase==='running')
     ?`<div class="jr-delay-live">🔴 현재 약 <b>${dly}분</b> 지연 운행 중</div><div class="jr-delay-caveat">지연 정보는 실제 운행 상황과 차이가 있을 수 있습니다</div>`:'';
   body.innerHTML=`
