@@ -80,10 +80,10 @@ function _simModel(){
     (l.routes||[{stations:l.stations}]).forEach(r=>r.stations.forEach(n=>{ if(!EXC.has(n))set.add(n); }));
     if(set.size)lineSets.push(set);
   });
-  const load={};
-  ALL_TRAINS.forEach(t=>t.stops.forEach(s=>{if(hasTime(s.arr)||hasTime(s.dep))load[s.s]=(load[s.s]||0)+1;}));
-  return _simModelCache={lineSets,load};
+  return _simModelCache={lineSets};
 }
+// 역별 승차 혼잡 점수 0~1 (인게임 승객 통계 기반, nimbi_pax.js). 승객 적은 역·시골역=0.
+function _paxScore(name){ return (typeof STATION_PAX!=='undefined'&&STATION_PAX[name])?STATION_PAX[name]/100:0; }
 // 전철 병행 구간 판정: 같은 전철 노선과 '3개 이상 연속' 공유되는 구간만 true.
 // (경부고속선·호남고속선처럼 드문드문 겹치는 역은 병행으로 보지 않음)
 function _metroParSections(timed){
@@ -131,10 +131,13 @@ function _isSingleTrack(a,b){ return _SIM_SINGLE_TRACK.has(a)&&_SIM_SINGLE_TRACK
 const _CAUSE_MISC=['신호 대기','선행 열차 간격 조정','운전 정리 지시','승강장 혼선'];
 function _sectionCause(rush, metroPar, congHi, weather, r, singleTrack){
   if(singleTrack && r<0.7) return '단선 교행 대기';   // 단선 구간에서만
-  if(weather!=='맑음' && r<0.32) return weather==='비'?'우천 서행':'기상 악화 서행';
+  if(weather!=='맑음'){                                 // 악천후일수록 서행 잦음
+    const g=weather==='비'?0.3:weather==='폭우·폭설'?0.55:0.78;
+    if(r<g) return weather==='비'?'우천 서행':'기상 악화 서행';
+  }
   if(rush) return '출퇴근 승객 집중';
   if(metroPar) return '전철 병행 구간 혼잡';
-  if(congHi) return '승객 집중·정차 지연';
+  if(congHi) return '승차 혼잡';
   return _CAUSE_MISC[Math.floor(r*_CAUSE_MISC.length)%_CAUSE_MISC.length];
 }
 
@@ -156,11 +159,12 @@ function _computeProfile(t){
     if(rm==null){m.push(m.length?m[m.length-1]:0);continue;}
     if(prev>=0&&rm<prev-60)off+=1440; m.push(rm+off); prev=rm; }
   const ctx=_simDayContext();
-  const {load}=_simModel();
+  _simModel();
   const secN=timed.length-1;
   const metroParArr=_metroParSections(timed);   // 같은 노선 3연속 공유 구간만 true
-  let ms=0,cs=0; for(let i=0;i<timed.length;i++){cs+=load[timed[i].s]||0;if(i<secN&&metroParArr[i])ms++;}
-  const metroFrac=ms/Math.max(1,secN), congNorm=Math.min(1,(cs/timed.length)/_SIM_CONG_REF);
+  // 승차 혼잡: 승객 수 많은 역에서만. _paxScore(역)=0~1(고승객역=1, 시골역/종착역=0)
+  let ms=0,cs=0; for(let i=0;i<timed.length;i++){cs+=_paxScore(timed[i].s);if(i<secN&&metroParArr[i])ms++;}
+  const metroFrac=ms/Math.max(1,secN), congNorm=Math.min(1,cs/Math.max(1,timed.length));
   const causeFactor=0.6+0.9*(0.5*metroFrac+0.5*congNorm);
   const runMin=Math.max(1,m[m.length-1]-m[0]);
   const lenFactor=Math.min(1, runMin/180);                 // 단거리↓
@@ -185,24 +189,32 @@ function _computeProfile(t){
   if(inherited>0){ events.push({idx:0,delta:Math.round(inherited),cause:'전 편성 회차 지연'}); dominant='회차 지연'; }
 
   if(flagged||surprise||inherited>0){
-    const incUnit=(flagged?Math.max(0.6,(f.max||6)/11):0.6)*(0.6+0.4*lenFactor)*severity*ctx.magMult;
+    // 대형 원인(기상 서행·단선 교행)은 인게임 범위까지 커질 수 있음
+    const bigUnit=(flagged?Math.max(0.6,(f.max||6)/11):0.6)*(0.6+0.4*lenFactor)*severity*ctx.magMult;
+    // 소형 원인(전철 병행·승차 혼잡·출퇴근 집중)은 소폭 → 회복으로 웬만해선 2분 이하로 끝남
+    const smallUnit=0.45+0.5*severity;
     const evBase=(flagged?Math.min(0.34,effProb/100*0.45+0.06):0.05)*(0.6+0.5*severity);
     let cur=inherited;
     for(let i=0;i<secN;i++){
       const dt=Math.max(1,m[i+1]-m[i]);
       const metroPar=metroParArr[i];   // 같은 전철 노선 3연속 공유 구간만
       const singleTrack=_isSingleTrack(timed[i].s, timed[i+1].s);   // 단선 교행 대기 구간
-      const cong=Math.min(1,(((load[timed[i].s]||0)+(load[timed[i+1].s]||0))/2)/_SIM_CONG_REF);
+      const cong=_paxScore(timed[i].s);       // 출발역 승차 혼잡도(0~1) — 고승객역만 높음
+      const congHi=cong>0.6;                   // 승객 많은 역에서만 승차 혼잡
       const rush=ctx.weekend?false:_isRush(m[i]);
-      const exposure=Math.min(1, 0.45*(metroPar?1:0)+0.45*cong+(rush?0.25:0)+(singleTrack?0.25:0));
+      const exposure=Math.min(1, 0.4*(metroPar?1:0)+0.5*cong+(rush?0.2:0)+(singleTrack?0.3:0));
       const ra=_seededRand(seed+i*2.7+0.5), rb=_seededRand(seed+i*2.7+1.9), rc=_seededRand(seed+i*2.7+3.3), rd=_seededRand(seed+i*2.7+5.1);
       const pInc=evBase*(0.35+exposure*1.3);
       let inc=0, cause=null;
-      if(ra<pInc){ inc=incUnit*(0.6+rb)*(rush?1.25:1);
-        cause=_sectionCause(rush, metroPar, cong>0.55, ctx.weather, rd, singleTrack); }
-      // 회복: 지연이 있고 여유 구간일 때만, 구간 소요·상한으로 조금씩만
+      if(ra<pInc){
+        cause=_sectionCause(rush, metroPar, congHi, ctx.weather, rd, singleTrack);
+        const big=(cause==='단선 교행 대기'||cause==='우천 서행'||cause==='기상 악화 서행');
+        inc=big ? bigUnit*(0.6+rb) : smallUnit*(0.5+0.6*rb); }
+      // 회복: 지연이 있고 여유 구간일 때만, 구간 소요·상한으로 조금씩만.
+      // 악천후 중에는 회복이 더뎌 지연이 누적(드문 재해일에 30분+ 발생 여지).
+      const recW=ctx.weather==='맑음'?1:ctx.weather==='비'?0.85:ctx.weather==='폭우·폭설'?0.6:0.4;
       let rec=0;
-      if(cur>0 && inc===0 && rc<0.35+0.4*(1-exposure)) rec=Math.min(cur,_SIM_REC_RATE*dt,_SIM_REC_CAP)*(0.5+0.5*rc);
+      if(cur>0 && inc===0 && rc<(0.35+0.4*(1-exposure))*recW) rec=Math.min(cur,_SIM_REC_RATE*dt,_SIM_REC_CAP)*(0.5+0.5*rc)*recW;
       cur=Math.max(0, Math.min(ctx.bigCap, cur+inc-rec));
       cd.push(cur);
       if(inc>=0.5&&cause){ events.push({idx:i+1,delta:+inc.toFixed(1),cause}); if(!dominant||inc>2)dominant=dominant&&inc<=2?dominant:cause; }
