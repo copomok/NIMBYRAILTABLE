@@ -7749,6 +7749,14 @@ function renderSettingsSection(el){
     <div style="font-size:11px;color:var(--text3);margin-top:10px;line-height:1.6">
       모드는 이 기기에만 저장됩니다. 워치 모드는 최소 화면으로 전환되며, 화면의 📱 버튼으로 언제든 돌아올 수 있습니다.
     </div>
+    <div style="font-size:13px;font-weight:800;color:var(--text1);margin:18px 0 10px">지연 시뮬레이션</div>
+    <div class="sim-toggle-card">
+      <div class="sim-toggle-info">
+        <div class="sim-toggle-title">🔴 지연 시뮬레이션</div>
+        <div class="sim-toggle-desc">예보 확률을 바탕으로 각 열차에 실제 지연을 부여해 <b>지도·탑승 여정·전광판</b>의 위치·시각에 반영합니다. 시간표 조회는 정시 그대로입니다.</div>
+      </div>
+      <button class="sim-switch${_simDelayOn?' on':''}" onclick="toggleSimDelay()" role="switch" aria-checked="${_simDelayOn}"><span class="sim-knob"></span></button>
+    </div>
   </div>`;
 }
 
@@ -9673,6 +9681,7 @@ function _siDepartureBoardHTML(name, trains, limit){
   const rows=trains.map(t=>{
     const s=t.stops.find(x=>x.s===trainName);
     if(!s) return null;
+    if(t.dest===trainName||(hasTime(s.arr)&&!hasTime(s.dep))) return null; // 당역종착은 출발판 제외(도착판에만)
     const depStr=s.dep||s.arr; if(!depStr) return null;
     const m=toMin(depStr); if(m===null) return null;
     let diff=m-nowMin; if(diff< -180) diff+=1440; // 자정 넘긴 새벽 열차 보정
@@ -9859,6 +9868,8 @@ function _delayedTrainsHTML(){
 function toggleSimDelay(){
   _simDelayOn=!_simDelayOn;
   try{localStorage.setItem('nimbi_simdelay',_simDelayOn?'1':'0');}catch(e){}
+  const sc=document.getElementById('my-sub-content');
+  if(sc&&sc.querySelector('.set-modes'))renderSettingsSection(sc);
   if(typeof renderSIContent==='function'){const el=document.getElementById('result-delay'); if(el&&document.getElementById('panel-delay')?.classList.contains('active'))renderSIDelay(el);}
   const de=document.getElementById('result-delay'); if(de&&de.offsetParent!==null)renderSIDelay(de);
   if(_journeyNo&&typeof _renderJourney==='function'){const b=document.getElementById('journey-body'); if(b)b._scrolledOnce=true; _renderJourney();}
@@ -9874,7 +9885,7 @@ function _outlookHTML(){
   const rows=o.rows.map(r=>{
     const lo=Math.max(1,Math.round(r.est*0.6)), hi=Math.max(lo+2,Math.round(r.est*1.25));
     const rng=r.est<5?`${r.est}분 내외`:`${lo}~${hi}분`;
-    return `<div class="ol-row"><span class="ol-tr">${_opsEsc(gl(r.t.grade))} ${_opsEsc(r.t.no)}</span><span class="ol-route">${_opsEsc(r.t.stops[0].s)}→${_opsEsc(r.t.dest)}</span><span class="ol-rng">${rng}</span></div>`;
+    return `<button class="ol-row" onclick="openJourney('${_opsEsc(r.t.no)}')"><span class="ol-tr">${_opsEsc(gl(r.t.grade))} ${_opsEsc(r.t.no)}</span><span class="ol-route">${_opsEsc(r.t.stops[0].s)}→${_opsEsc(r.t.dest)}${r.cause?` · <span class="ol-cz">${_opsEsc(r.cause)}</span>`:''}</span><span class="ol-rng">${rng}</span></button>`;
   }).join('');
   return `<div class="outlook-card${bad?' bad':''}">
     <div class="ol-head">${wxIco} 오늘의 운행 전망 <span class="ol-wx">${_opsEsc(o.ctx.weather)}${o.ctx.weekend?' · 주말':''}</span></div>
@@ -9886,12 +9897,8 @@ function _outlookHTML(){
 function renderSIDelay(el){
   const model=DELAY_MODEL;
   el.innerHTML=`<div style="margin-top:12px">
-    <div class="sim-toggle-card">
-      <div class="sim-toggle-info">
-        <div class="sim-toggle-title">🔴 지연 시뮬레이션</div>
-        <div class="sim-toggle-desc">예보 확률을 바탕으로 각 열차에 실제 지연을 부여해 <b>지도·탑승 여정·전광판</b>의 위치·시각에 반영합니다. 시간표 조회는 정시 그대로입니다.</div>
-      </div>
-      <button class="sim-switch${_simDelayOn?' on':''}" onclick="toggleSimDelay()" role="switch" aria-checked="${_simDelayOn}"><span class="sim-knob"></span></button>
+    <div style="background:var(--bg3);border-radius:10px;padding:9px 14px;margin-bottom:12px;font-size:12px;color:var(--text2)">
+      🔴 지연 시뮬레이션 <b style="color:${_simDelayOn?'var(--red)':'var(--text3)'}">${_simDelayOn?'ON':'OFF'}</b> · 마이페이지 ▸ <b>설정</b>에서 켜고 끌 수 있습니다
     </div>
     ${_outlookHTML()}
     ${_delayedTrainsHTML()}

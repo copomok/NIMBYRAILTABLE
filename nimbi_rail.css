@@ -1957,3 +1957,8 @@ button, select, input[type=range],
 .fc-fold[open] summary::after{content:" ▾"}
 .fc-fold[open] summary{border-radius:12px 12px 0 0;margin-bottom:8px}
 .fc-fold-sub{font-size:11px;font-weight:400;color:var(--text3);margin-left:6px}
+
+/* 전망 리스트: 클릭 가능한 행 + 주 지연 사유 */
+button.ol-row{width:100%;background:none;border:none;border-top:1px dashed var(--border);font:inherit;color:inherit;cursor:pointer}
+button.ol-row:hover{background:var(--bg3)}
+.ol-cz{color:#ffb454;font-weight:600}

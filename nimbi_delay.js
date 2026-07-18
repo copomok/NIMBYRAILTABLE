@@ -374,7 +374,7 @@ function _simOutlook(limit){
       const fin=pr.cd.length?pr.cd[pr.cd.length-1]:0;
       const peak=pr.cd.length?Math.max.apply(null,pr.cd):0;
       const est=Math.max(fin,peak); if(est<3)return;
-      rows.push({t,est});
+      rows.push({t,est,cause:pr.cause||null});
     });
     rows.sort((a,b)=>b.est-a.est);
     return {ctx, rows:rows.slice(0,limit||8), total:rows.length};
