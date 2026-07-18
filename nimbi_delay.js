@@ -240,7 +240,10 @@ function _computeProfile(t){
     let cur=inherited, recTotal=0;
     for(let i=0;i<secN;i++){
       const dt=Math.max(1,m[i+1]-m[i]);
-      const metroPar=metroParArr[i];   // 같은 전철 노선 3연속 공유 구간만
+      // 전철 병행 지연은 전철 운행 시간대(05:10~00:30)에만 발생
+      const tod=((m[i]%1440)+1440)%1440;
+      const metroSvc=(tod>=310||tod<=30);
+      const metroPar=metroParArr[i]&&metroSvc;   // 같은 전철 노선 3연속 공유 구간만
       const singleTrack=_isSingleTrack(timed[i].s, timed[i+1].s);   // 단선 교행 대기 구간
       const cong=_paxScore(timed[i].s);       // 출발역 승차 혼잡도(0~1) — 고승객역만 높음
       const congHi=cong>0.6;                   // 승객 많은 역에서만 승차 혼잡
@@ -264,18 +267,22 @@ function _computeProfile(t){
       //  악천후 중에는 회복이 더뎌 지연이 누적(재해일에 30분+ 발생 여지).
       let rec=0, dcut=0;
       if(cur>0 && inc===0){
-        const urg=Math.min(1, cur/8);                            // 지연 클수록 적극적(8분+ 최대)
-        const gate=(0.25+0.55*urg)*ctx.recW*(0.9+0.05*go.prio);  // 시도 확률도 지연에 비례
+        // 지연 비례 적극성: +3분 낮음 → +8분 조금 → +20분 적극 → +40분+ 최대
+        const urg=Math.min(1, Math.pow(cur/40, 0.6));
+        const gate=(0.15+0.8*urg)*ctx.recW*(0.9+0.05*go.prio);   // 회복 시도 확률(지연 클수록↑)
         if(rc<gate){
           const runRec=Math.min(0.16*dt*recFrac, 0.8)*(0.5+0.5*rc);            // 주행 여유 사용
           dcut=(cur>=2&&dwell[i+1]>=2)?Math.min(dwell[i+1]-1,1)*(0.4+0.6*urg):0; // 정차 단축(최대 1분)
           rec=Math.min(cur, (runRec+dcut)*ctx.recW, _SIM_REC_HARD);            // 역당 상한 ≈1분
         }
       }
+      const prevCur=cur;
       cur=Math.max(0, Math.min(ctx.bigCap, cur+inc-rec));
-      cd.push(cur); recTotal+=rec;
+      // 회복 판정: 이유와 무관하게 '이전 역 대비 지연 감소분' 전부를 회복 운전으로 계산
+      const drop=Math.max(0, prevCur-cur);
+      cd.push(cur); recTotal+=drop;
       if(inc>=0.5&&cause){ events.push({idx:i+1,delta:+inc.toFixed(1),cause}); if(!dominant||inc>2)dominant=dominant&&inc<=2?dominant:cause; }
-      else if(rec>=0.5) events.push({idx:i+1,delta:-+rec.toFixed(1),cause:dcut>=0.3?'정차 단축·회복 운전':'회복 운전'});
+      else if(drop>=0.5) events.push({idx:i+1,delta:-+drop.toFixed(1),cause:dcut>=0.3?'정차 단축·회복 운전':'회복 운전'});
     }
     if(!dominant){ const anyInc=events.find(e=>e.delta>0); dominant=anyInc?anyInc.cause:null; }
     var _recTotal=recTotal;

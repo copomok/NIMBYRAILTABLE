@@ -2564,13 +2564,9 @@ const CONFIRMED_ROTATION = (()=>{
     {id:"보은 1(보은주박)", seq:["1892","1891","1894","1893","1896","1897"]},
     {id:"보은 2", seq:["1895","1898"]},
     // 영주 소속
-    {id:"영주 1", seq:["1622","1625","1626","1633"]},
-    {id:"영주 2", seq:["1634","1627","1628","1635"]},
-    {id:"영주 3(태백황지주박)", seq:["1623","1624","1629","1632"]},
-    {id:"영주 4(태백황지주박)", seq:["1621","1630"]},
-    {id:"영주 5", seq:["1636","1631"]},
-    {id:"영주 6(태백황지주박)", seq:["1641","1644"]},
-    {id:"영주 7(부산 격일주박)", seq:["1643","1642"]},
+    {id:"영주 1", seq:["1622","1623","1624","1625","1626","1627","1628","1629","1630","1631"]},
+    {id:"영주 2(태백황지주박)", seq:["1621","1634","1641","1642","1633","1632"]},
+    {id:"영주 3", seq:["1636","1643","1644","1635"]},
     // 대전 소속 — 1·2편성 국악와인열차
     {id:"대전 1(국악와인)", seq:["1381","1384","1385","1388","1391","1394","1397","1400"]},
     {id:"대전 2(국악와인·남대구주박)", seq:["1382","1387","1390","1393","1396","1399"]},
@@ -5289,12 +5285,19 @@ function confirmBooking(trainNo,fromStn,toStn,depTime,arrTime){
   const travelDate=dateInput&&dateInput.value?dateInput.value:todayLocalStr();
 
   // 오늘 날짜 예매 시 출발 시각이 현재 시각보다 이전이면 차단
+  // (지연 시뮬레이션 중 지연 열차는 '실제 지연 출발 예정 시각'까지 예매 가능)
   if(travelDate===todayLocalStr()){
     const nowCheck=new Date();
     const nowMCheck=nowCheck.getHours()*60+nowCheck.getMinutes();
     const depMCheck=toMin(depTime);
-    if(depMCheck!==null && depMCheck<nowMCheck){
-      alert(`이미 출발한 열차는 예매할 수 없습니다.\n\n${fromStn} ${depTime} 출발 → 현재 시각 ${String(nowCheck.getHours()).padStart(2,'0')}:${String(nowCheck.getMinutes()).padStart(2,'0')}`);
+    let bookDelay=0;
+    if(depMCheck!==null&&typeof _simDelayOn!=='undefined'&&_simDelayOn&&typeof _simDelayAtStop==='function'){
+      const timedStops=t.stops.filter(s=>hasTime(s.arr)||hasTime(s.dep));
+      const fi=timedStops.findIndex(s=>s.s===fromStn);
+      if(fi>=0) bookDelay=_simDelayAtStop(t,fi)||0;
+    }
+    if(depMCheck!==null && depMCheck+bookDelay<nowMCheck){
+      alert(`이미 출발한 열차는 예매할 수 없습니다.\n\n${fromStn} ${depTime} 출발${bookDelay>0?` (약 ${bookDelay}분 지연)`:''} → 현재 시각 ${String(nowCheck.getHours()).padStart(2,'0')}:${String(nowCheck.getMinutes()).padStart(2,'0')}`);
       return;
     }
   }
@@ -7654,6 +7657,7 @@ const MY_TITLES = {
   daytrip:'🌄 당일치기 추천',
   terminal:'🖥️ 터미널 뷰',
   puzzle:'🧩 루트 퍼즐',
+  settings:'⚙️ 설정',
 };
 
 function openMySection(section){
@@ -7702,8 +7706,121 @@ function openMySection(section){
   } else if(section==='puzzle'){
     contentEl.innerHTML = '<div id="result-puzzle"></div>';
     renderRoutePuzzle();
+  } else if(section==='settings'){
+    renderSettingsSection(contentEl);
   }
 }
+
+// ══════════════════════════════════════════
+// ⚙️ 설정 — 환경 모드 (PC / 모바일 / 워치)
+// ══════════════════════════════════════════
+let _uiMode=(()=>{try{return localStorage.getItem('nimbi_uimode')||'mobile';}catch(e){return 'mobile';}})();
+function _applyUiMode(){
+  const r=document.documentElement;
+  r.classList.remove('ui-pc','ui-mobile','ui-watch');
+  r.classList.add('ui-'+_uiMode);
+  const w=document.getElementById('watch-view');
+  if(_uiMode==='watch'){ if(!w)_buildWatchView(); _renderWatchView(); _startWatchTimer(); }
+  else { if(w)w.remove(); _stopWatchTimer(); }
+}
+function setUiMode(m){
+  if(!['pc','mobile','watch'].includes(m))return;
+  _uiMode=m;
+  try{localStorage.setItem('nimbi_uimode',m);}catch(e){}
+  _applyUiMode();
+  const el=document.getElementById('my-sub-content');
+  if(el&&el.querySelector('.set-modes'))renderSettingsSection(el);
+}
+function renderSettingsSection(el){
+  const modes=[
+    {id:'pc',    icon:'🖥️', name:'PC 모드',    desc:'넓은 화면 · 키보드 조작(+/- 확대, WASD·방향키 이동)'},
+    {id:'mobile',icon:'📱', name:'모바일 모드', desc:'기본 모드 · 현재 화면 그대로'},
+    {id:'watch', icon:'⌚', name:'워치 모드',   desc:'최소 정보만 · 열차·다음 정차·지연·승강장'},
+  ];
+  el.innerHTML=`<div style="padding:4px 0">
+    <div style="font-size:13px;font-weight:800;color:var(--text1);margin-bottom:10px">환경 모드</div>
+    <div class="set-modes">
+      ${modes.map(m=>`<button class="set-mode-btn${_uiMode===m.id?' on':''}" onclick="setUiMode('${m.id}')">
+        <span class="set-mode-icon">${m.icon}</span>
+        <span class="set-mode-info"><b>${m.name}</b><small>${m.desc}</small></span>
+        ${_uiMode===m.id?'<span class="set-mode-check">✓</span>':''}
+      </button>`).join('')}
+    </div>
+    <div style="font-size:11px;color:var(--text3);margin-top:10px;line-height:1.6">
+      모드는 이 기기에만 저장됩니다. 워치 모드는 최소 화면으로 전환되며, 화면의 📱 버튼으로 언제든 돌아올 수 있습니다.
+    </div>
+  </div>`;
+}
+
+// ── ⌚ 워치 모드: 최소 정보 화면 ──
+let _watchTimer=null,_watchTrainNo=null;
+function _startWatchTimer(){ _stopWatchTimer(); _watchTimer=setInterval(_renderWatchView,30000); }
+function _stopWatchTimer(){ if(_watchTimer){clearInterval(_watchTimer);_watchTimer=null;} }
+function _buildWatchView(){
+  const d=document.createElement('div'); d.id='watch-view';
+  document.body.appendChild(d);
+}
+function _watchPickTrains(nowM){
+  const rows=[];
+  ALL_TRAINS.forEach(t=>{
+    const st=getCurrentStatus(t,nowM-( _simDelayOn?_simDelay(t,nowM):0));
+    if(st&&st.status==='running')rows.push(t);
+  });
+  return rows.slice(0,60);
+}
+function _renderWatchView(){
+  const host=document.getElementById('watch-view'); if(!host)return;
+  const n=new Date(), nowM=n.getHours()*60+n.getMinutes();
+  const running=_watchPickTrains(nowM);
+  if(_watchTrainNo&&!running.find(t=>t.no===_watchTrainNo))_watchTrainNo=null;
+  const _jn=(typeof _journeyNo!=='undefined')?_journeyNo:null; // 선언 전 호출 대비
+  if(!_watchTrainNo&&(_jn&&running.find(t=>t.no===_jn)))_watchTrainNo=_jn;
+  if(!_watchTrainNo&&running.length)_watchTrainNo=running[0].no;
+  const t=running.find(x=>x.no===_watchTrainNo);
+  const gl=g=>(typeof GL!=='undefined'&&GL[g])||g;
+  let card='';
+  if(t){
+    const d=_simDelayOn?_simDelay(t,nowM):0;
+    const st=getCurrentStatus(t,nowM-d);
+    const timed=t.stops.filter(s=>hasTime(s.arr)||hasTime(s.dep));
+    const last=timed[timed.length-1];
+    const termD=_simDelayOn?_simDelayAtStop(t,timed.length-1):0;
+    const eta=addMinToClock(last.arr||last.dep,termD);
+    const nextStn=st.atStn||st.nextStn||'';
+    const plat=(nextStn&&typeof _realPlatform==='function')?_realPlatform(t.no,nextStn):null;
+    card=`<div class="wv-card" style="--gc:${GRADE_COLORS[t.grade]||'#888'}">
+      <div class="wv-head"><span class="wv-grade">${_opsEsc(gl(t.grade))}</span> <b>${_opsEsc(t.no)}</b> <span class="wv-dest">${_opsEsc(t.dest)}행</span></div>
+      <div class="wv-row">${st.atStn?`🚉 ${_opsEsc(st.atStn)} 정차 중`:`▶ 다음 ${_opsEsc(st.nextStn||'-')}`}${plat!=null?` · ${plat}번`:''}</div>
+      <div class="wv-row ${d>0?'wv-late':''}">${d>0?`🔴 약 ${d}분 지연`:'🟢 정시 운행'}</div>
+      <div class="wv-row">🏁 ${_opsEsc(last.s)} ${eta} 도착${termD>0?` (+${termD})`:''}</div>
+    </div>`;
+  } else card=`<div class="wv-card"><div class="wv-row">운행 중인 열차가 없습니다</div></div>`;
+  host.innerHTML=`
+    <div class="wv-clock">${String(n.getHours()).padStart(2,'0')}:${String(n.getMinutes()).padStart(2,'0')}</div>
+    ${card}
+    <select class="wv-sel" onchange="_watchTrainNo=this.value;_renderWatchView()">
+      ${running.map(x=>`<option value="${_opsEsc(x.no)}"${x.no===_watchTrainNo?' selected':''}>${_opsEsc(gl(x.grade))} ${_opsEsc(x.no)} ${_opsEsc(x.dest)}행</option>`).join('')}
+    </select>
+    <button class="wv-exit" onclick="setUiMode('mobile')">📱 모바일 모드</button>`;
+}
+
+// ── 🖥️ PC 모드: 키보드 조작 (+/- 줌 · WASD/방향키 노선도 이동) ──
+document.addEventListener('keydown',e=>{
+  if(_uiMode!=='pc')return;
+  const tag=(e.target&&e.target.tagName)||'';
+  if(tag==='INPUT'||tag==='TEXTAREA'||tag==='SELECT'||e.target.isContentEditable)return;
+  const wrap=document.getElementById('map-svg-wrap');
+  if(e.key==='+'||e.key==='='){ if(typeof mapZoomIn==='function'){mapZoomIn();e.preventDefault();} }
+  else if(e.key==='-'||e.key==='_'){ if(typeof mapZoomOut==='function'){mapZoomOut();e.preventDefault();} }
+  else if(wrap){
+    const P=90;
+    if(e.key==='ArrowUp'||e.key==='w'||e.key==='W'){wrap.scrollTop-=P;e.preventDefault();}
+    else if(e.key==='ArrowDown'||e.key==='s'||e.key==='S'){wrap.scrollTop+=P;e.preventDefault();}
+    else if(e.key==='ArrowLeft'||e.key==='a'||e.key==='A'){wrap.scrollLeft-=P;e.preventDefault();}
+    else if(e.key==='ArrowRight'||e.key==='d'||e.key==='D'){wrap.scrollLeft+=P;e.preventDefault();}
+  }
+});
+setTimeout(()=>{try{_applyUiMode();}catch(e){}},0); // 전체 스크립트 로드 후 모드 적용
 
 // ══════════════════════════════════════════
 // 🎫 열차 예매 탭
@@ -8557,11 +8674,17 @@ function confirmXferBooking(){
   if(!X.legs.every(L=>L.cls)){alert('두 구간 모두 좌석 등급을 선택해주세요.');return;}
   const travelDate=X.date||todayLocalStr();
   const count=X.count||1, discount=X.discount||'none';
-  // 오늘 예매 시 선행 열차가 이미 출발했으면 차단
+  // 오늘 예매 시 선행 열차가 이미 출발했으면 차단 (지연 열차는 지연 출발 시각까지 허용)
   if(travelDate===todayLocalStr()){
     const now=new Date(); const nowM=now.getHours()*60+now.getMinutes();
     const depM=toMin(X.legs[0].depT);
-    if(depM!==null&&depM<nowM){alert(`이미 출발한 열차는 예매할 수 없습니다.\n\n${X.legs[0].from} ${X.legs[0].depT} 출발`);return;}
+    let xd=0;
+    if(depM!==null&&typeof _simDelayOn!=='undefined'&&_simDelayOn&&typeof _simDelayAtStop==='function'){
+      const xt=ALL_TRAINS.find(v=>v.no===X.legs[0].trainNo);
+      if(xt){ const ts=xt.stops.filter(s=>hasTime(s.arr)||hasTime(s.dep));
+        const fi=ts.findIndex(s=>s.s===X.legs[0].from); if(fi>=0)xd=_simDelayAtStop(xt,fi)||0; }
+    }
+    if(depM!==null&&depM+xd<nowM){alert(`이미 출발한 열차는 예매할 수 없습니다.\n\n${X.legs[0].from} ${X.legs[0].depT} 출발${xd>0?` (약 ${xd}분 지연)`:''}`);return;}
   }
   // 기존 승차권과 시간 겹침 검사 (각 구간)
   const existing=loadTickets().filter(tk=>tk.status==='active'&&tk.travelDate===travelDate);
