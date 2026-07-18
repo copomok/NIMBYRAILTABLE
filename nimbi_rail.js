@@ -9885,7 +9885,7 @@ function _outlookHTML(){
   const rows=o.rows.map(r=>{
     const lo=Math.max(1,Math.round(r.est*0.6)), hi=Math.max(lo+2,Math.round(r.est*1.25));
     const rng=r.est<5?`${r.est}분 내외`:`${lo}~${hi}분`;
-    return `<button class="ol-row" onclick="openJourney('${_opsEsc(r.t.no)}')"><span class="ol-tr">${_opsEsc(gl(r.t.grade))} ${_opsEsc(r.t.no)}</span><span class="ol-route">${_opsEsc(r.t.stops[0].s)}→${_opsEsc(r.t.dest)}${r.cause?` · <span class="ol-cz">${_opsEsc(r.cause)}</span>`:''}</span><span class="ol-rng">${rng}</span></button>`;
+    return `<button class="ol-row" onclick="openJourney('${_opsEsc(r.t.no)}')"><span class="ol-tr">${_opsEsc(gl(r.t.grade))} ${_opsEsc(r.t.no)}</span><span class="ol-route">${_opsEsc(r.t.stops[0].s)}→${_opsEsc(r.t.dest)}</span><span class="ol-rng">${rng}${r.cause?`<span class="ol-cz"> (${_opsEsc(r.cause)})</span>`:''}</span></button>`;
   }).join('');
   return `<div class="outlook-card${bad?' bad':''}">
     <div class="ol-head">${wxIco} 오늘의 운행 전망 <span class="ol-wx">${_opsEsc(o.ctx.weather)}${o.ctx.weekend?' · 주말':''}</span></div>
@@ -9897,9 +9897,6 @@ function _outlookHTML(){
 function renderSIDelay(el){
   const model=DELAY_MODEL;
   el.innerHTML=`<div style="margin-top:12px">
-    <div style="background:var(--bg3);border-radius:10px;padding:9px 14px;margin-bottom:12px;font-size:12px;color:var(--text2)">
-      🔴 지연 시뮬레이션 <b style="color:${_simDelayOn?'var(--red)':'var(--text3)'}">${_simDelayOn?'ON':'OFF'}</b> · 마이페이지 ▸ <b>설정</b>에서 켜고 끌 수 있습니다
-    </div>
     ${_outlookHTML()}
     ${_delayedTrainsHTML()}
     <details class="fc-fold"${_simDelayOn?'':' open'}>

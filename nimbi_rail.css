@@ -1961,4 +1961,5 @@ button, select, input[type=range],
 /* 전망 리스트: 클릭 가능한 행 + 주 지연 사유 */
 button.ol-row{width:100%;background:none;border:none;border-top:1px dashed var(--border);font:inherit;color:inherit;cursor:pointer}
 button.ol-row:hover{background:var(--bg3)}
-.ol-cz{color:#ffb454;font-weight:600}
+.ol-cz{display:none;color:#ffb454;font-weight:600}
+.ui-pc .ol-cz{display:inline}
