@@ -584,6 +584,14 @@ const NOTICES = [
 <strong>■ 지연은 이렇게 정해집니다</strong><br>
 지연 확률·크기는 <strong>인게임 지연 예측(노선·등급별)</strong>을 그대로 기반으로 합니다. 여기에 <span class="n-highlight">열차가 몰리는 혼잡 구간</span>과 <span class="n-highlight">전철과 병행하는 구간</span>을 <strong>참고</strong>해 "어느 노선에서 주로 지연되는지" 확률을 가감합니다. (별개 선로인 경부선 남안양~천안은 전철 병행에서 제외) 그래서 수도권·간선 혼잡 노선일수록 지연이 잦고, 한산한 지방 단선은 거의 정시로 운행합니다.<br><br>
 지연은 운행 중 문제 구간에서 서서히 누적됐다가 여유 구간에서 <strong>조금씩만 회복</strong>됩니다(한 번에 크게 줄지 않음). 그래서 지연 예상 열차가 예상보다 일찍·정시에 도착하기도 하고, 반대로 예상에 없던 소폭 지연이 생기기도 합니다. <strong>단거리 열차는 장거리 열차보다 지연 확률·지연량이 적습니다.</strong> 같은 열차는 그날 하루 같은 패턴을 유지합니다(매일 조금씩 달라짐).<br><br>
+
+<strong>■ 더 현실적으로 (관제 시뮬레이션)</strong><br>
+<div class="n-box">
+🕘 <strong>시간대</strong> — 출퇴근(07~09·18~20시)엔 승객 집중으로 지연↑<br>
+🌦️ <strong>요일·날씨</strong> — 날마다 날씨가 달라져 <span class="n-highlight">비·폭설</span> 날은 지연이 늘고, 드문 <span class="n-warn">태풍·기상특보</span> 날에만 30분 이상 대규모 지연이 나타납니다<br>
+🔁 <strong>회차 연쇄</strong> — 앞 편성이 크게 늦고 회차 시간이 짧으면, 다음 열차가 그 지연을 이어받습니다<br>
+📋 <strong>원인·관제 로그</strong> — 탑승 여정에서 지연 원인과 역·시각별 <strong>관제 로그</strong>를 확인할 수 있습니다
+</div><br>
 <span class="n-warn" style="display:block"><strong>시간표 조회 화면은 언제나 정시 그대로</strong>입니다. 시뮬레이션은 라이브 화면에만 적용되며, 실제 운행과 무관한 예측 기반 연출입니다.</span>`
   }
 ];

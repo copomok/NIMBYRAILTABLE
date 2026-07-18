@@ -1859,7 +1859,16 @@ button, select, input[type=range],
 /* 탑승 여정 지연 시각 — 지연된 역은 실제/예정 시각을 빨간 텍스트로 */
 .jr-time-late{color:#ff6b6b!important;font-weight:700}
 .jr-time-diff{font-size:10.5px;opacity:.85}
-.jr-delay-caveat{margin-top:3px;font-size:11px;color:var(--text3);line-height:1.4}
+.jr-delay-cause{margin-top:4px;font-size:12px;font-weight:600;color:#ffb454}
+.jr-delay-cause .jr-wx{color:#ff6b6b;font-weight:700}
+.jr-log{margin-top:6px}
+.jr-log summary{font-size:11.5px;font-weight:700;color:var(--text2);cursor:pointer;list-style:none;padding:3px 0}
+.jr-log summary::-webkit-details-marker{display:none}
+.jr-log summary::before{content:"▸ ";color:var(--text3)}
+.jr-log[open] summary::before{content:"▾ "}
+.jr-log-body{margin-top:3px;max-height:150px;overflow-y:auto;background:var(--bg1);border:1px solid var(--border);border-radius:8px;padding:6px 9px}
+.jr-log-body div{font-size:11px;font-family:var(--mono);color:var(--text2);line-height:1.7}
+.jr-delay-caveat{margin-top:5px;font-size:11px;color:var(--text3);line-height:1.4}
 /* 지연 예측 탭: 지연 운행 중 목록 */
 .delayed-list{margin-bottom:14px;background:var(--bg2);border:1px solid color-mix(in srgb,var(--red) 30%,var(--border));border-radius:12px;padding:12px 12px 8px}
 .delayed-head{font-size:13.5px;font-weight:800;color:var(--text1);margin-bottom:8px}
