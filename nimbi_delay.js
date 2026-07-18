@@ -103,9 +103,13 @@ function _turnaroundBuffer(pt, t){
   return buf>240?null:buf; // 4시간 초과면 같은 서비스 회차로 보지 않음
 }
 
+// ── 단선 구간(인게임 상 유일): 영동선 영주~소천 ──
+const _SIM_SINGLE_TRACK=new Set(['영주','봉화','법전','춘양','소천']);
+function _isSingleTrack(a,b){ return _SIM_SINGLE_TRACK.has(a)&&_SIM_SINGLE_TRACK.has(b); }
 // ── 지연 원인 태그 ──
-const _CAUSE_MISC=['신호 대기','선행 열차 간격 조정','단선 교행 대기','운전 정리 지시','승강장 혼선'];
-function _sectionCause(rush, metroPar, congHi, weather, r){
+const _CAUSE_MISC=['신호 대기','선행 열차 간격 조정','운전 정리 지시','승강장 혼선'];
+function _sectionCause(rush, metroPar, congHi, weather, r, singleTrack){
+  if(singleTrack && r<0.7) return '단선 교행 대기';   // 단선 구간에서만
   if(weather!=='맑음' && r<0.32) return weather==='비'?'우천 서행':'기상 악화 서행';
   if(rush) return '출퇴근 승객 집중';
   if(metroPar) return '전철 병행 구간 혼잡';
@@ -165,14 +169,15 @@ function _computeProfile(t){
     for(let i=0;i<secN;i++){
       const dt=Math.max(1,m[i+1]-m[i]);
       const metroPar=metro.has(timed[i].s)&&metro.has(timed[i+1].s);
+      const singleTrack=_isSingleTrack(timed[i].s, timed[i+1].s);   // 단선 교행 대기 구간
       const cong=Math.min(1,(((load[timed[i].s]||0)+(load[timed[i+1].s]||0))/2)/_SIM_CONG_REF);
       const rush=ctx.weekend?false:_isRush(m[i]);
-      const exposure=Math.min(1, 0.45*(metroPar?1:0)+0.45*cong+(rush?0.25:0));
+      const exposure=Math.min(1, 0.45*(metroPar?1:0)+0.45*cong+(rush?0.25:0)+(singleTrack?0.25:0));
       const ra=_seededRand(seed+i*2.7+0.5), rb=_seededRand(seed+i*2.7+1.9), rc=_seededRand(seed+i*2.7+3.3), rd=_seededRand(seed+i*2.7+5.1);
       const pInc=evBase*(0.35+exposure*1.3);
       let inc=0, cause=null;
       if(ra<pInc){ inc=incUnit*(0.6+rb)*(rush?1.25:1);
-        cause=_sectionCause(rush, metroPar, cong>0.55, ctx.weather, rd); }
+        cause=_sectionCause(rush, metroPar, cong>0.55, ctx.weather, rd, singleTrack); }
       // 회복: 지연이 있고 여유 구간일 때만, 구간 소요·상한으로 조금씩만
       let rec=0;
       if(cur>0 && inc===0 && rc<0.35+0.4*(1-exposure)) rec=Math.min(cur,_SIM_REC_RATE*dt,_SIM_REC_CAP)*(0.5+0.5*rc);
