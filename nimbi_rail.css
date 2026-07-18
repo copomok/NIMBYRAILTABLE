@@ -1846,9 +1846,16 @@ button, select, input[type=range],
 .jr-delay-live b{font-family:var(--mono)}
 .jr-eta-adj{color:#ffb454;font-weight:700;font-family:var(--sans)}
 
-/* 예매/승차권 현재 지연 배너 */
-.booking-delay-banner{margin-top:8px;padding:8px 12px;border-radius:9px;background:color-mix(in srgb,#ffb454 12%,var(--bg2));border:1px solid color-mix(in srgb,#ffb454 45%,var(--border));color:#ffb454;font-size:13px;font-weight:700}
-.booking-delay-banner b{font-family:var(--mono)}
+/* 예매/승차권 지연 안내(코레일톡식) */
+.booking-delay-banner{margin-top:10px;padding:10px 13px;border-radius:10px;background:color-mix(in srgb,#f85149 10%,var(--bg2));border:1px solid color-mix(in srgb,#f85149 42%,var(--border))}
+.bk-delay-head{font-size:13px;font-weight:800;color:#ff6b6b}
+.bk-delay-head b{font-family:var(--sans)}
+.bk-delay-note{margin-top:4px;font-size:11.5px;color:var(--text2);line-height:1.5}
+.bk-delay-live{color:#ffb454;font-weight:700}
+.ticket-delay-est{display:block;margin-top:2px;font-size:11px;font-weight:700;color:#f85149}
+/* 탑승 여정 지연 시각(빨강 괄호) */
+.jr-time-adj{margin-top:2px;font-size:11px;font-family:var(--mono);color:#ff6b6b;font-weight:700}
+.jr-delay-caveat{margin-top:3px;font-size:11px;color:var(--text3);line-height:1.4}
 /* 지연 예측 탭: 지연 운행 중 목록 */
 .delayed-list{margin-bottom:14px;background:var(--bg2);border:1px solid color-mix(in srgb,var(--red) 30%,var(--border));border-radius:12px;padding:12px 12px 8px}
 .delayed-head{font-size:13.5px;font-weight:800;color:var(--text1);margin-bottom:8px}

@@ -7102,12 +7102,11 @@ function _ticketCardHTML(tk){
             if(bs==='done')return '<span class="rt-board-badge rt-board-done" style="margin-left:auto">탑승 완료</span>';
             return '';})()}
       </div>
-      <div class="ticket-card-route">
-        <div class="ticket-station"><span class="ticket-station-name">${tk.fromStn}</span><span class="ticket-time">${tk.depTime||'-'}</span></div>
+      ${(()=>{const t=ALL_TRAINS.find(x=>x.no===tk.trainNo);const est=t?_simFinalDelay(t):0;const de=est>0?`<span class="ticket-delay-est">${est}분 지연 예상</span>`:'';return `<div class="ticket-card-route">
+        <div class="ticket-station"><span class="ticket-station-name">${tk.fromStn}</span><span class="ticket-time">${tk.depTime||'-'}</span>${de}</div>
         <div class="ticket-arrow">→</div>
-        <div class="ticket-station"><span class="ticket-station-name">${tk.toStn}</span><span class="ticket-time">${tk.arrTime||'-'}</span></div>
-      </div>
-      ${(()=>{const t=ALL_TRAINS.find(x=>x.no===tk.trainNo);return t?_bookingDelayBannerHTML(t):'';})()}
+        <div class="ticket-station"><span class="ticket-station-name">${tk.toStn}</span><span class="ticket-time">${tk.arrTime||'-'}</span>${de}</div>
+      </div>`;})()}
       <div class="ticket-card-divider"></div>
       <div class="ticket-card-info">
         <div class="ticket-info-row"><span>탑승일</span><span>${tk.travelDate}</span></div>
@@ -9725,7 +9724,9 @@ function _simDelay(t, clock){
   const span=Math.max(1,lastM-firstM), ramp=Math.min(90,span*0.6);
   return Math.round(tg.D*Math.min(1,(nowM-firstM)/ramp));
 }
-// 현재 지연 운행 중이면 배너 HTML(예매/승차권용). 시뮬 OFF·정시·미운행이면 빈 문자열.
+// 이 열차의 오늘 예상 총 지연분(운행 여부와 무관) — 시뮬 OFF면 0
+function _simFinalDelay(t){ return _simDelayOn?(_simTargetDelay(t).D||0):0; }
+// 현재 지연 운행 중이면 그 지연분, 아니면 0
 function _liveDelayOf(t){
   if(!_simDelayOn)return 0;
   const n=new Date(); const nm=n.getHours()*60+n.getMinutes();
@@ -9734,9 +9735,15 @@ function _liveDelayOf(t){
   const st=getCurrentStatus(t, nm-d);
   return (st&&st.status==='running')?d:0;
 }
+// 예매·승차권용 코레일톡식 지연 안내(예상 지연이 있는 열차만). 현재 운행 중이면 실시간 지연도 함께.
 function _bookingDelayBannerHTML(t){
-  const d=_liveDelayOf(t);
-  return d>0?`<div class="booking-delay-banner">🔴 현재 약 <b>${d}분</b> 지연 운행 중</div>`:'';
+  const est=_simFinalDelay(t); if(est<=0)return '';
+  const live=_liveDelayOf(t);
+  const liveTxt=live>0?`<br><span class="bk-delay-live">현재 약 ${live}분 지연 운행 중</span>`:'';
+  return `<div class="booking-delay-banner">
+    <div class="bk-delay-head">⚠️ 선택하신 열차는 <b>약 ${est}분 지연 예상</b> 열차입니다</div>
+    <div class="bk-delay-note">열차 운행 사항을 확인하고 구입하세요. 지연에 따른 별도 배상은 없습니다.${liveTxt}</div>
+  </div>`;
 }
 // 지연 예측 탭: 지금 지연 운행 중인 열차 목록
 function _delayedTrainsHTML(){
@@ -10683,6 +10690,13 @@ function _renderJourney(){
     const plat=(typeof _realPlatform==='function')?_realPlatform(t.no,st.s):null;
     const tArr=hasTime(st.arr)?st.arr:'', tDep=hasTime(st.dep)?st.dep:'';
     const timeTxt=st.isOrigin?`${tDep||tArr} 출발`:st.isTerm?`${tArr||tDep} 도착`:(tArr&&tDep&&tArr!==tDep?`${tArr}–${tDep}`:(tArr||tDep));
+    // 지연 반영 시각(코레일톡식): 아직 지나지 않은 역만 빨간 괄호로
+    let adjTxt='';
+    if(_simDelayOn&&dly>0&&phase==='running'&&!passed&&!st.isPass){
+      const aA=tArr?addMinToClock(tArr,dly):'', aD=tDep?addMinToClock(tDep,dly):'';
+      const adj=st.isOrigin?aD:st.isTerm?aA:(aA&&aD&&tArr!==tDep?`${aA}–${aD}`:(aA||aD));
+      if(adj)adjTxt=`<div class="jr-time-adj">(${adj})</div>`;
+    }
     const cls=['jr-stop'];
     if(st.isPass)cls.push('pass'); if(passed&&!isCur)cls.push('done'); if(isCur)cls.push('cur'); if(isNext)cls.push('next');
     const nameCls=st.isOrigin?'jr-origin':st.isTerm?'jr-term':'';
@@ -10691,12 +10705,13 @@ function _renderJourney(){
     return `<div class="${cls.join(' ')}" style="--gc:${c}">
       <div class="jr-dot"></div>
       <div class="jr-info"><span class="jr-name ${nameCls}">${_opsEsc(st.s)}${st.isPass?' <span class="jr-passtag">통과</span>':''}${badge}</span>${platTxt}</div>
-      <div class="jr-time">${timeTxt}</div>
+      <div class="jr-time">${timeTxt}${adjTxt}</div>
     </div>`;
   }).join('');
   const depT=stops[0].dep||stops[0].arr, arrT=lastItem.arr||lastItem.dep;
-  const arrAdj=(_simDelayOn&&finalD>0&&phase!=='done')?` <span class="jr-eta-adj">지연 예상 +${finalD}분</span>`:'';
-  const delayBadge=(_simDelayOn&&dly>0&&phase==='running')?`<div class="jr-delay-live">🔴 약 <b>${dly}분</b> 지연 운행 중</div>`:'';
+  const arrAdj=(_simDelayOn&&finalD>0&&phase!=='done')?` <span class="jr-eta-adj">${finalD}분 지연 예상</span>`:'';
+  const delayBadge=(_simDelayOn&&dly>0&&phase==='running')
+    ?`<div class="jr-delay-live">🔴 현재 약 <b>${dly}분</b> 지연 운행 중</div><div class="jr-delay-caveat">지연 정보는 실제 운행 상황과 차이가 있을 수 있습니다</div>`:'';
   body.innerHTML=`
     <div class="jr-header" style="--gc:${c}">
       <div class="jr-h-top">
