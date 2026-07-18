@@ -116,7 +116,7 @@ function _metroParSections(timed){
   }
   return par;
 }
-const _SIM_CONG_REF=280, _SIM_REC_RATE=0.12, _SIM_REC_CAP=1.5;
+const _SIM_CONG_REF=280, _SIM_REC_RATE=0.12, _SIM_REC_CAP=1.5, _SIM_REC_HARD=1.2; // 역당 회복 상한(≈1분)
 
 // ── 편성 회차 선행열차 맵(같은 날 연쇄 지연) ──
 let _simRotPredCache=null,_simRotSuccCache=null;
@@ -226,8 +226,10 @@ function _computeProfile(t){
   // 등급별 회복 특성: 역간 여유 시분 활용률(KTX 50~70% … 무궁화 10~30%) + 선로 우선권
   const go=_gradeOps(t.grade);
   const recFrac=go.rec[0]+(go.rec[1]-go.rec[0])*_seededRand(seed+4.44);
-  const recCap=Math.min(2, 0.9+0.4*go.prio);              // 한 구간 최대 회복(한 번에 크게 안 줄음)
   const prioMult=[1.25,1.1,1.0,0.85][go.prio];            // 낮은 우선순위=지연 사건 잦음
+  // 역별 계획 정차 시분(분) — 지연 시 2분+ 정차역에서 1분 정차로 단축해 회복
+  const dwell=timed.map(s=>{const a=toMin(s.arr),d=toMin(s.dep);
+    return (a!=null&&d!=null)?((d-a+1440)%1440):0;});
 
   if(flagged||surprise||inherited>0||vehSec>=0){
     // 대형 원인(기상 서행·단선 교행)은 인게임 범위까지 커질 수 있음
@@ -255,15 +257,25 @@ function _computeProfile(t){
         inc=_isBigCause(cause,ctx) ? bigUnit*(0.6+rb)
           : _isMidCause(cause)     ? Math.min(5, bigUnit*0.55*(0.6+rb)+smallUnit*0.5)
           :                          smallUnit*(0.5+0.6*rb); }
-      // 회복 운전: 역간 여유 시분(≈소요의 16%)을 등급별 회복률만큼 사용.
-      // 악천후 중에는 회복이 더뎌 지연이 누적(재해일에 30분+ 발생 여지).
-      let rec=0;
-      if(cur>0 && inc===0 && rc<(0.32+0.4*(1-exposure))*ctx.recW*(0.9+0.05*go.prio))
-        rec=Math.min(cur, 0.16*dt*recFrac, recCap)*(0.5+0.5*rc)*ctx.recW;
+      // 회복 운전: 지연이 클수록 적극적으로.
+      //  ① 역간 여유 시분(≈소요의 16%)을 등급별 회복률만큼 사용
+      //  ② 2분 이상 정차역에서는 1분 정차로 단축(정차 단축 회복)
+      //  단, 한 역당 회복은 1분 안팎(_SIM_REC_HARD)까지만 — 비현실적 회복 방지.
+      //  악천후 중에는 회복이 더뎌 지연이 누적(재해일에 30분+ 발생 여지).
+      let rec=0, dcut=0;
+      if(cur>0 && inc===0){
+        const urg=Math.min(1, cur/8);                            // 지연 클수록 적극적(8분+ 최대)
+        const gate=(0.25+0.55*urg)*ctx.recW*(0.9+0.05*go.prio);  // 시도 확률도 지연에 비례
+        if(rc<gate){
+          const runRec=Math.min(0.16*dt*recFrac, 0.8)*(0.5+0.5*rc);            // 주행 여유 사용
+          dcut=(cur>=2&&dwell[i+1]>=2)?Math.min(dwell[i+1]-1,1)*(0.4+0.6*urg):0; // 정차 단축(최대 1분)
+          rec=Math.min(cur, (runRec+dcut)*ctx.recW, _SIM_REC_HARD);            // 역당 상한 ≈1분
+        }
+      }
       cur=Math.max(0, Math.min(ctx.bigCap, cur+inc-rec));
       cd.push(cur); recTotal+=rec;
       if(inc>=0.5&&cause){ events.push({idx:i+1,delta:+inc.toFixed(1),cause}); if(!dominant||inc>2)dominant=dominant&&inc<=2?dominant:cause; }
-      else if(rec>=0.5) events.push({idx:i+1,delta:-+rec.toFixed(1),cause:'회복 운전'});
+      else if(rec>=0.5) events.push({idx:i+1,delta:-+rec.toFixed(1),cause:dcut>=0.3?'정차 단축·회복 운전':'회복 운전'});
     }
     if(!dominant){ const anyInc=events.find(e=>e.delta>0); dominant=anyInc?anyInc.cause:null; }
     var _recTotal=recTotal;
