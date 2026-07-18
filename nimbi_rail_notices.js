@@ -648,5 +648,24 @@ const NOTICES = [
 <strong>■ 지연 시각 3단계 색</strong><br>
 여정 타임라인의 지연 시각이 <span style="color:#eac54f;font-weight:700">~2분 노랑</span> · <span style="color:#f97316;font-weight:700">3~10분 주황</span> · <span style="color:#ff6b6b;font-weight:700">10분 초과 빨강</span>으로 구분됩니다.<br><br>
 <div class="n-box">대부분의 열차는 정시~2분, 3~10분은 비교적 흔하게, 10~20분은 가끔, <strong>30분 이상은 태풍·차량 고장 등 특수 상황에서만</strong> 발생합니다. 승객 혼잡만으로 10분 이상 지연되지 않습니다.</div>`
+  },
+  {
+    date:'2026-07-18',
+    cat:'timetable',
+    title:'무궁화호 #1360 신설 · 운용표 보완',
+    body:`<strong>■ #1360 신설</strong><br>
+대전 → 서울 무궁화호 <span class="n-highlight">#1360</span>이 신설되었습니다. 기존 #1358(12:51발)과 #1362(15:50발) 사이 공백 시간대를 메웁니다.<br><br>
+<table><tr><th>구간</th><th>시각</th></tr>
+<tr><td>대전 출발</td><td><strong>16:40</strong></td></tr>
+<tr><td>서울 도착</td><td><strong>18:37</strong></td></tr></table><br>
+경부선 완행 계통(회덕·신탄진·청주 시내·천안·수원 경유)으로 전 역 정차 패턴은 #1362와 동일합니다.<br><br>
+<strong>■ 운용표 보완</strong><br>
+<div class="n-box">
+🔁 <strong>대전 4</strong> 편성 신설 — #1389 > #1392 > #1395 > #1398 (대전~남대구 왕복 2회)<br>
+🔁 <strong>보은 2</strong> 편성 신설 — #1895 > #1898 (서울~보은 당일 왕복)<br>
+🔁 행신 3에 #1360, 행신 5에 #1377, 행신 9에 #1568, 전주 1에 #1595 편입<br>
+🔁 중복 기재 정정 — 행신 8 첫 열차 #1556, 전주 6 셋째 열차 #1532
+</div>
+모든 편성의 착발역 연결·회차 여유가 재검증되었습니다.`
   }
 ];
