@@ -511,5 +511,21 @@ const NOTICES = [
 
 해당 구간을 운행하는 <strong>부산–제주 KTX</strong>와 <strong>목포–완도 무궁화호</strong>의 소속 노선에 제주선이 반영되어, 열차 조회·노선도 추적에서 제주선 구간을 확인하실 수 있습니다.<br><br>
 <span style="color:var(--text2)">기차 모드 · 노선도 탭 상단에서 제주선을 선택해 보세요.</span>`
+  },
+  {
+    date:'2026-07-18',
+    cat:'update',
+    title:'운행 다이어그램·심야 열차 상태 표시 개선',
+    body:`세 가지 사용성 개선이 적용되었습니다.<br><br>
+
+<strong>■ 운행 다이어그램 역명 고정</strong><br>
+운용 탭의 <strong>운행 다이어그램</strong>을 좌우로 넘길 때 세로축 <span class="n-highlight">역 이름은 고정</span>되고 그래프만 움직이도록 바꿨습니다. 먼 시간대를 봐도 어느 역인지 바로 참조할 수 있습니다.<br><br>
+
+<strong>■ 자정 넘겨 운행하는 열차 상태</strong><br>
+익일 새벽까지 운행하는 열차가 종착 직후부터 다음 날 출발 전까지 계속 <strong>운행 종료</strong>로 표시되던 문제를 바로잡았습니다.<br>
+<div class="n-box">운행 종료 후 <strong>03:59까지 '운행 종료'</strong> · <strong>04:00부터 '운행 준비중'</strong>으로 전환됩니다. (운행일 경계 04시 기준)</div><br>
+
+<strong>■ 운행 준비중 열차 출발 안내</strong><br>
+운행 준비중인 열차에도 운행 중 열차처럼 <span class="n-highlight">"약 N분 후 출발 예정"</span> 문구가 함께 표시됩니다.`
   }
 ];

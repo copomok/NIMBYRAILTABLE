@@ -537,6 +537,14 @@ function searchByTrain(){
   if(fb)fb.style.display='';
 }
 
+// 출발까지 남은 시간 한국어 표기 (운행 준비중 열차용)
+function fmtEtaKor(m){
+  if(m==null)return '';
+  if(m<=0)return '곧 출발 예정';
+  if(m<60)return `약 ${m}분 후 출발 예정`;
+  const h=Math.floor(m/60), mm=m%60;
+  return `약 ${h}시간${mm?` ${mm}분`:''} 후 출발 예정`;
+}
 function getCurrentStatus(t, atMin){
   const now=new Date();
   const nowMin = atMin !== undefined ? atMin : now.getHours()*60+now.getMinutes();
@@ -572,9 +580,15 @@ function getCurrentStatus(t, atMin){
   const lastM=lastItem.normArr??lastItem.normDep;
 
   let nowM=nowMin;
-  if(lastM>1440&&nowMin<firstM) nowM=nowMin+1440;
+  if(lastM>=1440&&nowMin<firstM){
+    // 자정 넘겨 익일까지 운행하는 열차: 04시(운행일 경계) 이전이거나, 시프트해도 아직
+    // 운행 중이면 전일 출발분으로 간주(시프트). 04시 이후이면서 이미 종료됐다면 시프트하지
+    // 않아 '운행 준비중'(오늘 밤 출발 대기)으로 표시 → 3:59까지 종료, 4:00부터 준비중.
+    const shifted=nowMin+1440;
+    if(nowMin<240||shifted<=lastM) nowM=shifted;
+  }
 
-  if(nowM<firstM)return{status:'before'};
+  if(nowM<firstM)return{status:'before',nowMin,etaMin:firstM-nowM};
   if(nowM>lastM)return{status:'done',nowMin};
 
   // ── 핵심: 선형 탐색으로 단순하게 ──
@@ -743,7 +757,8 @@ function renderDetail(t){
         :`<br><span class="eta-sub">약 ${eta.min}분 뒤 도착 예정</span>`):'';
       statusBanner=`<div class="train-status-banner running">🚆 ${msg}${etaTxt}</div>`;
     } else if(status.status==='before'){
-      statusBanner=`<div class="train-status-banner before">운행을 준비중인 열차입니다</div>`;
+      const etaTxt=(status.etaMin!=null)?`<br><span class="eta-sub">${fmtEtaKor(status.etaMin)}</span>`:'';
+      statusBanner=`<div class="train-status-banner before">🕒 운행을 준비중인 열차입니다${etaTxt}</div>`;
     } else {
       statusBanner=`<div class="train-status-banner done">운행이 종료된 열차입니다</div>`;
     }
@@ -2151,7 +2166,7 @@ function getFavInfo(fav){
     let main=`${gradeLbl} ${t.no}`;
     let sub='';
     if(!status)sub='정보 없음';
-    else if(status.status==='before')sub='운행을 준비 중';
+    else if(status.status==='before')sub=status.etaMin!=null?`운행 준비 중 · ${fmtEtaKor(status.etaMin)}`:'운행을 준비 중';
     else if(status.status==='done')sub='운행 종료';
     else{
       if(status.atStn)sub=`${status.atStn}역 정차 중`;
@@ -9994,30 +10009,39 @@ function renderOpsDiagram(host){
   const L=66,T=26,R=16,B=10;
   const pxPerMin=1.06, plotW=Math.round(1440*pxPerMin);
   const plotH=Math.max(440, cor.names.length*22);
-  const W=L+plotW+R, H=T+plotH+B;
-  const X=m=>L+(m-240)*pxPerMin;
+  const H=T+plotH+B;
+  const Xp=m=>(m-240)*pxPerMin;   // 플롯 내부 X (좌측 축 제외 → 그래프만 스크롤)
   const Y=d=>T+d/cor.total*plotH;
+  // ── 좌측 고정 축(역명) — 가로 스크롤 시 함께 움직이지 않음 ──
+  const ax=[];
+  ax.push(`<svg viewBox="0 0 ${L} ${H}" width="${L}" height="${H}" xmlns="http://www.w3.org/2000/svg" class="ops-axis-svg">`);
+  ax.push(`<rect x="0" y="0" width="${L}" height="${H}" fill="var(--bg)"/>`);
+  let lastYa=-99;
+  cor.names.forEach(n=>{const y=Y(cor.dm[n]);
+    if(y-lastYa>=10){ax.push(`<text x="${L-6}" y="${y+3}" fill="var(--text2)" font-size="9.5" text-anchor="end">${_opsEsc(n)}</text>`);lastYa=y;}});
+  ax.push(`<line x1="${L-0.5}" y1="${T}" x2="${L-0.5}" y2="${T+plotH}" stroke="var(--border)" stroke-width="1" opacity="0.7"/>`);
+  ax.push('</svg>');
+  // ── 우측 스크롤 플롯(다이어그램 그래프) ──
+  const Wp=plotW+R;
   const s=[];
-  s.push(`<svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" xmlns="http://www.w3.org/2000/svg" class="ops-diagram-svg">`);
-  s.push(`<rect x="0" y="0" width="${W}" height="${H}" fill="var(--bg)"/>`);
-  for(let hh=4;hh<=28;hh++){const x=X(hh*60);
+  s.push(`<svg viewBox="0 0 ${Wp} ${H}" width="${Wp}" height="${H}" xmlns="http://www.w3.org/2000/svg" class="ops-diagram-svg">`);
+  s.push(`<rect x="0" y="0" width="${Wp}" height="${H}" fill="var(--bg)"/>`);
+  for(let hh=4;hh<=28;hh++){const x=Xp(hh*60);
     s.push(`<line x1="${x}" y1="${T}" x2="${x}" y2="${T+plotH}" stroke="var(--border)" stroke-width="${hh%2?0.5:1}" opacity="0.55"/>`);
     s.push(`<text x="${x}" y="${T-7}" fill="var(--text2)" font-size="10" text-anchor="middle">${String(hh%24).padStart(2,'0')}</text>`);}
-  let lastY=-99;
   cor.names.forEach(n=>{const y=Y(cor.dm[n]);
-    s.push(`<line x1="${L}" y1="${y}" x2="${L+plotW}" y2="${y}" stroke="var(--border)" stroke-width="0.5" opacity="0.4"/>`);
-    if(y-lastY>=10){s.push(`<text x="${L-6}" y="${y+3}" fill="var(--text2)" font-size="9.5" text-anchor="end">${_opsEsc(n)}</text>`);lastY=y;}});
+    s.push(`<line x1="0" y1="${y}" x2="${plotW}" y2="${y}" stroke="var(--border)" stroke-width="0.5" opacity="0.4"/>`);});
   const now=new Date();let nm=now.getHours()*60+now.getMinutes();let nx=nm<240?nm+1440:nm;
-  if(nx>=240&&nx<=1680){const x=X(nx);s.push(`<line x1="${x}" y1="${T}" x2="${x}" y2="${T+plotH}" stroke="var(--red)" stroke-width="1.3" opacity="0.9"/>`);s.push(`<text x="${x}" y="${T+plotH+8}" fill="var(--red)" font-size="9" text-anchor="middle">지금</text>`);}
+  if(nx>=240&&nx<=1680){const x=Xp(nx);s.push(`<line x1="${x}" y1="${T}" x2="${x}" y2="${T+plotH}" stroke="var(--red)" stroke-width="1.3" opacity="0.9"/>`);s.push(`<text x="${x}" y="${T+plotH+8}" fill="var(--red)" font-size="9" text-anchor="middle">지금</text>`);}
   showT.forEach(o=>{
     const c=GRADE_COLORS[o.t.grade]||'#8b949e';
-    const pl=o.pts.map(p=>`${X(p.t).toFixed(1)},${Y(p.d).toFixed(1)}`).join(' ');
+    const pl=o.pts.map(p=>`${Xp(p.t).toFixed(1)},${Y(p.d).toFixed(1)}`).join(' ');
     s.push(`<polyline points="${pl}" fill="none" stroke="transparent" stroke-width="7" style="cursor:pointer" onclick="jumpToTrain('${o.t.no}')"><title>${_opsEsc(o.t.grade)} ${o.t.no} · ${_opsEsc(o.t.stops[0].s)}→${_opsEsc(o.t.dest)}</title></polyline>`);
     s.push(`<polyline points="${pl}" fill="none" stroke="${c}" stroke-width="1.4" opacity="0.85" pointer-events="none"/>`);
-    o.pts.forEach(p=>{if(!p.pass)s.push(`<circle cx="${X(p.t).toFixed(1)}" cy="${Y(p.d).toFixed(1)}" r="1.5" fill="${c}" pointer-events="none"/>`);});
+    o.pts.forEach(p=>{if(!p.pass)s.push(`<circle cx="${Xp(p.t).toFixed(1)}" cy="${Y(p.d).toFixed(1)}" r="1.5" fill="${c}" pointer-events="none"/>`);});
   });
   s.push('</svg>');
-  h+=`<div class="ops-diagram-scroll">${s.join('')}</div>`;
+  h+=`<div class="ops-diagram-wrap"><div class="ops-diagram-axis">${ax.join('')}</div><div class="ops-diagram-scroll">${s.join('')}</div></div>`;
   h+=`<p class="ops-hint">가로축 = 시각(04→28시) · 세로축 = <b>${_opsEsc(cor.name)}</b> 역(거리순) · 선 하나 = 열차 1편 · 기울기가 급할수록 고속 · 교차점 = 교행/추월 · 선을 누르면 열차 상세로 이동</p>`;
   host.innerHTML=h;
 }
