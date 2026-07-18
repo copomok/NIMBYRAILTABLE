@@ -1845,3 +1845,20 @@ button, select, input[type=range],
 .jr-delay-live{margin-top:6px;font-size:13px;font-weight:700;color:#ffb454}
 .jr-delay-live b{font-family:var(--mono)}
 .jr-eta-adj{color:#ffb454;font-weight:700;font-family:var(--sans)}
+
+/* 예매/승차권 현재 지연 배너 */
+.booking-delay-banner{margin-top:8px;padding:8px 12px;border-radius:9px;background:color-mix(in srgb,#ffb454 12%,var(--bg2));border:1px solid color-mix(in srgb,#ffb454 45%,var(--border));color:#ffb454;font-size:13px;font-weight:700}
+.booking-delay-banner b{font-family:var(--mono)}
+/* 지연 예측 탭: 지연 운행 중 목록 */
+.delayed-list{margin-bottom:14px;background:var(--bg2);border:1px solid color-mix(in srgb,var(--red) 30%,var(--border));border-radius:12px;padding:12px 12px 8px}
+.delayed-head{font-size:13.5px;font-weight:800;color:var(--text1);margin-bottom:8px}
+.delayed-head b{color:var(--red);font-family:var(--mono)}
+.delayed-sub{font-size:11px;font-weight:500;color:var(--text3);margin-left:4px}
+.delayed-row{display:flex;align-items:center;gap:8px;width:100%;text-align:left;padding:8px 6px;background:none;border:none;border-top:1px solid var(--border);cursor:pointer;font-family:inherit}
+.delayed-row:first-of-type{border-top:none}
+.dl-grade{color:#fff;font-size:10.5px;font-weight:800;padding:2px 7px;border-radius:6px;flex-shrink:0}
+.dl-no{font-family:var(--mono);font-size:13px;font-weight:800;color:var(--text1);flex-shrink:0;min-width:38px}
+.dl-route{flex:1;min-width:0;font-size:12px;color:var(--text2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.dl-delay{flex-shrink:0;font-family:var(--mono);font-size:13px;font-weight:800;color:#ffb454}
+.delayed-empty{margin-bottom:14px;padding:16px;text-align:center;color:var(--text3);font-size:12.5px;background:var(--bg2);border:1px solid var(--border);border-radius:12px}
+.delayed-more{padding:6px;text-align:center;color:var(--text3);font-size:11.5px}

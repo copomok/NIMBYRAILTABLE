@@ -572,13 +572,18 @@ const NOTICES = [
 <span class="n-highlight">지연 예측 탭</span> 상단의 <strong>🔴 지연 시뮬레이션</strong> 스위치를 켜면 적용됩니다. (기본 꺼짐)<br><br>
 
 <strong>■ 무엇이 달라지나</strong><br>
-켜면 예보 확률·범위를 바탕으로 각 열차에 <strong>오늘의 실제 지연</strong>이 부여되어, 다음 화면에 반영됩니다.<br>
+켜면 각 열차에 <strong>오늘의 실제 지연</strong>이 부여되어 다음 화면에 반영됩니다.<br>
 <div class="n-box">
 🗺️ <strong>노선도</strong> — 열차가 지연된 실제 위치에 표시<br>
 🚆 <strong>탑승 여정</strong> — "약 N분 지연 운행 중" · 도착 지연 예상<br>
-🚉 <strong>전광판</strong> — 정시 대신 "N분 지연" 표시
+🚉 <strong>전광판</strong> — 정시 대신 "N분 지연" 표시<br>
+🎫 <strong>예매·승차권</strong> — 구입 화면에 "현재 약 N분 지연 운행 중"<br>
+📋 <strong>지연 예측 탭</strong> — 지금 지연 운행 중인 열차 목록(누르면 여정)
 </div><br>
-지연은 출발 직후 0에서 서서히 누적되며, 같은 열차는 그날 하루 동안 같은 값을 유지합니다(매일 조금씩 달라짐).<br><br>
-<span class="n-warn" style="display:block"><strong>시간표 조회 화면은 언제나 정시 그대로</strong>입니다. 시뮬레이션은 라이브 화면(노선도·여정·전광판)에만 적용되며, 실제 운행과는 무관한 예측 기반 연출입니다.</span>`
+
+<strong>■ 지연은 이렇게 생깁니다</strong><br>
+실제처럼 <span class="n-highlight">열차가 몰리는 혼잡 구간</span>과 <span class="n-highlight">전철과 병행하는 구간</span>에서 지연이 커집니다. 별개 선로를 쓰는 경부선 남안양~천안 구간은 전철 병행에서 제외됩니다. 그래서 수도권·간선 혼잡 노선일수록 지연이 잦고, 한산한 지방 단선은 거의 정시로 운행합니다.<br><br>
+지연은 출발 직후 0에서 서서히 누적되며, 같은 열차는 그날 하루 같은 값을 유지합니다(매일 조금씩 달라짐).<br><br>
+<span class="n-warn" style="display:block"><strong>시간표 조회 화면은 언제나 정시 그대로</strong>입니다. 시뮬레이션은 라이브 화면에만 적용되며, 실제 운행과 무관한 예측 기반 연출입니다.</span>`
   }
 ];

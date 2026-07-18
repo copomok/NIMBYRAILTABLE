@@ -5117,6 +5117,7 @@ function openBookingPopup(trainNo, fromStn, toStn, depTime, arrTime, travelDate)
         </div>
         <div class="alarm-popup-sub">${fromStn} ${depTime||''} → ${toStn} ${arrTime||''}</div>
         ${(()=>{const d=durMin(depTime,arrTime);return d!=null?`<div class="alarm-popup-sub" style="margin-top:-2px;color:var(--text3)">소요 ${fmtDurKor(d)}</div>`:'';})()}
+        ${_bookingDelayBannerHTML(t)}
         <div class="booking-date-section">
           <div class="booking-section-label">탑승일</div>
           <input type="date" id="booking-date" value="${travelDate&&travelDate>=minDate?travelDate:minDate}" min="${minDate}" max="${maxDate}" class="booking-date-input">
@@ -7106,6 +7107,7 @@ function _ticketCardHTML(tk){
         <div class="ticket-arrow">→</div>
         <div class="ticket-station"><span class="ticket-station-name">${tk.toStn}</span><span class="ticket-time">${tk.arrTime||'-'}</span></div>
       </div>
+      ${(()=>{const t=ALL_TRAINS.find(x=>x.no===tk.trainNo);return t?_bookingDelayBannerHTML(t):'';})()}
       <div class="ticket-card-divider"></div>
       <div class="ticket-card-info">
         <div class="ticket-info-row"><span>탑승일</span><span>${tk.travelDate}</span></div>
@@ -9670,13 +9672,41 @@ function _simDayKey(){ const d=new Date(); if(d.getHours()<4)d.setDate(d.getDate
 function _seededRand(seed){ const x=Math.sin(seed)*10000; return x-Math.floor(x); }
 function _simSeed(no){ const s=String(no)+':'+_simDayKey(); let h=2166136261;
   for(let i=0;i<s.length;i++){ h^=s.charCodeAt(i); h=Math.imul(h,16777619); } return (h>>>0)/1000; }
-// 이 열차의 오늘 목표 지연분 D(및 지연 여부) — 결정적
+// 지연 원인 모델(전철 병행 구간 · 혼잡 구간) — 1회 계산 후 캐시
+let _simModelCache=null;
+function _simModel(){
+  if(_simModelCache)return _simModelCache;
+  // 전철과 병행되는 역 집합 = 전철역 이름. 단 경부선 남안양~천안(별개 선로)은 제외.
+  const EXC=new Set(['남안양','수원','오산','평택','천안']);
+  const metro=new Set();
+  if(typeof METRO_LINES!=='undefined')METRO_LINES.forEach(l=>(l.routes||[{stations:l.stations}]).forEach(r=>r.stations.forEach(n=>metro.add(n))));
+  EXC.forEach(n=>metro.delete(n));
+  // 역별 통과·정차 편수 = 구간 혼잡도 근사
+  const load={};
+  ALL_TRAINS.forEach(t=>t.stops.forEach(s=>{if(hasTime(s.arr)||hasTime(s.dep))load[s.s]=(load[s.s]||0)+1;}));
+  return _simModelCache={metro,load};
+}
+const _SIM_CONG_REF=280; // 혼잡도 기준(간선 트렁크 ≈ 1.0)
+const _SIM_GF={'KTX':0.55,'SRT':0.5,'ITX-새마을':1.0,'ITX-청춘':1.0,'ITX-마음':1.0,'남도해양':1.1,'무궁화호':1.2};
+// 이 열차의 오늘 목표 지연분 D(및 원인 점수) — 결정적, 원인 기반
 function _simTargetDelay(t){
-  const f=_delayForecast(t.line,t.grade);
-  const base=_simSeed(t.no);
-  const r1=_seededRand(base+0.137), r2=_seededRand(base+7.31);
-  if(r1*100>=f.prob) return {D:0,delayed:false};
-  return {D:Math.max(1,Math.round(f.min+r2*(f.max-f.min))),delayed:true};
+  const {metro,load}=_simModel();
+  const timed=t.stops.filter(s=>hasTime(s.arr)||hasTime(s.dep));
+  if(timed.length<2) return {D:0,delayed:false,E:0};
+  let sec=0, metroSec=0, congSum=0;
+  for(let i=0;i<timed.length;i++){
+    congSum+=load[timed[i].s]||0;
+    if(i<timed.length-1){ sec++; if(metro.has(timed[i].s)&&metro.has(timed[i+1].s))metroSec++; }
+  }
+  const metroFrac=metroSec/Math.max(1,sec);              // ① 전철 병행 구간 비율
+  const congNorm=Math.min(1,(congSum/timed.length)/_SIM_CONG_REF); // ② 혼잡(운행 집중) 구간
+  const gf=_SIM_GF[_delayGradeFamily(t.grade)]||1;
+  const E=(7*metroFrac+6*congNorm)*gf;                   // 원인 기반 기대 지연(분)
+  const seed=_simSeed(t.no);
+  const r1=_seededRand(seed+0.137), r2=_seededRand(seed+7.31);
+  const p=Math.max(0.03,Math.min(0.9,E/20));
+  if(r1>=p) return {D:0,delayed:false,E};
+  return {D:Math.max(1,Math.round(E*(0.55+0.9*r2))),delayed:true,E};
 }
 // 현재 시각(clock, 분) 기준 누적 지연분 — 출발 직후 0에서 D까지 서서히 증가
 function _simDelay(t, clock){
@@ -9693,6 +9723,44 @@ function _simDelay(t, clock){
   if(nowM<=firstM) return 0;
   const span=Math.max(1,lastM-firstM), ramp=Math.min(90,span*0.6);
   return Math.round(tg.D*Math.min(1,(nowM-firstM)/ramp));
+}
+// 현재 지연 운행 중이면 배너 HTML(예매/승차권용). 시뮬 OFF·정시·미운행이면 빈 문자열.
+function _liveDelayOf(t){
+  if(!_simDelayOn)return 0;
+  const n=new Date(); const nm=n.getHours()*60+n.getMinutes();
+  const d=_simDelay(t, nm);
+  if(d<=0)return 0;
+  const st=getCurrentStatus(t, nm-d);
+  return (st&&st.status==='running')?d:0;
+}
+function _bookingDelayBannerHTML(t){
+  const d=_liveDelayOf(t);
+  return d>0?`<div class="booking-delay-banner">🔴 현재 약 <b>${d}분</b> 지연 운행 중</div>`:'';
+}
+// 지연 예측 탭: 지금 지연 운행 중인 열차 목록
+function _delayedTrainsHTML(){
+  if(!_simDelayOn)return '';
+  const n=new Date(), nm=n.getHours()*60+n.getMinutes();
+  const rows=[];
+  ALL_TRAINS.forEach(t=>{
+    const d=_simDelay(t,nm); if(d<=0)return;
+    const st=getCurrentStatus(t, nm-d); if(!st||st.status!=='running')return;
+    const pos=st.atStn?`${st.atStn} 정차`:(st.passStn?`${st.passStn} 통과`:(st.prevStn&&st.nextStn?`${st.prevStn}→${st.nextStn}`:'운행 중'));
+    rows.push({t,d,pos});
+  });
+  rows.sort((a,b)=>b.d-a.d);
+  if(!rows.length)return `<div class="delayed-empty">현재 지연 운행 중인 열차가 없습니다.</div>`;
+  const gl=g=>(typeof GL!=='undefined'&&GL[g])||g;
+  return `<div class="delayed-list">
+    <div class="delayed-head">🔴 지금 지연 운행 중 <b>${rows.length}</b>편 <span class="delayed-sub">누르면 탑승 여정</span></div>
+    ${rows.slice(0,40).map(r=>`<button class="delayed-row" onclick="openJourney('${r.t.no}')">
+      <span class="dl-grade" style="background:${(typeof GRADE_COLORS!=='undefined'&&GRADE_COLORS[r.t.grade])||'#888'}">${_opsEsc(gl(r.t.grade))}</span>
+      <span class="dl-no">${_opsEsc(r.t.no)}</span>
+      <span class="dl-route">${_opsEsc(r.t.stops[0].s)}→${_opsEsc(r.t.dest)} · ${_opsEsc(r.pos)}</span>
+      <span class="dl-delay">+${r.d}분</span>
+    </button>`).join('')}
+    ${rows.length>40?`<div class="delayed-more">외 ${rows.length-40}편</div>`:''}
+  </div>`;
 }
 function toggleSimDelay(){
   _simDelayOn=!_simDelayOn;
@@ -9716,6 +9784,7 @@ function renderSIDelay(el){
     <div style="background:var(--bg3);border-radius:10px;padding:10px 14px;margin-bottom:14px;font-size:12px;color:var(--text2);line-height:1.6">
       📊 Mysterious Enterprise 운행 기록 기반 · 지방 단선은 열차 수가 적어 지연↓${_simDelayOn?' · <b style="color:var(--red)">시뮬레이션 ON</b>':''}
     </div>
+    ${_delayedTrainsHTML()}
     ${model.map(d=>{
       const lv=d.prob<25?'low':d.prob<40?'med':'high';
       const lc=lv==='low'?'var(--green)':lv==='med'?'var(--orange)':'var(--red)';
