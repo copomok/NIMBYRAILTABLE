@@ -10488,6 +10488,10 @@ function closeJourney(){
 }
 function _renderJourney(){
   const body=document.getElementById('journey-body'); if(!body||!_journeyNo)return;
+  // 자동 갱신 시 현재 스크롤 위치 보존(혼자 맨 위로 튀는 문제 방지)
+  const _prevSc=body.querySelector('.jr-scroll');
+  const _prevTop=_prevSc?_prevSc.scrollTop:0;
+  const _firstRender=!body._scrolledOnce;
   const t=ALL_TRAINS.find(x=>x.no===_journeyNo); if(!t)return;
   const stops=_journeyStops(t); if(!stops.length){body.innerHTML='<div class="empty">시각 정보가 없습니다.</div>';return;}
   const status=getCurrentStatus(t);
@@ -10574,11 +10578,16 @@ function _renderJourney(){
       <div class="jr-timeline">${li}</div>
       <p class="jr-foot">약 5초마다 자동 갱신 · 실제 게임 내 시각 기준</p>
     </div>`;
-  // 현재 위치로 스크롤(타임라인 영역만)
-  const cur=body.querySelector('.jr-stop.cur')||body.querySelector('.jr-stop.next');
   const sc=body.querySelector('.jr-scroll');
-  if(cur&&sc&&!body._scrolledOnce){
-    sc.scrollTop=Math.max(0,cur.offsetTop-sc.clientHeight/2+cur.offsetHeight/2);
-    body._scrolledOnce=true;
+  if(sc){
+    if(_firstRender){
+      // 최초 1회만 현재 위치로 자동 스크롤
+      const cur=body.querySelector('.jr-stop.cur')||body.querySelector('.jr-stop.next');
+      if(cur)sc.scrollTop=Math.max(0,cur.offsetTop-sc.clientHeight/2+cur.offsetHeight/2);
+      body._scrolledOnce=true;
+    } else {
+      // 자동 갱신 시에는 사용자가 보던 스크롤 위치를 그대로 유지
+      sc.scrollTop=_prevTop;
+    }
   }
 }
