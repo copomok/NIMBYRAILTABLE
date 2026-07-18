@@ -793,8 +793,6 @@ function renderDetail(t){
           </div>
           <div class="detail-meta">${first?.s||''} ${depT} 발 → ${last?.s||''} ${arrT} 착</div>
           <div class="detail-meta" style="margin-top:2px">정차역 ${totalStops}개 &nbsp;·&nbsp; 소요시간 ${fmtDurKor(durMin(depT,arrT))}</div>
-          ${st.km>0?`<div class="detail-meta" style="margin-top:2px">표정속도 ${fmtSpeed(st.speed)}</div>`:''}
-          ${_delayMetaHTML(t)}
         </div>
         <div style="display:flex;gap:4px;flex-shrink:0">
           <button class="share-btn" style="position:static" onclick="trackTrainOnMap('${t.no}')">🗺️</button>
