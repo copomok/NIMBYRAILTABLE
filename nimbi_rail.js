@@ -9738,6 +9738,13 @@ function _simDelay(t, clock){
   const cur=fr<=up?sp.peak*(fr/up):sp.peak+(sp.final-sp.peak)*((fr-up)/(1-up));
   return Math.round(cur);
 }
+// 프로파일 상 진행비율 fr(0~1)에서의 지연분 — 특정 역 시점의 지연 계산용
+function _simDelayAtFrac(sp, fr){
+  if(!sp||!sp.peak) return 0;
+  fr=Math.max(0,Math.min(1,fr));
+  const up=0.55;
+  return Math.round(fr<=up?sp.peak*(fr/up):sp.peak+(sp.final-sp.peak)*((fr-up)/(1-up)));
+}
 // '지연 예상' 라벨용 예측 지연(운행 여부 무관). 예측 밖 소폭 지연은 라벨에 넣지 않음.
 function _simFinalDelay(t){ return _simDelayOn?(_simSpec(t).predicted||0):0; }
 // 현재 지연 운행 중이면 그 지연분, 아니면 0
@@ -10655,6 +10662,7 @@ function _renderJourney(){
   // 지연 시뮬 반영: 열차는 dly분 뒤처진 위치에 있음 → 유효시각 = 실제시각 - dly
   const dly=_simDelay(t, realNowMin);
   const finalD=_simFinalDelay(t);
+  const sp=_simSpec(t);
   let nowMin=realNowMin-dly;
   const status=getCurrentStatus(t, nowMin);
   let nowM=nowMin;
@@ -10703,14 +10711,15 @@ function _renderJourney(){
     const isNext=phase==='running'&&idx===nextRealIdx&&dwellIdx<0;
     const plat=(typeof _realPlatform==='function')?_realPlatform(t.no,st.s):null;
     const tArr=hasTime(st.arr)?st.arr:'', tDep=hasTime(st.dep)?st.dep:'';
-    const timeTxt=st.isOrigin?`${tDep||tArr} 출발`:st.isTerm?`${tArr||tDep} 도착`:(tArr&&tDep&&tArr!==tDep?`${tArr}–${tDep}`:(tArr||tDep));
-    // 지연 반영 시각(코레일톡식): 아직 지나지 않은 역(통과역 포함)에 빨간 괄호로
-    let adjTxt='';
-    if(_simDelayOn&&dly>0&&phase==='running'&&!passed){
-      const aA=tArr?addMinToClock(tArr,dly):'', aD=tDep?addMinToClock(tDep,dly):'';
-      const adj=st.isOrigin?aD:st.isTerm?aA:(aA&&aD&&tArr!==tDep?`${aA}–${aD}`:(aA||aD));
-      if(adj)adjTxt=`<div class="jr-time-adj">(${adj})</div>`;
+    // 이 역 시점의 지연분(운행/종료 시): 지나온 역=실제 지연, 남은 역=지연 예정. 정시면 0.
+    let dStop=0;
+    if(_simDelayOn&&phase!=='before'){
+      const sm=st.normArr??st.normDep;
+      const fr=(sm!=null&&lastM>firstM)?(sm-firstM)/(lastM-firstM):0;
+      dStop=_simDelayAtFrac(sp,fr);
     }
+    const sA=tArr?addMinToClock(tArr,dStop):'', sD=tDep?addMinToClock(tDep,dStop):'';
+    const timeTxt=st.isOrigin?`${sD||sA} 출발`:st.isTerm?`${sA||sD} 도착`:(sA&&sD&&tArr!==tDep?`${sA}–${sD}`:(sA||sD));
     const cls=['jr-stop'];
     if(st.isPass)cls.push('pass'); if(passed&&!isCur)cls.push('done'); if(isCur)cls.push('cur'); if(isNext)cls.push('next');
     const nameCls=st.isOrigin?'jr-origin':st.isTerm?'jr-term':'';
@@ -10719,13 +10728,15 @@ function _renderJourney(){
     return `<div class="${cls.join(' ')}" style="--gc:${c}">
       <div class="jr-dot"></div>
       <div class="jr-info"><span class="jr-name ${nameCls}">${_opsEsc(st.s)}${st.isPass?' <span class="jr-passtag">통과</span>':''}${badge}</span>${platTxt}</div>
-      <div class="jr-time">${timeTxt}${adjTxt}</div>
+      <div class="jr-time${dStop>0?' jr-time-late':''}">${timeTxt}${dStop>0?` <span class="jr-time-diff">(+${dStop})</span>`:''}</div>
     </div>`;
   }).join('');
   const depT=stops[0].dep||stops[0].arr, arrT=lastItem.arr||lastItem.dep;
+  // 종착 도착 지연 예정(종착역 시점 지연). 남은 역 시각은 타임라인에서 빨간 텍스트로 표시.
+  const termD=(_simDelayOn&&phase!=='before')?_simDelayAtFrac(sp,1):0;
   let arrAdj='';
   if(_simDelayOn){
-    if(phase==='running'&&dly>0) arrAdj=` <span class="jr-eta-adj">(${addMinToClock(arrT,dly)} 도착)</span>`;
+    if(termD>0) arrAdj=` <span class="jr-eta-adj">${addMinToClock(arrT,termD)} 도착 예정 (+${termD})</span>`;
     else if(phase==='before'&&finalD>0) arrAdj=` <span class="jr-eta-adj">${finalD}분 지연 예상</span>`;
   }
   const delayBadge=(_simDelayOn&&dly>0&&phase==='running')
