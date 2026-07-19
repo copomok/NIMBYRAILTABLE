@@ -6,7 +6,7 @@
 <title>님비레일 시간표</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="assets/css/nimbi_rail.css?v=2026072016">
+<link rel="stylesheet" href="assets/css/nimbi_rail.css?v=2026072018">
 <!-- PWA -->
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#161b22">
@@ -18,7 +18,7 @@
 </head>
 <body>
 <header>
-  <div class="logo"><div class="logo-icon">🚆</div>님비레일 시간표</div>
+  <button class="logo" type="button" onclick="switchTab('home')" aria-label="홈으로 이동"><span class="logo-icon">🚆</span>님비레일 시간표</button>
   <span id="header-clock" style="font-family:var(--mono);font-size:14px;font-weight:600;color:var(--text1);letter-spacing:1px"></span>
   <button class="hdr-refresh-btn" id="hdr-refresh" onclick="refreshCurrentTab()" title="현재 탭 새로고침">🔄</button>
   <button class="my-btn" onclick="openMyPage()" title="마이페이지">
@@ -113,7 +113,6 @@
 </div>
 <div class="container">
   <div class="tabs">
-    <button class="tab active" onclick="switchTab('home')" id="tab-home">🏠 홈</button>
     <button class="tab" onclick="switchTab('train')" id="tab-train">🔢 열차</button>
     <button class="tab" onclick="switchTab('station')" id="tab-station">🏢 시간표</button>
     <button class="tab" onclick="switchTab('route')" id="tab-route">🔍 출도착</button>
@@ -134,11 +133,11 @@
   </div>
 
   <div class="panel active" id="panel-home">
+    <div id="home-trip-widget"></div>
     <div id="daily-discovery"></div>
   </div>
 
   <div class="panel" id="panel-train">
-    <div id="home-trip-widget"></div>
     <div class="search-card">
       <div class="form-row">
         <div class="form-group"><label>노선</label>
@@ -483,7 +482,7 @@
   <script src="data/nimbi_rail_notices.js?v=2026072003"></script>
   <script src="data/nimbi_pax.js?v=2026072003"></script>
   <script src="js/features/nimbi_delay.js?v=2026072017"></script>
-  <script src="js/nimbi_rail.js?v=2026072016"></script>
+  <script src="js/nimbi_rail.js?v=2026072018"></script>
   <script src="js/features/nimbi_congestion.js?v=2026072003"></script>
   <script src="js/features/nimbi_engagement.js?v=2026072007"></script>
   <script src="js/features/nimbi_virtual_ride.js?v=2026072006"></script>

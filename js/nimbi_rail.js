@@ -373,8 +373,8 @@ function updateMinimap(){
 
 // ── 🚆/🚇 이용 모드 (기차/전철) ──
 let _appMode=(()=>{try{return localStorage.getItem('nimbi_mode')||'train';}catch(e){return 'train';}})();
-const METRO_MODE_TABS=['home','metrolines','metroroute','map','stationinfo']; // 전철 모드에서 보이는 메인 탭
-const TRAIN_MODE_TABS=['home','train','station','route','ops','map','stats','notice','stationinfo','delay']; // 기차 모드 상단바 탭
+const METRO_MODE_TABS=['metrolines','metroroute','map','stationinfo']; // 전철 모드에서 보이는 메인 탭
+const TRAIN_MODE_TABS=['train','station','route','ops','map','stats','notice','stationinfo','delay']; // 기차 모드 상단바 탭
 // 그 외 탭(book/alarm/fav/ticket 등)은 마이페이지 전용 — 항상 숨김 유지
 function _applyModeTabs(){
   const visible=_appMode==='metro'?METRO_MODE_TABS:TRAIN_MODE_TABS;
@@ -394,6 +394,11 @@ function setAppMode(m){
   _syncModeButtons();
   _applyModeTabs();
   // 현재 탭이 새 모드에서 숨겨지면 기본 탭으로 이동
+  if(document.getElementById('panel-home')?.classList.contains('active')){
+    renderDailyDiscovery();
+    updateHomeTripWidget();
+    return;
+  }
   const activeTab=document.querySelector('.tab.active');
   const activeId=(activeTab?.id||'').replace('tab-','');
   if(m==='metro'){
@@ -421,7 +426,8 @@ function refreshCurrentTab(){
     if(sec){ openMySection(sec); return; }
   }
   const a=document.querySelector('.tab.active');
-  const id=a?a.id.replace('tab-',''):'train';
+  const homeActive=document.getElementById('panel-home')?.classList.contains('active');
+  const id=homeActive?'home':a?a.id.replace('tab-',''):'train';
   switchTab(id); // 노선도·통계·공지·역정보 등은 switchTab이 재렌더
   // 검색형 탭은 현재 입력값 그대로 재검색해야 결과가 갱신됨
   try{
@@ -439,8 +445,10 @@ function switchTab(n){
   try{ closeStationBoard(); }catch(e){}
   document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
   document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
-  document.getElementById('tab-'+n).classList.add('active');
-  document.getElementById('panel-'+n).classList.add('active');
+  document.getElementById('tab-'+n)?.classList.add('active');
+  const targetPanel=document.getElementById('panel-'+n);
+  if(!targetPanel)return;
+  targetPanel.classList.add('active');
   if(n==='map'){
     const content=document.getElementById('map-content');
     if(content) content.style.display='';
@@ -462,8 +470,10 @@ function switchTab(n){
   if(n==='stats') renderStats();
   if(n==='notice') renderNotice();
   if(n==='ticket') renderTickets();
-  if(n==='home'&&typeof renderDailyDiscovery==='function')renderDailyDiscovery();
-  if(n==='train') updateHomeTripWidget();
+  if(n==='home'){
+    if(typeof renderDailyDiscovery==='function')renderDailyDiscovery();
+    updateHomeTripWidget();
+  }
   if(n==='book') renderBookTab();
   if(n==='delay'){const el=document.getElementById('result-delay');if(el)renderSIDelay(el);}
   if(n==='metrolines') renderMetroLinesTab();
@@ -683,7 +693,9 @@ function getCurrentStatus(t, atMin){
 function renderDetail(t){
   const valid=t.stops.filter(s=>s.arr||s.dep);
   const originStn=valid[0]?.s, terminusStn=valid[valid.length-1]?.s;
-  const status=getCurrentStatus(t);
+  const liveDelay=(typeof _liveDelayOf==='function')?_liveDelayOf(t):0;
+  const now=new Date(), nowM=now.getHours()*60+now.getMinutes();
+  const status=getCurrentStatus(t,nowM-liveDelay);
   const c=gc(t.grade);
 
   // ── 타임라인 rows ──
@@ -766,7 +778,13 @@ function renderDetail(t){
       const etaTxt=eta?(eta.min===0
         ?`<br><span class="eta-sub">곧 도착 예정</span>`
         :`<br><span class="eta-sub">약 ${eta.min}분 뒤 도착 예정</span>`):'';
-      statusBanner=`<div class="train-status-banner running">🚆 ${msg}${etaTxt}</div>`;
+      statusBanner=liveDelay>0
+        ?`<button class="train-status-banner running delayed" type="button" onclick="openJourney('${t.no}')">
+            <strong>🔴 지연 운행 중인 열차입니다 · 약 ${liveDelay}분</strong>
+            <span>${msg}</span>
+            <small>클릭하여 지연 정보 보기</small>
+          </button>`
+        :`<div class="train-status-banner running">🚆 ${msg}${etaTxt}</div>`;
     } else if(status.status==='before'){
       const etaTxt=(status.etaMin!=null)?`<br><span class="eta-sub">${fmtEtaKor(status.etaMin)}</span>`:'';
       statusBanner=`<div class="train-status-banner before">🕒 운행을 준비중인 열차입니다${etaTxt}</div>`;
@@ -6514,6 +6532,23 @@ function toggleSeatPref(p){
   try{localStorage.setItem('nimbi_seatprefs',JSON.stringify([..._seatPrefs]));}catch(e){}
   switchSeatCar(_seatCarIdx);
 }
+function toggleSettingsSeatPref(p){
+  if(_seatPrefs.has(p)) _seatPrefs.delete(p);
+  else {
+    const g=_PREF_GROUP[p];
+    for(const x of [..._seatPrefs])if(_PREF_GROUP[x]===g)_seatPrefs.delete(x);
+    _seatPrefs.add(p);
+  }
+  try{localStorage.setItem('nimbi_seatprefs',JSON.stringify([..._seatPrefs]));}catch(e){}
+  const el=document.getElementById('my-sub-content');
+  if(el)renderSettingsSection(el);
+}
+function clearSettingsSeatPrefs(){
+  _seatPrefs.clear();
+  try{localStorage.setItem('nimbi_seatprefs','[]');}catch(e){}
+  const el=document.getElementById('my-sub-content');
+  if(el)renderSettingsSection(el);
+}
 function toggleSeatPrefPanel(){ _seatPrefOpen=!_seatPrefOpen; const p=document.getElementById('seat-pref-panel'); if(p)p.classList.toggle('open',_seatPrefOpen); const b=document.getElementById('pref-toggle-btn'); if(b)b.classList.toggle('open',_seatPrefOpen); }
 function clearSeatPrefs(){ _seatPrefs.clear(); try{localStorage.setItem('nimbi_seatprefs','[]');}catch(e){} switchSeatCar(_seatCarIdx); }
 // 003·004: 좌석 자동 배정 (선호/인접/마주보기)
@@ -6971,7 +7006,7 @@ function renderTripWidgetCompact(active){
     <div class="trip-mini-sub">${sub}</div>
   </div>`;
 }
-// 홈(열차 탭) 상단 여정 카드 갱신 (간략)
+// 홈 상단 여정 카드 갱신 (간략)
 function updateHomeTripWidget(){
   const box=document.getElementById('home-trip-widget');
   if(!box) return;
@@ -6983,7 +7018,7 @@ function updateHomeTripWidget(){
 function renderTripWidgetIfVisible(){
   const tp=document.getElementById('panel-ticket');
   if(tp&&tp.classList.contains('active')) renderTickets();
-  const hp=document.getElementById('panel-train');
+  const hp=document.getElementById('panel-home');
   if(hp&&hp.classList.contains('active')) updateHomeTripWidget();
   updateLiveActivity();
 }
@@ -7385,7 +7420,7 @@ const ACCT_REG_KEY='nimbi_accounts';
 const ACCT_ACTIVE_KEY='nimbi_account_active';
 const ACCT_DATA_PREFIX='nimbi_acct_data_';
 // 계정에 연동되는 개인기록 키 (기기 UI 설정 nimbi_mode/led/zoom 등은 제외)
-const ACCT_KEYS=['nimbi_alarms','nimbi_alarm_groups','nimbi_seat_watches','nimbi_favs','nimbi_fav_groups','nimbi_notice_read','nimbi_tickets','nimbi_passes','nimbi_seatprefs','nimbi_bookroutes','nimbi_puzzle'];
+const ACCT_KEYS=['nimbi_alarms','nimbi_alarm_groups','nimbi_seat_watches','nimbi_favs','nimbi_fav_groups','nimbi_notice_read','nimbi_tickets','nimbi_passes','nimbi_seatprefs','nimbi_station_defaults','nimbi_bookroutes','nimbi_puzzle'];
 const ACCT_PREFIXES=['nimbi_history_'];
 const ACCT_EMOJIS=['🚆','🚄','🚅','🚇','🚉','🎫','⭐','🧭','🗺️','🌄','🐧','🦊','🐻','🐰','🐱','🌟'];
 function _acctEsc(s){return String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
@@ -7732,11 +7767,63 @@ function setUiMode(m){
   const el=document.getElementById('my-sub-content');
   if(el&&el.querySelector('.set-modes'))renderSettingsSection(el);
 }
+const STATION_DEFAULT_KEY='nimbi_station_defaults';
+const STATION_DEFAULTS={dir:'all',pass:'all',grade:'all',line:'all',terminus:'all',night:'all',after:''};
+function getStationDefaults(){
+  try{return {...STATION_DEFAULTS,...JSON.parse(localStorage.getItem(STATION_DEFAULT_KEY)||'{}')};}
+  catch(e){return {...STATION_DEFAULTS};}
+}
+function applyStationDefaults(){
+  const d=getStationDefaults();
+  const fields={
+    'sel-dir-station':d.dir,'sel-pass-station':d.pass,'sel-grade-station':d.grade,
+    'sel-line-station':d.line,'sel-terminus-station':d.terminus,'sel-night-station':d.night,
+    'input-after-time':d.after
+  };
+  Object.entries(fields).forEach(([id,value])=>{
+    const input=document.getElementById(id);
+    if(!input)return;
+    if(input.tagName==='INPUT'||[...(input.options||[])].some(o=>o.value===value))input.value=value;
+  });
+}
+function saveStationDefaults(){
+  const val=id=>document.getElementById(id)?.value||'all';
+  const after=(document.getElementById('setting-after-time')?.value||'').trim();
+  if(after&&!/^(?:[01]?\d|2[0-3]):[0-5]\d$/.test(after)){
+    alert('시간은 0:00~23:59 형식으로 입력해 주세요.');return;
+  }
+  const d={
+    dir:val('setting-station-dir'),pass:val('setting-station-pass'),
+    grade:val('setting-station-grade'),line:val('setting-station-line'),
+    terminus:val('setting-station-terminus'),night:val('setting-station-night'),after
+  };
+  try{localStorage.setItem(STATION_DEFAULT_KEY,JSON.stringify(d));}catch(e){}
+  applyStationDefaults();
+  const status=document.getElementById('station-default-status');
+  if(status){status.textContent='저장되었습니다';setTimeout(()=>{if(status)status.textContent='';},1800);}
+}
+function resetStationDefaults(){
+  try{localStorage.removeItem(STATION_DEFAULT_KEY);}catch(e){}
+  applyStationDefaults();
+  const el=document.getElementById('my-sub-content');
+  if(el)renderSettingsSection(el);
+}
+function _settingsOptions(items,current){
+  return items.map(([v,l])=>`<option value="${v}"${current===v?' selected':''}>${l}</option>`).join('');
+}
+function _settingsAttr(value){
+  return String(value??'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;');
+}
 function renderSettingsSection(el){
   const modes=[
     {id:'pc',    icon:'🖥️', name:'PC 모드',    desc:'넓은 화면 · 키보드 조작(+/- 확대, WASD·방향키 이동)'},
     {id:'mobile',icon:'📱', name:'모바일 모드', desc:'기본 모드 · 현재 화면 그대로'},
     {id:'watch', icon:'⌚', name:'워치 모드',   desc:'최소 정보만 · 열차·다음 정차·지연·승강장'},
+  ];
+  const sd=getStationDefaults();
+  const prefButtons=[
+    ['window','🪟 창측'],['aisle','🚶 복도측'],['power','⚡ 콘센트'],
+    ['front','⬆ 앞쪽'],['rear','⬇ 뒤쪽'],['fwd','▲ 순방향'],['rev','▽ 역방향']
   ];
   el.innerHTML=`<div class="settings-section"><div class="settings-card">
     <div style="font-size:13px;font-weight:800;color:var(--text1);margin-bottom:10px">환경 모드</div>
@@ -7749,6 +7836,29 @@ function renderSettingsSection(el){
     </div>
     <div style="font-size:11px;color:var(--text3);margin-top:10px;line-height:1.6">
       모드는 이 기기에만 저장됩니다. 워치 모드는 최소 화면으로 전환되며, 화면의 📱 버튼으로 언제든 돌아올 수 있습니다.
+    </div>
+    <div class="settings-divider"></div>
+    <div class="settings-title">좌석 선택 기본 선호</div>
+    <div class="settings-chip-row">
+      ${prefButtons.map(([v,l])=>`<button class="seat-auto-chip${_seatPrefs.has(v)?' on':''}" onclick="toggleSettingsSeatPref('${v}')">${l}</button>`).join('')}
+      <button class="seat-auto-chip pref-clear" onclick="clearSettingsSeatPrefs()">초기화</button>
+    </div>
+    <div class="settings-help">좌석 선택을 열면 이 선호 조건이 자동 배정과 추천 좌석에 우선 적용됩니다.</div>
+    <div class="settings-divider"></div>
+    <div class="settings-title">시간표 검색 기본 필터</div>
+    <div class="settings-filter-grid">
+      <label>방향<select id="setting-station-dir">${_settingsOptions([['all','전체'],['down','하행'],['up','상행']],sd.dir)}</select></label>
+      <label>통과 열차<select id="setting-station-pass">${_settingsOptions([['all','포함'],['stop','정차만']],sd.pass)}</select></label>
+      <label>등급<select id="setting-station-grade">${_settingsOptions([['all','전체'],['KTX','KTX'],['SRT','SRT'],['ITX-새마을','ITX-새마을'],['ITX-청춘','ITX-청춘'],['무궁화호','무궁화호'],['남도해양','남도해양'],['국악와인','국악와인']],sd.grade)}</select></label>
+      <label>노선<select id="setting-station-line">${_settingsOptions([['all','전체'],['경부선','경부선'],['경부고속선','경부고속선'],['호남선','호남선'],['전라선','전라선'],['경전선','경전선'],['중앙선','중앙선'],['동해선','동해선'],['강릉선','강릉선'],['중부내륙선','중부내륙선']],sd.line)}</select></label>
+      <label>당역 종착<select id="setting-station-terminus">${_settingsOptions([['all','포함'],['exclude','제외']],sd.terminus)}</select></label>
+      <label>심야 열차<select id="setting-station-night">${_settingsOptions([['all','전체'],['only','심야만'],['highlight','하이라이트']],sd.night)}</select></label>
+      <label>시간 이후<input id="setting-after-time" type="text" value="${_settingsAttr(sd.after)}" placeholder="예: 9:00"></label>
+    </div>
+    <div class="settings-actions">
+      <button class="btn btn-primary" onclick="saveStationDefaults()">기본값 저장</button>
+      <button class="btn settings-reset-btn" onclick="resetStationDefaults()">초기화</button>
+      <span id="station-default-status" class="settings-save-status"></span>
     </div>
     <div style="font-size:13px;font-weight:800;color:var(--text1);margin:18px 0 10px">지연 시뮬레이션</div>
     <div class="sim-toggle-card">
@@ -7847,6 +7957,7 @@ document.addEventListener('keydown',e=>{
   }
 });
 setTimeout(()=>{try{_applyUiMode();}catch(e){}},0); // 전체 스크립트 로드 후 모드 적용
+setTimeout(()=>{try{applyStationDefaults();}catch(e){}},0);
 
 // ══════════════════════════════════════════
 // 🎫 열차 예매 탭
