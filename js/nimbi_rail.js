@@ -7735,7 +7735,7 @@ function setUiMode(m){
 function renderSettingsSection(el){
   const modes=[
     {id:'pc',    icon:'🖥️', name:'PC 모드',    desc:'넓은 화면 · 키보드 조작(+/- 확대, WASD·방향키 이동)'},
-    {id:'mobile',icon:'📱', name:'모바일 모드', desc:'기본 모드 · 현재 화면 그대로'},
+    {id:'mobile',icon:'📱', name:'모바일 모드', desc:'평균적인 휴대폰 너비에 맞춘 한 화면 구성'},
     {id:'watch', icon:'⌚', name:'워치 모드',   desc:'최소 정보만 · 열차·다음 정차·지연·승강장'},
   ];
   el.innerHTML=`<div style="padding:4px 0">
@@ -10925,7 +10925,7 @@ function _renderJourney(){
         <span class="jr-dest">${_opsEsc(t.dest)}행</span>
       </div>
       <div class="jr-route">${_opsEsc(stops[0].s)} ${depT} → ${_opsEsc(lastItem.s)} ${arrT}${arrAdj}</div>
-      <button class="jr-virtual-btn" onclick="closeJourney();openVirtualRide('${_opsEsc(t.no)}')">🚆 실시간 가상 승차</button>
+      ${phase==='running'?`<button class="jr-virtual-btn" onclick="closeJourney();openVirtualRide('${_opsEsc(t.no)}')">🚆 실시간 가상 승차</button>`:''}
       <div class="jr-status jr-${phase}${(_simDelayOn&&dly>0&&phase==='running')?' jr-delayed':''}">
         <div class="jr-status-head">${head}</div>
         ${sub?`<div class="jr-status-sub">${sub}</div>`:''}
