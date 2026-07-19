@@ -781,7 +781,6 @@ function renderDetail(t){
       statusBanner=liveDelay>0
         ?`<button class="train-status-banner running delayed" type="button" onclick="openJourney('${t.no}')">
             <strong>🔴 지연 운행 중인 열차입니다 · 약 ${liveDelay}분</strong>
-            <span>${msg}</span>
             <small>클릭하여 지연 정보 보기</small>
           </button>`
         :`<div class="train-status-banner running">🚆 ${msg}${etaTxt}</div>`;
@@ -5533,9 +5532,9 @@ function openQRPopup(ticketId){
             <span style="margin-left:auto;display:flex;gap:6px;align-items:center">${discBadge}${boardBadge}</span>
           </div>
           <div class="rt-route">
-            <div class="rt-stn"><div class="rt-stn-name">${tk.fromStn}</div><div class="rt-stn-time">${tk.depTime||''}</div>${qrDelay.from}</div>
+            <div class="rt-stn"><div class="rt-stn-name">${tk.fromStn}</div><div class="rt-stn-time">${tk.depTime||''}${qrDelay.from}</div></div>
             <div class="rt-arrow" style="color:${gradeC}">→</div>
-            <div class="rt-stn rt-stn-r"><div class="rt-stn-name">${tk.toStn}</div><div class="rt-stn-time">${tk.arrTime||''}</div>${qrDelay.to}</div>
+            <div class="rt-stn rt-stn-r"><div class="rt-stn-name">${tk.toStn}</div><div class="rt-stn-time">${tk.arrTime||''}${qrDelay.to}</div></div>
           </div>
           <div class="rt-meta">
             <div><span class="rt-k">날짜</span><span class="rt-v">${tk.travelDate}</span></div>
@@ -7177,14 +7176,14 @@ function _ticketEndpointDelayHTML(tk){
   const live=_liveDelayOf(t),status=getCurrentStatus(t,nm-live);
   const cls='ticket-delay-est';
   if(status?.status==='running'||ticketBoardState(tk)==='active'){
-    return {from:depD>0?`<span class="${cls} actual">${depD}분 지연</span>`:'',to:''};
+    return {from:depD>0?` <span class="${cls} actual">(${depD}분 지연)</span>`:'',to:''};
   }
   if(status?.status==='done'||ticketBoardState(tk)==='done'||isTicketPast(tk)){
-    return {from:'',to:arrD>0?`<span class="${cls} actual">${arrD}분 지연</span>`:''};
+    return {from:'',to:arrD>0?` <span class="${cls} actual">(${arrD}분 지연)</span>`:''};
   }
   return {
-    from:depD>0?`<span class="${cls}">${addMinToClock(tk.depTime,depD)} 출발 예상 · +${depD}분</span>`:'',
-    to:arrD>0?`<span class="${cls}">${addMinToClock(tk.arrTime,arrD)} 도착 예상 · +${arrD}분</span>`:''
+    from:depD>0?` <span class="${cls}">(${depD}분 지연 예상)</span>`:'',
+    to:arrD>0?` <span class="${cls}">(${arrD}분 지연 예상)</span>`:''
   };
 }
 // 승차권 카드 HTML (목록·캘린더 공용)
@@ -7206,9 +7205,9 @@ function _ticketCardHTML(tk){
             return '';})()}
       </div>
       ${(()=>{const de=_ticketEndpointDelayHTML(tk);return `<div class="ticket-card-route">
-        <div class="ticket-station"><span class="ticket-station-name">${tk.fromStn}</span><span class="ticket-time">${tk.depTime||'-'}</span>${de.from}</div>
+        <div class="ticket-station"><span class="ticket-station-name">${tk.fromStn}</span><span class="ticket-time">${tk.depTime||'-'}${de.from}</span></div>
         <div class="ticket-arrow">→</div>
-        <div class="ticket-station"><span class="ticket-station-name">${tk.toStn}</span><span class="ticket-time">${tk.arrTime||'-'}</span>${de.to}</div>
+        <div class="ticket-station"><span class="ticket-station-name">${tk.toStn}</span><span class="ticket-time">${tk.arrTime||'-'}${de.to}</span></div>
       </div>`;})()}
       ${(()=>{const ri=(typeof _simRefundInfo==='function')?_simRefundInfo(tk):null; if(!ri)return '';
         return ri.eligible
