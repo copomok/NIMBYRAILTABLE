@@ -363,7 +363,7 @@ function _computeProfile(t){
       const congHi=cong>0.6;
       const rush=ctx.weekend?false:_isRush(m[i]);
       const exposure=Math.min(1, 0.4*(metroPar?1:0)+0.5*cong+(rush?0.2:0)+(singleTrack?0.3:0));
-      const ra=_seededRand(seed+i*2.7+0.5), rb=_seededRand(seed+i*2.7+1.9), rc=_seededRand(seed+i*2.7+3.3), rd=_seededRand(seed+i*2.7+5.1);
+      const ra=_seededRand(seed+i*2.7+0.5), rb=_seededRand(seed+i*2.7+1.9), rc=_seededRand(seed+i*2.7+3.3), rd=_seededRand(seed+i*2.7+5.1), re=_seededRand(seed+i*2.7+6.7);
       const pInc=evBase*(0.35+exposure*1.3);
       let inc=0, cause=null;
       if(ra<pInc){
@@ -389,18 +389,22 @@ function _computeProfile(t){
         const recW=_recoveryWeight(Math.round(cur));
         const urg=Math.min(1, Math.pow(cur/40, 0.6));
         const gate=(0.15+0.8*urg)*ctx.recW*(0.9+0.05*go.prio)*recW;
+        // 2분 이상 정차하는 역은 지연 중 1분 정차 단축을 적극 시행한다.
+        // 기상 악화 시에도 정차 단축 자체는 정확히 1분 회복되도록 운전 회복과 분리한다.
+        const canCut=cur>=1.5&&dwell[i+1]>=2;
+        const cutGate=Math.min(0.92,0.52+urg*0.30+go.prio*0.035);
+        if(canCut&&re<cutGate)dcut=1;
+        let runRec=0, recHard=_SIM_REC_HARD;
         if(rc<gate){
           // ─ 고속선 회복 강화 ─
-          let recHard=_SIM_REC_HARD;
           const inHS=_isHighSpeedSection(t.line)&&(/KTX|SRT/.test(t.grade));
           if(inHS){
             if(cur>=6&&cur<10)  recHard=2.0;
             else if(cur>=10)    recHard=3.0;
           }
-          const runRec=Math.min(0.16*dt*recFrac, 0.8)*(0.5+0.5*rc);
-          dcut=(cur>=2&&dwell[i+1]>=2)?Math.min(dwell[i+1]-1,1)*(0.4+0.6*urg):0;
-          rec=Math.min(cur, (runRec+dcut)*ctx.recW, recHard);
+          runRec=Math.min(0.16*dt*recFrac, 0.8)*(0.5+0.5*rc)*ctx.recW;
         }
+        rec=Math.min(cur,runRec+dcut,Math.max(recHard,dcut));
       }
       const prevCur=cur;
       cur=Math.max(0, Math.min(ctx.bigCap, cur+inc-rec));
@@ -580,6 +584,7 @@ function _simViewArr(t){
   if(Object.keys(_simViewCache).length>5000)_simViewCache={};
   const nm=_simNowFor(pr);
   const ctx=_simDayContext(t);
+  const dispatch=_dispatchInfo(t);
   const veh=_simVeh(t), vehOn=!!(veh&&pr.m[veh.sec]!=null&&nm>=pr.m[veh.sec]);
   const act=_simActualArr(t), sched=_simSchedArr(t);
   const seed=_simSeed(t.no,_simDayKey(t));
@@ -596,7 +601,23 @@ function _simViewArr(t){
       const r=_seededRand(seed+i*7.77+(revSeed>>>0)*0.00009131)-0.5;
       let v=base + r*2*vol*conv;
       if(prev!=null) v=Math.max(v, prev-_SIM_REC_HARD);
+      // 원인 사건이 없는 미래 역에서는 변동 보정 때문에 회복한 지연이 다시 늘지 않는다.
+      // 새 지연 사건이나 차량 장애가 실제로 배치된 역에서만 재증가를 허용한다.
+      const dispatchInc=i>0&&(dispatch.adj?.[i]||0)>(dispatch.adj?.[i-1]||0);
+      const events=pr.events||[], newEvent=events.find(e=>e.idx===i&&e.delta>=0.5);
+      const justShortened=events.some(e=>e.idx===i-1&&e.delta<0&&e.cause==='정차시간 단축');
+      const eventAllowed=!!newEvent&&(!justShortened||newEvent.delta>=2);
+      const hasNewDelay=eventAllowed||(vehOn&&veh&&veh.sec===i)||dispatchInc;
+      if(prev!=null&&!hasNewDelay)v=Math.min(v,prev);
       out[i]=Math.max(0, Math.round(v));
+    }
+    if(i>0&&pr.m[i]<=nm){
+      const dispatchInc=(dispatch.adj?.[i]||0)>(dispatch.adj?.[i-1]||0);
+      const events=pr.events||[], newEvent=events.find(e=>e.idx===i&&e.delta>=0.5);
+      const justShortened=events.some(e=>e.idx===i-1&&e.delta<0&&e.cause==='정차시간 단축');
+      const eventAllowed=!!newEvent&&(!justShortened||newEvent.delta>=2);
+      const hasNewDelay=eventAllowed||(vehOn&&veh&&veh.sec===i)||dispatchInc;
+      if(prev!=null&&!hasNewDelay)out[i]=Math.min(out[i],prev);
     }
     prev=out[i];
   }
