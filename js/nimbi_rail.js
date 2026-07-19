@@ -867,6 +867,7 @@ function renderDetail(t){
     <div id="tl-${t.no}">${_detailViewMode==='table'?renderTableView(t):rows}</div>
     <div class="ticket-cta-wrap" style="display:flex;gap:8px;flex-wrap:wrap">
       <button class="btn btn-primary ticket-cta-btn" style="flex:1" onclick="openBookingPopup('${t.no}','${first?.s||''}','${last?.s||''}','${depT}','${arrT}')">🎫 승차권 예매 (전 구간)</button>
+      <button class="btn ticket-cta-btn" style="flex:1" onclick="openVirtualRide('${t.no}')">🚆 실시간 가상 승차</button>
     </div>
   </div>`;
 }
