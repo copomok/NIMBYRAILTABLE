@@ -463,6 +463,7 @@ function switchTab(n){
   if(n==='notice') renderNotice();
   if(n==='ticket') renderTickets();
   if(n==='train') updateHomeTripWidget();
+  if(n==='train'&&typeof renderDailyDiscovery==='function')renderDailyDiscovery();
   if(n==='book') renderBookTab();
   if(n==='delay'){const el=document.getElementById('result-delay');if(el)renderSIDelay(el);}
   if(n==='metrolines') renderMetroLinesTab();
@@ -9388,7 +9389,10 @@ function renderSICard(name){
         })()}
       </div>
       ${_appMode!=='metro'?`<div style="padding:12px 16px 4px">
-        <button class="si-board-btn" onclick="openStationBoard('${nameEsc}')">🚉 출발 안내 전광판 열기</button>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:7px">
+          <button class="si-board-btn" onclick="openStationBoard('${nameEsc}')">🚉 역 전광판</button>
+          <button class="si-board-btn" onclick="openStationWatch('${nameEsc}')">👀 실시간 역관찰</button>
+        </div>
       </div>`:''}
       ${_appMode==='metro'?(()=>{ // 🚇 전철: 노선(route)별 전역/다음역 — 경유 노선·지선 분기 모두 표시
         if(typeof METRO_LINES==='undefined')return '';

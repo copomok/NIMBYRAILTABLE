@@ -485,6 +485,21 @@ tbody td{padding:10px 14px;font-size:13px;white-space:nowrap}
 .delay-passenger-summary{margin-top:9px;padding:9px 10px;border-radius:8px;background:rgba(56,139,253,.1);color:var(--text1);font-size:11px;line-height:1.5}
 @media(max-width:640px){.delay-confidence{grid-template-columns:1fr}.delay-cause-row{grid-template-columns:minmax(82px,1fr) 1.4fr 30px}}
 
+/* 오늘의 발견: 기존 역·열차·관제 화면으로 이어지는 홈 카드 */
+.daily-discovery{margin:0 0 12px}
+.daily-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:7px;padding:0 2px}
+.daily-head b{font-size:13px;color:var(--text1)}
+.daily-head span{font-size:10px;color:var(--text3)}
+.daily-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.daily-card{border:1px solid var(--border);border-radius:12px;background:var(--bg2);padding:12px;cursor:pointer;text-align:left;color:var(--text1);font-family:var(--sans);min-width:0;transition:border-color .15s,transform .15s}
+.daily-card:hover{border-color:var(--accent);transform:translateY(-1px)}
+.daily-label{font-size:10px;font-weight:700;color:var(--accent);margin-bottom:6px}
+.daily-title{font-size:16px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.daily-sub{font-size:10px;color:var(--text3);line-height:1.45;margin-top:4px;min-height:29px}
+.daily-live{display:inline-flex;align-items:center;gap:4px;margin-top:7px;padding:2px 7px;border-radius:8px;background:rgba(63,185,80,.12);color:#3fb950;font-size:9px;font-weight:700}
+.daily-live::before{content:'';width:5px;height:5px;border-radius:50%;background:#3fb950;box-shadow:0 0 0 3px rgba(63,185,80,.13)}
+@media(max-width:640px){.daily-grid{grid-template-columns:1fr}.daily-sub{min-height:0}}
+
 /* 알람 컬럼 */
 .tl-alarm-col{display:flex;align-items:center;justify-content:center}
 
