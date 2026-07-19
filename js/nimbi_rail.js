@@ -996,17 +996,12 @@ function searchByRoute(){
   // 직통 있으면 직통만 표시
   if(directs.length){
     const afterLabel=afterMin!==null?` · ${afterRaw} 이후`:'';
-    const _nowMin=(()=>{const n=new Date();return n.getHours()*60+n.getMinutes();})();
-    const relBadge=(depT)=>{ const m=toMin(depT); if(m==null)return '';
-      let d=(m-_nowMin+1440)%1440; if(d>180)return '';
-      const txt=d===0?'출발 임박':d<=1?'곧 출발':`${d}분 후`;
-      return `<div class="rt-badge ${d<=5?'rt-soon':'rt-ok'}">${txt}</div>`; };
     const rows=directs.map(({t,depT,arrT,dur})=>
       `<tr onclick="jumpToTrain('${t.no}')">
         <td>${trainChip(t.no,t.grade,`event.stopPropagation();jumpToTrain('${t.no}')`)}</td>
         <td>${gradeHtml(t.grade)}</td><td>${lineChipHtml(t.line)}</td>
         <td>${dirLabel(t.dir)}</td><td style="font-weight:500">${t.dest}</td>
-        <td><span class="time-dep">${depT||'-'}</span>${relBadge(depT)}</td>
+        <td><span class="time-dep">${depT||'-'}</span></td>
         <td><span class="time-arr">${arrT||'-'}</span></td>
         <td style="font-family:var(--mono);font-size:11px;color:var(--text2)">${dur}</td>
 
@@ -11084,9 +11079,17 @@ function _renderJourney(){
     const plat=(typeof _realPlatform==='function')?_realPlatform(t.no,st.s):null;
     const tArr=hasTime(st.arr)?st.arr:'', tDep=hasTime(st.dep)?st.dep:'';
     // 이 역 시점의 지연분(운행/종료 시): 지나온 역=실제 지연, 남은 역=지연 예정. 정시면 0.
-    const dStop=(_simDelayOn&&phase!=='before')?_simDelayAtStop(t, idx):0;
-    const sA=tArr?addMinToClock(tArr,dStop):'', sD=tDep?addMinToClock(tDep,dStop):'';
-    const timeTxt=st.isOrigin?`${sD||sA} 출발`:st.isTerm?`${sA||sD} 도착`:(sA&&sD&&tArr!==tDep?`${sA}–${sD}`:(sA||sD));
+    const delayPair=(_simDelayOn&&phase!=='before'&&typeof _simDelayPairAtStop==='function')
+      ?_simDelayPairAtStop(t,idx):{arr:_simDelayAtStop(t,idx),dep:_simDelayAtStop(t,idx),shortened:false};
+    const dArr=delayPair.arr||0, dDep=delayPair.dep||0, dStop=Math.max(dArr,dDep);
+    const sA=tArr?addMinToClock(tArr,dArr):'', sD=tDep?addMinToClock(tDep,dDep):'';
+    const delayTxt=dStop>0
+      ?delayPair.shortened&&dArr!==dDep
+        ?` <span class="jr-time-diff">(+${dArr} → +${dDep})</span>`
+        :` <span class="jr-time-diff">(+${dStop})</span>`
+      :'';
+    const timeBase=st.isOrigin?`${sD||sA} 출발`:st.isTerm?`${sA||sD} 도착`:(sA&&sD&&tArr!==tDep?`${sA}–${sD}`:(sA||sD));
+    const timeTxt=timeBase+delayTxt;
     const cls=['jr-stop'];
     if(st.isPass)cls.push('pass'); if(passed&&!isCur)cls.push('done'); if(isCur)cls.push('cur'); if(isNext)cls.push('next');
     const nameCls=st.isOrigin?'jr-origin':st.isTerm?'jr-term':'';
@@ -11095,7 +11098,7 @@ function _renderJourney(){
     return `<div class="${cls.join(' ')}" style="--gc:${c}">
       <div class="jr-dot"></div>
       <div class="jr-info"><span class="jr-name ${nameCls}">${_opsEsc(st.s)}${st.isPass?' <span class="jr-passtag">통과</span>':''}${badge}</span>${platTxt}</div>
-      <div class="jr-time${dStop>0?(dStop<=2?' jr-late-y':dStop<=10?' jr-late-o':' jr-late-r'):''}">${timeTxt}${dStop>0?` <span class="jr-time-diff">(+${dStop})</span>`:''}</div>
+      <div class="jr-time${dStop>0?(dStop<=2?' jr-late-y':dStop<=10?' jr-late-o':' jr-late-r'):''}">${timeTxt}</div>
     </div>`;
   }).join('');
   const depT=stops[0].dep||stops[0].arr, arrT=lastItem.arr||lastItem.dep;

@@ -605,6 +605,18 @@ function _simViewArr(t){
 
 // ── 조회 API ──
 function _simDelayAtStop(t, idx){ if(!_simDelayOn||_simExpired(t))return 0; const cd=_simViewArr(t); return (idx>=0&&idx<cd.length)?cd[idx]:0; }
+// 정차시간 단축 역은 도착 후 1분을 회복해 출발한다.
+// 역별 누적 지연 배열은 출발 시점 값이므로 UI용 도착/출발 지연을 분리해 제공한다.
+function _simDelayPairAtStop(t,idx){
+  const dep=_simDelayAtStop(t,idx);
+  if(!_simDelayOn||idx<=0||dep<=0)return {arr:dep,dep,shortened:false};
+  const pr=_simProfile(t);
+  const shortened=(pr.events||[]).some(e=>e.idx===idx&&e.delta<0&&e.cause==='정차시간 단축');
+  if(!shortened)return {arr:dep,dep,shortened:false};
+  const prev=_simDelayAtStop(t,idx-1);
+  const arr=Math.min(prev,dep+1);
+  return {arr:Math.max(dep,arr),dep,shortened:arr>dep};
+}
 function _simDelay(t, clock){
   if(!_simDelayOn||_simExpired(t)) return 0;
   const pr=_simProfile(t); const cd=_simViewArr(t); const {m,firstM,lastM}=pr;

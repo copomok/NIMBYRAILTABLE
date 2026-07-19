@@ -1880,8 +1880,6 @@ button, select, input[type=range],
 
 /* 출도착 결과 실시간 출발 배지 */
 .rt-badge{margin-top:3px;font-size:10px;font-weight:800;font-family:var(--sans);padding:1px 6px;border-radius:8px;display:inline-block;white-space:nowrap}
-.rt-badge.rt-ok{background:rgba(56,139,253,.16);color:var(--accent);border:1px solid rgba(56,139,253,.35)}
-.rt-badge.rt-soon{background:rgba(63,185,80,.18);color:var(--green);border:1px solid rgba(63,185,80,.4)}
 
 /* 지연 예보 칩 (열차 상세·탑승 여정) */
 .delay-chip{display:flex;align-items:center;gap:7px;flex-wrap:wrap;margin:8px 0 2px;padding:8px 12px;border-radius:10px;
