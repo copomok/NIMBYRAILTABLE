@@ -7735,7 +7735,7 @@ function setUiMode(m){
 function renderSettingsSection(el){
   const modes=[
     {id:'pc',    icon:'🖥️', name:'PC 모드',    desc:'넓은 화면 · 키보드 조작(+/- 확대, WASD·방향키 이동)'},
-    {id:'mobile',icon:'📱', name:'모바일 모드', desc:'평균적인 휴대폰 너비에 맞춘 한 화면 구성'},
+    {id:'mobile',icon:'📱', name:'모바일 모드', desc:'기본 모드 · 현재 화면 그대로'},
     {id:'watch', icon:'⌚', name:'워치 모드',   desc:'최소 정보만 · 열차·다음 정차·지연·승강장'},
   ];
   el.innerHTML=`<div style="padding:4px 0">
