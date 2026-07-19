@@ -53,6 +53,7 @@
     let favs=[];
     try{favs=(typeof loadFavs==='function'?loadFavs():[]).filter(f=>f.type==='route'&&f.data?.from&&f.data?.to);}
     catch(e){}
+    favs.sort((a,b)=>(b.addedAt||0)-(a.addedAt||0));
     const pairs=favs.map(f=>({from:f.data.from,to:f.data.to,fav:true}));
     try{
       const from=loadHistory('route_from'),to=loadHistory('route_to');
@@ -127,7 +128,7 @@
     const nextHtml=next?`<section class="home-section"><div class="home-section-head"><b>나의 다음 일정</b><span>${next.diff}분 후 출발</span></div>
       <button class="home-next-card" onclick="switchTab('ticket')"><div><b>${esc(next.train?.grade||'열차')} ${esc(next.ticket.trainNo)}</b><span>${esc(next.ticket.fromStn)} ${esc(next.ticket.depTime)} → ${esc(next.ticket.toStn)} ${esc(next.ticket.arrTime)}</span></div><em>승차권 ›</em></button></section>`:'';
     const interestHtml=pairs.length?`<section class="home-section"><div class="home-section-head"><b>관심 노선·구간 현황</b><span>즐겨찾기·최근 검색</span></div>
-      <div class="home-interest-list">${pairs.slice(0,3).map(r=>{const s=routeStatus(r,live);return `<button onclick="homeRouteSearch('${jsq(r.from)}','${jsq(r.to)}')"><span>${esc(r.from)} → ${esc(r.to)}</span><em class="${s.cls}">${s.label}</em></button>`;}).join('')}</div></section>`:'';
+      <div class="home-interest-list">${pairs.slice(0,3).map(r=>{const s=routeStatus(r,live);return `<button onclick="homeRouteSearch('${jsq(r.from)}','${jsq(r.to)}')"><span>${r.fav?'<i>★ 즐겨찾기</i>':''}${esc(r.from)} → ${esc(r.to)}</span><em class="${s.cls}">${s.label}</em></button>`;}).join('')}</div></section>`:'';
     const alertHtml=live.delayed.length?`<section class="home-section home-alert"><div class="home-section-head"><b>⚠️ 이상 운행 알림</b><span>현재 기준</span></div>
       <div class="home-alert-list">${live.delayed.slice(0,3).map(x=>`<button onclick="openJourney('${esc(x.t.no)}')"><span><b>${esc(x.t.grade)} ${esc(x.t.no)}</b><small>${esc(x.t.stops[0]?.s)} → ${esc(x.t.dest)} · 클릭하여 지연 정보 보기</small></span><em>+${x.d}분</em></button>`).join('')}</div></section>`:'';
     host.className='daily-discovery';
