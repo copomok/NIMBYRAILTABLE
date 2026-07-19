@@ -74,7 +74,7 @@ const REGIONAL_BONUS_STNS=new Set([
 ]);
 function getStnBonus(trainNo){
   const n=parseInt(trainNo)||0;
-  const t=ALL_TRAINS.find(x=>x.no===trainNo);
+  const t=getTrainByNo(trainNo);
   if(!t) return 0;
   const stns=t.stops.map(s=>s.s);
   // 경전선: 부산~진주/창원 구간이면 보너스
@@ -170,7 +170,7 @@ function generateVirtualBookings(trainNo, travelDate, composition){
   const cong=loadCongestion();
   if(cong[key]){_congCache[key]=true;return;}
 
-  const t=ALL_TRAINS.find(x=>x.no===trainNo);
+  const t=getTrainByNo(trainNo);
   const depTime=t?t.stops[0].dep||t.stops[0].arr:null;
   const baseFillRate=calcRealisticFillRate(trainNo,travelDate,depTime,t?.grade);
 
@@ -201,7 +201,7 @@ function getCongestionLevel(trainNo, travelDate, composition){
   const _ck=trainNo+':'+travelDate;
   if(_levelCache[_ck])return _levelCache[_ck];
   // 좌석 순회 없이 fillRate만으로 즉시 계산 (열차 목록용)
-  const t=ALL_TRAINS.find(x=>x.no===trainNo);
+  const t=getTrainByNo(trainNo);
   const depTime=t?t.stops[0].dep||t.stops[0].arr:null;
   const rate=calcRealisticFillRate(trainNo,travelDate,depTime,t?.grade);
   const _r=rate>=0.95?{rate,label:'매진 임박',color:'var(--red)'}:

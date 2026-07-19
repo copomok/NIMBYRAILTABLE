@@ -228,7 +228,7 @@ function _computeProfile(t){
   // 회차 연쇄
   let inherited=0;
   const predNo=_simRotPred()[t.no];
-  if(predNo){ const pt=(typeof ALL_TRAINS!=='undefined')&&ALL_TRAINS.find(x=>x.no===predNo);
+  if(predNo){ const pt=(typeof ALL_TRAINS!=='undefined')&&getTrainByNo(predNo);
     if(pt){ const pp=_simProfile(pt); const pf=(pp.cd&&pp.cd.length)?pp.cd[pp.cd.length-1]:0;
       if(pf>0){ const buf=_turnaroundBuffer(pt,t); if(buf!=null) inherited=Math.max(0, pf-Math.max(3,buf)); } } }
 
@@ -362,7 +362,7 @@ function _dispatchInfo(t){
       if(u.no===t.no)continue;
       const gap=_svMin(arrRaw)-u.dep;
       if(gap<0||gap>=45)continue;
-      const ut=ALL_TRAINS.find(x=>x.no===u.no); if(!ut)continue;
+      const ut=getTrainByNo(u.no); if(!ut)continue;
       // ─ v2: 무정차 통과 검증 ─
       const isPassStopU=_isPassStop(ut, timed[i].s);
       if(isPassStopU&&!_NO_PASS_TRACK.has(timed[i].s))continue;
@@ -550,7 +550,7 @@ function _simDelayReport(t){
   let affects=null;
   const succNo=_simRotSucc()[t.no];
   if(succNo&&fin>0&&typeof ALL_TRAINS!=='undefined'){
-    const nt=ALL_TRAINS.find(x=>x.no===succNo);
+    const nt=getTrainByNo(succNo);
     if(nt){ const buf=_turnaroundBuffer(t,nt); if(buf!=null&&fin>Math.max(3,buf))affects=succNo; }
   }
   return {first, spread:spread.slice(0,3), recovered:pr.recovered||0, final:fin, affects};
@@ -582,7 +582,7 @@ function _simExpired(t){
 }
 function _simRefundInfo(tk){
   if(!_simDelayOn||!tk)return null;
-  const t=(typeof ALL_TRAINS!=='undefined')&&ALL_TRAINS.find(x=>x.no===tk.trainNo); if(!t)return null;
+  const t=(typeof ALL_TRAINS!=='undefined')&&getTrainByNo(tk.trainNo); if(!t)return null;
   const act=_simActualArr(t); const fin=act.length?act[act.length-1]:0;
   if(fin<30)return null;
   const f=_delayForecast(t.line,t.grade);
