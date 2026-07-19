@@ -458,34 +458,39 @@ tbody td{padding:10px 14px;font-size:13px;white-space:nowrap}
 .tl-badge.now{background:rgba(63,185,80,.2);color:#3fb950;border:1px solid rgba(63,185,80,.4)}
 .tl-badge.next{background:rgba(56,139,253,.2);color:var(--accent);border:1px solid rgba(56,139,253,.4)}
 
-/* 지연 예측: 기존 프로필을 승객 관점으로 요약 */
-.delay-passenger-card{margin:0;border-bottom:1px solid var(--border);background:rgba(56,139,253,.035)}
-.delay-passenger-card>summary{cursor:pointer;list-style:none;padding:10px 14px;font-size:12px;font-weight:700;color:var(--text1);display:flex;justify-content:space-between;gap:8px}
-.delay-passenger-card>summary::-webkit-details-marker{display:none}
-.delay-passenger-card>summary span{color:var(--text3);font-weight:500}
-.delay-passenger-body{padding:0 14px 12px}
-.delay-confidence{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:10px}
-.delay-confidence>div{padding:8px;background:var(--bg3);border-radius:8px}
-.delay-confidence small{display:block;color:var(--text3);font-size:9px;margin-bottom:3px}
-.delay-confidence b{font-size:12px;color:var(--text1)}
-.delay-cause-title{font-size:11px;font-weight:700;color:var(--text2);margin-bottom:5px}
-.delay-cause-row{display:grid;grid-template-columns:minmax(90px,1fr) 2fr 34px;align-items:center;gap:7px;font-size:10px;color:var(--text2);margin:4px 0}
-.delay-cause-row b{text-align:right;color:var(--text1);font-family:var(--mono)}
-.delay-cause-track{height:5px;border-radius:4px;background:var(--bg3);overflow:hidden}
-.delay-cause-track i{display:block;height:100%;background:linear-gradient(90deg,#f97316,#f85149);border-radius:4px}
-.delay-passenger-summary{margin-top:9px;padding:9px 10px;border-radius:8px;background:rgba(56,139,253,.1);color:var(--text1);font-size:11px;line-height:1.5}
-@media(max-width:640px){.delay-confidence{grid-template-columns:1fr}.delay-cause-row{grid-template-columns:minmax(82px,1fr) 1.4fr 30px}}
-.jr-passenger-insights{border-bottom:1px solid var(--border);background:var(--bg1)}
-.jr-passenger-insights .delay-passenger-card{border-top:1px solid var(--border);border-bottom:0}
-.jr-congestion-card{padding:11px 14px;background:var(--bg2)}
-.jr-congestion-card>div:first-child{display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:11px;color:var(--text2)}
-.jr-congestion-card b{font-size:12px;color:var(--text1)}
-.jr-congestion-track{height:6px;border-radius:4px;background:var(--bg3);overflow:hidden;margin:7px 0}
-.jr-congestion-track i{display:block;height:100%;border-radius:4px;background:#3fb950}
-.jr-congestion-card.normal .jr-congestion-track i{background:#d29922}
-.jr-congestion-card.busy .jr-congestion-track i{background:#f97316}
-.jr-congestion-card.critical .jr-congestion-track i{background:#f85149}
-.jr-congestion-card p{margin:0;color:var(--text3);font-size:10px;line-height:1.45}
+/* 탑승 여정 출발 전 운행 예상 */
+.jr-passenger-insights{padding:10px 12px;border-bottom:1px solid var(--border);background:linear-gradient(180deg,var(--bg1),var(--bg2))}
+.jr-forecast-card{overflow:hidden;border:1px solid var(--border);border-radius:14px;background:var(--bg2);box-shadow:0 5px 18px rgba(0,0,0,.12)}
+.jr-forecast-head{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:11px 12px;border-bottom:1px solid var(--border)}
+.jr-forecast-head>div{display:flex;align-items:center;gap:8px;min-width:0}
+.jr-forecast-icon{display:grid;place-items:center;width:28px;height:28px;border-radius:9px;background:rgba(56,139,253,.12);font-size:15px}
+.jr-forecast-head b{display:block;font-size:12px;color:var(--text1)}
+.jr-forecast-head small{display:block;margin-top:1px;font-size:8px;color:var(--text3);font-weight:400}
+.jr-forecast-confidence{flex-shrink:0;padding:3px 7px;border-radius:8px;background:var(--bg3);color:var(--text2);font-size:9px;font-weight:700}
+.jr-forecast-grid{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--border)}
+.jr-forecast-metric{position:relative;padding:11px 12px;background:var(--bg2)}
+.jr-forecast-metric>span{display:block;font-size:9px;color:var(--text3);margin-bottom:4px}
+.jr-forecast-metric>b{font-size:14px;color:var(--text1)}
+.jr-forecast-metric>em{float:right;margin-top:3px;font-family:var(--mono);font-size:11px;font-style:normal;color:var(--text2)}
+.jr-forecast-bar{height:5px;margin-top:8px;border-radius:4px;background:var(--bg3);overflow:hidden;clear:both}
+.jr-forecast-bar i{display:block;height:100%;border-radius:4px;background:#3fb950}
+.jr-forecast-card.normal .jr-forecast-metric:first-child .jr-forecast-bar i{background:#d29922}
+.jr-forecast-card.busy .jr-forecast-metric:first-child .jr-forecast-bar i{background:#f97316}
+.jr-forecast-card.critical .jr-forecast-metric:first-child .jr-forecast-bar i{background:#f85149}
+.jr-forecast-metric.delay .jr-forecast-bar i{background:linear-gradient(90deg,#58a6ff,#a371f7)}
+.jr-forecast-summary{padding:9px 12px;background:rgba(56,139,253,.055);color:var(--text2);font-size:10px;line-height:1.45}
+.jr-forecast-detail{border-top:1px solid var(--border)}
+.jr-forecast-detail>summary{display:flex;align-items:center;justify-content:space-between;padding:9px 12px;cursor:pointer;list-style:none;color:var(--text2);font-size:10px;font-weight:700}
+.jr-forecast-detail>summary::-webkit-details-marker{display:none}
+.jr-forecast-detail[open]>summary span{transform:rotate(90deg)}
+.jr-forecast-detail-body{padding:1px 12px 11px}
+.jr-forecast-detail-title{margin:7px 0 5px;font-size:9px;font-weight:800;color:var(--text3)}
+.jr-forecast-cause{display:grid;grid-template-columns:minmax(85px,1fr) 1.5fr 30px;align-items:center;gap:6px;margin:5px 0;font-size:9px;color:var(--text2)}
+.jr-forecast-cause i{height:4px;border-radius:3px;background:var(--bg3);overflow:hidden}
+.jr-forecast-cause i b{display:block;height:100%;border-radius:3px;background:linear-gradient(90deg,#f97316,#f85149)}
+.jr-forecast-cause em{text-align:right;font-family:var(--mono);font-style:normal;color:var(--text3)}
+.jr-forecast-foot,.jr-forecast-empty{margin-top:8px;color:var(--text3);font-size:8px;line-height:1.4}
+@media(max-width:420px){.jr-forecast-head small{display:none}.jr-forecast-metric{padding:10px}.jr-forecast-summary{font-size:9px}}
 .jr-virtual-btn{width:100%;margin:9px 0 0;padding:8px 10px;border:1px solid color-mix(in srgb,var(--gc) 60%,var(--border));border-radius:9px;background:color-mix(in srgb,var(--gc) 12%,transparent);color:var(--text1);font-family:var(--sans);font-size:11px;font-weight:800;cursor:pointer}
 
 /* 오늘의 발견: 기존 역·열차·관제 화면으로 이어지는 홈 카드 */

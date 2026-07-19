@@ -680,29 +680,6 @@ function getCurrentStatus(t, atMin){
   return{status:'done',nowMin};
 }
 
-function _renderDelayPassengerInsight(t){
-  if(typeof _delayPassengerInsight!=='function')return '';
-  const insight=_delayPassengerInsight(t);
-  const causeRows=insight.causes.map(c=>`<div class="delay-cause-row">
-    <span>${c.name}</span>
-    <div class="delay-cause-track"><i style="width:${c.share}%"></i></div>
-    <b>${c.share}%</b>
-  </div>`).join('');
-  return `<details class="delay-passenger-card">
-    <summary>⏱ 지연 분석 <span>${insight.forecast.label} · 신뢰도 ${insight.confidence}%</span></summary>
-    <div class="delay-passenger-body">
-      <div class="delay-confidence">
-        <div><small>예측 신뢰도</small><b>${insight.confidenceLabel} ${insight.confidence}%</b></div>
-        <div><small>기본 지연 가능성</small><b>${insight.forecast.prob}%</b></div>
-        <div><small>종착 영향</small><b>${insight.finalDelay?`+${insight.finalDelay}분`:'정시 예상'}</b></div>
-      </div>
-      <div class="delay-cause-title">지연 원인 기여도</div>
-      ${causeRows}
-      <div class="delay-passenger-summary">👤 ${insight.passengerSummary}</div>
-    </div>
-  </details>`;
-}
-
 function renderDetail(t){
   const valid=t.stops.filter(s=>s.arr||s.dep);
   const originStn=valid[0]?.s, terminusStn=valid[valid.length-1]?.s;
@@ -10793,7 +10770,7 @@ function closeJourney(){
   if(_journeyTimer){clearTimeout(_journeyTimer);_journeyTimer=null;}
   _journeyNo=null;
 }
-function _renderJourneyCongestion(t){
+function _renderJourneyForecast(t){
   let rate=.5;
   try{
     const first=t.stops.find(s=>hasTime(s.dep)||hasTime(s.arr));
@@ -10804,15 +10781,37 @@ function _renderJourneyCongestion(t){
   const pct=Math.round(rate*100);
   const level=rate>=.9?'매우 혼잡':rate>=.76?'혼잡':rate>=.58?'보통':'여유';
   const cls=rate>=.9?'critical':rate>=.76?'busy':rate>=.58?'normal':'calm';
-  const note=rate>=.9?'입석·매진 가능성이 높습니다. 좌석과 탑승 위치를 미리 확인하세요.'
-    :rate>=.76?'혼잡이 예상됩니다. 출입문과 통로 주변을 피해 이동하세요.'
-    :rate>=.58?'보통 수준의 이용객이 예상됩니다. 일부 인기 구간은 붐빌 수 있습니다.'
-    :'비교적 여유로운 운행이 예상됩니다.';
-  return `<div class="jr-congestion-card ${cls}">
-    <div><span>예상 혼잡도</span><b>${level} · ${pct}%</b></div>
-    <div class="jr-congestion-track"><i style="width:${pct}%"></i></div>
-    <p>👥 ${note}</p>
-  </div>`;
+  const insight=typeof _delayPassengerInsight==='function'?_delayPassengerInsight(t):null;
+  const causeRows=(insight?.causes||[]).map(c=>`<div class="jr-forecast-cause">
+    <span>${_opsEsc(c.name)}</span><i><b style="width:${c.share}%"></b></i><em>${c.share}%</em>
+  </div>`).join('');
+  const delayValue=insight?.finalDelay?`+${insight.finalDelay}분`:`${insight?.forecast?.prob||0}%`;
+  const delayLabel=insight?.finalDelay?'종착 지연 예상':'지연 가능성';
+  return `<section class="jr-forecast-card ${cls}">
+    <div class="jr-forecast-head">
+      <div><span class="jr-forecast-icon">☀️</span><div><b>오늘의 운행 예상</b><small>출발 전 예측 · 운행 시작 후 자동 숨김</small></div></div>
+      <span class="jr-forecast-confidence">신뢰도 ${insight?.confidence||'-'}%</span>
+    </div>
+    <div class="jr-forecast-grid">
+      <div class="jr-forecast-metric">
+        <span>예상 혼잡도</span><b>${level}</b><em>${pct}%</em>
+        <div class="jr-forecast-bar"><i style="width:${pct}%"></i></div>
+      </div>
+      <div class="jr-forecast-metric delay">
+        <span>${delayLabel}</span><b>${insight?.forecast?.label||'낮음'}</b><em>${delayValue}</em>
+        <div class="jr-forecast-bar"><i style="width:${insight?.forecast?.prob||0}%"></i></div>
+      </div>
+    </div>
+    <div class="jr-forecast-summary">👤 ${_opsEsc(insight?.passengerSummary||'현재 예측상 승객 여정에 미치는 영향은 거의 없습니다.')}</div>
+    <details class="jr-forecast-detail">
+      <summary>예측 근거 자세히 보기 <span>›</span></summary>
+      <div class="jr-forecast-detail-body">
+        <div class="jr-forecast-detail-title">지연 원인 기여도</div>
+        ${causeRows||'<div class="jr-forecast-empty">특별한 지연 요인이 없습니다.</div>'}
+        <div class="jr-forecast-foot">예측 신뢰도 ${insight?.confidenceLabel||'참고'} ${insight?.confidence||'-'}% · 실제 운행 상황에 따라 달라질 수 있습니다.</div>
+      </div>
+    </details>
+  </section>`;
 }
 function _renderJourney(){
   const body=document.getElementById('journey-body'); if(!body||!_journeyNo)return;
@@ -10934,10 +10933,7 @@ function _renderJourney(){
       </div>
       <div class="jr-progress"><div class="jr-progress-fill" style="width:${prog}%;background:${c}"></div></div>
     </div>
-    <div class="jr-passenger-insights">
-      ${_renderJourneyCongestion(t)}
-      ${_renderDelayPassengerInsight(t)}
-    </div>
+    ${phase==='before'?`<div class="jr-passenger-insights">${_renderJourneyForecast(t)}</div>`:''}
     <div class="jr-scroll">
       <div class="jr-timeline">${li}</div>
       <p class="jr-foot">매분 자동 갱신 · 실제 게임 내 시각 기준</p>
