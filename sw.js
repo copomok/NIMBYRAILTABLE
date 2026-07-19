@@ -1,24 +1,24 @@
-const CACHE_NAME = 'nimbirail-2026072002';
+const CACHE_NAME = 'nimbirail-2026072003';
 const ASSETS = [
   '/NIMBYRAILTABLE/',
   '/NIMBYRAILTABLE/index.html',
-  '/NIMBYRAILTABLE/nimbi_rail.css',
-  '/NIMBYRAILTABLE/nimbi_rail.js',
-  '/NIMBYRAILTABLE/nimbi_rail_data.js',
-  '/NIMBYRAILTABLE/nimbi_rail_index.js',
-  '/NIMBYRAILTABLE/nimbi_station_data.js',
-  '/NIMBYRAILTABLE/nimbi_platform_db.js',
-  '/NIMBYRAILTABLE/nimbi_realplat.js',
-  '/NIMBYRAILTABLE/nimbi_station_history.js',
-  '/NIMBYRAILTABLE/nimbi_rail_notices.js',
-  '/NIMBYRAILTABLE/nimbi_pax.js',
-  '/NIMBYRAILTABLE/nimbi_delay.js',
-  '/NIMBYRAILTABLE/nimbi_delay_explanation.html',
-  '/NIMBYRAILTABLE/nimbi_metro.js',
-  '/NIMBYRAILTABLE/nimbi_congestion.js',
+  '/NIMBYRAILTABLE/assets/css/nimbi_rail.css',
+  '/NIMBYRAILTABLE/js/nimbi_rail.js',
+  '/NIMBYRAILTABLE/data/nimbi_rail_data.js',
+  '/NIMBYRAILTABLE/js/core/nimbi_rail_index.js',
+  '/NIMBYRAILTABLE/data/nimbi_station_data.js',
+  '/NIMBYRAILTABLE/data/nimbi_platform_db.js',
+  '/NIMBYRAILTABLE/data/nimbi_realplat.js',
+  '/NIMBYRAILTABLE/data/nimbi_station_history.js',
+  '/NIMBYRAILTABLE/data/nimbi_rail_notices.js',
+  '/NIMBYRAILTABLE/data/nimbi_pax.js',
+  '/NIMBYRAILTABLE/js/features/nimbi_delay.js',
+  '/NIMBYRAILTABLE/pages/nimbi_delay_explanation.html',
+  '/NIMBYRAILTABLE/data/nimbi_metro.js',
+  '/NIMBYRAILTABLE/js/features/nimbi_congestion.js',
   '/NIMBYRAILTABLE/manifest.json',
-  '/NIMBYRAILTABLE/icon-192.png',
-  '/NIMBYRAILTABLE/icon-512.png',
+  '/NIMBYRAILTABLE/assets/icons/icon-192.png',
+  '/NIMBYRAILTABLE/assets/icons/icon-512.png',
 ];
 
 self.addEventListener('install', e => {
@@ -74,8 +74,8 @@ self.addEventListener('message', e => {
     const { title, body, tag } = e.data;
     self.registration.showNotification(title || '🔔 님비레일 알람', {
       body: body || '',
-      icon: '/NIMBYRAILTABLE/icon-192.png',
-      badge: '/NIMBYRAILTABLE/icon-192.png',
+      icon: '/NIMBYRAILTABLE/assets/icons/icon-192.png',
+      badge: '/NIMBYRAILTABLE/assets/icons/icon-192.png',
       vibrate: [200, 100, 200],
       requireInteraction: false,
       tag: tag || 'nimbirail-20260719013510alarm',

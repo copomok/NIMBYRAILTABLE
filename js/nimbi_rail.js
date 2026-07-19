@@ -101,7 +101,7 @@ function _stnCoord(name){
   }
   return (d&&d.lat!=null&&d.lon!=null)?{lat:+d.lat,lon:+d.lon}:null;
 }
-// 좌표 객체 2개 간 거리 (nimbi_station_data.js의 haversineKm(4인자)와 이름 충돌 방지 위해 별도 명명)
+// 좌표 객체 2개 간 거리 (data/nimbi_station_data.js의 haversineKm(4인자)와 이름 충돌 방지 위해 별도 명명)
 function havPt(a,b){
   if(!a||!b)return 0;
   const R=6371,r=Math.PI/180;
@@ -1453,18 +1453,18 @@ function sendNotification(title, body){
     navigator.serviceWorker.ready.then(reg=>{
       reg.showNotification(title,{
         body,
-        icon:'/NIMBYRAILTABLE/icon-192.png',
-        badge:'/NIMBYRAILTABLE/icon-192.png',
+        icon:'/NIMBYRAILTABLE/assets/icons/icon-192.png',
+        badge:'/NIMBYRAILTABLE/assets/icons/icon-192.png',
         vibrate:[200,100,200],
         requireInteraction:false,
         tag:'nimbirail-alarm-'+Date.now(),
       });
     }).catch(()=>{
       // SW 실패 시 기본 Notification 폴백
-      new Notification(title,{body,icon:'/NIMBYRAILTABLE/icon-192.png'});
+      new Notification(title,{body,icon:'/NIMBYRAILTABLE/assets/icons/icon-192.png'});
     });
   } else {
-    new Notification(title,{body,icon:'/NIMBYRAILTABLE/icon-192.png'});
+    new Notification(title,{body,icon:'/NIMBYRAILTABLE/assets/icons/icon-192.png'});
   }
 }
 
@@ -1795,8 +1795,8 @@ function updateTripProgressNotif(){
     navigator.serviceWorker.ready.then(reg=>{
       reg.showNotification(title,{
         body,
-        icon:'/NIMBYRAILTABLE/icon-192.png',
-        badge:'/NIMBYRAILTABLE/icon-192.png',
+        icon:'/NIMBYRAILTABLE/assets/icons/icon-192.png',
+        badge:'/NIMBYRAILTABLE/assets/icons/icon-192.png',
         tag:TRIP_NOTIF_TAG,       // 고정 tag → 새 알림 안 쌓이고 갱신만 됨
         renotify:false,            // 갱신 시 재진동/재알림음 없음
         silent:true,
@@ -6499,7 +6499,7 @@ function _seatPower(grade, r, isWindow, totalRows){
   return r%2===1;                                              // KTX 계열: 창틀 만나는 홀수열 창가
 }
 
-// 혼잡도 알고리즘 → nimbi_congestion.js 참조
+// 혼잡도 알고리즘 → js/features/nimbi_congestion.js 참조
 // ── 좌석 선택 팝업 ──
 let _selectedSeats=[];
 let _seatCarIdx=0;
@@ -9216,7 +9216,7 @@ function _gradeMatchesPlatform(trainGrade, platformGrades){
   return false;
 }
 
-// ── 실사용 승강장 (게임 DB 기반, nimbi_realplat.js) ──
+// ── 실사용 승강장 (게임 DB 기반, data/nimbi_realplat.js) ──
 // trainName: 역 접미사 없는 역 이름 (REAL_PLAT 키). name: STATION_DB/PLATFORM_DB 키(역 포함).
 function _realPlatform(trainNo, trainName){
   if(typeof REAL_PLAT==='undefined')return null;
@@ -9819,7 +9819,7 @@ function closeStationBoard(){
 }
 
 // ── 지연 예측 모델 (노선·등급별 확률/예상 지연) ──
-// ── 지연 예보/시뮬레이션 엔진은 nimbi_delay.js로 분리 (DELAY_MODEL·_delayForecast·_simProfile·_simDelay·_simFinalDelay·_liveDelayOf·_simCauseSummary·_simEventLog 등) ──
+// ── 지연 예보/시뮬레이션 엔진은 js/features/nimbi_delay.js로 분리 (DELAY_MODEL·_delayForecast·_simProfile·_simDelay·_simFinalDelay·_liveDelayOf·_simCauseSummary·_simEventLog 등) ──
 // 탑승 여정 헤더용 지연 예보 칩
 function _delayChipHTML(t){
   const f=_delayForecast(t.line,t.grade);
@@ -9904,7 +9904,7 @@ function _loadDelayExplanation(){
   const host=document.getElementById('delay-explanation-host');
   if(!host)return;
   if(!_delayExplanationPromise){
-    _delayExplanationPromise=fetch('nimbi_delay_explanation.html')
+    _delayExplanationPromise=fetch('pages/nimbi_delay_explanation.html')
       .then(res=>{
         if(!res.ok)throw new Error(`HTTP ${res.status}`);
         return res.text();
