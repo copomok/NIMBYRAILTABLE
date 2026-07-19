@@ -449,15 +449,6 @@ tbody td{padding:10px 14px;font-size:13px;white-space:nowrap}
 
 /* 역명 컬럼 */
 .tl-stn-col{display:flex;align-items:center;gap:6px;padding:4px 0}
-.tl-stn-main{min-width:0}
-.tl-stn-main>div:last-child{display:flex;align-items:center;gap:6px}
-.tl-segment-meta{display:flex;align-items:center;gap:6px;min-height:15px;margin-top:-7px;margin-bottom:2px;font-size:10px;color:var(--text3)}
-.tl-congestion{padding:1px 5px;border-radius:7px;font-weight:700}
-.tl-congestion.calm{color:#3fb950;background:rgba(63,185,80,.12)}
-.tl-congestion.normal{color:#d29922;background:rgba(210,153,34,.12)}
-.tl-congestion.busy{color:#f97316;background:rgba(249,115,22,.12)}
-.tl-congestion.critical{color:#f85149;background:rgba(248,81,73,.12)}
-.tl-row-current-segment .tl-line{width:4px;background:linear-gradient(#3fb950,#58a6ff);box-shadow:0 0 8px rgba(88,166,255,.8)}
 .tl-stn-name{font-size:14px;font-weight:500}
 .tl-stn-name.origin{color:#3fb950;font-weight:700;font-size:15px}
 .tl-stn-name.term{color:#f85149;font-weight:700;font-size:15px}
@@ -484,9 +475,21 @@ tbody td{padding:10px 14px;font-size:13px;white-space:nowrap}
 .delay-cause-track i{display:block;height:100%;background:linear-gradient(90deg,#f97316,#f85149);border-radius:4px}
 .delay-passenger-summary{margin-top:9px;padding:9px 10px;border-radius:8px;background:rgba(56,139,253,.1);color:var(--text1);font-size:11px;line-height:1.5}
 @media(max-width:640px){.delay-confidence{grid-template-columns:1fr}.delay-cause-row{grid-template-columns:minmax(82px,1fr) 1.4fr 30px}}
+.jr-passenger-insights{border-bottom:1px solid var(--border);background:var(--bg1)}
+.jr-passenger-insights .delay-passenger-card{border-top:1px solid var(--border);border-bottom:0}
+.jr-congestion-card{padding:11px 14px;background:var(--bg2)}
+.jr-congestion-card>div:first-child{display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:11px;color:var(--text2)}
+.jr-congestion-card b{font-size:12px;color:var(--text1)}
+.jr-congestion-track{height:6px;border-radius:4px;background:var(--bg3);overflow:hidden;margin:7px 0}
+.jr-congestion-track i{display:block;height:100%;border-radius:4px;background:#3fb950}
+.jr-congestion-card.normal .jr-congestion-track i{background:#d29922}
+.jr-congestion-card.busy .jr-congestion-track i{background:#f97316}
+.jr-congestion-card.critical .jr-congestion-track i{background:#f85149}
+.jr-congestion-card p{margin:0;color:var(--text3);font-size:10px;line-height:1.45}
+.jr-virtual-btn{width:100%;margin:9px 0 0;padding:8px 10px;border:1px solid color-mix(in srgb,var(--gc) 60%,var(--border));border-radius:9px;background:color-mix(in srgb,var(--gc) 12%,transparent);color:var(--text1);font-family:var(--sans);font-size:11px;font-weight:800;cursor:pointer}
 
 /* 오늘의 발견: 기존 역·열차·관제 화면으로 이어지는 홈 카드 */
-.daily-discovery{margin:0 0 12px}
+.daily-discovery{max-width:860px;margin:0 auto 12px}
 .daily-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:7px;padding:0 2px}
 .daily-head b{font-size:13px;color:var(--text1)}
 .daily-head span{font-size:10px;color:var(--text3)}

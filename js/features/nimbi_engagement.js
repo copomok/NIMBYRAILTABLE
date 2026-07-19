@@ -86,12 +86,6 @@
       </div>`;
   };
 
-  window.openStationWatch=function(name){
-    openStationBoard(name);
-    const title=document.querySelector('#station-board-overlay .sb-title, #station-board-overlay h2, #station-board-overlay .board-title');
-    if(title)title.textContent=`${name.replace(/역$/,'')} 실시간 역관찰`;
-  };
-
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',renderDailyDiscovery);
   else renderDailyDiscovery();
 })();

@@ -373,8 +373,8 @@ function updateMinimap(){
 
 // ── 🚆/🚇 이용 모드 (기차/전철) ──
 let _appMode=(()=>{try{return localStorage.getItem('nimbi_mode')||'train';}catch(e){return 'train';}})();
-const METRO_MODE_TABS=['metrolines','metroroute','map','stationinfo']; // 전철 모드에서 보이는 메인 탭
-const TRAIN_MODE_TABS=['train','station','route','ops','map','stats','notice','stationinfo','delay']; // 기차 모드 상단바 탭
+const METRO_MODE_TABS=['home','metrolines','metroroute','map','stationinfo']; // 전철 모드에서 보이는 메인 탭
+const TRAIN_MODE_TABS=['home','train','station','route','ops','map','stats','notice','stationinfo','delay']; // 기차 모드 상단바 탭
 // 그 외 탭(book/alarm/fav/ticket 등)은 마이페이지 전용 — 항상 숨김 유지
 function _applyModeTabs(){
   const visible=_appMode==='metro'?METRO_MODE_TABS:TRAIN_MODE_TABS;
@@ -462,8 +462,8 @@ function switchTab(n){
   if(n==='stats') renderStats();
   if(n==='notice') renderNotice();
   if(n==='ticket') renderTickets();
+  if(n==='home'&&typeof renderDailyDiscovery==='function')renderDailyDiscovery();
   if(n==='train') updateHomeTripWidget();
-  if(n==='train'&&typeof renderDailyDiscovery==='function')renderDailyDiscovery();
   if(n==='book') renderBookTab();
   if(n==='delay'){const el=document.getElementById('result-delay');if(el)renderSIDelay(el);}
   if(n==='metrolines') renderMetroLinesTab();
@@ -680,26 +680,6 @@ function getCurrentStatus(t, atMin){
   return{status:'done',nowMin};
 }
 
-function _segmentPassengerInfo(t, fromStop, toStop){
-  if(!fromStop||!toStop)return null;
-  const fromT=hasTime(fromStop.dep)?fromStop.dep:fromStop.arr;
-  const toT=hasTime(toStop.arr)?toStop.arr:toStop.dep;
-  const minutes=fromT&&toT?durMin(fromT,toT):null;
-  let base=0.5;
-  try{
-    const first=t.stops.find(s=>hasTime(s.dep)||hasTime(s.arr));
-    const dep=first?(hasTime(first.dep)?first.dep:first.arr):'';
-    if(typeof calcRealisticFillRate==='function')base=calcRealisticFillRate(t.no,todayLocalStr(),dep,t.grade);
-  }catch(e){}
-  const paxA=(typeof STATION_PAX!=='undefined'&&STATION_PAX[fromStop.s])||0;
-  const paxB=(typeof STATION_PAX!=='undefined'&&STATION_PAX[toStop.s])||0;
-  const paxBoost=Math.min(.18,(paxA+paxB)/200*0.18);
-  const score=Math.max(0,Math.min(1,base*0.82+paxBoost));
-  const level=score>=.88?'매우 혼잡':score>=.72?'혼잡':score>=.55?'보통':'여유';
-  const cls=score>=.88?'critical':score>=.72?'busy':score>=.55?'normal':'calm';
-  return {minutes,level,cls,percent:Math.round(score*100)};
-}
-
 function _renderDelayPassengerInsight(t){
   if(typeof _delayPassengerInsight!=='function')return '';
   const insight=_delayPassengerInsight(t);
@@ -730,21 +710,19 @@ function renderDetail(t){
   const c=gc(t.grade);
 
   // ── 타임라인 rows ──
-  let rows=''; let seq=0, prevTimedStop=null;
+  let rows=''; let seq=0;
   t.stops.forEach(s=>{
     const arr=s.arr, dep=s.dep;
     if(!arr&&!dep)return;
     const isOrigin=s.s===originStn, isTerm=s.s===terminusStn;
     const isPass=!isOrigin&&!isTerm&&isPassStop(t,s.s);
     seq++;
-    const segment=_segmentPassengerInfo(t,prevTimedStop,s);
 
     // 현재 위치 하이라이트
     let hlRow='';
     if(status&&status.status==='running'){
       if(status.atStn===s.s) hlRow=' tl-row-hl-at';
       else if(status.nextStn===s.s) hlRow=' tl-row-hl-next';
-      if(status.prevStn===prevTimedStop?.s&&status.nextStn===s.s)hlRow+=' tl-row-current-segment';
     }
 
     // dot 클래스
@@ -791,14 +769,11 @@ function renderDetail(t){
         ${isOrigin||isTerm?'':'<div class="tl-line"></div>'}
       </div>
       <div class="tl-stn-col">
-        <div class="tl-stn-main">
-          ${segment?`<div class="tl-segment-meta"><span>${segment.minutes!=null?`${segment.minutes}분`:''}</span><span class="tl-congestion ${segment.cls}" title="예상 혼잡도 ${segment.percent}%">${segment.level}</span></div>`:''}
-          <div><span class="tl-stn-name ${isOrigin?'origin':isTerm?'term':isPass?'pass':'stop'}">${s.s}</span>${badge}</div>
-        </div>
+        <span class="tl-stn-name ${isOrigin?'origin':isTerm?'term':isPass?'pass':'stop'}">${s.s}</span>
+        ${badge}
       </div>
       <div class="tl-alarm-col">${alarmBtn}</div>
     </div>`;
-    prevTimedStop=s;
   });
 
   // ── 운행 배너 ──
@@ -851,7 +826,6 @@ function renderDetail(t){
       </div>
     </div>
     ${statusBanner}
-    ${_renderDelayPassengerInsight(t)}
     <div class="tl-toolbar">
       <label style="font-size:12px;color:var(--text2);display:flex;align-items:center;gap:6px;cursor:pointer">
         <input type="checkbox" id="hide-pass-${t.no}" onchange="togglePassRows('${t.no}')" style="cursor:pointer">
@@ -867,7 +841,6 @@ function renderDetail(t){
     <div id="tl-${t.no}">${_detailViewMode==='table'?renderTableView(t):rows}</div>
     <div class="ticket-cta-wrap" style="display:flex;gap:8px;flex-wrap:wrap">
       <button class="btn btn-primary ticket-cta-btn" style="flex:1" onclick="openBookingPopup('${t.no}','${first?.s||''}','${last?.s||''}','${depT}','${arrT}')">🎫 승차권 예매 (전 구간)</button>
-      <button class="btn ticket-cta-btn" style="flex:1" onclick="openVirtualRide('${t.no}')">🚆 실시간 가상 승차</button>
     </div>
   </div>`;
 }
@@ -9390,10 +9363,7 @@ function renderSICard(name){
         })()}
       </div>
       ${_appMode!=='metro'?`<div style="padding:12px 16px 4px">
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:7px">
-          <button class="si-board-btn" onclick="openStationBoard('${nameEsc}')">🚉 역 전광판</button>
-          <button class="si-board-btn" onclick="openStationWatch('${nameEsc}')">👀 실시간 역관찰</button>
-        </div>
+        <button class="si-board-btn" onclick="openStationBoard('${nameEsc}')">🚉 출발 안내 전광판 열기</button>
       </div>`:''}
       ${_appMode==='metro'?(()=>{ // 🚇 전철: 노선(route)별 전역/다음역 — 경유 노선·지선 분기 모두 표시
         if(typeof METRO_LINES==='undefined')return '';
@@ -10823,6 +10793,27 @@ function closeJourney(){
   if(_journeyTimer){clearTimeout(_journeyTimer);_journeyTimer=null;}
   _journeyNo=null;
 }
+function _renderJourneyCongestion(t){
+  let rate=.5;
+  try{
+    const first=t.stops.find(s=>hasTime(s.dep)||hasTime(s.arr));
+    const dep=first?(hasTime(first.dep)?first.dep:first.arr):'';
+    if(typeof calcRealisticFillRate==='function')rate=calcRealisticFillRate(t.no,todayLocalStr(),dep,t.grade);
+  }catch(e){}
+  rate=Math.max(0,Math.min(1,rate));
+  const pct=Math.round(rate*100);
+  const level=rate>=.9?'매우 혼잡':rate>=.76?'혼잡':rate>=.58?'보통':'여유';
+  const cls=rate>=.9?'critical':rate>=.76?'busy':rate>=.58?'normal':'calm';
+  const note=rate>=.9?'입석·매진 가능성이 높습니다. 좌석과 탑승 위치를 미리 확인하세요.'
+    :rate>=.76?'혼잡이 예상됩니다. 출입문과 통로 주변을 피해 이동하세요.'
+    :rate>=.58?'보통 수준의 이용객이 예상됩니다. 일부 인기 구간은 붐빌 수 있습니다.'
+    :'비교적 여유로운 운행이 예상됩니다.';
+  return `<div class="jr-congestion-card ${cls}">
+    <div><span>예상 혼잡도</span><b>${level} · ${pct}%</b></div>
+    <div class="jr-congestion-track"><i style="width:${pct}%"></i></div>
+    <p>👥 ${note}</p>
+  </div>`;
+}
 function _renderJourney(){
   const body=document.getElementById('journey-body'); if(!body||!_journeyNo)return;
   // 자동 갱신 시 현재 스크롤 위치 보존(혼자 맨 위로 튀는 문제 방지)
@@ -10935,12 +10926,17 @@ function _renderJourney(){
         <span class="jr-dest">${_opsEsc(t.dest)}행</span>
       </div>
       <div class="jr-route">${_opsEsc(stops[0].s)} ${depT} → ${_opsEsc(lastItem.s)} ${arrT}${arrAdj}</div>
+      <button class="jr-virtual-btn" onclick="closeJourney();openVirtualRide('${_opsEsc(t.no)}')">🚆 실시간 가상 승차</button>
       <div class="jr-status jr-${phase}${(_simDelayOn&&dly>0&&phase==='running')?' jr-delayed':''}">
         <div class="jr-status-head">${head}</div>
         ${sub?`<div class="jr-status-sub">${sub}</div>`:''}
         ${delayBadge}
       </div>
       <div class="jr-progress"><div class="jr-progress-fill" style="width:${prog}%;background:${c}"></div></div>
+    </div>
+    <div class="jr-passenger-insights">
+      ${_renderJourneyCongestion(t)}
+      ${_renderDelayPassengerInsight(t)}
     </div>
     <div class="jr-scroll">
       <div class="jr-timeline">${li}</div>
