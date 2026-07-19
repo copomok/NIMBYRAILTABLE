@@ -237,7 +237,12 @@ function _simOutlookEstimate(t,profile){
   const pr=profile||_simProfile(t);
   // 기본 프로필이 아니라 현재 시점의 관측·변동·돌발상황이 반영된 표시 배열을 사용한다.
   // 지나온 구간은 확정값, 남은 구간은 10분 단위로 갱신되는 전망값이다.
-  const values=(_simDelayOn&&pr.cd.length)?_simViewArr(t):pr.cd;
+  let values=(_simDelayOn&&pr.cd.length)?_simViewArr(t):pr.cd;
+  const positiveEvents=(pr.events||[]).filter(e=>e.delta>0);
+  if(positiveEvents.length&&positiveEvents.every(e=>e.cause==='출퇴근 승객 집중')){
+    const rushCap=Math.min(6,Math.max(1,Math.ceil(positiveEvents.reduce((sum,e)=>sum+e.delta,0))));
+    values=values.map(v=>Math.min(v,rushCap));
+  }
   const finalDelay=values.length?Math.max(0,Math.round(values[values.length-1])):0;
   const maxDelay=values.length?Math.max(0,...values.map(v=>Math.round(v))):0;
   const estimatedDelay=Math.max(finalDelay,maxDelay);
@@ -347,6 +352,7 @@ function _computeProfile(t){
     const evBase=(flagged?Math.min(0.34,effProb/100*0.45+0.06):0.05)*(0.6+0.5*severity)*prioMult;
     let cur=inherited, recTotal=0;
     let mpN=0, mpLast=-999, mpSp=false;
+    let rushN=0, rushLast=-999;
     for(let i=0;i<secN;i++){
       const dt=Math.max(1,m[i+1]-m[i]);
       const tod=((m[i]%1440)+1440)%1440;
@@ -365,6 +371,12 @@ function _computeProfile(t){
         inc=_isBigCause(cause,ctx) ? bigUnit*(0.6+rb)
           : _isMidCause(cause)     ? Math.min(5, bigUnit*0.55*(0.6+rb)+smallUnit*0.5)
           :                          smallUnit*(0.5+0.6*rb);
+        if(cause==='출퇴근 승객 집중'){
+          // 평일 러시아워에만 선택되며, 한 역 최대 2분·열차당 최대 3회로 과도한 누적을 막는다.
+          inc=Math.min(2,inc);
+          if(!rush || rushN>=3 || (m[i]-rushLast)<10){inc=0;cause=null;}
+          else {rushN++;rushLast=m[i];}
+        }
         if(cause==='전철 병행 구간 혼잡'){
           const sparse=_MP_SPARSE.has(timed[i].s)||_MP_SPARSE.has(timed[i+1].s);
           if(mpN>=4 || (m[i]-mpLast)<10 || (sparse&&mpSp)){ inc=0; cause=null; }

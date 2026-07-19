@@ -9949,7 +9949,12 @@ function openDelayExplanation(){
   document.body.appendChild(modal);
   _loadDelayExplanation(document.getElementById('delay-explanation-modal-body'));
 }
-function closeDelayExplanation(){document.getElementById('delay-explanation-modal')?.remove();}
+function closeDelayExplanation(){
+  const modal=document.getElementById('delay-explanation-modal');
+  if(!modal||modal.classList.contains('closing'))return;
+  modal.classList.add('closing');
+  setTimeout(()=>modal.remove(),240);
+}
 
 function renderSIDelay(el){
   const model=DELAY_MODEL;
