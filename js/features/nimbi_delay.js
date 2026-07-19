@@ -235,8 +235,11 @@ function _simProfile(t){
 }
 function _simOutlookEstimate(t,profile){
   const pr=profile||_simProfile(t);
-  const finalDelay=pr.cd.length?Math.max(0,Math.round(pr.cd[pr.cd.length-1])):0;
-  const maxDelay=pr.cd.length?Math.max(0,...pr.cd.map(v=>Math.round(v))):0;
+  // 기본 프로필이 아니라 현재 시점의 관측·변동·돌발상황이 반영된 표시 배열을 사용한다.
+  // 지나온 구간은 확정값, 남은 구간은 10분 단위로 갱신되는 전망값이다.
+  const values=(_simDelayOn&&pr.cd.length)?_simViewArr(t):pr.cd;
+  const finalDelay=values.length?Math.max(0,Math.round(values[values.length-1])):0;
+  const maxDelay=values.length?Math.max(0,...values.map(v=>Math.round(v))):0;
   const estimatedDelay=Math.max(finalDelay,maxDelay);
   const lo=estimatedDelay>0?Math.max(1,Math.round(estimatedDelay*0.6)):0;
   const hi=estimatedDelay>0?Math.max(lo+2,Math.round(estimatedDelay*1.25)):0;
@@ -542,19 +545,34 @@ function _simActualArr(t){
   return sched.map((v,i)=> i>=veh.sec ? Math.round(Math.min(cap, v+Math.max(0, veh.amt-(i-veh.sec)))) : v);
 }
 
-// 표시 배열
-let _simViewCache={},_simViewBucket=-1;
+// 표시 배열 갱신 기준:
+// 운행 전 10분 / 운행 중 역 통과 / 15분 초과 장거리 구간만 구간 내 10분 / 종료 후 고정.
+let _simViewCache={};
+function _simViewRevision(pr){
+  const nm=_simNowFor(pr);
+  if(nm<pr.firstM)return `before:${Math.floor(nm/10)}`;
+  if(nm>=pr.lastM)return 'done';
+  for(let i=0;i<pr.m.length-1;i++){
+    if(nm>=pr.m[i]&&nm<pr.m[i+1]){
+      const span=Math.max(1,pr.m[i+1]-pr.m[i]);
+      return span>15?`segment:${i}:${Math.floor((nm-pr.m[i])/10)}`:`segment:${i}`;
+    }
+  }
+  return `running:${Math.floor(nm/10)}`;
+}
 function _simViewArr(t){
   const pr=_simProfile(t); if(!pr.cd.length)return pr.cd;
-  const bucket=Math.floor(_svMin(_simNowM())/10);
-  if(bucket!==_simViewBucket){ _simViewCache={}; _simViewBucket=bucket; }
-  const key=t.no+':'+_simDayKey(t);
+  const revision=_simViewRevision(pr);
+  const key=t.no+':'+_simDayKey(t)+':'+revision;
   if(_simViewCache[key])return _simViewCache[key];
+  if(Object.keys(_simViewCache).length>5000)_simViewCache={};
   const nm=_simNowFor(pr);
   const ctx=_simDayContext(t);
   const veh=_simVeh(t), vehOn=!!(veh&&pr.m[veh.sec]!=null&&nm>=pr.m[veh.sec]);
   const act=_simActualArr(t), sched=_simSchedArr(t);
   const seed=_simSeed(t.no,_simDayKey(t));
+  let revSeed=2166136261;
+  for(let i=0;i<revision.length;i++){revSeed^=revision.charCodeAt(i);revSeed=Math.imul(revSeed,16777619);}
   const vol=0.9+(ctx.probMult-1)*2.5;
   const out=new Array(pr.cd.length);
   let prev=null;
@@ -563,7 +581,7 @@ function _simViewArr(t){
     if(pr.m[i]<=nm){ out[i]=base; }
     else{
       const conv=Math.min(1,(pr.m[i]-nm)/60);
-      const r=_seededRand(seed+i*7.77+bucket*0.9131)-0.5;
+      const r=_seededRand(seed+i*7.77+(revSeed>>>0)*0.00009131)-0.5;
       let v=base + r*2*vol*conv;
       if(prev!=null) v=Math.max(v, prev-_SIM_REC_HARD);
       out[i]=Math.max(0, Math.round(v));
