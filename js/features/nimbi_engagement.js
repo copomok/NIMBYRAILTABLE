@@ -133,8 +133,12 @@
     host.className='daily-discovery';
     host.innerHTML=`${nextHtml}<section class="home-quick">
       <div class="home-section-head"><b>빠른 출도착 검색</b><span>기본 필터 자동 적용</span></div>
-      <div class="home-quick-fields"><label><span>출발역</span><input id="home-from" list="home-stations" placeholder="출발역 선택"></label><button onclick="homeSwapRoute()" aria-label="출발 도착 바꾸기">⇄</button><label><span>도착역</span><input id="home-to" list="home-stations" placeholder="도착역 선택"></label><button class="home-search-btn" onclick="homeRouteSearch()">열차 조회</button></div>
-      <datalist id="home-stations">${stations.map(s=>`<option value="${esc(s[0])}"></option>`).join('')}</datalist>
+      <div class="home-quick-fields">
+        <label class="autocomplete-wrap"><span>출발역</span><input id="home-from" placeholder="출발역 선택" autocomplete="off" oninput="acShow('home-from','ac-home-from')" onfocus="acShow('home-from','ac-home-from')" onkeydown="acKey(event,'home-from','ac-home-from');if(event.key==='Enter'&&!event.defaultPrevented)homeRouteSearch()" onblur="setTimeout(()=>acHide('ac-home-from'),150)"><div class="ac-dropdown" id="ac-home-from"></div></label>
+        <button onclick="homeSwapRoute()" aria-label="출발 도착 바꾸기">⇄</button>
+        <label class="autocomplete-wrap"><span>도착역</span><input id="home-to" placeholder="도착역 선택" autocomplete="off" oninput="acShow('home-to','ac-home-to')" onfocus="acShow('home-to','ac-home-to')" onkeydown="acKey(event,'home-to','ac-home-to');if(event.key==='Enter'&&!event.defaultPrevented)homeRouteSearch()" onblur="setTimeout(()=>acHide('ac-home-to'),150)"><div class="ac-dropdown" id="ac-home-to"></div></label>
+        <button class="home-search-btn" onclick="homeRouteSearch()">열차 조회</button>
+      </div>
       ${pairChips?`<div class="home-route-chips">${pairChips}</div>`:''}
     </section>
     <section class="home-section"><div class="home-section-head"><b>현재 운행</b><span>${String(new Date().getHours()).padStart(2,'0')}:${String(new Date().getMinutes()).padStart(2,'0')} 기준</span></div>
