@@ -102,12 +102,12 @@
   }
   function outlook(){
     const ctx=typeof _simDayContext==='function'?_simDayContext():null;
-    const byLine=new Map();let sum=0,n=0;
-    ALL_TRAINS.forEach(t=>{const f=_delayForecast(t.line,t.grade);sum+=f.prob;n++;
+    const byLine=new Map();let sum=0,n=0,ended=0;
+    ALL_TRAINS.forEach(t=>{if(getCurrentStatus(t)?.status==='done'){ended++;return;}const f=_delayForecast(t.line,t.grade);sum+=f.prob;n++;
       const line=(t.line||'기타').split('·')[0];const row=byLine.get(line)||{sum:0,n:0};row.sum+=f.prob;row.n++;byLine.set(line,row);});
     const peak=[...byLine].map(([line,v])=>({line,prob:Math.round(v.sum/v.n)})).sort((a,b)=>b.prob-a.prob)[0];
     const avg=Math.round(sum/Math.max(1,n));
-    return {ctx,peak,avg,label:avg<25?'대체로 원활':avg<40?'일부 지연 가능':'지연 가능성 높음'};
+    return {ctx,peak,avg,ended,active:n,label:avg<25?'대체로 원활':avg<40?'일부 지연 가능':'지연 가능성 높음'};
   }
 
   window.renderDailyDiscovery=function(){
@@ -129,15 +129,14 @@
     const interestHtml=pairs.length?`<section class="home-section"><div class="home-section-head"><b>관심 노선·구간 현황</b><span>즐겨찾기·최근 검색</span></div>
       <div class="home-interest-list">${pairs.slice(0,3).map(r=>{const s=routeStatus(r,live);return `<button onclick="homeRouteSearch('${jsq(r.from)}','${jsq(r.to)}')"><span>${esc(r.from)} → ${esc(r.to)}</span><em class="${s.cls}">${s.label}</em></button>`;}).join('')}</div></section>`:'';
     const alertHtml=live.delayed.length?`<section class="home-section home-alert"><div class="home-section-head"><b>⚠️ 이상 운행 알림</b><span>현재 기준</span></div>
-      ${live.delayed.slice(0,3).map(x=>`<button onclick="openJourney('${esc(x.t.no)}')"><span>${esc(x.t.grade)} ${esc(x.t.no)} · ${esc(x.t.dest)}행</span><b>+${x.d}분</b></button>`).join('')}</section>`:'';
+      <div class="home-alert-list">${live.delayed.slice(0,3).map(x=>`<button onclick="openJourney('${esc(x.t.no)}')"><span><b>${esc(x.t.grade)} ${esc(x.t.no)}</b><small>${esc(x.t.stops[0]?.s)} → ${esc(x.t.dest)} · 클릭하여 지연 정보 보기</small></span><em>+${x.d}분</em></button>`).join('')}</div></section>`:'';
     host.className='daily-discovery';
-    host.innerHTML=`<section class="home-quick">
+    host.innerHTML=`${nextHtml}<section class="home-quick">
       <div class="home-section-head"><b>빠른 출도착 검색</b><span>기본 필터 자동 적용</span></div>
-      <div class="home-quick-fields"><input id="home-from" list="home-stations" placeholder="출발역"><button onclick="homeSwapRoute()" aria-label="출발 도착 바꾸기">⇄</button><input id="home-to" list="home-stations" placeholder="도착역"><button class="home-search-btn" onclick="homeRouteSearch()">검색</button></div>
+      <div class="home-quick-fields"><label><span>출발역</span><input id="home-from" list="home-stations" placeholder="출발역 선택"></label><button onclick="homeSwapRoute()" aria-label="출발 도착 바꾸기">⇄</button><label><span>도착역</span><input id="home-to" list="home-stations" placeholder="도착역 선택"></label><button class="home-search-btn" onclick="homeRouteSearch()">열차 조회</button></div>
       <datalist id="home-stations">${stations.map(s=>`<option value="${esc(s[0])}"></option>`).join('')}</datalist>
       ${pairChips?`<div class="home-route-chips">${pairChips}</div>`:''}
     </section>
-    ${nextHtml}
     <section class="home-section"><div class="home-section-head"><b>현재 운행</b><span>${String(new Date().getHours()).padStart(2,'0')}:${String(new Date().getMinutes()).padStart(2,'0')} 기준</span></div>
       <div class="home-metrics">
         <button onclick="switchTab('ops')"><b>${live.running}</b><span>운행 중</span></button>
@@ -150,6 +149,7 @@
     <section class="home-section home-outlook"><div class="home-section-head"><b>오늘의 운행 전망</b><span>${view.ctx?.weekend?'주말·공휴일':'평일'} · ${esc(view.ctx?.weather||'맑음')}</span></div>
       <div class="home-outlook-main"><span>전체 전망</span><b>${view.label}</b><em>평균 지연 가능성 ${view.avg}%</em></div>
       <div class="home-outlook-sub">${view.peak?`${esc(view.peak.line)}의 지연 가능성이 ${view.peak.prob}%로 상대적으로 높습니다.`:'특별한 지연 요인이 없습니다.'}</div>
+      <div class="home-outlook-ended"><span>전망 대상 ${view.active}편</span><b>운행 종료 ${view.ended}편</b><small>운행이 끝난 열차는 전망 집계에서 분리됩니다.</small></div>
     </section>
     ${alertHtml}
     <div class="daily-head"><b>오늘의 발견</b><span>매일 04:00 갱신</span></div>

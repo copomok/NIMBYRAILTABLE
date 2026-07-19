@@ -5514,6 +5514,7 @@ function openQRPopup(ticketId){
     : canManualBoard(tk)
     ? `<button class="rt-act-btn rt-act-board rt-act-manual" onclick="openManualBoard('${tk.id}')">🖐️ 수개표 (개표 놓침)</button>`
     : '';
+  const qrDelay=_ticketEndpointDelayHTML(tk);
 
   window._qrTicketId = tk.id;
   const wrap = document.createElement('div');
@@ -5532,9 +5533,9 @@ function openQRPopup(ticketId){
             <span style="margin-left:auto;display:flex;gap:6px;align-items:center">${discBadge}${boardBadge}</span>
           </div>
           <div class="rt-route">
-            <div class="rt-stn"><div class="rt-stn-name">${tk.fromStn}</div><div class="rt-stn-time">${tk.depTime||''}</div></div>
+            <div class="rt-stn"><div class="rt-stn-name">${tk.fromStn}</div><div class="rt-stn-time">${tk.depTime||''}</div>${qrDelay.from}</div>
             <div class="rt-arrow" style="color:${gradeC}">→</div>
-            <div class="rt-stn rt-stn-r"><div class="rt-stn-name">${tk.toStn}</div><div class="rt-stn-time">${tk.arrTime||''}</div></div>
+            <div class="rt-stn rt-stn-r"><div class="rt-stn-name">${tk.toStn}</div><div class="rt-stn-time">${tk.arrTime||''}</div>${qrDelay.to}</div>
           </div>
           <div class="rt-meta">
             <div><span class="rt-k">날짜</span><span class="rt-v">${tk.travelDate}</span></div>
@@ -7166,6 +7167,26 @@ function renderTickets(){
   updateTripLED();
 }
 
+function _ticketEndpointDelayHTML(tk){
+  if(tk.status==='cancelled')return {from:'',to:''};
+  const t=getTrainByNo(tk.trainNo);if(!t)return {from:'',to:''};
+  const timed=t.stops.filter(s=>hasTime(s.arr)||hasTime(s.dep));
+  const fi=timed.findIndex(s=>s.s===tk.fromStn),ti=timed.findIndex(s=>s.s===tk.toStn);
+  const depD=fi>=0?_simDelayAtStop(t,fi):0,arrD=ti>=0?_simDelayAtStop(t,ti):0;
+  const n=new Date(),nm=n.getHours()*60+n.getMinutes();
+  const live=_liveDelayOf(t),status=getCurrentStatus(t,nm-live);
+  const cls='ticket-delay-est';
+  if(status?.status==='running'||ticketBoardState(tk)==='active'){
+    return {from:depD>0?`<span class="${cls} actual">${depD}분 지연</span>`:'',to:''};
+  }
+  if(status?.status==='done'||ticketBoardState(tk)==='done'||isTicketPast(tk)){
+    return {from:'',to:arrD>0?`<span class="${cls} actual">${arrD}분 지연</span>`:''};
+  }
+  return {
+    from:depD>0?`<span class="${cls}">${addMinToClock(tk.depTime,depD)} 출발 예상 · +${depD}분</span>`:'',
+    to:arrD>0?`<span class="${cls}">${addMinToClock(tk.arrTime,arrD)} 도착 예상 · +${arrD}분</span>`:''
+  };
+}
 // 승차권 카드 HTML (목록·캘린더 공용)
 function _ticketCardHTML(tk){
     const c=gc(tk.grade);
@@ -7184,10 +7205,10 @@ function _ticketCardHTML(tk){
             if(bs==='done')return '<span class="rt-board-badge rt-board-done" style="margin-left:auto">탑승 완료</span>';
             return '';})()}
       </div>
-      ${(()=>{const t=getTrainByNo(tk.trainNo);const est=t?_simFinalDelay(t):0;const de=est>0?`<span class="ticket-delay-est">${est}분 지연 예상</span>`:'';return `<div class="ticket-card-route">
-        <div class="ticket-station"><span class="ticket-station-name">${tk.fromStn}</span><span class="ticket-time">${tk.depTime||'-'}</span>${de}</div>
+      ${(()=>{const de=_ticketEndpointDelayHTML(tk);return `<div class="ticket-card-route">
+        <div class="ticket-station"><span class="ticket-station-name">${tk.fromStn}</span><span class="ticket-time">${tk.depTime||'-'}</span>${de.from}</div>
         <div class="ticket-arrow">→</div>
-        <div class="ticket-station"><span class="ticket-station-name">${tk.toStn}</span><span class="ticket-time">${tk.arrTime||'-'}</span>${de}</div>
+        <div class="ticket-station"><span class="ticket-station-name">${tk.toStn}</span><span class="ticket-time">${tk.arrTime||'-'}</span>${de.to}</div>
       </div>`;})()}
       ${(()=>{const ri=(typeof _simRefundInfo==='function')?_simRefundInfo(tk):null; if(!ri)return '';
         return ri.eligible
@@ -9857,9 +9878,13 @@ function _siDepartureBoardHTML(name, trains, limit){
     if(!s) return null;
     if(t.dest===trainName||(hasTime(s.arr)&&!hasTime(s.dep))) return null; // 당역종착은 출발판 제외(도착판에만)
     const depStr=s.dep||s.arr; if(!depStr) return null;
-    const m=toMin(depStr); if(m===null) return null;
+    const timed=t.stops.filter(x=>hasTime(x.arr)||hasTime(x.dep));
+    const si=timed.findIndex(x=>x.s===trainName);
+    const delay=si>=0?_simDelayAtStop(t,si):0;
+    const expected=delay>0?addMinToClock(depStr,delay):depStr;
+    const m=toMin(expected); if(m===null) return null;
     let diff=m-nowMin; if(diff< -180) diff+=1440; // 자정 넘긴 새벽 열차 보정
-    return {t,depStr,m,diff};
+    return {t,depStr,expected,delay,m,diff};
   }).filter(Boolean)
     .filter(r=>r.diff>=-2)
     .sort((a,b)=>a.diff-b.diff)
@@ -9872,12 +9897,12 @@ function _siDepartureBoardHTML(name, trains, limit){
     if(r.diff<=0){ st='출발'; cls='sb-st-board'; }
     else if(r.diff<=5){ st=`${r.diff}분 후`; cls='sb-st-soon'; }
     else { st='정시'; cls='sb-st-sched'; }
-    const sdly=_simDelay(t, nowMin);
+    const sdly=r.delay;
     if(sdly>0){ st=`${sdly}분 지연`; cls='sb-st-delay'; }
     const isTerm = t.dest===trainName || (()=>{const s=t.stops.find(x=>x.s===trainName);return s&&s.arr&&!s.dep;})();
     const df=_delayForecast(t.line,t.grade);
     return `<div class="stn-board-row">
-      <span class="sb-time">${r.depStr}</span>
+      <span class="sb-time${sdly>0?' delayed':''}">${sdly>0?`<i>${r.depStr}</i><i>${r.expected}</i>`:r.depStr}</span>
       <span class="sb-info">
         <span class="sb-dest">${isTerm?'당역종착':t.dest+'행'}</span>
         <span class="sb-train">${t.grade} ${t.no} <span class="sb-risk" style="background:${df.color}" title="지연 위험 ${df.label}"></span></span>
@@ -9910,13 +9935,17 @@ function _siArrivalBoardHTML(name, trains, limit){
     const s=t.stops.find(x=>x.s===trainName);
     if(!s) return null;
     const arrStr=s.arr; if(!arrStr||!hasTime(arrStr)) return null; // 도착 시각 있는 열차만(출발역 제외)
-    const m=toMin(arrStr); if(m===null) return null;
+    const timed=t.stops.filter(x=>hasTime(x.arr)||hasTime(x.dep));
+    const si=timed.findIndex(x=>x.s===trainName);
+    const delay=si>=0?_simDelayAtStop(t,si):0;
+    const expected=delay>0?addMinToClock(arrStr,delay):arrStr;
+    const m=toMin(expected); if(m===null) return null;
     let diff=m-nowMin; if(diff< -180) diff+=1440;
     // 어디서 오는지: 이 열차의 첫 출발역(기점)
     let fromStn=null;
     for(let i=0;i<t.stops.length;i++){ if(hasTime(t.stops[i].dep)||hasTime(t.stops[i].arr)){ fromStn=t.stops[i].s; break; } }
     const isTerm=(t.dest===trainName)||(!hasTime(s.dep));
-    return {t,arrStr,m,diff,fromStn,isTerm};
+    return {t,arrStr,expected,delay,m,diff,fromStn,isTerm};
   }).filter(Boolean)
     .filter(r=>r.diff>=-2)
     .sort((a,b)=>a.diff-b.diff)
@@ -9927,11 +9956,11 @@ function _siArrivalBoardHTML(name, trains, limit){
     if(r.diff<=0){ st='도착'; cls='sb-st-board'; }
     else if(r.diff<=5){ st=`${r.diff}분 후`; cls='sb-st-soon'; }
     else { st='정시'; cls='sb-st-sched'; }
-    const sdly=_simDelay(t, nowMin);
+    const sdly=r.delay;
     if(sdly>0){ st=`${sdly}분 지연`; cls='sb-st-delay'; }
     const df=_delayForecast(t.line,t.grade);
     return `<div class="stn-board-row">
-      <span class="sb-time">${r.arrStr}</span>
+      <span class="sb-time${sdly>0?' delayed':''}">${sdly>0?`<i>${r.arrStr}</i><i>${r.expected}</i>`:r.arrStr}</span>
       <span class="sb-info">
         <span class="sb-dest">${r.isTerm?'당역종착':(r.fromStn?r.fromStn+' 발':t.dest+'행')}</span>
         <span class="sb-train">${t.grade} ${t.no} <span class="sb-risk" style="background:${df.color}" title="지연 위험 ${df.label}"></span></span>

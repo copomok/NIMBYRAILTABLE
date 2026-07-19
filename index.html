@@ -6,7 +6,7 @@
 <title>님비레일 시간표</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="assets/css/nimbi_rail.css?v=2026072021">
+<link rel="stylesheet" href="assets/css/nimbi_rail.css?v=2026072023">
 <!-- PWA -->
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#161b22">
@@ -123,7 +123,7 @@
     <button class="tab" onclick="switchTab('stats')" id="tab-stats">📊 통계</button>
     <button class="tab" onclick="switchTab('notice')" id="tab-notice">📢 공지</button>
     <button class="tab" onclick="switchTab('stationinfo')" id="tab-stationinfo">🚉 역 정보</button>
-    <button class="tab" onclick="switchTab('delay')" id="tab-delay">⏱️ 지연 예측</button>
+    <button class="tab" onclick="switchTab('delay')" id="tab-delay">⏱️ 지연</button>
     <button class="tab" id="tab-book" style="display:none" onclick="switchTab('book')">🎫 열차 예매</button>
     <!-- 알람·즐겨찾기·승차권은 마이페이지로 이동 -->
     <button class="tab" id="tab-alarm" style="display:none" onclick="switchTab('alarm')">🔔 알람</button>
@@ -482,9 +482,9 @@
   <script src="data/nimbi_rail_notices.js?v=2026072003"></script>
   <script src="data/nimbi_pax.js?v=2026072003"></script>
   <script src="js/features/nimbi_delay.js?v=2026072022"></script>
-  <script src="js/nimbi_rail.js?v=2026072020"></script>
+  <script src="js/nimbi_rail.js?v=2026072023"></script>
   <script src="js/features/nimbi_congestion.js?v=2026072003"></script>
-  <script src="js/features/nimbi_engagement.js?v=2026072021"></script>
+  <script src="js/features/nimbi_engagement.js?v=2026072023"></script>
   <script>
   if('serviceWorker' in navigator){
     window.addEventListener('load', ()=>{
