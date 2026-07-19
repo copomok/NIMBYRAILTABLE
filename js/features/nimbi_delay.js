@@ -46,23 +46,57 @@ function _delayForecast(line,grade){
 
 // ── 시드/공용 ──
 let _simDelayOn=(()=>{try{return localStorage.getItem('nimbi_simdelay')==='1';}catch(e){return false;}})();
-let _simDayKeyOverride=null;
-function _simDayKey(){ if(_simDayKeyOverride)return _simDayKeyOverride;
-  const d=new Date(); if(d.getHours()<4)d.setDate(d.getDate()-1);
-  return d.getFullYear()*10000+(d.getMonth()+1)*100+d.getDate(); }
+function _simCalendarDayKey(d){
+  return d.getFullYear()*10000+(d.getMonth()+1)*100+d.getDate();
+}
+function _simTrainCrossesMidnight(t){
+  if(!t||!t.stops)return false;
+  let prev=null;
+  for(const s of t.stops){
+    const raw=toMin(hasTime(s.dep)?s.dep:s.arr);
+    if(raw==null)continue;
+    if(prev!=null&&raw<prev-60)return true;
+    prev=raw;
+  }
+  return false;
+}
+// 일반 예측은 자정에 갱신하고, 전날 출발해 자정을 넘긴 열차만 04시까지 이전 운행일을 유지한다.
+function _simDayKey(t){
+  const d=new Date();
+  if(t&&d.getHours()<4&&_simTrainCrossesMidnight(t))d.setDate(d.getDate()-1);
+  return _simCalendarDayKey(d);
+}
 function _seededRand(seed){ const x=Math.sin(seed)*10000; return x-Math.floor(x); }
-function _simSeed(no){ const s=String(no)+':'+_simDayKey(); let h=2166136261;
+function _simSeed(no,dayKey){ const s=String(no)+':'+(dayKey||_simDayKey()); let h=2166136261;
   for(let i=0;i<s.length;i++){ h^=s.charCodeAt(i); h=Math.imul(h,16777619); } return (h>>>0)/1000; }
-function _simDaySeed(salt){ return _seededRand(_simDayKey()*0.000131+salt); }
+function _simDaySeed(salt,dayKey){ return _seededRand((dayKey||_simDayKey())*0.000131+salt); }
 
 // ── 오늘의 운행 컨텍스트(요일·날씨) — 네트워크 전체 상관 ──
-let _simCtxCache=null,_simCtxDay=null;
-function _simDayContext(){
-  const day=_simDayKey();
-  if(_simCtxCache&&_simCtxDay===day)return _simCtxCache;
-  const d=new Date(); if(d.getHours()<4)d.setDate(d.getDate()-1);
-  const dow=d.getDay(), weekend=(dow===0||dow===6);
-  const w=_simDaySeed(3.71);
+let _simCtxCache={};
+function _simLunarParts(d){
+  try{
+    const parts=new Intl.DateTimeFormat('en-u-ca-chinese',{month:'numeric',day:'numeric'}).formatToParts(d);
+    return {
+      month:Number(parts.find(p=>p.type==='month')?.value),
+      day:Number(parts.find(p=>p.type==='day')?.value)
+    };
+  }catch(e){ return null; }
+}
+function _simIsKoreanHoliday(d){
+  const md=(d.getMonth()+1)*100+d.getDate();
+  if([101,301,505,606,815,1003,1009,1225].includes(md))return true;
+  const lunar=_simLunarParts(d);
+  if(lunar&&((lunar.month===1&&lunar.day<=2)||(lunar.month===4&&lunar.day===8)||(lunar.month===8&&lunar.day>=14&&lunar.day<=16)))return true;
+  const tomorrow=new Date(d); tomorrow.setDate(d.getDate()+1);
+  const nextLunar=_simLunarParts(tomorrow);
+  return !!(nextLunar&&nextLunar.month===1&&nextLunar.day===1);
+}
+function _simDayContext(t){
+  const day=_simDayKey(t);
+  if(_simCtxCache[day])return _simCtxCache[day];
+  const d=new Date(Math.floor(day/10000),Math.floor(day/100)%100-1,day%100);
+  const dow=d.getDay(), holiday=_simIsKoreanHoliday(d), weekend=(dow===0||dow===6||holiday);
+  const w=_simDaySeed(3.71,day);
   const mo=d.getMonth()+1;
   const CUT= (mo>=6&&mo<=8)?[0.45,0.50,0.58,0.74,0.955,0.955]
            : (mo>=3&&mo<=5)?[0.58,0.68,0.78,0.80,0.93,0.995]
@@ -78,7 +112,7 @@ function _simDayContext(){
   else if(w<CUT[5]) wx={weather:'폭설', probMult:1.35,magMult:1.4, bigCap:30, recW:0.55,sagGate:0.55, sagLabel:'폭설 제설 지연',    wxBig:true};
   else              wx={weather:'태풍', probMult:1.7, magMult:1.9, bigCap:42, recW:0.4, sagGate:0.78, sagLabel:'태풍 서행',        wxBig:true};
   const rushMult=weekend?1.12:1.5;
-  return (_simCtxDay=day, _simCtxCache=Object.assign({day,dow,weekend,rushMult},wx));
+  return (_simCtxCache[day]=Object.assign({day,dow,weekend,holiday,rushMult},wx));
 }
 function _isRush(minOfDay){ const h=Math.floor((((minOfDay%1440)+1440)%1440)/60); return (h>=7&&h<9)||(h>=18&&h<20); }
 
@@ -194,10 +228,20 @@ function _isHighSpeedSection(lineStr){
 // ── 지연 프로파일(핵심) ── 역별 누적 지연 cd[] + 원인/로그
 let _simProfileCache={};
 function _simProfile(t){
-  const key=t.no+':'+_simDayKey();
+  const key=t.no+':'+_simDayKey(t);
   if(_simProfileCache[key])return _simProfileCache[key];
   _simProfileCache[key]={cd:[],m:[],firstM:null,lastM:null,predictedFlag:false,cause:null,events:[]};
   return _simProfileCache[key]=_computeProfile(t);
+}
+function _simOutlookEstimate(t,profile){
+  const pr=profile||_simProfile(t);
+  const finalDelay=pr.cd.length?Math.max(0,Math.round(pr.cd[pr.cd.length-1])):0;
+  const maxDelay=pr.cd.length?Math.max(0,...pr.cd.map(v=>Math.round(v))):0;
+  const estimatedDelay=Math.max(finalDelay,maxDelay);
+  const lo=estimatedDelay>0?Math.max(1,Math.round(estimatedDelay*0.6)):0;
+  const hi=estimatedDelay>0?Math.max(lo+2,Math.round(estimatedDelay*1.25)):0;
+  const rangeText=estimatedDelay<=0?'0분':estimatedDelay<5?`${estimatedDelay}분 내외`:`${lo}~${hi}분`;
+  return {finalDelay,maxDelay,estimatedDelay,lo,hi,rangeText};
 }
 
 // 승객 화면용 지연 분석 요약.
@@ -231,8 +275,10 @@ function _delayPassengerInsight(t){
   if(profile.weather&&profile.weather!=='맑음')confidence-=5;
   confidence=Math.max(45,Math.min(92,confidence));
   const confidenceLabel=confidence>=80?'높음':confidence>=65?'보통':'참고';
-  const finalDelay=profile.cd.length?Math.max(0,Math.round(profile.cd[profile.cd.length-1])):0;
-  const maxDelay=profile.cd.length?Math.max(...profile.cd.map(v=>Math.round(v))):0;
+  const estimate=_simOutlookEstimate(t,profile);
+  const finalDelay=estimate.finalDelay;
+  const maxDelay=estimate.maxDelay;
+  const estimatedDelay=estimate.estimatedDelay;
   let passengerSummary='현재 예측상 승객 여정에 미치는 영향은 거의 없습니다.';
   if(finalDelay>0){
     passengerSummary=finalDelay<=3
@@ -240,12 +286,13 @@ function _delayPassengerInsight(t){
       :finalDelay<=10
         ?`도착이 약 ${finalDelay}분 늦어질 수 있어 짧은 환승은 여유 시간을 확인하세요.`
         :`도착이 약 ${finalDelay}분 늦어질 수 있어 환승·약속 시간을 재조정하는 편이 안전합니다.`;
-  }else if(maxDelay>0){
+  }else if(estimatedDelay>0){
     passengerSummary=`운행 중 최대 ${maxDelay}분가량 늦어질 수 있지만 종착 전 대부분 회복될 전망입니다.`;
   }else if(forecast.prob>=35){
     passengerSummary=`지연 가능성은 ${forecast.prob}% 수준이지만 현재 시뮬레이션에서는 정시 운행이 예상됩니다.`;
   }
-  return {forecast,profile,causes,confidence,confidenceLabel,finalDelay,maxDelay,passengerSummary};
+  return {forecast,profile,causes,confidence,confidenceLabel,finalDelay,maxDelay,
+    estimatedDelay,delayRange:estimate.rangeText,passengerSummary};
 }
 
 function _computeProfile(t){
@@ -257,7 +304,7 @@ function _computeProfile(t){
   for(const s of timed){ const rm=toMin(hasTime(s.dep)?s.dep:s.arr);
     if(rm==null){m.push(m.length?m[m.length-1]:0);continue;}
     if(prev>=0&&rm<prev-60)off+=1440; m.push(rm+off); prev=rm; }
-  const ctx=_simDayContext();
+  const ctx=_simDayContext(t);
   _simModel();
   const secN=timed.length-1;
   const metroParArr=_metroParSections(timed);
@@ -267,7 +314,7 @@ function _computeProfile(t){
   const runMin=Math.max(1,m[m.length-1]-m[0]);
   const lenFactor=Math.min(1, runMin/180);
   const effProb=Math.min(96, f.prob*causeFactor*(0.4+0.6*lenFactor)*ctx.probMult*(ctx.weekend?0.9:1));
-  const seed=_simSeed(t.no);
+  const seed=_simSeed(t.no,_simDayKey(t));
   const r1=_seededRand(seed+0.137), r4=_seededRand(seed+11.2), rSev=_seededRand(seed+2.23);
   const flagged=r1*100<effProb, surprise=!flagged&&r4<0.07*lenFactor*ctx.probMult;
   const sevRoll=Math.min(1, rSev*(ctx.probMult>1.2?1.35:1));
@@ -391,7 +438,7 @@ function _isPassStop(t, stnName){
 
 let _dispCache={};
 function _dispatchInfo(t){
-  const key=t.no+':'+_simDayKey();
+  const key=t.no+':'+_simDayKey(t);
   if(_dispCache[key])return _dispCache[key];
   const pr=_simProfile(t);
   const out={adj:null,events:[]};
@@ -429,11 +476,11 @@ function _dispatchInfo(t){
 }
 
 // ── v2: 차량 고장 극단화 (영업일 단위 Global Event) ──
-let _vehDayCache=null, _vehDayKey=null;
-function _getVehicleFaultOfDay(){
-  const day=_simDayKey();
-  if(_vehDayKey===day&&_vehDayCache)return _vehDayCache;
-  const seed=_simSeed('vehicle_fault_'+day)*1000;
+let _vehDayCache={};
+function _getVehicleFaultOfDay(day){
+  day=day||_simDayKey();
+  if(Object.prototype.hasOwnProperty.call(_vehDayCache,day))return _vehDayCache[day];
+  const seed=_simSeed('vehicle_fault',day)*1000;
   const roll=_seededRand(seed);
   let result=null;
   if(roll<0.9945)  result=null;
@@ -458,16 +505,16 @@ function _getVehicleFaultOfDay(){
       }
     }
   }
-  _vehDayKey=day;
-  return _vehDayCache=result;
+  return (_vehDayCache[day]=result);
 }
 
 let _simVehCache={};
 function _simVeh(t){
-  const key=t.no+':'+_simDayKey();
+  const day=_simDayKey(t);
+  const key=t.no+':'+day;
   if(key in _simVehCache)return _simVehCache[key];
   let v=null;
-  const faults=_getVehicleFaultOfDay();
+  const faults=_getVehicleFaultOfDay(day);
   if(faults){
     const fault=faults.find(f=>f.trainNo===t.no);
     if(fault){
@@ -491,7 +538,7 @@ function _simSchedArr(t){
 function _simActualArr(t){
   const sched=_simSchedArr(t); const veh=_simVeh(t);
   if(!veh) return sched;
-  const cap=_simDayContext().bigCap+veh.amt;
+  const cap=_simDayContext(t).bigCap+veh.amt;
   return sched.map((v,i)=> i>=veh.sec ? Math.round(Math.min(cap, v+Math.max(0, veh.amt-(i-veh.sec)))) : v);
 }
 
@@ -501,13 +548,13 @@ function _simViewArr(t){
   const pr=_simProfile(t); if(!pr.cd.length)return pr.cd;
   const bucket=Math.floor(_svMin(_simNowM())/10);
   if(bucket!==_simViewBucket){ _simViewCache={}; _simViewBucket=bucket; }
-  const key=t.no+':'+_simDayKey();
+  const key=t.no+':'+_simDayKey(t);
   if(_simViewCache[key])return _simViewCache[key];
   const nm=_simNowFor(pr);
-  const ctx=_simDayContext();
+  const ctx=_simDayContext(t);
   const veh=_simVeh(t), vehOn=!!(veh&&pr.m[veh.sec]!=null&&nm>=pr.m[veh.sec]);
   const act=_simActualArr(t), sched=_simSchedArr(t);
-  const seed=_simSeed(t.no);
+  const seed=_simSeed(t.no,_simDayKey(t));
   const vol=0.9+(ctx.probMult-1)*2.5;
   const out=new Array(pr.cd.length);
   let prev=null;
@@ -605,21 +652,16 @@ function _simDelayReport(t){
 }
 function _simOutlook(limit){
   if(!_simDelayOn)return null;
-  const d0=new Date();
-  if(d0.getHours()<4)_simDayKeyOverride=d0.getFullYear()*10000+(d0.getMonth()+1)*100+d0.getDate();
-  try{
-    const ctx=_simDayContext();
-    const rows=[];
-    if(typeof ALL_TRAINS!=='undefined')ALL_TRAINS.forEach(t=>{
-      const pr=_simProfile(t); if(!pr.predictedFlag)return;
-      const fin=pr.cd.length?pr.cd[pr.cd.length-1]:0;
-      const peak=pr.cd.length?Math.max.apply(null,pr.cd):0;
-      const est=Math.max(fin,peak); if(est<3)return;
-      rows.push({t,est,cause:pr.cause||null});
-    });
-    rows.sort((a,b)=>b.est-a.est);
-    return {ctx, rows:rows.slice(0,limit||8), total:rows.length};
-  } finally { _simDayKeyOverride=null; }
+  const ctx=_simDayContext();
+  const rows=[];
+  if(typeof ALL_TRAINS!=='undefined')ALL_TRAINS.forEach(t=>{
+    const pr=_simProfile(t); if(!pr.predictedFlag)return;
+    const estimate=_simOutlookEstimate(t,pr);
+    if(estimate.estimatedDelay<3)return;
+    rows.push({t,est:estimate.estimatedDelay,rangeText:estimate.rangeText,cause:pr.cause||null});
+  });
+  rows.sort((a,b)=>b.est-a.est);
+  return {ctx, rows:rows.slice(0,limit||8), total:rows.length};
 }
 function _simExpired(t){
   const pr=_simProfile(t); if(!pr.cd.length||pr.lastM==null)return false;

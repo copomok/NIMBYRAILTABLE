@@ -7738,7 +7738,7 @@ function renderSettingsSection(el){
     {id:'mobile',icon:'📱', name:'모바일 모드', desc:'기본 모드 · 현재 화면 그대로'},
     {id:'watch', icon:'⌚', name:'워치 모드',   desc:'최소 정보만 · 열차·다음 정차·지연·승강장'},
   ];
-  el.innerHTML=`<div style="padding:4px 0">
+  el.innerHTML=`<div class="settings-section"><div class="settings-card">
     <div style="font-size:13px;font-weight:800;color:var(--text1);margin-bottom:10px">환경 모드</div>
     <div class="set-modes">
       ${modes.map(m=>`<button class="set-mode-btn${_uiMode===m.id?' on':''}" onclick="setUiMode('${m.id}')">
@@ -7758,7 +7758,7 @@ function renderSettingsSection(el){
       </div>
       <button class="sim-switch${_simDelayOn?' on':''}" onclick="toggleSimDelay()" role="switch" aria-checked="${_simDelayOn}"><span class="sim-knob"></span></button>
     </div>
-  </div>`;
+  </div></div>`;
 }
 
 // ── ⌚ 워치 모드: 최소 정보 화면 ──
@@ -9884,14 +9884,13 @@ function _outlookHTML(){
   const bad=o.ctx.weather!=='맑음';
   const gl=g=>(typeof GL!=='undefined'&&GL[g])||g;
   const rows=o.rows.map(r=>{
-    const lo=Math.max(1,Math.round(r.est*0.6)), hi=Math.max(lo+2,Math.round(r.est*1.25));
-    const rng=r.est<5?`${r.est}분 내외`:`${lo}~${hi}분`;
+    const rng=r.rangeText||`${r.est}분 내외`;
     const gc=(typeof GRADE_COLORS!=='undefined'&&GRADE_COLORS[r.t.grade])||'#888';
     const sev=r.est>=15?'r':r.est>=8?'o':'y';
     return `<button class="ol-row" onclick="openJourney('${_opsEsc(r.t.no)}')"><span class="ol-grade" style="background:${gc}">${_opsEsc(gl(r.t.grade))}</span><span class="ol-no">${_opsEsc(r.t.no)}</span><span class="ol-route">${_opsEsc(r.t.stops[0].s)}<span class="ol-arr">→</span>${_opsEsc(r.t.dest)}</span><span class="ol-rng ol-sev-${sev}">${rng}</span>${r.cause?`<span class="ol-cz">(${_opsEsc(r.cause)})</span>`:''}</button>`;
   }).join('');
   return `<div class="outlook-card${bad?' bad':''}">
-    <div class="ol-head">${wxIco} 오늘의 운행 전망 <span class="ol-wx">${_opsEsc(o.ctx.weather)}${o.ctx.weekend?' · 주말':''}</span></div>
+    <div class="ol-head">${wxIco} 오늘의 운행 전망 <span class="ol-wx">${_opsEsc(o.ctx.weather)} · ${o.ctx.weekend?'주말·공휴일':'평일'}</span></div>
     ${o.rows.length?`<div class="ol-desc">${bad?`${_opsEsc(o.ctx.weather)}의 영향으로 다음 열차의 지연이 예상됩니다.`:'다음 열차의 지연이 예상됩니다.'}</div>${rows}${o.total>8?`<button class="ol-allbtn" onclick="window._olAll=!window._olAll;var e=document.getElementById('result-delay');if(e)renderSIDelay(e)">${window._olAll?'접기 ▲':`전체 ${o.total}편 보기 ▼`}</button>`:''}`
       :`<div class="ol-desc">현재 지연이 예보된 열차가 없습니다. 전 열차 정상 운행이 예상됩니다.</div>`}
     <div class="ol-caveat">예측은 확정이 아니며, 기상 호전 등에 따라 정상 운행으로 변경될 수 있습니다.</div>
@@ -10785,8 +10784,8 @@ function _renderJourneyForecast(t){
   const causeRows=(insight?.causes||[]).map(c=>`<div class="jr-forecast-cause">
     <span>${_opsEsc(c.name)}</span><i><b style="width:${c.share}%"></b></i><em>${c.share}%</em>
   </div>`).join('');
-  const delayValue=insight?.finalDelay?`+${insight.finalDelay}분`:`${insight?.forecast?.prob||0}%`;
-  const delayLabel=insight?.finalDelay?'종착 지연 예상':'지연 가능성';
+  const delayValue=insight?.estimatedDelay?insight.delayRange:`${insight?.forecast?.prob||0}%`;
+  const delayLabel=insight?.estimatedDelay?'예상 지연 범위':'지연 가능성';
   return `<section class="jr-forecast-card ${cls}">
     <div class="jr-forecast-head">
       <div><span class="jr-forecast-icon">☀️</span><div><b>오늘의 운행 예상</b><small>출발 전 예측 · 운행 시작 후 자동 숨김</small></div></div>
