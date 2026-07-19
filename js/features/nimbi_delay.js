@@ -200,6 +200,54 @@ function _simProfile(t){
   return _simProfileCache[key]=_computeProfile(t);
 }
 
+// 승객 화면용 지연 분석 요약.
+// 기존 시뮬레이션 프로필의 원인 이벤트를 재사용해 별도 예측 모델을 만들지 않는다.
+function _delayPassengerInsight(t){
+  const forecast=_delayForecast(t.line,t.grade);
+  const profile=_simProfile(t);
+  const positives=(profile.events||[]).filter(e=>e.delta>0);
+  const totals=new Map();
+  positives.forEach(e=>totals.set(e.cause,(totals.get(e.cause)||0)+e.delta));
+  const total=[...totals.values()].reduce((sum,v)=>sum+v,0);
+  const causes=[...totals.entries()]
+    .sort((a,b)=>b[1]-a[1])
+    .slice(0,4)
+    .map(([name,value])=>({
+      name,
+      minutes:Math.max(1,Math.round(value)),
+      share:total>0?Math.max(1,Math.round(value/total*100)):0
+    }));
+  if(!causes.length){
+    causes.push({name:'정상 운행 여건',minutes:0,share:100});
+  }
+
+  const timed=t.stops.filter(s=>hasTime(s.arr)||hasTime(s.dep));
+  const modeled=DELAY_MODEL.some(d=>{
+    const cut=d.name.lastIndexOf(' ');
+    return (t.line||'').split('·').includes(d.name.slice(0,cut))
+      && _delayGradeFamily(t.grade)===d.name.slice(cut+1);
+  });
+  let confidence=58+(modeled?18:0)+Math.min(14,Math.floor(timed.length/4));
+  if(profile.weather&&profile.weather!=='맑음')confidence-=5;
+  confidence=Math.max(45,Math.min(92,confidence));
+  const confidenceLabel=confidence>=80?'높음':confidence>=65?'보통':'참고';
+  const finalDelay=profile.cd.length?Math.max(0,Math.round(profile.cd[profile.cd.length-1])):0;
+  const maxDelay=profile.cd.length?Math.max(...profile.cd.map(v=>Math.round(v))):0;
+  let passengerSummary='현재 예측상 승객 여정에 미치는 영향은 거의 없습니다.';
+  if(finalDelay>0){
+    passengerSummary=finalDelay<=3
+      ?`도착이 약 ${finalDelay}분 늦어질 수 있으나 환승·약속에는 큰 영향이 적습니다.`
+      :finalDelay<=10
+        ?`도착이 약 ${finalDelay}분 늦어질 수 있어 짧은 환승은 여유 시간을 확인하세요.`
+        :`도착이 약 ${finalDelay}분 늦어질 수 있어 환승·약속 시간을 재조정하는 편이 안전합니다.`;
+  }else if(maxDelay>0){
+    passengerSummary=`운행 중 최대 ${maxDelay}분가량 늦어질 수 있지만 종착 전 대부분 회복될 전망입니다.`;
+  }else if(forecast.prob>=35){
+    passengerSummary=`지연 가능성은 ${forecast.prob}% 수준이지만 현재 시뮬레이션에서는 정시 운행이 예상됩니다.`;
+  }
+  return {forecast,profile,causes,confidence,confidenceLabel,finalDelay,maxDelay,passengerSummary};
+}
+
 function _computeProfile(t){
   const empty={cd:[],m:[],firstM:null,lastM:null,predictedFlag:false,cause:null,events:[]};
   const f=_delayForecast(t.line,t.grade);

@@ -679,6 +679,49 @@ function getCurrentStatus(t, atMin){
   return{status:'done',nowMin};
 }
 
+function _segmentPassengerInfo(t, fromStop, toStop){
+  if(!fromStop||!toStop)return null;
+  const fromT=hasTime(fromStop.dep)?fromStop.dep:fromStop.arr;
+  const toT=hasTime(toStop.arr)?toStop.arr:toStop.dep;
+  const minutes=fromT&&toT?durMin(fromT,toT):null;
+  let base=0.5;
+  try{
+    const first=t.stops.find(s=>hasTime(s.dep)||hasTime(s.arr));
+    const dep=first?(hasTime(first.dep)?first.dep:first.arr):'';
+    if(typeof calcRealisticFillRate==='function')base=calcRealisticFillRate(t.no,todayLocalStr(),dep,t.grade);
+  }catch(e){}
+  const paxA=(typeof STATION_PAX!=='undefined'&&STATION_PAX[fromStop.s])||0;
+  const paxB=(typeof STATION_PAX!=='undefined'&&STATION_PAX[toStop.s])||0;
+  const paxBoost=Math.min(.18,(paxA+paxB)/200*0.18);
+  const score=Math.max(0,Math.min(1,base*0.82+paxBoost));
+  const level=score>=.88?'매우 혼잡':score>=.72?'혼잡':score>=.55?'보통':'여유';
+  const cls=score>=.88?'critical':score>=.72?'busy':score>=.55?'normal':'calm';
+  return {minutes,level,cls,percent:Math.round(score*100)};
+}
+
+function _renderDelayPassengerInsight(t){
+  if(typeof _delayPassengerInsight!=='function')return '';
+  const insight=_delayPassengerInsight(t);
+  const causeRows=insight.causes.map(c=>`<div class="delay-cause-row">
+    <span>${c.name}</span>
+    <div class="delay-cause-track"><i style="width:${c.share}%"></i></div>
+    <b>${c.share}%</b>
+  </div>`).join('');
+  return `<details class="delay-passenger-card">
+    <summary>⏱ 지연 분석 <span>${insight.forecast.label} · 신뢰도 ${insight.confidence}%</span></summary>
+    <div class="delay-passenger-body">
+      <div class="delay-confidence">
+        <div><small>예측 신뢰도</small><b>${insight.confidenceLabel} ${insight.confidence}%</b></div>
+        <div><small>기본 지연 가능성</small><b>${insight.forecast.prob}%</b></div>
+        <div><small>종착 영향</small><b>${insight.finalDelay?`+${insight.finalDelay}분`:'정시 예상'}</b></div>
+      </div>
+      <div class="delay-cause-title">지연 원인 기여도</div>
+      ${causeRows}
+      <div class="delay-passenger-summary">👤 ${insight.passengerSummary}</div>
+    </div>
+  </details>`;
+}
+
 function renderDetail(t){
   const valid=t.stops.filter(s=>s.arr||s.dep);
   const originStn=valid[0]?.s, terminusStn=valid[valid.length-1]?.s;
@@ -686,19 +729,21 @@ function renderDetail(t){
   const c=gc(t.grade);
 
   // ── 타임라인 rows ──
-  let rows=''; let seq=0;
+  let rows=''; let seq=0, prevTimedStop=null;
   t.stops.forEach(s=>{
     const arr=s.arr, dep=s.dep;
     if(!arr&&!dep)return;
     const isOrigin=s.s===originStn, isTerm=s.s===terminusStn;
     const isPass=!isOrigin&&!isTerm&&isPassStop(t,s.s);
     seq++;
+    const segment=_segmentPassengerInfo(t,prevTimedStop,s);
 
     // 현재 위치 하이라이트
     let hlRow='';
     if(status&&status.status==='running'){
       if(status.atStn===s.s) hlRow=' tl-row-hl-at';
       else if(status.nextStn===s.s) hlRow=' tl-row-hl-next';
+      if(status.prevStn===prevTimedStop?.s&&status.nextStn===s.s)hlRow+=' tl-row-current-segment';
     }
 
     // dot 클래스
@@ -745,11 +790,14 @@ function renderDetail(t){
         ${isOrigin||isTerm?'':'<div class="tl-line"></div>'}
       </div>
       <div class="tl-stn-col">
-        <span class="tl-stn-name ${isOrigin?'origin':isTerm?'term':isPass?'pass':'stop'}">${s.s}</span>
-        ${badge}
+        <div class="tl-stn-main">
+          ${segment?`<div class="tl-segment-meta"><span>${segment.minutes!=null?`${segment.minutes}분`:''}</span><span class="tl-congestion ${segment.cls}" title="예상 혼잡도 ${segment.percent}%">${segment.level}</span></div>`:''}
+          <div><span class="tl-stn-name ${isOrigin?'origin':isTerm?'term':isPass?'pass':'stop'}">${s.s}</span>${badge}</div>
+        </div>
       </div>
       <div class="tl-alarm-col">${alarmBtn}</div>
     </div>`;
+    prevTimedStop=s;
   });
 
   // ── 운행 배너 ──
@@ -802,6 +850,7 @@ function renderDetail(t){
       </div>
     </div>
     ${statusBanner}
+    ${_renderDelayPassengerInsight(t)}
     <div class="tl-toolbar">
       <label style="font-size:12px;color:var(--text2);display:flex;align-items:center;gap:6px;cursor:pointer">
         <input type="checkbox" id="hide-pass-${t.no}" onchange="togglePassRows('${t.no}')" style="cursor:pointer">

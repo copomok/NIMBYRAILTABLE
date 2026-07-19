@@ -449,6 +449,15 @@ tbody td{padding:10px 14px;font-size:13px;white-space:nowrap}
 
 /* 역명 컬럼 */
 .tl-stn-col{display:flex;align-items:center;gap:6px;padding:4px 0}
+.tl-stn-main{min-width:0}
+.tl-stn-main>div:last-child{display:flex;align-items:center;gap:6px}
+.tl-segment-meta{display:flex;align-items:center;gap:6px;min-height:15px;margin-top:-7px;margin-bottom:2px;font-size:10px;color:var(--text3)}
+.tl-congestion{padding:1px 5px;border-radius:7px;font-weight:700}
+.tl-congestion.calm{color:#3fb950;background:rgba(63,185,80,.12)}
+.tl-congestion.normal{color:#d29922;background:rgba(210,153,34,.12)}
+.tl-congestion.busy{color:#f97316;background:rgba(249,115,22,.12)}
+.tl-congestion.critical{color:#f85149;background:rgba(248,81,73,.12)}
+.tl-row-current-segment .tl-line{width:4px;background:linear-gradient(#3fb950,#58a6ff);box-shadow:0 0 8px rgba(88,166,255,.8)}
 .tl-stn-name{font-size:14px;font-weight:500}
 .tl-stn-name.origin{color:#3fb950;font-weight:700;font-size:15px}
 .tl-stn-name.term{color:#f85149;font-weight:700;font-size:15px}
@@ -457,6 +466,24 @@ tbody td{padding:10px 14px;font-size:13px;white-space:nowrap}
 .tl-badge{font-size:10px;padding:1px 6px;border-radius:8px;font-weight:600}
 .tl-badge.now{background:rgba(63,185,80,.2);color:#3fb950;border:1px solid rgba(63,185,80,.4)}
 .tl-badge.next{background:rgba(56,139,253,.2);color:var(--accent);border:1px solid rgba(56,139,253,.4)}
+
+/* 지연 예측: 기존 프로필을 승객 관점으로 요약 */
+.delay-passenger-card{margin:0;border-bottom:1px solid var(--border);background:rgba(56,139,253,.035)}
+.delay-passenger-card>summary{cursor:pointer;list-style:none;padding:10px 14px;font-size:12px;font-weight:700;color:var(--text1);display:flex;justify-content:space-between;gap:8px}
+.delay-passenger-card>summary::-webkit-details-marker{display:none}
+.delay-passenger-card>summary span{color:var(--text3);font-weight:500}
+.delay-passenger-body{padding:0 14px 12px}
+.delay-confidence{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:10px}
+.delay-confidence>div{padding:8px;background:var(--bg3);border-radius:8px}
+.delay-confidence small{display:block;color:var(--text3);font-size:9px;margin-bottom:3px}
+.delay-confidence b{font-size:12px;color:var(--text1)}
+.delay-cause-title{font-size:11px;font-weight:700;color:var(--text2);margin-bottom:5px}
+.delay-cause-row{display:grid;grid-template-columns:minmax(90px,1fr) 2fr 34px;align-items:center;gap:7px;font-size:10px;color:var(--text2);margin:4px 0}
+.delay-cause-row b{text-align:right;color:var(--text1);font-family:var(--mono)}
+.delay-cause-track{height:5px;border-radius:4px;background:var(--bg3);overflow:hidden}
+.delay-cause-track i{display:block;height:100%;background:linear-gradient(90deg,#f97316,#f85149);border-radius:4px}
+.delay-passenger-summary{margin-top:9px;padding:9px 10px;border-radius:8px;background:rgba(56,139,253,.1);color:var(--text1);font-size:11px;line-height:1.5}
+@media(max-width:640px){.delay-confidence{grid-template-columns:1fr}.delay-cause-row{grid-template-columns:minmax(82px,1fr) 1.4fr 30px}}
 
 /* 알람 컬럼 */
 .tl-alarm-col{display:flex;align-items:center;justify-content:center}
