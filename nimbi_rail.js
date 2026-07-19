@@ -9896,6 +9896,35 @@ function _outlookHTML(){
     <div class="ol-caveat">예측은 확정이 아니며, 기상 호전 등에 따라 정상 운행으로 변경될 수 있습니다.</div>
   </div>`;
 }
+
+// 승객용 지연 산정 안내는 별도 HTML 조각으로 관리한다.
+// 한 번 불러온 내용은 탭 재렌더링 시 재사용해 불필요한 네트워크 요청을 막는다.
+let _delayExplanationPromise=null;
+function _loadDelayExplanation(){
+  const host=document.getElementById('delay-explanation-host');
+  if(!host)return;
+  if(!_delayExplanationPromise){
+    _delayExplanationPromise=fetch('nimbi_delay_explanation.html')
+      .then(res=>{
+        if(!res.ok)throw new Error(`HTTP ${res.status}`);
+        return res.text();
+      })
+      .catch(err=>{
+        _delayExplanationPromise=null;
+        throw err;
+      });
+  }
+  _delayExplanationPromise
+    .then(html=>{
+      const current=document.getElementById('delay-explanation-host');
+      if(current)current.innerHTML=html;
+    })
+    .catch(()=>{
+      const current=document.getElementById('delay-explanation-host');
+      if(current)current.innerHTML='<div class="delayed-empty">지연 산정 방식 안내를 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.</div>';
+    });
+}
+
 function renderSIDelay(el){
   const model=DELAY_MODEL;
   el.innerHTML=`<div style="margin-top:12px">
@@ -9921,7 +9950,11 @@ function renderSIDelay(el){
       </div>`;
     }).join('')}
     </details>
+    <div id="delay-explanation-host" aria-live="polite">
+      <div class="delayed-empty">지연 산정 방식 안내를 불러오는 중…</div>
+    </div>
   </div>`;
+  _loadDelayExplanation();
 }
 
 // ── 이용 모드(기차/전철) 초기 반영 ──
