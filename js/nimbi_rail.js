@@ -7420,7 +7420,7 @@ const ACCT_REG_KEY='nimbi_accounts';
 const ACCT_ACTIVE_KEY='nimbi_account_active';
 const ACCT_DATA_PREFIX='nimbi_acct_data_';
 // 계정에 연동되는 개인기록 키 (기기 UI 설정 nimbi_mode/led/zoom 등은 제외)
-const ACCT_KEYS=['nimbi_alarms','nimbi_alarm_groups','nimbi_seat_watches','nimbi_favs','nimbi_fav_groups','nimbi_notice_read','nimbi_tickets','nimbi_passes','nimbi_seatprefs','nimbi_station_defaults','nimbi_bookroutes','nimbi_puzzle'];
+const ACCT_KEYS=['nimbi_alarms','nimbi_alarm_groups','nimbi_seat_watches','nimbi_favs','nimbi_fav_groups','nimbi_notice_read','nimbi_tickets','nimbi_passes','nimbi_seatprefs','nimbi_station_defaults','nimbi_route_defaults','nimbi_bookroutes','nimbi_puzzle'];
 const ACCT_PREFIXES=['nimbi_history_'];
 const ACCT_EMOJIS=['🚆','🚄','🚅','🚇','🚉','🎫','⭐','🧭','🗺️','🌄','🐧','🦊','🐻','🐰','🐱','🌟'];
 function _acctEsc(s){return String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
@@ -7808,6 +7808,49 @@ function resetStationDefaults(){
   const el=document.getElementById('my-sub-content');
   if(el)renderSettingsSection(el);
 }
+const ROUTE_DEFAULT_KEY='nimbi_route_defaults';
+const ROUTE_DEFAULTS={sort:'duration',maxDuration:'0',grade:'all',after:'',xferMin:'3',xferMax:'60'};
+function getRouteDefaults(){
+  try{return {...ROUTE_DEFAULTS,...JSON.parse(localStorage.getItem(ROUTE_DEFAULT_KEY)||'{}')};}
+  catch(e){return {...ROUTE_DEFAULTS};}
+}
+function applyRouteDefaults(){
+  const d=getRouteDefaults();
+  const fields={
+    'sel-sort-route':d.sort,'sel-max-duration':d.maxDuration,'sel-grade-route':d.grade,
+    'input-after-route':d.after,'xfer-min':d.xferMin,'xfer-max':d.xferMax
+  };
+  Object.entries(fields).forEach(([id,value])=>{
+    const input=document.getElementById(id);
+    if(!input)return;
+    if(input.tagName==='INPUT'||[...(input.options||[])].some(o=>o.value===value))input.value=value;
+  });
+}
+function saveRouteDefaults(){
+  const val=id=>document.getElementById(id)?.value||'';
+  const after=val('setting-route-after').trim();
+  if(after&&!/^(?:[01]?\d|2[0-3]):[0-5]\d$/.test(after)){
+    alert('시간은 0:00~23:59 형식으로 입력해 주세요.');return;
+  }
+  const d={
+    sort:val('setting-route-sort'),maxDuration:val('setting-route-max'),
+    grade:val('setting-route-grade'),after,
+    xferMin:val('setting-route-xfer-min'),xferMax:val('setting-route-xfer-max')
+  };
+  if(Number(d.xferMin)>=Number(d.xferMax)){
+    alert('최대 환승 대기는 최소 환승 대기보다 길어야 합니다.');return;
+  }
+  try{localStorage.setItem(ROUTE_DEFAULT_KEY,JSON.stringify(d));}catch(e){}
+  applyRouteDefaults();
+  const status=document.getElementById('route-default-status');
+  if(status){status.textContent='저장되었습니다';setTimeout(()=>{if(status)status.textContent='';},1800);}
+}
+function resetRouteDefaults(){
+  try{localStorage.removeItem(ROUTE_DEFAULT_KEY);}catch(e){}
+  applyRouteDefaults();
+  const el=document.getElementById('my-sub-content');
+  if(el)renderSettingsSection(el);
+}
 function _settingsOptions(items,current){
   return items.map(([v,l])=>`<option value="${v}"${current===v?' selected':''}>${l}</option>`).join('');
 }
@@ -7821,6 +7864,7 @@ function renderSettingsSection(el){
     {id:'watch', icon:'⌚', name:'워치 모드',   desc:'최소 정보만 · 열차·다음 정차·지연·승강장'},
   ];
   const sd=getStationDefaults();
+  const rd=getRouteDefaults();
   const prefButtons=[
     ['window','🪟 창측'],['aisle','🚶 복도측'],['power','⚡ 콘센트'],
     ['front','⬆ 앞쪽'],['rear','⬇ 뒤쪽'],['fwd','▲ 순방향'],['rev','▽ 역방향']
@@ -7838,6 +7882,15 @@ function renderSettingsSection(el){
       모드는 이 기기에만 저장됩니다. 워치 모드는 최소 화면으로 전환되며, 화면의 📱 버튼으로 언제든 돌아올 수 있습니다.
     </div>
     <div class="settings-divider"></div>
+    <div class="settings-title">지연 시뮬레이션</div>
+    <div class="sim-toggle-card">
+      <div class="sim-toggle-info">
+        <div class="sim-toggle-title">🔴 지연 시뮬레이션</div>
+        <div class="sim-toggle-desc">예보 확률을 바탕으로 각 열차에 실제 지연을 부여해 <b>지도·탑승 여정·전광판</b>의 위치·시각에 반영합니다. 시간표 조회는 정시 그대로입니다.</div>
+      </div>
+      <button class="sim-switch${_simDelayOn?' on':''}" onclick="toggleSimDelay()" role="switch" aria-checked="${_simDelayOn}"><span class="sim-knob"></span></button>
+    </div>
+    <div class="settings-divider"></div>
     <div class="settings-title">좌석 선택 기본 선호</div>
     <div class="settings-chip-row">
       ${prefButtons.map(([v,l])=>`<button class="seat-auto-chip${_seatPrefs.has(v)?' on':''}" onclick="toggleSettingsSeatPref('${v}')">${l}</button>`).join('')}
@@ -7845,8 +7898,9 @@ function renderSettingsSection(el){
     </div>
     <div class="settings-help">좌석 선택을 열면 이 선호 조건이 자동 배정과 추천 좌석에 우선 적용됩니다.</div>
     <div class="settings-divider"></div>
-    <div class="settings-title">시간표 검색 기본 필터</div>
-    <div class="settings-filter-grid">
+    <details class="settings-fold">
+      <summary>시간표 검색 기본 필터 <span>⌄</span></summary>
+      <div class="settings-fold-body"><div class="settings-filter-grid">
       <label>방향<select id="setting-station-dir">${_settingsOptions([['all','전체'],['down','하행'],['up','상행']],sd.dir)}</select></label>
       <label>통과 열차<select id="setting-station-pass">${_settingsOptions([['all','포함'],['stop','정차만']],sd.pass)}</select></label>
       <label>등급<select id="setting-station-grade">${_settingsOptions([['all','전체'],['KTX','KTX'],['SRT','SRT'],['ITX-새마을','ITX-새마을'],['ITX-청춘','ITX-청춘'],['무궁화호','무궁화호'],['남도해양','남도해양'],['국악와인','국악와인']],sd.grade)}</select></label>
@@ -7859,15 +7913,27 @@ function renderSettingsSection(el){
       <button class="btn btn-primary" onclick="saveStationDefaults()">기본값 저장</button>
       <button class="btn settings-reset-btn" onclick="resetStationDefaults()">초기화</button>
       <span id="station-default-status" class="settings-save-status"></span>
-    </div>
-    <div style="font-size:13px;font-weight:800;color:var(--text1);margin:18px 0 10px">지연 시뮬레이션</div>
-    <div class="sim-toggle-card">
-      <div class="sim-toggle-info">
-        <div class="sim-toggle-title">🔴 지연 시뮬레이션</div>
-        <div class="sim-toggle-desc">예보 확률을 바탕으로 각 열차에 실제 지연을 부여해 <b>지도·탑승 여정·전광판</b>의 위치·시각에 반영합니다. 시간표 조회는 정시 그대로입니다.</div>
+      </div></div>
+    </details>
+    <div class="settings-divider"></div>
+    <details class="settings-fold">
+      <summary>출도착 검색 기본 필터 <span>⌄</span></summary>
+      <div class="settings-fold-body">
+        <div class="settings-filter-grid">
+          <label>정렬<select id="setting-route-sort">${_settingsOptions([['duration','소요시간순'],['depart','출발시각순'],['arrive','도착시각순']],rd.sort)}</select></label>
+          <label>최대 소요<select id="setting-route-max">${_settingsOptions([['0','제한없음'],['60','1시간'],['90','1시간 30분'],['120','2시간'],['180','3시간'],['240','4시간']],rd.maxDuration)}</select></label>
+          <label>열차 등급<select id="setting-route-grade">${_settingsOptions([['all','전체'],['KTX','KTX'],['SRT','SRT'],['ITX-새마을','ITX-새마을'],['ITX-청춘','ITX-청춘'],['무궁화호','무궁화호'],['남도해양','남도해양'],['국악와인','국악와인']],rd.grade)}</select></label>
+          <label>시간 이후<input id="setting-route-after" type="text" value="${_settingsAttr(rd.after)}" placeholder="예: 9:00"></label>
+          <label>최소 환승 대기<select id="setting-route-xfer-min">${_settingsOptions([['3','3분'],['5','5분'],['10','10분'],['15','15분'],['20','20분']],rd.xferMin)}</select></label>
+          <label>최대 환승 대기<select id="setting-route-xfer-max">${_settingsOptions([['30','30분'],['45','45분'],['60','60분'],['90','90분'],['120','120분']],rd.xferMax)}</select></label>
+        </div>
+        <div class="settings-actions">
+          <button class="btn btn-primary" onclick="saveRouteDefaults()">기본값 저장</button>
+          <button class="btn settings-reset-btn" onclick="resetRouteDefaults()">초기화</button>
+          <span id="route-default-status" class="settings-save-status"></span>
+        </div>
       </div>
-      <button class="sim-switch${_simDelayOn?' on':''}" onclick="toggleSimDelay()" role="switch" aria-checked="${_simDelayOn}"><span class="sim-knob"></span></button>
-    </div>
+    </details>
   </div></div>`;
 }
 
@@ -7958,6 +8024,7 @@ document.addEventListener('keydown',e=>{
 });
 setTimeout(()=>{try{_applyUiMode();}catch(e){}},0); // 전체 스크립트 로드 후 모드 적용
 setTimeout(()=>{try{applyStationDefaults();}catch(e){}},0);
+setTimeout(()=>{try{applyRouteDefaults();}catch(e){}},0);
 
 // ══════════════════════════════════════════
 // 🎫 열차 예매 탭
@@ -11064,7 +11131,6 @@ function _renderJourney(){
         <span class="jr-dest">${_opsEsc(t.dest)}행</span>
       </div>
       <div class="jr-route">${_opsEsc(stops[0].s)} ${depT} → ${_opsEsc(lastItem.s)} ${arrT}${arrAdj}</div>
-      ${phase==='running'?`<button class="jr-virtual-btn" onclick="closeJourney();openVirtualRide('${_opsEsc(t.no)}')">🚆 실시간 가상 승차</button>`:''}
       <div class="jr-status jr-${phase}${(_simDelayOn&&dly>0&&phase==='running')?' jr-delayed':''}">
         <div class="jr-status-head">${head}</div>
         ${sub?`<div class="jr-status-sub">${sub}</div>`:''}
