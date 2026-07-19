@@ -506,6 +506,26 @@ tbody td{padding:10px 14px;font-size:13px;white-space:nowrap}
 
 /* 오늘의 발견: 기존 역·열차·관제 화면으로 이어지는 홈 카드 */
 .daily-discovery{max-width:860px;margin:0 auto 12px}
+.home-section,.home-quick{border:1px solid var(--border);border-radius:13px;background:var(--bg2);padding:13px;margin-bottom:10px}
+.home-section-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px}
+.home-section-head b{font-size:13px;color:var(--text1)}.home-section-head span{font-size:10px;color:var(--text3)}
+.home-quick-fields{display:grid;grid-template-columns:1fr 34px 1fr auto;gap:7px;align-items:center}
+.home-quick-fields input{width:100%;min-width:0;height:38px}
+.home-quick-fields>button{height:38px;border:1px solid var(--border);border-radius:8px;background:var(--bg3);color:var(--text1);font-family:var(--sans);font-weight:700;cursor:pointer}
+.home-quick-fields .home-search-btn{padding:0 18px;background:var(--accent);border-color:var(--accent);color:#fff}
+.home-route-chips{display:flex;gap:6px;overflow-x:auto;margin-top:9px;scrollbar-width:none}.home-route-chips::-webkit-scrollbar{display:none}
+.home-route-chips button{flex-shrink:0;border:1px solid var(--border);border-radius:14px;background:var(--bg1);color:var(--text2);padding:5px 10px;font-size:10px;font-family:var(--sans);cursor:pointer}
+.home-next-card{width:100%;display:flex;align-items:center;gap:10px;text-align:left;border:0;background:transparent;color:var(--text1);font-family:var(--sans);cursor:pointer}
+.home-next-card>div{flex:1;min-width:0}.home-next-card b{display:block;font-size:15px}.home-next-card span{display:block;margin-top:4px;color:var(--text2);font-size:11px}.home-next-card em{color:var(--accent);font-style:normal;font-size:11px}
+.home-metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:7px}
+.home-metrics button{border:1px solid var(--border);border-radius:10px;background:var(--bg1);padding:10px 5px;color:var(--text1);font-family:var(--sans);cursor:pointer}
+.home-metrics b{display:block;font:800 19px var(--mono);color:var(--accent2)}.home-metrics b.warn{color:var(--red)}.home-metrics span{display:block;margin-top:3px;font-size:9px;color:var(--text3)}
+.home-interest-list{display:flex;flex-direction:column}.home-interest-list button,.home-alert>button{display:flex;align-items:center;justify-content:space-between;gap:10px;border:0;border-top:1px solid var(--border);background:transparent;color:var(--text1);padding:9px 2px;font-family:var(--sans);font-size:11px;cursor:pointer;text-align:left}
+.home-interest-list button:first-child,.home-alert>button:nth-child(2){border-top:0}
+.home-interest-list em{font-style:normal;font-size:9px;font-weight:800;border-radius:10px;padding:3px 7px}.home-interest-list em.ok{color:var(--green);background:rgba(63,185,80,.12)}.home-interest-list em.warn{color:#ff7b72;background:rgba(248,81,73,.12)}
+.home-outlook-main{display:flex;align-items:baseline;gap:9px;flex-wrap:wrap}.home-outlook-main span{font-size:10px;color:var(--text3)}.home-outlook-main b{font-size:17px}.home-outlook-main em{font-style:normal;font-size:10px;color:var(--accent2)}
+.home-outlook-sub{font-size:10px;color:var(--text2);margin-top:7px;line-height:1.45}
+.home-alert{border-color:rgba(248,81,73,.35);background:rgba(248,81,73,.05)}.home-alert>button b{color:#ff7b72;font-family:var(--mono)}
 .daily-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:7px;padding:0 2px}
 .daily-head b{font-size:13px;color:var(--text1)}
 .daily-head span{font-size:10px;color:var(--text3)}
@@ -518,6 +538,7 @@ tbody td{padding:10px 14px;font-size:13px;white-space:nowrap}
 .daily-live{display:inline-flex;align-items:center;gap:4px;margin-top:7px;padding:2px 7px;border-radius:8px;background:rgba(63,185,80,.12);color:#3fb950;font-size:9px;font-weight:700}
 .daily-live::before{content:'';width:5px;height:5px;border-radius:50%;background:#3fb950;box-shadow:0 0 0 3px rgba(63,185,80,.13)}
 @media(max-width:640px){.daily-grid{grid-template-columns:1fr}.daily-sub{min-height:0}}
+@media(max-width:520px){.home-quick-fields{grid-template-columns:1fr 32px 1fr}.home-quick-fields .home-search-btn{grid-column:1/-1}.home-metrics{gap:5px}.home-metrics b{font-size:17px}}
 
 /* 알람 컬럼 */
 .tl-alarm-col{display:flex;align-items:center;justify-content:center}
