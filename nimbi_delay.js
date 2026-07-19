@@ -158,6 +158,8 @@ function _turnaroundBuffer(pt, t){
 
 // ── 단선 구간(인게임 상 유일): 영동선 영주~소천 ──
 const _SIM_SINGLE_TRACK=new Set(['영주','봉화','법전','춘양','소천']);
+// 전철 운행 극소수 구간(옥천~추풍령): 전철 병행 지연은 이 구간 통과 중 1회만
+const _MP_SPARSE=new Set(['옥천','이원','심천','영동','황간','추풍령']);
 function _isSingleTrack(a,b){ return _SIM_SINGLE_TRACK.has(a)&&_SIM_SINGLE_TRACK.has(b); }
 // ── 지연 원인 태그 ──
 //  운행(신호·점유·대피·추월·교행) / 차량 / 역(승객) / 기상 — 우선순위 낮은 등급일수록 운행 원인↑
@@ -246,6 +248,7 @@ function _computeProfile(t){
     const smallUnit=0.45+0.5*severity;
     const evBase=(flagged?Math.min(0.34,effProb/100*0.45+0.06):0.05)*(0.6+0.5*severity)*prioMult;
     let cur=inherited, recTotal=0;
+    let mpN=0, mpLast=-999, mpSp=false;   // 전철 병행 발생 횟수·마지막 발생 시각·희소구간 사용 여부
     for(let i=0;i<secN;i++){
       const dt=Math.max(1,m[i+1]-m[i]);
       // 전철 병행 지연은 전철 운행 시간대(05:10~00:30)에만 발생
@@ -264,7 +267,13 @@ function _computeProfile(t){
         cause=_sectionCause(rush, metroPar, congHi, ctx, rd, singleTrack, go.prio);
         inc=_isBigCause(cause,ctx) ? bigUnit*(0.6+rb)
           : _isMidCause(cause)     ? Math.min(5, bigUnit*0.55*(0.6+rb)+smallUnit*0.5)
-          :                          smallUnit*(0.5+0.6*rb); }
+          :                          smallUnit*(0.5+0.6*rb);
+        // 전철 병행 혼잡 현실화: 최소 10분 간격 · 열차당 최대 4회 · 옥천~추풍령은 1회만
+        if(cause==='전철 병행 구간 혼잡'){
+          const sparse=_MP_SPARSE.has(timed[i].s)||_MP_SPARSE.has(timed[i+1].s);
+          if(mpN>=4 || (m[i]-mpLast)<10 || (sparse&&mpSp)){ inc=0; cause=null; }
+          else { mpN++; mpLast=m[i]; if(sparse)mpSp=true; }
+        } }
       // 회복 운전: 지연이 클수록 적극적으로.
       //  ① 역간 여유 시분(≈소요의 16%)을 등급별 회복률만큼 사용
       //  ② 2분 이상 정차역에서는 1분 정차로 단축(정차 단축 회복)
@@ -471,8 +480,15 @@ function _simEventLog(t){
     const st=timed[e.idx]?timed[e.idx].s:'';
     const clk=pr.m[e.idx]!=null?fmt(pr.m[e.idx]+(e.delta>0?e.delta:0)):'';
     if(e.delta>0)return `[${clk}] ${st} · ${e.cause} +${Math.round(e.delta)}분`;
-    return `[${clk}] ${st} · ${e.cause||'운전 정리'} −${Math.abs(Math.round(e.delta))}분`;
+    return `[${clk}] ${st} · ${e.cause||'운전 정리'} −${Math.max(1,Math.abs(Math.round(e.delta)))}분`;
   })()}));
+  // 회복 운전 보충: 표시 지연이 실제로 줄어든 구간은 빠짐없이 구간별 기록에 남김
+  const covered=new Set((pr.events||[]).filter(e=>e.delta<0).map(e=>e.idx));
+  for(let i=1;i<pr.cd.length;i++){
+    const drop=pr.cd[i-1]-pr.cd[i];
+    if(drop>0&&!covered.has(i))
+      lines.push({m:pr.m[i]||0, s:`[${fmt(pr.m[i]||0)}] ${timed[i]?timed[i].s:''} · 회복 운전 −${drop}분`});
+  }
   // 승강장 점유 전파(원인 열차 기록): 그 역 도달 후에만 표시
   const nmL=_simNowFor(pr);
   const dis=_dispatchInfo(t);
