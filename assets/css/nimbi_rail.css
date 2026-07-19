@@ -461,12 +461,17 @@ tbody td{padding:10px 14px;font-size:13px;white-space:nowrap}
 /* 탑승 여정 출발 전 운행 예상 */
 .jr-passenger-insights{padding:10px 12px;border-bottom:1px solid var(--border);background:linear-gradient(180deg,var(--bg1),var(--bg2))}
 .jr-forecast-card{overflow:hidden;border:1px solid var(--border);border-radius:14px;background:var(--bg2);box-shadow:0 5px 18px rgba(0,0,0,.12)}
-.jr-forecast-head{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:11px 12px;border-bottom:1px solid var(--border)}
+.jr-forecast-head{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:11px 12px;cursor:pointer;list-style:none}
+.jr-forecast-head::-webkit-details-marker{display:none}
+.jr-forecast-card[open]>.jr-forecast-head{border-bottom:1px solid var(--border)}
 .jr-forecast-head>div{display:flex;align-items:center;gap:8px;min-width:0}
 .jr-forecast-icon{display:grid;place-items:center;width:28px;height:28px;border-radius:9px;background:rgba(56,139,253,.12);font-size:15px}
 .jr-forecast-head b{display:block;font-size:12px;color:var(--text1)}
 .jr-forecast-head small{display:block;margin-top:1px;font-size:8px;color:var(--text3);font-weight:400}
 .jr-forecast-confidence{flex-shrink:0;padding:3px 7px;border-radius:8px;background:var(--bg3);color:var(--text2);font-size:9px;font-weight:700}
+.jr-forecast-head-meta{margin-left:auto}
+.jr-forecast-chevron{color:var(--text3);font-size:13px;transition:transform .18s}
+.jr-forecast-card[open] .jr-forecast-chevron{transform:rotate(180deg)}
 .jr-forecast-grid{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--border)}
 .jr-forecast-metric{position:relative;padding:11px 12px;background:var(--bg2)}
 .jr-forecast-metric>span{display:block;font-size:9px;color:var(--text3);margin-bottom:4px}
@@ -1984,7 +1989,17 @@ button, select, input[type=range],
 .ol-route{flex:1;color:var(--text3);font-size:11px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .ol-rng{font-weight:700;color:var(--orange);font-variant-numeric:tabular-nums;white-space:nowrap}
 .ol-more{font-size:11px;color:var(--text3);padding-top:4px}
-.ol-caveat{font-size:10.5px;color:var(--text3);margin-top:8px;padding-top:6px;border-top:1px dashed var(--border)}
+.ol-caveat{font-size:10.5px;color:var(--text3);margin-top:8px;padding-top:6px;border-top:1px dashed var(--border);line-height:1.55}
+.ol-caveat span{display:block;margin-top:3px}
+.ol-explain-btn{display:block;margin-top:7px;padding:0;border:0;background:none;color:var(--accent2);font-family:inherit;font-size:11px;font-weight:700;cursor:pointer;text-decoration:underline;text-underline-offset:3px}
+.delay-explanation-modal{position:fixed;inset:0;z-index:10200;display:flex;align-items:center;justify-content:center;padding:16px;background:rgba(0,0,0,.76);backdrop-filter:blur(5px)}
+.delay-explanation-dialog{display:flex;flex-direction:column;width:min(560px,100%);max-height:min(760px,90vh);overflow:hidden;border:1px solid var(--border);border-radius:16px;background:var(--bg1);box-shadow:0 20px 70px rgba(0,0,0,.55)}
+.delay-explanation-head{display:flex;align-items:center;gap:10px;padding:14px 16px;border-bottom:1px solid var(--border);background:var(--bg2)}
+.delay-explanation-head b{flex:1;font-size:14px;color:var(--text1)}
+.delay-explanation-head button{width:30px;height:30px;border:1px solid var(--border);border-radius:8px;background:var(--bg3);color:var(--text2);font-size:14px;cursor:pointer}
+.delay-explanation-modal-body{overflow-y:auto;padding:16px;-webkit-overflow-scrolling:touch}
+.delay-explanation-modal-body>div{margin:0!important;padding:0!important;border:0!important;background:transparent!important}
+@media(max-width:640px){.delay-explanation-modal{align-items:flex-end;padding:0}.delay-explanation-dialog{max-height:88vh;border-radius:18px 18px 0 0;border-bottom:0}.delay-explanation-modal-body{padding:14px}}
 .delayed-list{margin-bottom:14px;background:var(--bg2);border:1px solid color-mix(in srgb,var(--red) 30%,var(--border));border-radius:12px;padding:12px 12px 8px}
 .delayed-head{font-size:13.5px;font-weight:800;color:var(--text1);margin-bottom:8px}
 .delayed-head b{color:var(--red);font-family:var(--mono)}

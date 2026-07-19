@@ -16,7 +16,8 @@
         <div style="padding: 8px 12px; background: var(--bg1); border-left: 3px solid var(--accent); border-radius: 4px;">
           <p style="margin: 0 0 4px 0;">
             각 열차는 <strong>노선·등급·요일·시간대·기상</strong>을 바탕으로 오늘의 지연을 예측합니다.<br>
-            예측은 <strong>대한민국 철도 운행 데이터</strong>를 학습한 패턴을 따르며, 매일 자정에 새로 계산됩니다.
+            예측은 <strong>대한민국 철도 운행 데이터</strong>를 학습한 패턴을 따르며, 일반 열차는 매일 자정에 새로 계산됩니다.
+            자정을 넘어 운행하는 열차는 이전 운행 정보를 유지한 뒤 오전 4시에 갱신됩니다.
           </p>
         </div>
       </div>
@@ -132,6 +133,8 @@
             ⚠️ 이 예측은 <strong>시뮬레이션이며 실제 운행과 무관</strong>합니다.
           </p>
           <ul style="margin: 0; padding-left: 18px; color: var(--text2); font-size: 11px;">
+            <li>운행 전에는 10분 단위로 예보가 조정될 수 있습니다</li>
+            <li>운행 중에는 역 통과 시 갱신되며, 15분을 넘는 구간에서는 10분 단위로 추가 갱신됩니다</li>
             <li>실제 지연은 예측치와 다를 수 있습니다</li>
             <li>교통 혼란·사고·규제 등 예측 불가능한 사건은 반영되지 않습니다</li>
             <li>폐선·운행 중단 같은 특수 상황도 포함되지 않습니다</li>

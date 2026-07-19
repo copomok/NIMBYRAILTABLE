@@ -9893,18 +9893,21 @@ function _outlookHTML(){
     <div class="ol-head">${wxIco} 오늘의 운행 전망 <span class="ol-wx">${_opsEsc(o.ctx.weather)} · ${o.ctx.weekend?'주말·공휴일':'평일'}</span></div>
     ${o.rows.length?`<div class="ol-desc">${bad?`${_opsEsc(o.ctx.weather)}의 영향으로 다음 열차의 지연이 예상됩니다.`:'다음 열차의 지연이 예상됩니다.'}</div>${rows}${o.total>8?`<button class="ol-allbtn" onclick="window._olAll=!window._olAll;var e=document.getElementById('result-delay');if(e)renderSIDelay(e)">${window._olAll?'접기 ▲':`전체 ${o.total}편 보기 ▼`}</button>`:''}`
       :`<div class="ol-desc">현재 지연이 예보된 열차가 없습니다. 전 열차 정상 운행이 예상됩니다.</div>`}
-    <div class="ol-caveat">예측은 확정이 아니며, 기상 호전 등에 따라 정상 운행으로 변경될 수 있습니다.</div>
+    <div class="ol-caveat">
+      예측은 확정이 아니며, 기상 호전 등에 따라 정상 운행으로 변경될 수 있습니다.
+      <span>운행 전과 운행 중에도 관측 상황, 역 통과, 돌발상황에 따라 지연 정보와 예보가 달라질 수 있습니다.</span>
+    </div>
+    <button class="ol-explain-btn" onclick="openDelayExplanation()">지연은 어떻게 산정되나요?</button>
   </div>`;
 }
 
 // 승객용 지연 산정 안내는 별도 HTML 조각으로 관리한다.
 // 한 번 불러온 내용은 탭 재렌더링 시 재사용해 불필요한 네트워크 요청을 막는다.
 let _delayExplanationPromise=null;
-function _loadDelayExplanation(){
-  const host=document.getElementById('delay-explanation-host');
+function _loadDelayExplanation(host){
   if(!host)return;
   if(!_delayExplanationPromise){
-    _delayExplanationPromise=fetch('pages/nimbi_delay_explanation.html')
+    _delayExplanationPromise=fetch('pages/nimbi_delay_explanation.html?v=2026072015')
       .then(res=>{
         if(!res.ok)throw new Error(`HTTP ${res.status}`);
         return res.text();
@@ -9916,14 +9919,37 @@ function _loadDelayExplanation(){
   }
   _delayExplanationPromise
     .then(html=>{
-      const current=document.getElementById('delay-explanation-host');
-      if(current)current.innerHTML=html;
+      const current=document.getElementById('delay-explanation-modal-body');
+      if(!current)return;
+      const parsed=document.createElement('div');
+      parsed.innerHTML=html;
+      const content=parsed.querySelector('details > div');
+      current.innerHTML=content?content.outerHTML:html;
     })
     .catch(()=>{
-      const current=document.getElementById('delay-explanation-host');
+      const current=document.getElementById('delay-explanation-modal-body');
       if(current)current.innerHTML='<div class="delayed-empty">지연 산정 방식 안내를 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.</div>';
     });
 }
+function openDelayExplanation(){
+  document.getElementById('delay-explanation-modal')?.remove();
+  const modal=document.createElement('div');
+  modal.id='delay-explanation-modal';
+  modal.className='delay-explanation-modal';
+  modal.innerHTML=`<div class="delay-explanation-dialog" role="dialog" aria-modal="true" aria-labelledby="delay-explanation-title">
+    <div class="delay-explanation-head">
+      <b id="delay-explanation-title">지연은 어떻게 산정되나요?</b>
+      <button onclick="closeDelayExplanation()" aria-label="닫기">✕</button>
+    </div>
+    <div class="delay-explanation-modal-body" id="delay-explanation-modal-body">
+      <div class="delayed-empty">지연 산정 방식 안내를 불러오는 중…</div>
+    </div>
+  </div>`;
+  modal.addEventListener('click',e=>{if(e.target===modal)closeDelayExplanation();});
+  document.body.appendChild(modal);
+  _loadDelayExplanation(document.getElementById('delay-explanation-modal-body'));
+}
+function closeDelayExplanation(){document.getElementById('delay-explanation-modal')?.remove();}
 
 function renderSIDelay(el){
   const model=DELAY_MODEL;
@@ -9950,11 +9976,7 @@ function renderSIDelay(el){
       </div>`;
     }).join('')}
     </details>
-    <div id="delay-explanation-host" aria-live="polite">
-      <div class="delayed-empty">지연 산정 방식 안내를 불러오는 중…</div>
-    </div>
   </div>`;
-  _loadDelayExplanation();
 }
 
 // ── 이용 모드(기차/전철) 초기 반영 ──
@@ -10769,7 +10791,7 @@ function closeJourney(){
   if(_journeyTimer){clearTimeout(_journeyTimer);_journeyTimer=null;}
   _journeyNo=null;
 }
-function _renderJourneyForecast(t){
+function _renderJourneyForecast(t,isOpen=true){
   let rate=.5;
   try{
     const first=t.stops.find(s=>hasTime(s.dep)||hasTime(s.arr));
@@ -10786,11 +10808,11 @@ function _renderJourneyForecast(t){
   </div>`).join('');
   const delayValue=insight?.estimatedDelay?insight.delayRange:`${insight?.forecast?.prob||0}%`;
   const delayLabel=insight?.estimatedDelay?'예상 지연 범위':'지연 가능성';
-  return `<section class="jr-forecast-card ${cls}">
-    <div class="jr-forecast-head">
+  return `<details class="jr-forecast-card ${cls}"${isOpen?' open':''}>
+    <summary class="jr-forecast-head">
       <div><span class="jr-forecast-icon">☀️</span><div><b>오늘의 운행 예상</b><small>출발 전 예측 · 운행 시작 후 자동 숨김</small></div></div>
-      <span class="jr-forecast-confidence">신뢰도 ${insight?.confidence||'-'}%</span>
-    </div>
+      <div class="jr-forecast-head-meta"><span class="jr-forecast-confidence">신뢰도 ${insight?.confidence||'-'}%</span><span class="jr-forecast-chevron">⌄</span></div>
+    </summary>
     <div class="jr-forecast-grid">
       <div class="jr-forecast-metric">
         <span>예상 혼잡도</span><b>${level}</b><em>${pct}%</em>
@@ -10810,13 +10832,15 @@ function _renderJourneyForecast(t){
         <div class="jr-forecast-foot">예측 신뢰도 ${insight?.confidenceLabel||'참고'} ${insight?.confidence||'-'}% · 실제 운행 상황에 따라 달라질 수 있습니다.</div>
       </div>
     </details>
-  </section>`;
+  </details>`;
 }
 function _renderJourney(){
   const body=document.getElementById('journey-body'); if(!body||!_journeyNo)return;
   // 자동 갱신 시 현재 스크롤 위치 보존(혼자 맨 위로 튀는 문제 방지)
   const _prevSc=body.querySelector('.jr-scroll');
   const _prevTop=_prevSc?_prevSc.scrollTop:0;
+  const _forecastEl=body.querySelector('.jr-forecast-card');
+  const _forecastOpen=_forecastEl?_forecastEl.open:true;
   const _firstRender=!body._scrolledOnce;
   const t=getTrainByNo(_journeyNo); if(!t)return;
   const stops=_journeyStops(t); if(!stops.length){body.innerHTML='<div class="empty">시각 정보가 없습니다.</div>';return;}
@@ -10932,7 +10956,7 @@ function _renderJourney(){
       </div>
       <div class="jr-progress"><div class="jr-progress-fill" style="width:${prog}%;background:${c}"></div></div>
     </div>
-    ${phase==='before'?`<div class="jr-passenger-insights">${_renderJourneyForecast(t)}</div>`:''}
+    ${phase==='before'?`<div class="jr-passenger-insights">${_renderJourneyForecast(t,_forecastOpen)}</div>`:''}
     <div class="jr-scroll">
       <div class="jr-timeline">${li}</div>
       <p class="jr-foot">매분 자동 갱신 · 실제 게임 내 시각 기준</p>
