@@ -669,6 +669,8 @@ function _computeProfile(t){
           if(mpN>=4 || (m[i]-mpLast)<10 || (sparse&&mpSp)){ inc=0; cause=null; }
           else { mpN++; mpLast=m[i]; if(sparse)mpSp=true; }
         } }
+      // 종착역에는 새로운 지연 원인을 배치하지 않고 이전 구간의 지연만 이어간다.
+      if(i===secN-1){inc=0;cause=null;}
 
       // ═══ v2: 회복 운전 강화 (회복 우선도 배수) ═══
       let rec=0, dcut=0;
@@ -793,7 +795,7 @@ function _dispatchInfo(t){
   const rp=(typeof REAL_PLAT!=='undefined')&&REAL_PLAT[t.no];
   if(rp){
     const idx=_platIndex();
-    for(let i=1;i<timed.length&&hits<2;i++){
+    for(let i=1;i<timed.length-1&&hits<2;i++){
       if(_isPassStop(t,timed[i].s))continue;
       const p=rp[timed[i].s]; if(p==null)continue;
       const arrRaw=toMin(hasTime(timed[i].arr)?timed[i].arr:timed[i].dep); if(arrRaw==null)continue;
@@ -831,6 +833,7 @@ function _dispatchInfo(t){
   const segIdx=_segmentIndex();
   let segmentHits=0;
   for(let i=0;i<timed.length-1&&segmentHits<3;i++){
+    if(i===timed.length-2)continue;
     const from=timed[i],to=timed[i+1];
     const startRaw=toMin(hasTime(from.dep)?from.dep:from.arr);
     const endRaw=toMin(hasTime(to.arr)?to.arr:to.dep);
@@ -1141,12 +1144,11 @@ function _simEventLog(t){
   const timed=t.stops.filter(s=>hasTime(s.arr)||hasTime(s.dep));
   const fmt=mm=>{const v=(((mm%1440)+1440)%1440);return String(Math.floor(v/60)).padStart(2,"0")+":"+String(Math.round(v%60)).padStart(2,"0");};
   const cumulative=idx=>Math.max(0,Math.round(view[idx]||0));
-  const cumulativeText=idx=>{const v=cumulative(idx);return v>0?`+${v}분`:"정시";};
   const eventClock=idx=>fmt((pr.m[idx]||0)+cumulative(idx));
   const lines=(pr.events||[]).map(e=>({m:pr.m[e.idx]||0,s:(()=>{
     const st=timed[e.idx]?timed[e.idx].s:"";
     const amount=Math.max(1,Math.abs(Math.round(e.delta||0)));
-    if(e.delta>0)return `[${eventClock(e.idx)}] ${st} · ${e.cause} ${cumulativeText(e.idx)}`;
+    if(e.delta>0)return `[${eventClock(e.idx)}] ${st} · ${e.cause} +${amount}분`;
     return `[${eventClock(e.idx)}] ${st} · ${e.cause||"운전 정리"} −${amount}분`;
   })()}));
   const covered=new Set((pr.events||[]).filter(e=>e.delta<0).map(e=>e.idx));
@@ -1161,7 +1163,7 @@ function _simEventLog(t){
     if(nmL<e.m)return;
     const baseTxt=(e.txt||e.cause||"운행 순서 조정").replace(/\s[+−]\d+(?:\.\d+)?분$/u,"");
     const amount=Math.max(1,Math.abs(Math.round(e.delta||0)));
-    const change=e.delta<0?`−${amount}분`:cumulativeText(e.idx);
+    const change=e.delta<0?`−${amount}분`:`+${amount}분`;
     lines.push({m:e.m,s:`[${eventClock(e.idx)}] ${baseTxt} ${change}`});
   });
   const peak=Math.max.apply(null,view),peakIdx=view.indexOf(peak);
@@ -1169,7 +1171,7 @@ function _simEventLog(t){
     if(f)f.s=f.s.replace("회복 운전","관제 우선권 부여 · 회복 운전");}
   const veh=_simVeh(t);
   if(veh&&pr.m[veh.sec]!=null&&nmL>=pr.m[veh.sec])
-    lines.push({m:pr.m[veh.sec],s:`[${eventClock(veh.sec)}] ${timed[veh.sec]?timed[veh.sec].s:""} · 차량 ${veh.type} ${cumulativeText(veh.sec)}`});
+    lines.push({m:pr.m[veh.sec],s:`[${eventClock(veh.sec)}] ${timed[veh.sec]?timed[veh.sec].s:""} · 차량 ${veh.type} +${veh.amt}분`});
   lines.sort((a,b)=>a.m-b.m);
   return lines.map(x=>x.s);
 }

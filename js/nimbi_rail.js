@@ -7020,7 +7020,7 @@ function renderTripWidgetCompact(active){
       <span class="trip-mini-grade-badge" style="background:${gc}">${train.grade}</span>
       <strong class="trip-mini-no">${train.no}</strong>
       <span class="trip-mini-bound">${ticket.toStn}행</span>
-      <span class="trip-mini-go">승차권 <b>›</b></span>
+      <button type="button" class="trip-mini-go" onclick="event.stopPropagation();openQRPopup(&quot;${ticket.id}&quot;)">승차권 <b>›</b></button>
     </div>
     <div class="trip-mini-route">
       <div class="trip-mini-station"><span>출발</span><strong>${ticket.fromStn}</strong><time>${ticket.depTime||"-"}</time></div>
