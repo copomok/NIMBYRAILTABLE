@@ -1,5 +1,5 @@
 // ═══════════════════════════════════════════════════════════════
-// 🚦 님비레일 지연 예보·시뮬레이션 엔진 v2 (Dispatch Layer + Recovery Weight)
+// 🚦 님비레일 지연 예보·시뮬레이션 엔진 v2 (Dispatch Layer + Recovery Probability)
 // ───────────────────────────────────────────────────────────────
 // 기반  : 인게임 발췌 지연 예측(DELAY_MODEL) — 노선·등급별 확률/범위(주기반)
 // 보정  : 구간 특성(전철 병행·혼잡) · 거리(소요) · 시간대(러시) · 요일/날씨(일 단위)
@@ -7,7 +7,7 @@
 // 성질  : 결정적(열차+운행일 시드) · 하루 단위 캐시 · 등급별 회복 운전(KTX>ITX>새마을>무궁화)
 // 기상  : 맑음·안개·강풍·폭염·비·폭설·태풍 — 일 단위 결정, 서행·회복 저해 반영
 // 분포  : 대부분 정시~2분, 3~10분 비교적 흔함, 10~20분 가끔, 30분+ 는 태풍·차량 고장 등 특수 상황만
-// v2   : Dispatch Layer 2단계(승강장 + 선로), 회복 우선도 배수, 고속선 강화, 차량 고장 극단화
+// v2   : Dispatch Layer 2단계(승강장 + 선로), 등급별 회복 확률, 고속선 강화, 차량 고장 극단화
 // ═══════════════════════════════════════════════════════════════
 
 // ── 인게임 발췌 지연 예측 ──
@@ -190,8 +190,9 @@ function _scheduleSimBoundary(){
   _simBoundaryTimer=setTimeout(()=>{
     _simPruneRecords();
     _simCtxCache={};_simProfileCache={};_simViewCache={};_dispCache={};_simVehCache={};
-    if(typeof renderDailyDiscovery==='function')renderDailyDiscovery();
-    if(typeof _journeyNo!=='undefined'&&_journeyNo&&typeof _renderJourney==='function')_renderJourney();
+    try{if(typeof renderDailyDiscovery==='function')renderDailyDiscovery();}catch(e){console.warn('daily refresh',e);}
+    try{if(typeof _journeyNo!=='undefined'&&_journeyNo&&typeof _renderJourney==='function')_renderJourney();}catch(e){console.warn('journey refresh',e);}
+    try{if(typeof _handleCalendarDayChange==='function')_handleCalendarDayChange(true);}catch(e){console.warn('calendar refresh',e);}
     _scheduleSimBoundary();
   },Math.max(1000,next.getTime()-now.getTime()));
 }
@@ -488,15 +489,32 @@ function _isBigCause(cause, ctx){
   if(cause===ctx.sagLabel)return !!ctx.wxBig;
   return false;
 }
-// ── 회복 우선도 배수 시스템 ──
-function _recoveryWeight(delayMins){
-  if(delayMins<2)    return 1.0;  // 0~1분: 작은 지연도 적극 회복
-  if(delayMins<5)    return 1.1;  // 2~4분
-  if(delayMins<10)   return 1.25; // 5~9분
-  if(delayMins<15)   return 1.35; // 10~14분
-  if(delayMins<20)   return 1.5;  // 15~19분
-  if(delayMins<30)   return 1.7;  // 20~29분
-  return 1.9;                    // 30분 이상
+// ── 등급별 회복 운전 발생 확률 ──
+function _recoveryGradeGroup(grade){
+  if(/KTX|SRT/.test(grade||''))return 'high';
+  if(/^ITX-(?:새마을|마음|청춘)/.test(grade||''))return 'itx';
+  if(/새마을/.test(grade||''))return 'saemaeul';
+  return 'local';
+}
+function getRecoveryProbability(delayMinutes,grade){
+  if(!(delayMinutes>0))return 0;
+  const points=[1,3,6,10,15];
+  const table={
+    local:[.36,.48,.52,.76,.84],
+    saemaeul:[.39,.51,.55,.79,.87],
+    itx:[.42,.54,.58,.82,.90],
+    high:[.45,.58,.62,.86,.94]
+  };
+  const rates=table[_recoveryGradeGroup(grade)];
+  const delay=Math.max(1,delayMinutes);
+  if(delay>=15)return rates[rates.length-1];
+  for(let i=1;i<points.length;i++){
+    if(delay<=points[i]){
+      const ratio=(delay-points[i-1])/(points[i]-points[i-1]);
+      return rates[i-1]+(rates[i]-rates[i-1])*ratio;
+    }
+  }
+  return rates[rates.length-1];
 }
 
 // ── 고속선 구간 판정 ──
@@ -673,7 +691,7 @@ function _computeProfile(t){
       // 종착역에는 새로운 지연 원인을 배치하지 않고 이전 구간의 지연만 이어간다.
       if(i===secN-1){inc=0;cause=null;}
 
-      // ═══ v2: 회복 운전 강화 (회복 우선도 배수) ═══
+      // 등급·현재 지연별 기준 확률로 회복 운전 발생 여부를 결정한다.
       let rec=0, dcut=0;
       const arrivalDelay=Math.max(0,cur+inc);
       // 1분이라도 지연된 상태로 2분 이상 정차하는 역은 항상 1분 단축한다.
@@ -681,9 +699,11 @@ function _computeProfile(t){
       const canCut=arrivalDelay>0&&dwell[i+1]>=2&&!_isDwellDelayCause(cause);
       if(canCut)dcut=Math.min(1,dwell[i+1]-1,arrivalDelay);
       if(arrivalDelay>0 && inc===0){
-        const recW=_recoveryWeight(Math.round(cur));
-        const urg=Math.min(1, Math.pow(cur/40, 0.6));
-        const gate=(0.62+0.45*urg)*secCtx.recW*(0.9+0.05*go.prio)*recW;
+        const baseProbability=getRecoveryProbability(arrivalDelay,t.grade);
+        // 표의 확률이 기준이다. 악천후는 발생 확률을 최대 35%까지만 낮추고,
+        // 기존처럼 실제 회복량에도 recW를 적용한다.
+        const weatherProbabilityMultiplier=Math.max(.65,Math.min(1,secCtx.recW));
+        const gate=Math.max(0,Math.min(.98,baseProbability*weatherProbabilityMultiplier));
         let runRec=0, recHard=_SIM_REC_HARD;
         if(rc<gate){
           // ─ 고속선 회복 강화 ─
@@ -701,7 +721,10 @@ function _computeProfile(t){
       cur=Math.max(0, Math.min(ctx.bigCap, cur+inc-rec));
       cd.push(cur); recTotal+=rec;
       if(inc>=0.5&&cause){ events.push({idx:i+1,delta:+inc.toFixed(1),cause}); if(!dominant||inc>2)dominant=dominant&&inc<=2?dominant:cause; }
-      if(rec>=0.5) events.push({idx:i+1,delta:-+rec.toFixed(1),cause:dcut>=0.3?'정차시간 단축':'회복 운전'});
+      const actualDcut=Math.min(dcut,rec);
+      const actualRunRec=Math.max(0,rec-actualDcut);
+      if(actualDcut>=0.5)events.push({idx:i+1,delta:-+actualDcut.toFixed(1),cause:'정차시간 단축'});
+      if(actualRunRec>=0.5)events.push({idx:i+1,delta:-+actualRunRec.toFixed(1),cause:'회복 운전'});
     }
     if(!dominant){ const anyInc=events.find(e=>e.delta>0); dominant=anyInc?anyInc.cause:null; }
     var _recTotal=recTotal;
@@ -778,6 +801,19 @@ function _isPassStop(t, stnName){
 function _priorRealStopIndex(t,timed,idx){
   for(let i=idx;i>=0;i--)if(!_isPassStop(t,timed[i].s))return i;
   return -1;
+}
+
+function _minimumFollowHeadway(leaderDelay,followerDelay,stationName){
+  const delayed=leaderDelay>0||followerDelay>0;
+  let minutes=delayed?1:3;
+  // 혼잡역·통과선 미보유역에서는 역 구내 진입 여유를 한 분 더 둔다.
+  if(_paxScore(stationName)>.6||_NO_PASS_TRACK.has(stationName))minutes=Math.max(minutes,2);
+  return minutes;
+}
+function _headwayHold(leaderDeparture,leaderDelay,followerDeparture,followerDelay,minimumHeadway){
+  const leaderClear=leaderDeparture+Math.max(0,leaderDelay||0);
+  const followerReady=followerDeparture+Math.max(0,followerDelay||0);
+  return Math.min(15,Math.max(0,Math.ceil(leaderClear+minimumHeadway-followerReady)));
 }
 
 let _dispCache={};
@@ -886,13 +922,10 @@ function _dispatchInfo(t){
           _gradeOps(ut.grade).prio<=_gradeOps(t.grade).prio)continue;
         const sourceDelay=sourceActual[u.idx]||0;
         if(sourceDelay<=0)continue;
-        const sourceEnd=u.end+(sourceActual[u.idx+1]||sourceDelay);
-        const myActualEnd=myEnd+currentEndDelay;
-        // 운암→언양 예시처럼 다음 역 도착이 같으면 그 역에서 정상적으로 추월할 수 있다.
-        if(sourceEnd>=myActualEnd)continue;
-        // 추풍령처럼 대피할 수 없는 역에서는 완행을 세우지 않고 빠른 열차가 다음 역까지 따른다.
-        if(_NO_PASS_TRACK.has(from.s))continue;
-        const hold=_segmentOrderHold(u.start,sourceDelay,myStart,currentDelay);
+        // 단순 복선 추종은 다음 역 도착/블록 완전 이탈을 기다리지 않는다.
+        // 현재 역에서 선행 열차가 출발·통과한 뒤 필요한 최소 시격의 부족분만 더한다.
+        const minimumHeadway=_minimumFollowHeadway(sourceDelay,currentDelay,from.s);
+        const hold=_headwayHold(u.start,sourceDelay,myStart,currentDelay,minimumHeadway);
         if(hold<=0)continue;
         const holdIdx=_priorRealStopIndex(t,timed,i);
         if(holdIdx<0)continue;
@@ -900,8 +933,8 @@ function _dispatchInfo(t){
         for(let j=holdIdx;j<pr.cd.length;j++)adj[j]+=hold;
         out.events.push({
           m:pr.m[holdIdx]||0,idx:holdIdx,delta:hold,cause:'선행 열차 연쇄 지연',
-          sourceNo:ut.no,holdAtStop:true,conflictAt:from.s,
-          txt:`${timed[holdIdx].s} 정차 대기 · ${from.s}–${to.s} 순서 조정 · 선행 ${ut.grade} ${ut.no} +${hold}분`
+          sourceNo:ut.no,holdAtStop:true,followGap:true,conflictAt:from.s,
+          txt:`${timed[holdIdx].s} 선행 열차 최소 시격 확보 · 선행 ${ut.grade} ${ut.no} +${hold}분`
         });
         segmentHits++;
         break;

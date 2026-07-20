@@ -291,6 +291,31 @@ function updateClock(){
   const s=String(now.getSeconds()).padStart(2,'0');
   const el=document.getElementById('header-clock');
   if(el) el.textContent=`${h}:${m}:${s}`;
+  _handleCalendarDayChange(false,now);
+}
+let _appCalendarDay=todayLocalStr();
+let _calendarRefreshPending=false;
+function _handleCalendarDayChange(force,now){
+  const nextDay=todayLocalStr(now||new Date());
+  if(!force&&nextDay===_appCalendarDay)return;
+  _appCalendarDay=nextDay;
+  if(_calendarRefreshPending)return;
+  _calendarRefreshPending=true;
+  setTimeout(()=>{
+    _calendarRefreshPending=false;
+    // 열려 있는 날짜 입력이 어제 날짜에 고정되지 않도록 하되 사용자가 고른 미래 날짜는 유지한다.
+    const maxDateObj=new Date((now||new Date()).getTime());
+    maxDateObj.setDate(maxDateObj.getDate()+30);
+    const nextMax=todayLocalStr(maxDateObj);
+    document.querySelectorAll('input[type="date"]').forEach(input=>{
+      if(input.min&&input.min<nextDay)input.min=nextDay;
+      if(input.max&&input.max<nextMax)input.max=nextMax;
+      if(input.value&&input.value<nextDay)input.value=nextDay;
+    });
+    try{refreshCurrentTab();}catch(e){console.warn('day rollover refresh',e);}
+    try{updateHomeTripWidget();}catch(e){}
+    try{updateLiveActivity();}catch(e){}
+  },0);
 }
 setInterval(updateClock,1000);
 updateClock();
