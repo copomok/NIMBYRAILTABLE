@@ -490,13 +490,13 @@ function _isBigCause(cause, ctx){
 }
 // ── 회복 우선도 배수 시스템 ──
 function _recoveryWeight(delayMins){
-  if(delayMins<2)    return 0.8;  // 0~2분
-  if(delayMins<5)    return 1.0;  // 3~5분
-  if(delayMins<10)   return 1.3;  // 6~10분
-  if(delayMins<15)   return 1.7;  // 11~15분
-  if(delayMins<20)   return 2.2;  // 16~20분
-  if(delayMins<30)   return 2.7;  // 21~30분
-  return 3.0;                     // 31분 이상
+  if(delayMins<2)    return 1.0;  // 0~1분: 작은 지연도 적극 회복
+  if(delayMins<5)    return 1.1;  // 2~4분
+  if(delayMins<10)   return 1.25; // 5~9분
+  if(delayMins<15)   return 1.35; // 10~14분
+  if(delayMins<20)   return 1.5;  // 15~19분
+  if(delayMins<30)   return 1.7;  // 20~29분
+  return 1.9;                    // 30분 이상
 }
 
 // ── 고속선 구간 판정 ──
@@ -683,7 +683,7 @@ function _computeProfile(t){
       if(arrivalDelay>0 && inc===0){
         const recW=_recoveryWeight(Math.round(cur));
         const urg=Math.min(1, Math.pow(cur/40, 0.6));
-        const gate=(0.15+0.8*urg)*secCtx.recW*(0.9+0.05*go.prio)*recW;
+        const gate=(0.62+0.45*urg)*secCtx.recW*(0.9+0.05*go.prio)*recW;
         let runRec=0, recHard=_SIM_REC_HARD;
         if(rc<gate){
           // ─ 고속선 회복 강화 ─
