@@ -779,7 +779,7 @@ function renderDetail(t){
         ?`<br><span class="eta-sub">곧 도착 예정</span>`
         :`<br><span class="eta-sub">약 ${eta.min}분 뒤 도착 예정</span>`):'';
       statusBanner=liveDelay>0
-        ?`<button class="train-status-banner running delayed" type="button" onclick="openJourney('${t.no}')">
+        ?`<button class="train-status-banner running delayed" type="button" onclick="event.stopPropagation();openJourney('${t.no}')">
             <strong>🔴 지연 운행 중인 열차입니다 · 약 ${liveDelay}분</strong>
             <small>클릭하여 지연 정보 보기</small>
           </button>`
@@ -10947,7 +10947,7 @@ function searchMetroRoute(){
 // ══════════════════════════════════════════
 // 🚆 탑승 여정 — 실시간 승차 화면 (기존 위치 계산 재활용, 몰입형)
 // ══════════════════════════════════════════
-let _journeyNo=null, _journeyTimer=null;
+let _journeyNo=null, _journeyTimer=null, _journeyPageLock=null;
 // 시각 있는 정차/통과역을 자정 보정된 분으로 반환
 function _journeyStops(t){
   const raw=[];
@@ -10973,11 +10973,25 @@ function openJourney(no){
   if(!ov){
     ov=document.createElement('div'); ov.id='journey-overlay'; ov.className='journey-overlay';
     ov.innerHTML=`<div class="journey-sheet"><button class="journey-close" onclick="closeJourney()" aria-label="닫기">✕</button><div id="journey-body"></div></div>`;
-    ov.addEventListener('click',e=>{ if(e.target===ov)closeJourney(); });
+    ov.addEventListener('pointerdown',e=>e.stopPropagation());
+    ov.addEventListener('touchstart',e=>e.stopPropagation(),{passive:true});
+    ov.addEventListener('touchmove',e=>e.stopPropagation(),{passive:true});
+    ov.addEventListener('click',e=>{ e.stopPropagation(); if(e.target===ov)closeJourney(); });
     document.body.appendChild(ov);
   }
+  if(!ov.classList.contains('open')){
+    const body=document.body, root=document.documentElement, scrollY=window.scrollY;
+    _journeyPageLock={
+      scrollY,
+      body:{position:body.style.position,top:body.style.top,left:body.style.left,
+        right:body.style.right,width:body.style.width,overflow:body.style.overflow},
+      rootOverflow:root.style.overflow
+    };
+    body.classList.add('journey-modal-open');
+    body.style.top=`-${scrollY}px`;
+    root.style.overflow='hidden';
+  }
   ov.classList.add('open');
-  document.body.style.overflow='hidden';
   const jb=document.getElementById('journey-body'); if(jb)jb._scrolledOnce=false;
   _renderJourney();
   _scheduleJourneyTick();
@@ -10993,7 +11007,14 @@ function _scheduleJourneyTick(){
 function closeJourney(){
   const ov=document.getElementById('journey-overlay');
   if(ov)ov.classList.remove('open');
-  document.body.style.overflow='';
+  if(_journeyPageLock){
+    const body=document.body, root=document.documentElement, lock=_journeyPageLock;
+    body.classList.remove('journey-modal-open');
+    Object.assign(body.style,lock.body);
+    root.style.overflow=lock.rootOverflow;
+    window.scrollTo(0,lock.scrollY);
+    _journeyPageLock=null;
+  }
   if(_journeyTimer){clearTimeout(_journeyTimer);_journeyTimer=null;}
   _journeyNo=null;
 }

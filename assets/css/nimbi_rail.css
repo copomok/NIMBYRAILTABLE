@@ -1841,9 +1841,10 @@ button, select, input[type=range],
 .mr-mode-chip.on{background:var(--accent);color:#fff;border-color:var(--accent)}
 
 /* 🚆 탑승 여정 오버레이 */
-.journey-overlay{position:fixed;inset:0;z-index:10050;background:rgba(0,0,0,.74);backdrop-filter:blur(5px);display:none;align-items:flex-end;justify-content:center}
+.journey-modal-open{position:fixed;left:0;right:0;width:100%;overflow:hidden;overscroll-behavior:none}
+.journey-overlay{position:fixed;inset:0;z-index:10050;background:rgba(0,0,0,.74);backdrop-filter:blur(5px);display:none;align-items:flex-end;justify-content:center;pointer-events:auto;touch-action:none;overscroll-behavior:contain}
 .journey-overlay.open{display:flex}
-.journey-sheet{position:relative;display:flex;flex-direction:column;width:100%;max-width:480px;max-height:92vh;overflow:hidden;background:var(--bg1);border-radius:20px 20px 0 0;box-shadow:0 -8px 40px rgba(0,0,0,.5);animation:jrUp .25s ease}
+.journey-sheet{position:relative;display:flex;flex-direction:column;width:100%;max-width:480px;max-height:92vh;overflow:hidden;background:var(--bg1);border-radius:20px 20px 0 0;box-shadow:0 -8px 40px rgba(0,0,0,.5);animation:jrUp .25s ease;pointer-events:auto;touch-action:pan-y;overscroll-behavior:contain}
 @media(min-width:520px){.journey-overlay{align-items:center}.journey-sheet{border-radius:20px}}
 @keyframes jrUp{from{transform:translateY(30px);opacity:.5}to{transform:translateY(0);opacity:1}}
 #journey-body{display:flex;flex-direction:column;flex:1;min-height:0;overflow:hidden}
@@ -1865,7 +1866,7 @@ button, select, input[type=range],
 .jr-progress{margin-top:13px;height:7px;border-radius:7px;background:var(--bg3);overflow:hidden}
 .jr-progress-fill{height:100%;border-radius:7px;transition:width .6s ease;box-shadow:0 0 8px color-mix(in srgb,var(--gc) 60%,transparent)}
 /* 스크롤 되는 타임라인 영역 */
-.jr-scroll{position:relative;flex:1;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch}
+.jr-scroll{position:relative;flex:1;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain}
 .jr-timeline{padding:12px 18px 6px}
 .jr-stop{display:grid;grid-template-columns:22px 1fr auto;align-items:center;gap:11px;position:relative;padding:8px 8px;min-height:36px;border-radius:10px}
 .jr-stop::before{content:"";position:absolute;left:16.5px;top:0;bottom:0;width:2.5px;background:var(--border);border-radius:2px}
