@@ -474,6 +474,7 @@ function _isSingleTrack(a,b){ return _SIM_SINGLE_TRACK.has(a)&&_SIM_SINGLE_TRACK
 // 다른 열차가 전제되는 대피·추월·선행열차·통과대기 원인은 독립 난수로 만들지 않는다.
 // 실제 원인 열차의 지연으로 시각·승강장이 겹칠 때 _dispatchInfo()에서만 생성한다.
 const _CAUSE_MISC=['신호 대기','운전 정리 지시','승강장 혼선'];
+function _isDwellDelayCause(cause){return /승객|승차|하차|승강장/u.test(cause||'');}
 function _sectionCause(rush, metroPar, congHi, ctx, r, singleTrack, prio){
   if(singleTrack && r<0.7) return '단선 교행 대기';
   if(ctx.sagGate && r<ctx.sagGate) return ctx.sagLabel;
@@ -677,7 +678,7 @@ function _computeProfile(t){
       const arrivalDelay=Math.max(0,cur+inc);
       // 1분이라도 지연된 상태로 2분 이상 정차하는 역은 항상 1분 단축한다.
       // 최소 정차 1분은 보장한다.
-      const canCut=arrivalDelay>0&&dwell[i+1]>=2;
+      const canCut=arrivalDelay>0&&dwell[i+1]>=2&&!_isDwellDelayCause(cause);
       if(canCut)dcut=Math.min(1,dwell[i+1]-1,arrivalDelay);
       if(arrivalDelay>0 && inc===0){
         const recW=_recoveryWeight(Math.round(cur));
@@ -818,7 +819,7 @@ function _dispatchInfo(t){
         for(let j=i;j<pr.cd.length;j++)adj[j]+=Math.max(0,w-(j-i));
         const cause='선행 열차 연쇄 지연';
         out.events.push({
-          m:pr.m[i]||0,idx:i,delta:w,cause,sourceNo:ut.no,
+          m:pr.m[i]||0,idx:i,delta:w,cause,sourceNo:ut.no,holdAtStop:true,dwellDelay:true,
           txt:`${timed[i].s} ${p}번 승강장 점유 대기 · 원인 열차 ${ut.grade} ${ut.no} +${w}분`
         });
         hits++;break;
@@ -906,6 +907,14 @@ function _dispatchInfo(t){
         break;
       }
     }
+  }
+  // 승강장 정차 지연과 같은 역에 잡힌 정차시간 단축은 취소한다.
+  if(adj){
+    out.events.filter(e=>e.dwellDelay).forEach(e=>{
+      const cancelled=(pr.events||[]).filter(x=>x.idx===e.idx&&x.delta<0&&x.cause==='정차시간 단축')
+        .reduce((sum,x)=>sum+Math.abs(x.delta||0),0);
+      if(cancelled>0)for(let j=e.idx;j<adj.length;j++)adj[j]+=cancelled;
+    });
   }
   // 연쇄 지연 상태로 도착한 뒤 2분 이상 정차하면 다음 역부터 1분을 반드시 회복한다.
   if(adj){
@@ -1090,12 +1099,16 @@ function _simDelayPairAtStop(t,idx){
   const dep=_simDelayAtStop(t,idx);
   if(!_simDelayOn||idx<=0||dep<=0)return {arr:dep,dep,shortened:false,held:false};
   const pr=_simProfile(t);
+  const dispatchEvents=_dispatchInfo(t).events||[];
   const shortened=(pr.events||[]).some(e=>e.idx===idx&&e.delta<0&&e.cause==='정차시간 단축')||
-    (_dispatchInfo(t).events||[]).some(e=>e.idx===idx&&e.dispatchRecovery);
-  const held=(_dispatchInfo(t).events||[])
-    .filter(e=>e.idx===idx&&e.holdAtStop)
+    dispatchEvents.some(e=>e.idx===idx&&e.dispatchRecovery);
+  const dwellAdded=(pr.events||[])
+    .filter(e=>e.idx===idx&&e.delta>0&&_isDwellDelayCause(e.cause))
     .reduce((sum,e)=>sum+(e.delta||0),0);
-  if(held>0)return {arr:Math.max(0,dep-held),dep,shortened:false,held:true};
+  const held=dispatchEvents.filter(e=>e.idx===idx&&e.holdAtStop)
+    .reduce((sum,e)=>sum+(e.delta||0),0);
+  const extended=Math.min(dep,Math.max(0,Math.round(dwellAdded+held)));
+  if(extended>0)return {arr:Math.max(0,dep-extended),dep,shortened:false,held:true};
   if(!shortened)return {arr:dep,dep,shortened:false,held:false};
   const arr=dep+1;
   return {arr,dep,shortened:true,held:false};
@@ -1145,25 +1158,29 @@ function _simEventLog(t){
   const fmt=mm=>{const v=(((mm%1440)+1440)%1440);return String(Math.floor(v/60)).padStart(2,"0")+":"+String(Math.round(v%60)).padStart(2,"0");};
   const cumulative=idx=>Math.max(0,Math.round(view[idx]||0));
   const eventClock=idx=>fmt((pr.m[idx]||0)+cumulative(idx));
-  const lines=(pr.events||[]).map(e=>({m:pr.m[e.idx]||0,s:(()=>{
+  const dis=_dispatchInfo(t);
+  const dwellBlocked=new Set(dis.events.filter(e=>e.dwellDelay).map(e=>e.idx));
+  const profileEvents=(pr.events||[]).filter(e=>!(e.delta<0&&e.cause==='정차시간 단축'&&dwellBlocked.has(e.idx)));
+  const lines=profileEvents.map(e=>({m:pr.m[e.idx]||0,s:(()=>{
     const st=timed[e.idx]?timed[e.idx].s:"";
     const amount=Math.max(1,Math.abs(Math.round(e.delta||0)));
-    if(e.delta>0)return `[${eventClock(e.idx)}] ${st} · ${e.cause} +${amount}분`;
+    if(e.delta>0)return _isDwellDelayCause(e.cause)
+      ?`[${eventClock(e.idx)}] ${st} · ${e.cause} · 정차시간 +${amount}분`
+      :`[${eventClock(e.idx)}] ${st} · ${e.cause} +${amount}분`;
     return `[${eventClock(e.idx)}] ${st} · ${e.cause||"운전 정리"} −${amount}분`;
   })()}));
-  const covered=new Set((pr.events||[]).filter(e=>e.delta<0).map(e=>e.idx));
+  const covered=new Set(profileEvents.filter(e=>e.delta<0).map(e=>e.idx));
   for(let i=1;i<view.length;i++){
     const drop=(view[i-1]||0)-(view[i]||0);
-    if(drop>0&&!covered.has(i))
+    if(drop>0&&!covered.has(i)&&!dwellBlocked.has(i))
       lines.push({m:pr.m[i]||0,s:`[${eventClock(i)}] ${timed[i]?timed[i].s:""} · 회복 운전 −${drop}분`});
   }
   const nmL=_simNowFor(pr);
-  const dis=_dispatchInfo(t);
   dis.events.forEach(e=>{
     if(nmL<e.m)return;
     const baseTxt=(e.txt||e.cause||"운행 순서 조정").replace(/\s[+−]\d+(?:\.\d+)?분$/u,"");
     const amount=Math.max(1,Math.abs(Math.round(e.delta||0)));
-    const change=e.delta<0?`−${amount}분`:`+${amount}분`;
+    const change=e.delta<0?`−${amount}분`:(e.dwellDelay?`· 정차시간 +${amount}분`:`+${amount}분`);
     lines.push({m:e.m,s:`[${eventClock(e.idx)}] ${baseTxt} ${change}`});
   });
   const peak=Math.max.apply(null,view),peakIdx=view.indexOf(peak);
