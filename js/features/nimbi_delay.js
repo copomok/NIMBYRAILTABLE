@@ -385,15 +385,15 @@ function _computeProfile(t){
 
       // ═══ v2: 회복 운전 강화 (회복 우선도 배수) ═══
       let rec=0, dcut=0;
-      if(cur>0 && inc===0){
+      const arrivalDelay=Math.max(0,cur+inc);
+      // 지연 상태로 2분 이상 정차하는 역은 지연 크기·신규 지연 발생 여부와 무관하게
+      // 거의 대부분(결정적 시드 기준 94%) 1분 단축한다. 최소 정차 1분은 보장한다.
+      const canCut=arrivalDelay>0&&dwell[i+1]>=2;
+      if(canCut&&re<0.94)dcut=Math.min(1,dwell[i+1]-1,arrivalDelay);
+      if(arrivalDelay>0 && inc===0){
         const recW=_recoveryWeight(Math.round(cur));
         const urg=Math.min(1, Math.pow(cur/40, 0.6));
         const gate=(0.15+0.8*urg)*ctx.recW*(0.9+0.05*go.prio)*recW;
-        // 2분 이상 정차하는 역은 지연 중 1분 정차 단축을 적극 시행한다.
-        // 기상 악화 시에도 정차 단축 자체는 정확히 1분 회복되도록 운전 회복과 분리한다.
-        const canCut=cur>=1.5&&dwell[i+1]>=2;
-        const cutGate=Math.min(0.92,0.52+urg*0.30+go.prio*0.035);
-        if(canCut&&re<cutGate)dcut=1;
         let runRec=0, recHard=_SIM_REC_HARD;
         if(rc<gate){
           // ─ 고속선 회복 강화 ─
@@ -404,14 +404,14 @@ function _computeProfile(t){
           }
           runRec=Math.min(0.16*dt*recFrac, 0.8)*(0.5+0.5*rc)*ctx.recW;
         }
-        rec=Math.min(cur,runRec+dcut,Math.max(recHard,dcut));
+        rec=Math.min(arrivalDelay,runRec+dcut,Math.max(recHard,dcut));
+      } else {
+        rec=dcut;
       }
-      const prevCur=cur;
       cur=Math.max(0, Math.min(ctx.bigCap, cur+inc-rec));
-      const drop=Math.max(0, prevCur-cur);
-      cd.push(cur); recTotal+=drop;
+      cd.push(cur); recTotal+=rec;
       if(inc>=0.5&&cause){ events.push({idx:i+1,delta:+inc.toFixed(1),cause}); if(!dominant||inc>2)dominant=dominant&&inc<=2?dominant:cause; }
-      else if(drop>=0.5) events.push({idx:i+1,delta:-+drop.toFixed(1),cause:dcut>=0.3?'정차시간 단축':'회복 운전'});
+      if(rec>=0.5) events.push({idx:i+1,delta:-+rec.toFixed(1),cause:dcut>=0.3?'정차시간 단축':'회복 운전'});
     }
     if(!dominant){ const anyInc=events.find(e=>e.delta>0); dominant=anyInc?anyInc.cause:null; }
     var _recTotal=recTotal;
@@ -634,9 +634,8 @@ function _simDelayPairAtStop(t,idx){
   const pr=_simProfile(t);
   const shortened=(pr.events||[]).some(e=>e.idx===idx&&e.delta<0&&e.cause==='정차시간 단축');
   if(!shortened)return {arr:dep,dep,shortened:false};
-  const prev=_simDelayAtStop(t,idx-1);
-  const arr=Math.min(prev,dep+1);
-  return {arr:Math.max(dep,arr),dep,shortened:arr>dep};
+  const arr=dep+1;
+  return {arr,dep,shortened:true};
 }
 function _simDelay(t, clock){
   if(!_simDelayOn||_simExpired(t)) return 0;
