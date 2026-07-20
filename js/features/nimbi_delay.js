@@ -111,6 +111,91 @@ const _REAL_WX_REGIONS=[
 ];
 const _REAL_WX_CACHE_KEY='nimbi_real_weather_v1';
 let _realWx=null,_realWxPromise=null,_realWxVersion=0,_realWxTimer=null;
+const _SIM_RECORD_KEY='nimbi_delay_records_v1';
+let _simRecordSaveTimer=null,_simBoundaryTimer=null;
+let _simRecords=(()=>{
+  try{
+    const value=JSON.parse(localStorage.getItem(_SIM_RECORD_KEY)||'{}');
+    return value&&typeof value==='object'?value:{};
+  }catch(e){return {};}
+})();
+function _simValidRecordDays(){
+  const now=new Date(),days=new Set([_simCalendarDayKey(now)]);
+  if(now.getHours()<4){
+    const prev=new Date(now);prev.setDate(prev.getDate()-1);
+    days.add(_simCalendarDayKey(prev));
+  }
+  return days;
+}
+function _simPruneRecords(){
+  const valid=_simValidRecordDays();
+  const current=String(_simCalendarDayKey(new Date()));
+  let changed=false;
+  Object.keys(_simRecords).forEach(day=>{
+    if(!valid.has(Number(day))){delete _simRecords[day];changed=true;return;}
+    if(day!==current){
+      // 자정~04시에는 전날 기록 중 실제로 자정을 넘겨 운행하는 편성만 유지한다.
+      if(typeof getTrainByNo!=='function')return;
+      Object.keys(_simRecords[day]||{}).forEach(no=>{
+        const train=getTrainByNo(no);
+        if(!train||!_simTrainCrossesMidnight(train)){delete _simRecords[day][no];changed=true;}
+      });
+      if(!Object.keys(_simRecords[day]||{}).length){delete _simRecords[day];changed=true;}
+    }
+  });
+  if(changed)_simSaveRecords();
+}
+function _simSaveRecords(){
+  if(_simRecordSaveTimer)return;
+  _simRecordSaveTimer=setTimeout(()=>{
+    _simRecordSaveTimer=null;
+    try{localStorage.setItem(_SIM_RECORD_KEY,JSON.stringify(_simRecords));}catch(e){}
+  },400);
+}
+function _simRecordFor(t,create){
+  const day=String(_simDayKey(t));
+  if(!_simRecords[day]&&create)_simRecords[day]={};
+  if(!_simRecords[day])return null;
+  if(!_simRecords[day][t.no]&&create)_simRecords[day][t.no]={values:[],confirmed:-1,done:false};
+  return _simRecords[day][t.no]||null;
+}
+function _simConfirmActual(t,pr,actual,nm){
+  let last=-1;
+  // 각 역의 실제 통과·도착 예정시각까지 지난 뒤에만 해당 값을 확정한다.
+  for(let i=0;i<pr.m.length;i++)if(pr.m[i]+(actual[i]||0)<=nm)last=i;
+  if(nm>=pr.lastM+(actual[actual.length-1]||0))last=pr.m.length-1;
+  let record=_simRecordFor(t,false);
+  // 운행 전 열차를 단순 조회한 것만으로 빈 기록을 대량 저장하지 않는다.
+  if(last<0)return record||{values:[],confirmed:-1,done:false};
+  if(!record)record=_simRecordFor(t,true);
+  let changed=false;
+  for(let i=record.confirmed+1;i<=last;i++){
+    record.values[i]=Math.max(0,Math.round(actual[i]||0));
+    changed=true;
+  }
+  if(last>record.confirmed){record.confirmed=last;changed=true;}
+  if(last===pr.m.length-1&&!record.done){record.done=true;changed=true;}
+  if(changed){record.updatedAt=Date.now();_simSaveRecords();}
+  return record;
+}
+_simPruneRecords();
+function _scheduleSimBoundary(){
+  if(_simBoundaryTimer)clearTimeout(_simBoundaryTimer);
+  const now=new Date();
+  const midnight=new Date(now);midnight.setHours(24,0,0,0);
+  const four=new Date(now);
+  if(now.getHours()<4)four.setHours(4,0,0,0);
+  else{four.setDate(four.getDate()+1);four.setHours(4,0,0,0);}
+  const next=midnight<four?midnight:four;
+  _simBoundaryTimer=setTimeout(()=>{
+    _simPruneRecords();
+    _simCtxCache={};_simProfileCache={};_simViewCache={};_dispCache={};_simVehCache={};
+    if(typeof renderDailyDiscovery==='function')renderDailyDiscovery();
+    if(typeof _journeyNo!=='undefined'&&_journeyNo&&typeof _renderJourney==='function')_renderJourney();
+    _scheduleSimBoundary();
+  },Math.max(1000,next.getTime()-now.getTime()));
+}
+_scheduleSimBoundary();
 function _wxConfig(weather){
   return ({
     '맑음':{weather:'맑음',probMult:1,magMult:1,bigCap:15,recW:1,sagGate:0,sagLabel:null,wxBig:false},
@@ -206,6 +291,7 @@ function _applyRealWx(data){
     if(profileDay!==data.day)keptProfiles[key]=_simProfileCache[key];
   });
   _simProfileCache=keptProfiles;
+  _dispCache={};
   if(typeof _simViewCache!=='undefined')_simViewCache={};
   try{localStorage.setItem(_REAL_WX_CACHE_KEY,JSON.stringify(data));}catch(e){}
   if(typeof renderDailyDiscovery==='function')renderDailyDiscovery();
@@ -278,7 +364,11 @@ if(typeof fetch==='function'){
   _scheduleRealWeatherRefresh();
   document.addEventListener('visibilitychange',()=>{
     if(document.visibilityState==='visible'&&_realWxNeedsRefresh())_loadRealWeather();
-    if(document.visibilityState==='visible')_scheduleRealWeatherRefresh();
+    if(document.visibilityState==='visible'){
+      _simPruneRecords();
+      _scheduleSimBoundary();
+      _scheduleRealWeatherRefresh();
+    }
   });
 }
 function _isRush(minOfDay){ const h=Math.floor((((minOfDay%1440)+1440)%1440)/60); return (h>=7&&h<9)||(h>=18&&h<20); }
@@ -733,23 +823,25 @@ function _simActualArr(t){
 }
 
 // 표시 배열 갱신 기준:
-// 운행 전 10분 / 운행 중 역 통과 / 15분 초과 장거리 구간만 구간 내 10분 / 종료 후 고정.
+// 운행 전 30분 / 운행 중 역 통과 / 15분 초과 장거리 구간만 구간 내 10분 / 종료 후 고정.
 let _simViewCache={};
-function _simViewRevision(pr){
+function _simViewRevision(t,pr){
   const nm=_simNowFor(pr);
-  if(nm<pr.firstM)return `before:${Math.floor(nm/10)}`;
-  if(nm>=pr.lastM)return 'done';
+  // 실제 날씨는 매시 정각에 받고, 열차별 운행 전 전망은 00분·30분에 갱신한다.
+  if(nm<pr.firstM)return `before:${Math.floor(nm/30)}`;
+  const actual=_simActualArr(t),actualEnd=pr.lastM+(actual[actual.length-1]||0);
+  if(nm>=actualEnd)return 'done';
   for(let i=0;i<pr.m.length-1;i++){
     if(nm>=pr.m[i]&&nm<pr.m[i+1]){
       const span=Math.max(1,pr.m[i+1]-pr.m[i]);
       return span>15?`segment:${i}:${Math.floor((nm-pr.m[i])/10)}`:`segment:${i}`;
     }
   }
-  return `running:${Math.floor(nm/10)}`;
+  return `terminal:${Math.floor(nm/10)}`;
 }
 function _simViewArr(t){
   const pr=_simProfile(t); if(!pr.cd.length)return pr.cd;
-  const revision=_simViewRevision(pr);
+  const revision=_simViewRevision(t,pr);
   const key=t.no+':'+_simDayKey(t)+':'+revision;
   if(_simViewCache[key])return _simViewCache[key];
   if(Object.keys(_simViewCache).length>5000)_simViewCache={};
@@ -758,6 +850,7 @@ function _simViewArr(t){
   const dispatch=_dispatchInfo(t);
   const veh=_simVeh(t), vehOn=!!(veh&&pr.m[veh.sec]!=null&&nm>=pr.m[veh.sec]);
   const act=_simActualArr(t), sched=_simSchedArr(t);
+  const record=_simConfirmActual(t,pr,act,nm);
   const seed=_simSeed(t.no,_simDayKey(t));
   let revSeed=2166136261;
   for(let i=0;i<revision.length;i++){revSeed^=revision.charCodeAt(i);revSeed=Math.imul(revSeed,16777619);}
@@ -766,7 +859,8 @@ function _simViewArr(t){
   let prev=null;
   for(let i=0;i<pr.cd.length;i++){
     const base=vehOn?act[i]:sched[i];
-    if(pr.m[i]<=nm){ out[i]=base; }
+    if(i<=record.confirmed&&record.values[i]!=null){ out[i]=record.values[i]; }
+    else if(pr.m[i]<=nm){ out[i]=base; }
     else{
       const conv=Math.min(1,(pr.m[i]-nm)/60);
       const r=_seededRand(seed+i*7.77+(revSeed>>>0)*0.00009131)-0.5;
@@ -796,6 +890,26 @@ function _simViewArr(t){
 }
 
 // ── 조회 API ──
+function _simState(t,travelDate){
+  if(!t||!_simDelayOn||(travelDate&&!_simTicketMatchesServiceDay(t,travelDate))){
+    return {phase:'none',current:0,final:0,recorded:false};
+  }
+  const pr=_simProfile(t);
+  if(!pr.cd.length)return {phase:'none',current:0,final:0,recorded:false};
+  const now=new Date(),clock=now.getHours()*60+now.getMinutes()+now.getSeconds()/60;
+  const nm=_simNowFor(pr),view=_simViewArr(t),record=_simRecordFor(t,false);
+  const actualEnd=pr.lastM+(_simActualArr(t).slice(-1)[0]||0);
+  const phase=nm<pr.firstM?'before':nm>=actualEnd?'done':'running';
+  const current=phase==='before'?0:_simDelay(t,clock,travelDate);
+  return {
+    phase,current,
+    final:view[view.length-1]||0,
+    values:view,
+    confirmedThrough:record?.confirmed??-1,
+    recorded:!!record,
+    serviceDate:_simServiceDate(t)
+  };
+}
 function _simDelayAtStop(t, idx, travelDate){
   if(travelDate&&!_simTicketMatchesServiceDay(t,travelDate))return 0;
   if(!_simDelayOn||_simExpired(t))return 0;

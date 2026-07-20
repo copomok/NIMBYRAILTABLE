@@ -2110,3 +2110,23 @@ button.ol-row{display:flex;align-items:center;gap:8px;padding:7px 4px}
 /* 전망 행: 행선지 좌측 정렬(열차번호 옆) */
 button.ol-row{text-align:left}
 .ol-route{text-align:left}
+
+/* 모바일 공통 안정화: 팝업 배경 스크롤 차단과 안전영역/긴 문구 대응 */
+body.app-modal-open{overflow:hidden;overscroll-behavior:none}
+.alarm-popup,.booking-popup,.si-board-popup,.delay-explanation-dialog{
+  max-width:min(480px,calc(100vw - 32px));
+}
+.book-detail-panel,.journey-sheet{
+  padding-bottom:env(safe-area-inset-bottom,0px);
+}
+.booking-popup,.book-detail-panel,.journey-sheet,.si-board-popup{
+  overflow-wrap:anywhere;
+}
+@media(max-width:640px){
+  .container{width:100%;padding-left:16px;padding-right:16px}
+  .search-card,.settings-card{min-width:0}
+  .form-group,.autocomplete-wrap,.settings-filter-grid>*{min-width:0}
+  .book-detail-panel{left:12px;right:12px;width:auto;max-width:none;max-height:calc(100dvh - var(--safe-top) - 12px)}
+  .journey-sheet{max-height:calc(100dvh - var(--safe-top) - 8px)}
+  .si-board-popup{width:calc(100vw - 24px);max-height:calc(100dvh - var(--safe-top) - 24px)}
+}

@@ -6522,8 +6522,20 @@ function _seatPower(grade, r, isWindow, totalRows){
 let _selectedSeats=[];
 let _seatCarIdx=0;
 // 003: 좌석 선호 (다중) — pos:창측/복도, dir:순/역방향, zone:앞/뒤, pw:콘센트 — 저장됨
-let _seatPrefs=(()=>{try{const s=localStorage.getItem('nimbi_seatprefs');return new Set(s?JSON.parse(s):[]);}catch(e){return new Set();}})();
 const _PREF_GROUP={window:'pos',aisle:'pos',fwd:'dir',rev:'dir',front:'zone',rear:'zone',power:'pw'};
+let _seatPrefs=(()=>{
+  try{
+    const raw=JSON.parse(localStorage.getItem('nimbi_seatprefs')||'[]');
+    const clean=Array.isArray(raw)?raw.filter(x=>Object.prototype.hasOwnProperty.call(_PREF_GROUP,x)):[];
+    const out=new Set();
+    clean.forEach(p=>{
+      const group=_PREF_GROUP[p];
+      for(const old of [...out])if(_PREF_GROUP[old]===group)out.delete(old);
+      out.add(p);
+    });
+    return out;
+  }catch(e){return new Set();}
+})();
 let _seatPrefOpen=false;
 function toggleSeatPref(p){
   if(_seatPrefs.has(p)) _seatPrefs.delete(p);
@@ -7177,13 +7189,12 @@ function _ticketEndpointDelayHTML(tk){
   const timed=t.stops.filter(s=>hasTime(s.arr)||hasTime(s.dep));
   const fi=timed.findIndex(s=>s.s===tk.fromStn),ti=timed.findIndex(s=>s.s===tk.toStn);
   const depD=fi>=0?_simDelayAtStop(t,fi,tk.travelDate):0,arrD=ti>=0?_simDelayAtStop(t,ti,tk.travelDate):0;
-  const n=new Date(),nm=n.getHours()*60+n.getMinutes();
-  const live=_liveDelayOf(t),status=getCurrentStatus(t,nm-live);
+  const state=typeof _simState==='function'?_simState(t,tk.travelDate):null;
   const cls='ticket-delay-est';
-  if(status?.status==='running'||ticketBoardState(tk)==='active'){
+  if(state?.phase==='running'||ticketBoardState(tk)==='active'){
     return {from:depD>0?` <span class="${cls} actual">(${depD}분 지연)</span>`:'',to:''};
   }
-  if(status?.status==='done'||ticketBoardState(tk)==='done'||isTicketPast(tk)){
+  if(state?.phase==='done'||ticketBoardState(tk)==='done'||isTicketPast(tk)){
     return {from:'',to:arrD>0?` <span class="${cls} actual">(${arrD}분 지연)</span>`:''};
   }
   return {
@@ -7431,6 +7442,21 @@ function closeMySubPanel(){
   document.getElementById('my-sub-panel').classList.remove('open');
   if(window._mySubClockTimer){clearInterval(window._mySubClockTimer);window._mySubClockTimer=null;}
 }
+
+// 동적으로 열리는 주요 팝업이 하나라도 있으면 배경 페이지의 터치·스크롤을 막는다.
+// 개별 팝업마다 잠금 코드를 복제하지 않고 body 직계 오버레이 변화를 한 번만 관찰한다.
+const _APP_MODAL_IDS=[
+  'alarm-popup-wrap','seat-watch-wrap','fav-cat-popup-wrap','group-manager-wrap','rotation-wrap',
+  'booking-popup-wrap','qr-popup-wrap','manboard-overlay','fmt-popup-wrap','pass-day-wrap',
+  'seat-selector-wrap','book-stn-picker-wrap','book-pass-picker-wrap','book-detail-wrap',
+  'si-board-wrap','delay-explanation-modal','cmp-wrap'
+];
+function _syncAppModalLock(){
+  const open=_APP_MODAL_IDS.some(id=>document.getElementById(id));
+  document.body.classList.toggle('app-modal-open',open);
+}
+const _appModalObserver=new MutationObserver(_syncAppModalLock);
+_appModalObserver.observe(document.body,{childList:true});
 
 // ══════════════════════════════════════════
 // 👤 계정(로컬 프로필) 기능 — 서버 없이 여러 계정을 기기 내 프로필로 관리,
@@ -7789,8 +7815,25 @@ function setUiMode(m){
 }
 const STATION_DEFAULT_KEY='nimbi_station_defaults';
 const STATION_DEFAULTS={dir:'all',pass:'all',grade:'all',line:'all',terminus:'all',night:'all',after:''};
+const STATION_DEFAULT_ALLOWED={
+  dir:['all','down','up'],pass:['all','stop'],
+  grade:['all','KTX','SRT','ITX-새마을','ITX-청춘','무궁화호','남도해양','국악와인'],
+  line:['all','경부선','경부고속선','호남선','전라선','경전선','중앙선','동해선','강릉선','중부내륙선'],
+  terminus:['all','exclude'],night:['all','only','highlight']
+};
+function _safeDefaults(raw,defaults,allowed){
+  const out={...defaults};
+  if(!raw||typeof raw!=='object'||Array.isArray(raw))return out;
+  Object.keys(defaults).forEach(key=>{
+    if(key==='after'){
+      const value=String(raw[key]||'').trim();
+      out[key]=!value||/^(?:[01]?\d|2[0-3]):[0-5]\d$/.test(value)?value:defaults[key];
+    }else if(!allowed[key]||allowed[key].includes(String(raw[key])))out[key]=String(raw[key]??defaults[key]);
+  });
+  return out;
+}
 function getStationDefaults(){
-  try{return {...STATION_DEFAULTS,...JSON.parse(localStorage.getItem(STATION_DEFAULT_KEY)||'{}')};}
+  try{return _safeDefaults(JSON.parse(localStorage.getItem(STATION_DEFAULT_KEY)||'{}'),STATION_DEFAULTS,STATION_DEFAULT_ALLOWED);}
   catch(e){return {...STATION_DEFAULTS};}
 }
 function applyStationDefaults(){
@@ -7830,8 +7873,16 @@ function resetStationDefaults(){
 }
 const ROUTE_DEFAULT_KEY='nimbi_route_defaults';
 const ROUTE_DEFAULTS={sort:'duration',maxDuration:'0',grade:'all',after:'',xferMin:'3',xferMax:'60'};
+const ROUTE_DEFAULT_ALLOWED={
+  sort:['duration','depart','arrive'],maxDuration:['0','60','90','120','180','240'],
+  grade:STATION_DEFAULT_ALLOWED.grade,xferMin:['3','5','10','15','20'],xferMax:['30','45','60','90','120']
+};
 function getRouteDefaults(){
-  try{return {...ROUTE_DEFAULTS,...JSON.parse(localStorage.getItem(ROUTE_DEFAULT_KEY)||'{}')};}
+  try{
+    const out=_safeDefaults(JSON.parse(localStorage.getItem(ROUTE_DEFAULT_KEY)||'{}'),ROUTE_DEFAULTS,ROUTE_DEFAULT_ALLOWED);
+    if(Number(out.xferMin)>=Number(out.xferMax)){out.xferMin=ROUTE_DEFAULTS.xferMin;out.xferMax=ROUTE_DEFAULTS.xferMax;}
+    return out;
+  }
   catch(e){return {...ROUTE_DEFAULTS};}
 }
 function applyRouteDefaults(){
@@ -8480,7 +8531,7 @@ function searchBookTrains(includeTransfer, includeAdj){
           <span style="font-size:13px;color:var(--text2);font-family:var(--mono)">${t.no}</span>
           <span style="font-size:12px;font-weight:600;color:var(--text1)">${t.dest}행</span>
           ${adj?`<span style="font-size:9.5px;font-weight:800;padding:1px 7px;border-radius:8px;background:rgba(249,115,22,.12);border:1px solid var(--orange);color:var(--orange)">인접역</span>`:''}
-          ${(()=>{const live=_liveDelayOf(t),est=_simFinalDelay(t);return live>0?`<span class="book-delay-tag live">${live}분 지연</span>`:est>0?`<span class="book-delay-tag est">${est}분 지연 예상</span>`:'';})()}
+          ${(()=>{const state=typeof _simState==='function'?_simState(t,dateGo):null;const live=state?.phase==='running'?state.current:0,est=state?.phase==='before'?state.final:0;return live>0?`<span class="book-delay-tag live">${live}분 지연</span>`:est>0?`<span class="book-delay-tag est">${est}분 지연 예상</span>`:'';})()}
         </div>
         <div style="display:flex;align-items:baseline;gap:6px">
           <span style="font-size:17px;font-weight:700;font-family:var(--mono)">${depT}</span>
@@ -11086,9 +11137,10 @@ function _renderJourney(){
   const lastM=lastItem.normArr??lastItem.normDep;
   const now=new Date();
   const realNowMin=now.getHours()*60+now.getMinutes()+now.getSeconds()/60;
+  const simState=typeof _simState==='function'?_simState(t):null;
   // 지연 시뮬 반영: 열차는 dly분 뒤처진 위치에 있음 → 유효시각 = 실제시각 - dly
-  const dly=_simDelay(t, realNowMin);
-  const finalD=_simFinalDelay(t);
+  const dly=simState?simState.current:_simDelay(t, realNowMin);
+  const finalD=simState?simState.final:_simFinalDelay(t);
   let nowMin=realNowMin-dly;
   const status=getCurrentStatus(t, nowMin);
   let nowM=nowMin;
@@ -11097,8 +11149,8 @@ function _renderJourney(){
   const gl=(typeof GL!=='undefined'&&GL[t.grade])||t.grade;
   // 진행률
   let prog=0, phase='before';
-  if(status&&status.status==='done'){prog=100;phase='done';}
-  else if(status&&status.status==='running'){prog=Math.max(1,Math.min(99,(nowM-firstM)/(lastM-firstM)*100));phase='running';}
+  if(simState?.phase==='done'||status&&status.status==='done'){prog=100;phase='done';}
+  else if(simState?.phase==='running'||status&&status.status==='running'){prog=Math.max(1,Math.min(99,(nowM-firstM)/(lastM-firstM)*100));phase='running';}
   else {prog=0;phase='before';}
   // 통과역 인지 위치 계산: 정차 중(dwell)·다음 실제 정차역(nextReal)을 직접 산출
   let dwellIdx=-1, nextRealIdx=-1;

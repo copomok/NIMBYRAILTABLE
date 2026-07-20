@@ -184,5 +184,5 @@
 
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',renderDailyDiscovery);
   else renderDailyDiscovery();
-  setInterval(()=>{if(document.getElementById('panel-home')?.classList.contains('active'))renderDailyDiscovery();},60000);
+  setInterval(()=>{if(document.visibilityState==='visible'&&document.getElementById('panel-home')?.classList.contains('active'))renderDailyDiscovery();},60000);
 })();
