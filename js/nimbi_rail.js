@@ -11196,8 +11196,8 @@ function _renderJourney(){
     const dArr=delayPair.arr||0, dDep=delayPair.dep||0, dStop=Math.max(dArr,dDep);
     const sA=tArr?addMinToClock(tArr,dArr):'', sD=tDep?addMinToClock(tDep,dDep):'';
     const delayTxt=dStop>0
-      ?delayPair.shortened&&dArr!==dDep
-        ?` <span class="jr-time-diff">(+${dArr} → +${dDep})</span>`
+      ?dArr!==dDep
+        ?` <span class="jr-time-diff">(${dArr>0?'+'+dArr:'0'} → +${dDep})</span>`
         :` <span class="jr-time-diff">(+${dStop})</span>`
       :'';
     const timeBase=st.isOrigin?`${sD||sA} 출발`:st.isTerm?`${sA||sD} 도착`:(sA&&sD&&tArr!==tDep?`${sA}–${sD}`:(sA||sD));

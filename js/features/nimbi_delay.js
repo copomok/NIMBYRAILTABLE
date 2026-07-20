@@ -381,6 +381,30 @@ function _gradeOps(grade){
   return {rec:[0.10,0.30], prio:0};
 }
 
+// 경부선 남안양~평택은 ITX와 무궁화호·전철이 서로 다른 선로를 사용한다.
+// 두 끝점이 모두 이 구간 안에 있을 때만 분리 선로 예외를 적용한다.
+const _SIM_KB_SEPARATE_TRACK=new Set(['남안양','수원','오산','평택']);
+function _isKbSeparateTrackSection(a,b){
+  return _SIM_KB_SEPARATE_TRACK.has(a)&&_SIM_KB_SEPARATE_TRACK.has(b);
+}
+function _segmentTrackGroup(t,a,b){
+  if(!_isKbSeparateTrackSection(a,b))return 'shared';
+  return /^ITX-(?:새마을|마음)$/.test(t.grade||'')?'kb-itx':'kb-local';
+}
+function _sameSegmentTrack(aTrain,bTrain,from,to){
+  const a=_segmentTrackGroup(aTrain,from,to),b=_segmentTrackGroup(bTrain,from,to);
+  return a==='shared'||b==='shared'||a===b;
+}
+function _segmentOrderHold(leaderStart,leaderDelay,followerStart,followerDelay){
+  return Math.min(15,Math.max(0,
+    Math.ceil(leaderStart+leaderDelay+1-(followerStart+followerDelay))
+  ));
+}
+function _metroParallelApplies(t,a,b){
+  // 이 구간의 ITX는 전철과 선로를 공유하지 않으므로 전철 혼잡 지연을 받지 않는다.
+  return !(_isKbSeparateTrackSection(a,b)&&/^ITX-(?:새마을|마음)$/.test(t.grade||''));
+}
+
 // ── 혼잡/전철 병행 모델 ──
 let _simModelCache=null;
 function _simModel(){
@@ -573,7 +597,9 @@ function _computeProfile(t){
   const ctx=_simDayContext(t);
   _simModel();
   const secN=timed.length-1;
-  const metroParArr=_metroParSections(timed);
+  const metroParArr=_metroParSections(timed).map((v,i)=>
+    v&&_metroParallelApplies(t,timed[i].s,timed[i+1]?.s)
+  );
   let ms=0,cs=0; for(let i=0;i<timed.length;i++){cs+=_paxScore(timed[i].s);if(i<secN&&metroParArr[i])ms++;}
   const metroFrac=ms/Math.max(1,secN), congNorm=Math.min(1,cs/Math.max(1,timed.length));
   const causeFactor=0.6+0.9*(0.5*metroFrac+0.5*congNorm);
@@ -709,6 +735,30 @@ function _platIndex(){
   return (_platIdxDay=day,_platIdxCache=idx);
 }
 
+// 같은 방향의 동일 역간 구간을 운행하는 열차를 예정 진입 시각순으로 모은다.
+// 정차·통과 여부와 관계없이 시간표에 시각이 있는 지점을 사용한다.
+let _segmentIdxCache=null,_segmentIdxDay=null;
+function _segmentIndex(){
+  const day=_simDayKey();
+  if(_segmentIdxCache&&_segmentIdxDay===day)return _segmentIdxCache;
+  const idx={};
+  if(typeof ALL_TRAINS!=='undefined')ALL_TRAINS.forEach(u=>{
+    const timed=u.stops.filter(s=>hasTime(s.arr)||hasTime(s.dep));
+    for(let i=0;i<timed.length-1;i++){
+      const from=timed[i],to=timed[i+1];
+      const startRaw=toMin(hasTime(from.dep)?from.dep:from.arr);
+      const endRaw=toMin(hasTime(to.arr)?to.arr:to.dep);
+      if(startRaw==null||endRaw==null)continue;
+      let start=_svMin(startRaw),end=_svMin(endRaw);
+      if(end<start)end+=1440;
+      const key=from.s+'>'+to.s;
+      (idx[key]=idx[key]||[]).push({no:u.no,idx:i,start,end,duration:end-start});
+    }
+  });
+  Object.values(idx).forEach(a=>a.sort((x,y)=>x.start-y.start||x.end-y.end));
+  return (_segmentIdxDay=day,_segmentIdxCache=idx);
+}
+
 // 무정차 통과 판정
 function _isPassStop(t, stnName){
   if(!t.stops)return false;
@@ -722,41 +772,86 @@ function _dispatchInfo(t){
   if(_dispCache[key])return _dispCache[key];
   const pr=_simProfile(t);
   const out={adj:null,events:[]};
-  if(!pr.cd.length){return _dispCache[key]=out;}
-  const rp=(typeof REAL_PLAT!=='undefined')&&REAL_PLAT[t.no];
-  if(!rp){return _dispCache[key]=out;}
+  // 다른 열차의 연쇄 지연을 조회할 때 순환 참조가 생기지 않도록 먼저 등록한다.
+  _dispCache[key]=out;
+  if(!pr.cd.length)return out;
   const timed=t.stops.filter(s=>hasTime(s.arr)||hasTime(s.dep));
-  const idx=_platIndex();
   let adj=null,hits=0;
-  for(let i=1;i<timed.length&&hits<2;i++){
-    const p=rp[timed[i].s]; if(p==null)continue;
-    const arrRaw=toMin(hasTime(timed[i].arr)?timed[i].arr:timed[i].dep); if(arrRaw==null)continue;
-    const myArr=_svMin(arrRaw)+(pr.cd[i]||0);
-    const list=idx[timed[i].s+':'+p]; if(!list)continue;
+
+  // 1) 동일 승강장 점유 충돌
+  const rp=(typeof REAL_PLAT!=='undefined')&&REAL_PLAT[t.no];
+  if(rp){
+    const idx=_platIndex();
+    for(let i=1;i<timed.length&&hits<2;i++){
+      const p=rp[timed[i].s]; if(p==null)continue;
+      const arrRaw=toMin(hasTime(timed[i].arr)?timed[i].arr:timed[i].dep); if(arrRaw==null)continue;
+      const myArr=_svMin(arrRaw)+(pr.cd[i]||0);
+      const list=idx[timed[i].s+':'+p]; if(!list)continue;
+      for(const u of list){
+        if(u.no===t.no)continue;
+        const gap=_svMin(arrRaw)-u.dep;
+        if(gap<0||gap>=45)continue;
+        const ut=getTrainByNo(u.no); if(!ut)continue;
+        const isPassStopU=_isPassStop(ut, timed[i].s);
+        if(isPassStopU&&!_NO_PASS_TRACK.has(timed[i].s))continue;
+        const ucd=_simProfile(ut).cd; const ud=ucd[u.idx]||0; if(ud<=0)continue;
+        const overlap=(u.dep+ud)-myArr;
+        if(overlap<0)continue;
+        const w=Math.min(10,Math.ceil(overlap)+1);
+        if(!adj)adj=new Array(pr.cd.length).fill(0);
+        for(let j=i;j<pr.cd.length;j++)adj[j]+=Math.max(0,w-(j-i));
+        const cause='선행 열차 연쇄 지연';
+        out.events.push({
+          m:pr.m[i]||0,idx:i,delta:w,cause,sourceNo:ut.no,
+          txt:`${timed[i].s} ${p}번 승강장 점유 대기 · 원인 열차 ${ut.grade} ${ut.no} +${w}분`
+        });
+        hits++;break;
+      }
+    }
+  }
+
+  // 2) 역간 진입 순서 충돌
+  // 빠른 선행 열차가 지연되어 후속 열차보다 늦게 구간에 들어오게 되면,
+  // 후속 열차를 직전 역에서 최소 1분 간격이 확보될 때까지 기다리게 한다.
+  const segIdx=_segmentIndex();
+  let segmentHits=0;
+  for(let i=0;i<timed.length-1&&segmentHits<3;i++){
+    const from=timed[i],to=timed[i+1];
+    const startRaw=toMin(hasTime(from.dep)?from.dep:from.arr);
+    const endRaw=toMin(hasTime(to.arr)?to.arr:to.dep);
+    if(startRaw==null||endRaw==null)continue;
+    let myStart=_svMin(startRaw),myEnd=_svMin(endRaw);
+    if(myEnd<myStart)myEnd+=1440;
+    const list=segIdx[from.s+'>'+to.s]||[];
     for(const u of list){
       if(u.no===t.no)continue;
-      const gap=_svMin(arrRaw)-u.dep;
-      if(gap<0||gap>=45)continue;
-      const ut=getTrainByNo(u.no); if(!ut)continue;
-      // ─ v2: 무정차 통과 검증 ─
-      const isPassStopU=_isPassStop(ut, timed[i].s);
-      if(isPassStopU&&!_NO_PASS_TRACK.has(timed[i].s))continue;
-      const ucd=_simProfile(ut).cd; const ud=ucd[u.idx]||0; if(ud<=0)continue;
-      const overlap=(u.dep+ud)-myArr;
-      if(overlap<0)continue;
-      const w=Math.min(10,Math.ceil(overlap)+1);
+      const plannedLead=myStart-u.start;
+      if(plannedLead<0||plannedLead>=45)continue;
+      const ut=getTrainByNo(u.no);
+      if(!ut||!_sameSegmentTrack(t,ut,from.s,to.s))continue;
+      // 예정상 먼저 진입하고, 더 빠르거나 우선등급인 열차만 선행 열차로 본다.
+      if(u.duration>myEnd-myStart&&_gradeOps(ut.grade).prio<=_gradeOps(t.grade).prio)continue;
+      if(plannedLead===0&&u.duration>=myEnd-myStart&&
+        _gradeOps(ut.grade).prio<=_gradeOps(t.grade).prio)continue;
+      const sourceDelay=_simActualArr(ut)[u.idx]||0;
+      if(sourceDelay<=0)continue;
+      const currentDelay=(pr.cd[i]||0)+(adj?.[i]||0);
+      const hold=_segmentOrderHold(u.start,sourceDelay,myStart,currentDelay);
+      if(hold<=0)continue;
       if(!adj)adj=new Array(pr.cd.length).fill(0);
-      for(let j=i;j<pr.cd.length;j++)adj[j]+=Math.max(0,w-(j-i));
-      const cause='선행 열차 연쇄 지연';
+      // 출발 순서를 맞추기 위한 대기는 다음 구간에도 그대로 전파한다.
+      for(let j=i;j<pr.cd.length;j++)adj[j]+=hold;
       out.events.push({
-        m:pr.m[i]||0,idx:i,delta:w,cause,sourceNo:ut.no,
-        txt:`${timed[i].s} ${p}번 승강장 점유 대기 · 원인 열차 ${ut.grade} ${ut.no} +${w}분`
+        m:pr.m[i]||0,idx:i,delta:hold,cause:'선행 열차 연쇄 지연',
+        sourceNo:ut.no,holdAtStop:true,
+        txt:`${from.s} 출발 순서 조정 · 선행 ${ut.grade} ${ut.no} 통과 대기 +${hold}분`
       });
-      hits++;break;
+      segmentHits++;
+      break;
     }
   }
   out.adj=adj;
-  return _dispCache[key]=out;
+  return out;
 }
 
 // ── v2: 차량 고장 극단화 (영업일 단위 Global Event) ──
@@ -920,15 +1015,20 @@ function _simDelayAtStop(t, idx, travelDate){
   const cd=_simViewArr(t); return (idx>=0&&idx<cd.length)?cd[idx]:0;
 }
 // 정차시간 단축 역은 도착 후 1분을 회복해 출발한다.
+// 선행 열차 대기 역은 정시(또는 기존 지연) 도착 후 정차를 늘려 출발 지연이 생긴다.
 // 역별 누적 지연 배열은 출발 시점 값이므로 UI용 도착/출발 지연을 분리해 제공한다.
 function _simDelayPairAtStop(t,idx){
   const dep=_simDelayAtStop(t,idx);
-  if(!_simDelayOn||idx<=0||dep<=0)return {arr:dep,dep,shortened:false};
+  if(!_simDelayOn||idx<=0||dep<=0)return {arr:dep,dep,shortened:false,held:false};
   const pr=_simProfile(t);
   const shortened=(pr.events||[]).some(e=>e.idx===idx&&e.delta<0&&e.cause==='정차시간 단축');
-  if(!shortened)return {arr:dep,dep,shortened:false};
+  const held=(_dispatchInfo(t).events||[])
+    .filter(e=>e.idx===idx&&e.holdAtStop)
+    .reduce((sum,e)=>sum+(e.delta||0),0);
+  if(held>0)return {arr:Math.max(0,dep-held),dep,shortened:false,held:true};
+  if(!shortened)return {arr:dep,dep,shortened:false,held:false};
   const arr=dep+1;
-  return {arr,dep,shortened:true};
+  return {arr,dep,shortened:true,held:false};
 }
 function _simDelay(t, clock, travelDate){
   if(travelDate&&!_simTicketMatchesServiceDay(t,travelDate))return 0;
