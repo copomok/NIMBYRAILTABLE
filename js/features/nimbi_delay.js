@@ -772,6 +772,11 @@ function _isPassStop(t, stnName){
   return (hasTime(s.arr)&&!hasTime(s.dep))||(!hasTime(s.arr)&&hasTime(s.dep));
 }
 
+function _priorRealStopIndex(t,timed,idx){
+  for(let i=idx;i>=0;i--)if(!_isPassStop(t,timed[i].s))return i;
+  return -1;
+}
+
 let _dispCache={};
 function _dispatchInfo(t){
   const key=t.no+':'+_simDayKey(t);
@@ -789,6 +794,7 @@ function _dispatchInfo(t){
   if(rp){
     const idx=_platIndex();
     for(let i=1;i<timed.length&&hits<2;i++){
+      if(_isPassStop(t,timed[i].s))continue;
       const p=rp[timed[i].s]; if(p==null)continue;
       const arrRaw=toMin(hasTime(timed[i].arr)?timed[i].arr:timed[i].dep); if(arrRaw==null)continue;
       // 앞 구간에서 이미 받은 연쇄 지연까지 포함한 실제 도착 예정 시각으로 비교한다.
@@ -884,12 +890,14 @@ function _dispatchInfo(t){
         if(_NO_PASS_TRACK.has(from.s))continue;
         const hold=_segmentOrderHold(u.start,sourceDelay,myStart,currentDelay);
         if(hold<=0)continue;
+        const holdIdx=_priorRealStopIndex(t,timed,i);
+        if(holdIdx<0)continue;
         if(!adj)adj=new Array(pr.cd.length).fill(0);
-        for(let j=i;j<pr.cd.length;j++)adj[j]+=hold;
+        for(let j=holdIdx;j<pr.cd.length;j++)adj[j]+=hold;
         out.events.push({
-          m:pr.m[i]||0,idx:i,delta:hold,cause:'선행 열차 연쇄 지연',
-          sourceNo:ut.no,holdAtStop:true,
-          txt:`${from.s} 출발 순서 조정 · 선행 ${ut.grade} ${ut.no} 통과 대기 +${hold}분`
+          m:pr.m[holdIdx]||0,idx:holdIdx,delta:hold,cause:'선행 열차 연쇄 지연',
+          sourceNo:ut.no,holdAtStop:true,conflictAt:from.s,
+          txt:`${timed[holdIdx].s} 정차 대기 · ${from.s}–${to.s} 순서 조정 · 선행 ${ut.grade} ${ut.no} +${hold}분`
         });
         segmentHits++;
         break;
