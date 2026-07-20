@@ -7746,6 +7746,7 @@ function openMySection(section){
   const titleEl = document.getElementById('my-sub-title');
   const contentEl = document.getElementById('my-sub-content');
   if(titleEl) titleEl.textContent = MY_TITLES[section]||'';
+  if(contentEl)contentEl.dataset.section=section;
   document.getElementById('my-sub-panel').classList.add('open');
   // 서브패널 헤더 시계
   if(window._mySubClockTimer) clearInterval(window._mySubClockTimer);

@@ -2063,6 +2063,20 @@ button, select, input[type=range],
 .ui-pc .journey-sheet{max-width:520px}
 .ui-pc body{font-size:15px}
 
+/* PC 마이페이지: 통계·공지·설정을 제외한 업무 화면은 전체 가용 폭 사용 */
+.ui-pc #my-sub-content:is(
+  [data-section="account"],[data-section="book"],[data-section="ticket"],
+  [data-section="alarm"],[data-section="fav"],[data-section="pass"],
+  [data-section="daytrip"],[data-section="terminal"],[data-section="puzzle"]
+) > div{
+  width:100%;max-width:none;margin-left:0;margin-right:0;
+}
+.ui-pc #my-sub-content[data-section="book"] :is(#result-book,#my-result-book,.book-card),
+.ui-pc #my-sub-content:is([data-section="daytrip"],[data-section="terminal"],[data-section="puzzle"])
+  :is(#result-daytrip,#result-terminal,#result-puzzle){
+  width:100%;max-width:none;margin-left:0;margin-right:0;
+}
+
 /* ⌚ 워치 모드: 최소 정보 화면 */
 .ui-watch .container,.ui-watch header,.ui-watch .tabs{display:none!important}
 .ui-watch body{overflow:hidden}
