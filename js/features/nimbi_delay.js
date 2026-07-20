@@ -66,6 +66,15 @@ function _simDayKey(t){
   if(t&&d.getHours()<4&&_simTrainCrossesMidnight(t))d.setDate(d.getDate()-1);
   return _simCalendarDayKey(d);
 }
+function _simServiceDate(t){
+  const key=_simDayKey(t);
+  return `${Math.floor(key/10000)}-${String(Math.floor(key/100)%100).padStart(2,'0')}-${String(key%100).padStart(2,'0')}`;
+}
+// 승차권의 이용일이 현재 지연 프로필의 운행일과 같을 때만 동적 지연을 연결한다.
+// 전날 출발해 자정을 넘긴 열차는 04시까지 전날 이용일과 일치한다.
+function _simTicketMatchesServiceDay(t,travelDate){
+  return !!(t&&travelDate&&String(travelDate).slice(0,10)===_simServiceDate(t));
+}
 function _seededRand(seed){ const x=Math.sin(seed)*10000; return x-Math.floor(x); }
 function _simSeed(no,dayKey){ const s=String(no)+':'+(dayKey||_simDayKey()); let h=2166136261;
   for(let i=0;i<s.length;i++){ h^=s.charCodeAt(i); h=Math.imul(h,16777619); } return (h>>>0)/1000; }
@@ -101,7 +110,7 @@ const _REAL_WX_REGIONS=[
   {name:'부산·경남',lat:35.1796,lon:129.0756},{name:'제주',lat:33.4996,lon:126.5312}
 ];
 const _REAL_WX_CACHE_KEY='nimbi_real_weather_v1';
-let _realWx=null,_realWxPromise=null,_realWxVersion=0;
+let _realWx=null,_realWxPromise=null,_realWxVersion=0,_realWxTimer=null;
 function _wxConfig(weather){
   return ({
     '맑음':{weather:'맑음',probMult:1,magMult:1,bigCap:15,recW:1,sagGate:0,sagLabel:null,wxBig:false},
@@ -188,12 +197,22 @@ function _parseRealWxResponse(raw,day){
 }
 function _applyRealWx(data){
   _realWx=data;_realWxVersion++;
-  _simCtxCache={};_simProfileCache={};
+  _simCtxCache={};
+  // 새 예보의 날짜에 해당하는 프로필만 다시 계산한다. 자정 이후에도 04시까지
+  // 유지되어야 하는 전날 출발 심야 열차의 기록은 캐시에서 보존한다.
+  const keptProfiles={};
+  Object.keys(_simProfileCache||{}).forEach(key=>{
+    const profileDay=Number(key.slice(key.lastIndexOf(':')+1));
+    if(profileDay!==data.day)keptProfiles[key]=_simProfileCache[key];
+  });
+  _simProfileCache=keptProfiles;
   if(typeof _simViewCache!=='undefined')_simViewCache={};
   try{localStorage.setItem(_REAL_WX_CACHE_KEY,JSON.stringify(data));}catch(e){}
   if(typeof renderDailyDiscovery==='function')renderDailyDiscovery();
   const de=document.getElementById('result-delay'); if(de&&de.offsetParent!==null&&typeof renderSIDelay==='function')renderSIDelay(de);
   if(typeof _journeyNo!=='undefined'&&_journeyNo&&typeof _renderJourney==='function')_renderJourney();
+  if(typeof _siBoardName!=='undefined'&&_siBoardName&&typeof _drawStationBoard==='function')_drawStationBoard();
+  if(typeof updateMapTrains==='function')updateMapTrains();
 }
 function _loadRealWeather(){
   if(_realWxPromise)return _realWxPromise;
@@ -205,9 +224,25 @@ function _loadRealWeather(){
   const lat=_REAL_WX_REGIONS.map(r=>r.lat).join(','),lon=_REAL_WX_REGIONS.map(r=>r.lon).join(',');
   const hourly='precipitation_probability,precipitation,rain,showers,snowfall,weather_code,temperature_2m,apparent_temperature,wind_gusts_10m,visibility';
   const url=`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&hourly=${hourly}&forecast_days=1&timezone=Asia%2FSeoul`;
-  return _realWxPromise=fetch(url).then(r=>{if(!r.ok)throw new Error(`weather ${r.status}`);return r.json();})
+  _realWxPromise=fetch(url).then(r=>{if(!r.ok)throw new Error(`weather ${r.status}`);return r.json();})
     .then(raw=>{const data=_parseRealWxResponse(raw,day);_applyRealWx(data);return data;})
-    .catch(()=>_realWx);
+    .catch(()=>_realWx)
+    .finally(()=>{_realWxPromise=null;});
+  return _realWxPromise;
+}
+function _realWxNeedsRefresh(){
+  if(!_realWx?.fetchedAt)return true;
+  const fetched=new Date(_realWx.fetchedAt),now=new Date();
+  return fetched.getFullYear()!==now.getFullYear()||fetched.getMonth()!==now.getMonth()||
+    fetched.getDate()!==now.getDate()||fetched.getHours()!==now.getHours();
+}
+function _scheduleRealWeatherRefresh(){
+  if(_realWxTimer)clearTimeout(_realWxTimer);
+  const now=new Date(),next=new Date(now);
+  next.setHours(now.getHours()+1,0,0,0);
+  _realWxTimer=setTimeout(()=>{
+    _loadRealWeather().finally(_scheduleRealWeatherRefresh);
+  },Math.max(1000,next.getTime()-now.getTime()));
 }
 function _simDayContext(t){
   const day=_simDayKey(t);
@@ -238,7 +273,14 @@ function _simDayContext(t){
   const rushMult=weekend?1.12:1.5;
   return (_simCtxCache[cacheKey]=Object.assign({day,dow,weekend,holiday,rushMult,weatherSource:'시뮬레이션'},wx));
 }
-if(typeof fetch==='function')_loadRealWeather();
+if(typeof fetch==='function'){
+  _loadRealWeather();
+  _scheduleRealWeatherRefresh();
+  document.addEventListener('visibilitychange',()=>{
+    if(document.visibilityState==='visible'&&_realWxNeedsRefresh())_loadRealWeather();
+    if(document.visibilityState==='visible')_scheduleRealWeatherRefresh();
+  });
+}
 function _isRush(minOfDay){ const h=Math.floor((((minOfDay%1440)+1440)%1440)/60); return (h>=7&&h<9)||(h>=18&&h<20); }
 
 // ── 등급별 운행 특성: 회복률(역간 여유 시분 활용률)·선로 우선권 ──
@@ -754,7 +796,11 @@ function _simViewArr(t){
 }
 
 // ── 조회 API ──
-function _simDelayAtStop(t, idx){ if(!_simDelayOn||_simExpired(t))return 0; const cd=_simViewArr(t); return (idx>=0&&idx<cd.length)?cd[idx]:0; }
+function _simDelayAtStop(t, idx, travelDate){
+  if(travelDate&&!_simTicketMatchesServiceDay(t,travelDate))return 0;
+  if(!_simDelayOn||_simExpired(t))return 0;
+  const cd=_simViewArr(t); return (idx>=0&&idx<cd.length)?cd[idx]:0;
+}
 // 정차시간 단축 역은 도착 후 1분을 회복해 출발한다.
 // 역별 누적 지연 배열은 출발 시점 값이므로 UI용 도착/출발 지연을 분리해 제공한다.
 function _simDelayPairAtStop(t,idx){
@@ -766,7 +812,8 @@ function _simDelayPairAtStop(t,idx){
   const arr=dep+1;
   return {arr,dep,shortened:true};
 }
-function _simDelay(t, clock){
+function _simDelay(t, clock, travelDate){
+  if(travelDate&&!_simTicketMatchesServiceDay(t,travelDate))return 0;
   if(!_simDelayOn||_simExpired(t)) return 0;
   const pr=_simProfile(t); const cd=_simViewArr(t); const {m,firstM,lastM}=pr;
   if(!cd.length||firstM==null) return 0;
@@ -779,7 +826,9 @@ function _simDelay(t, clock){
   }
   return cd[cd.length-1];
 }
-function _simFinalDelay(t){ if(!_simDelayOn||_simExpired(t))return 0; const pr=_simProfile(t);
+function _simFinalDelay(t,travelDate){
+  if(travelDate&&!_simTicketMatchesServiceDay(t,travelDate))return 0;
+  if(!_simDelayOn||_simExpired(t))return 0; const pr=_simProfile(t);
   if(!pr.predictedFlag||!pr.cd.length)return 0;
   const v=_simViewArr(t); return v[v.length-1]||0; }
 function _liveDelayOf(t){
@@ -855,15 +904,14 @@ function _simOutlook(limit){
   return {ctx, rows:rows.slice(0,limit||8), total:rows.length};
 }
 function _simExpired(t){
-  const pr=_simProfile(t); if(!pr.cd.length||pr.lastM==null)return false;
-  const n=new Date();
-  const svNow=((n.getHours()*60+n.getMinutes()-240)+1440)%1440;
-  const svEnd=(((pr.lastM-240)%1440)+1440)%1440+(pr.cd[pr.cd.length-1]||0)+120;
-  return svNow>svEnd;
+  // 프로필 캐시 키 자체가 운행일을 포함한다. 일반 열차는 자정, 자정을 넘기는
+  // 열차는 04시에 새 키로 교체되므로 운행 종료 2시간 뒤 별도로 폐기하지 않는다.
+  return false;
 }
 function _simRefundInfo(tk){
   if(!_simDelayOn||!tk)return null;
   const t=(typeof ALL_TRAINS!=='undefined')&&getTrainByNo(tk.trainNo); if(!t)return null;
+  if(!_simTicketMatchesServiceDay(t,tk.travelDate))return null;
   const act=_simActualArr(t); const fin=act.length?act[act.length-1]:0;
   if(fin<30)return null;
   const f=_delayForecast(t.line,t.grade);

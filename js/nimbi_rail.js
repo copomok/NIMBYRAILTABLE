@@ -5174,7 +5174,7 @@ function openBookingPopup(trainNo, fromStn, toStn, depTime, arrTime, travelDate)
         </div>
         <div class="alarm-popup-sub">${fromStn} ${depTime||''} → ${toStn} ${arrTime||''}</div>
         ${(()=>{const d=durMin(depTime,arrTime);return d!=null?`<div class="alarm-popup-sub" style="margin-top:-2px;color:var(--text3)">소요 ${fmtDurKor(d)}</div>`:'';})()}
-        ${_bookingDelayBannerHTML(t)}
+        <div id="booking-delay-banner-slot">${_bookingDelayBannerHTML(t,travelDate&&travelDate>=minDate?travelDate:minDate)}</div>
         <div class="booking-date-section">
           <div class="booking-section-label">탑승일</div>
           <input type="date" id="booking-date" value="${travelDate&&travelDate>=minDate?travelDate:minDate}" min="${minDate}" max="${maxDate}" class="booking-date-input">
@@ -5218,6 +5218,10 @@ function openBookingPopup(trainNo, fromStn, toStn, depTime, arrTime, travelDate)
   document.getElementById('booking-seat-select-btn')?.addEventListener('click', ()=>openSeatSelectorFromBooking(trainNo));
   document.getElementById('booking-stepper-minus')?.addEventListener('click', ()=>changePassengerCount(-1));
   document.getElementById('booking-stepper-plus')?.addEventListener('click', ()=>changePassengerCount(1));
+  document.getElementById('booking-date')?.addEventListener('change',e=>{
+    const slot=document.getElementById('booking-delay-banner-slot');
+    if(slot)slot.innerHTML=_bookingDelayBannerHTML(t,e.target.value);
+  });
   wrap.querySelectorAll('.booking-discount-option').forEach(btn=>{
     btn.addEventListener('click', ()=>selectDiscount(btn, btn.dataset.discount));
   });
@@ -7169,9 +7173,10 @@ function renderTickets(){
 function _ticketEndpointDelayHTML(tk){
   if(tk.status==='cancelled')return {from:'',to:''};
   const t=getTrainByNo(tk.trainNo);if(!t)return {from:'',to:''};
+  if(typeof _simTicketMatchesServiceDay==='function'&&!_simTicketMatchesServiceDay(t,tk.travelDate))return {from:'',to:''};
   const timed=t.stops.filter(s=>hasTime(s.arr)||hasTime(s.dep));
   const fi=timed.findIndex(s=>s.s===tk.fromStn),ti=timed.findIndex(s=>s.s===tk.toStn);
-  const depD=fi>=0?_simDelayAtStop(t,fi):0,arrD=ti>=0?_simDelayAtStop(t,ti):0;
+  const depD=fi>=0?_simDelayAtStop(t,fi,tk.travelDate):0,arrD=ti>=0?_simDelayAtStop(t,ti,tk.travelDate):0;
   const n=new Date(),nm=n.getHours()*60+n.getMinutes();
   const live=_liveDelayOf(t),status=getCurrentStatus(t,nm-live);
   const cls='ticket-delay-est';
@@ -10033,8 +10038,9 @@ function _delayMetaHTML(t){
   return `<div class="detail-meta" style="margin-top:2px">지연 예보 <b style="color:${f.color}">${f.label}</b> <span style="color:var(--text3)">·</span> 확률 ${f.prob}% <span style="color:var(--text3)">·</span> 예상 +${f.min}~${f.max}분</div>`;
 }
 // 예매·승차권용 코레일톡식 지연 안내(예상 지연이 있는 열차만). 현재 운행 중이면 실시간 지연도 함께.
-function _bookingDelayBannerHTML(t){
-  const est=_simFinalDelay(t); if(est<=0)return '';
+function _bookingDelayBannerHTML(t,travelDate){
+  if(travelDate&&typeof _simTicketMatchesServiceDay==='function'&&!_simTicketMatchesServiceDay(t,travelDate))return '';
+  const est=_simFinalDelay(t,travelDate); if(est<=0)return '';
   const live=_liveDelayOf(t);
   const liveTxt=live>0?`<br><span class="bk-delay-live">현재 약 ${live}분 지연 운행 중</span>`:'';
   return `<div class="booking-delay-banner">
