@@ -389,7 +389,7 @@ function _isKbSeparateTrackSection(a,b){
 }
 function _segmentTrackGroup(t,a,b){
   if(!_isKbSeparateTrackSection(a,b))return 'shared';
-  return /^ITX-(?:새마을|마음)$/.test(t.grade||'')?'kb-itx':'kb-local';
+  return /^ITX-(?:새마을|마음|청춘)$/.test(t.grade||'')?'kb-itx':'kb-local';
 }
 function _sameSegmentTrack(aTrain,bTrain,from,to){
   const a=_segmentTrackGroup(aTrain,from,to),b=_segmentTrackGroup(bTrain,from,to);
@@ -402,7 +402,7 @@ function _segmentOrderHold(leaderStart,leaderDelay,followerStart,followerDelay){
 }
 function _metroParallelApplies(t,a,b){
   // 이 구간의 ITX는 전철과 선로를 공유하지 않으므로 전철 혼잡 지연을 받지 않는다.
-  return !(_isKbSeparateTrackSection(a,b)&&/^ITX-(?:새마을|마음)$/.test(t.grade||''));
+  return !(_isKbSeparateTrackSection(a,b)&&/^ITX-(?:새마을|마음|청춘)$/.test(t.grade||''));
 }
 
 // ── 혼잡/전철 병행 모델 ──
