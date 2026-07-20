@@ -8,10 +8,12 @@
   --green:#3fb950;--orange:#f97316;--red:#f85149;
   --radius:8px;--mono:'JetBrains Mono',monospace;--sans:'Noto Sans KR',sans-serif;
   --c-ktx:#3b82f6;--c-srt:#a855f7;--c-itxsm:#ef4444;--c-itxcc:#22c55e;--c-mgh:#f97316;--c-ndh:#38bdf8;--c-gaw:#343d68;
+  --safe-top:env(safe-area-inset-top,0px);
 }
 *{box-sizing:border-box;margin:0;padding:0}
+html{background:var(--bg2)}
 body{background:var(--bg);color:var(--text);font-family:var(--sans);font-size:14px;min-height:100vh}
-header{background:var(--bg2);border-bottom:1px solid var(--border);padding:0 100px 0 24px;display:flex;align-items:center;gap:16px;height:56px;position:sticky;top:0;z-index:100}
+header{background:var(--bg2);border-bottom:1px solid var(--border);padding:var(--safe-top) 100px 0 24px;display:flex;align-items:center;gap:16px;height:calc(56px + var(--safe-top));position:sticky;top:0;z-index:100}
 .logo{display:flex;align-items:center;gap:10px;font-weight:700;font-size:16px;color:var(--accent2);font-family:var(--sans);background:none;border:0;padding:0;cursor:pointer;white-space:nowrap}
 .logo:hover{color:#79c0ff}
 .logo:focus-visible{outline:2px solid var(--accent);outline-offset:5px;border-radius:4px}
@@ -988,7 +990,7 @@ tbody td{padding:10px 14px;font-size:13px;white-space:nowrap}
    👤 마이페이지 슬라이드 패널
    ══════════════════════════════════════════ */
 .my-btn{
-  position:fixed;top:10px;right:12px;
+  position:fixed;top:calc(10px + var(--safe-top));right:12px;
   width:36px;height:36px;
   border-radius:8px;
   border:1px solid var(--border);background:var(--bg3);
@@ -999,7 +1001,7 @@ tbody td{padding:10px 14px;font-size:13px;white-space:nowrap}
 }
 .my-btn:hover{background:var(--bg2);border-color:var(--accent)}
 .hdr-refresh-btn{
-  position:fixed;top:10px;right:56px;
+  position:fixed;top:calc(10px + var(--safe-top));right:56px;
   width:36px;height:36px;
   border-radius:8px;
   border:1px solid var(--border);background:var(--bg3);
