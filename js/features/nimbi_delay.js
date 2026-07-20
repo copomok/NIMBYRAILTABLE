@@ -1190,7 +1190,7 @@ function _simCauseSummary(t){
   const seen=[]; causes.filter(e=>e.delta>0).forEach(e=>{ if(!seen.includes(e.cause))seen.push(e.cause); });
   return seen.slice(0,2).join(' · ');
 }
-function _simEventLog(t){
+function _simEventLog(t,includeFuture){
   if(!_simDelayOn||_simExpired(t))return [];
   const pr=_simProfile(t); if(!pr.cd.length)return [];
   // 타임라인과 같은 표시 배열을 사용한다. 지난 역은 확정값, 남은 역은 현재 갱신본이다.
@@ -1218,7 +1218,7 @@ function _simEventLog(t){
   }
   const nmL=_simNowFor(pr);
   dis.events.forEach(e=>{
-    if(nmL<e.m)return;
+    if(!includeFuture&&nmL<e.m)return;
     const baseTxt=(e.txt||e.cause||"운행 순서 조정").replace(/\s[+−]\d+(?:\.\d+)?분$/u,"");
     const amount=Math.max(1,Math.abs(Math.round(e.delta||0)));
     const change=e.delta<0?`−${amount}분`:(e.dwellDelay?`· 정차시간 +${amount}분`:`+${amount}분`);
@@ -1228,7 +1228,7 @@ function _simEventLog(t){
   if(peak>=8){const f=lines.find(x=>x.s.includes("회복 운전")&&x.m>(pr.m[peakIdx]||0));
     if(f)f.s=f.s.replace("회복 운전","관제 우선권 부여 · 회복 운전");}
   const veh=_simVeh(t);
-  if(veh&&pr.m[veh.sec]!=null&&nmL>=pr.m[veh.sec])
+  if(veh&&pr.m[veh.sec]!=null&&(includeFuture||nmL>=pr.m[veh.sec]))
     lines.push({m:pr.m[veh.sec],s:`[${eventClock(veh.sec)}] ${timed[veh.sec]?timed[veh.sec].s:""} · 차량 ${veh.type} +${veh.amt}분`});
   lines.sort((a,b)=>a.m-b.m);
   return lines.map(x=>x.s);

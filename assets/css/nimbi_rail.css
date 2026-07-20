@@ -498,6 +498,9 @@ tbody td{padding:10px 14px;font-size:13px;white-space:nowrap}
 .jr-forecast-detail[open]>summary span{transform:rotate(90deg)}
 .jr-forecast-detail-body{padding:1px 12px 11px}
 .jr-forecast-detail-title{margin:7px 0 5px;font-size:9px;font-weight:800;color:var(--text3)}
+.jr-forecast-log{max-height:150px;overflow-y:auto;border:1px solid var(--border);border-radius:8px;background:var(--bg1);padding:7px 9px}
+.jr-forecast-log-row{padding:3px 0;color:var(--text2);font-family:var(--mono);font-size:8.5px;line-height:1.45;overflow-wrap:anywhere}
+.jr-forecast-log-row+.jr-forecast-log-row{border-top:1px dotted rgba(139,148,158,.18)}
 .jr-forecast-cause{display:grid;grid-template-columns:minmax(85px,1fr) 1.5fr 30px;align-items:center;gap:6px;margin:5px 0;font-size:9px;color:var(--text2)}
 .jr-forecast-cause i{height:4px;border-radius:3px;background:var(--bg3);overflow:hidden}
 .jr-forecast-cause i b{display:block;height:100%;border-radius:3px;background:linear-gradient(90deg,#f97316,#f85149)}

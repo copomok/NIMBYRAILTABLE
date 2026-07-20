@@ -11133,9 +11133,9 @@ function _renderJourneyForecast(t,isOpen=true){
   const level=rate>=.9?'매우 혼잡':rate>=.76?'혼잡':rate>=.58?'보통':'여유';
   const cls=rate>=.9?'critical':rate>=.76?'busy':rate>=.58?'normal':'calm';
   const insight=typeof _delayPassengerInsight==='function'?_delayPassengerInsight(t):null;
-  const causeRows=(insight?.causes||[]).map(c=>`<div class="jr-forecast-cause">
-    <span>${_opsEsc(c.name)}</span><i><b style="width:${c.share}%"></b></i><em>${c.share}%</em>
-  </div>`).join('');
+  const forecastLogs=typeof _simEventLog==='function'?_simEventLog(t,true):[];
+  const forecastLogRows=forecastLogs.slice(0,20)
+    .map(line=>`<div class="jr-forecast-log-row">${_opsEsc(line)}</div>`).join('');
   const delayValue=insight?.estimatedDelay?insight.delayRange:`${insight?.forecast?.prob||0}%`;
   const delayLabel=insight?.estimatedDelay?'예상 지연 범위':'지연 가능성';
   return `<details class="jr-forecast-card ${cls}"${isOpen?' open':''}>
@@ -11155,11 +11155,11 @@ function _renderJourneyForecast(t,isOpen=true){
     </div>
     <div class="jr-forecast-summary">👤 ${_opsEsc(insight?.passengerSummary||'현재 예측상 승객 여정에 미치는 영향은 거의 없습니다.')}</div>
     <details class="jr-forecast-detail">
-      <summary>예측 근거 자세히 보기 <span>›</span></summary>
+      <summary>예상 지연 로그 보기 <span>›</span></summary>
       <div class="jr-forecast-detail-body">
-        <div class="jr-forecast-detail-title">지연 원인 기여도</div>
-        ${causeRows||'<div class="jr-forecast-empty">특별한 지연 요인이 없습니다.</div>'}
-        <div class="jr-forecast-foot">예측 신뢰도 ${insight?.confidenceLabel||'참고'} ${insight?.confidence||'-'}% · 실제 운행 상황에 따라 달라질 수 있습니다.</div>
+        <div class="jr-forecast-detail-title">운행 전 예상 구간별 기록</div>
+        <div class="jr-forecast-log">${forecastLogRows||'<div class="jr-forecast-empty">현재 예정된 지연 이벤트가 없습니다.</div>'}</div>
+        <div class="jr-forecast-foot">운행 전 시뮬레이션 기준 · 실제 운행 중에는 관측 상황에 따라 로그와 지연 시간이 다시 계산됩니다.</div>
       </div>
     </details>
   </details>`;
