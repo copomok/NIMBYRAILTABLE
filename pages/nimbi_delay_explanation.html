@@ -15,7 +15,7 @@
         <div style="font-weight: 700; color: var(--text1); margin-bottom: 6px;">■ 기본 원리</div>
         <div style="padding: 8px 12px; background: var(--bg1); border-left: 3px solid var(--accent); border-radius: 4px;">
           <p style="margin: 0 0 4px 0;">
-            각 열차는 <strong>노선·등급·요일·시간대·기상</strong>을 바탕으로 오늘의 지연을 예측합니다.<br>
+            각 열차는 <strong>노선·등급·요일·시간대·실제 기상 예보</strong>를 바탕으로 오늘의 지연을 예측합니다.<br>
             예측은 <strong>대한민국 철도 운행 데이터</strong>를 학습한 패턴을 따르며, 일반 열차는 매일 자정에 새로 계산됩니다.
             자정을 넘어 운행하는 열차는 이전 운행 정보를 유지한 뒤 오전 4시에 갱신됩니다.
           </p>
@@ -34,8 +34,8 @@
 
         <div style="margin-bottom: 8px; padding: 8px 12px; background: color-mix(in srgb, #f97316 8%, var(--bg1)); border-left: 3px solid #f97316; border-radius: 4px;">
           <div style="font-weight: 600; color: #f97316; margin-bottom: 3px;">🌡️ 오늘의 날씨</div>
-          <div>맑음 1.0배 → 강풍 1.18배 → 폭설 1.35배 → <strong>태풍 1.7배</strong><br>
-          <span style="color: var(--text3); font-size: 11px;">→ 악천후는 지연 확률과 지연 규모를 크게 증가시킵니다</span></div>
+          <div>전국 주요 권역의 <strong>시간대별 강수량·강수확률·적설·돌풍·기온·가시거리</strong>를 확인합니다.<br>
+          <span style="color: var(--text3); font-size: 11px;">→ 비가 가장 강한 지역과 시간에 그곳을 지나는 열차의 지연 가능성이 집중됩니다. 예보를 불러오지 못하면 기존 시뮬레이션 날씨를 사용합니다.</span></div>
         </div>
 
         <div style="margin-bottom: 8px; padding: 8px 12px; background: color-mix(in srgb, #a855f7 8%, var(--bg1)); border-left: 3px solid #a855f7; border-radius: 4px;">
@@ -48,7 +48,7 @@
           <div style="font-weight: 600; color: #f85149; margin-bottom: 3px;">👥 혼잡도와 구간 특성</div>
           <div>서울·동대구·부산 등 고혼잡 역 주변에서 지연 확률 증가<br>
           전철과 병행되는 구간, 단선 구간도 영향을 미칩니다<br>
-          <span style="color: var(--text3); font-size: 11px;">→ 경부선과 전철이 함께 지나는 서울~천안 구간은 특히 민감합니다</span></div>
+          <span style="color: var(--text3); font-size: 11px;">→ 실제로 선로를 함께 쓰는 병행 구간만 반영하며, 별도 선로 구간은 제외합니다</span></div>
         </div>
       </div>
 

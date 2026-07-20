@@ -104,8 +104,10 @@
   function outlook(){
     const ctx=typeof _simDayContext==='function'?_simDayContext():null;
     const byLine=new Map();let sum=0,n=0,ended=0;
-    ALL_TRAINS.forEach(t=>{if(getCurrentStatus(t)?.status==='done'){ended++;return;}const f=_delayForecast(t.line,t.grade);sum+=f.prob;n++;
-      const line=(t.line||'기타').split('·')[0];const row=byLine.get(line)||{sum:0,n:0};row.sum+=f.prob;row.n++;byLine.set(line,row);});
+    ALL_TRAINS.forEach(t=>{if(getCurrentStatus(t)?.status==='done'){ended++;return;}const f=_delayForecast(t.line,t.grade);
+      const routeCtx=typeof _simDayContext==='function'?_simDayContext(t):ctx;
+      const prob=Math.min(96,f.prob*(routeCtx?.probMult||1));sum+=prob;n++;
+      const line=(t.line||'기타').split('·')[0];const row=byLine.get(line)||{sum:0,n:0};row.sum+=prob;row.n++;byLine.set(line,row);});
     const peak=[...byLine].map(([line,v])=>({line,prob:Math.round(v.sum/v.n)})).sort((a,b)=>b.prob-a.prob)[0];
     const avg=Math.round(sum/Math.max(1,n));
     return {ctx,peak,avg,ended,active:n,label:avg<25?'대체로 원활':avg<40?'일부 지연 가능':'지연 가능성 높음'};
@@ -151,9 +153,9 @@
       </div>
     </section>
     ${interestHtml}
-    <section class="home-section home-outlook"><div class="home-section-head"><b>오늘의 운행 전망</b><span>${view.ctx?.weekend?'주말·공휴일':'평일'} · ${esc(view.ctx?.weather||'맑음')}</span></div>
+    <section class="home-section home-outlook"><div class="home-section-head"><b>오늘의 운행 전망</b><span>${view.ctx?.weekend?'주말·공휴일':'평일'} · ${esc(view.ctx?.weather||'맑음')}${view.ctx?.weatherSource==='실제 예보'?' · 실제 예보':''}</span></div>
       <div class="home-outlook-main"><span>전체 전망</span><b>${view.label}</b><em>평균 지연 가능성 ${view.avg}%</em></div>
-      <div class="home-outlook-sub">${view.peak?`${esc(view.peak.line)}의 지연 가능성이 ${view.peak.prob}%로 상대적으로 높습니다.`:'특별한 지연 요인이 없습니다.'}</div>
+      <div class="home-outlook-sub">${view.ctx?.weatherSource==='실제 예보'&&view.ctx?.weather!=='맑음'&&view.ctx?.region?`${esc(view.ctx.region)} ${String(view.ctx.hour).padStart(2,'0')}시 기상 영향이 가장 큽니다. `:''}${view.peak?`${esc(view.peak.line)}의 지연 가능성이 ${view.peak.prob}%로 상대적으로 높습니다.`:'특별한 지연 요인이 없습니다.'}</div>
       <div class="home-outlook-ended"><span>전망 대상 ${view.active}편</span><b>운행 종료 ${view.ended}편</b><small>운행이 끝난 열차는 전망 집계에서 분리됩니다.</small></div>
     </section>
     ${alertHtml}

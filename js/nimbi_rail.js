@@ -10081,8 +10081,10 @@ function toggleSimDelay(){
 function _outlookHTML(){
   if(!_simDelayOn||typeof _simOutlook!=='function')return '';
   const o=_simOutlook(window._olAll?10000:8); if(!o)return '';
-  const wxIco={'맑음':'☀️','안개':'🌫️','강풍':'💨','폭염':'🌡️','비':'🌧️','폭설':'❄️','태풍':'🌀'}[o.ctx.weather]||'🌤️';
+  const wxIco={'맑음':'☀️','안개':'🌫️','강풍':'💨','폭염':'🌡️','비':'🌧️','폭우':'🌧️','폭설':'❄️','태풍':'🌀'}[o.ctx.weather]||'🌤️';
   const bad=o.ctx.weather!=='맑음';
+  const realWx=o.ctx.weatherSource==='실제 예보';
+  const peakWx=realWx&&bad&&o.ctx.region?`${_opsEsc(o.ctx.region)} ${String(o.ctx.hour).padStart(2,'0')}시 영향 집중`:'';
   const gl=g=>(typeof GL!=='undefined'&&GL[g])||g;
   const rows=o.rows.map(r=>{
     const rng=r.rangeText||`${r.est}분 내외`;
@@ -10091,12 +10093,14 @@ function _outlookHTML(){
     return `<button class="ol-row" onclick="openJourney('${_opsEsc(r.t.no)}')"><span class="ol-grade" style="background:${gc}">${_opsEsc(gl(r.t.grade))}</span><span class="ol-no">${_opsEsc(r.t.no)}</span><span class="ol-route">${_opsEsc(r.t.stops[0].s)}<span class="ol-arr">→</span>${_opsEsc(r.t.dest)}</span><span class="ol-rng ol-sev-${sev}">${rng}</span>${r.cause?`<span class="ol-cz">(${_opsEsc(r.cause)})</span>`:''}</button>`;
   }).join('');
   return `<div class="outlook-card${bad?' bad':''}">
-    <div class="ol-head">${wxIco} 오늘의 운행 전망 <span class="ol-wx">${_opsEsc(o.ctx.weather)} · ${o.ctx.weekend?'주말·공휴일':'평일'}</span></div>
-    ${o.rows.length?`<div class="ol-desc">${bad?`${_opsEsc(o.ctx.weather)}의 영향으로 다음 열차의 지연이 예상됩니다.`:'다음 열차의 지연이 예상됩니다.'}</div>${rows}${o.total>8?`<button class="ol-allbtn" onclick="window._olAll=!window._olAll;var e=document.getElementById('result-delay');if(e)renderSIDelay(e)">${window._olAll?'접기 ▲':`전체 ${o.total}편 보기 ▼`}</button>`:''}`
+    <div class="ol-head">${wxIco} 오늘의 운행 전망 <span class="ol-wx">${_opsEsc(o.ctx.weather)} · ${o.ctx.weekend?'주말·공휴일':'평일'}${realWx?' · 실제 예보':''}</span></div>
+    ${peakWx?`<div class="ol-forecast-source">📍 ${peakWx}${o.ctx.precipitation>=.5?` · 시간당 ${Math.round(o.ctx.precipitation*10)/10}㎜`:''}</div>`:''}
+    ${o.rows.length?`<div class="ol-desc">${bad?`${_opsEsc(o.ctx.weather)} 예보를 반영해 다음 열차의 지연 가능성을 계산했습니다.`:'실제 예보를 반영한 결과 다음 열차의 지연 가능성이 있습니다.'}</div>${rows}${o.total>8?`<button class="ol-allbtn" onclick="window._olAll=!window._olAll;var e=document.getElementById('result-delay');if(e)renderSIDelay(e)">${window._olAll?'접기 ▲':`전체 ${o.total}편 보기 ▼`}</button>`:''}`
       :`<div class="ol-desc">현재 지연이 예보된 열차가 없습니다. 전 열차 정상 운행이 예상됩니다.</div>`}
     <div class="ol-caveat">
       예측은 확정이 아니며, 기상 호전 등에 따라 정상 운행으로 변경될 수 있습니다.
       <span>운행 전과 운행 중에도 관측 상황, 역 통과, 돌발상황에 따라 지연 정보와 예보가 달라질 수 있습니다.</span>
+      ${realWx?'<span>기상 예보 제공: Open-Meteo · 접속 시 최신 예보 확인</span>':''}
     </div>
     <button class="ol-explain-btn" onclick="openDelayExplanation()">지연은 어떻게 산정되나요?</button>
   </div>`;
@@ -10108,7 +10112,7 @@ let _delayExplanationPromise=null;
 function _loadDelayExplanation(host){
   if(!host)return;
   if(!_delayExplanationPromise){
-    _delayExplanationPromise=fetch('pages/nimbi_delay_explanation.html?v=2026072015')
+    _delayExplanationPromise=fetch('pages/nimbi_delay_explanation.html?v=2026072032')
       .then(res=>{
         if(!res.ok)throw new Error(`HTTP ${res.status}`);
         return res.text();

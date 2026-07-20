@@ -91,11 +91,135 @@ function _simIsKoreanHoliday(d){
   const nextLunar=_simLunarParts(tomorrow);
   return !!(nextLunar&&nextLunar.month===1&&nextLunar.day===1);
 }
+
+// ── 실제 시간대별 기상 예보 (Open-Meteo, 키 불필요) ──
+// 주요 권역 예보를 한 번에 받아 열차가 해당 지역을 지나는 시각에만 기상 영향을 준다.
+const _REAL_WX_REGIONS=[
+  {name:'수도권',lat:37.5665,lon:126.9780},{name:'강원',lat:37.7519,lon:128.8761},
+  {name:'충청',lat:36.3504,lon:127.3845},{name:'전북',lat:35.8242,lon:127.1480},
+  {name:'광주·전남',lat:35.1595,lon:126.8526},{name:'대구·경북',lat:35.8714,lon:128.6014},
+  {name:'부산·경남',lat:35.1796,lon:129.0756},{name:'제주',lat:33.4996,lon:126.5312}
+];
+const _REAL_WX_CACHE_KEY='nimbi_real_weather_v1';
+let _realWx=null,_realWxPromise=null,_realWxVersion=0;
+function _wxConfig(weather){
+  return ({
+    '맑음':{weather:'맑음',probMult:1,magMult:1,bigCap:15,recW:1,sagGate:0,sagLabel:null,wxBig:false},
+    '안개':{weather:'안개',probMult:1.1,magMult:1.05,bigCap:13,recW:.9,sagGate:.26,sagLabel:'안개 서행',wxBig:false},
+    '강풍':{weather:'강풍',probMult:1.22,magMult:1.25,bigCap:22,recW:.76,sagGate:.38,sagLabel:'강풍 서행',wxBig:true},
+    '폭염':{weather:'폭염',probMult:1.1,magMult:1.1,bigCap:15,recW:.88,sagGate:.24,sagLabel:'폭염 레일온도 서행',wxBig:false},
+    '비':{weather:'비',probMult:1.16,magMult:1.18,bigCap:20,recW:.78,sagGate:.34,sagLabel:'우천 서행',wxBig:true},
+    '폭우':{weather:'폭우',probMult:1.55,magMult:1.65,bigCap:34,recW:.5,sagGate:.68,sagLabel:'폭우 서행',wxBig:true},
+    '폭설':{weather:'폭설',probMult:1.35,magMult:1.4,bigCap:30,recW:.55,sagGate:.55,sagLabel:'폭설 제설 지연',wxBig:true},
+    '태풍':{weather:'태풍',probMult:1.7,magMult:1.9,bigCap:42,recW:.4,sagGate:.78,sagLabel:'태풍 서행',wxBig:true}
+  })[weather]||null;
+}
+function _wxClassify(v){
+  const p=+(v.precipitation||0), rain=+(v.rain||0)+ +(v.showers||0), snow=+(v.snowfall||0);
+  const gust=+(v.wind_gusts_10m||0), temp=+(v.temperature_2m||0), feel=+(v.apparent_temperature||0);
+  const vis=v.visibility==null?99999:+v.visibility, code=+(v.weather_code||0), pop=+(v.precipitation_probability||0);
+  let weather='맑음',score=0;
+  if(snow>=1||[75,77,85,86].includes(code)){weather='폭설';score=75+Math.min(20,snow*4);}
+  else if(p>=15||rain>=15||(code>=95&&p>=8)){weather='폭우';score=80+Math.min(19,p);}
+  else if(gust>=70){weather='강풍';score=68+Math.min(20,(gust-70)/3);}
+  else if(Math.max(temp,feel)>=35){weather='폭염';score=55+Math.min(15,Math.max(temp,feel)-35);}
+  else if(p>=.5||rain>=.5||pop>=60||code>=51&&code<=82){weather='비';score=35+Math.min(25,p*3)+pop*.08;}
+  else if(vis<1000||code===45||code===48){weather='안개';score=30+Math.min(20,(1000-vis)/50);}
+  return Object.assign(_wxConfig(weather),{score,precipitation:p,rain,snowfall:snow,gust,temp,pop,visibility:vis,code});
+}
+function _wxCoord(name){
+  if(typeof STATION_DB==='undefined'||!name)return null;
+  const d=STATION_DB[name]||STATION_DB[name+'역']||(name.endsWith('역')?STATION_DB[name.slice(0,-1)]:null);
+  return d&&d.lat!=null&&d.lon!=null?{lat:+d.lat,lon:+d.lon}:null;
+}
+function _wxNearestRegion(coord){
+  if(!coord||!_realWx?.regions?.length)return null;
+  let best=null,bd=Infinity;
+  for(const r of _realWx.regions){
+    const d=(coord.lat-r.lat)**2+((coord.lon-r.lon)*Math.cos(coord.lat*Math.PI/180))**2;
+    if(d<bd){bd=d;best=r;}
+  }
+  return best;
+}
+function _realWxAt(name,minOfDay,dayKey){
+  if(!_realWx||_realWx.day!==(dayKey||_simDayKey()))return null;
+  const reg=_wxNearestRegion(_wxCoord(name)); if(!reg)return null;
+  const hour=Math.max(0,Math.min(23,Math.floor((((minOfDay||0)%1440)+1440)%1440/60)));
+  const wx=reg.hours?.[hour]; return wx?Object.assign({region:reg.name,hour},wx):null;
+}
+function _realWxContext(t){
+  const dayKey=_simDayKey(t);
+  if(!_realWx||_realWx.day!==dayKey)return null;
+  if(!t)return Object.assign({weatherSource:'실제 예보'},_realWx.peak);
+  const timed=t.stops.filter(s=>hasTime(s.arr)||hasTime(s.dep));
+  let peak=null,sumP=0,sumM=0,n=0;
+  for(const s of timed){
+    const tm=toMin(hasTime(s.arr)?s.arr:s.dep), wx=_realWxAt(s.s,tm,dayKey);
+    if(!wx)continue;
+    sumP+=wx.probMult;sumM+=wx.magMult;n++;
+    if(!peak||wx.score>peak.score)peak=wx;
+  }
+  if(!peak)return null;
+  // 한 시간의 국지성 폭우가 노선 전체를 과장하지 않도록 최고 위험과 노선 평균을 함께 반영한다.
+  return Object.assign({},peak,{
+    probMult:Math.max(1,(sumP/n)*.55+peak.probMult*.45),
+    magMult:Math.max(1,(sumM/n)*.55+peak.magMult*.45),
+    weatherSource:'실제 예보'
+  });
+}
+function _parseRealWxResponse(raw,day){
+  const list=Array.isArray(raw)?raw:[raw],regions=[];
+  list.forEach((x,ri)=>{
+    const h=x?.hourly||{},hours=Array.from({length:24},()=>_wxClassify({}));
+    (h.time||[]).forEach((ts,i)=>{
+      if(!String(ts).startsWith(String(day).slice(0,4)+'-'))return;
+      const datePart=String(ts).slice(0,10).replace(/-/g,'');
+      if(+datePart!==day)return;
+      const hr=+String(ts).slice(11,13); if(hr<0||hr>23)return;
+      const v={}; ['precipitation_probability','precipitation','rain','showers','snowfall','weather_code','temperature_2m','apparent_temperature','wind_gusts_10m','visibility'].forEach(k=>v[k]=h[k]?.[i]);
+      hours[hr]=_wxClassify(v);
+    });
+    const meta=_REAL_WX_REGIONS[ri]||{name:`권역 ${ri+1}`,lat:+x.latitude,lon:+x.longitude};
+    regions.push({name:meta.name,lat:meta.lat,lon:meta.lon,hours});
+  });
+  let peak=null;
+  regions.forEach(r=>r.hours.forEach((wx,h)=>{if(!peak||wx.score>peak.score)peak=Object.assign({region:r.name,hour:h},wx);}));
+  return {day,regions,peak:Object.assign({region:'전국',hour:12},_wxConfig('맑음'),peak||{}),fetchedAt:Date.now()};
+}
+function _applyRealWx(data){
+  _realWx=data;_realWxVersion++;
+  _simCtxCache={};_simProfileCache={};
+  if(typeof _simViewCache!=='undefined')_simViewCache={};
+  try{localStorage.setItem(_REAL_WX_CACHE_KEY,JSON.stringify(data));}catch(e){}
+  if(typeof renderDailyDiscovery==='function')renderDailyDiscovery();
+  const de=document.getElementById('result-delay'); if(de&&de.offsetParent!==null&&typeof renderSIDelay==='function')renderSIDelay(de);
+  if(typeof _journeyNo!=='undefined'&&_journeyNo&&typeof _renderJourney==='function')_renderJourney();
+}
+function _loadRealWeather(){
+  if(_realWxPromise)return _realWxPromise;
+  const day=_simDayKey();
+  try{
+    const saved=JSON.parse(localStorage.getItem(_REAL_WX_CACHE_KEY)||'null');
+    if(saved?.day===day&&Date.now()-saved.fetchedAt<3*60*60*1000)_realWx=saved;
+  }catch(e){}
+  const lat=_REAL_WX_REGIONS.map(r=>r.lat).join(','),lon=_REAL_WX_REGIONS.map(r=>r.lon).join(',');
+  const hourly='precipitation_probability,precipitation,rain,showers,snowfall,weather_code,temperature_2m,apparent_temperature,wind_gusts_10m,visibility';
+  const url=`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&hourly=${hourly}&forecast_days=1&timezone=Asia%2FSeoul`;
+  return _realWxPromise=fetch(url).then(r=>{if(!r.ok)throw new Error(`weather ${r.status}`);return r.json();})
+    .then(raw=>{const data=_parseRealWxResponse(raw,day);_applyRealWx(data);return data;})
+    .catch(()=>_realWx);
+}
 function _simDayContext(t){
   const day=_simDayKey(t);
-  if(_simCtxCache[day])return _simCtxCache[day];
+  const cacheKey=day+':'+(t?.no||'network')+':'+_realWxVersion;
+  if(_simCtxCache[cacheKey])return _simCtxCache[cacheKey];
   const d=new Date(Math.floor(day/10000),Math.floor(day/100)%100-1,day%100);
   const dow=d.getDay(), holiday=_simIsKoreanHoliday(d), weekend=(dow===0||dow===6||holiday);
+  const realWx=_realWxContext(t);
+  if(realWx){
+    const rushMult=weekend?1.12:1.5;
+    return (_simCtxCache[cacheKey]=Object.assign({day,dow,weekend,holiday,rushMult},realWx));
+  }
   const w=_simDaySeed(3.71,day);
   const mo=d.getMonth()+1;
   const CUT= (mo>=6&&mo<=8)?[0.45,0.50,0.58,0.74,0.955,0.955]
@@ -112,8 +236,9 @@ function _simDayContext(t){
   else if(w<CUT[5]) wx={weather:'폭설', probMult:1.35,magMult:1.4, bigCap:30, recW:0.55,sagGate:0.55, sagLabel:'폭설 제설 지연',    wxBig:true};
   else              wx={weather:'태풍', probMult:1.7, magMult:1.9, bigCap:42, recW:0.4, sagGate:0.78, sagLabel:'태풍 서행',        wxBig:true};
   const rushMult=weekend?1.12:1.5;
-  return (_simCtxCache[day]=Object.assign({day,dow,weekend,holiday,rushMult},wx));
+  return (_simCtxCache[cacheKey]=Object.assign({day,dow,weekend,holiday,rushMult,weatherSource:'시뮬레이션'},wx));
 }
+if(typeof fetch==='function')_loadRealWeather();
 function _isRush(minOfDay){ const h=Math.floor((((minOfDay%1440)+1440)%1440)/60); return (h>=7&&h<9)||(h>=18&&h<20); }
 
 // ── 등급별 운행 특성: 회복률(역간 여유 시분 활용률)·선로 우선권 ──
@@ -362,13 +487,17 @@ function _computeProfile(t){
       const cong=_paxScore(timed[i].s);
       const congHi=cong>0.6;
       const rush=ctx.weekend?false:_isRush(m[i]);
+      const localWx=_realWxAt(timed[i+1].s,m[i+1],ctx.day);
+      const secCtx=localWx?Object.assign({},ctx,localWx):ctx;
+      const localProb=localWx?Math.max(.7,Math.min(1.9,localWx.probMult/Math.max(1,ctx.probMult))):1;
+      const localMag=localWx?Math.max(.75,Math.min(1.8,localWx.magMult/Math.max(1,ctx.magMult))):1;
       const exposure=Math.min(1, 0.4*(metroPar?1:0)+0.5*cong+(rush?0.2:0)+(singleTrack?0.3:0));
       const ra=_seededRand(seed+i*2.7+0.5), rb=_seededRand(seed+i*2.7+1.9), rc=_seededRand(seed+i*2.7+3.3), rd=_seededRand(seed+i*2.7+5.1), re=_seededRand(seed+i*2.7+6.7);
-      const pInc=evBase*(0.35+exposure*1.3);
+      const pInc=evBase*(0.35+exposure*1.3)*localProb;
       let inc=0, cause=null;
       if(ra<pInc){
-        cause=_sectionCause(rush, metroPar, congHi, ctx, rd, singleTrack, go.prio);
-        inc=_isBigCause(cause,ctx) ? bigUnit*(0.6+rb)
+        cause=_sectionCause(rush, metroPar, congHi, secCtx, rd, singleTrack, go.prio);
+        inc=_isBigCause(cause,secCtx) ? bigUnit*localMag*(0.6+rb)
           : _isMidCause(cause)     ? Math.min(5, bigUnit*0.55*(0.6+rb)+smallUnit*0.5)
           :                          smallUnit*(0.5+0.6*rb);
         if(cause==='출퇴근 승객 집중'){
@@ -393,7 +522,7 @@ function _computeProfile(t){
       if(arrivalDelay>0 && inc===0){
         const recW=_recoveryWeight(Math.round(cur));
         const urg=Math.min(1, Math.pow(cur/40, 0.6));
-        const gate=(0.15+0.8*urg)*ctx.recW*(0.9+0.05*go.prio)*recW;
+        const gate=(0.15+0.8*urg)*secCtx.recW*(0.9+0.05*go.prio)*recW;
         let runRec=0, recHard=_SIM_REC_HARD;
         if(rc<gate){
           // ─ 고속선 회복 강화 ─
@@ -402,7 +531,7 @@ function _computeProfile(t){
             if(cur>=6&&cur<10)  recHard=2.0;
             else if(cur>=10)    recHard=3.0;
           }
-          runRec=Math.min(0.16*dt*recFrac, 0.8)*(0.5+0.5*rc)*ctx.recW;
+          runRec=Math.min(0.16*dt*recFrac, 0.8)*(0.5+0.5*rc)*secCtx.recW;
         }
         rec=Math.min(arrivalDelay,runRec+dcut,Math.max(recHard,dcut));
       } else {
