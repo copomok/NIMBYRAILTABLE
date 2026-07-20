@@ -1513,19 +1513,36 @@ button, select, input[type=range],
 .trip-widget-btn.on{border-color:var(--green);color:var(--green);background:rgba(63,185,80,.12)}
 #home-trip-widget{margin-bottom:10px}
 #home-trip-widget:empty{display:none;margin:0}
+/* 홈 · 나의 다음 여정 */
+.trip-mini{position:relative;overflow:hidden;border:1px solid var(--trip-color);border:1px solid color-mix(in srgb,var(--trip-color) 55%,var(--border));border-radius:17px;padding:16px 17px 15px;background:linear-gradient(140deg,var(--trip-soft),var(--bg2) 48%,var(--bg2));box-shadow:0 10px 28px rgba(0,0,0,.16);cursor:pointer;transition:transform .16s,border-color .16s,box-shadow .16s}
+.trip-mini:hover{transform:translateY(-2px);border-color:var(--trip-color);box-shadow:0 13px 32px rgba(0,0,0,.22)}
+.trip-mini-accent{position:absolute;inset:0 auto 0 0;width:4px;background:var(--trip-color)}
+.trip-mini-kicker{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:13px}
+.trip-mini-title{font-size:12px;font-weight:800;color:var(--text2);letter-spacing:.25px}
+.trip-mini-status{display:inline-flex;align-items:center;gap:6px;padding:4px 8px;border-radius:999px;background:var(--bg3);font-size:11px;font-weight:800;white-space:nowrap}
+.trip-mini-status i{width:6px;height:6px;border-radius:50%;box-shadow:0 0 0 3px color-mix(in srgb,currentColor 16%,transparent)}
+.trip-mini-train{display:flex;align-items:center;gap:8px;min-width:0;margin-bottom:15px}
+.trip-mini-grade-badge{display:inline-flex;align-items:center;min-height:27px;padding:4px 10px;border-radius:8px;color:#fff;font-size:12px;font-weight:850;line-height:1;box-shadow:inset 0 0 0 1px rgba(255,255,255,.16)}
+.trip-mini-no{font-family:var(--mono);font-size:21px;font-weight:850;color:var(--text1);letter-spacing:.4px}
+.trip-mini-bound{font-size:13px;font-weight:700;color:var(--text2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.trip-mini-go{margin-left:auto;display:inline-flex;align-items:center;gap:4px;color:var(--trip-color);font-size:11.5px;font-weight:800;white-space:nowrap}
+.trip-mini-go b{font-size:18px;line-height:1;font-weight:500}
+.trip-mini-route{display:grid;grid-template-columns:minmax(0,1fr) minmax(52px,.55fr) minmax(0,1fr);align-items:center;padding:13px 14px;border:1px solid var(--border);border:1px solid color-mix(in srgb,var(--trip-color) 22%,var(--border));border-radius:12px;background:var(--bg3);background:color-mix(in srgb,var(--trip-color) 5%,var(--bg3));margin-bottom:12px}
+.trip-mini-station{display:grid;grid-template-columns:auto 1fr;gap:3px 8px;min-width:0}
+.trip-mini-station.end{text-align:right;grid-template-columns:1fr auto}
+.trip-mini-station.end span{grid-column:2}.trip-mini-station.end strong{grid-column:1/3}.trip-mini-station.end time{grid-column:1/3}
+.trip-mini-station span{font-size:10px;font-weight:750;color:var(--text3)}
+.trip-mini-station strong{grid-column:1/3;font-size:17px;font-weight:850;color:var(--text1);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.trip-mini-station time{grid-column:1/3;font-family:var(--mono);font-size:12px;font-weight:750;color:var(--trip-color);font-variant-numeric:tabular-nums}
+.trip-mini-route-line{display:flex;align-items:center;gap:6px;color:var(--trip-color)}
+.trip-mini-route-line span{height:1px;flex:1;background:var(--trip-color);background:color-mix(in srgb,var(--trip-color) 48%,transparent)}
+.trip-mini-route-line b{font-size:15px;font-weight:700}
+.trip-mini-footer{display:flex;align-items:center;gap:10px;min-width:0}
+.trip-mini-detail{display:flex;align-items:center;gap:6px;min-width:0;font-size:12px;font-weight:700;color:var(--text2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.trip-mini-detail b{color:var(--trip-color);font-size:11px}
+.trip-mini-seat{margin-left:auto;padding-left:10px;border-left:1px solid var(--border);font-size:11px;color:var(--text3);white-space:nowrap}
+@media(max-width:520px){.trip-mini{padding:14px 14px 13px}.trip-mini-train{margin-bottom:12px}.trip-mini-grade-badge{padding:4px 8px}.trip-mini-no{font-size:19px}.trip-mini-bound{font-size:12px}.trip-mini-route{grid-template-columns:minmax(0,1fr) 42px minmax(0,1fr);padding:11px 10px}.trip-mini-station strong{font-size:15px}.trip-mini-footer{align-items:flex-start;flex-direction:column;gap:5px}.trip-mini-seat{margin-left:0;padding-left:0;border-left:0}.trip-mini-go{font-size:0}.trip-mini-go b{font-size:20px}}
 
-/* ── 홈 간략 여정 카드 ── */
-.trip-mini{border:1.5px solid var(--border);border-radius:12px;padding:12px 14px;background:var(--bg2);cursor:pointer}
-.trip-mini-top{display:flex;align-items:center;gap:7px;margin-bottom:8px}
-.trip-mini-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;animation:trip-pulse 1.5s ease-in-out infinite}
-.trip-mini-label{font-size:12px;font-weight:700;letter-spacing:.3px}
-.trip-mini-grade{font-size:12px;font-weight:700}
-.trip-mini-no{font-size:12px;font-weight:700;color:var(--text1);font-family:var(--mono)}
-.trip-mini-go{margin-left:auto;font-size:12px;color:var(--text3);font-weight:600}
-.trip-mini-led{display:flex;align-items:center;gap:8px;background:#08111c;border:1px solid #14324d;border-radius:7px;padding:5px 9px;margin-bottom:7px}
-.trip-mini-led-tag{font-size:10px;font-weight:700;color:#0d1117;background:#f0b429;border-radius:3px;padding:1px 6px;flex-shrink:0}
-.trip-mini-led-txt{font-family:var(--mono);font-weight:800;font-size:14px;letter-spacing:1px;color:#ffbf34;text-shadow:0 0 6px rgba(255,176,32,.55);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.trip-mini-sub{font-size:12px;color:var(--text2);font-weight:600}
 
 /* ══════════════════════════════════════════
    🎫 개표/탑승 (게이트) · 편성/좌석 · 역 전광판

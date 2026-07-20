@@ -6988,34 +6988,50 @@ function goLiveTrack(no){
 
 // 홈(열차 탭)용 간략 여정 카드 (상세는 승차권 탭)
 function renderTripWidgetCompact(active){
-  if(!active) return '';
+  if(!active) return "";
   const {ticket,train,status,preBoard,minsUntilDep,preArr,minsUntilArr}=active;
-  const gc=GRADE_COLORS[train.grade]||'#8b949e';
-  let label,color,ledTag,led,sub;
-  if(preBoard){ label='승차 준비'; color='var(--orange)'; ledTag='곧 출발'; led=`${ticket.fromStn} ${ticket.depTime||''}`; sub=`${fmtEta(minsUntilDep)} 출발 · ${ticket.toStn}행`; }
-  else if(preArr){ label='도착 준비'; color='var(--green)'; ledTag='곧 도착'; led=`${ticket.toStn}`; sub=`${fmtEta(minsUntilArr)} 도착 · 내리는 문 확인`; }
-  else {
+  const gc=GRADE_COLORS[train.grade]||"#8b949e";
+  let stateLabel,stateDetail,stateIcon,stateColor;
+  if(preBoard){
+    stateLabel="승차 준비"; stateIcon="🚉"; stateColor="var(--orange)";
+    stateDetail=`${fmtEta(minsUntilDep)} 후 출발 예정`;
+  }else if(preArr){
+    stateLabel="도착 준비"; stateIcon="📍"; stateColor="var(--green)";
+    stateDetail=`${fmtEta(minsUntilArr)} 후 ${ticket.toStn} 도착`;
+  }else{
     const tl=getTripTimeline3(train,status,ticket);
-    ledTag = '이번 역';
-    led = (tl&&tl.cur?tl.cur.name:(status.atStn||'-'));
-    if(led===ticket.toStn) led += ' · 내리는 문 확인';
-    const depM=toMin(ticket.depTime), arrM=toMin(ticket.arrTime);
-    const now=new Date(); const nowM=now.getHours()*60+now.getMinutes();
+    const current=tl&&tl.cur?tl.cur.name:(status.atStn||status.passStn||"이동 중");
+    const depM=toMin(ticket.depTime),arrM=toMin(ticket.arrTime);
+    const now=new Date(),nowM=now.getHours()*60+now.getMinutes();
     let diff=(arrM!=null&&depM!=null)?((arrM>=depM)?arrM-nowM:arrM+1440-nowM):null;
-    if(diff!=null&&diff<0)diff+=1440; if(diff!=null&&diff>=1440)diff%=1440;
-    label='탑승 중'; color='var(--green)'; sub=`${ticket.toStn} ${diff!=null?fmtEta(diff):'-'} 도착`;
+    if(diff!=null&&diff<0)diff+=1440;
+    if(diff!=null&&diff>=1440)diff%=1440;
+    stateLabel="탑승 중"; stateIcon="●"; stateColor="var(--green)";
+    stateDetail=`${current} · ${ticket.toStn}까지 ${diff!=null?fmtEta(diff):"운행 중"}`;
   }
-  return `<div class="trip-mini" style="border-color:${gc}" onclick="switchTab('ticket')">
-    <div class="trip-mini-top">
-      <span class="trip-mini-dot" style="background:${color}"></span>
-      <span class="trip-mini-label" style="color:${color}">${label}</span>
-      <span class="trip-mini-grade" style="color:${gc}">${train.grade}</span>
-      <span class="trip-mini-no">${train.no}</span>
-      <span class="trip-mini-go">승차권 ›</span>
+  const seat=[ticket.seatClassLabel,seatSummary(ticket.seats)].filter(Boolean).join(" · ");
+  return `<article class="trip-mini" style="--trip-color:${gc};--trip-soft:${gc}1f" onclick="switchTab(&quot;ticket&quot;)">
+    <span class="trip-mini-accent" aria-hidden="true"></span>
+    <div class="trip-mini-kicker">
+      <span class="trip-mini-title">나의 다음 여정</span>
+      <span class="trip-mini-status" style="color:${stateColor}"><i style="background:${stateColor}"></i>${stateLabel}</span>
     </div>
-    ${ledEnabled()?`<div class="trip-mini-led"><span class="trip-mini-led-tag">${ledTag}</span><span class="trip-mini-led-txt">${led}</span></div>`:''}
-    <div class="trip-mini-sub">${sub}</div>
-  </div>`;
+    <div class="trip-mini-train">
+      <span class="trip-mini-grade-badge" style="background:${gc}">${train.grade}</span>
+      <strong class="trip-mini-no">${train.no}</strong>
+      <span class="trip-mini-bound">${ticket.toStn}행</span>
+      <span class="trip-mini-go">승차권 <b>›</b></span>
+    </div>
+    <div class="trip-mini-route">
+      <div class="trip-mini-station"><span>출발</span><strong>${ticket.fromStn}</strong><time>${ticket.depTime||"-"}</time></div>
+      <div class="trip-mini-route-line"><span></span><b>→</b><span></span></div>
+      <div class="trip-mini-station end"><span>도착</span><strong>${ticket.toStn}</strong><time>${ticket.arrTime||"-"}</time></div>
+    </div>
+    <div class="trip-mini-footer">
+      <span class="trip-mini-detail"><b>${stateIcon}</b>${stateDetail}</span>
+      ${seat?`<span class="trip-mini-seat">${seat}</span>`:""}
+    </div>
+  </article>`;
 }
 // 홈 상단 여정 카드 갱신 (간략)
 function updateHomeTripWidget(){
