@@ -1136,29 +1136,40 @@ function _simCauseSummary(t){
 function _simEventLog(t){
   if(!_simDelayOn||_simExpired(t))return [];
   const pr=_simProfile(t); if(!pr.cd.length)return [];
+  // 타임라인과 같은 표시 배열을 사용한다. 지난 역은 확정값, 남은 역은 현재 갱신본이다.
+  const view=_simViewArr(t);
   const timed=t.stops.filter(s=>hasTime(s.arr)||hasTime(s.dep));
-  const fmt=mm=>{const v=(((mm%1440)+1440)%1440);return String(Math.floor(v/60)).padStart(2,'0')+':'+String(Math.round(v%60)).padStart(2,'0');};
-  const lines=(pr.events||[]).map(e=>({m:pr.m[e.idx]||0, s:(()=>{
-    const st=timed[e.idx]?timed[e.idx].s:'';
-    const clk=pr.m[e.idx]!=null?fmt(pr.m[e.idx]+(e.delta>0?e.delta:0)):'';
-    if(e.delta>0)return `[${clk}] ${st} · ${e.cause} +${Math.round(e.delta)}분`;
-    return `[${clk}] ${st} · ${e.cause||'운전 정리'} −${Math.max(1,Math.abs(Math.round(e.delta)))}분`;
+  const fmt=mm=>{const v=(((mm%1440)+1440)%1440);return String(Math.floor(v/60)).padStart(2,"0")+":"+String(Math.round(v%60)).padStart(2,"0");};
+  const cumulative=idx=>Math.max(0,Math.round(view[idx]||0));
+  const cumulativeText=idx=>{const v=cumulative(idx);return v>0?`누적 +${v}분`:"정시";};
+  const eventClock=idx=>fmt((pr.m[idx]||0)+cumulative(idx));
+  const lines=(pr.events||[]).map(e=>({m:pr.m[e.idx]||0,s:(()=>{
+    const st=timed[e.idx]?timed[e.idx].s:"";
+    const amount=Math.max(1,Math.abs(Math.round(e.delta||0)));
+    if(e.delta>0)return `[${eventClock(e.idx)}] ${st} · ${e.cause} · ${cumulativeText(e.idx)} (구간 +${amount}분)`;
+    return `[${eventClock(e.idx)}] ${st} · ${e.cause||"운전 정리"} · ${cumulativeText(e.idx)} (${amount}분 회복)`;
   })()}));
   const covered=new Set((pr.events||[]).filter(e=>e.delta<0).map(e=>e.idx));
-  for(let i=1;i<pr.cd.length;i++){
-    const drop=pr.cd[i-1]-pr.cd[i];
+  for(let i=1;i<view.length;i++){
+    const drop=(view[i-1]||0)-(view[i]||0);
     if(drop>0&&!covered.has(i))
-      lines.push({m:pr.m[i]||0, s:`[${fmt(pr.m[i]||0)}] ${timed[i]?timed[i].s:''} · 회복 운전 −${drop}분`});
+      lines.push({m:pr.m[i]||0,s:`[${eventClock(i)}] ${timed[i]?timed[i].s:""} · 회복 운전 · ${cumulativeText(i)} (${drop}분 회복)`});
   }
   const nmL=_simNowFor(pr);
   const dis=_dispatchInfo(t);
-  dis.events.forEach(e=>{ if(nmL>=e.m) lines.push({m:e.m, s:`[${fmt(e.m)}] ${e.txt}`}); });
-  const peak=Math.max.apply(null,pr.cd), peakIdx=pr.cd.indexOf(peak);
-  if(peak>=8){ const f=lines.find(x=>x.s.includes('회복 운전')&&x.m>(pr.m[peakIdx]||0));
-    if(f) f.s=f.s.replace('회복 운전','관제 우선권 부여 · 회복 운전'); }
+  dis.events.forEach(e=>{
+    if(nmL<e.m)return;
+    const baseTxt=(e.txt||e.cause||"운행 순서 조정").replace(/\s[+−]\d+(?:\.\d+)?분$/u,"");
+    const amount=Math.max(1,Math.abs(Math.round(e.delta||0)));
+    const change=e.delta<0?`${amount}분 회복`:`구간 +${amount}분`;
+    lines.push({m:e.m,s:`[${eventClock(e.idx)}] ${baseTxt} · ${cumulativeText(e.idx)} (${change})`});
+  });
+  const peak=Math.max.apply(null,view),peakIdx=view.indexOf(peak);
+  if(peak>=8){const f=lines.find(x=>x.s.includes("회복 운전")&&x.m>(pr.m[peakIdx]||0));
+    if(f)f.s=f.s.replace("회복 운전","관제 우선권 부여 · 회복 운전");}
   const veh=_simVeh(t);
-  if(veh&&pr.m[veh.sec]!=null&&_simNowFor(pr)>=pr.m[veh.sec])
-    lines.push({m:pr.m[veh.sec], s:`[${fmt(pr.m[veh.sec])}] ${timed[veh.sec]?timed[veh.sec].s:''} · 차량 ${veh.type} +${veh.amt}분`});
+  if(veh&&pr.m[veh.sec]!=null&&nmL>=pr.m[veh.sec])
+    lines.push({m:pr.m[veh.sec],s:`[${eventClock(veh.sec)}] ${timed[veh.sec]?timed[veh.sec].s:""} · 차량 ${veh.type} · ${cumulativeText(veh.sec)} (구간 +${veh.amt}분)`});
   lines.sort((a,b)=>a.m-b.m);
   return lines.map(x=>x.s);
 }
