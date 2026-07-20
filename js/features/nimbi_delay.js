@@ -651,7 +651,7 @@ function _computeProfile(t){
       const localProb=localWx?Math.max(.7,Math.min(1.9,localWx.probMult/Math.max(1,ctx.probMult))):1;
       const localMag=localWx?Math.max(.75,Math.min(1.8,localWx.magMult/Math.max(1,ctx.magMult))):1;
       const exposure=Math.min(1, 0.4*(metroPar?1:0)+0.5*cong+(rush?0.2:0)+(singleTrack?0.3:0));
-      const ra=_seededRand(seed+i*2.7+0.5), rb=_seededRand(seed+i*2.7+1.9), rc=_seededRand(seed+i*2.7+3.3), rd=_seededRand(seed+i*2.7+5.1), re=_seededRand(seed+i*2.7+6.7);
+      const ra=_seededRand(seed+i*2.7+0.5), rb=_seededRand(seed+i*2.7+1.9), rc=_seededRand(seed+i*2.7+3.3), rd=_seededRand(seed+i*2.7+5.1);
       const pInc=evBase*(0.35+exposure*1.3)*localProb;
       let inc=0, cause=null;
       if(ra<pInc){
@@ -673,10 +673,10 @@ function _computeProfile(t){
       // ═══ v2: 회복 운전 강화 (회복 우선도 배수) ═══
       let rec=0, dcut=0;
       const arrivalDelay=Math.max(0,cur+inc);
-      // 지연 상태로 2분 이상 정차하는 역은 지연 크기·신규 지연 발생 여부와 무관하게
-      // 거의 대부분(결정적 시드 기준 94%) 1분 단축한다. 최소 정차 1분은 보장한다.
+      // 1분이라도 지연된 상태로 2분 이상 정차하는 역은 항상 1분 단축한다.
+      // 최소 정차 1분은 보장한다.
       const canCut=arrivalDelay>0&&dwell[i+1]>=2;
-      if(canCut&&re<0.94)dcut=Math.min(1,dwell[i+1]-1,arrivalDelay);
+      if(canCut)dcut=Math.min(1,dwell[i+1]-1,arrivalDelay);
       if(arrivalDelay>0 && inc===0){
         const recW=_recoveryWeight(Math.round(cur));
         const urg=Math.min(1, Math.pow(cur/40, 0.6));
@@ -762,8 +762,14 @@ function _segmentIndex(){
 // 무정차 통과 판정
 function _isPassStop(t, stnName){
   if(!t.stops)return false;
-  const s=t.stops.find(x=>x.s===stnName);
-  return s&&(!hasTime(s.arr)&&!hasTime(s.dep));
+  const raw=t.stops.find(x=>x.s===stnName);
+  if(raw&&(raw.arr==='통과'||raw.dep==='통과'))return true;
+  const valid=t.stops.filter(s=>hasTime(s.arr)||hasTime(s.dep));
+  const vi=valid.findIndex(x=>x.s===stnName);
+  if(vi<=0||vi>=valid.length-1)return false;
+  const s=valid[vi];
+  if(s.arr==='통과'||s.dep==='통과')return true;
+  return (hasTime(s.arr)&&!hasTime(s.dep))||(!hasTime(s.arr)&&hasTime(s.dep));
 }
 
 let _dispCache={};
@@ -785,7 +791,8 @@ function _dispatchInfo(t){
     for(let i=1;i<timed.length&&hits<2;i++){
       const p=rp[timed[i].s]; if(p==null)continue;
       const arrRaw=toMin(hasTime(timed[i].arr)?timed[i].arr:timed[i].dep); if(arrRaw==null)continue;
-      const myArr=_svMin(arrRaw)+(pr.cd[i]||0);
+      // 앞 구간에서 이미 받은 연쇄 지연까지 포함한 실제 도착 예정 시각으로 비교한다.
+      const myArr=_svMin(arrRaw)+(pr.cd[i]||0)+(adj?.[i]||0);
       const list=idx[timed[i].s+':'+p]; if(!list)continue;
       for(const u of list){
         if(u.no===t.no)continue;
@@ -793,8 +800,9 @@ function _dispatchInfo(t){
         if(gap<0||gap>=45)continue;
         const ut=getTrainByNo(u.no); if(!ut)continue;
         const isPassStopU=_isPassStop(ut, timed[i].s);
-        if(isPassStopU&&!_NO_PASS_TRACK.has(timed[i].s))continue;
-        const ucd=_simProfile(ut).cd; const ud=ucd[u.idx]||0; if(ud<=0)continue;
+        // 통과 열차와 정차 열차의 추월 관계는 아래 역간 순서 계층에서만 처리한다.
+        if(isPassStopU)continue;
+        const ucd=_simActualArr(ut); const ud=ucd[u.idx]||0; if(ud<=0)continue;
         const overlap=(u.dep+ud)-myArr;
         if(overlap<0)continue;
         const w=Math.min(10,Math.ceil(overlap)+1);
@@ -811,8 +819,9 @@ function _dispatchInfo(t){
   }
 
   // 2) 역간 진입 순서 충돌
-  // 빠른 선행 열차가 지연되어 후속 열차보다 늦게 구간에 들어오게 되면,
-  // 후속 열차를 직전 역에서 최소 1분 간격이 확보될 때까지 기다리게 한다.
+  // 빠른 선행 열차가 지연되어 후속 열차보다 늦게 구간에 들어오고,
+  // 다음 역 전까지 실제 추월하게 될 때만 후속 열차를 직전 역에서 기다리게 한다.
+  // 다음 역에서 나란히 도착해 정상적으로 추월할 수 있으면 연쇄 지연을 만들지 않는다.
   const segIdx=_segmentIndex();
   let segmentHits=0;
   for(let i=0;i<timed.length-1&&segmentHits<3;i++){
@@ -826,28 +835,77 @@ function _dispatchInfo(t){
     for(const u of list){
       if(u.no===t.no)continue;
       const plannedLead=myStart-u.start;
-      if(plannedLead<0||plannedLead>=45)continue;
+      if(plannedLead<=-45||plannedLead>=45)continue;
       const ut=getTrainByNo(u.no);
       if(!ut||!_sameSegmentTrack(t,ut,from.s,to.s))continue;
-      // 예정상 먼저 진입하고, 더 빠르거나 우선등급인 열차만 선행 열차로 본다.
-      if(u.duration>myEnd-myStart&&_gradeOps(ut.grade).prio<=_gradeOps(t.grade).prio)continue;
-      if(plannedLead===0&&u.duration>=myEnd-myStart&&
-        _gradeOps(ut.grade).prio<=_gradeOps(t.grade).prio)continue;
-      const sourceDelay=_simActualArr(ut)[u.idx]||0;
-      if(sourceDelay<=0)continue;
       const currentDelay=(pr.cd[i]||0)+(adj?.[i]||0);
-      const hold=_segmentOrderHold(u.start,sourceDelay,myStart,currentDelay);
-      if(hold<=0)continue;
-      if(!adj)adj=new Array(pr.cd.length).fill(0);
-      // 출발 순서를 맞추기 위한 대기는 다음 구간에도 그대로 전파한다.
-      for(let j=i;j<pr.cd.length;j++)adj[j]+=hold;
-      out.events.push({
-        m:pr.m[i]||0,idx:i,delta:hold,cause:'선행 열차 연쇄 지연',
-        sourceNo:ut.no,holdAtStop:true,
-        txt:`${from.s} 출발 순서 조정 · 선행 ${ut.grade} ${ut.no} 통과 대기 +${hold}분`
-      });
-      segmentHits++;
-      break;
+      const currentEndDelay=(pr.cd[i+1]||0)+(adj?.[i+1]||0);
+      const sourceBase=_simProfile(ut).cd;
+      const sourceActual=_simActualArr(ut);
+
+      if(plannedLead<=0&&plannedLead>-45){
+        // 예정상 앞선(같은 시각 포함) 빠른 현재 열차가 지연되어 완행 뒤로 밀리면,
+        // 다음 대피 가능역까지 선행 완행과 최소 1분 간격을 유지한다.
+        const faster=_gradeOps(t.grade).prio>_gradeOps(ut.grade).prio||
+          (myEnd-myStart)<u.duration;
+        const otherStartDelay=sourceBase[u.idx]||0;
+        const myActualStart=myStart+currentDelay;
+        const otherActualStart=u.start+otherStartDelay;
+        if(faster&&myActualStart>otherActualStart){
+          const otherActualEnd=u.end+(sourceBase[u.idx+1]||otherStartDelay);
+          const myActualEnd=myEnd+currentEndDelay;
+          const followDelay=Math.min(15,Math.max(0,Math.ceil(otherActualEnd+1-myActualEnd)));
+          if(followDelay>0){
+            if(!adj)adj=new Array(pr.cd.length).fill(0);
+            for(let j=i+1;j<pr.cd.length;j++)adj[j]+=followDelay;
+            out.events.push({
+              m:pr.m[i+1]||0,idx:i+1,delta:followDelay,cause:'선행 열차 연쇄 지연',
+              sourceNo:ut.no,followGap:true,
+              txt:`${from.s}–${to.s} 간격 유지 · 선행 ${ut.grade} ${ut.no} +${followDelay}분`
+            });
+            segmentHits++;
+            break;
+          }
+        }
+      }
+
+      if(plannedLead>=0&&plannedLead<45){
+        // 예정상 먼저 진입하고, 더 빠르거나 우선등급인 열차만 선행 열차로 본다.
+        if(u.duration>myEnd-myStart&&_gradeOps(ut.grade).prio<=_gradeOps(t.grade).prio)continue;
+        if(plannedLead===0&&u.duration>=myEnd-myStart&&
+          _gradeOps(ut.grade).prio<=_gradeOps(t.grade).prio)continue;
+        const sourceDelay=sourceActual[u.idx]||0;
+        if(sourceDelay<=0)continue;
+        const sourceEnd=u.end+(sourceActual[u.idx+1]||sourceDelay);
+        const myActualEnd=myEnd+currentEndDelay;
+        // 운암→언양 예시처럼 다음 역 도착이 같으면 그 역에서 정상적으로 추월할 수 있다.
+        if(sourceEnd>=myActualEnd)continue;
+        // 추풍령처럼 대피할 수 없는 역에서는 완행을 세우지 않고 빠른 열차가 다음 역까지 따른다.
+        if(_NO_PASS_TRACK.has(from.s))continue;
+        const hold=_segmentOrderHold(u.start,sourceDelay,myStart,currentDelay);
+        if(hold<=0)continue;
+        if(!adj)adj=new Array(pr.cd.length).fill(0);
+        for(let j=i;j<pr.cd.length;j++)adj[j]+=hold;
+        out.events.push({
+          m:pr.m[i]||0,idx:i,delta:hold,cause:'선행 열차 연쇄 지연',
+          sourceNo:ut.no,holdAtStop:true,
+          txt:`${from.s} 출발 순서 조정 · 선행 ${ut.grade} ${ut.no} 통과 대기 +${hold}분`
+        });
+        segmentHits++;
+        break;
+      }
+    }
+  }
+  // 연쇄 지연 상태로 도착한 뒤 2분 이상 정차하면 다음 역부터 1분을 반드시 회복한다.
+  if(adj){
+    const blockedAt=new Set(out.events.filter(e=>e.holdAtStop||e.followGap).map(e=>e.idx));
+    for(let i=1;i<timed.length;i++){
+      const a=toMin(timed[i].arr),d=toMin(timed[i].dep);
+      const dwell=(a!=null&&d!=null)?((d-a+1440)%1440):0;
+      if(dwell<2||adj[i]<=0||adj[i]<(adj[i-1]||0)||blockedAt.has(i))continue;
+      for(let j=i;j<adj.length;j++)adj[j]=Math.max(0,adj[j]-1);
+      out.events.push({m:pr.m[i]||0,idx:i,delta:-1,cause:"정차시간 단축",dispatchRecovery:true,
+        txt:timed[i].s+" 정차시간 1분 단축 · 연쇄 지연 회복"});
     }
   }
   out.adj=adj;
@@ -1021,7 +1079,8 @@ function _simDelayPairAtStop(t,idx){
   const dep=_simDelayAtStop(t,idx);
   if(!_simDelayOn||idx<=0||dep<=0)return {arr:dep,dep,shortened:false,held:false};
   const pr=_simProfile(t);
-  const shortened=(pr.events||[]).some(e=>e.idx===idx&&e.delta<0&&e.cause==='정차시간 단축');
+  const shortened=(pr.events||[]).some(e=>e.idx===idx&&e.delta<0&&e.cause==='정차시간 단축')||
+    (_dispatchInfo(t).events||[]).some(e=>e.idx===idx&&e.dispatchRecovery);
   const held=(_dispatchInfo(t).events||[])
     .filter(e=>e.idx===idx&&e.holdAtStop)
     .reduce((sum,e)=>sum+(e.delta||0),0);
