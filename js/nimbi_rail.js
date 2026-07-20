@@ -7010,7 +7010,7 @@ function renderTripWidgetCompact(active){
     stateDetail=`${current} · ${ticket.toStn}까지 ${diff!=null?fmtEta(diff):"운행 중"}`;
   }
   const seat=[ticket.seatClassLabel,seatSummary(ticket.seats)].filter(Boolean).join(" · ");
-  return `<article class="trip-mini" style="--trip-color:${gc};--trip-soft:${gc}1f" onclick="switchTab(&quot;ticket&quot;)">
+  return `<article class="trip-mini" style="--trip-color:${gc};--trip-soft:${gc}1f" onclick="openQRPopup(&quot;${ticket.id}&quot;)">
     <span class="trip-mini-accent" aria-hidden="true"></span>
     <div class="trip-mini-kicker">
       <span class="trip-mini-title">나의 다음 여정</span>
@@ -11243,7 +11243,7 @@ function _renderJourney(){
   const _repHTML=_rep?`<div class="jr-log-report">
         ${_rep.first?`<div><span class="jr-rk">최초 원인</span>${_opsEsc(_rep.first)}${_wx!=='맑음'?` · <span class="jr-wx">${_opsEsc(_wx)}</span>`:''}</div>`:''}
         ${_rep.spread.length?`<div><span class="jr-rk">전파 원인</span>${_opsEsc(_rep.spread.join(' · '))}</div>`:''}
-        <div><span class="jr-rk">회복 운전</span>${_rep.recovered>0?`약 ${_rep.recovered}분 회복`:'회복 없음'}</div>
+        <div><span class="jr-rk">회복 운전</span>${_rep.recovered>0?`현재까지 총 ${_rep.recovered}분 회복`:"회복 없음"}</div>
         <div><span class="jr-rk">종착 지연</span>${_rep.final>0?`약 ${_rep.final}분 예상`:'정시 도착 예상'}</div>
         ${_rep.affects?`<div><span class="jr-rk">영향 열차</span>다음 회차 ${_opsEsc(_rep.affects)} 열차 지연 우려</div>`:''}
       </div>`:'';

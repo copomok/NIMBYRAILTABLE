@@ -1179,8 +1179,12 @@ function _simDelayReport(t){
   if(!_simDelayOn||_simExpired(t))return null;
   const pr=_simProfile(t); if(!pr.cd||!pr.cd.length)return null;
   const view=_simViewArr(t),fin=view[view.length-1]||0;
+  const nm=_simNowFor(pr);
+  let recovered=0;
+  for(let i=1;i<view.length&&pr.m[i]<=nm;i++)recovered+=Math.max(0,(view[i-1]||0)-(view[i]||0));
+  recovered=Math.round(recovered);
   const incs=(pr.events||[]).concat(_dispatchInfo(t).events||[]).filter(e=>e.delta>0);
-  if(!incs.length&&fin<=0&&!(pr.recovered>0))return null;
+  if(!incs.length&&fin<=0&&recovered<=0)return null;
   const first=pr.inheritedFrom?`전 편성 회차 지연 (${pr.inheritedFrom} 열차)`:(incs[0]?incs[0].cause:null);
   const spread=[]; incs.forEach(e=>{ if(e.cause!==((incs[0]||{}).cause)&&e.cause!=='전 편성 회차 지연'&&!spread.includes(e.cause))spread.push(e.cause); });
   let affects=null;
@@ -1189,7 +1193,7 @@ function _simDelayReport(t){
     const nt=getTrainByNo(succNo);
     if(nt){ const buf=_turnaroundBuffer(t,nt); if(buf!=null&&fin>Math.max(3,buf))affects=succNo; }
   }
-  return {first, spread:spread.slice(0,3), recovered:pr.recovered||0, final:fin, affects};
+  return {first, spread:spread.slice(0,3), recovered, final:fin, affects};
 }
 function _simOutlook(limit){
   if(!_simDelayOn)return null;
