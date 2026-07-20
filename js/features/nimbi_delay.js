@@ -49,11 +49,19 @@ let _simDelayOn=(()=>{try{return localStorage.getItem('nimbi_simdelay')==='1';}c
 function _simCalendarDayKey(d){
   return d.getFullYear()*10000+(d.getMonth()+1)*100+d.getDate();
 }
+// 이 파일은 공통 UI 스크립트(nimbi_rail.js)보다 먼저 로드된다.
+// 자정 직후 이전 운행일 기록을 정리할 때도 사용할 수 있도록 초기 판정용 파서를 자체 보유한다.
+function _simClockToMin(value){
+  if(!value)return null;
+  const match=String(value).match(/(\d+):(\d+)/);
+  return match?Number(match[1])*60+Number(match[2]):null;
+}
 function _simTrainCrossesMidnight(t){
   if(!t||!t.stops)return false;
   let prev=null;
   for(const s of t.stops){
-    const raw=toMin(hasTime(s.dep)?s.dep:s.arr);
+    const depHasTime=typeof hasTime==='function'?hasTime(s.dep):/\d+:\d+/.test(s.dep||'');
+    const raw=_simClockToMin(depHasTime?s.dep:s.arr);
     if(raw==null)continue;
     if(prev!=null&&raw<prev-60)return true;
     prev=raw;
