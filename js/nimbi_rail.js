@@ -255,8 +255,8 @@ function acShow(iid,did){
   // 예매 역 입력 필드면 bookable 역만 표시
   const isBookField=['book-stn-input','pass-from','pass-to'].includes(iid);
   const pool=isBookField?getBookableStations():ALL_STATIONS;
-  // 초성 검색 포함
-  const hits=pool.filter(s=>matchesQuery(s,q)).slice(0,12);
+  // 초성 검색 포함 · 기차 탭 검색이므로 전철 전용역(무정차)은 제외
+  const hits=pool.filter(s=>matchesQuery(s,q)&&!_isMetroOnly(s)).slice(0,12);
   if(!hits.length){drop.className='ac-dropdown';drop.style.display='none';return;}
   // 하이라이트
   drop.innerHTML=hits.map(s=>{
@@ -2804,7 +2804,7 @@ function trackTrainOnMap(trainNo){
     '경부선':'gyeongbu','경부고속선':'gyeongbuhs','호남고속선':'honamhs','호남선':'honam',
     '전라선':'jeolla','중앙선':'jungang','동해선':'donghae','영동선':'yeongdong',
     '강릉선':'gangreung','중부내륙선':'jungnaelyuk','경전선':'gyeongjeon','제주선':'jeju','충북선':'chungbuk','장항선':'janghang','남부내륙선':'nambunaelyuk',
-    '태안선':'taean','소백선':'sobaek','경북선':'gyeongbuk','태백선':'taebaek','정선선':'jeongseon'
+    '서산선':'seosan','태안선':'taean','소백선':'sobaek','경북선':'gyeongbuk','태백선':'taebaek','정선선':'jeongseon'
   };
 
   // 현재 위치 기준으로 실제 운행 중인 노선 판단
@@ -3118,7 +3118,7 @@ const GRADE_COLORS = {
 };
 
 // 노선명 → MAP_LINES 키, 노선별 인접역 쌍 캐시 (구간 소속 판별용)
-const _lineNameToKey={'경부선':'gyeongbu','경부고속선':'gyeongbuhs','호남고속선':'honamhs','호남선':'honam','전라선':'jeolla','중앙선':'jungang','동해선':'donghae','영동선':'yeongdong','강릉선':'gangreung','중부내륙선':'jungnaelyuk','경전선':'gyeongjeon','제주선':'jeju','충북선':'chungbuk','장항선':'janghang','남부내륙선':'nambunaelyuk','태안선':'taean','소백선':'sobaek','경북선':'gyeongbuk','태백선':'taebaek','정선선':'jeongseon'};
+const _lineNameToKey={'경부선':'gyeongbu','경부고속선':'gyeongbuhs','호남고속선':'honamhs','호남선':'honam','전라선':'jeolla','중앙선':'jungang','동해선':'donghae','영동선':'yeongdong','강릉선':'gangreung','중부내륙선':'jungnaelyuk','경전선':'gyeongjeon','제주선':'jeju','충북선':'chungbuk','장항선':'janghang','남부내륙선':'nambunaelyuk','서산선':'seosan','태안선':'taean','소백선':'sobaek','경북선':'gyeongbuk','태백선':'taebaek','정선선':'jeongseon'};
 const _mapEdgeCache={};
 function _mapLineEdgeSet(key){
   if(_mapEdgeCache[key])return _mapEdgeCache[key];
@@ -3814,6 +3814,25 @@ nambunaelyuk:{
     {n:'단성',x:433,y:782},
     {n:'진주',x:466,y:820},
     {n:'사천',x:462,y:849}
+    ]}
+  ]
+},
+
+seosan:{
+  name:'서산선', color:'#14b8a6',
+  routes:[
+    {color:'#14b8a6', stations:[
+    {n:'수영',x:194,y:217},
+    {n:'봉담',x:184,y:236},
+    {n:'왕림',x:176,y:252},
+    {n:'향남',x:168,y:268},
+    {n:'청북',x:159,y:283},
+    {n:'안중',x:150,y:296},
+    {n:'현덕',x:142,y:308},
+    {n:'송악',x:132,y:317},
+    {n:'당진',x:122,y:323},
+    {n:'사기소(대운산)',x:100,y:338},
+    {n:'서산',x:78,y:352}
     ]}
   ]
 },
@@ -9280,6 +9299,12 @@ function _modeStnSetsInit(){
     _metroStnSet=new Set();
     METRO_LINES.forEach(l=>(l.routes||[{stations:l.stations}]).forEach(r=>r.stations.forEach(n=>_metroStnSet.add(n))));
   }
+}
+// 전철 전용역: 전철 노선에는 있으나 어떤 열차도 정차하지 않는 역(통과만 포함)
+// → 기차 탭 역 검색에서 제외 대상
+function _isMetroOnly(name){
+  _modeStnSetsInit();
+  return !!(_metroStnSet&&_metroStnSet.has(name)&&_trainStnSet&&!_trainStnSet.has(name));
 }
 // 모드 전환 + 같은 역 상세 열기 (전철↔기차 병행역 빠른 이동)
 function switchModeStation(mode,name){
