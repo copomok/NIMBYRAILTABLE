@@ -887,6 +887,34 @@ function _priorRealStopIndex(t,timed,idx){
   return -1;
 }
 
+// 계획된 역 추월 지점: t가 '통과선 보유역'에서 정차 중인 ut를 통과로 추월하도록
+// 시각표에 짜여 있으면, 그 역의 인덱스(t의 timed 기준)를 돌려준다. (없으면 -1)
+// 이 역 이후로는 t가 ut의 앞이므로 ut를 t의 선행 열차로 보아 붙잡지 않는다.
+let _overtakeCache={};
+function _overtakePassStation(t, ut){
+  const key=t.no+'>'+ut.no;
+  if(_overtakeCache[key]!==undefined)return _overtakeCache[key];
+  const timed=t.stops.filter(s=>hasTime(s.arr)||hasTime(s.dep));
+  let found=-1;
+  const norm=d=>{d=((d%1440)+1440)%1440;return d>720?d-1440:d;}; // 자정 넘김 보정
+  for(let k=1;k<timed.length-1;k++){
+    const S=timed[k].s;
+    if(_NO_PASS_TRACK.has(S))continue;      // 통과선 미보유역은 통과 추월 불가
+    if(!_isPassStop(t,S))continue;          // t가 S를 통과해야 함
+    const us=ut.stops.find(x=>x.s===S);
+    if(!us||_isPassStop(ut,S))continue;     // ut는 S에 실제 정차
+    if(!(hasTime(us.arr)&&hasTime(us.dep)))continue; // ut 도착·출발 모두 있는 정차
+    // 시각표상 t가 S를 ut의 출발 시각 이하(소폭 +1분 여유)로 통과 → ut가 아직 역에 있을 때
+    // t가 통과하며 추월. ut가 이미 한참 앞서 떠난 역은 추월이 아니므로 제외.
+    const tArr=toMin(timed[k].arr)??toMin(timed[k].dep);
+    const uDep=toMin(us.dep);
+    if(tArr==null||uDep==null)continue;
+    if(norm(tArr-uDep)>1)continue;
+    found=k;break;
+  }
+  return _overtakeCache[key]=found;
+}
+
 function _minimumFollowHeadway(leaderDelay,followerDelay,stationName){
   const delayed=leaderDelay>0||followerDelay>0;
   let minutes=delayed?1:3;
@@ -968,6 +996,11 @@ function _dispatchInfo(t){
       if(plannedLead<=-45||plannedLead>=45)continue;
       const ut=getTrainByNo(u.no);
       if(!ut||!_sameSegmentTrack(t,ut,from.s,to.s))continue;
+      // 계획된 역 추월 이후: t가 통과선 보유역에서 정차 중인 ut를 이미(또는 이 역에서)
+      // 추월하도록 시각표가 짜여 있으면, ut는 더 이상 t의 선행이 아니다.
+      // 소폭 지연으로 t가 잠시 뒤처져도 붙잡지 않고 예정대로 추월한다.
+      const _ovk=_overtakePassStation(t,ut);
+      if(_ovk>=0&&_ovk<=i)continue;
       const currentDelay=(pr.cd[i]||0)+(adj?.[i]||0);
       const currentEndDelay=(pr.cd[i+1]||0)+(adj?.[i+1]||0);
       const sourceBase=_simProfile(ut).cd;
