@@ -10199,9 +10199,7 @@ function _outlookHTML(){
     return `<button class="ol-row" onclick="openJourney('${_opsEsc(r.t.no)}')"><span class="ol-grade" style="background:${gc}">${_opsEsc(gl(r.t.grade))}</span><span class="ol-no">${_opsEsc(r.t.no)}</span><span class="ol-route">${_opsEsc(r.t.stops[0].s)}<span class="ol-arr">→</span>${_opsEsc(r.t.dest)}</span><span class="ol-rng ol-sev-${sev}">${rng}</span>${r.cause?`<span class="ol-cz">(${_opsEsc(r.cause)})</span>`:''}</button>`;
   }).join('');
   return `<div class="outlook-card${bad?' bad':''}">
-    <div class="ol-head">${wxIco} 오늘의 운행 전망 ${infoBtn} <span class="ol-wx">${_opsEsc(headLabel)} · ${o.ctx.weekend?'주말·공휴일':'평일'} · ${_opsEsc(srcLabel)}</span></div>
-    ${peakWx?`<div class="ol-forecast-source">📍 ${peakWx}${o.ctx.precipitation>=.5?` · 시간당 ${Math.round(o.ctx.precipitation*10)/10}㎜`:''}</div>`:''}
-    ${hl&&hl.mixed?`<div class="ol-forecast-source">🗺️ 지역별 기상 차이를 반영해 지연 가능성을 계산했습니다 · <b>ⓘ</b>로 지역별 확인</div>`:''}
+    <div class="ol-head">${wxIco} 오늘의 운행 전망 ${infoBtn} <span class="ol-wx">${_opsEsc(headLabel)} · ${o.ctx.weekend?'주말·공휴일':'평일'}</span></div>
     ${o.rows.length?`<div class="ol-desc">${bad?`${_opsEsc(headWeather)} 예보를 반영해 다음 열차의 지연 가능성을 계산했습니다.`:'실제 예보를 반영한 결과 다음 열차의 지연 가능성이 있습니다.'}</div>${rows}${o.total>8?`<button class="ol-allbtn" onclick="window._olAll=!window._olAll;var e=document.getElementById('result-delay');if(e)renderSIDelay(e)">${window._olAll?'접기 ▲':`전체 ${o.total}편 보기 ▼`}</button>`:''}`
       :`<div class="ol-desc">현재 지연이 예보된 열차가 없습니다. 전 열차 정상 운행이 예상됩니다.</div>`}
     <div class="ol-caveat">
@@ -10269,7 +10267,7 @@ function closeDelayExplanation(){
 }
 
 // ── ⓘ 지역별 운행 날씨 모달 ──
-let _wxModalReturnFocus=null, _wxModalKeyHandler=null;
+let _wxModalReturnFocus=null, _wxModalKeyHandler=null, _wxModalPageLock=null;
 function openRegionalWeatherModal(){
   document.getElementById('weather-modal')?.remove();
   document.getElementById('weather-modal-backdrop')?.remove();
@@ -10304,6 +10302,14 @@ function openRegionalWeatherModal(){
       <button onclick="closeRegionalWeatherModal()" aria-label="닫기">✕</button>
     </div>
     <div class="weather-modal-body">${body}</div>`;
+  // 배경 스크롤·터치 차단(탑승 여정 모달과 동일 방식)
+  const docBody=document.body, root=document.documentElement, scrollY=window.scrollY;
+  _wxModalPageLock={scrollY,
+    body:{position:docBody.style.position,top:docBody.style.top,left:docBody.style.left,right:docBody.style.right,width:docBody.style.width,overflow:docBody.style.overflow},
+    rootOverflow:root.style.overflow};
+  docBody.classList.add('journey-modal-open'); docBody.style.top=`-${scrollY}px`; root.style.overflow='hidden';
+  backdrop.addEventListener('touchmove',e=>e.preventDefault(),{passive:false});
+  modal.addEventListener('touchmove',e=>e.stopPropagation(),{passive:true});
   document.body.appendChild(backdrop);
   document.body.appendChild(modal);
   _wxModalKeyHandler=e=>{ if(e.key==='Escape')closeRegionalWeatherModal(); };
@@ -10316,6 +10322,9 @@ function closeRegionalWeatherModal(){
   if(_wxModalKeyHandler){ document.removeEventListener('keydown',_wxModalKeyHandler); _wxModalKeyHandler=null; }
   if(modal){ modal.classList.add('closing'); setTimeout(()=>modal.remove(),200); }
   if(backdrop){ backdrop.classList.add('closing'); setTimeout(()=>backdrop.remove(),200); }
+  if(_wxModalPageLock){ const body=document.body, root=document.documentElement, lock=_wxModalPageLock;
+    body.classList.remove('journey-modal-open'); Object.assign(body.style,lock.body); root.style.overflow=lock.rootOverflow;
+    window.scrollTo(0,lock.scrollY); _wxModalPageLock=null; }
   if(_wxModalReturnFocus&&typeof _wxModalReturnFocus.focus==='function'){ try{_wxModalReturnFocus.focus();}catch(e){} }
   _wxModalReturnFocus=null;
 }
