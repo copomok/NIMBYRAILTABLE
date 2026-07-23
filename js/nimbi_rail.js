@@ -9959,42 +9959,56 @@ function _siPlatformTrainsHTML(name, trains){
   `;
 }
 
-// ── 역 전광판 (출발 안내 LED) ──
+// ── 역 전광판 공통: 운행일 종료 시 '운행 종료 ↔ 내일 첫 열차' 교대 표시 ──
+function _sbEndedHTML(colsHtml, tmrRowsHtml, firstStr, kindLabel){
+  return `<div class="stn-board-ended">
+    <div class="sbe-flip sbe-a">
+      <div class="sbe-moon">🌙</div>
+      <div class="sbe-msg">금일 운행이 종료되었습니다</div>
+      <div class="sbe-sub">운행일 기준 04:00 ~ 익일 03:59${firstStr?` · 내일 첫 ${kindLabel} <b>${firstStr}</b>`:''}</div>
+    </div>
+    <div class="sbe-flip sbe-b">
+      <div class="sbe-next-head">🚆 내일 운행 예정</div>
+      ${colsHtml}
+      ${tmrRowsHtml||'<div class="stn-board-empty">내일 운행 정보 없음</div>'}
+    </div>
+  </div>`;
+}
+
+// ── 역 전광판 (출발 안내 LED) ── 오늘(운행일 04:00~익일 03:59) 열차만 표시
 function _siDepartureBoardHTML(name, trains, limit){
   limit=limit||6;
   const trainName=name.endsWith('역')?name.slice(0,-1):name;
   const now=new Date();
   const nowMin=now.getHours()*60+now.getMinutes();
+  const nowSrv=_srvMin(nowMin);
   const clock=`${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
   // 열차별 승강장 매핑 (게임 DB 우선, 없으면 휴리스틱)
   const platOf={};
   trains.forEach(t=>{ const p=_platformForTrain(name, trainName, trains, t); if(p!=null) platOf[t.no]=p; });
-  // 지금 이후 출발 열차 추출
-  const rows=trains.map(t=>{
+  // 출발판 후보(당역종착 제외) — 운행일 기준 시각(diff = 운행일 분 차이)
+  const cand=trains.map(t=>{
     const s=t.stops.find(x=>x.s===trainName);
     if(!s) return null;
-    if(t.dest===trainName||(hasTime(s.arr)&&!hasTime(s.dep))) return null; // 당역종착은 출발판 제외(도착판에만)
+    if(t.dest===trainName||(hasTime(s.arr)&&!hasTime(s.dep))) return null; // 당역종착은 출발판 제외
     const depStr=s.dep||s.arr; if(!depStr) return null;
     const timed=t.stops.filter(x=>hasTime(x.arr)||hasTime(x.dep));
     const si=timed.findIndex(x=>x.s===trainName);
     const delay=si>=0?_simDelayAtStop(t,si):0;
     const expected=delay>0?addMinToClock(depStr,delay):depStr;
     const m=toMin(expected); if(m===null) return null;
-    let diff=m-nowMin; if(diff< -180) diff+=1440; // 자정 넘긴 새벽 열차 보정
-    return {t,depStr,expected,delay,m,diff};
-  }).filter(Boolean)
-    .filter(r=>r.diff>=-2)
-    .sort((a,b)=>a.diff-b.diff)
-    .slice(0,limit);
-
-  const rowsHtml = rows.length ? rows.map(r=>{
-    const t=r.t;
-    const plat=platOf[t.no];
+    const srv=_srvMin(m);
+    const diff=srv-nowSrv; // 운행일 기준 현재와의 분 차이 (다음 운행일 열차는 음수 → 제외)
+    return {t,depStr,expected,delay,srv,diff};
+  }).filter(Boolean);
+  const depRow=(r,tmr)=>{
+    const t=r.t, plat=platOf[t.no];
     let st, cls;
-    if(r.diff<=0){ st='출발'; cls='sb-st-board'; }
+    if(tmr){ st='내일'; cls='sb-st-sched'; }
+    else if(r.diff<=0){ st='출발'; cls='sb-st-board'; }
     else if(r.diff<=5){ st=`${r.diff}분 후`; cls='sb-st-soon'; }
     else { st='정시'; cls='sb-st-sched'; }
-    const sdly=r.delay;
+    const sdly=tmr?0:r.delay;
     if(sdly>0){ st=`${sdly}분 지연`; cls='sb-st-delay'; }
     const isTerm = t.dest===trainName || (()=>{const s=t.stops.find(x=>x.s===trainName);return s&&s.arr&&!s.dep;})();
     const df=_delayForecast(t.line,t.grade);
@@ -10007,28 +10021,38 @@ function _siDepartureBoardHTML(name, trains, limit){
       <span class="sb-plat ${plat?'':'none'}">${plat||'–'}</span>
       <span class="sb-status ${cls}">${st}</span>
     </div>`;
-  }).join('') : `<div class="stn-board-empty">현재 출발 예정 열차 없음</div>`;
-
+  };
+  const cols=`<div class="stn-board-cols"><span style="width:52px">시각</span><span style="flex:1">방면 · 열차</span><span style="width:30px;text-align:center">홈</span><span style="width:56px;text-align:right">안내</span></div>`;
+  // 오늘(현재 이후) 출발 열차
+  const rows=cand.filter(r=>r.diff>=-2).sort((a,b)=>a.diff-b.diff).slice(0,limit);
+  const svcEnded = rows.length===0 && cand.length>0;
+  let body;
+  if(svcEnded){
+    const tmr=[...cand].sort((a,b)=>a.srv-b.srv).slice(0,limit);
+    body=_sbEndedHTML(cols, tmr.map(r=>depRow(r,true)).join(''), tmr[0]?.depStr, '출발');
+  } else {
+    body=cols+(rows.length?rows.map(r=>depRow(r,false)).join(''):`<div class="stn-board-empty">현재 출발 예정 열차 없음</div>`);
+  }
   return `<div class="stn-board">
     <div class="stn-board-head">
       <span class="stn-board-title">▶ 출발 안내 · DEPARTURES</span>
       <span class="stn-board-clock">${clock}</span>
     </div>
-    <div class="stn-board-cols"><span style="width:52px">시각</span><span style="flex:1">방면 · 열차</span><span style="width:30px;text-align:center">홈</span><span style="width:56px;text-align:right">안내</span></div>
-    ${rowsHtml}
+    ${body}
   </div>`;
 }
 
-// ── 도착 안내 전광판 (출발판의 도착 버전, 도착 시각 기준) ──
+// ── 도착 안내 전광판 (출발판의 도착 버전, 도착 시각 기준) ── 오늘 열차만 표시
 function _siArrivalBoardHTML(name, trains, limit){
   limit=limit||10;
   const trainName=name.endsWith('역')?name.slice(0,-1):name;
   const now=new Date();
   const nowMin=now.getHours()*60+now.getMinutes();
+  const nowSrv=_srvMin(nowMin);
   const clock=`${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
   const platOf={};
   trains.forEach(t=>{ const p=_platformForTrain(name, trainName, trains, t); if(p!=null) platOf[t.no]=p; });
-  const rows=trains.map(t=>{
+  const cand=trains.map(t=>{
     const s=t.stops.find(x=>x.s===trainName);
     if(!s) return null;
     const arrStr=s.arr; if(!arrStr||!hasTime(arrStr)) return null; // 도착 시각 있는 열차만(출발역 제외)
@@ -10037,23 +10061,21 @@ function _siArrivalBoardHTML(name, trains, limit){
     const delay=si>=0?_simDelayAtStop(t,si):0;
     const expected=delay>0?addMinToClock(arrStr,delay):arrStr;
     const m=toMin(expected); if(m===null) return null;
-    let diff=m-nowMin; if(diff< -180) diff+=1440;
-    // 어디서 오는지: 이 열차의 첫 출발역(기점)
+    const srv=_srvMin(m);
+    const diff=srv-nowSrv;
     let fromStn=null;
     for(let i=0;i<t.stops.length;i++){ if(hasTime(t.stops[i].dep)||hasTime(t.stops[i].arr)){ fromStn=t.stops[i].s; break; } }
     const isTerm=(t.dest===trainName)||(!hasTime(s.dep));
-    return {t,arrStr,expected,delay,m,diff,fromStn,isTerm};
-  }).filter(Boolean)
-    .filter(r=>r.diff>=-2)
-    .sort((a,b)=>a.diff-b.diff)
-    .slice(0,limit);
-  const rowsHtml = rows.length ? rows.map(r=>{
+    return {t,arrStr,expected,delay,srv,diff,fromStn,isTerm};
+  }).filter(Boolean);
+  const arrRow=(r,tmr)=>{
     const t=r.t, plat=platOf[t.no];
     let st, cls;
-    if(r.diff<=0){ st='도착'; cls='sb-st-board'; }
+    if(tmr){ st='내일'; cls='sb-st-sched'; }
+    else if(r.diff<=0){ st='도착'; cls='sb-st-board'; }
     else if(r.diff<=5){ st=`${r.diff}분 후`; cls='sb-st-soon'; }
     else { st='정시'; cls='sb-st-sched'; }
-    const sdly=r.delay;
+    const sdly=tmr?0:r.delay;
     if(sdly>0){ st=`${sdly}분 지연`; cls='sb-st-delay'; }
     const df=_delayForecast(t.line,t.grade);
     return `<div class="stn-board-row">
@@ -10065,14 +10087,23 @@ function _siArrivalBoardHTML(name, trains, limit){
       <span class="sb-plat ${plat?'':'none'}">${plat||'–'}</span>
       <span class="sb-status ${cls}">${st}</span>
     </div>`;
-  }).join('') : `<div class="stn-board-empty">현재 도착 예정 열차 없음</div>`;
+  };
+  const cols=`<div class="stn-board-cols"><span style="width:52px">시각</span><span style="flex:1">출발지 · 열차</span><span style="width:30px;text-align:center">홈</span><span style="width:56px;text-align:right">안내</span></div>`;
+  const rows=cand.filter(r=>r.diff>=-2).sort((a,b)=>a.diff-b.diff).slice(0,limit);
+  const svcEnded = rows.length===0 && cand.length>0;
+  let body;
+  if(svcEnded){
+    const tmr=[...cand].sort((a,b)=>a.srv-b.srv).slice(0,limit);
+    body=_sbEndedHTML(cols, tmr.map(r=>arrRow(r,true)).join(''), tmr[0]?.arrStr, '도착');
+  } else {
+    body=cols+(rows.length?rows.map(r=>arrRow(r,false)).join(''):`<div class="stn-board-empty">현재 도착 예정 열차 없음</div>`);
+  }
   return `<div class="stn-board">
     <div class="stn-board-head">
       <span class="stn-board-title">▼ 도착 안내 · ARRIVALS</span>
       <span class="stn-board-clock">${clock}</span>
     </div>
-    <div class="stn-board-cols"><span style="width:52px">시각</span><span style="flex:1">출발지 · 열차</span><span style="width:30px;text-align:center">홈</span><span style="width:56px;text-align:right">안내</span></div>
-    ${rowsHtml}
+    ${body}
   </div>`;
 }
 // ── 역 실시간 전광판 팝업 (출발/도착 탭 · 자동 갱신) ──

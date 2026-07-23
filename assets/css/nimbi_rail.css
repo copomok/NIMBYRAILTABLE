@@ -1691,6 +1691,24 @@ button, select, input[type=range],
 .sb-st-sched{color:#8b949e}
 .sb-st-delay{color:#ffb454;font-weight:800}
 .stn-board-empty{text-align:center;color:#3a5a70;font-size:12px;padding:14px;font-family:var(--mono)}
+/* 운행 종료 — '운행 종료 문구'와 '내일 열차'를 교대로 표시 (LED 전광판식 크로스페이드) */
+.stn-board-ended{display:grid}
+.stn-board-ended>.sbe-flip{grid-area:1/1;min-width:0}
+.sbe-a{text-align:center;padding:20px 12px;align-self:center}
+.sbe-a .sbe-moon{font-size:26px;line-height:1;margin-bottom:8px;filter:drop-shadow(0 0 8px rgba(120,170,255,.5))}
+.sbe-a .sbe-msg{font-size:14px;font-weight:800;color:#ffbf34;font-family:var(--mono);letter-spacing:1px;text-shadow:0 0 8px rgba(255,176,32,.5)}
+.sbe-a .sbe-sub{font-size:10.5px;color:#5a7a92;margin-top:8px;line-height:1.6;font-family:var(--mono)}
+.sbe-a .sbe-sub b{color:#3fd08a}
+.sbe-b .sbe-next-head{font-size:10px;font-weight:800;color:#3fd08a;letter-spacing:1px;font-family:var(--mono);padding:0 2px 6px;text-shadow:0 0 6px rgba(63,208,138,.4)}
+.sbe-a{animation:sbeFlipA 8s infinite}
+.sbe-b{animation:sbeFlipB 8s infinite}
+@keyframes sbeFlipA{0%,44%{opacity:1;visibility:visible}50%,94%{opacity:0;visibility:hidden}100%{opacity:1;visibility:visible}}
+@keyframes sbeFlipB{0%,44%{opacity:0;visibility:hidden}50%,94%{opacity:1;visibility:visible}100%{opacity:0;visibility:hidden}}
+@media (prefers-reduced-motion:reduce){
+  .stn-board-ended{display:block}
+  .sbe-flip{grid-area:auto;animation:none!important;opacity:1!important;visibility:visible!important}
+  .sbe-a{padding-bottom:12px;border-bottom:1px solid #14283a;margin-bottom:8px}
+}
 /* 출발 안내 전광판 버튼 · 팝업 */
 .si-board-btn{width:100%;padding:12px;border-radius:11px;border:1px solid #1b2a36;
   background:linear-gradient(180deg,#0a1420,#05080c);color:#3fd08a;font-size:13px;font-weight:800;
