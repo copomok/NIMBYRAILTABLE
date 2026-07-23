@@ -270,6 +270,60 @@ function _realWxContext(t){
     weatherSource:'실제 예보'
   });
 }
+// ── 지역·시간대 대표 기상(상단 헤드라인 + ⓘ 지역별 모달) ──
+const _WX_ICON={'맑음':'☀️','안개':'🌫️','강풍':'💨','폭염':'🌡️','비':'🌧️','폭우':'⛈️','폭설':'❄️','태풍':'🌀'};
+function _wxIcon(w){ return _WX_ICON[w]||'🌤️'; }
+// 현재 시각 각 지역의 날씨 + 변화 이력. 실제 예보 없으면 null(시뮬레이션 단일 기상).
+function _wxRegionsNow(nowMin){
+  if(!_realWx||!_realWx.regions||!_realWx.regions.length)return null;
+  const hour=Math.max(0,Math.min(23,Math.floor((((nowMin||0)%1440)+1440)%1440/60)));
+  return _realWx.regions.map(r=>{
+    const cur=(r.hours&&r.hours[hour])||_wxConfig('맑음');
+    let startHour=hour, prevWeather=null;
+    for(let h=hour;h>=0;h--){ const wh=r.hours&&r.hours[h]&&r.hours[h].weather;
+      if(wh===cur.weather)startHour=h; else { prevWeather=wh||null; break; } }
+    return {name:r.name, weather:cur.weather, score:cur.score||0, sagLabel:cur.sagLabel||null,
+      icon:_wxIcon(cur.weather), hour, startHour:(startHour>0?startHour:0), prevWeather:(startHour>0?prevWeather:null)};
+  });
+}
+// 상단 대표 기상: {primaryWeather, mixed, secondaryWeather[], affectedRegionCount, label, source, hasRegions}
+function _wxHeadline(nowMin){
+  const ctx=_simDayContext();
+  const source=(ctx.weatherSource==='실제 예보')?'실제 예보':'님비레일 시뮬레이션 예보';
+  const regs=_wxRegionsNow(nowMin);
+  if(!regs){ return {primaryWeather:ctx.weather,mixed:false,secondaryWeather:[],affectedRegionCount:1,
+    label:ctx.weather,source,hasRegions:false}; }
+  const agg={}; regs.forEach(r=>{agg[r.weather]=(agg[r.weather]||0)+Math.max(1,r.score);});
+  const order=Object.keys(agg).sort((a,b)=>agg[b]-agg[a]);
+  const primary=order[0];
+  const secondary=order.filter(w=>w!==primary&&w!=='맑음');   // 대표 외의 악기상만 부제로
+  const label = secondary.length ? `${primary} 중심 · 일부 지역 ${secondary.slice(0,2).join('·')}` : primary;
+  return {primaryWeather:primary,mixed:secondary.length>0,secondaryWeather:secondary,
+    affectedRegionCount:new Set(regs.map(r=>r.weather)).size,label,source,hasRegions:true};
+}
+// ⓘ 모달용 상세: 지역 카드(현재 날씨·영향·적용 시간·변화·영향 열차 수)
+function _wxRegionalDetail(nowMin){
+  const regs=_wxRegionsNow(nowMin); if(!regs)return null;
+  const hh=Math.floor((((nowMin||0)%1440)+1440)%1440/60);
+  // 현재 운행 중 열차를 현재 통과 지역에 배정해 지역별 영향 열차 수 집계
+  const counts={};
+  if(typeof ALL_TRAINS!=='undefined'&&typeof getCurrentStatus==='function'){
+    for(const t of ALL_TRAINS){
+      const d=_simDelayOn?_simDelay(t,nowMin):0;
+      const st=getCurrentStatus(t,nowMin-d); if(!st||st.status!=='running')continue;
+      const stn=st.atStn||st.nextStn||st.prevStn; if(!stn)continue;
+      const reg=_wxNearestRegion(_wxCoord(stn)); if(!reg)continue;
+      counts[reg.name]=(counts[reg.name]||0)+1;
+    }
+  }
+  return {hour:hh, headline:_wxHeadline(nowMin), regions:regs.map(r=>({
+    name:r.name, weather:r.weather, icon:r.icon,
+    impact:r.sagLabel?(r.sagLabel+' 가능성'):'운행 영향 적음',
+    timeLabel:(r.startHour<=0?'종일':`${String(r.startHour).padStart(2,'0')}:00부터`),
+    changeLabel:r.prevWeather?`${r.prevWeather} → ${r.weather} · ${String(r.startHour).padStart(2,'0')}:00 변경`:null,
+    trains:counts[r.name]||0
+  }))};
+}
 function _parseRealWxResponse(raw,day){
   const list=Array.isArray(raw)?raw:[raw],regions=[];
   list.forEach((x,ri)=>{
@@ -747,7 +801,10 @@ function _computeProfile(t){
       }
       cur=Math.max(0, Math.min(ctx.bigCap, cur+inc-rec));
       cd.push(cur); recTotal+=rec;
-      if(inc>=0.5&&cause){ events.push({idx:i+1,delta:+inc.toFixed(1),cause}); if(!dominant||inc>2)dominant=dominant&&inc<=2?dominant:cause; }
+      if(inc>=0.5&&cause){ const ev={idx:i+1,delta:+inc.toFixed(1),cause};
+        // 기상 서행 이벤트에는 실제 발생 지역·시각을 함께 저장(로그·모달 교차검증용)
+        if(localWx&&cause===secCtx.sagLabel){ ev.weatherRegion=localWx.region; ev.weather=localWx.weather; ev.eventMinute=m[i+1]; }
+        events.push(ev); if(!dominant||inc>2)dominant=dominant&&inc<=2?dominant:cause; }
       const actualDcut=Math.min(dcut,rec);
       const actualRunRec=Math.max(0,rec-actualDcut);
       if(actualDcut>=0.5)events.push({idx:i+1,delta:-+actualDcut.toFixed(1),cause:'정차시간 단축'});

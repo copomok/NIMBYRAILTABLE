@@ -153,7 +153,7 @@
       </div>
     </section>
     ${interestHtml}
-    <section class="home-section home-outlook"><div class="home-section-head"><b>오늘의 운행 전망</b><span>${view.ctx?.weekend?'주말·공휴일':'평일'} · ${esc(view.ctx?.weather||'맑음')}${view.ctx?.weatherSource==='실제 예보'?' · 실제 예보':''}</span></div>
+    <section class="home-section home-outlook"><div class="home-section-head"><b>오늘의 운행 전망${(typeof _wxHeadline==='function'&&_wxHeadline((new Date()).getHours()*60+(new Date()).getMinutes()).hasRegions)?` <button type="button" class="weather-info-btn" aria-label="지역별 날씨 상세 보기" onclick="openRegionalWeatherModal()">ⓘ</button>`:''}</b><span>${view.ctx?.weekend?'주말·공휴일':'평일'} · ${esc((typeof _wxHeadline==='function'?_wxHeadline((new Date()).getHours()*60+(new Date()).getMinutes()).label:(view.ctx?.weather||'맑음')))}${view.ctx?.weatherSource==='실제 예보'?' · 실제 예보':''}</span></div>
       <div class="home-outlook-main"><span>전체 전망</span><b>${view.label}</b><em>평균 지연 가능성 ${view.avg}%</em></div>
       <div class="home-outlook-sub">${view.ctx?.weatherSource==='실제 예보'&&view.ctx?.weather!=='맑음'&&view.ctx?.region?`${esc(view.ctx.region)} ${String(view.ctx.hour).padStart(2,'0')}시 기상 영향이 가장 큽니다. `:''}${view.peak?`${esc(view.peak.line)}의 지연 가능성이 ${view.peak.prob}%로 상대적으로 높습니다.`:'특별한 지연 요인이 없습니다.'}</div>
       <div class="home-outlook-ended"><span>전망 대상 ${view.active}편</span><b>운행 종료 ${view.ended}편</b><small>운행이 끝난 열차는 전망 집계에서 분리됩니다.</small></div>

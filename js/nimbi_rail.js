@@ -10180,9 +10180,16 @@ function toggleSimDelay(){
 function _outlookHTML(){
   if(!_simDelayOn||typeof _simOutlook!=='function')return '';
   const o=_simOutlook(window._olAll?10000:8); if(!o)return '';
-  const wxIco={'맑음':'☀️','안개':'🌫️','강풍':'💨','폭염':'🌡️','비':'🌧️','폭우':'🌧️','폭설':'❄️','태풍':'🌀'}[o.ctx.weather]||'🌤️';
-  const bad=o.ctx.weather!=='맑음';
-  const realWx=o.ctx.weatherSource==='실제 예보';
+  const _n=new Date(), nowMin=_n.getHours()*60+_n.getMinutes();
+  // 상단 대표 기상은 현재 시각·지역 기준으로 재계산(하루 peak 단일값 아님) → 지역 모순 해소
+  const hl=(typeof _wxHeadline==='function')?_wxHeadline(nowMin):null;
+  const headWeather=hl?hl.primaryWeather:o.ctx.weather;
+  const headLabel=hl?hl.label:o.ctx.weather;
+  const wxIco={'맑음':'☀️','안개':'🌫️','강풍':'💨','폭염':'🌡️','비':'🌧️','폭우':'⛈️','폭설':'❄️','태풍':'🌀'}[headWeather]||'🌤️';
+  const bad=headWeather!=='맑음';
+  const realWx=(hl?hl.source:o.ctx.weatherSource)==='실제 예보';
+  const srcLabel=hl?hl.source:(o.ctx.weatherSource==='실제 예보'?'실제 예보':'님비레일 시뮬레이션 예보');
+  const infoBtn=(hl&&hl.hasRegions)?`<button type="button" class="weather-info-btn" aria-label="지역별 날씨 상세 보기" onclick="openRegionalWeatherModal()">ⓘ</button>`:'';
   const peakWx=realWx&&bad&&o.ctx.region?`${_opsEsc(o.ctx.region)} ${String(o.ctx.hour).padStart(2,'0')}시 영향 집중`:'';
   const gl=g=>(typeof GL!=='undefined'&&GL[g])||g;
   const rows=o.rows.map(r=>{
@@ -10192,9 +10199,10 @@ function _outlookHTML(){
     return `<button class="ol-row" onclick="openJourney('${_opsEsc(r.t.no)}')"><span class="ol-grade" style="background:${gc}">${_opsEsc(gl(r.t.grade))}</span><span class="ol-no">${_opsEsc(r.t.no)}</span><span class="ol-route">${_opsEsc(r.t.stops[0].s)}<span class="ol-arr">→</span>${_opsEsc(r.t.dest)}</span><span class="ol-rng ol-sev-${sev}">${rng}</span>${r.cause?`<span class="ol-cz">(${_opsEsc(r.cause)})</span>`:''}</button>`;
   }).join('');
   return `<div class="outlook-card${bad?' bad':''}">
-    <div class="ol-head">${wxIco} 오늘의 운행 전망 <span class="ol-wx">${_opsEsc(o.ctx.weather)} · ${o.ctx.weekend?'주말·공휴일':'평일'}${realWx?' · 실제 예보':''}</span></div>
+    <div class="ol-head">${wxIco} 오늘의 운행 전망 ${infoBtn} <span class="ol-wx">${_opsEsc(headLabel)} · ${o.ctx.weekend?'주말·공휴일':'평일'} · ${_opsEsc(srcLabel)}</span></div>
     ${peakWx?`<div class="ol-forecast-source">📍 ${peakWx}${o.ctx.precipitation>=.5?` · 시간당 ${Math.round(o.ctx.precipitation*10)/10}㎜`:''}</div>`:''}
-    ${o.rows.length?`<div class="ol-desc">${bad?`${_opsEsc(o.ctx.weather)} 예보를 반영해 다음 열차의 지연 가능성을 계산했습니다.`:'실제 예보를 반영한 결과 다음 열차의 지연 가능성이 있습니다.'}</div>${rows}${o.total>8?`<button class="ol-allbtn" onclick="window._olAll=!window._olAll;var e=document.getElementById('result-delay');if(e)renderSIDelay(e)">${window._olAll?'접기 ▲':`전체 ${o.total}편 보기 ▼`}</button>`:''}`
+    ${hl&&hl.mixed?`<div class="ol-forecast-source">🗺️ 지역별 기상 차이를 반영해 지연 가능성을 계산했습니다 · <b>ⓘ</b>로 지역별 확인</div>`:''}
+    ${o.rows.length?`<div class="ol-desc">${bad?`${_opsEsc(headWeather)} 예보를 반영해 다음 열차의 지연 가능성을 계산했습니다.`:'실제 예보를 반영한 결과 다음 열차의 지연 가능성이 있습니다.'}</div>${rows}${o.total>8?`<button class="ol-allbtn" onclick="window._olAll=!window._olAll;var e=document.getElementById('result-delay');if(e)renderSIDelay(e)">${window._olAll?'접기 ▲':`전체 ${o.total}편 보기 ▼`}</button>`:''}`
       :`<div class="ol-desc">현재 지연이 예보된 열차가 없습니다. 전 열차 정상 운행이 예상됩니다.</div>`}
     <div class="ol-caveat">
       예측은 확정이 아니며, 기상 호전 등에 따라 정상 운행으로 변경될 수 있습니다.
@@ -10258,6 +10266,58 @@ function closeDelayExplanation(){
   if(!modal||modal.classList.contains('closing'))return;
   modal.classList.add('closing');
   setTimeout(()=>modal.remove(),240);
+}
+
+// ── ⓘ 지역별 운행 날씨 모달 ──
+let _wxModalReturnFocus=null, _wxModalKeyHandler=null;
+function openRegionalWeatherModal(){
+  document.getElementById('weather-modal')?.remove();
+  document.getElementById('weather-modal-backdrop')?.remove();
+  _wxModalReturnFocus=document.activeElement;
+  const n=new Date(), nowMin=n.getHours()*60+n.getMinutes();
+  const detail=(typeof _wxRegionalDetail==='function')?_wxRegionalDetail(nowMin):null;
+  const backdrop=document.createElement('div');
+  backdrop.className='weather-modal-backdrop'; backdrop.id='weather-modal-backdrop';
+  backdrop.onclick=closeRegionalWeatherModal;
+  const modal=document.createElement('div');
+  modal.className='weather-modal'; modal.id='weather-modal';
+  modal.setAttribute('role','dialog'); modal.setAttribute('aria-modal','true');
+  modal.setAttribute('aria-labelledby','weather-modal-title');
+  const clk=`${String(n.getHours()).padStart(2,'0')}:${String(n.getMinutes()).padStart(2,'0')}`;
+  const hl=detail?detail.headline:null;
+  let body;
+  if(!detail){
+    body=`<div class="wxm-summary">현재 실제 지역별 예보를 불러오지 못했습니다. 님비레일 시뮬레이션 예보 기준으로 전국 동일 기상을 적용 중입니다.</div>`;
+  } else {
+    const cards=detail.regions.map(r=>`<div class="wxm-region">
+      <div class="wxm-region-top"><span class="wxm-ico">${r.icon}</span><b>${_opsEsc(r.name)}</b><span class="wxm-w">${_opsEsc(r.weather)}</span></div>
+      <div class="wxm-region-row">🕒 ${_opsEsc(r.timeLabel)}</div>
+      ${r.changeLabel?`<div class="wxm-region-row wxm-change">🔄 ${_opsEsc(r.changeLabel)}</div>`:''}
+      <div class="wxm-region-row">🚦 ${_opsEsc(r.impact)}</div>
+      <div class="wxm-region-row wxm-tr">🚆 현재 영향 예상 ${r.trains}편</div>
+    </div>`).join('');
+    body=`<div class="wxm-summary"><b>현재 대표 기상</b><br>${_opsEsc(hl?hl.label:'—')} · ${_opsEsc(hl?hl.source:'')}</div>
+      <div class="wxm-region-list">${cards}</div>`;
+  }
+  modal.innerHTML=`<div class="weather-modal-header">
+      <div><div id="weather-modal-title">지역별 운행 날씨</div><div class="wxm-updated">현재 ${clk} 기준</div></div>
+      <button onclick="closeRegionalWeatherModal()" aria-label="닫기">✕</button>
+    </div>
+    <div class="weather-modal-body">${body}</div>`;
+  document.body.appendChild(backdrop);
+  document.body.appendChild(modal);
+  _wxModalKeyHandler=e=>{ if(e.key==='Escape')closeRegionalWeatherModal(); };
+  document.addEventListener('keydown',_wxModalKeyHandler);
+  const closeBtn=modal.querySelector('.weather-modal-header button'); if(closeBtn)closeBtn.focus();
+}
+function closeRegionalWeatherModal(){
+  const modal=document.getElementById('weather-modal');
+  const backdrop=document.getElementById('weather-modal-backdrop');
+  if(_wxModalKeyHandler){ document.removeEventListener('keydown',_wxModalKeyHandler); _wxModalKeyHandler=null; }
+  if(modal){ modal.classList.add('closing'); setTimeout(()=>modal.remove(),200); }
+  if(backdrop){ backdrop.classList.add('closing'); setTimeout(()=>backdrop.remove(),200); }
+  if(_wxModalReturnFocus&&typeof _wxModalReturnFocus.focus==='function'){ try{_wxModalReturnFocus.focus();}catch(e){} }
+  _wxModalReturnFocus=null;
 }
 
 function renderSIDelay(el){

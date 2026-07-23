@@ -2007,6 +2007,33 @@ button, select, input[type=range],
 .ol-head{font-size:13px;font-weight:800;color:var(--text1);margin-bottom:4px}
 .ol-wx{font-size:11px;font-weight:700;color:var(--orange);margin-left:4px}
 .outlook-card:not(.bad) .ol-wx{color:var(--green)}
+/* ⓘ 지역별 날씨 버튼 (최소 터치 40px) */
+.weather-info-btn{display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;min-width:22px;padding:0;margin:0 2px;border:1px solid var(--border);border-radius:50%;background:var(--bg3);color:var(--text2);font-size:12px;font-weight:800;cursor:pointer;vertical-align:middle;position:relative}
+.weather-info-btn::after{content:"";position:absolute;inset:-9px}
+.weather-info-btn:hover{background:var(--bg2);color:var(--text1)}
+.weather-info-btn:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+/* 지역별 운행 날씨 모달 */
+.weather-modal-backdrop{position:fixed;inset:0;z-index:10300;background:rgba(0,0,0,.72);backdrop-filter:blur(4px);animation:delayModalFadeIn .2s ease both}
+.weather-modal-backdrop.closing{opacity:0;transition:opacity .2s ease}
+.weather-modal{position:fixed;z-index:10310;left:50%;top:50%;transform:translate(-50%,-50%);width:min(460px,calc(100vw - 28px));max-height:86vh;display:flex;flex-direction:column;background:var(--bg1);border:1px solid var(--border);border-radius:16px;box-shadow:0 12px 48px rgba(0,0,0,.55);animation:delayModalFadeIn .22s ease both;overflow:hidden}
+.weather-modal.closing{opacity:0;transition:opacity .2s ease}
+.weather-modal-header{display:flex;align-items:flex-start;justify-content:space-between;gap:8px;padding:14px 16px;border-bottom:1px solid var(--border)}
+#weather-modal-title{font-size:15px;font-weight:800;color:var(--text1)}
+.wxm-updated{font-size:11px;color:var(--text3);margin-top:2px}
+.weather-modal-header button{background:none;border:none;color:var(--text2);font-size:17px;cursor:pointer;padding:2px 6px;border-radius:8px}
+.weather-modal-header button:hover{background:var(--bg3);color:var(--text1)}
+.weather-modal-body{padding:12px 16px 16px;overflow-y:auto}
+.wxm-summary{font-size:12.5px;color:var(--text2);line-height:1.6;background:var(--bg3);border-radius:10px;padding:10px 12px;margin-bottom:12px}
+.wxm-region-list{display:flex;flex-direction:column;gap:8px}
+.wxm-region{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:10px 12px}
+.wxm-region-top{display:flex;align-items:center;gap:8px;margin-bottom:6px}
+.wxm-ico{font-size:18px}
+.wxm-region-top b{font-size:13.5px;color:var(--text1)}
+.wxm-w{margin-left:auto;font-size:12px;font-weight:800;color:var(--orange)}
+.wxm-region-row{font-size:11.5px;color:var(--text2);line-height:1.7}
+.wxm-region-row.wxm-change{color:#ffb454;font-weight:700}
+.wxm-region-row.wxm-tr{color:var(--text3)}
+@media(min-width:520px){.weather-modal{width:min(500px,calc(100vw - 40px))}}
 .ol-forecast-source{margin:5px 0 7px;padding:6px 8px;border-radius:8px;background:rgba(56,139,253,.09);color:var(--accent2);font-size:10.5px;font-weight:700}
 .ol-desc{font-size:11.5px;color:var(--text2);margin-bottom:8px}
 .ol-row{display:flex;align-items:center;gap:8px;padding:4px 0;border-top:1px dashed var(--border);font-size:12px}
