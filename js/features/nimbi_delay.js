@@ -507,11 +507,11 @@ function _recoveryGradeGroup(grade){
 function getRecoveryProbability(delayMinutes,grade){
   if(!(delayMinutes>0))return 0;
   const points=[1,3,6,10,15];
-  const table={
-    local:[.36,.48,.52,.76,.84],
-    saemaeul:[.39,.51,.55,.79,.87],
-    itx:[.42,.54,.58,.82,.90],
-    high:[.45,.58,.62,.86,.94]
+  const table={   // 기본 확률 소폭 하향(역간 시간 배수·실패 누적과 함께 사용)
+    local:[.31,.43,.47,.69,.77],
+    saemaeul:[.34,.46,.50,.72,.80],
+    itx:[.37,.49,.53,.75,.83],
+    high:[.40,.53,.57,.79,.87]
   };
   const rates=table[_recoveryGradeGroup(grade)];
   const delay=Math.max(1,delayMinutes);
@@ -524,6 +524,20 @@ function getRecoveryProbability(delayMinutes,grade){
   }
   return rates[rates.length-1];
 }
+// 역간 실제 운전시간 배수: 짧을수록 회복↓, 길수록↑
+function getSectionRecoveryMultiplier(sectionMinutes){
+  if(sectionMinutes<=3)return 0.72; if(sectionMinutes<=6)return 0.84;
+  if(sectionMinutes<=10)return 0.96; if(sectionMinutes<=15)return 1.08;
+  if(sectionMinutes<=25)return 1.18; return 1.26;
+}
+// 회복 실패 연속 보너스(확률 포인트, 배수 아님)
+function getRecoveryMissBonus(streak){
+  if(streak<=0)return 0; if(streak===1)return 0.03; if(streak===2)return 0.06;
+  if(streak===3)return 0.10; if(streak===4)return 0.14; return 0.18;
+}
+// 지연 긴급도 보너스(소폭) · 지연별 최종 상한
+function getRecoveryUrgencyBonus(d){ return d<4?0:d<7?0.01:d<10?0.02:d<15?0.03:0.04; }
+function getRecoveryMaxProbability(d){ return d<4?0.72:d<10?0.82:d<15?0.90:0.94; }
 
 // ── 고속선 구간 판정 ──
 function _isHighSpeedSection(lineStr){
@@ -664,6 +678,7 @@ function _computeProfile(t){
     let cur=inherited, recTotal=0;
     let mpN=0, mpLast=-999, mpSp=false;
     let rushN=0, rushLast=-999;
+    let recoveryMissStreak=0;   // 회복 실패 연속 횟수(다음 구간 시도 확률↑)
     for(let i=0;i<secN;i++){
       const dt=Math.max(1,m[i+1]-m[i]);
       const tod=((m[i]%1440)+1440)%1440;
@@ -707,13 +722,15 @@ function _computeProfile(t){
       const canCut=arrivalDelay>0&&dwell[i+1]>=2&&!_isDwellDelayCause(cause);
       if(canCut)dcut=Math.min(1,dwell[i+1]-1,arrivalDelay);
       if(arrivalDelay>0 && inc===0){
-        const baseProbability=getRecoveryProbability(arrivalDelay,t.grade);
-        // 표의 확률이 기준이다. 악천후는 발생 확률을 최대 35%까지만 낮추고,
-        // 기존처럼 실제 회복량에도 recW를 적용한다.
+        // 기본표(등급×지연) × 역간 실제 운전시간 배수 × 날씨 + 실패누적 + 긴급도, 지연별 상한 clamp.
+        const runMin=Math.max(1, dt-(dwell[i+1]||0));   // 정차시간 제외 순수 역간 운전시간
         const weatherProbabilityMultiplier=Math.max(.65,Math.min(1,secCtx.recW));
-        const gate=Math.max(0,Math.min(.98,baseProbability*weatherProbabilityMultiplier));
+        let prob=getRecoveryProbability(arrivalDelay,t.grade)
+                   *getSectionRecoveryMultiplier(runMin)*weatherProbabilityMultiplier
+                 +getRecoveryMissBonus(recoveryMissStreak)+getRecoveryUrgencyBonus(arrivalDelay);
+        prob=Math.max(0.05,Math.min(getRecoveryMaxProbability(arrivalDelay),prob));
         let runRec=0, recHard=_SIM_REC_HARD;
-        if(rc<gate){
+        if(rc<prob){
           // ─ 고속선 회복 강화 ─
           const inHS=_isHighSpeedSection(t.line)&&(/KTX|SRT/.test(t.grade));
           if(inHS){
@@ -723,8 +740,10 @@ function _computeProfile(t){
           runRec=Math.min(0.16*dt*recFrac, 0.8)*(0.5+0.5*rc)*secCtx.recW;
         }
         rec=Math.min(arrivalDelay,runRec+dcut,Math.max(recHard,dcut));
+        // 실패 누적: 실제 회복량 기준(1분+ 성공→0, 부분 성공→-1, 미미→+1)
+        if(rec>=1.0)recoveryMissStreak=0; else if(rec>=0.3)recoveryMissStreak=Math.max(0,recoveryMissStreak-1); else recoveryMissStreak++;
       } else {
-        rec=dcut;
+        rec=dcut;   // 신규 지연 구간: 회복 기회 없음(streak 유지)
       }
       cur=Math.max(0, Math.min(ctx.bigCap, cur+inc-rec));
       cd.push(cur); recTotal+=rec;
