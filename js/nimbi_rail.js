@@ -7062,7 +7062,7 @@ function renderTripWidgetCompact(active){
   if(!active) return "";
   const {ticket,train,status,preBoard,minsUntilDep,preArr,minsUntilArr}=active;
   const gc=GRADE_COLORS[train.grade]||"#8b949e";
-  let stateLabel,metaText,stateIcon,stateColor,ledCur=null,nextName=null,nextTime='',onboard=false;
+  let stateLabel,metaText,stateIcon,stateColor,ledCur=null,midName=null,midTime='',onboard=false;
   if(preBoard){
     stateLabel="승차 준비"; stateIcon="🚉"; stateColor="var(--orange)";
     metaText=`${fmtEta(minsUntilDep)} 출발 예정`;
@@ -7072,8 +7072,8 @@ function renderTripWidgetCompact(active){
   }else{
     const tl=getTripTimeline3(train,status,ticket);
     ledCur=(tl&&tl.cur?tl.cur.name:(status.atStn||status.passStn||null)); onboard=true;
-    // 가운데 칸은 '다음 역' (LED는 이번 역을 따로 표시) — 종착·승차역과 겹치면 생략
-    if(tl&&tl.next&&tl.next.name!==ticket.toStn&&tl.next.name!==ticket.fromStn){ nextName=tl.next.name; nextTime=tl.next.time||''; }
+    // 가운데 칸은 '이번 역'(tl.cur, 도착 중/정차 중인 역) — 종착·승차역과 겹치면 생략
+    if(tl&&tl.cur&&tl.cur.name!==ticket.toStn&&tl.cur.name!==ticket.fromStn){ midName=tl.cur.name; midTime=tl.cur.time||''; }
     const depM=toMin(ticket.depTime),arrM=toMin(ticket.arrTime);
     const now=new Date(),nowM=now.getHours()*60+now.getMinutes();
     let diff=(arrM!=null&&depM!=null)?((arrM>=depM)?arrM-nowM:arrM+1440-nowM):null;
@@ -7082,7 +7082,7 @@ function renderTripWidgetCompact(active){
     stateLabel="탑승 중"; stateIcon="●"; stateColor="var(--green)";
     metaText=`${ticket.toStn}까지 ${diff!=null?fmtEta(diff):"운행 중"}`;
   }
-  const hasNext = !!(onboard&&nextName);
+  const hasMid = !!(onboard&&midName);
   const seat=[ticket.seatClassLabel,seatSummary(ticket.seats)].filter(Boolean).join(" · ");
   const idEsc=String(ticket.id).replace(/"/g,'&quot;');
   // 차내 LED (탑승/도착 준비 중 + LED 설정 켜짐일 때) — '이번 역'(현재)을 순환 표시, 카드 하단 패널로 배치
@@ -7091,11 +7091,11 @@ function renderTripWidgetCompact(active){
   const ledHtml = (onboard&&ledEnabled())
     ? `<div class="trip-led trip-mini-led"><span class="trip-led-tag trip-mini-led-tag">이번 역</span><span class="trip-led-scr"><span class="trip-led-txt trip-mini-led-txt">${ledStn}${ledFinal}</span></span></div>`
     : '';
-  // 출발 · 다음 · 도착 3역 인라인 (다음 역은 온보드일 때만)
+  // 출발 · 다음 · 도착 3역 인라인 (가운데는 이번 역 데이터, 라벨만 '다음')
   const stn=(lbl,name,time,cls)=>`<div class="tm-stn ${cls}"><span class="tm-stn-lbl">${lbl}</span><strong class="tm-stn-nm">${name}</strong><time class="tm-stn-tm">${time||'-'}</time></div>`;
   const sep=`<span class="tm-sep" aria-hidden="true">→</span>`;
-  const routeInner = hasNext
-    ? `${stn('출발',ticket.fromStn,ticket.depTime,'dep')}${sep}${stn('다음',nextName,nextTime,'mid')}${sep}${stn('도착',ticket.toStn,ticket.arrTime,'arr')}`
+  const routeInner = hasMid
+    ? `${stn('출발',ticket.fromStn,ticket.depTime,'dep')}${sep}${stn('다음',midName,midTime,'mid')}${sep}${stn('도착',ticket.toStn,ticket.arrTime,'arr')}`
     : `${stn('출발',ticket.fromStn,ticket.depTime,'dep')}${sep}${stn('도착',ticket.toStn,ticket.arrTime,'arr')}`;
   // 축소 모드: 한 줄 요약 + LED
   if(_tripCompact){
