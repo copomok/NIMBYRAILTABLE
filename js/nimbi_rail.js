@@ -969,6 +969,42 @@ function setAfterRouteNow(){
   searchByRoute();
 }
 
+// 카카오맵식 길찾기 타임라인 카드 — legs=[{t,from,to,depT,arrT}]
+function _journeyCardHTML(legs){
+  const esc=s=>String(s).replace(/'/g,"\\'");
+  const depT=legs[0].depT, arrT=legs[legs.length-1].arrT;
+  const totalDur=durStr(depT,arrT);
+  const xfer=legs.length-1;
+  const stnCount=(t,from,to)=>{ const fi=t.stops.findIndex(s=>s.s===from), ti=t.stops.findIndex(s=>s.s===to); return (fi>=0&&ti>fi)?ti-fi:1; };
+  let rail='';
+  legs.forEach((l,i)=>{
+    const col=`var(--c-${gcCssVar(l.t.grade)})`;
+    const n=stnCount(l.t,l.from,l.to), legDur=durStr(l.depT,l.arrT);
+    rail+=`<div class="rt-node" style="--lc:${col}">
+      <div class="rt-time">${l.depT||'-'}</div>
+      <div class="rt-rail"><span class="rt-dot rt-board">${GL[l.t.grade]?GL[l.t.grade][0]:'●'}</span><span class="rt-seg"></span></div>
+      <div class="rt-info">
+        <div class="rt-stn">${l.from}<span class="rt-chev">›</span></div>
+        <div class="rt-sub"><span class="tc tc-${gc(l.t.grade)}" onclick="event.stopPropagation();jumpToTrain('${esc(l.t.no)}')">${l.t.no}</span> ${l.t.dest}행 · ${GL[l.t.grade]||l.t.grade}</div>
+        <div class="rt-cnt">${n}개 역 · ${legDur}</div>
+      </div></div>`;
+    if(i<legs.length-1){ const wait=(toMin(legs[i+1].depT)-toMin(l.arrT));
+      rail+=`<div class="rt-node rt-walk">
+        <div class="rt-time"></div>
+        <div class="rt-rail"><span class="rt-seg rt-dash"></span><span class="rt-walk-ic">🚶</span></div>
+        <div class="rt-info"><div class="rt-sub rt-xfer">${l.to} 환승 · 대기 ${wait>=0?wait:0}분</div></div></div>`;
+    }
+  });
+  const last=legs[legs.length-1];
+  rail+=`<div class="rt-node rt-last" style="--lc:var(--c-${gcCssVar(last.t.grade)})">
+    <div class="rt-time">${arrT||'-'}</div>
+    <div class="rt-rail"><span class="rt-dot rt-alight">하차</span></div>
+    <div class="rt-info"><div class="rt-stn">${last.to}<span class="rt-chev">›</span></div></div></div>`;
+  return `<div class="rt-card">
+    <div class="rt-sum"><div class="rt-dur">${totalDur}</div>
+      <div class="rt-sum-meta">${xfer>0?`환승 ${xfer}회`:'직통'} · <span class="rt-mono">${depT}→${arrT||'?'}</span></div></div>
+    <div class="rt-tl">${rail}</div></div>`;
+}
 function searchByRoute(){
   acHide('ac-from');
   acHide('ac-to');
@@ -1017,25 +1053,17 @@ function searchByRoute(){
     return (dA||9999)-(dB||9999);
   });
 
-  // 직통 있으면 직통만 표시
+  // 직통 있으면 직통만 표시 (카카오맵식 타임라인 카드)
   if(directs.length){
     const afterLabel=afterMin!==null?` · ${afterRaw} 이후`:'';
-    const rows=directs.map(({t,depT,arrT,dur})=>
-      `<tr onclick="jumpToTrain('${t.no}')">
-        <td>${trainChip(t.no,t.grade,`event.stopPropagation();jumpToTrain('${t.no}')`)}</td>
-        <td>${gradeHtml(t.grade)}</td><td>${lineChipHtml(t.line)}</td>
-        <td>${dirLabel(t.dir)}</td><td style="font-weight:500">${t.dest}</td>
-        <td><span class="time-dep">${depT||'-'}</span></td>
-        <td><span class="time-arr">${arrT||'-'}</span></td>
-        <td style="font-family:var(--mono);font-size:11px;color:var(--text2)">${dur}</td>
-
-      </tr>`
+    const cards=directs.slice(0,12).map(({t,depT,arrT})=>
+      _journeyCardHTML([{t,from,to,depT,arrT}])
     ).join('');
     const fb=document.getElementById('fav-btn-route');
     if(fb)fb.style.display='';
-    el.innerHTML=`<div class="result-header"><div class="result-title">🔍 ${from} → ${to}${afterLabel}</div><span class="badge blue">${directs.length}편</span><span class="badge" style="background:var(--bg3)">${sortLabel}</span></div>
-    <div class="table-wrap"><table><thead><tr><th>열차</th><th>등급</th><th>노선</th><th>방향</th><th>행선지</th><th>출발</th><th>도착</th><th>소요</th></tr></thead><tbody>${rows}</tbody></table></div>
-    <p class="hint">※ 열차번호 클릭 시 전체 운행 정보 조회</p>`;
+    el.innerHTML=`<div class="result-header"><div class="result-title">🔍 ${from} → ${to}${afterLabel}</div><span class="badge blue">직통 ${directs.length}편</span><span class="badge" style="background:var(--bg3)">${sortLabel}</span></div>
+    <div class="rt-list">${cards}</div>
+    <p class="hint">※ 열차번호 클릭 시 전체 운행 정보 조회 · 상위 ${Math.min(12,directs.length)}편 표시</p>`;
     return;
   }
 
@@ -1132,37 +1160,9 @@ function searchByRoute(){
     return;
   }
 
-  // 환승 결과 렌더링
+  // 환승 결과 렌더링 (카카오맵식 타임라인 카드)
   const afterLabel=afterMin!==null?` · ${afterRaw} 이후`:'';
-  const cards=transfers.map(({legs,totalDur})=>{
-    const legsHtml=legs.map((l,i)=>`
-      <div class="xfer-leg">
-        <div class="xfer-leg-head">
-          ${trainChip(l.t.no,l.t.grade,`jumpToTrain('${l.t.no}')`)}
-          ${gradeHtml(l.t.grade)}
-          ${lineChipHtml(l.t.line)}
-          <span style="color:var(--text2);font-size:12px">${dirLabel(l.t.dir)} · ${l.t.dest}행</span>
-        </div>
-        <div class="xfer-leg-route">
-          <span class="xfer-stn">${l.from}</span>
-          <span class="xfer-dep time-dep">${l.depT||'-'}</span>
-          <span class="xfer-arrow">→</span>
-          <span class="xfer-stn">${l.to}</span>
-          <span class="xfer-arr time-arr">${l.arrT||'-'}</span>
-
-        </div>
-      </div>
-      ${i<legs.length-1?`<div class="xfer-wait">🔄 환승 · 대기 ${toMin(legs[i+1].depT)-toMin(l.arrT)}분</div>`:''}
-    `).join('');
-    return `<div class="xfer-card">
-      <div class="xfer-card-head">
-        <span class="xfer-badge">1회 환승</span>
-        <span style="font-family:var(--mono);font-size:12px;color:var(--text2)">${legs[0].depT} → ${legs[legs.length-1].arrT||'?'} · ${totalDur}</span>
-      </div>
-      ${legsHtml}
-    </div>`;
-  }).join('');
-
+  const cards=transfers.map(({legs})=>_journeyCardHTML(legs)).join('');
   const fb2=document.getElementById('fav-btn-route');
   if(fb2)fb2.style.display='';
   el.innerHTML=`<div class="result-header">
@@ -1170,7 +1170,7 @@ function searchByRoute(){
     <span class="badge" style="background:var(--bg3)">${sortLabel}</span>
     <span class="badge yellow">${transfers.length}건</span>
   </div>
-  ${cards}
+  <div class="rt-list">${cards}</div>
   <p class="hint">※ 열차번호 클릭 시 전체 운행 정보 조회 · 환승 대기 3~60분 · 최단 소요 5건</p>`;
 }
 function toggleStationFilter(){
