@@ -10467,7 +10467,7 @@ function openMetroTimetable(stn, line){
   const old=document.getElementById('mtt-wrap'); if(old)old.remove();
   const deps=_metroStationDeps(stn).filter(o=>o.line===line);
   if(!deps.length) return;
-  const fClk=m=>String(Math.floor(m/60)).padStart(2,'0')+':'+String(m%60).padStart(2,'0');
+  const fClk=m=>Math.floor(m/60)+':'+String(m%60).padStart(2,'0');
   const dirs={}; deps.forEach(o=>{ (dirs[o.next]=dirs[o.next]||[]).push(o); });
   const dirOrder=Object.keys(dirs).sort((a,b)=>dirs[b].length-dirs[a].length).slice(0,2);
   const color=_metroLineColor(line);
