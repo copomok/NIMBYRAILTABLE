@@ -9791,7 +9791,7 @@ function _metroStationDeps(stn){
       const n=f.length/3, ix=k=>f[3*k+2];
       for(let k=0;k<n-1;k++){
         if(ix(k)!==sIdx) continue;
-        if(k>0 && ix(k-1)===sIdx) continue;               // 회차 연속중복 방지
+        if(ix(k+1)===sIdx) continue;                      // 당역종착(도착) 지점 스킵 — 회차 출발 지점만 유지
         const nextName=names[ix(k+1)];
         // 행선지: 앞쪽 회차점(A>B>A) 이전까지, 없으면 마지막역
         let dest=names[ix(n-1)];
@@ -9799,11 +9799,15 @@ function _metroStationDeps(stn){
           if(ix(j+1)===ix(j)){ dest=names[ix(j)]; break; }
           if(ix(j+1)===ix(j-1)){ dest=names[ix(j)]; break; }
         }
-        // 출발지: 뒤쪽 회차점 이전까지, 없으면 첫역
-        let orig=names[ix(0)];
-        for(let j=k-1;j>0;j--){
-          if(ix(j-1)===ix(j)){ orig=names[ix(j)]; break; }
-          if(ix(j-1)===ix(j+1)){ orig=names[ix(j)]; break; }
+        // 출발지: 직전이 동일역(당역종착 후 회차 출발)이면 이 역, 아니면 뒤쪽 회차점/첫역
+        let orig;
+        if(k>0 && ix(k-1)===sIdx){ orig=stn; }
+        else {
+          orig=names[ix(0)];
+          for(let j=k-1;j>0;j--){
+            if(ix(j-1)===ix(j)){ orig=names[ix(j)]; break; }
+            if(ix(j-1)===ix(j+1)){ orig=names[ix(j)]; break; }
+          }
         }
         const atMin=f[3*k+1];                             // 이 역 출발(d)
         out.push({line, next:nextName, dest, orig, cls, svc:si, atSec:atMin*60, dep:f[1], arr:f[3*(n-1)]});
