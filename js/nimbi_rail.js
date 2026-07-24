@@ -9814,18 +9814,12 @@ function _metroStationDeps(stn){
         if(ix(k)!==sIdx) continue;
         if(ix(k+1)===sIdx) continue;                      // 당역종착(도착) 지점 스킵 — 회차 출발 지점만 유지
         const nextName=names[ix(k+1)];
-        // 행선지 결정:
-        //  · 마지막역이 경로 중 '마지막에 딱 한 번' 등장하는 순수 종점(재방문X)이고 착·발역이 다르면
-        //    (곡정→이천→원평 같은 출입고 직통 편성) → 인게임 최종 행선지(마지막역) 그대로
-        //  · 그 외(완전 왕복, 또는 마지막역을 도중 경유 후 되돌아와 종착) → 진행방향 회차점(A>B>A) 사용
-        const pOrig=names[ix(0)], pFinalIdx=ix(n-1), pFinal=names[pFinalIdx];
-        let finalOnce=true; for(let j=0;j<n-1;j++){ if(ix(j)===pFinalIdx){ finalOnce=false; break; } }
-        let dest=pFinal;
-        if(!(pOrig!==pFinal && finalOnce)){
-          for(let j=k+1;j<n-1;j++){
-            if(ix(j+1)===ix(j)){ dest=names[ix(j)]; break; }
-            if(ix(j+1)===ix(j-1)){ dest=names[ix(j)]; break; }
-          }
+        // 행선지: 진행방향 회차점(A>B>A·연속중복) 기준으로 leg 분할 — 회차점 이전까지, 없으면 마지막역
+        // (곡정→이천→원평 출입고 편성은 곡정›이천, 이천›원평 두 leg로 분할 표기)
+        let dest=names[ix(n-1)];
+        for(let j=k+1;j<n-1;j++){
+          if(ix(j+1)===ix(j)){ dest=names[ix(j)]; break; }
+          if(ix(j+1)===ix(j-1)){ dest=names[ix(j)]; break; }
         }
         // 출발지: 회차 출발(직전 동일역=당역종착 후 출발, 또는 A>B>A 정점=이 역이 회차역)이면 이 역
         let orig;
