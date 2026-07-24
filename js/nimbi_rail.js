@@ -9850,18 +9850,26 @@ function _metroStationBoardHTML(stn){
     const cols=dirOrder.map(nx=>{
       const list=dirs[nx];
       const {entries,first,last}=_metroDirEntries(list);
-      const seenMin=new Set();
-      const up=entries.map(o=>{let rel=o.sec-nowS; if(rel<0)rel+=86400; return {rel,dest:o.dest,sec:o.sec,cls:o.cls};})
-        .sort((a,b)=>a.rel-b.rel)
-        .filter(o=>{const m=Math.floor(o.sec/60); if(seenMin.has(m))return false; seenMin.add(m); return true;})
-        .slice(0,3);
-      const trainsHtml=up.map((u,i)=>{
-        const showDest=u.dest&&u.dest!==stn;   // 자기참조 라벨만 숨김(인접역 종착은 표기)
-        return `<div class="mtb2-train${i===0?' mtb2-train--now':''}">
-        <span class="mtb2-dest">${_metroClsTag(u.cls)}${showDest?u.dest+'행':'&nbsp;'}</span>
-        <span class="mtb2-rel">${relTxt(u.rel)}</span>
-        <span class="mtb2-clk">${fSrvClock(u.sec)}</span>
-      </div>`;}).join('')||'<div class="mtb2-none">운행 정보 없음</div>';
+      let trainsHtml;
+      if(nowS>last){
+        // 오늘 막차 이후 → 운행 종료 + 첫차·행선지 안내
+        const fd=entries[0]&&entries[0].dest; const showFd=fd&&fd!==stn;
+        trainsHtml=`<div class="mtb2-ended"><span class="mtb2-ended-t">운행 종료</span>
+          <span class="mtb2-ended-first">첫차 ${fSrvClock(first)}${showFd?` <b>${fd}행</b>`:''}</span></div>`;
+      } else {
+        const seenMin=new Set();
+        const up=entries.map(o=>{let rel=o.sec-nowS; if(rel<0)rel+=86400; return {rel,dest:o.dest,sec:o.sec,cls:o.cls};})
+          .sort((a,b)=>a.rel-b.rel)
+          .filter(o=>{const m=Math.floor(o.sec/60); if(seenMin.has(m))return false; seenMin.add(m); return true;})
+          .slice(0,3);
+        trainsHtml=up.map((u,i)=>{
+          const showDest=u.dest&&u.dest!==stn;   // 자기참조 라벨만 숨김(인접역 종착은 표기)
+          return `<div class="mtb2-train${i===0?' mtb2-train--now':''}">
+          <span class="mtb2-dest">${_metroClsTag(u.cls)}${showDest?u.dest+'행':'&nbsp;'}</span>
+          <span class="mtb2-rel">${relTxt(u.rel)}</span>
+          <span class="mtb2-clk">${fSrvClock(u.sec)}</span>
+        </div>`;}).join('')||'<div class="mtb2-none">운행 정보 없음</div>';
+      }
       return `<div class="mtb2-col">
         <div class="mtb2-dir"><span class="mtb2-arr">▸</span>${nx} 방면</div>
         ${trainsHtml}
@@ -10532,13 +10540,22 @@ function openMetroTrain(line, svcIdx, hlClk){
   // 클릭 지점 → 그 지점이 속한 방향 leg
   let ci=0; for(let i=0;i<n;i++){ if(norm(times[i])===hlClk){ ci=i; break; } }
   const [ls,le]=(_metroLegRanges(idxSeq).find(([s,e])=>ci>=s&&ci<=e))||[0,n-1];
-  const seq=[]; for(let i=ls;i<=le;i++){ const st={s:names[idxSeq[i]], m:times[i], cur:i===ci}; if(seq.length&&seq[seq.length-1].s===st.s){ if(st.cur)seq[seq.length-1].cur=true; } else seq.push(st); }
+  const seq=[]; for(let i=ls;i<=le;i++){ const st={s:names[idxSeq[i]], m:times[i]}; if(!seq.length||seq[seq.length-1].s!==st.s) seq.push(st); else seq[seq.length-1]=st; }
   const orig=seq[0].s, dest=seq[seq.length-1].s;
+  // 실시간 진행 위치: 현재 시각 기준 이 편성이 어디쯤 있는지(지나온 역=done, 현 위치=cur)
+  const srv=x=>(((x-240)%1440)+1440)%1440;
+  const nowc=new Date(); const nowSv=srv(nowc.getHours()*60+nowc.getMinutes());
+  const abs=[]; let off=0; seq.forEach((st,i)=>{ const v=srv(st.m); if(i>0&&(v+off)<abs[i-1]) off+=1440; abs.push(v+off); });
+  let nowAbs=nowSv; while(nowAbs<abs[0]-720)nowAbs+=1440; while(nowAbs>abs[abs.length-1]+720)nowAbs-=1440;
+  let curIdx; // -1: 운행 전, -2: 운행 종료, >=0: 현 위치(막 지난 역)
+  if(nowAbs<abs[0])curIdx=-1; else if(nowAbs>=abs[abs.length-1])curIdx=-2;
+  else { curIdx=0; for(let i=0;i<abs.length;i++){ if(abs[i]<=nowAbs)curIdx=i; else break; } }
   const rows=seq.map((st,i)=>{
     const isOrigin=i===0, isTerm=i===seq.length-1;
-    const clsA=['jr-stop']; if(st.cur)clsA.push('cur');
+    let stateCls=''; if(curIdx===-2)stateCls='done'; else if(curIdx>=0){ if(i<curIdx)stateCls='done'; else if(i===curIdx)stateCls='cur'; }
+    const clsA=['jr-stop']; if(stateCls)clsA.push(stateCls);
     const nameCls=isOrigin?'jr-origin':isTerm?'jr-term':'';
-    const badge=st.cur?'<span class="jr-badge cur">현재</span>':'';
+    const badge=stateCls==='cur'?'<span class="jr-badge cur">현재</span>':'';
     const timeTxt=isOrigin?`${fmt(st.m)} 출발`:isTerm?`${fmt(st.m)} 도착`:fmt(st.m);
     return `<div class="${clsA.join(' ')}" style="--gc:${color}">
       <div class="jr-dot"></div>
@@ -10546,6 +10563,7 @@ function openMetroTrain(line, svcIdx, hlClk){
       <div class="jr-time">${timeTxt}</div>
     </div>`;
   }).join('');
+  const statusTxt=curIdx===-1?'운행 전':curIdx===-2?'운행 종료':'운행 중';
   const exp=cls===2?'<span class="mtb-exp mtb-exp--t">특급</span>':cls===1?'<span class="mtb-exp">급행</span>':'';
   const wrap=document.createElement('div'); wrap.id='mtn-wrap';
   wrap.innerHTML=`<div class="rail-ticket-backdrop" onclick="closeMetroTrain()"></div>
@@ -10554,7 +10572,7 @@ function openMetroTrain(line, svcIdx, hlClk){
         <b>${_opsEsc(orig)}</b><span class="mtn-arrow">▶▶▶</span><b>${_opsEsc(dest)}</b>${exp}
         <button class="si-board-close" onclick="closeMetroTrain()" aria-label="닫기">✕</button></div>
       <div class="jr-timeline mtn-tl">${rows}</div>
-      <div class="mtn-foot">인게임 시각표 기준 · ${seq.length}개 역</div>
+      <div class="mtn-foot">인게임 시각표 기준 · ${seq.length}개 역 · <b style="color:${color}">${statusTxt}</b></div>
     </div>`;
   document.body.appendChild(wrap);
   const cur=wrap.querySelector('.jr-stop.cur'); if(cur)cur.scrollIntoView({block:'center'});

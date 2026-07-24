@@ -1813,6 +1813,10 @@ button, select, input[type=range],
 .mtb2-train--est .mtb2-dest,.mtb2-train--est .mtb2-rel{opacity:.72}
 .mtb2-est-m{font-style:normal;font-size:9px;color:var(--text3);margin-left:1px;vertical-align:1px}
 .mtb2-none{font-size:11px;color:var(--text3);padding:3px 0}
+.mtb2-ended{display:flex;flex-direction:column;gap:3px;padding:5px 0}
+.mtb2-ended-t{font-size:12px;font-weight:800;color:var(--text3)}
+.mtb2-ended-first{font-size:11px;color:var(--text2)}
+.mtb2-ended-first b{color:var(--mc);font-weight:700}
 .mtb2-fl{font-size:9.5px;color:var(--text3);font-family:var(--mono);font-variant-numeric:tabular-nums;margin-top:2px;padding-top:5px;border-top:1px dashed var(--border)}
 .mtb-foot{font-size:9.5px;color:var(--text3);margin-top:5px}
 /* 🚇 전철 역 전체 시간표 모달 (시간대별 정렬 그리드) */
