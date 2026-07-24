@@ -1681,6 +1681,14 @@ function getRemainingStops(train, ticket){
 
 // LED 표시 on/off (탑승 카드 LED 토글)
 function ledEnabled(){ return localStorage.getItem('nimbi_led_on')!=='0'; }
+// 탑승 여정 카드 축소 표시 (설정)
+let _tripCompact = localStorage.getItem('nimbi_trip_compact')==='1';
+function toggleTripCompact(){
+  _tripCompact=!_tripCompact;
+  try{ localStorage.setItem('nimbi_trip_compact', _tripCompact?'1':'0'); }catch(e){}
+  if(typeof updateHomeTripWidget==='function') updateHomeTripWidget();
+  const el=document.getElementById('my-sub-content'); if(el&&typeof renderSettingsSection==='function') renderSettingsSection(el);
+}
 function toggleTripLED(ev){
   if(ev) ev.stopPropagation();
   localStorage.setItem('nimbi_led_on', ledEnabled()?'0':'1');
@@ -7049,20 +7057,22 @@ function goLiveTrack(no){
 // 013: 이번 정차역 안내는 분 단위로 표시하며, 위젯 30초 주기 재렌더로 갱신된다.
 
 // 홈(열차 탭)용 간략 여정 카드 (상세는 승차권 탭)
+// 차내 LED·현재 위치(출발↔도착 가운데)를 함께 표시하며, 설정에서 축소 모드로 볼 수 있다.
 function renderTripWidgetCompact(active){
   if(!active) return "";
   const {ticket,train,status,preBoard,minsUntilDep,preArr,minsUntilArr}=active;
   const gc=GRADE_COLORS[train.grade]||"#8b949e";
-  let stateLabel,stateDetail,stateIcon,stateColor;
+  let stateLabel,stateDetail,stateIcon,stateColor,curName=null,onboard=false;
   if(preBoard){
     stateLabel="승차 준비"; stateIcon="🚉"; stateColor="var(--orange)";
     stateDetail=`${fmtEta(minsUntilDep)} 후 출발 예정`;
   }else if(preArr){
-    stateLabel="도착 준비"; stateIcon="📍"; stateColor="var(--green)";
+    stateLabel="도착 준비"; stateIcon="📍"; stateColor="var(--green)"; onboard=true; curName=ticket.toStn;
     stateDetail=`${fmtEta(minsUntilArr)} 후 ${ticket.toStn} 도착`;
   }else{
     const tl=getTripTimeline3(train,status,ticket);
-    const current=tl&&tl.cur?tl.cur.name:(status.atStn||status.passStn||"이동 중");
+    curName=(tl&&tl.cur?tl.cur.name:(status.atStn||status.passStn||null)); onboard=true;
+    const current=curName||"이동 중";
     const depM=toMin(ticket.depTime),arrM=toMin(ticket.arrTime);
     const now=new Date(),nowM=now.getHours()*60+now.getMinutes();
     let diff=(arrM!=null&&depM!=null)?((arrM>=depM)?arrM-nowM:arrM+1440-nowM):null;
@@ -7072,7 +7082,35 @@ function renderTripWidgetCompact(active){
     stateDetail=`${current} · ${ticket.toStn}까지 ${diff!=null?fmtEta(diff):"운행 중"}`;
   }
   const seat=[ticket.seatClassLabel,seatSummary(ticket.seats)].filter(Boolean).join(" · ");
-  return `<article class="trip-mini" style="--trip-color:${gc};--trip-soft:${gc}1f" onclick="openQRPopup(&quot;${ticket.id}&quot;)">
+  const idEsc=String(ticket.id).replace(/"/g,'&quot;');
+  // 차내 LED (탑승/도착 준비 중 + LED 설정 켜짐일 때) — 열차 탭 승차 카드와 동일한 순환 LED 재사용
+  const ledStn = curName || (preBoard?ticket.fromStn:'-');
+  const ledFinal = (curName&&curName===ticket.toStn)?' · 내리는 문 확인':'';
+  const ledHtml = (onboard&&ledEnabled())
+    ? `<div class="trip-led trip-mini-led"><span class="trip-led-tag trip-mini-led-tag">이번 역</span><span class="trip-led-scr"><span class="trip-led-txt trip-mini-led-txt">${ledStn}${ledFinal}</span></span></div>`
+    : '';
+  // 축소 모드: 한 줄 요약 + LED
+  if(_tripCompact){
+    return `<article class="trip-mini trip-mini--slim" style="--trip-color:${gc};--trip-soft:${gc}1f" onclick="openQRPopup(&quot;${idEsc}&quot;)">
+      <span class="trip-mini-accent" aria-hidden="true"></span>
+      <div class="trip-mini-train">
+        <span class="trip-mini-grade-badge" style="background:${gc}">${train.grade}</span>
+        <strong class="trip-mini-no">${train.no}</strong>
+        <span class="trip-mini-bound">${ticket.fromStn}→${ticket.toStn}</span>
+        <span class="trip-mini-status" style="color:${stateColor};margin-left:auto"><i style="background:${stateColor}"></i>${stateLabel}</span>
+      </div>
+      ${ledHtml}
+      <div class="trip-mini-footer">
+        <span class="trip-mini-detail"><b>${stateIcon}</b>${stateDetail}</span>
+        <button type="button" class="trip-mini-go" onclick="event.stopPropagation();openQRPopup(&quot;${idEsc}&quot;)">승차권 <b>›</b></button>
+      </div>
+    </article>`;
+  }
+  // 전체 모드: 출발 → (현재 위치) → 도착
+  const nowChip = (onboard&&curName)
+    ? `<em class="trip-mini-now" title="현재 위치">${curName}</em>`
+    : '';
+  return `<article class="trip-mini" style="--trip-color:${gc};--trip-soft:${gc}1f" onclick="openQRPopup(&quot;${idEsc}&quot;)">
     <span class="trip-mini-accent" aria-hidden="true"></span>
     <div class="trip-mini-kicker">
       <span class="trip-mini-title">탑승 여정</span>
@@ -7082,11 +7120,12 @@ function renderTripWidgetCompact(active){
       <span class="trip-mini-grade-badge" style="background:${gc}">${train.grade}</span>
       <strong class="trip-mini-no">${train.no}</strong>
       <span class="trip-mini-bound">${ticket.toStn}행</span>
-      <button type="button" class="trip-mini-go" onclick="event.stopPropagation();openQRPopup(&quot;${ticket.id}&quot;)">승차권 <b>›</b></button>
+      <button type="button" class="trip-mini-go" onclick="event.stopPropagation();openQRPopup(&quot;${idEsc}&quot;)">승차권 <b>›</b></button>
     </div>
-    <div class="trip-mini-route">
+    ${ledHtml}
+    <div class="trip-mini-route${nowChip?' has-now':''}">
       <div class="trip-mini-station"><span>출발</span><strong>${ticket.fromStn}</strong><time>${ticket.depTime||"-"}</time></div>
-      <div class="trip-mini-route-line"><span></span><b>→</b><span></span></div>
+      <div class="trip-mini-route-line">${nowChip}<span class="trip-mini-arrow-row"><span></span><b>→</b><span></span></span></div>
       <div class="trip-mini-station end"><span>도착</span><strong>${ticket.toStn}</strong><time>${ticket.arrTime||"-"}</time></div>
     </div>
     <div class="trip-mini-footer">
@@ -7095,44 +7134,63 @@ function renderTripWidgetCompact(active){
     </div>
   </article>`;
 }
-// 오늘 남은 예정 승차권 목록 (탑승 임박/탑승 중인 excludeId는 제외) — 가까운 출발 순
+// 앞으로 1주(오늘~+7일)의 예정 승차권 (탑승 임박/중인 excludeId는 제외) — 가까운 출발 순
 function getUpcomingTickets(excludeId){
   if(typeof loadTickets!=='function') return [];
-  const today=todayLocalStr();
   const now=new Date(), nowM=now.getHours()*60+now.getMinutes();
+  const dayIdx={};
+  for(let i=0;i<8;i++){ const d=new Date(now); d.setDate(d.getDate()+i); dayIdx[todayLocalStr(d)]=i; }
   return loadTickets()
-    .filter(tk=>tk.status==='active'&&tk.travelDate===today&&tk.id!==excludeId)
-    .map(tk=>{ const dep=toMin(tk.depTime); let diff=dep==null?9999:dep-nowM; if(diff<0)diff+=1440; return {ticket:tk, train:getTrainByNo(tk.trainNo), diff}; })
-    .filter(x=>x.diff>0&&x.diff<720)
+    .filter(tk=>tk.status==='active'&&tk.id!==excludeId&&dayIdx[tk.travelDate]!=null)
+    .map(tk=>{ const off=dayIdx[tk.travelDate]; const dep=toMin(tk.depTime);
+      let diff = dep==null?999999 : (dep-nowM)+off*1440;
+      return {ticket:tk, train:getTrainByNo(tk.trainNo), diff, dayoff:off}; })
+    .filter(x=>x.diff>0)
     .sort((a,b)=>a.diff-b.diff);
 }
-// 예정 승차권 컴팩트 행 (탑승 시간 전 상태)
-function renderPlanRow(u){
-  const {ticket,train,diff}=u;
+// 예정 승차권 슬라이드 카드 (탑승 시간 전 · 앞으로 1주)
+function renderPlanSlide(u){
+  const {ticket,train,diff,dayoff}=u;
   const gc=(train&&GRADE_COLORS[train.grade])||'#8b949e';
   const grade=train?train.grade:(ticket.grade||'열차');
-  return `<button type="button" class="myplan-row" style="--pl:${gc}" onclick="openQRPopup(&quot;${ticket.id}&quot;)">
-    <span class="myplan-row-badge" style="background:${gc}">${grade}</span>
-    <span class="myplan-row-main">
-      <span class="myplan-row-title"><strong>${ticket.trainNo}</strong>${ticket.toStn}행</span>
-      <span class="myplan-row-sub">${ticket.fromStn} ${ticket.depTime||'-'} → ${ticket.toStn} ${ticket.arrTime||'-'}</span>
+  // 언제 출발: 오늘=상대시간, 내일=내일 HH:MM, 그 외=M/D(요일) HH:MM
+  let when;
+  if(dayoff===0) when=`${fmtEta(diff)} 출발`;
+  else if(dayoff===1) when=`내일 ${ticket.depTime||''} 출발`;
+  else { const wk=['일','월','화','수','목','금','토']; const d=new Date(); d.setDate(d.getDate()+dayoff);
+    when=`${d.getMonth()+1}/${d.getDate()}(${wk[d.getDay()]}) ${ticket.depTime||''} 출발`; }
+  const idEsc=String(ticket.id).replace(/"/g,'&quot;');
+  return `<button type="button" class="myplan-slide" style="--pl:${gc}" onclick="openQRPopup(&quot;${idEsc}&quot;)">
+    <span class="myplan-slide-top">
+      <span class="myplan-slide-badge" style="background:${gc}">${grade}</span>
+      <strong class="myplan-slide-no">${ticket.trainNo}</strong>
+      <span class="myplan-slide-bound">${ticket.toStn}행</span>
+      <span class="myplan-slide-when">${when}</span>
     </span>
-    <span class="myplan-row-side">
-      <span class="myplan-row-eta">${fmtEta(diff)} 출발</span>
-      <span class="myplan-row-go">승차권 ›</span>
+    <span class="myplan-slide-route">
+      <span class="myplan-slide-stn"><b>${ticket.fromStn}</b><time>${ticket.depTime||'-'}</time></span>
+      <span class="myplan-slide-arrow">→</span>
+      <span class="myplan-slide-stn end"><b>${ticket.toStn}</b><time>${ticket.arrTime||'-'}</time></span>
     </span>
+    <span class="myplan-slide-foot"><span>${[ticket.seatClassLabel,seatSummary(ticket.seats)].filter(Boolean).join(' · ')||'승차권'}</span><em>승차권 ›</em></span>
   </button>`;
 }
-// 통합 "나의 다음 일정" — 탑승 임박/중인 건은 여정 카드, 나머지는 컴팩트 행으로 함께 표시
+// 통합 "나의 다음 일정" — 탑승 임박/중인 건은 여정 카드, 앞으로 1주 예정은 가로 슬라이더
 function renderMyPlan(){
   const active=getActiveTripTicket();
   const upcoming=getUpcomingTickets(active?active.ticket.id:null);
   if(!active && !upcoming.length) return '';
   const count=(active?1:0)+upcoming.length;
+  const slider = upcoming.length
+    ? `<div class="myplan-slider-wrap">
+        <div class="myplan-slider">${upcoming.map(renderPlanSlide).join('')}</div>
+        ${upcoming.length>1?`<div class="myplan-slider-hint">← 밀어서 1주 예매 내역 보기 →</div>`:''}
+      </div>`
+    : '';
   return `<section class="myplan">
     <div class="myplan-head"><b>나의 다음 일정</b>${count>1?`<span>${count}건 예정</span>`:''}</div>
     ${active?renderTripWidgetCompact(active):''}
-    ${upcoming.map(renderPlanRow).join('')}
+    ${slider}
   </section>`;
 }
 // 홈 상단 "나의 다음 일정" 위젯 갱신 (여정 + 예정 통합)
@@ -8079,6 +8137,13 @@ function renderSettingsSection(el){
         <div class="sim-toggle-desc">예보 확률을 바탕으로 각 열차에 실제 지연을 부여해 <b>지도·탑승 여정·전광판</b>의 위치·시각에 반영합니다. 시간표 조회는 정시 그대로입니다.</div>
       </div>
       <button class="sim-switch${_simDelayOn?' on':''}" onclick="toggleSimDelay()" role="switch" aria-checked="${_simDelayOn}"><span class="sim-knob"></span></button>
+    </div>
+    <div class="sim-toggle-card">
+      <div class="sim-toggle-info">
+        <div class="sim-toggle-title">🎫 탑승 여정 카드 축소</div>
+        <div class="sim-toggle-desc">홈의 <b>탑승 여정</b> 카드를 기본적으로 작게(한 줄 요약 + 차내 LED) 표시합니다.</div>
+      </div>
+      <button class="sim-switch${_tripCompact?' on':''}" onclick="toggleTripCompact()" role="switch" aria-checked="${_tripCompact}"><span class="sim-knob"></span></button>
     </div>
     <div class="settings-divider"></div>
     <div class="settings-title">좌석 선택 기본 선호</div>
