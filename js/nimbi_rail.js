@@ -7065,10 +7065,10 @@ function renderTripWidgetCompact(active){
   let stateLabel,stateDetail,stateIcon,stateColor,curName=null,onboard=false;
   if(preBoard){
     stateLabel="승차 준비"; stateIcon="🚉"; stateColor="var(--orange)";
-    stateDetail=`${fmtEta(minsUntilDep)} 후 출발 예정`;
+    stateDetail=`${fmtEta(minsUntilDep)} 출발 예정`;
   }else if(preArr){
     stateLabel="도착 준비"; stateIcon="📍"; stateColor="var(--green)"; onboard=true; curName=ticket.toStn;
-    stateDetail=`${fmtEta(minsUntilArr)} 후 ${ticket.toStn} 도착`;
+    stateDetail=`${fmtEta(minsUntilArr)} ${ticket.toStn} 도착`;
   }else{
     const tl=getTripTimeline3(train,status,ticket);
     curName=(tl&&tl.cur?tl.cur.name:(status.atStn||status.passStn||null)); onboard=true;
@@ -7125,7 +7125,7 @@ function renderTripWidgetCompact(active){
     ${ledHtml}
     <div class="trip-mini-route${nowChip?' has-now':''}">
       <div class="trip-mini-station"><span>출발</span><strong>${ticket.fromStn}</strong><time>${ticket.depTime||"-"}</time></div>
-      <div class="trip-mini-route-line">${nowChip}<span class="trip-mini-arrow-row"><span></span><b>→</b><span></span></span></div>
+      <div class="trip-mini-route-line">${nowChip?`${nowChip}<div class="trip-mini-arrow-row"><span></span><b>→</b><span></span></div>`:`<span></span><b>→</b><span></span>`}</div>
       <div class="trip-mini-station end"><span>도착</span><strong>${ticket.toStn}</strong><time>${ticket.arrTime||"-"}</time></div>
     </div>
     <div class="trip-mini-footer">
@@ -7149,7 +7149,8 @@ function getUpcomingTickets(excludeId){
     .sort((a,b)=>a.diff-b.diff);
 }
 // 예정 승차권 슬라이드 카드 (탑승 시간 전 · 앞으로 1주)
-function renderPlanSlide(u){
+// mini=true: 탑승 여정 카드가 떠 있을 때 한 줄 요약으로 작게 표시
+function renderPlanSlide(u, mini){
   const {ticket,train,diff,dayoff}=u;
   const gc=(train&&GRADE_COLORS[train.grade])||'#8b949e';
   const grade=train?train.grade:(ticket.grade||'열차');
@@ -7160,6 +7161,17 @@ function renderPlanSlide(u){
   else { const wk=['일','월','화','수','목','금','토']; const d=new Date(); d.setDate(d.getDate()+dayoff);
     when=`${d.getMonth()+1}/${d.getDate()}(${wk[d.getDay()]}) ${ticket.depTime||''} 출발`; }
   const idEsc=String(ticket.id).replace(/"/g,'&quot;');
+  if(mini){
+    return `<button type="button" class="myplan-slide myplan-slide--mini" style="--pl:${gc}" onclick="openQRPopup(&quot;${idEsc}&quot;)">
+      <span class="myplan-slide-top">
+        <span class="myplan-slide-badge" style="background:${gc}">${grade}</span>
+        <strong class="myplan-slide-no">${ticket.trainNo}</strong>
+        <span class="myplan-slide-bound">${ticket.toStn}행</span>
+        <span class="myplan-slide-when">${when}</span>
+      </span>
+      <span class="myplan-slide-foot"><span>${ticket.fromStn} ${ticket.depTime||'-'} → ${ticket.toStn} ${ticket.arrTime||'-'}</span><em>승차권 ›</em></span>
+    </button>`;
+  }
   return `<button type="button" class="myplan-slide" style="--pl:${gc}" onclick="openQRPopup(&quot;${idEsc}&quot;)">
     <span class="myplan-slide-top">
       <span class="myplan-slide-badge" style="background:${gc}">${grade}</span>
@@ -7176,14 +7188,16 @@ function renderPlanSlide(u){
   </button>`;
 }
 // 통합 "나의 다음 일정" — 탑승 임박/중인 건은 여정 카드, 앞으로 1주 예정은 가로 슬라이더
+// 탑승 여정 카드가 떠 있으면 1주 슬라이드는 작게(mini) 표시
 function renderMyPlan(){
   const active=getActiveTripTicket();
   const upcoming=getUpcomingTickets(active?active.ticket.id:null);
   if(!active && !upcoming.length) return '';
   const count=(active?1:0)+upcoming.length;
+  const mini=!!active;
   const slider = upcoming.length
     ? `<div class="myplan-slider-wrap">
-        <div class="myplan-slider">${upcoming.map(renderPlanSlide).join('')}</div>
+        <div class="myplan-slider${mini?' myplan-slider--mini':''}">${upcoming.map(u=>renderPlanSlide(u,mini)).join('')}</div>
         ${upcoming.length>1?`<div class="myplan-slider-hint">← 밀어서 1주 예매 내역 보기 →</div>`:''}
       </div>`
     : '';

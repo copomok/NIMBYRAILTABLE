@@ -1562,8 +1562,8 @@ button, select, input[type=range],
 .myplan-row-eta{font-size:11px;font-weight:750;color:var(--text2);white-space:nowrap}
 .myplan-row-go{font-size:11px;font-weight:800;color:var(--pl);white-space:nowrap}
 
-/* 여정 카드: 출발↔도착 가운데 현재 위치 칩 */
-.trip-mini-route-line{flex-direction:column;justify-content:center}
+/* 여정 카드: 출발↔도착 가운데 현재 위치 칩 (현재 위치 있을 때만 세로 배치) */
+.trip-mini-route.has-now .trip-mini-route-line{flex-direction:column;justify-content:center;gap:5px}
 .trip-mini-arrow-row{display:flex;align-items:center;gap:6px;width:100%}
 .trip-mini-now{max-width:100%;font-size:10.5px;font-weight:850;line-height:1.35;color:var(--trip-color);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;background:color-mix(in srgb,var(--trip-color) 15%,transparent);padding:2px 8px;border-radius:999px}
 .trip-mini-now::before{content:'현재 ';font-size:8.5px;font-weight:800;opacity:.72}
@@ -1590,14 +1590,21 @@ button, select, input[type=range],
 .myplan-slide-when{margin-left:auto;font-size:11px;font-weight:750;color:var(--pl);white-space:nowrap;flex-shrink:0}
 .myplan-slide-route{display:flex;align-items:center;gap:9px;padding:10px 12px;border:1px solid color-mix(in srgb,var(--pl) 18%,var(--border));border-radius:11px;background:color-mix(in srgb,var(--pl) 5%,var(--bg3))}
 .myplan-slide-stn{display:flex;flex-direction:column;gap:2px;min-width:0}
-.myplan-slide-stn.end{margin-left:auto;text-align:right;align-items:flex-end}
+.myplan-slide-stn.end{text-align:right;align-items:flex-end}
 .myplan-slide-stn b{font-size:15px;font-weight:850;color:var(--text1);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%}
 .myplan-slide-stn time{font-family:var(--mono);font-size:11.5px;font-weight:750;color:var(--pl);font-variant-numeric:tabular-nums}
-.myplan-slide-arrow{color:var(--pl);font-weight:700;flex-shrink:0}
+.myplan-slide-arrow{flex:1;text-align:center;color:var(--pl);font-weight:700}
 .myplan-slide-foot{display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:11px}
 .myplan-slide-foot span{color:var(--text3);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
 .myplan-slide-foot em{color:var(--pl);font-style:normal;font-weight:800;flex-shrink:0}
 .myplan-slider-hint{text-align:center;font-size:10px;color:var(--text3);margin-top:5px;letter-spacing:.3px}
+/* 탑승 여정 카드가 떠 있을 때: 1주 슬라이드를 작게(mini) */
+.myplan-slider--mini{gap:8px}
+.myplan-slide--mini{flex:0 0 74%;gap:8px;padding:11px 13px}
+.myplan-slide--mini .myplan-slide-no{font-size:15px}
+.myplan-slide--mini .myplan-slide-foot{font-size:10.5px}
+.myplan-slide--mini .myplan-slide-foot span{font-family:var(--mono);font-variant-numeric:tabular-nums}
+@media(max-width:520px){.myplan-slide{flex-basis:88%}.myplan-slide--mini{flex-basis:80%}}
 
 
 /* ══════════════════════════════════════════
