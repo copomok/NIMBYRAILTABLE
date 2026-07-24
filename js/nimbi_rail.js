@@ -9789,8 +9789,11 @@ function _metroStationBoardHTML(stn){
       const list=dirs[nx];
       const times=list.map(o=>o.atSec).sort((a,b)=>srvSec(a)-srvSec(b));
       const first=times[0], last=times[times.length-1];
+      const seenMin=new Set();
       const up=list.map(o=>{let rel=srvSec(o.atSec)-nowS; if(rel<0)rel+=86400; return {rel,dest:o.dest,atSec:o.atSec};})
-        .sort((a,b)=>a.rel-b.rel).slice(0,3);
+        .sort((a,b)=>a.rel-b.rel)
+        .filter(o=>{const m=Math.floor(o.atSec/60); if(seenMin.has(m))return false; seenMin.add(m); return true;})
+        .slice(0,3);
       const trainsHtml=up.map((u,i)=>{
         const showDest=u.dest&&u.dest!==stn&&u.dest!==nx;   // 왕복·순환 오기입 라벨 숨김
         return `<div class="mtb2-train${i===0?' mtb2-train--now':''}">
