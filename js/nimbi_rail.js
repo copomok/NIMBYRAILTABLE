@@ -9867,7 +9867,8 @@ function _metroStationBoardHTML(stn){
   });
   const blocks=lineOrder.map(line=>{
     const color=_metroLineColor(line), dirs=lines[line];
-    const dirOrder=Object.keys(dirs).sort((a,b)=>dirs[b].length-dirs[a].length).slice(0,2);
+    // 분기역(계통 다수)은 모든 방면 표시 — 2개 초과 시 가로 스크롤 (일부 계통 누락 방지)
+    const dirOrder=Object.keys(dirs).sort((a,b)=>dirs[b].length-dirs[a].length).slice(0,6);
     const cols=dirOrder.map(nx=>{
       const list=dirs[nx];
       const {entries,first,last}=_metroDirEntries(list);
@@ -10493,7 +10494,8 @@ function openMetroTimetable(stn, line){
   if(!deps.length) return;
   const fClk=m=>Math.floor(m/60)+':'+String(m%60).padStart(2,'0');
   const dirs={}; deps.forEach(o=>{ (dirs[o.next]=dirs[o.next]||[]).push(o); });
-  const dirOrder=Object.keys(dirs).sort((a,b)=>dirs[b].length-dirs[a].length).slice(0,2);
+  // 분기역은 모든 방면 표시 — 2개 초과 시 가로 스크롤 (계통 누락 방지)
+  const dirOrder=Object.keys(dirs).sort((a,b)=>dirs[b].length-dirs[a].length).slice(0,6);
   const color=_metroLineColor(line);
   const nowM=new Date().getHours()*60+new Date().getMinutes();
   // 방면별 시각순 편 목록 (운행일분 기준, 중복 분 제거)
