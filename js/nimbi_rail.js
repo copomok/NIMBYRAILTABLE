@@ -9361,7 +9361,28 @@ function renderMetroLinesTab(){
     </div>
     <div style="display:flex;flex-direction:column;gap:8px;padding-bottom:24px">${list.map(_metroCardHTML).join('')}</div>`;
 }
+// 현 시간표(METRO_SCHED) 기준 첫·막차/배차 산출 — 노선명별 메모이즈
+let _metroStatCache={};
+function _metroSchedStats(name){
+  if(name in _metroStatCache) return _metroStatCache[name];
+  const ent=(typeof METRO_SCHED!=='undefined')&&METRO_SCHED[name];
+  if(!ent||!ent.t||!ent.t.length) return _metroStatCache[name]=null;
+  const srv=m=>(((m-240)%1440)+1440)%1440;                              // 04:00=0
+  const clk=sm=>{const c=(sm+240)%1440;return Math.floor(c/60)+':'+String(c%60).padStart(2,'0');};
+  const byDir={}; let minS=Infinity,maxS=-Infinity;
+  for(const f of ent.t){ const sm=srv(f[1]); if(sm<minS)minS=sm; if(sm>maxS)maxS=sm;   // 원점 출발(첫 정차 d)
+    const d=f[2]+'>'+(f.length>=6?f[5]:''); (byDir[d]=byDir[d]||[]).push(sm); }        // 방향=원점>다음역
+  // 주 방향(편수 최다)의 주간 연속 배차 간격 → 러시=하위 15%, 평시=상위 80% 분위
+  const primary=Object.keys(byDir).sort((a,b)=>byDir[b].length-byDir[a].length)[0];
+  const deps=byDir[primary].slice().sort((a,b)=>a-b);
+  const gaps=[]; for(let i=1;i<deps.length;i++){const g=deps[i]-deps[i-1]; if(g>0&&g<=120&&deps[i-1]>=90&&deps[i-1]<=1170)gaps.push(g);}
+  gaps.sort((a,b)=>a-b);
+  const pct=p=>gaps.length?gaps[Math.min(gaps.length-1,Math.floor(p*gaps.length))]:null;
+  return _metroStatCache[name]={first:clk(minS),last:clk(maxS),hwPeak:pct(0.15),hwOff:pct(0.8)};
+}
 function _metroCardHTML(l){
+  const st=_metroSchedStats(l.name);
+  const first=(st&&st.first)||l.first, last=(st&&st.last)||l.last, hwObj=(st&&st.hwPeak!=null)?st:l;
   return `<div class="metro-card" style="border-left:4px solid ${l.color}" onclick="openMetroLineDetail('${l.id}')">
     <div class="metro-head">
       <span class="metro-dot" style="background:${l.color}"></span>
@@ -9372,9 +9393,9 @@ function _metroCardHTML(l){
     </div>
     <div class="metro-route">${l.loop?`${l.from} 기점 순환`:`${l.from} ↔ ${l.to}`}</div>
     <div class="metro-info">
-      <span>첫차 <b>${l.first}</b></span>
-      <span>막차 <b>${l.last}</b></span>
-      <span>${_metroHeadway(l)}</span>
+      <span>첫차 <b>${first}</b></span>
+      <span>막차 <b>${last}</b></span>
+      <span>${_metroHeadway(hwObj)}</span>
     </div>
   </div>`;
 }
@@ -9401,9 +9422,9 @@ function _renderMetroLineDetail(el,id){
         </div>
         <div class="metro-route">${l.loop?`${l.from} 기점 순환`:`${l.from} ↔ ${l.to}`}</div>
         <div class="metro-info">
-          <span>첫차 <b>${l.first}</b></span>
-          <span>막차 <b>${l.last}</b></span>
-          <span>${_metroHeadway(l)}</span>
+          <span>첫차 <b>${(()=>{const st=_metroSchedStats(l.name);return (st&&st.first)||l.first;})()}</b></span>
+          <span>막차 <b>${(()=>{const st=_metroSchedStats(l.name);return (st&&st.last)||l.last;})()}</b></span>
+          <span>${(()=>{const st=_metroSchedStats(l.name);return _metroHeadway((st&&st.hwPeak!=null)?st:l);})()}</span>
         </div>
         ${l.patterns.length?`<div class="metro-pats" style="margin-top:8px">운행계통 <span class="metro-pat-chip${!_metroPatSel?' on':''}" onclick="setMetroPat(null)">전체</span>${l.patterns.map(p=>`<span class="metro-pat-chip${_metroPatSel===p?' on':''}" onclick="setMetroPat('${p.replace(/'/g,"\\'")}')">${p}</span>`).join('')}</div>`:''}
         ${patInfo}
