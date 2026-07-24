@@ -9819,9 +9819,9 @@ function _metroStationBoardHTML(stn){
     const dirOrder=Object.keys(dirs).sort((a,b)=>dirs[b].length-dirs[a].length).slice(0,2);
     const cols=dirOrder.map(nx=>{
       const list=dirs[nx];
-      // 방면 대표 행선지(최빈값)
+      // 방면 행선지 빈도(비율 기반 배분용)
       const dcnt={}; list.forEach(o=>{dcnt[o.dest]=(dcnt[o.dest]||0)+1;});
-      const domDest=Object.keys(dcnt).sort((a,b)=>dcnt[b]-dcnt[a])[0];
+      const destList=Object.keys(dcnt);
       // 운행일 기준 초(중복 분 제거) → 정렬
       const secs=[...new Set(list.map(o=>Math.floor(srvSec(o.atSec)/60)*60))].sort((a,b)=>a-b);
       const first=secs[0], last=secs[secs.length-1];
@@ -9830,8 +9830,14 @@ function _metroStationBoardHTML(stn){
       if(secs.length>=4){
         const gaps=[]; for(let i=1;i<secs.length;i++)gaps.push(secs[i]-secs[i-1]);
         gaps.sort((a,b)=>a-b); const H=gaps[Math.floor(gaps.length/2)]||0;
+        const fillSecs=[];
         if(H>0) for(let i=1;i<secs.length;i++){ const g=secs[i]-secs[i-1];
-          if(g>H*2.5){ const n=Math.round(g/H)-1; for(let k=1;k<=n;k++)entries.push({sec:secs[i-1]+Math.round(g*k/(n+1)),dest:domDest,est:true}); } }
+          if(g>H*2.5){ const n=Math.round(g/H)-1; for(let k=1;k<=n;k++)fillSecs.push(secs[i-1]+Math.round(g*k/(n+1))); } }
+        // 행선지를 실제 빈도 비율대로 시간순 교차 배분(경부선 등 다행선지 대응) — 제수법
+        fillSecs.sort((a,b)=>a-b);
+        const asg={}; destList.forEach(d=>asg[d]=0);
+        const pick=()=>{let b=destList[0],bs=Infinity; for(const d of destList){const sc=(asg[d]+0.5)/dcnt[d]; if(sc<bs){bs=sc;b=d;}} asg[b]++; return b;};
+        fillSecs.forEach(fs=>entries.push({sec:fs,dest:pick(),est:true}));
       }
       const seenMin=new Set();
       const up=entries.map(o=>{let rel=o.sec-nowS; if(rel<0)rel+=86400; return {rel,dest:o.dest,sec:o.sec,est:o.est};})
