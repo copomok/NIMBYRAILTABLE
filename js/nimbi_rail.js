@@ -9776,9 +9776,9 @@ function _nearestStn(fromBase, cands){
 function _metroLineColor(name){ const l=(typeof METRO_LINES!=='undefined')&&METRO_LINES.find(x=>x.name===name); return l?l.color:'#8b949e'; }
 // 등급 배지: 1=급행, 2=특급 (일반은 표시 없음)
 function _metroClsTag(c){ return c===2?'<span class="mtb-exp mtb-exp--t">특급</span>':c===1?'<span class="mtb-exp">급행</span>':''; }
-// v3 시각표 기반: 각 편성 t[i]=[발분,역idx, 발분,역idx, ...] (실제 정차시각, 복원 없음).
+// v6 시각표 기반: 각 편성 t[i]=[도착분,출발분,역idx, ...] (정차마다 도착·출발 쌍, 복원 없음).
 // 한 역을 지나는 모든 지점에서 출발편 생성. 행선지=진행방향 회차점(왕복)·마지막역(직통),
-// 출발지=진행 반대방향 회차점·첫역. 시각표가 명시적이므로 종착역 보정은 불필요.
+// 출발지=진행 반대방향 회차점·첫역. atSec=이 역 출발(d), arr=마지막역 도착(a).
 function _metroStationDeps(stn){
   if(typeof METRO_SCHED==='undefined') return [];
   const out=[];
@@ -9788,29 +9788,25 @@ function _metroStationDeps(stn){
     const sIdx=names.indexOf(stn), cArr=ent.c;
     for(let si=0;si<svcs.length;si++){
       const f=svcs[si], cls=cArr?cArr[si]:0;
-      const n=f.length>>1;
-      // 이 편성이 stn을 지나는 모든 지점
+      const n=f.length/3, ix=k=>f[3*k+2];
       for(let k=0;k<n-1;k++){
-        if(f[2*k+1]!==sIdx) continue;
-        if(k>0 && f[2*(k-1)+1]===sIdx) continue;          // 회차 연속중복 방지
-        const nextName=names[f[2*(k+1)+1]];
+        if(ix(k)!==sIdx) continue;
+        if(k>0 && ix(k-1)===sIdx) continue;               // 회차 연속중복 방지
+        const nextName=names[ix(k+1)];
         // 행선지: 앞쪽 회차점(A>B>A) 이전까지, 없으면 마지막역
-        let dest=names[f[2*(n-1)+1]];
+        let dest=names[ix(n-1)];
         for(let j=k+1;j<n-1;j++){
-          if(f[2*(j+1)+1]===f[2*j+1]){ dest=names[f[2*j+1]]; break; }
-          if(f[2*(j+1)+1]===f[2*(j-1)+1]){ dest=names[f[2*j+1]]; break; }
+          if(ix(j+1)===ix(j)){ dest=names[ix(j)]; break; }
+          if(ix(j+1)===ix(j-1)){ dest=names[ix(j)]; break; }
         }
         // 출발지: 뒤쪽 회차점 이전까지, 없으면 첫역
-        let orig=names[f[1]];
+        let orig=names[ix(0)];
         for(let j=k-1;j>0;j--){
-          if(f[2*(j-1)+1]===f[2*j+1]){ orig=names[f[2*j+1]]; break; }
-          if(f[2*(j-1)+1]===f[2*(j+1)+1]){ orig=names[f[2*j+1]]; break; }
+          if(ix(j-1)===ix(j)){ orig=names[ix(j)]; break; }
+          if(ix(j-1)===ix(j+1)){ orig=names[ix(j)]; break; }
         }
-        // 종점 보정: 왕복 편성이 착발역 한 정거장 앞에서 종료 기록된 것 → 실제 착발역으로
-        const fx=(typeof METRO_FIX!=='undefined')&&METRO_FIX[line];
-        if(fx){ if(fx[dest])dest=fx[dest]; if(fx[orig])orig=fx[orig]; }
-        const atMin=f[2*k];
-        out.push({line, next:nextName, dest, orig, cls, svc:si, atSec:atMin*60, dep:f[0], arr:f[2*(n-1)]});
+        const atMin=f[3*k+1];                             // 이 역 출발(d)
+        out.push({line, next:nextName, dest, orig, cls, svc:si, atSec:atMin*60, dep:f[1], arr:f[3*(n-1)]});
       }
     }
   }
@@ -10534,13 +10530,14 @@ function openMetroTrain(line, svcIdx, hlClk){
   const ent=(typeof METRO_SCHED!=='undefined')&&METRO_SCHED[line]; if(!ent)return;
   const f=ent.t[svcIdx]; if(!f)return;
   const names=ent.s, cls=ent.c?ent.c[svcIdx]:0, color=_metroLineColor(line);
-  const n=f.length>>1, norm=m=>(((m%1440)+1440)%1440);
+  const n=f.length/3, norm=m=>(((m%1440)+1440)%1440);
   const fmt=m=>`${Math.floor(norm(m)/60)}:${String(norm(m)%60).padStart(2,'0')}`;
-  const idxSeq=[], times=[]; for(let i=0;i<n;i++){ idxSeq.push(f[2*i+1]); times.push(f[2*i]); }
-  // 클릭 지점 → 그 지점이 속한 방향 leg
-  let ci=0; for(let i=0;i<n;i++){ if(norm(times[i])===hlClk){ ci=i; break; } }
+  const idxSeq=[], aT=[], dT=[]; for(let i=0;i<n;i++){ idxSeq.push(f[3*i+2]); aT.push(f[3*i]); dT.push(f[3*i+1]); }
+  // 클릭 지점 → 그 지점이 속한 방향 leg (보드는 출발d 기준)
+  let ci=0; for(let i=0;i<n;i++){ if(norm(dT[i])===hlClk){ ci=i; break; } }
   const [ls,le]=(_metroLegRanges(idxSeq).find(([s,e])=>ci>=s&&ci<=e))||[0,n-1];
-  const seq=[]; for(let i=ls;i<=le;i++){ const st={s:names[idxSeq[i]], m:times[i]}; if(!seq.length||seq[seq.length-1].s!==st.s) seq.push(st); else seq[seq.length-1]=st; }
+  // 통과역=출발(d) 표시, leg 종착역=도착(a) 표시(반대방향 회차 출발시각 오기 방지)
+  const seq=[]; for(let i=ls;i<=le;i++){ const st={s:names[idxSeq[i]], m:(i===le?aT[i]:dT[i])}; if(!seq.length||seq[seq.length-1].s!==st.s) seq.push(st); else seq[seq.length-1]=st; }
   const orig=seq[0].s, dest=seq[seq.length-1].s;
   // 실시간 진행 위치: 현재 시각 기준 이 편성이 어디쯤 있는지(지나온 역=done, 현 위치=cur)
   const srv=x=>(((x-240)%1440)+1440)%1440;
@@ -11552,13 +11549,13 @@ function _metroSegService(lineName, board, alight, afterSrv){
   const bi=names.indexOf(board), ai=names.indexOf(alight); if(bi<0||ai<0) return null;
   const srvMin=m=>(((m-240)%1440)+1440)%1440;
   let best=null, wrap=null;
-  for(let si=0;si<svcs.length;si++){ const f=svcs[si], n=f.length>>1, cls=cArr?cArr[si]:0;
-    for(let k=0;k<n-1;k++){ if(f[2*k+1]!==bi)continue;
-      let mIdx=-1; for(let m=k+1;m<n;m++){ if(f[2*m+1]===ai){mIdx=m;break;} }
+  for(let si=0;si<svcs.length;si++){ const f=svcs[si], n=f.length/3, cls=cArr?cArr[si]:0;
+    for(let k=0;k<n-1;k++){ if(f[3*k+2]!==bi)continue;
+      let mIdx=-1; for(let m=k+1;m<n;m++){ if(f[3*m+2]===ai){mIdx=m;break;} }
       if(mIdx<0) continue;
-      const ds=srvMin(f[2*k]), via=[];
-      for(let x=k+1;x<mIdx;x++)via.push(names[f[2*x+1]]);
-      const cand={ds, dep:f[2*k]%1440, arr:f[2*mIdx]%1440, nStops:mIdx-k, via, cls};
+      const ds=srvMin(f[3*k+1]), via=[];                 // 출발d 기준
+      for(let x=k+1;x<mIdx;x++)via.push(names[f[3*x+2]]);
+      const cand={ds, dep:f[3*k+1]%1440, arr:f[3*mIdx]%1440, nStops:mIdx-k, via, cls};   // 도착a 기준
       if(ds>=afterSrv){ if(!best||ds<best.ds)best=cand; }
       if(!wrap||ds<wrap.ds)wrap=cand;
       break;
