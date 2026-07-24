@@ -2804,7 +2804,7 @@ function trackTrainOnMap(trainNo){
     '경부선':'gyeongbu','경부고속선':'gyeongbuhs','호남고속선':'honamhs','호남선':'honam',
     '전라선':'jeolla','중앙선':'jungang','동해선':'donghae','영동선':'yeongdong',
     '강릉선':'gangreung','중부내륙선':'jungnaelyuk','경전선':'gyeongjeon','제주선':'jeju','충북선':'chungbuk','장항선':'janghang','남부내륙선':'nambunaelyuk',
-    '서산선':'seosan','태안선':'taean','소백선':'sobaek','경북선':'gyeongbuk','태백선':'taebaek','정선선':'jeongseon'
+    '서산선':'seosan','태안선':'taean','경강선':'seogang','소백선':'sobaek','경북선':'gyeongbuk','태백선':'taebaek','정선선':'jeongseon'
   };
 
   // 현재 위치 기준으로 실제 운행 중인 노선 판단
@@ -3118,7 +3118,7 @@ const GRADE_COLORS = {
 };
 
 // 노선명 → MAP_LINES 키, 노선별 인접역 쌍 캐시 (구간 소속 판별용)
-const _lineNameToKey={'경부선':'gyeongbu','경부고속선':'gyeongbuhs','호남고속선':'honamhs','호남선':'honam','전라선':'jeolla','중앙선':'jungang','동해선':'donghae','영동선':'yeongdong','강릉선':'gangreung','중부내륙선':'jungnaelyuk','경전선':'gyeongjeon','제주선':'jeju','충북선':'chungbuk','장항선':'janghang','남부내륙선':'nambunaelyuk','서산선':'seosan','태안선':'taean','소백선':'sobaek','경북선':'gyeongbuk','태백선':'taebaek','정선선':'jeongseon'};
+const _lineNameToKey={'경부선':'gyeongbu','경부고속선':'gyeongbuhs','호남고속선':'honamhs','호남선':'honam','전라선':'jeolla','중앙선':'jungang','동해선':'donghae','영동선':'yeongdong','강릉선':'gangreung','중부내륙선':'jungnaelyuk','경전선':'gyeongjeon','제주선':'jeju','충북선':'chungbuk','장항선':'janghang','남부내륙선':'nambunaelyuk','서산선':'seosan','태안선':'taean','경강선':'seogang','소백선':'sobaek','경북선':'gyeongbuk','태백선':'taebaek','정선선':'jeongseon'};
 const _mapEdgeCache={};
 function _mapLineEdgeSet(key){
   if(_mapEdgeCache[key])return _mapEdgeCache[key];
@@ -3852,6 +3852,24 @@ taean:{
     {n:'안면도',x:53,y:430},
     {n:'고남',x:67,y:458},
     {n:'보령',x:113,y:484}
+    ]}
+  ]
+},
+
+seogang:{
+  name:'경강선', color:'#7c3aed',
+  routes:[
+    {color:'#7c3aed', stations:[
+    {n:'수진',x:235,y:159},
+    {n:'경기광주',x:262,y:168},
+    {n:'이천',x:295,y:182},
+    {n:'여주',x:345,y:190},
+    {n:'지정',x:411,y:177}
+    ]},
+    {color:'#7c3aed', dash:true, stations:[
+    {n:'일죽',x:317,y:258},
+    {n:'가남',x:332,y:222},
+    {n:'여주',x:345,y:190}
     ]}
   ]
 },
