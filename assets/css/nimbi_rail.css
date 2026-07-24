@@ -1546,6 +1546,22 @@ button, select, input[type=range],
 .trip-mini-seat{margin-left:auto;padding-left:10px;border-left:1px solid var(--border);font-size:11px;color:var(--text3);white-space:nowrap}
 @media(max-width:520px){.trip-mini{padding:14px 14px 13px}.trip-mini-train{margin-bottom:12px}.trip-mini-grade-badge{padding:4px 8px}.trip-mini-no{font-size:19px}.trip-mini-bound{font-size:12px}.trip-mini-route{grid-template-columns:minmax(0,1fr) 42px minmax(0,1fr);padding:11px 10px}.trip-mini-station strong{font-size:15px}.trip-mini-footer{align-items:flex-start;flex-direction:column;gap:5px}.trip-mini-seat{margin-left:0;padding-left:0;border-left:0}.trip-mini-go{font-size:11px}.trip-mini-go b{font-size:20px}}
 
+/* 나의 다음 일정 — 여정 카드(trip-mini)와 예정 승차권 행을 한 섹션에 통합 */
+.myplan{display:flex;flex-direction:column;gap:9px;margin-bottom:12px}
+.myplan-head{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:2px 3px 0}
+.myplan-head b{font-size:14px;font-weight:800;color:var(--text1);letter-spacing:.2px}
+.myplan-head span{font-size:11px;font-weight:600;color:var(--text3)}
+.myplan-row{display:flex;align-items:center;gap:11px;width:100%;padding:12px 13px;border:1px solid color-mix(in srgb,var(--pl) 26%,var(--border));border-radius:13px;background:var(--bg2);cursor:pointer;font-family:var(--sans);color:var(--text1);text-align:left;transition:transform .15s,border-color .15s,box-shadow .15s}
+.myplan-row:hover{transform:translateY(-1px);border-color:var(--pl);box-shadow:0 6px 18px rgba(0,0,0,.14)}
+.myplan-row-badge{flex-shrink:0;display:inline-flex;align-items:center;min-height:24px;padding:3px 9px;border-radius:7px;color:#fff;font-size:11px;font-weight:850;line-height:1;box-shadow:inset 0 0 0 1px rgba(255,255,255,.16)}
+.myplan-row-main{flex:1;min-width:0;display:flex;flex-direction:column;gap:3px}
+.myplan-row-title{font-size:14px;font-weight:750;color:var(--text1);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.myplan-row-title strong{font-family:var(--mono);font-size:15px;font-weight:850;margin-right:5px}
+.myplan-row-sub{font-size:11px;color:var(--text3);font-family:var(--mono);font-variant-numeric:tabular-nums;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.myplan-row-side{display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex-shrink:0}
+.myplan-row-eta{font-size:11px;font-weight:750;color:var(--text2);white-space:nowrap}
+.myplan-row-go{font-size:11px;font-weight:800;color:var(--pl);white-space:nowrap}
+
 
 /* ══════════════════════════════════════════
    🎫 개표/탑승 (게이트) · 편성/좌석 · 역 전광판

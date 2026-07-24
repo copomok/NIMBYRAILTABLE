@@ -7075,7 +7075,7 @@ function renderTripWidgetCompact(active){
   return `<article class="trip-mini" style="--trip-color:${gc};--trip-soft:${gc}1f" onclick="openQRPopup(&quot;${ticket.id}&quot;)">
     <span class="trip-mini-accent" aria-hidden="true"></span>
     <div class="trip-mini-kicker">
-      <span class="trip-mini-title">나의 다음 여정</span>
+      <span class="trip-mini-title">탑승 여정</span>
       <span class="trip-mini-status" style="color:${stateColor}"><i style="background:${stateColor}"></i>${stateLabel}</span>
     </div>
     <div class="trip-mini-train">
@@ -7095,14 +7095,54 @@ function renderTripWidgetCompact(active){
     </div>
   </article>`;
 }
-// 홈 상단 여정 카드 갱신 (간략)
+// 오늘 남은 예정 승차권 목록 (탑승 임박/탑승 중인 excludeId는 제외) — 가까운 출발 순
+function getUpcomingTickets(excludeId){
+  if(typeof loadTickets!=='function') return [];
+  const today=todayLocalStr();
+  const now=new Date(), nowM=now.getHours()*60+now.getMinutes();
+  return loadTickets()
+    .filter(tk=>tk.status==='active'&&tk.travelDate===today&&tk.id!==excludeId)
+    .map(tk=>{ const dep=toMin(tk.depTime); let diff=dep==null?9999:dep-nowM; if(diff<0)diff+=1440; return {ticket:tk, train:getTrainByNo(tk.trainNo), diff}; })
+    .filter(x=>x.diff>0&&x.diff<720)
+    .sort((a,b)=>a.diff-b.diff);
+}
+// 예정 승차권 컴팩트 행 (탑승 시간 전 상태)
+function renderPlanRow(u){
+  const {ticket,train,diff}=u;
+  const gc=(train&&GRADE_COLORS[train.grade])||'#8b949e';
+  const grade=train?train.grade:(ticket.grade||'열차');
+  return `<button type="button" class="myplan-row" style="--pl:${gc}" onclick="openQRPopup(&quot;${ticket.id}&quot;)">
+    <span class="myplan-row-badge" style="background:${gc}">${grade}</span>
+    <span class="myplan-row-main">
+      <span class="myplan-row-title"><strong>${ticket.trainNo}</strong>${ticket.toStn}행</span>
+      <span class="myplan-row-sub">${ticket.fromStn} ${ticket.depTime||'-'} → ${ticket.toStn} ${ticket.arrTime||'-'}</span>
+    </span>
+    <span class="myplan-row-side">
+      <span class="myplan-row-eta">${fmtEta(diff)} 출발</span>
+      <span class="myplan-row-go">승차권 ›</span>
+    </span>
+  </button>`;
+}
+// 통합 "나의 다음 일정" — 탑승 임박/중인 건은 여정 카드, 나머지는 컴팩트 행으로 함께 표시
+function renderMyPlan(){
+  const active=getActiveTripTicket();
+  const upcoming=getUpcomingTickets(active?active.ticket.id:null);
+  if(!active && !upcoming.length) return '';
+  const count=(active?1:0)+upcoming.length;
+  return `<section class="myplan">
+    <div class="myplan-head"><b>나의 다음 일정</b>${count>1?`<span>${count}건 예정</span>`:''}</div>
+    ${active?renderTripWidgetCompact(active):''}
+    ${upcoming.map(renderPlanRow).join('')}
+  </section>`;
+}
+// 홈 상단 "나의 다음 일정" 위젯 갱신 (여정 + 예정 통합)
 function updateHomeTripWidget(){
   const box=document.getElementById('home-trip-widget');
   if(!box) return;
-  const active=getActiveTripTicket();
-  box.innerHTML = active ? renderTripWidgetCompact(active) : '';
-  box.style.display = active ? '' : 'none';
-  if(active) updateTripLED();
+  const html=renderMyPlan();
+  box.innerHTML = html;
+  box.style.display = html ? '' : 'none';
+  if(getActiveTripTicket()) updateTripLED();
 }
 function renderTripWidgetIfVisible(){
   const tp=document.getElementById('panel-ticket');
