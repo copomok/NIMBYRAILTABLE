@@ -1761,17 +1761,23 @@ button, select, input[type=range],
 .mtb-title{font-size:12px;font-weight:800;color:var(--text2)}
 .mtb-run{font-size:11px;color:var(--text3)}
 .mtb-run b{color:var(--green);font-family:var(--mono);font-weight:800}
-.mtb-row{display:flex;flex-direction:column;gap:3px;padding:9px 11px;border:1px solid color-mix(in srgb,var(--mc) 24%,var(--border));border-left:3px solid var(--mc);border-radius:9px;background:var(--bg3);margin-bottom:7px}
-.mtb-dir{display:flex;align-items:center;gap:6px;font-size:12.5px;min-width:0}
-.mtb-dir .mtb-dot{width:8px;height:8px;border-radius:50%;background:var(--mc);flex-shrink:0}
-.mtb-dir b{color:var(--mc);font-weight:800;white-space:nowrap}
-.mtb-dest{color:var(--text2);font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.mtb-fl{font-size:11px;color:var(--text3);font-family:var(--mono);font-variant-numeric:tabular-nums}
-.mtb-next{font-size:11.5px;color:var(--text2);overflow:hidden;text-overflow:ellipsis}
-.mtb-next em{font-style:normal;font-size:10px;font-weight:800;color:var(--mc);margin-right:2px}
-.mtb-next span{font-family:var(--mono);font-weight:700;color:var(--text1);font-variant-numeric:tabular-nums}
-
-.mtb-more{text-align:center;font-size:10.5px;color:var(--text3);padding:4px 0 2px}
+/* 카카오지하철식 방면별 2열 도착 보드 */
+.mtb2-line{border:1px solid color-mix(in srgb,var(--mc) 22%,var(--border));border-radius:11px;background:var(--bg3);margin-bottom:9px;overflow:hidden}
+.mtb2-lhead{display:flex;align-items:center;gap:7px;padding:8px 11px;background:color-mix(in srgb,var(--mc) 12%,var(--bg3));border-bottom:1px solid color-mix(in srgb,var(--mc) 18%,var(--border))}
+.mtb2-lhead .mtb2-dot{width:9px;height:9px;border-radius:50%;background:var(--mc);flex-shrink:0}
+.mtb2-lhead b{color:var(--mc);font-weight:800;font-size:13px}
+.mtb2-cols{display:flex;gap:1px;background:var(--border)}
+.mtb2-col{flex:1;min-width:0;background:var(--bg3);padding:8px 10px 7px;display:flex;flex-direction:column;gap:5px}
+.mtb2-dir{display:flex;align-items:center;gap:3px;font-size:11px;font-weight:800;color:var(--text2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding-bottom:1px}
+.mtb2-dir .mtb2-arr{color:var(--mc);font-size:9px}
+.mtb2-train{display:flex;align-items:baseline;gap:6px;min-width:0}
+.mtb2-dest{flex:1;min-width:0;font-size:12px;font-weight:700;color:var(--text2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mtb2-rel{font-family:var(--mono);font-weight:800;font-size:13px;color:var(--text3);font-variant-numeric:tabular-nums;flex-shrink:0}
+.mtb2-train--now .mtb2-dest{color:var(--text1)}
+.mtb2-train--now .mtb2-rel{color:var(--mc)}
+.mtb2-clk{font-family:var(--mono);font-size:9.5px;color:var(--text3);flex-shrink:0;font-variant-numeric:tabular-nums}
+.mtb2-none{font-size:11px;color:var(--text3);padding:3px 0}
+.mtb2-fl{font-size:9.5px;color:var(--text3);font-family:var(--mono);font-variant-numeric:tabular-nums;margin-top:2px;padding-top:5px;border-top:1px dashed var(--border)}
 .mtb-foot{font-size:9.5px;color:var(--text3);margin-top:5px}
 /* 운행 종료 — '운행 종료 문구'와 '내일 열차'를 교대로 표시 (LED 전광판식 크로스페이드) */
 .stn-board-ended{display:grid}
