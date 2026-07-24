@@ -1774,6 +1774,8 @@ button, select, input[type=range],
 .mtb2-dir .mtb2-arr{color:var(--mc);font-size:9px}
 .mtb2-train{display:flex;align-items:baseline;gap:6px;min-width:0}
 .mtb2-dest{flex:1;min-width:0;font-size:12px;font-weight:700;color:var(--text2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mtb-exp{display:inline-block;font-size:9.5px;font-weight:800;color:#ff4d4f;border:1px solid #ff4d4f;border-radius:4px;padding:0 3px;margin-right:4px;vertical-align:1px;line-height:1.35}
+.mtb-exp--t{color:#9254de;border-color:#9254de}
 .mtb2-rel{font-family:var(--mono);font-weight:800;font-size:13px;color:var(--text3);font-variant-numeric:tabular-nums;flex-shrink:0}
 .mtb2-train--now .mtb2-dest{color:var(--text1)}
 .mtb2-train--now .mtb2-rel{color:var(--mc)}

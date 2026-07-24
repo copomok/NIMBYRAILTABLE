@@ -9738,6 +9738,8 @@ function _nearestStn(fromBase, cands){
 // ── 🚇 전철 역 시간표 보드 (인게임 스케줄 METRO_SCHED 기반) ──
 // 방면(노선+종착)별 첫차·막차·다음 열차(시간표) + 역 전체 현재 운행 편수.
 function _metroLineColor(name){ const l=(typeof METRO_LINES!=='undefined')&&METRO_LINES.find(x=>x.name===name); return l?l.color:'#8b949e'; }
+// 등급 배지: 1=급행, 2=특급 (일반은 표시 없음)
+function _metroClsTag(c){ return c===2?'<span class="mtb-exp mtb-exp--t">특급</span>':c===1?'<span class="mtb-exp">급행</span>':''; }
 // v3 시각표 기반: 각 편성 t[i]=[발분,역idx, 발분,역idx, ...] (실제 정차시각, 복원 없음).
 // 한 역을 지나는 모든 지점에서 출발편 생성. 행선지=진행방향 회차점(왕복)·마지막역(직통),
 // 출발지=진행 반대방향 회차점·첫역. 시각표가 명시적이므로 종착역 보정은 불필요.
@@ -9747,8 +9749,9 @@ function _metroStationDeps(stn){
   for(const line in METRO_SCHED){
     const ent=METRO_SCHED[line], names=ent.s, svcs=ent.t;
     if(!names.includes(stn)) continue;
-    const sIdx=names.indexOf(stn);
-    for(const f of svcs){
+    const sIdx=names.indexOf(stn), cArr=ent.c;
+    for(let si=0;si<svcs.length;si++){
+      const f=svcs[si], cls=cArr?cArr[si]:0;
       const n=f.length>>1;
       // 이 편성이 stn을 지나는 모든 지점
       for(let k=0;k<n-1;k++){
@@ -9771,7 +9774,7 @@ function _metroStationDeps(stn){
         const fx=(typeof METRO_FIX!=='undefined')&&METRO_FIX[line];
         if(fx){ if(fx[dest])dest=fx[dest]; if(fx[orig])orig=fx[orig]; }
         const atMin=f[2*k];
-        out.push({line, next:nextName, dest, orig, atSec:atMin*60, dep:f[0], arr:f[2*(n-1)]});
+        out.push({line, next:nextName, dest, orig, cls, atSec:atMin*60, dep:f[0], arr:f[2*(n-1)]});
       }
     }
   }
@@ -9780,7 +9783,7 @@ function _metroStationDeps(stn){
 // 방면 출발편 목록 → 운행일초 정렬(중복 분 제거). v3 실측 시각표를 그대로 반영(보간 없음).
 function _metroDirEntries(list){
   const srvSec=s=>(((s-14400)%86400)+86400)%86400;
-  const real=list.map(o=>({sec:srvSec(o.atSec),dest:o.dest,orig:o.orig})).sort((a,b)=>a.sec-b.sec);
+  const real=list.map(o=>({sec:srvSec(o.atSec),dest:o.dest,orig:o.orig,cls:o.cls})).sort((a,b)=>a.sec-b.sec);
   const seen=new Set();
   const entries=real.filter(o=>{const m=Math.floor(o.sec/60); if(seen.has(m))return false; seen.add(m); return true;});
   const secs=entries.map(o=>Math.floor(o.sec/60)*60);
@@ -9812,14 +9815,14 @@ function _metroStationBoardHTML(stn){
       const list=dirs[nx];
       const {entries,first,last}=_metroDirEntries(list);
       const seenMin=new Set();
-      const up=entries.map(o=>{let rel=o.sec-nowS; if(rel<0)rel+=86400; return {rel,dest:o.dest,sec:o.sec,est:o.est};})
+      const up=entries.map(o=>{let rel=o.sec-nowS; if(rel<0)rel+=86400; return {rel,dest:o.dest,sec:o.sec,cls:o.cls};})
         .sort((a,b)=>a.rel-b.rel)
         .filter(o=>{const m=Math.floor(o.sec/60); if(seenMin.has(m))return false; seenMin.add(m); return true;})
         .slice(0,3);
       const trainsHtml=up.map((u,i)=>{
         const showDest=u.dest&&u.dest!==stn;   // 자기참조 라벨만 숨김(인접역 종착은 표기)
         return `<div class="mtb2-train${i===0?' mtb2-train--now':''}">
-        <span class="mtb2-dest">${showDest?u.dest+'행':'&nbsp;'}</span>
+        <span class="mtb2-dest">${_metroClsTag(u.cls)}${showDest?u.dest+'행':'&nbsp;'}</span>
         <span class="mtb2-rel">${relTxt(u.rel)}</span>
         <span class="mtb2-clk">${fSrvClock(u.sec)}</span>
       </div>`;}).join('')||'<div class="mtb2-none">운행 정보 없음</div>';
@@ -10432,7 +10435,7 @@ function openMetroTimetable(stn, line){
   const colData=dirOrder.map(nx=>{
     const {entries}=_metroDirEntries(dirs[nx]);
     const seen=new Set();
-    return entries.map(o=>({m:Math.floor(o.sec/60),orig:o.orig,dest:o.dest}))
+    return entries.map(o=>({m:Math.floor(o.sec/60),orig:o.orig,dest:o.dest,cls:o.cls}))
       .filter(o=>{ if(seen.has(o.m))return false; seen.add(o.m); return true; })
       .sort((a,b)=>a.m-b.m)
       .map(o=>({...o,clk:(o.m+240)%1440}));
@@ -10443,7 +10446,7 @@ function openMetroTimetable(stn, line){
   const rowHTML=r=>{
     const od=(r.orig&&r.orig!==r.dest)?`${r.orig} › ${r.dest}`:`${r.dest}`;
     const cur=r.clk===nowM?' mtt-row--now':'';
-    return `<div class="mtt-row${cur}"><span class="mtt-t">${fClk(r.clk)}</span><span class="mtt-od">${od}</span></div>`;
+    return `<div class="mtt-row${cur}"><span class="mtt-t">${fClk(r.clk)}${_metroClsTag(r.cls)}</span><span class="mtt-od">${od}</span></div>`;
   };
   const grid=hours.map(h=>{
     const cells=colData.map(rows=>{
