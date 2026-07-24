@@ -1562,18 +1562,25 @@ button, select, input[type=range],
 .myplan-row-eta{font-size:11px;font-weight:750;color:var(--text2);white-space:nowrap}
 .myplan-row-go{font-size:11px;font-weight:800;color:var(--pl);white-space:nowrap}
 
-/* 여정 카드: 출발↔도착 가운데 현재 위치 칩 (현재 위치 있을 때만 세로 배치) */
-.trip-mini-route.has-now .trip-mini-route-line{flex-direction:column;justify-content:center;gap:5px}
-.trip-mini-arrow-row{display:flex;align-items:center;gap:6px;width:100%}
-.trip-mini-now{max-width:100%;font-size:10.5px;font-weight:850;line-height:1.35;color:var(--trip-color);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;background:color-mix(in srgb,var(--trip-color) 15%,transparent);padding:2px 8px;border-radius:999px}
-.trip-mini-now::before{content:'현재 ';font-size:8.5px;font-weight:800;opacity:.72}
+/* 여정 카드 경로: 출발 · 현재 · 도착 3역 인라인 (현재는 온보드일 때만) */
+.trip-mini-route{display:flex;align-items:stretch;gap:6px}
+.tm-stn{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px;justify-content:center}
+.tm-stn.dep{align-items:flex-start;text-align:left}
+.tm-stn.now{align-items:center;text-align:center}
+.tm-stn.arr{align-items:flex-end;text-align:right}
+.tm-stn-lbl{font-size:9.5px;font-weight:800;letter-spacing:.3px;color:var(--text3)}
+.tm-stn.now .tm-stn-lbl{color:var(--trip-color)}
+.tm-stn-nm{font-size:17px;font-weight:850;line-height:1.15;color:var(--text1);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%}
+.tm-stn.now .tm-stn-nm{color:var(--trip-color)}
+.tm-stn-tm{font-family:var(--mono);font-size:12px;font-weight:750;color:var(--trip-color);font-variant-numeric:tabular-nums}
+.tm-sep{display:flex;align-items:center;flex-shrink:0;color:var(--trip-color);font-size:14px;font-weight:700;opacity:.6}
 /* 여정 카드 축소(slim) 모드 */
 .trip-mini--slim{padding:13px 15px}
 .trip-mini--slim .trip-mini-train{margin-bottom:0}
-.trip-mini--slim .trip-mini-led{margin:10px 0 9px}
 .trip-mini--slim .trip-mini-bound{font-size:12px}
-/* 차내 LED (홈 여정 카드용 축소 변형) */
-.trip-mini-led{margin:11px 0 3px}
+.trip-mini--slim .trip-mini-footer{margin-top:10px}
+/* 차내 LED — 카드 하단 인트레인 패널 */
+.trip-mini-led{margin:12px 0 0}
 .trip-mini-led .trip-led-txt{font-size:14px}
 
 /* 나의 다음 일정 — 1주 예정 가로 슬라이더 */

@@ -7062,33 +7062,39 @@ function renderTripWidgetCompact(active){
   if(!active) return "";
   const {ticket,train,status,preBoard,minsUntilDep,preArr,minsUntilArr}=active;
   const gc=GRADE_COLORS[train.grade]||"#8b949e";
-  let stateLabel,stateDetail,stateIcon,stateColor,curName=null,onboard=false;
+  let stateLabel,metaText,stateIcon,stateColor,curName=null,curTime='',onboard=false;
   if(preBoard){
     stateLabel="승차 준비"; stateIcon="🚉"; stateColor="var(--orange)";
-    stateDetail=`${fmtEta(minsUntilDep)} 출발 예정`;
+    metaText=`${fmtEta(minsUntilDep)} 출발 예정`;
   }else if(preArr){
-    stateLabel="도착 준비"; stateIcon="📍"; stateColor="var(--green)"; onboard=true; curName=ticket.toStn;
-    stateDetail=`${fmtEta(minsUntilArr)} ${ticket.toStn} 도착`;
+    stateLabel="도착 준비"; stateIcon="📍"; stateColor="var(--green)"; onboard=true; curName=ticket.toStn; curTime=ticket.arrTime||'';
+    metaText=`${fmtEta(minsUntilArr)} ${ticket.toStn} 도착`;
   }else{
     const tl=getTripTimeline3(train,status,ticket);
-    curName=(tl&&tl.cur?tl.cur.name:(status.atStn||status.passStn||null)); onboard=true;
-    const current=curName||"이동 중";
+    curName=(tl&&tl.cur?tl.cur.name:(status.atStn||status.passStn||null)); curTime=(tl&&tl.cur?tl.cur.time:'')||''; onboard=true;
     const depM=toMin(ticket.depTime),arrM=toMin(ticket.arrTime);
     const now=new Date(),nowM=now.getHours()*60+now.getMinutes();
     let diff=(arrM!=null&&depM!=null)?((arrM>=depM)?arrM-nowM:arrM+1440-nowM):null;
     if(diff!=null&&diff<0)diff+=1440;
     if(diff!=null&&diff>=1440)diff%=1440;
     stateLabel="탑승 중"; stateIcon="●"; stateColor="var(--green)";
-    stateDetail=`${current} · ${ticket.toStn}까지 ${diff!=null?fmtEta(diff):"운행 중"}`;
+    metaText=`${ticket.toStn}까지 ${diff!=null?fmtEta(diff):"운행 중"}`;
   }
+  const hasNow = !!(onboard&&curName);
   const seat=[ticket.seatClassLabel,seatSummary(ticket.seats)].filter(Boolean).join(" · ");
   const idEsc=String(ticket.id).replace(/"/g,'&quot;');
-  // 차내 LED (탑승/도착 준비 중 + LED 설정 켜짐일 때) — 열차 탭 승차 카드와 동일한 순환 LED 재사용
-  const ledStn = curName || (preBoard?ticket.fromStn:'-');
+  // 차내 LED (탑승/도착 준비 중 + LED 설정 켜짐일 때) — 열차 탭 승차 카드와 동일한 순환 LED 재사용, 카드 하단 패널로 배치
+  const ledStn = curName || (preBoard?ticket.fromStn:'운행 중');
   const ledFinal = (curName&&curName===ticket.toStn)?' · 내리는 문 확인':'';
   const ledHtml = (onboard&&ledEnabled())
     ? `<div class="trip-led trip-mini-led"><span class="trip-led-tag trip-mini-led-tag">이번 역</span><span class="trip-led-scr"><span class="trip-led-txt trip-mini-led-txt">${ledStn}${ledFinal}</span></span></div>`
     : '';
+  // 출발 · 현재 · 도착 3역 인라인 (현재는 온보드일 때만)
+  const stn=(lbl,name,time,cls)=>`<div class="tm-stn ${cls}"><span class="tm-stn-lbl">${lbl}</span><strong class="tm-stn-nm">${name}</strong><time class="tm-stn-tm">${time||'-'}</time></div>`;
+  const sep=`<span class="tm-sep" aria-hidden="true">→</span>`;
+  const routeInner = hasNow
+    ? `${stn('출발',ticket.fromStn,ticket.depTime,'dep')}${sep}${stn('현재',curName,curTime,'now')}${sep}${stn('도착',ticket.toStn,ticket.arrTime,'arr')}`
+    : `${stn('출발',ticket.fromStn,ticket.depTime,'dep')}${sep}${stn('도착',ticket.toStn,ticket.arrTime,'arr')}`;
   // 축소 모드: 한 줄 요약 + LED
   if(_tripCompact){
     return `<article class="trip-mini trip-mini--slim" style="--trip-color:${gc};--trip-soft:${gc}1f" onclick="openQRPopup(&quot;${idEsc}&quot;)">
@@ -7096,20 +7102,17 @@ function renderTripWidgetCompact(active){
       <div class="trip-mini-train">
         <span class="trip-mini-grade-badge" style="background:${gc}">${train.grade}</span>
         <strong class="trip-mini-no">${train.no}</strong>
-        <span class="trip-mini-bound">${ticket.fromStn}→${ticket.toStn}</span>
+        <span class="trip-mini-bound">${ticket.fromStn}${hasNow?' · '+curName:''} → ${ticket.toStn}</span>
         <span class="trip-mini-status" style="color:${stateColor};margin-left:auto"><i style="background:${stateColor}"></i>${stateLabel}</span>
       </div>
-      ${ledHtml}
       <div class="trip-mini-footer">
-        <span class="trip-mini-detail"><b>${stateIcon}</b>${stateDetail}</span>
+        <span class="trip-mini-detail"><b>${stateIcon}</b>${metaText}</span>
         <button type="button" class="trip-mini-go" onclick="event.stopPropagation();openQRPopup(&quot;${idEsc}&quot;)">승차권 <b>›</b></button>
       </div>
+      ${ledHtml}
     </article>`;
   }
-  // 전체 모드: 출발 → (현재 위치) → 도착
-  const nowChip = (onboard&&curName)
-    ? `<em class="trip-mini-now" title="현재 위치">${curName}</em>`
-    : '';
+  // 전체 모드
   return `<article class="trip-mini" style="--trip-color:${gc};--trip-soft:${gc}1f" onclick="openQRPopup(&quot;${idEsc}&quot;)">
     <span class="trip-mini-accent" aria-hidden="true"></span>
     <div class="trip-mini-kicker">
@@ -7122,16 +7125,12 @@ function renderTripWidgetCompact(active){
       <span class="trip-mini-bound">${ticket.toStn}행</span>
       <button type="button" class="trip-mini-go" onclick="event.stopPropagation();openQRPopup(&quot;${idEsc}&quot;)">승차권 <b>›</b></button>
     </div>
-    ${ledHtml}
-    <div class="trip-mini-route${nowChip?' has-now':''}">
-      <div class="trip-mini-station"><span>출발</span><strong>${ticket.fromStn}</strong><time>${ticket.depTime||"-"}</time></div>
-      <div class="trip-mini-route-line">${nowChip?`${nowChip}<div class="trip-mini-arrow-row"><span></span><b>→</b><span></span></div>`:`<span></span><b>→</b><span></span>`}</div>
-      <div class="trip-mini-station end"><span>도착</span><strong>${ticket.toStn}</strong><time>${ticket.arrTime||"-"}</time></div>
-    </div>
+    <div class="trip-mini-route${hasNow?' has-now':''}">${routeInner}</div>
     <div class="trip-mini-footer">
-      <span class="trip-mini-detail"><b>${stateIcon}</b>${stateDetail}</span>
+      <span class="trip-mini-detail"><b>${stateIcon}</b>${metaText}</span>
       ${seat?`<span class="trip-mini-seat">${seat}</span>`:""}
     </div>
+    ${ledHtml}
   </article>`;
 }
 // 앞으로 1주(오늘~+7일)의 예정 승차권 (탑승 임박/중인 excludeId는 제외) — 가까운 출발 순
