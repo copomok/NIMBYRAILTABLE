@@ -9735,6 +9735,59 @@ function _nearestStn(fromBase, cands){
   return arr[0];
 }
 
+// ── 🚇 전철 역 시간표 보드 (인게임 스케줄 METRO_SCHED 기반) ──
+// 방면(노선+종착)별 첫차·막차·다음 열차(시간표) + 역 전체 현재 운행 편수.
+function _metroLineColor(name){ const l=(typeof METRO_LINES!=='undefined')&&METRO_LINES.find(x=>x.name===name); return l?l.color:'#8b949e'; }
+function _metroStationDeps(stn){
+  if(typeof METRO_SCHED==='undefined') return [];
+  const out=[];
+  for(const line in METRO_SCHED){
+    for(const pat of METRO_SCHED[line]){
+      const st=pat.st;
+      const idx=st.findIndex(s=>s[0]===stn); if(idx<0) continue;
+      for(const rec of pat.tt){
+        const dep=rec[0], fi=rec[1], ti=rec[2], arr=rec[3];
+        if(idx<fi||idx>ti) continue;
+        let t=dep*60;                                    // 초 단위 복원
+        for(let i=fi+1;i<=idx;i++){ t+=st[i][1]; if(i<idx) t+=st[i][2]; }
+        out.push({line, dir:st[ti][0], at:Math.floor(t/60)%1440, dep, arr});
+      }
+    }
+  }
+  return out;
+}
+function _metroStationBoardHTML(stn){
+  if(typeof METRO_SCHED==='undefined') return '';
+  const deps=_metroStationDeps(stn);
+  if(!deps.length) return '';
+  const now=new Date(); const nowMin=now.getHours()*60+now.getMinutes(); const nowSrv=_srvMin(nowMin);
+  const running=deps.filter(o=>{const d=o.dep,a=o.arr; return (d<=a)?(nowMin>=d&&nowMin<=a):(nowMin>=d||nowMin<=a);}).length;
+  const groups={};
+  deps.forEach(o=>{ const k=o.line+'|'+o.dir; (groups[k]=groups[k]||[]).push(o.at); });
+  const fClock=m=>`${Math.floor(m/60)}:${String(m%60).padStart(2,'0')}`;
+  const order=Object.keys(groups).sort((a,b)=>groups[b].length-groups[a].length);
+  const CAP=8;
+  const rowsHtml=order.slice(0,CAP).map(k=>{
+    const line=k.split('|')[0], dir=k.split('|')[1];
+    const color=_metroLineColor(line);
+    const times=[...new Set(groups[k])].sort((a,b)=>_srvMin(a)-_srvMin(b));
+    const first=times[0], last=times[times.length-1];
+    let next=times.filter(t=>_srvMin(t)>=nowSrv), wrap=false;
+    if(!next.length){ next=times.slice(0,4); wrap=true; }
+    const nextTxt=next.slice(0,4).map(fClock).join(' · ')||'-';
+    return `<div class="mtb-row" style="--mc:${color}">
+      <div class="mtb-dir"><span class="mtb-dot"></span><b>${line}</b><span class="mtb-dest">${dir} 방면</span></div>
+      <div class="mtb-fl">첫차 ${fClock(first)} · 막차 ${fClock(last)}</div>
+      <div class="mtb-next"><em>${wrap?'내일 첫차':'다음'}</em> <span>${nextTxt}</span></div>
+    </div>`;
+  }).join('');
+  const more=order.length>CAP?`<div class="mtb-more">외 ${order.length-CAP}개 방면</div>`:'';
+  return `<div style="padding:12px 16px;border-bottom:1px solid var(--border)">
+    <div class="mtb-head"><span class="mtb-title">🚇 역 시간표</span><span class="mtb-run">현재 운행 <b>${running}</b>편</span></div>
+    ${rowsHtml}${more}
+    <div class="mtb-foot">인게임 스케줄 기준 · 역별 시각은 역간 소요 추정(±1분)</div>
+  </div>`;
+}
 function renderSICard(name){
   const el=document.getElementById('si-card');
   if(!el)return;
@@ -9822,6 +9875,7 @@ function renderSICard(name){
           </div>`).join('')}
         </div>`;
       })():''}
+      ${_appMode==='metro'?_metroStationBoardHTML(trainName):''}
       ${_appMode==='metro'&&_isTrainStn(trainName)?`<div style="padding:12px 16px 4px">
         <button class="si-board-btn" onclick="switchModeStation('train','${nameEsc}')">🚆 기차 ${trainName}역으로 전환</button>
       </div>`:''}

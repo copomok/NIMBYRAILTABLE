@@ -1756,6 +1756,23 @@ button, select, input[type=range],
 .sb-st-sched{color:#8b949e}
 .sb-st-delay{color:#ffb454;font-weight:800}
 .stn-board-empty{text-align:center;color:#3a5a70;font-size:12px;padding:14px;font-family:var(--mono)}
+/* 🚇 전철 역 시간표 보드 */
+.mtb-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:9px}
+.mtb-title{font-size:12px;font-weight:800;color:var(--text2)}
+.mtb-run{font-size:11px;color:var(--text3)}
+.mtb-run b{color:var(--green);font-family:var(--mono);font-weight:800}
+.mtb-row{display:flex;flex-direction:column;gap:3px;padding:9px 11px;border:1px solid color-mix(in srgb,var(--mc) 24%,var(--border));border-left:3px solid var(--mc);border-radius:9px;background:var(--bg3);margin-bottom:7px}
+.mtb-dir{display:flex;align-items:center;gap:6px;font-size:12.5px;min-width:0}
+.mtb-dir .mtb-dot{width:8px;height:8px;border-radius:50%;background:var(--mc);flex-shrink:0}
+.mtb-dir b{color:var(--mc);font-weight:800;white-space:nowrap}
+.mtb-dest{color:var(--text2);font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.mtb-fl{font-size:11px;color:var(--text3);font-family:var(--mono);font-variant-numeric:tabular-nums}
+.mtb-next{font-size:11.5px;color:var(--text2);overflow:hidden;text-overflow:ellipsis}
+.mtb-next em{font-style:normal;font-size:10px;font-weight:800;color:var(--mc);margin-right:2px}
+.mtb-next span{font-family:var(--mono);font-weight:700;color:var(--text1);font-variant-numeric:tabular-nums}
+
+.mtb-more{text-align:center;font-size:10.5px;color:var(--text3);padding:4px 0 2px}
+.mtb-foot{font-size:9.5px;color:var(--text3);margin-top:5px}
 /* 운행 종료 — '운행 종료 문구'와 '내일 열차'를 교대로 표시 (LED 전광판식 크로스페이드) */
 .stn-board-ended{display:grid}
 .stn-board-ended>.sbe-flip{grid-area:1/1;min-width:0}
