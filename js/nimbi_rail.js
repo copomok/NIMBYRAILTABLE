@@ -10510,34 +10510,54 @@ function openMetroTimetable(stn, line){
   document.body.appendChild(wrap);
 }
 function closeMetroTimetable(){ const el=document.getElementById('mtt-wrap'); if(el)el.remove(); }
-// 🚇 개별 편성 역별 타임라인 — 카카오지하철식(출발→종착, 역별 시각, 현재역 강조)
+// 왕복 편성을 회차점(A>B>A·연속중복) 기준 방향별 leg 구간으로 분할
+function _metroLegRanges(idxSeq){
+  const ranges=[]; let start=0; const n=idxSeq.length;
+  for(let j=1;j<n-1;j++){
+    if(idxSeq[j-1]===idxSeq[j+1]){ ranges.push([start,j]); start=j; }        // A>B>A 회차점 = 실 종점
+    else if(idxSeq[j]===idxSeq[j+1]){ ranges.push([start,j]); start=j+1; }    // 연속중복(회차 정차)
+  }
+  ranges.push([start,n-1]);
+  return ranges.filter(([s,e])=>e>s);
+}
+// 🚇 개별 편성 역별 타임라인 — 기차 탑승 여정과 동일한 디자인, 왕복은 실 종점 기준 방향 leg만 표시
 function openMetroTrain(line, svcIdx, hlClk){
   const old=document.getElementById('mtn-wrap'); if(old)old.remove();
   const ent=(typeof METRO_SCHED!=='undefined')&&METRO_SCHED[line]; if(!ent)return;
   const f=ent.t[svcIdx]; if(!f)return;
   const names=ent.s, cls=ent.c?ent.c[svcIdx]:0, color=_metroLineColor(line);
-  const n=f.length>>1, fmt=m=>`${Math.floor((((m%1440)+1440)%1440)/60)}:${String(((m%1440)+1440)%1440%60).padStart(2,'0')}`;
-  // 회차 연속중복 역 합치기
-  const seq=[]; for(let i=0;i<n;i++){ const st={s:names[f[2*i+1]], m:f[2*i]}; if(seq.length&&seq[seq.length-1].s===st.s) seq[seq.length-1]=st; else seq.push(st); }
+  const n=f.length>>1, norm=m=>(((m%1440)+1440)%1440);
+  const fmt=m=>`${Math.floor(norm(m)/60)}:${String(norm(m)%60).padStart(2,'0')}`;
+  const idxSeq=[], times=[]; for(let i=0;i<n;i++){ idxSeq.push(f[2*i+1]); times.push(f[2*i]); }
+  // 클릭 지점 → 그 지점이 속한 방향 leg
+  let ci=0; for(let i=0;i<n;i++){ if(norm(times[i])===hlClk){ ci=i; break; } }
+  const [ls,le]=(_metroLegRanges(idxSeq).find(([s,e])=>ci>=s&&ci<=e))||[0,n-1];
+  const seq=[]; for(let i=ls;i<=le;i++){ const st={s:names[idxSeq[i]], m:times[i], cur:i===ci}; if(seq.length&&seq[seq.length-1].s===st.s){ if(st.cur)seq[seq.length-1].cur=true; } else seq.push(st); }
   const orig=seq[0].s, dest=seq[seq.length-1].s;
-  let hlUsed=false;
   const rows=seq.map((st,i)=>{
-    const hl=(!hlUsed&&(((st.m%1440)+1440)%1440)===hlClk)?(hlUsed=true,' mtn-row--now'):'';
-    const end=(i===0||i===seq.length-1)?' mtn-dot--end':'';
-    return `<div class="mtn-row${hl}"><span class="mtn-stn">${st.s}</span><span class="mtn-rail"><span class="mtn-dot${end}"></span></span><span class="mtn-t">${fmt(st.m)}</span></div>`;
+    const isOrigin=i===0, isTerm=i===seq.length-1;
+    const clsA=['jr-stop']; if(st.cur)clsA.push('cur');
+    const nameCls=isOrigin?'jr-origin':isTerm?'jr-term':'';
+    const badge=st.cur?'<span class="jr-badge cur">현재</span>':'';
+    const timeTxt=isOrigin?`${fmt(st.m)} 출발`:isTerm?`${fmt(st.m)} 도착`:fmt(st.m);
+    return `<div class="${clsA.join(' ')}" style="--gc:${color}">
+      <div class="jr-dot"></div>
+      <div class="jr-info"><span class="jr-name ${nameCls}">${_opsEsc(st.s)}${badge}</span></div>
+      <div class="jr-time">${timeTxt}</div>
+    </div>`;
   }).join('');
   const exp=cls===2?'<span class="mtb-exp mtb-exp--t">특급</span>':cls===1?'<span class="mtb-exp">급행</span>':'';
   const wrap=document.createElement('div'); wrap.id='mtn-wrap';
   wrap.innerHTML=`<div class="rail-ticket-backdrop" onclick="closeMetroTrain()"></div>
-    <div class="mtn-popup" role="dialog" aria-label="${line} ${orig}→${dest} 시간표" style="--mc:${color}">
-      <div class="mtn-head"><span class="mtn-lchip" style="background:${color}">${line}</span>
-        <b>${orig}</b><span class="mtn-arrow">▶▶▶</span><b>${dest}</b>${exp}
+    <div class="mtn-popup" role="dialog" aria-label="${_opsEsc(line)} ${_opsEsc(orig)}→${_opsEsc(dest)} 시간표" style="--mc:${color}">
+      <div class="mtn-head"><span class="mtn-lchip" style="background:${color}">${_opsEsc(line)}</span>
+        <b>${_opsEsc(orig)}</b><span class="mtn-arrow">▶▶▶</span><b>${_opsEsc(dest)}</b>${exp}
         <button class="si-board-close" onclick="closeMetroTrain()" aria-label="닫기">✕</button></div>
-      <div class="mtn-list">${rows}</div>
+      <div class="jr-timeline mtn-tl">${rows}</div>
       <div class="mtn-foot">인게임 시각표 기준 · ${seq.length}개 역</div>
     </div>`;
   document.body.appendChild(wrap);
-  const now=wrap.querySelector('.mtn-row--now'); if(now)now.scrollIntoView({block:'center'});
+  const cur=wrap.querySelector('.jr-stop.cur'); if(cur)cur.scrollIntoView({block:'center'});
 }
 function closeMetroTrain(){ const el=document.getElementById('mtn-wrap'); if(el)el.remove(); }
 

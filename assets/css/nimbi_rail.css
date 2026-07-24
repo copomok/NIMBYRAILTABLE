@@ -1843,6 +1843,7 @@ button, select, input[type=range],
 .mtn-arrow{color:var(--text3);font-size:12px;letter-spacing:-1px}
 .mtn-head .si-board-close{margin-left:auto}
 .mtn-list{overflow-y:auto;padding:6px 0}
+.mtn-tl{overflow-y:auto;flex:1;min-height:0}
 .mtn-row{display:grid;grid-template-columns:1fr 44px 60px;align-items:center;min-height:44px}
 .mtn-row--now{background:color-mix(in srgb,var(--mc) 13%,transparent)}
 .mtn-stn{font-size:14.5px;font-weight:700;color:var(--text1);text-align:right;padding-right:8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
