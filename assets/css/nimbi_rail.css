@@ -1862,6 +1862,19 @@ button, select, input[type=range],
 .mtn-t{font-family:var(--mono);font-size:14px;color:var(--text2);font-variant-numeric:tabular-nums;padding-left:6px}
 .mtn-row--now .mtn-t{color:var(--mc);font-weight:800}
 .mtn-foot{font-size:9.5px;color:var(--text3);padding:9px 16px;border-top:1px solid var(--border);flex-shrink:0}
+/* 🚇 역 시간표 + 편성 시간표 페어(같이 열림) 레이아웃 */
+.mtt-popup,.mtn-popup{transition:transform .16s ease,filter .16s ease}
+/* PC(넓은 화면): 역 시간표 왼쪽 · 편성 시간표 오른쪽으로 나란히 */
+@media(min-width:1060px){
+  body.metro-paired #mtt-wrap .mtt-popup{transform:translate(calc(-50% - 228px),-50%)}
+  body.metro-paired #mtn-wrap .mtn-popup{transform:translate(calc(-50% + 288px),-50%)}
+  body.metro-paired #mtn-wrap .rail-ticket-backdrop{background:transparent;backdrop-filter:none;-webkit-backdrop-filter:none}
+}
+/* 모바일·좁은 화면: 편성 시간표가 역 시간표를 덮되, 역 시간표 창은 블러+터치 차단 */
+@media(max-width:1059px){
+  body.metro-paired #mtt-wrap .mtt-popup{filter:blur(3px);pointer-events:none}
+  body.metro-paired #mtt-wrap .rail-ticket-backdrop{pointer-events:none}
+}
 /* 운행 종료 — '운행 종료 문구'와 '내일 열차'를 교대로 표시 (LED 전광판식 크로스페이드) */
 .stn-board-ended{display:grid}
 .stn-board-ended>.sbe-flip{grid-area:1/1;min-width:0}

@@ -10517,7 +10517,7 @@ function openMetroTimetable(stn, line){
     </div>`;
   document.body.appendChild(wrap);
 }
-function closeMetroTimetable(){ const el=document.getElementById('mtt-wrap'); if(el)el.remove(); }
+function closeMetroTimetable(){ const el=document.getElementById('mtt-wrap'); if(el)el.remove(); const t=document.getElementById('mtn-wrap'); if(t)t.remove(); document.body.classList.remove('metro-paired'); }
 // 왕복 편성을 회차점(A>B>A·연속중복) 기준 방향별 leg 구간으로 분할
 function _metroLegRanges(idxSeq){
   const ranges=[]; let start=0; const n=idxSeq.length;
@@ -10576,9 +10576,11 @@ function openMetroTrain(line, svcIdx, hlClk){
       <div class="mtn-foot">인게임 시각표 기준 · ${seq.length}개 역 · <b style="color:${color}">${statusTxt}</b></div>
     </div>`;
   document.body.appendChild(wrap);
+  // 역 시간표(mtt)에서 열렸으면 나란히/오버레이 페어 레이아웃 적용
+  if(document.getElementById('mtt-wrap')) document.body.classList.add('metro-paired');
   const cur=wrap.querySelector('.jr-stop.cur'); if(cur)cur.scrollIntoView({block:'center'});
 }
-function closeMetroTrain(){ const el=document.getElementById('mtn-wrap'); if(el)el.remove(); }
+function closeMetroTrain(){ const el=document.getElementById('mtn-wrap'); if(el)el.remove(); document.body.classList.remove('metro-paired'); }
 
 // ── 지연 예측 모델 (노선·등급별 확률/예상 지연) ──
 // ── 지연 예보/시뮬레이션 엔진은 js/features/nimbi_delay.js로 분리 (DELAY_MODEL·_delayForecast·_simProfile·_simDelay·_simFinalDelay·_liveDelayOf·_simCauseSummary·_simEventLog 등) ──
