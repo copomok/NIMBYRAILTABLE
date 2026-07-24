@@ -9846,6 +9846,42 @@ function _metroDirEntries(list){
   const secs=entries.map(o=>Math.floor(o.sec/60)*60);
   return {entries, first:secs[0], last:secs[secs.length-1]};
 }
+// 노선별 역명→좌표 (METRO_LINES routes 기반, 메모이즈)
+let _metroXYCache={};
+function _metroLineXY(lineName){
+  if(lineName in _metroXYCache) return _metroXYCache[lineName];
+  const l=(typeof METRO_LINES!=='undefined')&&METRO_LINES.find(x=>x.name===lineName);
+  const m={};
+  if(l)(l.routes||[{stations:l.stations,xy:l.xy}]).forEach(r=>{const st=r.stations||[],xy=r.xy||[];
+    st.forEach((s,i)=>{ if(xy[i]&&m[String(s).replace(/역$/,'')]==null)m[String(s).replace(/역$/,'')]=xy[i]; });});
+  return _metroXYCache[lineName]=m;
+}
+function _metroXYof(xm,name){ if(xm[name])return xm[name]; const a=String(name).replace(/역$/,''); if(xm[a])return xm[a];
+  const h=String(name).split(' / ')[0].replace(/역$/,''); return xm[h]||null; }
+// 분기역 다방면(3+) → 실제 좌표 방향으로 2개 물리 방면(극)으로 병합. 같은 쪽 계통은 한 열로.
+function _metroDirGroups(lineName, stnName, dirCounts){
+  const keys=Object.keys(dirCounts).sort((a,b)=>dirCounts[b]-dirCounts[a]);
+  if(keys.length<=2) return keys.map(k=>[k]);
+  const xm=_metroLineXY(lineName), S=_metroXYof(xm,stnName);
+  const withXY=keys.filter(k=>_metroXYof(xm,k)), noXY=keys.filter(k=>!_metroXYof(xm,k));
+  if(!S||withXY.length<2) return [[keys[0]], keys.slice(1)];        // 좌표 부족 시 폴백
+  const vec=k=>{const p=_metroXYof(xm,k);const dx=p[0]-S[0],dy=p[1]-S[1],L=Math.hypot(dx,dy)||1;return [dx/L,dy/L];};
+  const p1=vec(withXY[0]); let p2=null,mn=2;
+  for(const k of withXY){const v=vec(k);const d=v[0]*p1[0]+v[1]*p1[1];if(d<mn){mn=d;p2=v;}}
+  const g1=[],g2=[];
+  for(const k of withXY){const v=vec(k);const d1=v[0]*p1[0]+v[1]*p1[1];const d2=p2?v[0]*p2[0]+v[1]*p2[1]:-2;(d1>=d2?g1:g2).push(k);}
+  if(noXY.length){const names=METRO_SCHED[lineName].s;const ai=g=>g.length?g.reduce((s,k)=>s+names.indexOf(k),0)/g.length:names.indexOf(stnName);
+    const a1=ai(g1),a2=ai(g2);for(const k of noXY){const ni=names.indexOf(k);(Math.abs(ni-a1)<=Math.abs(ni-a2)?g1:g2).push(k);}}
+  const sum=g=>g.reduce((s,k)=>s+dirCounts[k],0);
+  return [g1,g2].filter(g=>g.length).sort((a,b)=>sum(b)-sum(a));
+}
+// 방면 그룹(다중 다음역) 편 병합 — 지선별로 분내 중복 제거 후 합침(서로 다른 계통 동시각은 유지)
+function _metroGroupEntries(dirsMap, keys){
+  let all=[]; for(const k of keys) all=all.concat(_metroDirEntries(dirsMap[k]).entries);
+  all.sort((a,b)=>a.sec-b.sec);
+  const secs=all.map(o=>Math.floor(o.sec/60)*60);
+  return {entries:all, first:secs[0], last:secs[secs.length-1]};
+}
 function _metroStationBoardHTML(stn){
   if(typeof METRO_SCHED==='undefined') return '';
   const deps=_metroStationDeps(stn);
@@ -9867,11 +9903,12 @@ function _metroStationBoardHTML(stn){
   });
   const blocks=lineOrder.map(line=>{
     const color=_metroLineColor(line), dirs=lines[line];
-    // 분기역(계통 다수)은 모든 방면 표시 — 2개 초과 시 가로 스크롤 (일부 계통 누락 방지)
-    const dirOrder=Object.keys(dirs).sort((a,b)=>dirs[b].length-dirs[a].length).slice(0,6);
-    const cols=dirOrder.map(nx=>{
-      const list=dirs[nx];
-      const {entries,first,last}=_metroDirEntries(list);
+    // 분기역(계통 다수)은 좌표 기준 2개 물리 방면으로 병합 — 같은 쪽 계통은 한 열에 통합
+    const dirCounts={}; Object.keys(dirs).forEach(k=>dirCounts[k]=dirs[k].length);
+    const groups=_metroDirGroups(line, stn, dirCounts);
+    const cols=groups.map(grp=>{
+      const label=grp.join(' • ');
+      const {entries,first,last}=_metroGroupEntries(dirs, grp);
       let trainsHtml;
       if(nowS>last){
         // 오늘 막차 이후 → 운행 종료 + 첫차·행선지 안내
@@ -9879,10 +9916,8 @@ function _metroStationBoardHTML(stn){
         trainsHtml=`<div class="mtb2-ended"><span class="mtb2-ended-t">운행 종료</span>
           <span class="mtb2-ended-first">첫차 ${fSrvClock(first)}${showFd?` <b>${fd}행</b>`:''}</span></div>`;
       } else {
-        const seenMin=new Set();
         const up=entries.map(o=>{let rel=o.sec-nowS; if(rel<0)rel+=86400; return {rel,dest:o.dest,sec:o.sec,cls:o.cls};})
           .sort((a,b)=>a.rel-b.rel)
-          .filter(o=>{const m=Math.floor(o.sec/60); if(seenMin.has(m))return false; seenMin.add(m); return true;})
           .slice(0,3);
         trainsHtml=up.map((u,i)=>{
           const showDest=u.dest&&u.dest!==stn;   // 자기참조 라벨만 숨김(인접역 종착은 표기)
@@ -9893,7 +9928,7 @@ function _metroStationBoardHTML(stn){
         </div>`;}).join('')||'<div class="mtb2-none">운행 정보 없음</div>';
       }
       return `<div class="mtb2-col">
-        <div class="mtb2-dir"><span class="mtb2-arr">▸</span>${nx} 방면</div>
+        <div class="mtb2-dir"><span class="mtb2-arr">▸</span>${label} 방면</div>
         ${trainsHtml}
         <div class="mtb2-fl">첫 ${fSrvClock(first)} · 막 ${fSrvClock(last)}</div>
       </div>`;
@@ -10494,16 +10529,15 @@ function openMetroTimetable(stn, line){
   if(!deps.length) return;
   const fClk=m=>Math.floor(m/60)+':'+String(m%60).padStart(2,'0');
   const dirs={}; deps.forEach(o=>{ (dirs[o.next]=dirs[o.next]||[]).push(o); });
-  // 분기역은 모든 방면 표시 — 2개 초과 시 가로 스크롤 (계통 누락 방지)
-  const dirOrder=Object.keys(dirs).sort((a,b)=>dirs[b].length-dirs[a].length).slice(0,6);
+  // 분기역은 좌표 기준 2개 물리 방면으로 병합 — 같은 쪽 계통은 한 열에 통합
+  const dirCounts={}; Object.keys(dirs).forEach(k=>dirCounts[k]=dirs[k].length);
+  const groups=_metroDirGroups(line, stn, dirCounts);
   const color=_metroLineColor(line);
   const nowM=new Date().getHours()*60+new Date().getMinutes();
-  // 방면별 시각순 편 목록 (운행일분 기준, 중복 분 제거)
-  const colData=dirOrder.map(nx=>{
-    const {entries}=_metroDirEntries(dirs[nx]);
-    const seen=new Set();
+  // 방면(그룹)별 시각순 편 목록 (지선별 분내 중복 제거 후 병합)
+  const colData=groups.map(grp=>{
+    const {entries}=_metroGroupEntries(dirs, grp);
     return entries.map(o=>({m:Math.floor(o.sec/60),orig:o.orig,dest:o.dest,cls:o.cls,svc:o.svc,line:o.line}))
-      .filter(o=>{ if(seen.has(o.m))return false; seen.add(o.m); return true; })
       .sort((a,b)=>a.m-b.m)
       .map(o=>({...o,clk:(o.m+240)%1440}));
   });
@@ -10524,7 +10558,7 @@ function openMetroTimetable(stn, line){
     }).join('');
     return `<div class="mtt-hrow">${cells}</div>`;
   }).join('');
-  const heads=dirOrder.map(nx=>`<div class="mtt-dirhead"><span class="mtt-arr">▸</span>${nx} 방면</div>`).join('');
+  const heads=groups.map(grp=>`<div class="mtt-dirhead"><span class="mtt-arr">▸</span>${grp.join(' • ')} 방면</div>`).join('');
   const wrap=document.createElement('div');
   wrap.id='mtt-wrap';
   wrap.innerHTML=`
@@ -10532,7 +10566,7 @@ function openMetroTimetable(stn, line){
     <div class="mtt-popup" role="dialog" aria-label="${line} ${stn} 시간표" style="--mc:${color}">
       <div class="mtt-head"><span><b style="color:${color}">🚇 ${line}</b> · ${stn}</span>
         <button class="si-board-close" onclick="closeMetroTimetable()" aria-label="닫기">✕</button></div>
-      <div class="mtt-scroll" style="--cols:${dirOrder.length}">
+      <div class="mtt-scroll" style="--cols:${groups.length}">
         <div class="mtt-headrow">${heads}</div>
         <div class="mtt-grid">${grid}</div>
       </div>
