@@ -1053,17 +1053,25 @@ function searchByRoute(){
     return (dA||9999)-(dB||9999);
   });
 
-  // 직통 있으면 직통만 표시 (카카오맵식 타임라인 카드)
+  // 직통 있으면 직통만 표시
   if(directs.length){
     const afterLabel=afterMin!==null?` · ${afterRaw} 이후`:'';
-    const cards=directs.slice(0,12).map(({t,depT,arrT})=>
-      _journeyCardHTML([{t,from,to,depT,arrT}])
+    const rows=directs.map(({t,depT,arrT,dur})=>
+      `<tr onclick="jumpToTrain('${t.no}')">
+        <td>${trainChip(t.no,t.grade,`event.stopPropagation();jumpToTrain('${t.no}')`)}</td>
+        <td>${gradeHtml(t.grade)}</td><td>${lineChipHtml(t.line)}</td>
+        <td>${dirLabel(t.dir)}</td><td style="font-weight:500">${t.dest}</td>
+        <td><span class="time-dep">${depT||'-'}</span></td>
+        <td><span class="time-arr">${arrT||'-'}</span></td>
+        <td style="font-family:var(--mono);font-size:11px;color:var(--text2)">${dur}</td>
+
+      </tr>`
     ).join('');
     const fb=document.getElementById('fav-btn-route');
     if(fb)fb.style.display='';
-    el.innerHTML=`<div class="result-header"><div class="result-title">🔍 ${from} → ${to}${afterLabel}</div><span class="badge blue">직통 ${directs.length}편</span><span class="badge" style="background:var(--bg3)">${sortLabel}</span></div>
-    <div class="rt-list">${cards}</div>
-    <p class="hint">※ 열차번호 클릭 시 전체 운행 정보 조회 · 상위 ${Math.min(12,directs.length)}편 표시</p>`;
+    el.innerHTML=`<div class="result-header"><div class="result-title">🔍 ${from} → ${to}${afterLabel}</div><span class="badge blue">${directs.length}편</span><span class="badge" style="background:var(--bg3)">${sortLabel}</span></div>
+    <div class="table-wrap"><table><thead><tr><th>열차</th><th>등급</th><th>노선</th><th>방향</th><th>행선지</th><th>출발</th><th>도착</th><th>소요</th></tr></thead><tbody>${rows}</tbody></table></div>
+    <p class="hint">※ 열차번호 클릭 시 전체 운행 정보 조회</p>`;
     return;
   }
 
@@ -1160,9 +1168,37 @@ function searchByRoute(){
     return;
   }
 
-  // 환승 결과 렌더링 (카카오맵식 타임라인 카드)
+  // 환승 결과 렌더링
   const afterLabel=afterMin!==null?` · ${afterRaw} 이후`:'';
-  const cards=transfers.map(({legs})=>_journeyCardHTML(legs)).join('');
+  const cards=transfers.map(({legs,totalDur})=>{
+    const legsHtml=legs.map((l,i)=>`
+      <div class="xfer-leg">
+        <div class="xfer-leg-head">
+          ${trainChip(l.t.no,l.t.grade,`jumpToTrain('${l.t.no}')`)}
+          ${gradeHtml(l.t.grade)}
+          ${lineChipHtml(l.t.line)}
+          <span style="color:var(--text2);font-size:12px">${dirLabel(l.t.dir)} · ${l.t.dest}행</span>
+        </div>
+        <div class="xfer-leg-route">
+          <span class="xfer-stn">${l.from}</span>
+          <span class="xfer-dep time-dep">${l.depT||'-'}</span>
+          <span class="xfer-arrow">→</span>
+          <span class="xfer-stn">${l.to}</span>
+          <span class="xfer-arr time-arr">${l.arrT||'-'}</span>
+
+        </div>
+      </div>
+      ${i<legs.length-1?`<div class="xfer-wait">🔄 환승 · 대기 ${toMin(legs[i+1].depT)-toMin(l.arrT)}분</div>`:''}
+    `).join('');
+    return `<div class="xfer-card">
+      <div class="xfer-card-head">
+        <span class="xfer-badge">1회 환승</span>
+        <span style="font-family:var(--mono);font-size:12px;color:var(--text2)">${legs[0].depT} → ${legs[legs.length-1].arrT||'?'} · ${totalDur}</span>
+      </div>
+      ${legsHtml}
+    </div>`;
+  }).join('');
+
   const fb2=document.getElementById('fav-btn-route');
   if(fb2)fb2.style.display='';
   el.innerHTML=`<div class="result-header">
@@ -1170,7 +1206,7 @@ function searchByRoute(){
     <span class="badge" style="background:var(--bg3)">${sortLabel}</span>
     <span class="badge yellow">${transfers.length}건</span>
   </div>
-  <div class="rt-list">${cards}</div>
+  ${cards}
   <p class="hint">※ 열차번호 클릭 시 전체 운행 정보 조회 · 환승 대기 3~60분 · 최단 소요 5건</p>`;
 }
 function toggleStationFilter(){
@@ -11448,27 +11484,45 @@ function searchMetroRoute(){
   if(r.err==='noStn'){const bad=_metroGraph().stnLines[from]?to:from;out.innerHTML=`<div class="mr-hint">전철 노선에 <b>${_opsEsc(bad)}</b> 역이 없습니다. 역명을 확인하세요.</div>`;return;}
   if(r.err||!r.segments||!r.segments.length){out.innerHTML='<div class="mr-hint">경로를 찾을 수 없습니다.</div>';return;}
   const G=_metroGraph();
-  const mins=Math.round(r.stops*2.1+r.transfers*4);
-  const segHtml=r.segments.map((s,i)=>{
-    const l=G.lineById[s.lid]||{name:'?',color:'#888'};
+  const totalMin=Math.round(r.stops*2.1+r.transfers*4);
+  // 지금 출발 기준 예상 시각(역당 약 2.1분·환승 4분)
+  const now=new Date(); const startM=now.getHours()*60+now.getMinutes();
+  const fmt=m=>{m=((Math.round(m))%1440+1440)%1440;return `${Math.floor(m/60)}:${String(m%60).padStart(2,'0')}`;};
+  let cum=0, rail='';
+  r.segments.forEach((s,i)=>{
+    const l=G.lineById[s.lid]||{name:'?',color:'#8b949e'};
     const board=s.stns[0], alight=s.stns[s.stns.length-1];
     const via=s.stns.slice(1,-1);
-    const viaTxt=via.length?`<div class="mr-via">${via.map(_opsEsc).join(' · ')}</div>`:'';
-    return `${i>0?`<div class="mr-xfer"><span class="mr-xfer-dot">🔄</span> <b>${_opsEsc(board)}</b> 환승</div>`:''}
-      <div class="mr-seg" style="--lc:${l.color}">
-        <div class="mr-seg-head"><span class="mr-linechip" style="background:${l.color}">${_opsEsc(l.name)}</span><span class="mr-seg-count">${s.stns.length-1}개역</span></div>
-        <div class="mr-seg-route"><b>${_opsEsc(board)}</b> <span class="mr-arrow">→</span> <b>${_opsEsc(alight)}</b></div>
-        ${viaTxt}
-      </div>`;
-  }).join('');
+    const segMin=Math.max(1,Math.round((s.stns.length-1)*2.1));
+    const boardTime=startM+cum;
+    rail+=`<div class="rt-node" style="--lc:${l.color}">
+      <div class="rt-time">${fmt(boardTime)}</div>
+      <div class="rt-rail"><span class="rt-dot rt-board rt-mdot"></span><span class="rt-seg"></span></div>
+      <div class="rt-info">
+        <div class="rt-stn">${_opsEsc(board)}<span class="rt-chev">›</span></div>
+        <div class="rt-sub"><span class="rt-lchip" style="background:${l.color}">${_opsEsc(l.name)}</span> ${_opsEsc(alight)}행</div>
+        <div class="rt-cnt">${s.stns.length-1}개 역 · 약 ${segMin}분${via.length?` <span class="rt-via-tg" onclick="this.parentElement.nextElementSibling.classList.toggle('open')">경유역 ▾</span>`:''}</div>
+        ${via.length?`<div class="rt-via">${via.map(_opsEsc).join(' · ')}</div>`:''}
+      </div></div>`;
+    cum+=segMin;
+    if(i<r.segments.length-1){
+      rail+=`<div class="rt-node rt-walk"><div class="rt-time"></div><div class="rt-rail"><span class="rt-seg rt-dash"></span><span class="rt-walk-ic">🚶</span></div><div class="rt-info"><div class="rt-sub rt-xfer">${_opsEsc(alight)} 환승</div></div></div>`;
+      cum+=4;
+    }
+  });
+  const lastL=G.lineById[r.segments[r.segments.length-1].lid]||{color:'#8b949e'};
+  rail+=`<div class="rt-node rt-last" style="--lc:${lastL.color}"><div class="rt-time">${fmt(startM+cum)}</div><div class="rt-rail"><span class="rt-dot rt-alight">하차</span></div><div class="rt-info"><div class="rt-stn">${_opsEsc(to)}<span class="rt-chev">›</span></div></div></div>`;
   out.innerHTML=`
     <div class="result-header" style="margin-top:16px">
       <div class="result-title">🚇 ${_opsEsc(from)} → ${_opsEsc(to)}</div>
-      <span class="badge blue">환승 ${r.transfers}회</span>
-      <span class="badge" style="background:var(--bg3)">${r.stops}개역 · 약 ${mins}분</span>
+      <span class="badge blue">${_mrMode==='time'?'최소 시간':'최소 환승'}</span>
     </div>
-    <div class="mr-segs">${segHtml}</div>
-    <p class="ops-hint">${_mrMode==='time'?'최소 시간':'최소 환승'} 경로 기준(소요는 역당 약 2분·환승 4분 추정). 실제 열차 시각은 노선 탭에서 확인하세요.</p>`;
+    <div class="rt-list"><div class="rt-card">
+      <div class="rt-sum"><div class="rt-dur">약 ${totalMin}분</div>
+        <div class="rt-sum-meta">${r.transfers>0?`환승 ${r.transfers}회`:'직통'} · ${r.stops}개 역</div></div>
+      <div class="rt-tl">${rail}</div>
+    </div></div>
+    <p class="ops-hint">지금 출발 기준 예상(역당 약 2분·환승 4분 추정). 실제 열차 시각은 역 시간표에서 확인하세요.</p>`;
 }
 
 // ══════════════════════════════════════════
