@@ -10599,22 +10599,30 @@ function openMetroTrain(line, svcIdx, hlClk){
   let ci=0; for(let i=0;i<n;i++){ if(norm(dT[i])===hlClk){ ci=i; break; } }
   const [ls,le]=(_metroLegRanges(idxSeq).find(([s,e])=>ci>=s&&ci<=e))||[0,n-1];
   // 통과역=출발(d) 표시, leg 종착역=도착(a) 표시(반대방향 회차 출발시각 오기 방지)
-  const seq=[]; for(let i=ls;i<=le;i++){ const st={s:names[idxSeq[i]], m:(i===le?aT[i]:dT[i])}; if(!seq.length||seq[seq.length-1].s!==st.s) seq.push(st); else seq[seq.length-1]=st; }
+  const seq=[]; for(let i=ls;i<=le;i++){ const st={s:names[idxSeq[i]], a:aT[i], d:(i===le?aT[i]:dT[i]), m:(i===le?aT[i]:dT[i])}; if(!seq.length||seq[seq.length-1].s!==st.s) seq.push(st); else seq[seq.length-1]=st; }
   const orig=seq[0].s, dest=seq[seq.length-1].s;
-  // 실시간 진행 위치: 현재 시각 기준 이 편성이 어디쯤 있는지(지나온 역=done, 현 위치=cur)
+  // 실시간 진행 위치: 기차 탑승 여정과 동일 — 정차 중이면 그 역=현재, 이동 중이면 다음역=다음(강조)
   const srv=x=>(((x-240)%1440)+1440)%1440;
-  const nowc=new Date(); const nowSv=srv(nowc.getHours()*60+nowc.getMinutes());
-  const abs=[]; let off=0; seq.forEach((st,i)=>{ const v=srv(st.m); if(i>0&&(v+off)<abs[i-1]) off+=1440; abs.push(v+off); });
-  let nowAbs=nowSv; while(nowAbs<abs[0]-720)nowAbs+=1440; while(nowAbs>abs[abs.length-1]+720)nowAbs-=1440;
-  let curIdx; // -1: 운행 전, -2: 운행 종료, >=0: 현 위치(막 지난 역)
-  if(nowAbs<abs[0])curIdx=-1; else if(nowAbs>=abs[abs.length-1])curIdx=-2;
-  else { curIdx=0; for(let i=0;i<abs.length;i++){ if(abs[i]<=nowAbs)curIdx=i; else break; } }
+  const flat=[]; seq.forEach(st=>{ flat.push(srv(st.a), srv(st.d)); });   // 도착·출발 교대
+  let off=0; const mono=[]; for(let i=0;i<flat.length;i++){ let v=flat[i]+off; if(i>0&&v<mono[i-1]){ off+=1440; v+=1440; } mono.push(v); }
+  const absA=seq.map((_,i)=>mono[2*i]), absD=seq.map((_,i)=>mono[2*i+1]);
+  const nowc=new Date(); let nowAbs=srv(nowc.getHours()*60+nowc.getMinutes());
+  while(nowAbs<absA[0]-720)nowAbs+=1440; while(nowAbs>absD[absD.length-1]+720)nowAbs-=1440;
+  let phase, dwellIdx=-1, nextIdx=-1;                                     // dwellIdx: 정차 중 역, nextIdx: 접근 중 다음역
+  if(nowAbs<absA[0]) phase='before';
+  else if(nowAbs>=absD[absD.length-1]) phase='done';
+  else { phase='running';
+    for(let i=0;i<seq.length;i++){ if(nowAbs>=absA[i]&&nowAbs<=absD[i]){ dwellIdx=i; break; } }
+    if(dwellIdx<0){ for(let i=0;i<seq.length;i++){ if(absA[i]>nowAbs){ nextIdx=i; break; } } }
+  }
   const rows=seq.map((st,i)=>{
     const isOrigin=i===0, isTerm=i===seq.length-1;
-    let stateCls=''; if(curIdx===-2)stateCls='done'; else if(curIdx>=0){ if(i<curIdx)stateCls='done'; else if(i===curIdx)stateCls='cur'; }
-    const clsA=['jr-stop']; if(stateCls)clsA.push(stateCls);
+    const passed=(phase==='done')||(phase==='running'&&nowAbs>absD[i]+1e-6);
+    const isCur=phase==='running'&&i===dwellIdx;
+    const isNext=phase==='running'&&i===nextIdx&&dwellIdx<0;
+    const clsA=['jr-stop']; if(passed&&!isCur)clsA.push('done'); if(isCur)clsA.push('cur'); if(isNext)clsA.push('next');
     const nameCls=isOrigin?'jr-origin':isTerm?'jr-term':'';
-    const badge=stateCls==='cur'?'<span class="jr-badge cur">현재</span>':'';
+    const badge=isCur?'<span class="jr-badge cur">현재</span>':isNext?'<span class="jr-badge next">다음</span>':'';
     const timeTxt=isOrigin?`${fmt(st.m)} 출발`:isTerm?`${fmt(st.m)} 도착`:fmt(st.m);
     return `<div class="${clsA.join(' ')}" style="--gc:${color}">
       <div class="jr-dot"></div>
@@ -10622,7 +10630,7 @@ function openMetroTrain(line, svcIdx, hlClk){
       <div class="jr-time">${timeTxt}</div>
     </div>`;
   }).join('');
-  const statusTxt=curIdx===-1?'운행 전':curIdx===-2?'운행 종료':'운행 중';
+  const statusTxt=phase==='before'?'운행 전':phase==='done'?'운행 종료':'운행 중';
   const exp=cls===2?'<span class="mtb-exp mtb-exp--t">특급</span>':cls===1?'<span class="mtb-exp">급행</span>':'';
   const wrap=document.createElement('div'); wrap.id='mtn-wrap';
   wrap.innerHTML=`<div class="rail-ticket-backdrop" onclick="closeMetroTrain()"></div>
@@ -10636,7 +10644,7 @@ function openMetroTrain(line, svcIdx, hlClk){
   document.body.appendChild(wrap);
   // 역 시간표(mtt)에서 열렸으면 나란히/오버레이 페어 레이아웃 적용
   if(document.getElementById('mtt-wrap')) document.body.classList.add('metro-paired');
-  const cur=wrap.querySelector('.jr-stop.cur'); if(cur)cur.scrollIntoView({block:'center'});
+  const cur=wrap.querySelector('.jr-stop.cur')||wrap.querySelector('.jr-stop.next'); if(cur)cur.scrollIntoView({block:'center'});
 }
 function closeMetroTrain(){ const el=document.getElementById('mtn-wrap'); if(el)el.remove(); document.body.classList.remove('metro-paired'); }
 

@@ -2101,7 +2101,9 @@ button, select, input[type=range],
 .jr-stop.done{opacity:.62}
 .jr-stop.cur{background:color-mix(in srgb,var(--gc) 12%,transparent)}
 .jr-stop.cur .jr-dot{width:15px;height:15px;margin-left:2.25px;background:var(--gc);border-color:#fff;box-shadow:0 0 0 4px color-mix(in srgb,var(--gc) 30%,transparent);animation:jrPulse 1.7s infinite}
-.jr-stop.next .jr-dot{border-color:var(--gc);background:var(--bg1)}
+.jr-stop.next{background:color-mix(in srgb,var(--gc) 7%,transparent)}
+.jr-stop.next .jr-dot{border-color:var(--gc);background:var(--bg1);box-shadow:0 0 0 3px color-mix(in srgb,var(--gc) 16%,transparent)}
+.jr-stop.next .jr-name{font-weight:800}
 @keyframes jrPulse{0%,100%{box-shadow:0 0 0 3px color-mix(in srgb,var(--gc) 32%,transparent)}50%{box-shadow:0 0 0 8px color-mix(in srgb,var(--gc) 6%,transparent)}}
 .jr-stop.pass{min-height:28px}
 .jr-stop.pass .jr-dot{width:7px;height:7px;margin-left:6px;border-width:2px}
