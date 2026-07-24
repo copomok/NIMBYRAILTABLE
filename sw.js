@@ -1,4 +1,4 @@
-const CACHE_NAME = 'nimbirail-2026072334';
+const CACHE_NAME = 'nimbirail-2026072335';
 const ASSETS = [
   '/NIMBYRAILTABLE/',
   '/NIMBYRAILTABLE/index.html',
