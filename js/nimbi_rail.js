@@ -11475,6 +11475,27 @@ function renderMetroRouteTab(){
     </div>
     <div id="mr-result"></div>`;
 }
+// 구간 실제 다음 열차: lineName에서 board→alight를 잇는 편 중 afterSrv(운행일분) 이후 최속 출발
+function _metroSegService(lineName, board, alight, afterSrv){
+  const ent=(typeof METRO_SCHED!=='undefined')&&METRO_SCHED[lineName]; if(!ent) return null;
+  const names=ent.s, svcs=ent.t, cArr=ent.c;
+  const bi=names.indexOf(board), ai=names.indexOf(alight); if(bi<0||ai<0) return null;
+  const srvMin=m=>(((m-240)%1440)+1440)%1440;
+  let best=null, wrap=null;
+  for(let si=0;si<svcs.length;si++){ const f=svcs[si], n=f.length>>1, cls=cArr?cArr[si]:0;
+    for(let k=0;k<n-1;k++){ if(f[2*k+1]!==bi)continue;
+      let mIdx=-1; for(let m=k+1;m<n;m++){ if(f[2*m+1]===ai){mIdx=m;break;} }
+      if(mIdx<0) continue;
+      const ds=srvMin(f[2*k]), via=[];
+      for(let x=k+1;x<mIdx;x++)via.push(names[f[2*x+1]]);
+      const cand={ds, dep:f[2*k]%1440, arr:f[2*mIdx]%1440, nStops:mIdx-k, via, cls};
+      if(ds>=afterSrv){ if(!best||ds<best.ds)best=cand; }
+      if(!wrap||ds<wrap.ds)wrap=cand;
+      break;
+    }
+  }
+  return best||wrap;
+}
 function searchMetroRoute(){
   const out=document.getElementById('mr-result'); if(!out)return;
   const from=(_mrFrom||'').trim(), to=(_mrTo||'').trim();
@@ -11484,45 +11505,80 @@ function searchMetroRoute(){
   if(r.err==='noStn'){const bad=_metroGraph().stnLines[from]?to:from;out.innerHTML=`<div class="mr-hint">전철 노선에 <b>${_opsEsc(bad)}</b> 역이 없습니다. 역명을 확인하세요.</div>`;return;}
   if(r.err||!r.segments||!r.segments.length){out.innerHTML='<div class="mr-hint">경로를 찾을 수 없습니다.</div>';return;}
   const G=_metroGraph();
-  const totalMin=Math.round(r.stops*2.1+r.transfers*4);
-  // 지금 출발 기준 예상 시각(역당 약 2.1분·환승 4분)
-  const now=new Date(); const startM=now.getHours()*60+now.getMinutes();
+  const now=new Date();
+  const srvMin=m=>(((m-240)%1440)+1440)%1440;
   const fmt=m=>{m=((Math.round(m))%1440+1440)%1440;return `${Math.floor(m/60)}:${String(m%60).padStart(2,'0')}`;};
-  let cum=0, rail='';
-  r.segments.forEach((s,i)=>{
+  const durFmt=m=>{const h=Math.floor(m/60);return h?`${h}시간 ${m%60}분`:`${m}분`;};
+  const nowSrv=srvMin(now.getHours()*60+now.getMinutes());
+  const XBUF=2; // 환승 도보 버퍼(분)
+  // ── 실제 운행 데이터로 구간별 다음 열차 탐색 ──
+  let afterSrv=nowSrv; const legs=[]; let realOk=r.segments.length>0;
+  for(const s of r.segments){
     const l=G.lineById[s.lid]||{name:'?',color:'#8b949e'};
-    const board=s.stns[0], alight=s.stns[s.stns.length-1];
-    const via=s.stns.slice(1,-1);
-    const segMin=Math.max(1,Math.round((s.stns.length-1)*2.1));
-    const boardTime=startM+cum;
-    rail+=`<div class="rt-node" style="--lc:${l.color}">
-      <div class="rt-time">${fmt(boardTime)}</div>
-      <div class="rt-rail"><span class="rt-dot rt-board rt-mdot"></span><span class="rt-seg"></span></div>
-      <div class="rt-info">
-        <div class="rt-stn">${_opsEsc(board)}<span class="rt-chev">›</span></div>
-        <div class="rt-sub"><span class="rt-lchip" style="background:${l.color}">${_opsEsc(l.name)}</span> ${_opsEsc(alight)}행</div>
-        <div class="rt-cnt">${s.stns.length-1}개 역 · 약 ${segMin}분${via.length?` <span class="rt-via-tg" onclick="this.parentElement.nextElementSibling.classList.toggle('open')">경유역 ▾</span>`:''}</div>
-        ${via.length?`<div class="rt-via">${via.map(_opsEsc).join(' · ')}</div>`:''}
-      </div></div>`;
-    cum+=segMin;
-    if(i<r.segments.length-1){
-      rail+=`<div class="rt-node rt-walk"><div class="rt-time"></div><div class="rt-rail"><span class="rt-seg rt-dash"></span><span class="rt-walk-ic">🚶</span></div><div class="rt-info"><div class="rt-sub rt-xfer">${_opsEsc(alight)} 환승</div></div></div>`;
-      cum+=4;
-    }
-  });
-  const lastL=G.lineById[r.segments[r.segments.length-1].lid]||{color:'#8b949e'};
-  rail+=`<div class="rt-node rt-last" style="--lc:${lastL.color}"><div class="rt-time">${fmt(startM+cum)}</div><div class="rt-rail"><span class="rt-dot rt-alight">하차</span></div><div class="rt-info"><div class="rt-stn">${_opsEsc(to)}<span class="rt-chev">›</span></div></div></div>`;
+    const svc=_metroSegService(l.name, s.stns[0], s.stns[s.stns.length-1], afterSrv);
+    if(!svc){ realOk=false; break; }
+    legs.push({l, board:s.stns[0], alight:s.stns[s.stns.length-1], dep:svc.dep, arr:svc.arr, nStops:svc.nStops, via:svc.via, cls:svc.cls});
+    afterSrv=(srvMin(svc.arr)+XBUF)%1440;
+  }
+  let rail='', headDur, headMeta, foot;
+  if(realOk){
+    legs.forEach((lg,i)=>{
+      const segMin=(srvMin(lg.arr)-srvMin(lg.dep)+1440)%1440;
+      const exp=lg.cls===2?'<span class="mtb-exp mtb-exp--t">특급</span>':lg.cls===1?'<span class="mtb-exp">급행</span>':'';
+      rail+=`<div class="rt-node" style="--lc:${lg.l.color}">
+        <div class="rt-time">${fmt(lg.dep)}</div>
+        <div class="rt-rail"><span class="rt-dot rt-board rt-mdot"></span><span class="rt-seg"></span></div>
+        <div class="rt-info">
+          <div class="rt-stn">${_opsEsc(lg.board)}<span class="rt-chev">›</span></div>
+          <div class="rt-sub">${exp}<span class="rt-lchip" style="background:${lg.l.color}">${_opsEsc(lg.l.name)}</span> ${_opsEsc(lg.alight)}행</div>
+          <div class="rt-cnt">${lg.nStops}개 역 · ${segMin}분${lg.via.length?` <span class="rt-via-tg" onclick="this.parentElement.nextElementSibling.classList.toggle('open')">경유역 ▾</span>`:''}</div>
+          ${lg.via.length?`<div class="rt-via">${lg.via.map(_opsEsc).join(' · ')}</div>`:''}
+        </div></div>`;
+      if(i<legs.length-1){ const wait=(srvMin(legs[i+1].dep)-srvMin(lg.arr)+1440)%1440;
+        rail+=`<div class="rt-node rt-walk"><div class="rt-time"></div><div class="rt-rail"><span class="rt-seg rt-dash"></span><span class="rt-walk-ic">🚶</span></div><div class="rt-info"><div class="rt-sub rt-xfer">${_opsEsc(lg.alight)} 환승 · 대기 ${wait}분</div></div></div>`;
+      }
+    });
+    const last=legs[legs.length-1];
+    rail+=`<div class="rt-node rt-last" style="--lc:${last.l.color}"><div class="rt-time">${fmt(last.arr)}</div><div class="rt-rail"><span class="rt-dot rt-alight">하차</span></div><div class="rt-info"><div class="rt-stn">${_opsEsc(to)}<span class="rt-chev">›</span></div></div></div>`;
+    const total=(srvMin(last.arr)-srvMin(legs[0].dep)+1440)%1440;
+    headDur=durFmt(total);
+    headMeta=`${r.transfers>0?`환승 ${r.transfers}회`:'직통'} · <span class="rt-mono">${fmt(legs[0].dep)}→${fmt(last.arr)}</span>`;
+    foot='실제 운행 시각표 기준 · 지금 이후 첫 열차. 환승 대기·소요는 시각표 실측값.';
+  } else {
+    // ── 운행 데이터 없는 구간 → 추정 fallback ──
+    let cum=0; const startM=now.getHours()*60+now.getMinutes();
+    r.segments.forEach((s,i)=>{
+      const l=G.lineById[s.lid]||{name:'?',color:'#8b949e'};
+      const board=s.stns[0], alight=s.stns[s.stns.length-1], via=s.stns.slice(1,-1);
+      const segMin=Math.max(1,Math.round((s.stns.length-1)*2.1));
+      rail+=`<div class="rt-node" style="--lc:${l.color}">
+        <div class="rt-time">${fmt(startM+cum)}</div>
+        <div class="rt-rail"><span class="rt-dot rt-board rt-mdot"></span><span class="rt-seg"></span></div>
+        <div class="rt-info">
+          <div class="rt-stn">${_opsEsc(board)}<span class="rt-chev">›</span></div>
+          <div class="rt-sub"><span class="rt-lchip" style="background:${l.color}">${_opsEsc(l.name)}</span> ${_opsEsc(alight)}행</div>
+          <div class="rt-cnt">${s.stns.length-1}개 역 · 약 ${segMin}분${via.length?` <span class="rt-via-tg" onclick="this.parentElement.nextElementSibling.classList.toggle('open')">경유역 ▾</span>`:''}</div>
+          ${via.length?`<div class="rt-via">${via.map(_opsEsc).join(' · ')}</div>`:''}
+        </div></div>`;
+      cum+=segMin;
+      if(i<r.segments.length-1){ rail+=`<div class="rt-node rt-walk"><div class="rt-time"></div><div class="rt-rail"><span class="rt-seg rt-dash"></span><span class="rt-walk-ic">🚶</span></div><div class="rt-info"><div class="rt-sub rt-xfer">${_opsEsc(s.stns[s.stns.length-1])} 환승</div></div></div>`; cum+=4; }
+    });
+    const lastL=G.lineById[r.segments[r.segments.length-1].lid]||{color:'#8b949e'};
+    rail+=`<div class="rt-node rt-last" style="--lc:${lastL.color}"><div class="rt-time">${fmt(startM+cum)}</div><div class="rt-rail"><span class="rt-dot rt-alight">하차</span></div><div class="rt-info"><div class="rt-stn">${_opsEsc(to)}<span class="rt-chev">›</span></div></div></div>`;
+    headDur=`약 ${Math.round(r.stops*2.1+r.transfers*4)}분`;
+    headMeta=`${r.transfers>0?`환승 ${r.transfers}회`:'직통'} · ${r.stops}개 역`;
+    foot='운행 시각표가 없는 구간이라 추정(역당 약 2분·환승 4분).';
+  }
   out.innerHTML=`
     <div class="result-header" style="margin-top:16px">
       <div class="result-title">🚇 ${_opsEsc(from)} → ${_opsEsc(to)}</div>
       <span class="badge blue">${_mrMode==='time'?'최소 시간':'최소 환승'}</span>
     </div>
     <div class="rt-list"><div class="rt-card">
-      <div class="rt-sum"><div class="rt-dur">약 ${totalMin}분</div>
-        <div class="rt-sum-meta">${r.transfers>0?`환승 ${r.transfers}회`:'직통'} · ${r.stops}개 역</div></div>
+      <div class="rt-sum"><div class="rt-dur">${headDur}</div><div class="rt-sum-meta">${headMeta}</div></div>
       <div class="rt-tl">${rail}</div>
     </div></div>
-    <p class="ops-hint">지금 출발 기준 예상(역당 약 2분·환승 4분 추정). 실제 열차 시각은 역 시간표에서 확인하세요.</p>`;
+    <p class="ops-hint">${foot}</p>`;
 }
 
 // ══════════════════════════════════════════
