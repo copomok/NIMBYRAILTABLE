@@ -9767,6 +9767,9 @@ function _metroStationDeps(stn){
           if(f[2*(j-1)+1]===f[2*j+1]){ orig=names[f[2*j+1]]; break; }
           if(f[2*(j-1)+1]===f[2*(j+1)+1]){ orig=names[f[2*j+1]]; break; }
         }
+        // 종점 보정: 왕복 편성이 착발역 한 정거장 앞에서 종료 기록된 것 → 실제 착발역으로
+        const fx=(typeof METRO_FIX!=='undefined')&&METRO_FIX[line];
+        if(fx){ if(fx[dest])dest=fx[dest]; if(fx[orig])orig=fx[orig]; }
         const atMin=f[2*k];
         out.push({line, next:nextName, dest, orig, atSec:atMin*60, dep:f[0], arr:f[2*(n-1)]});
       }
