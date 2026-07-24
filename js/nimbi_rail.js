@@ -9797,23 +9797,34 @@ function _metroStationDeps(stn){
   }
   return out;
 }
-// 방면 출발편 목록 → 운행일초 정렬 + 과도한 공백을 배차간격 중앙값으로 보간(행선지는 실제 빈도 비율로 교차 배분)
+// 방면 출발편 목록 → 운행일초 정렬 + 과도한 공백을 배차간격 중앙값으로 보간
+// (보간 편은 실제 (출발역→행선지) 쌍을 빈도대로 교차 배분해 실제 열차와 동일하게 구성.
+//  첫·막차 시간대의 넓은 배차는 자연스러운 현상이므로 보간하지 않음)
 function _metroDirEntries(list){
   const srvSec=s=>(((s-14400)%86400)+86400)%86400;
-  const dcnt={}; list.forEach(o=>{dcnt[o.dest]=(dcnt[o.dest]||0)+1;});
-  const destList=Object.keys(dcnt);
+  // 실제 (출발역,행선지) 쌍 빈도
+  const pairs=[], pmap={};
+  list.forEach(o=>{ const k=(o.orig||'')+'→'+o.dest; if(!pmap[k]){pmap[k]={orig:o.orig||null,dest:o.dest,c:0};pairs.push(pmap[k]);} pmap[k].c++; });
   const secs=[...new Set(list.map(o=>Math.floor(srvSec(o.atSec)/60)*60))].sort((a,b)=>a-b);
   const entries=list.map(o=>({sec:srvSec(o.atSec),dest:o.dest,orig:o.orig,est:false}));
   if(secs.length>=4){
-    const gaps=[]; for(let i=1;i<secs.length;i++)gaps.push(secs[i]-secs[i-1]);
-    gaps.sort((a,b)=>a-b); const H=gaps[Math.floor(gaps.length/2)]||0;
-    const fillSecs=[];
-    if(H>0) for(let i=1;i<secs.length;i++){ const g=secs[i]-secs[i-1];
-      if(g>H*2.5){ const n=Math.round(g/H)-1; for(let k=1;k<=n;k++)fillSecs.push(secs[i-1]+Math.round(g*k/(n+1))); } }
-    fillSecs.sort((a,b)=>a-b);
-    const asg={}; destList.forEach(d=>asg[d]=0);
-    const pick=()=>{let b=destList[0],bs=Infinity; for(const d of destList){const sc=(asg[d]+0.5)/dcnt[d]; if(sc<bs){bs=sc;b=d;}} asg[b]++; return b;};
-    fillSecs.forEach(fs=>entries.push({sec:fs,dest:pick(),orig:null,est:true}));
+    const sorted=[]; for(let i=1;i<secs.length;i++)sorted.push(secs[i]-secs[i-1]);
+    sorted.sort((a,b)=>a-b); const H=sorted[Math.floor(sorted.length/2)]||0;
+    if(H>0){
+      // 조밀(코어) 구간 경계: 정상 배차(≤2.5H)가 처음/마지막으로 나타나는 지점
+      let loI=-1, hiI=-1;
+      for(let i=1;i<secs.length;i++){ if(secs[i]-secs[i-1]<=H*2.5){ if(loI<0)loI=i; hiI=i; } }
+      const coreLo = loI>=0 ? secs[loI-1] : Infinity;   // 첫차 시간대 이전 넓은 배차 제외
+      const coreHi = hiI>=0 ? secs[hiI]   : -Infinity;  // 막차 시간대 이후 넓은 배차 제외
+      const fillSecs=[];
+      for(let i=1;i<secs.length;i++){ const g=secs[i]-secs[i-1];
+        if(g>H*2.5 && secs[i-1]>=coreLo && secs[i]<=coreHi){ const n=Math.round(g/H)-1;
+          for(let k=1;k<=n;k++)fillSecs.push(secs[i-1]+Math.round(g*k/(n+1))); } }
+      fillSecs.sort((a,b)=>a-b);
+      const asg=pairs.map(()=>0);
+      const pick=()=>{let bi=0,bs=Infinity; for(let i=0;i<pairs.length;i++){const sc=(asg[i]+0.5)/pairs[i].c; if(sc<bs){bs=sc;bi=i;}} asg[bi]++; return pairs[bi];};
+      fillSecs.forEach(fs=>{ const p=pick(); entries.push({sec:fs,dest:p.dest,orig:p.orig,est:true}); });
+    }
   }
   return {entries, first:secs[0], last:secs[secs.length-1]};
 }
@@ -9849,9 +9860,9 @@ function _metroStationBoardHTML(stn){
         .slice(0,3);
       const trainsHtml=up.map((u,i)=>{
         const showDest=u.dest&&u.dest!==stn;   // 자기참조 라벨만 숨김(인접역 종착은 표기)
-        return `<div class="mtb2-train${i===0?' mtb2-train--now':''}${u.est?' mtb2-train--est':''}">
+        return `<div class="mtb2-train${i===0?' mtb2-train--now':''}">
         <span class="mtb2-dest">${showDest?u.dest+'행':'&nbsp;'}</span>
-        <span class="mtb2-rel">${relTxt(u.rel)}${u.est?'<i class="mtb2-est-m">≈</i>':''}</span>
+        <span class="mtb2-rel">${relTxt(u.rel)}</span>
         <span class="mtb2-clk">${fSrvClock(u.sec)}</span>
       </div>`;}).join('')||'<div class="mtb2-none">운행 정보 없음</div>';
       return `<div class="mtb2-col">
@@ -9869,7 +9880,7 @@ function _metroStationBoardHTML(stn){
   return `<div style="padding:12px 16px;border-bottom:1px solid var(--border)">
     <div class="mtb-head"><span class="mtb-title">🚇 실시간 도착</span><span class="mtb-run">운행 <b>${running}</b>편</span></div>
     ${blocks}
-    <div class="mtb-foot">인게임 스케줄 기준 · 남은 시간은 역간 소요 추정치(±1분) · ≈는 배차간격 기반 보간</div>
+    <div class="mtb-foot">인게임 스케줄 기준 · 남은 시간은 역간 소요 추정치(±1분)</div>
   </div>`;
 }
 function renderSICard(name){
@@ -10449,35 +10460,41 @@ function closeStationBoard(){
   if(_siBoardTimer){clearInterval(_siBoardTimer);_siBoardTimer=null;}
   _siBoardName=null; _siBoardTrains=null;
 }
-// 🚇 전철 역 전체 시간표(방면별 2열, 시각 + 출발지›행선지) — 카카오지하철식
+// 🚇 전철 역 전체 시간표 — 카카오지하철식(방면별 열, 같은 시간대는 같은 행에 정렬)
 function openMetroTimetable(stn, line){
   const old=document.getElementById('mtt-wrap'); if(old)old.remove();
   const deps=_metroStationDeps(stn).filter(o=>o.line===line);
   if(!deps.length) return;
-  const srvSec=s=>(((s-14400)%86400)+86400)%86400;
   const fClk=m=>String(Math.floor(m/60)).padStart(2,'0')+':'+String(m%60).padStart(2,'0');
   const dirs={}; deps.forEach(o=>{ (dirs[o.next]=dirs[o.next]||[]).push(o); });
   const dirOrder=Object.keys(dirs).sort((a,b)=>dirs[b].length-dirs[a].length).slice(0,2);
   const color=_metroLineColor(line);
-  const nowM=Math.floor((new Date().getHours()*60+new Date().getMinutes()));
-  const colHTML=nx=>{
+  const nowM=new Date().getHours()*60+new Date().getMinutes();
+  // 방면별 시각순 편 목록 (운행일분 기준, 중복 분 제거)
+  const colData=dirOrder.map(nx=>{
     const {entries}=_metroDirEntries(dirs[nx]);
     const seen=new Set();
-    const rows=entries.map(o=>({at:Math.floor(o.sec/60),orig:o.orig,dest:o.dest,est:o.est})) // sec=운행일초 → 분
-      .filter(o=>{ if(seen.has(o.at))return false; seen.add(o.at); return true; })
-      .sort((a,b)=>a.at-b.at)
-      .map(o=>({...o,clk:(o.at+240)%1440}));                                                  // 운행일분 → 시계분
-    let html='', lastH=-1;
-    rows.forEach(r=>{
-      const h=Math.floor(r.at/60);
-      if(lastH>=0&&h!==lastH) html+='<div class="mtt-gap"></div>';
-      lastH=h;
-      const od=(r.orig&&r.orig!==r.dest)?`${r.orig} › ${r.dest}`:`${r.dest}`;
-      const cur=r.clk===nowM?' mtt-row--now':'';
-      html+=`<div class="mtt-row${cur}${r.est?' mtt-row--est':''}"><span class="mtt-t">${fClk(r.clk)}</span><span class="mtt-od">${od}${r.est?' <i class="mtb2-est-m">≈</i>':''}</span></div>`;
-    });
-    return `<div class="mtt-col"><div class="mtt-dirhead"><span class="mtt-arr">▸</span>${nx} 방면</div><div class="mtt-list">${html}</div></div>`;
+    return entries.map(o=>({m:Math.floor(o.sec/60),orig:o.orig,dest:o.dest}))
+      .filter(o=>{ if(seen.has(o.m))return false; seen.add(o.m); return true; })
+      .sort((a,b)=>a.m-b.m)
+      .map(o=>({...o,clk:(o.m+240)%1440}));
+  });
+  // 등장하는 운행일 '시' 목록
+  const hourSet=new Set(); colData.forEach(rows=>rows.forEach(r=>hourSet.add(Math.floor(r.m/60))));
+  const hours=[...hourSet].sort((a,b)=>a-b);
+  const rowHTML=r=>{
+    const od=(r.orig&&r.orig!==r.dest)?`${r.orig} › ${r.dest}`:`${r.dest}`;
+    const cur=r.clk===nowM?' mtt-row--now':'';
+    return `<div class="mtt-row${cur}"><span class="mtt-t">${fClk(r.clk)}</span><span class="mtt-od">${od}</span></div>`;
   };
+  const grid=hours.map(h=>{
+    const cells=colData.map(rows=>{
+      const hr=rows.filter(r=>Math.floor(r.m/60)===h);
+      return `<div class="mtt-hcell">${hr.map(rowHTML).join('')||'<div class="mtt-empty">·</div>'}</div>`;
+    }).join('');
+    return `<div class="mtt-hrow">${cells}</div>`;
+  }).join('');
+  const heads=dirOrder.map(nx=>`<div class="mtt-dirhead"><span class="mtt-arr">▸</span>${nx} 방면</div>`).join('');
   const wrap=document.createElement('div');
   wrap.id='mtt-wrap';
   wrap.innerHTML=`
@@ -10485,7 +10502,10 @@ function openMetroTimetable(stn, line){
     <div class="mtt-popup" role="dialog" aria-label="${line} ${stn} 시간표" style="--mc:${color}">
       <div class="mtt-head"><span><b style="color:${color}">🚇 ${line}</b> · ${stn}</span>
         <button class="si-board-close" onclick="closeMetroTimetable()" aria-label="닫기">✕</button></div>
-      <div class="mtt-cols">${dirOrder.map(colHTML).join('')}</div>
+      <div class="mtt-scroll" style="--cols:${dirOrder.length}">
+        <div class="mtt-headrow">${heads}</div>
+        <div class="mtt-grid">${grid}</div>
+      </div>
       <div class="mtt-foot">인게임 스케줄 기준 · 시각은 역간 소요 추정(±1분) · 출발지 › 행선지</div>
     </div>`;
   document.body.appendChild(wrap);
