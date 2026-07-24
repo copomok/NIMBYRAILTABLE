@@ -9752,16 +9752,16 @@ function _metroMetaGet(){
   }
   return _metroMeta={termSet,routes};
 }
-// 인게임 반복구조가 종착역을 한 정거장 짧게 잘라 기록한 경우(장신대→청량리) 노선도로 실제 종착역 보정
-function _metroFixTerminal(line,st,ti){
-  const D=st[ti][0];
-  if(ti!==st.length-1) return D;                   // 패턴 맨 끝(잘림)만 대상
-  const meta=_metroMetaGet(), prev=ti>0?st[ti-1][0]:null;
-  if(!prev||!meta.routes[line]) return D;
+// 인게임 반복구조가 착·종점을 한 정거장 짧게 잘라 기록한 경우(장신대→청량리, 내리→원평)를
+// 노선도로 실제 착·종점까지 보정. isEnd=true면 패턴 끝(종점), false면 패턴 시작(착점) 대상.
+function _metroFixEndpoint(line,st,endIdx,isEnd){
+  const D=st[endIdx][0];
+  if(isEnd ? endIdx!==st.length-1 : endIdx!==0) return D;   // 패턴 맨 끝/맨 앞(잘림)만 대상
+  const meta=_metroMetaGet(), adj=isEnd?(endIdx>0?st[endIdx-1][0]:null):(st[endIdx+1]?st[endIdx+1][0]:null);
+  if(!adj||!meta.routes[line]) return D;
   for(const r of meta.routes[line]){
-    const pd=r.indexOf(D), pp=r.indexOf(prev);
-    if(pd>=0&&pp>=0&&pd!==pp){ const ni=pd+Math.sign(pd-pp), T=r[ni];
-      // 실제 종착역이거나 노선 종점(양 끝)이면 보정 (예: 내리→원평)
+    const pd=r.indexOf(D), pa=r.indexOf(adj);
+    if(pd>=0&&pa>=0&&pd!==pa){ const ni=pd+Math.sign(pd-pa), T=r[ni];   // 내부 인접역 반대쪽으로 한 칸 연장
       if(T&&(meta.termSet[line].has(T)||ni===0||ni===r.length-1)) return T; }
   }
   return D;
@@ -9781,51 +9781,53 @@ function _metroStationDeps(stn){
           if(idx>fi && st[idx-1][0]===stn) continue;      // 회차 연속중복(도착·출발 겹침) 방지
           let nx=idx+1; while(nx<=ti && st[nx] && st[nx][0]===stn) nx++;
           if(nx>ti || !st[nx]) continue;
-          // 행선지: 진행 방향의 회차점(연속중복 또는 A>B>A)까지, 없으면 패턴 종착
-          let dest=st[ti][0], folded=false;
+          // 행선지: 진행 방향(앞) 회차점까지, 없으면 패턴 종착(잘림 보정)
+          let dest=st[ti][0], df=false;
           for(let j=idx+1;j<ti;j++){
-            if(st[j+1]&&st[j][0]===st[j+1][0]){ dest=st[j][0]; folded=true; break; }
-            if(st[j+1]&&st[j-1]&&st[j+1][0]===st[j-1][0]){ dest=st[j][0]; folded=true; break; }
+            if(st[j+1]&&st[j][0]===st[j+1][0]){ dest=st[j][0]; df=true; break; }
+            if(st[j+1]&&st[j-1]&&st[j+1][0]===st[j-1][0]){ dest=st[j][0]; df=true; break; }
           }
-          if(!folded) dest=_metroFixTerminal(line,st,ti);  // 종착까지 직진 → 잘림 보정
+          if(!df) dest=_metroFixEndpoint(line,st,ti,true);
+          // 출발지: 진행 반대방향(뒤) 회차점까지 = 이 방향 운행 착발(왕복 편성에서 유의미한 출발역)
+          let orig=st[fi][0], of=false;
+          for(let j=idx-1;j>fi;j--){
+            if(st[j-1]&&st[j][0]===st[j-1][0]){ orig=st[j][0]; of=true; break; }
+            if(st[j-1]&&st[j+1]&&st[j-1][0]===st[j+1][0]){ orig=st[j][0]; of=true; break; }
+          }
+          if(!of) orig=_metroFixEndpoint(line,st,fi,false);
           let t=dep*60;                                    // 초 단위 복원
           for(let i=fi+1;i<=idx;i++){ t+=st[i][1]; if(i<idx) t+=st[i][2]; }
-          out.push({line, next:st[nx][0], dest, orig:st[fi][0], atSec:((t%86400)+86400)%86400, dep, arr});
+          out.push({line, next:st[nx][0], dest, orig, atSec:((t%86400)+86400)%86400, dep, arr});
         }
       }
     }
   }
   return out;
 }
-// 방면 출발편 목록 → 운행일초 정렬 + 과도한 공백을 배차간격 중앙값으로 보간
-// (보간 편은 실제 (출발역→행선지) 쌍을 빈도대로 교차 배분해 실제 열차와 동일하게 구성.
-//  첫·막차 시간대의 넓은 배차는 자연스러운 현상이므로 보간하지 않음)
+// 방면 출발편 목록 → 운행일초 정렬 + 과도한 공백을 실제 편성 복제로 보간.
+// 보간 편은 공백 앞·뒤의 실제 열차(착발·행선지 그대로)를 교대 복제해 실제 운행과 동일하게 구성하며,
+// 첫·막차 시간대의 넓은 배차는 자연스러운 현상이므로 조밀 운행 코어 구간 안의 공백만 대상으로 한다.
 function _metroDirEntries(list){
   const srvSec=s=>(((s-14400)%86400)+86400)%86400;
-  // 실제 (출발역,행선지) 쌍 빈도
-  const pairs=[], pmap={};
-  list.forEach(o=>{ const k=(o.orig||'')+'→'+o.dest; if(!pmap[k]){pmap[k]={orig:o.orig||null,dest:o.dest,c:0};pairs.push(pmap[k]);} pmap[k].c++; });
-  const secs=[...new Set(list.map(o=>Math.floor(srvSec(o.atSec)/60)*60))].sort((a,b)=>a-b);
-  const entries=list.map(o=>({sec:srvSec(o.atSec),dest:o.dest,orig:o.orig,est:false}));
-  if(secs.length>=4){
-    const sorted=[]; for(let i=1;i<secs.length;i++)sorted.push(secs[i]-secs[i-1]);
-    sorted.sort((a,b)=>a-b); const H=sorted[Math.floor(sorted.length/2)]||0;
+  const real=list.map(o=>({sec:srvSec(o.atSec),dest:o.dest,orig:o.orig})).sort((a,b)=>a.sec-b.sec);
+  const seen=new Set();
+  const uniq=real.filter(o=>{const m=Math.floor(o.sec/60); if(seen.has(m))return false; seen.add(m); return true;});
+  const entries=uniq.slice();
+  if(uniq.length>=4){
+    const gaps=[]; for(let i=1;i<uniq.length;i++)gaps.push(uniq[i].sec-uniq[i-1].sec);
+    const sorted=[...gaps].sort((a,b)=>a-b); const H=sorted[Math.floor(sorted.length/2)]||0;
     if(H>0){
-      // 조밀(코어) 구간 경계: 정상 배차(≤2.5H)가 처음/마지막으로 나타나는 지점
-      let loI=-1, hiI=-1;
-      for(let i=1;i<secs.length;i++){ if(secs[i]-secs[i-1]<=H*2.5){ if(loI<0)loI=i; hiI=i; } }
-      const coreLo = loI>=0 ? secs[loI-1] : Infinity;   // 첫차 시간대 이전 넓은 배차 제외
-      const coreHi = hiI>=0 ? secs[hiI]   : -Infinity;  // 막차 시간대 이후 넓은 배차 제외
-      const fillSecs=[];
-      for(let i=1;i<secs.length;i++){ const g=secs[i]-secs[i-1];
-        if(g>H*2.5 && secs[i-1]>=coreLo && secs[i]<=coreHi){ const n=Math.round(g/H)-1;
-          for(let k=1;k<=n;k++)fillSecs.push(secs[i-1]+Math.round(g*k/(n+1))); } }
-      fillSecs.sort((a,b)=>a-b);
-      const asg=pairs.map(()=>0);
-      const pick=()=>{let bi=0,bs=Infinity; for(let i=0;i<pairs.length;i++){const sc=(asg[i]+0.5)/pairs[i].c; if(sc<bs){bs=sc;bi=i;}} asg[bi]++; return pairs[bi];};
-      fillSecs.forEach(fs=>{ const p=pick(); entries.push({sec:fs,dest:p.dest,orig:p.orig,est:true}); });
+      let loI=-1, hiI=-1;                               // 정상 배차(≤2.5H)가 처음/마지막 나타나는 지점 = 코어 경계
+      for(let i=1;i<uniq.length;i++){ if(uniq[i].sec-uniq[i-1].sec<=H*2.5){ if(loI<0)loI=i; hiI=i; } }
+      if(loI>=0){ const coreLo=uniq[loI-1].sec, coreHi=uniq[hiI].sec;
+        for(let i=1;i<uniq.length;i++){ const g=uniq[i].sec-uniq[i-1].sec;
+          if(g>H*2.5 && uniq[i-1].sec>=coreLo && uniq[i].sec<=coreHi){ const n=Math.round(g/H)-1;
+            for(let j=1;j<=n;j++){ const src=(j%2===1)?uniq[i-1]:uniq[i];   // 앞·뒤 실제 편성 교대 복제
+              entries.push({sec:uniq[i-1].sec+Math.round(g*j/(n+1)), dest:src.dest, orig:src.orig}); } } }
+      }
     }
   }
+  const secs=[...new Set(entries.map(o=>Math.floor(o.sec/60)*60))].sort((a,b)=>a-b);
   return {entries, first:secs[0], last:secs[secs.length-1]};
 }
 function _metroStationBoardHTML(stn){
