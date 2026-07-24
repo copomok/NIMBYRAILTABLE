@@ -9738,96 +9738,49 @@ function _nearestStn(fromBase, cands){
 // ── 🚇 전철 역 시간표 보드 (인게임 스케줄 METRO_SCHED 기반) ──
 // 방면(노선+종착)별 첫차·막차·다음 열차(시간표) + 역 전체 현재 운행 편수.
 function _metroLineColor(name){ const l=(typeof METRO_LINES!=='undefined')&&METRO_LINES.find(x=>x.name===name); return l?l.color:'#8b949e'; }
-// 노선별 실제 종착역 집합 + 노선도(route) 캐시 — 종착역 보정에 사용
-let _metroMeta=null;
-function _metroMetaGet(){
-  if(_metroMeta) return _metroMeta;
-  const termSet={}, routes={};
-  if(typeof METRO_SCHED!=='undefined') for(const line in METRO_SCHED){
-    const t=new Set();
-    for(const pat of METRO_SCHED[line]) for(const rec of pat.tt) t.add(pat.st[rec[2]][0]);
-    termSet[line]=t;
-    const l=(typeof METRO_LINES!=='undefined')&&METRO_LINES.find(x=>x.name===line);
-    routes[line]=l?(l.routes||[{stations:l.stations}]).map(r=>r.stations):[];
-  }
-  return _metroMeta={termSet,routes};
-}
-// 인게임 반복구조가 착·종점을 한 정거장 짧게 잘라 기록한 경우(장신대→청량리, 내리→원평)를
-// 노선도로 실제 착·종점까지 보정. isEnd=true면 패턴 끝(종점), false면 패턴 시작(착점) 대상.
-function _metroFixEndpoint(line,st,endIdx,isEnd){
-  const D=st[endIdx][0];
-  if(isEnd ? endIdx!==st.length-1 : endIdx!==0) return D;   // 패턴 맨 끝/맨 앞(잘림)만 대상
-  const meta=_metroMetaGet(), adj=isEnd?(endIdx>0?st[endIdx-1][0]:null):(st[endIdx+1]?st[endIdx+1][0]:null);
-  if(!adj||!meta.routes[line]) return D;
-  for(const r of meta.routes[line]){
-    const pd=r.indexOf(D), pa=r.indexOf(adj);
-    if(pd>=0&&pa>=0&&pd!==pa){ const ni=pd+Math.sign(pd-pa), T=r[ni];   // 내부 인접역 반대쪽으로 한 칸 연장
-      if(T&&(meta.termSet[line].has(T)||ni===0||ni===r.length-1)) return T; }
-  }
-  return D;
-}
+// v3 시각표 기반: 각 편성 t[i]=[발분,역idx, 발분,역idx, ...] (실제 정차시각, 복원 없음).
+// 한 역을 지나는 모든 지점에서 출발편 생성. 행선지=진행방향 회차점(왕복)·마지막역(직통),
+// 출발지=진행 반대방향 회차점·첫역. 시각표가 명시적이므로 종착역 보정은 불필요.
 function _metroStationDeps(stn){
   if(typeof METRO_SCHED==='undefined') return [];
   const out=[];
   for(const line in METRO_SCHED){
-    for(const pat of METRO_SCHED[line]){
-      const st=pat.st;
-      if(!st.some(s=>s[0]===stn)) continue;
-      for(const rec of pat.tt){
-        const dep=rec[0], fi=rec[1], ti=rec[2], arr=rec[3];
-        // 이 편이 [fi,ti) 안에서 이 역을 지나는 '모든' 지점 — 왕복 패턴은 상·하행에서 각각 출발
-        for(let idx=fi; idx<ti; idx++){
-          if(st[idx][0]!==stn) continue;
-          if(idx>fi && st[idx-1][0]===stn) continue;      // 회차 연속중복(도착·출발 겹침) 방지
-          let nx=idx+1; while(nx<=ti && st[nx] && st[nx][0]===stn) nx++;
-          if(nx>ti || !st[nx]) continue;
-          // 행선지: 진행 방향(앞) 회차점까지, 없으면 패턴 종착(잘림 보정)
-          let dest=st[ti][0], df=false;
-          for(let j=idx+1;j<ti;j++){
-            if(st[j+1]&&st[j][0]===st[j+1][0]){ dest=st[j][0]; df=true; break; }
-            if(st[j+1]&&st[j-1]&&st[j+1][0]===st[j-1][0]){ dest=st[j][0]; df=true; break; }
-          }
-          if(!df) dest=_metroFixEndpoint(line,st,ti,true);
-          // 출발지: 진행 반대방향(뒤) 회차점까지 = 이 방향 운행 착발(왕복 편성에서 유의미한 출발역)
-          let orig=st[fi][0], of=false;
-          for(let j=idx-1;j>fi;j--){
-            if(st[j-1]&&st[j][0]===st[j-1][0]){ orig=st[j][0]; of=true; break; }
-            if(st[j-1]&&st[j+1]&&st[j-1][0]===st[j+1][0]){ orig=st[j][0]; of=true; break; }
-          }
-          if(!of) orig=_metroFixEndpoint(line,st,fi,false);
-          let t=dep*60;                                    // 초 단위 복원
-          for(let i=fi+1;i<=idx;i++){ t+=st[i][1]; if(i<idx) t+=st[i][2]; }
-          out.push({line, next:st[nx][0], dest, orig, atSec:((t%86400)+86400)%86400, dep, arr});
+    const ent=METRO_SCHED[line], names=ent.s, svcs=ent.t;
+    if(!names.includes(stn)) continue;
+    const sIdx=names.indexOf(stn);
+    for(const f of svcs){
+      const n=f.length>>1;
+      // 이 편성이 stn을 지나는 모든 지점
+      for(let k=0;k<n-1;k++){
+        if(f[2*k+1]!==sIdx) continue;
+        if(k>0 && f[2*(k-1)+1]===sIdx) continue;          // 회차 연속중복 방지
+        const nextName=names[f[2*(k+1)+1]];
+        // 행선지: 앞쪽 회차점(A>B>A) 이전까지, 없으면 마지막역
+        let dest=names[f[2*(n-1)+1]];
+        for(let j=k+1;j<n-1;j++){
+          if(f[2*(j+1)+1]===f[2*j+1]){ dest=names[f[2*j+1]]; break; }
+          if(f[2*(j+1)+1]===f[2*(j-1)+1]){ dest=names[f[2*j+1]]; break; }
         }
+        // 출발지: 뒤쪽 회차점 이전까지, 없으면 첫역
+        let orig=names[f[1]];
+        for(let j=k-1;j>0;j--){
+          if(f[2*(j-1)+1]===f[2*j+1]){ orig=names[f[2*j+1]]; break; }
+          if(f[2*(j-1)+1]===f[2*(j+1)+1]){ orig=names[f[2*j+1]]; break; }
+        }
+        const atMin=f[2*k];
+        out.push({line, next:nextName, dest, orig, atSec:atMin*60, dep:f[0], arr:f[2*(n-1)]});
       }
     }
   }
   return out;
 }
-// 방면 출발편 목록 → 운행일초 정렬 + 과도한 공백을 실제 편성 복제로 보간.
-// 보간 편은 공백 앞·뒤의 실제 열차(착발·행선지 그대로)를 교대 복제해 실제 운행과 동일하게 구성하며,
-// 첫·막차 시간대의 넓은 배차는 자연스러운 현상이므로 조밀 운행 코어 구간 안의 공백만 대상으로 한다.
+// 방면 출발편 목록 → 운행일초 정렬(중복 분 제거). v3 실측 시각표를 그대로 반영(보간 없음).
 function _metroDirEntries(list){
   const srvSec=s=>(((s-14400)%86400)+86400)%86400;
   const real=list.map(o=>({sec:srvSec(o.atSec),dest:o.dest,orig:o.orig})).sort((a,b)=>a.sec-b.sec);
   const seen=new Set();
-  const uniq=real.filter(o=>{const m=Math.floor(o.sec/60); if(seen.has(m))return false; seen.add(m); return true;});
-  const entries=uniq.slice();
-  if(uniq.length>=4){
-    const gaps=[]; for(let i=1;i<uniq.length;i++)gaps.push(uniq[i].sec-uniq[i-1].sec);
-    const sorted=[...gaps].sort((a,b)=>a-b); const H=sorted[Math.floor(sorted.length/2)]||0;
-    if(H>0){
-      let loI=-1, hiI=-1;                               // 정상 배차(≤2.5H)가 처음/마지막 나타나는 지점 = 코어 경계
-      for(let i=1;i<uniq.length;i++){ if(uniq[i].sec-uniq[i-1].sec<=H*2.5){ if(loI<0)loI=i; hiI=i; } }
-      if(loI>=0){ const coreLo=uniq[loI-1].sec, coreHi=uniq[hiI].sec;
-        for(let i=1;i<uniq.length;i++){ const g=uniq[i].sec-uniq[i-1].sec;
-          if(g>H*2.5 && uniq[i-1].sec>=coreLo && uniq[i].sec<=coreHi){ const n=Math.round(g/H)-1;
-            for(let j=1;j<=n;j++){ const src=(j%2===1)?uniq[i-1]:uniq[i];   // 앞·뒤 실제 편성 교대 복제
-              entries.push({sec:uniq[i-1].sec+Math.round(g*j/(n+1)), dest:src.dest, orig:src.orig}); } } }
-      }
-    }
-  }
-  const secs=[...new Set(entries.map(o=>Math.floor(o.sec/60)*60))].sort((a,b)=>a-b);
+  const entries=real.filter(o=>{const m=Math.floor(o.sec/60); if(seen.has(m))return false; seen.add(m); return true;});
+  const secs=entries.map(o=>Math.floor(o.sec/60)*60);
   return {entries, first:secs[0], last:secs[secs.length-1]};
 }
 function _metroStationBoardHTML(stn){
@@ -9882,7 +9835,7 @@ function _metroStationBoardHTML(stn){
   return `<div style="padding:12px 16px;border-bottom:1px solid var(--border)">
     <div class="mtb-head"><span class="mtb-title">🚇 실시간 도착</span><span class="mtb-run">운행 <b>${running}</b>편</span></div>
     ${blocks}
-    <div class="mtb-foot">인게임 스케줄 기준 · 남은 시간은 역간 소요 추정치(±1분)</div>
+    <div class="mtb-foot">인게임 시각표 기준 · 계통별 실제 착발 반영</div>
   </div>`;
 }
 function renderSICard(name){
@@ -10508,7 +10461,7 @@ function openMetroTimetable(stn, line){
         <div class="mtt-headrow">${heads}</div>
         <div class="mtt-grid">${grid}</div>
       </div>
-      <div class="mtt-foot">인게임 스케줄 기준 · 시각은 역간 소요 추정(±1분) · 출발지 › 행선지</div>
+      <div class="mtt-foot">인게임 시각표 기준 · 실제 정차시각 · 출발지 › 행선지</div>
     </div>`;
   document.body.appendChild(wrap);
 }
