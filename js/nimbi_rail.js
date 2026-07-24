@@ -9810,7 +9810,7 @@ function _metroStationDeps(stn){
         const fx=(typeof METRO_FIX!=='undefined')&&METRO_FIX[line];
         if(fx){ if(fx[dest])dest=fx[dest]; if(fx[orig])orig=fx[orig]; }
         const atMin=f[2*k];
-        out.push({line, next:nextName, dest, orig, cls, atSec:atMin*60, dep:f[0], arr:f[2*(n-1)]});
+        out.push({line, next:nextName, dest, orig, cls, svc:si, atSec:atMin*60, dep:f[0], arr:f[2*(n-1)]});
       }
     }
   }
@@ -9819,7 +9819,7 @@ function _metroStationDeps(stn){
 // 방면 출발편 목록 → 운행일초 정렬(중복 분 제거). v3 실측 시각표를 그대로 반영(보간 없음).
 function _metroDirEntries(list){
   const srvSec=s=>(((s-14400)%86400)+86400)%86400;
-  const real=list.map(o=>({sec:srvSec(o.atSec),dest:o.dest,orig:o.orig,cls:o.cls})).sort((a,b)=>a.sec-b.sec);
+  const real=list.map(o=>({sec:srvSec(o.atSec),dest:o.dest,orig:o.orig,cls:o.cls,svc:o.svc,line:o.line})).sort((a,b)=>a.sec-b.sec);
   const seen=new Set();
   const entries=real.filter(o=>{const m=Math.floor(o.sec/60); if(seen.has(m))return false; seen.add(m); return true;});
   const secs=entries.map(o=>Math.floor(o.sec/60)*60);
@@ -10471,7 +10471,7 @@ function openMetroTimetable(stn, line){
   const colData=dirOrder.map(nx=>{
     const {entries}=_metroDirEntries(dirs[nx]);
     const seen=new Set();
-    return entries.map(o=>({m:Math.floor(o.sec/60),orig:o.orig,dest:o.dest,cls:o.cls}))
+    return entries.map(o=>({m:Math.floor(o.sec/60),orig:o.orig,dest:o.dest,cls:o.cls,svc:o.svc,line:o.line}))
       .filter(o=>{ if(seen.has(o.m))return false; seen.add(o.m); return true; })
       .sort((a,b)=>a.m-b.m)
       .map(o=>({...o,clk:(o.m+240)%1440}));
@@ -10479,10 +10479,12 @@ function openMetroTimetable(stn, line){
   // 등장하는 운행일 '시' 목록
   const hourSet=new Set(); colData.forEach(rows=>rows.forEach(r=>hourSet.add(Math.floor(r.m/60))));
   const hours=[...hourSet].sort((a,b)=>a-b);
+  const escL=x=>String(x).replace(/\\/g,'\\\\').replace(/'/g,"\\'");
   const rowHTML=r=>{
     const od=(r.orig&&r.orig!==r.dest)?`${r.orig} › ${r.dest}`:`${r.dest}`;
     const cur=r.clk===nowM?' mtt-row--now':'';
-    return `<div class="mtt-row${cur}"><span class="mtt-t">${fClk(r.clk)}${_metroClsTag(r.cls)}</span><span class="mtt-od">${od}</span></div>`;
+    const clk=(r.svc!=null)?` onclick="openMetroTrain('${escL(r.line)}',${r.svc},${r.clk})"`:'';
+    return `<div class="mtt-row${cur}${r.svc!=null?' mtt-row--tap':''}"${clk}><span class="mtt-t">${fClk(r.clk)}${_metroClsTag(r.cls)}</span><span class="mtt-od">${od}</span></div>`;
   };
   const grid=hours.map(h=>{
     const cells=colData.map(rows=>{
@@ -10508,6 +10510,36 @@ function openMetroTimetable(stn, line){
   document.body.appendChild(wrap);
 }
 function closeMetroTimetable(){ const el=document.getElementById('mtt-wrap'); if(el)el.remove(); }
+// 🚇 개별 편성 역별 타임라인 — 카카오지하철식(출발→종착, 역별 시각, 현재역 강조)
+function openMetroTrain(line, svcIdx, hlClk){
+  const old=document.getElementById('mtn-wrap'); if(old)old.remove();
+  const ent=(typeof METRO_SCHED!=='undefined')&&METRO_SCHED[line]; if(!ent)return;
+  const f=ent.t[svcIdx]; if(!f)return;
+  const names=ent.s, cls=ent.c?ent.c[svcIdx]:0, color=_metroLineColor(line);
+  const n=f.length>>1, fmt=m=>`${Math.floor((((m%1440)+1440)%1440)/60)}:${String(((m%1440)+1440)%1440%60).padStart(2,'0')}`;
+  // 회차 연속중복 역 합치기
+  const seq=[]; for(let i=0;i<n;i++){ const st={s:names[f[2*i+1]], m:f[2*i]}; if(seq.length&&seq[seq.length-1].s===st.s) seq[seq.length-1]=st; else seq.push(st); }
+  const orig=seq[0].s, dest=seq[seq.length-1].s;
+  let hlUsed=false;
+  const rows=seq.map((st,i)=>{
+    const hl=(!hlUsed&&(((st.m%1440)+1440)%1440)===hlClk)?(hlUsed=true,' mtn-row--now'):'';
+    const end=(i===0||i===seq.length-1)?' mtn-dot--end':'';
+    return `<div class="mtn-row${hl}"><span class="mtn-stn">${st.s}</span><span class="mtn-rail"><span class="mtn-dot${end}"></span></span><span class="mtn-t">${fmt(st.m)}</span></div>`;
+  }).join('');
+  const exp=cls===2?'<span class="mtb-exp mtb-exp--t">특급</span>':cls===1?'<span class="mtb-exp">급행</span>':'';
+  const wrap=document.createElement('div'); wrap.id='mtn-wrap';
+  wrap.innerHTML=`<div class="rail-ticket-backdrop" onclick="closeMetroTrain()"></div>
+    <div class="mtn-popup" role="dialog" aria-label="${line} ${orig}→${dest} 시간표" style="--mc:${color}">
+      <div class="mtn-head"><span class="mtn-lchip" style="background:${color}">${line}</span>
+        <b>${orig}</b><span class="mtn-arrow">▶▶▶</span><b>${dest}</b>${exp}
+        <button class="si-board-close" onclick="closeMetroTrain()" aria-label="닫기">✕</button></div>
+      <div class="mtn-list">${rows}</div>
+      <div class="mtn-foot">인게임 시각표 기준 · ${seq.length}개 역</div>
+    </div>`;
+  document.body.appendChild(wrap);
+  const now=wrap.querySelector('.mtn-row--now'); if(now)now.scrollIntoView({block:'center'});
+}
+function closeMetroTrain(){ const el=document.getElementById('mtn-wrap'); if(el)el.remove(); }
 
 // ── 지연 예측 모델 (노선·등급별 확률/예상 지연) ──
 // ── 지연 예보/시뮬레이션 엔진은 js/features/nimbi_delay.js로 분리 (DELAY_MODEL·_delayForecast·_simProfile·_simDelay·_simFinalDelay·_liveDelayOf·_simCauseSummary·_simEventLog 등) ──
