@@ -1813,6 +1813,18 @@ button, select, input[type=range],
 .mtb2-train--est .mtb2-dest,.mtb2-train--est .mtb2-rel{opacity:.72}
 .mtb2-est-m{font-style:normal;font-size:9px;color:var(--text3);margin-left:1px;vertical-align:1px}
 .mtb2-none{font-size:11px;color:var(--text3);padding:3px 0}
+/* 도착보드 시간/현위치 토글 */
+.mtb-modetog{display:inline-flex;gap:2px;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:2px}
+.mtb-mode{font-family:var(--sans);font-size:10.5px;font-weight:800;color:var(--text3);background:transparent;border:0;border-radius:6px;padding:3px 9px;cursor:pointer}
+.mtb-mode.on{background:var(--mc,var(--accent));color:#fff}
+/* 현위치 라벨(접근·도착·출발) */
+.mtb2-pos{flex-shrink:0;font-size:11px;font-weight:700;color:var(--text2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:60%}
+.mtb2-pos b{font-family:var(--sans);font-weight:800;margin-left:2px}
+.mtb2-pos--app b{color:#e8a33d}
+.mtb2-pos--at b{color:var(--green)}
+.mtb2-pos--dep b{color:var(--accent)}
+.mtb2-pos--wait{color:var(--text3);font-weight:600}
+.mtb2-train--now .mtb2-pos{color:var(--text1)}
 .mtb2-ended{display:flex;flex-direction:column;gap:3px;padding:5px 0}
 .mtb2-ended-t{font-size:12px;font-weight:800;color:var(--text3)}
 .mtb2-ended-first{font-size:11px;color:var(--text2)}
