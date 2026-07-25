@@ -10772,7 +10772,7 @@ function _metroSchCanvas(l){
            <span class="msch-rail" style="left:${RX}px;top:${TOP}px;height:${bottomY-TOP}px"></span>`;
   let body='', maxOther=0;
   stns.forEach((s,i)=>{ const y=Yi(i), end=(i===0||i===n-1);
-    const pfs=_metroStationPlatforms(l.name, s);
+    const pfs=_metroStationPlatforms(s, l.name);
     const cur=pfs.filter(p=>p.isCur), others=pfs.filter(p=>!p.isCur);
     // 이 노선 승강장: 좌(상행)=낮은 번호, 우(하행)=높은 번호 (방향 짝은 근사)
     const pL=cur.length?cur[0].pn:'', pR=cur.length>1?cur[cur.length-1].pn:(cur.length===1?cur[0].pn:'');
