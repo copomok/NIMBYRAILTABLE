@@ -1525,7 +1525,8 @@ button, select, input[type=range],
 .msch-stn{position:absolute;left:0;right:0;height:0}
 .msch-name{position:absolute;left:2px;top:0;transform:translateY(-50%);width:44px;text-align:right;font-size:11px;font-weight:700;color:var(--text1);line-height:1.15;white-space:normal;word-break:keep-all}
 .msch-stn.end .msch-name{font-weight:800;color:var(--mc)}
-.msch-plat{position:absolute;top:0;transform:translateY(-50%);width:13px;height:34px;border-radius:3px;background:color-mix(in srgb,var(--text3) 34%,transparent);border:1px solid color-mix(in srgb,var(--text3) 22%,transparent)}
+.msch-plat{position:absolute;top:0;transform:translateY(-50%);width:17px;height:34px;border-radius:3px;background:color-mix(in srgb,var(--text3) 26%,transparent);border:1px solid color-mix(in srgb,var(--text3) 20%,transparent);display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:9px;font-weight:800;color:var(--text3)}
+.msch-plat.on{background:color-mix(in srgb,var(--mc) 20%,var(--bg2));border-color:var(--mc);color:var(--mc)}
 .msch-tick{position:absolute;top:0;transform:translate(-50%,-50%);width:11px;height:11px;border-radius:50%;background:var(--bg2);border:2.5px solid var(--mc);z-index:2}
 .msch-stn.end .msch-tick{width:13px;height:13px;background:#fff}
 .msch-train{position:absolute;z-index:6}

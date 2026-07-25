@@ -10742,6 +10742,16 @@ function openMetroTrain(line, svcIdx, hlClk){
 function closeMetroTrain(){ const el=document.getElementById('mtn-wrap'); if(el)el.remove(); document.body.classList.remove('metro-paired'); }
 
 // 🛤️ 배선도(간이): 복선 트랙 + 승강장 + 방향 화살표 열차. 상행(종점→기점)=좌측·▲, 하행(기점→종점)=우측·▼
+// 역에서 이 노선(계통 포함)이 쓰는 승강장 번호 목록 (PLATFORM_DB 기반)
+function _metroPlatformsAt(base, stn){
+  if(typeof PLATFORM_DB==='undefined')return [];
+  const key=PLATFORM_DB[stn]?stn:(PLATFORM_DB[stn+'역']?stn+'역':null); if(!key)return [];
+  const plats=PLATFORM_DB[key];
+  const match=ln=>ln===base||ln.startsWith(base+'/')||ln.startsWith(base+' (');
+  const out=[];
+  for(const pn of Object.keys(plats)){ if((plats[pn].l||[]).some(match)) out.push(Number(pn)); }
+  return out.filter(x=>!isNaN(x)).sort((a,b)=>a-b);
+}
 // 배선도 캔버스 HTML 생성 (탭 인라인 공용). 반환: {cnt, html}
 function _metroSchCanvas(l){
   const stns=l.stations, n=stns.length, color=l.color;
@@ -10751,10 +10761,13 @@ function _metroSchCanvas(l){
            <span class="msch-rail" style="left:${RX}px;top:${TOP}px;height:${bottomY-TOP}px"></span>`;
   let body='';
   stns.forEach((s,i)=>{ const y=Yi(i), end=(i===0||i===n-1);
+    const plats=_metroPlatformsAt(l.name, s);
+    // 좌(상행)=낮은 번호, 우(하행)=높은 번호 (방향 짝은 근사)
+    const pL=plats.length?plats[0]:'', pR=plats.length>1?plats[plats.length-1]:(plats.length===1?plats[0]:'');
     body+=`<div class="msch-stn${end?' end':''}" style="top:${y}px">
       <span class="msch-name">${_opsEsc(s)}</span>
-      <span class="msch-plat" style="left:${LX-31}px"></span>
-      <span class="msch-plat" style="left:${RX+18}px"></span>
+      <span class="msch-plat${pL!==''?' on':''}" style="left:${LX-32}px">${pL}</span>
+      <span class="msch-plat${pR!==''?' on':''}" style="left:${RX+18}px">${pR}</span>
       <span class="msch-tick" style="left:${LX}px"></span>
       <span class="msch-tick" style="left:${RX}px"></span>
     </div>`;
@@ -10794,7 +10807,7 @@ function renderMetroSchematicTab(){
       </div>
       <div class="msch-legend"><span class="msch-lg up">▲ 상행 <small>종점→기점</small></span><span class="msch-lg down">하행 <small>기점→종점</small> ▼</span></div>
       <div class="msch-body msch-body--inline">${html}</div>
-      <div class="msch-foot">인게임 시각표 기준 · 직선 복선 단순화(분기·회차선 제외)</div>
+      <div class="msch-foot">인게임 시각표 기준 · 직선 복선 단순화(분기·회차선 제외) · 승강장 번호는 노선 사용 승강장(방향 짝 근사)</div>
     </div>`;
   } else { inner='<div style="text-align:center;color:var(--text3);font-size:13px;padding:44px 12px">위에서 노선을 선택하면<br>실시간 배선도가 표시됩니다</div>'; }
   el.innerHTML=`
