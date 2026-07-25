@@ -9432,6 +9432,10 @@ function _renderMetroLineDetail(el,id){
           <button onclick="event.stopPropagation();showMetroOnMap('${l.id}')" style="padding:8px 14px;border-radius:10px;border:1px solid ${l.color};background:transparent;color:${l.color};font-size:12.5px;font-weight:700;cursor:pointer;font-family:var(--sans)">🗺️ 노선도에서 보기</button>
         </div>
       </div>
+      <div class="mtl-live-head">
+        <span class="mtl-live-run" style="--mc:${l.color}">🚇 실시간 <b>${_metroLineLiveTrains(l.name).length}</b>대 운행 중</span>
+        <button class="mtl-live-refresh" onclick="openMetroLineDetail('${l.id}')" title="새로고침">↻ 새로고침</button>
+      </div>
       <div class="mtl-tl" style="--mc:${l.color}">
         ${(()=>{const _xm=_metroXferMap(l);return rows.map((r,i)=>{
           if(r.gap)return `<div class="mtl-gap">지선 · 경유 구간</div>`;
@@ -9442,7 +9446,7 @@ function _renderMetroLineDetail(el,id){
           const xferHTML=(xf.length||hasTrain)?`<span class="mtl-xfers">${
             xf.map(x=>`<span class="mtl-xfer" style="--xc:${x.color}" title="${x.name} 환승" onclick="event.stopPropagation();openMetroLine('${x.id}')"><i></i>${x.name}</span>`).join('')
           }${hasTrain?`<span class="mtl-xfer train" title="기차 환승">🚆</span>`:''}</span>`:'';
-          return `<div class="mtl-row${cls}" onclick="openStationDetail('${r.n.replace(/'/g,"\\'")}')">
+          return `<div class="mtl-row${cls}" data-stn="${String(r.n).replace(/&/g,'&amp;').replace(/"/g,'&quot;')}" onclick="openStationDetail('${r.n.replace(/'/g,"\\'")}')">
             <span class="mtl-dot${isEnd?' end':''}"></span>
             <span class="mtl-name${isEnd?' end':''}">${r.n}</span>
             ${isEnd?`<span class="mtl-endtag">${i===0?'기점':'종점'}</span>`:(!r.stop?`<span class="mtl-passtag">통과</span>`:'')}
@@ -9451,6 +9455,7 @@ function _renderMetroLineDetail(el,id){
         }).join('');})()}
       </div>
     </div>`;
+  _placeMetroLiveMarkers(el, l.name);
   window.scrollTo(0,0);
 }
 function setMetroRegion(r){_metroRegion=r;_metroDetailId=null;_metroPatSel=null;renderMetroLinesTab();}
@@ -9906,6 +9911,49 @@ function _metroTrainPos(line, svcIdx){
     }
   }
   return {state:'after'};
+}
+// 편성 현위치(노선도 마커용): 운행 중이면 구간·진행률·진행방향 행선지 반환, 아니면 null
+function _metroTrainLivePos(line, svcIdx){
+  const ent=(typeof METRO_SCHED!=='undefined')&&METRO_SCHED[line]; if(!ent)return null;
+  const f=ent.t[svcIdx], names=ent.s; if(!f)return null;
+  const n=f.length/3, srv=x=>(((x-240)%1440)+1440)%1440, nm=k=>names[f[3*k+2]];
+  const flat=[]; for(let i=0;i<n;i++){ flat.push(srv(f[3*i]), srv(f[3*i+1])); }
+  let off=0; const mono=[]; for(let i=0;i<flat.length;i++){ let v=flat[i]+off; if(i>0&&v<mono[i-1]){off+=1440;v+=1440;} mono.push(v); }
+  const absA=[],absD=[]; for(let i=0;i<n;i++){absA.push(mono[2*i]);absD.push(mono[2*i+1]);}
+  const nowc=new Date(); let now=srv(nowc.getHours()*60+nowc.getMinutes());
+  while(now<absA[0]-720)now+=1440; while(now>absD[n-1]+720)now-=1440;
+  if(now<absA[0]||now>=absD[n-1]) return null;
+  let curIdx=-1, toIdx=-1, frac=0, atStation=false;
+  for(let i=0;i<n;i++){
+    if(now>=absA[i]&&now<=absD[i]){ curIdx=i; toIdx=Math.min(i+1,n-1); atStation=true; break; }
+    if(i<n-1&&now>absD[i]&&now<absA[i+1]){ curIdx=i; toIdx=i+1; frac=(now-absD[i])/Math.max(1,absA[i+1]-absD[i]); break; }
+  }
+  if(curIdx<0) return null;
+  let dest=nm(n-1);   // 진행방향 회차점(A>B>A·연속중복) 이전까지, 없으면 최종역
+  for(let j=curIdx+1;j<n-1;j++){ if(f[3*(j+1)+2]===f[3*j+2]){dest=nm(j);break;} if(f[3*(j+1)+2]===f[3*(j-1)+2]){dest=nm(j);break;} }
+  return {fromStn:nm(curIdx), toStn:nm(toIdx), frac, atStation, dest};
+}
+function _metroLineLiveTrains(lineName){
+  const ent=(typeof METRO_SCHED!=='undefined')&&METRO_SCHED[lineName]; if(!ent)return [];
+  const out=[]; for(let s=0;s<ent.t.length;s++){ const p=_metroTrainLivePos(lineName,s); if(p)out.push(p); }
+  return out;
+}
+// 노선 상세 타임라인 위에 운행 중 편성 마커를 실제 진행률 위치에 배치 (버스앱식)
+function _placeMetroLiveMarkers(container, lineName){
+  const tl=container.querySelector('.mtl-tl'); if(!tl)return;
+  tl.querySelectorAll('.mtl-live').forEach(m=>m.remove());
+  const rowEls={}; tl.querySelectorAll('.mtl-row').forEach(r=>{ const nm=r.dataset.stn; if(nm&&!rowEls[nm])rowEls[nm]=r; });
+  _metroLineLiveTrains(lineName).forEach(t=>{
+    const fromEl=rowEls[t.fromStn], toEl=rowEls[t.toStn], anchor=fromEl||toEl; if(!anchor)return;
+    const aCtr=anchor.offsetTop+anchor.offsetHeight/2; let y=aCtr, downward=true;
+    if(fromEl&&toEl){ const fCtr=fromEl.offsetTop+fromEl.offsetHeight/2, tCtr=toEl.offsetTop+toEl.offsetHeight/2;
+      y=t.atStation?fCtr:fCtr+(tCtr-fCtr)*t.frac; downward=toEl.offsetTop>=fromEl.offsetTop; }
+    const m=document.createElement('div');
+    m.className='mtl-live'+(downward?' down':' up')+(t.atStation?' at':'');
+    m.style.top=y+'px';
+    m.innerHTML=`<span class="mtl-live-ico">🚇</span><span class="mtl-live-dest">${downward?'▾':'▴'} ${_opsEsc(t.dest)}행</span>`;
+    tl.appendChild(m);
+  });
 }
 function _metroStationBoardHTML(stn){
   if(typeof METRO_SCHED==='undefined') return '';
