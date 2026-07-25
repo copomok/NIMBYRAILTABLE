@@ -398,7 +398,7 @@ function updateMinimap(){
 
 // ── 🚆/🚇 이용 모드 (기차/전철) ──
 let _appMode=(()=>{try{return localStorage.getItem('nimbi_mode')||'train';}catch(e){return 'train';}})();
-const METRO_MODE_TABS=['metrolines','metroroute','map','stationinfo']; // 전철 모드에서 보이는 메인 탭
+const METRO_MODE_TABS=['metrolines','metroschematic','metroroute','map','stationinfo']; // 전철 모드에서 보이는 메인 탭
 const TRAIN_MODE_TABS=['train','station','route','ops','map','stats','notice','stationinfo','delay']; // 기차 모드 상단바 탭
 // 그 외 탭(book/alarm/fav/ticket 등)은 마이페이지 전용 — 항상 숨김 유지
 function _applyModeTabs(){
@@ -502,6 +502,7 @@ function switchTab(n){
   if(n==='book') renderBookTab();
   if(n==='delay'){const el=document.getElementById('result-delay');if(el)renderSIDelay(el);}
   if(n==='metrolines') renderMetroLinesTab();
+  if(n==='metroschematic') renderMetroSchematicTab();
   if(n==='metroroute') renderMetroRouteTab();
   if(n==='ops') renderOpsTab();
 
@@ -9430,7 +9431,7 @@ function _renderMetroLineDetail(el,id){
         ${patInfo}
         <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap">
           <button onclick="event.stopPropagation();showMetroOnMap('${l.id}')" style="padding:8px 14px;border-radius:10px;border:1px solid ${l.color};background:transparent;color:${l.color};font-size:12.5px;font-weight:700;cursor:pointer;font-family:var(--sans)">🗺️ 노선도에서 보기</button>
-          <button onclick="event.stopPropagation();openMetroSchematic('${l.id}')" style="padding:8px 14px;border-radius:10px;border:1px solid ${l.color};background:${l.color};color:#fff;font-size:12.5px;font-weight:700;cursor:pointer;font-family:var(--sans)">🛤️ 배선도(실시간)</button>
+          <button onclick="event.stopPropagation();openMetroSchematicTab('${l.id}')" style="padding:8px 14px;border-radius:10px;border:1px solid ${l.color};background:${l.color};color:#fff;font-size:12.5px;font-weight:700;cursor:pointer;font-family:var(--sans)">🛤️ 배선도(실시간)</button>
         </div>
       </div>
       <div class="mtl-live-head">
@@ -10741,16 +10742,13 @@ function openMetroTrain(line, svcIdx, hlClk){
 function closeMetroTrain(){ const el=document.getElementById('mtn-wrap'); if(el)el.remove(); document.body.classList.remove('metro-paired'); }
 
 // 🛤️ 배선도(간이): 복선 트랙 + 승강장 + 방향 화살표 열차. 상행(종점→기점)=좌측·▲, 하행(기점→종점)=우측·▼
-function openMetroSchematic(lineId){
-  const old=document.getElementById('msch-wrap'); if(old)old.remove();
-  const l=(typeof METRO_LINES!=='undefined')&&METRO_LINES.find(x=>x.id===lineId); if(!l)return;
+// 배선도 캔버스 HTML 생성 (탭 인라인 공용). 반환: {cnt, html}
+function _metroSchCanvas(l){
   const stns=l.stations, n=stns.length, color=l.color;
   const ROW=54, TOP=26, LX=116, RX=146;
   const Yi=i=>TOP+i*ROW, bottomY=Yi(n-1), H=bottomY+26;
-  // 레일(복선)
   let svg=`<span class="msch-rail" style="left:${LX}px;top:${TOP}px;height:${bottomY-TOP}px"></span>
            <span class="msch-rail" style="left:${RX}px;top:${TOP}px;height:${bottomY-TOP}px"></span>`;
-  // 역(승강장·틱·역명)
   let body='';
   stns.forEach((s,i)=>{ const y=Yi(i), end=(i===0||i===n-1);
     body+=`<div class="msch-stn${end?' end':''}" style="top:${y}px">
@@ -10761,7 +10759,6 @@ function openMetroSchematic(lineId){
       <span class="msch-tick" style="left:${RX}px"></span>
     </div>`;
   });
-  // 운행 중 편성 — 상행(종점→기점, 위로)=좌측·▲, 하행(기점→종점, 아래로)=우측·▼
   const idxOf={}; stns.forEach((s,i)=>{ if(idxOf[s]==null)idxOf[s]=i; });
   let trains='', cnt=0;
   _metroLineLiveTrains(l.name).forEach(t=>{
@@ -10772,26 +10769,42 @@ function openMetroSchematic(lineId){
       <span class="msch-lbl">${_opsEsc(t.dest)}</span>
     </div>`;
   });
-  const wrap=document.createElement('div'); wrap.id='msch-wrap';
-  wrap.innerHTML=`<div class="rail-ticket-backdrop" onclick="closeMetroSchematic()"></div>
-    <div class="msch-popup" role="dialog" aria-label="${_opsEsc(l.name)} 배선도" style="--mc:${color}">
+  return {cnt, html:`<div class="msch-canvas" style="height:${H}px;--mc:${color}">${svg}${body}${trains}</div>`};
+}
+// 노선 상세 버튼 → 배선 탭으로 이동하며 해당 노선 선택
+function openMetroSchematicTab(lineId){ _metroSchLine=lineId; if(_appMode!=='metro')setAppMode('metro'); switchTab('metroschematic'); }
+// ── 🛤️ 배선 탭 ──
+let _metroSchRegion='전체', _metroSchLine=null;
+function setMetroSchRegion(r){ _metroSchRegion=r; _metroSchLine=null; renderMetroSchematicTab(); }
+function pickMetroSchLine(id){ _metroSchLine=id; renderMetroSchematicTab(); }
+function renderMetroSchematicTab(){
+  const el=document.getElementById('result-metroschematic'); if(!el)return;
+  if(typeof METRO_LINES==='undefined'){ el.innerHTML='<div class="empty"><div class="empty-icon">🛤️</div><p>전철 노선 데이터가 없습니다.</p></div>'; return; }
+  const regions=['전체',...new Set(METRO_LINES.map(l=>l.region))];
+  const list=METRO_LINES.filter(l=>_metroSchRegion==='전체'||l.region===_metroSchRegion);
+  if(_metroSchLine&&!METRO_LINES.some(l=>l.id===_metroSchLine)) _metroSchLine=null;
+  const sel=_metroSchLine?METRO_LINES.find(l=>l.id===_metroSchLine):null;
+  let inner;
+  if(sel){ const {cnt,html}=_metroSchCanvas(sel);
+    inner=`<div class="msch-inline" style="--mc:${sel.color}">
       <div class="msch-head">
-        <span><b style="color:${color}">🛤️ ${_opsEsc(l.name)}</b> 배선도</span>
-        <span class="msch-head-r"><span class="msch-run">🚇 <b>${cnt}</b>대</span>
-          <button class="mtl-live-refresh" onclick="openMetroSchematic('${l.id}')" title="새로고침">↻</button>
-          <button class="si-board-close" onclick="closeMetroSchematic()" aria-label="닫기">✕</button></span>
+        <span><b style="color:${sel.color}">🛤️ ${_opsEsc(sel.name)}</b> 배선도</span>
+        <span class="msch-head-r"><span class="msch-run">🚇 <b>${cnt}</b>대 운행</span>
+          <button class="mtl-live-refresh" onclick="renderMetroSchematicTab()" title="새로고침">↻</button></span>
       </div>
       <div class="msch-legend"><span class="msch-lg up">▲ 상행 <small>종점→기점</small></span><span class="msch-lg down">하행 <small>기점→종점</small> ▼</span></div>
-      <div class="msch-body">
-        <div class="msch-canvas" style="height:${H}px;--mc:${color}">${svg}${body}${trains}</div>
-      </div>
+      <div class="msch-body msch-body--inline">${html}</div>
       <div class="msch-foot">인게임 시각표 기준 · 직선 복선 단순화(분기·회차선 제외)</div>
     </div>`;
-  document.body.appendChild(wrap);
-  // 운행 중 편성이 있으면 첫 편성으로 스크롤
-  const first=wrap.querySelector('.msch-train'); if(first){ const cv=wrap.querySelector('.msch-body'); if(cv)cv.scrollTop=Math.max(0,first.offsetTop-cv.clientHeight/2); }
+  } else { inner='<div style="text-align:center;color:var(--text3);font-size:13px;padding:44px 12px">위에서 노선을 선택하면<br>실시간 배선도가 표시됩니다</div>'; }
+  el.innerHTML=`
+    <div style="margin:14px 2px 4px;font-size:12px;color:var(--text3)">🛤️ 배선도 · 노선을 선택하면 실시간 편성 위치가 복선 트랙 위에 표시됩니다</div>
+    <div style="display:flex;gap:6px;flex-wrap:wrap;margin:8px 0 10px">
+      ${regions.map(r=>`<button class="metro-region-chip${_metroSchRegion===r?' on':''}" onclick="setMetroSchRegion('${r}')">${r}${r!=='전체'?` ${METRO_LINES.filter(l=>l.region===r).length}`:''}</button>`).join('')}
+    </div>
+    <div class="msch-linepick">${list.map(l=>`<button class="msch-linechip${_metroSchLine===l.id?' on':''}" style="--mc:${l.color}" onclick="pickMetroSchLine('${l.id}')"><span class="msch-linedot" style="background:${l.color}"></span>${l.name}</button>`).join('')}</div>
+    ${inner}`;
 }
-function closeMetroSchematic(){ const el=document.getElementById('msch-wrap'); if(el)el.remove(); }
 
 // ── 지연 예측 모델 (노선·등급별 확률/예상 지연) ──
 // ── 지연 예보/시뮬레이션 엔진은 js/features/nimbi_delay.js로 분리 (DELAY_MODEL·_delayForecast·_simProfile·_simDelay·_simFinalDelay·_liveDelayOf·_simCauseSummary·_simEventLog 등) ──
