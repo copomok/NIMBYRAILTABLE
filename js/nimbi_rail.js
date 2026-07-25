@@ -9428,8 +9428,9 @@ function _renderMetroLineDetail(el,id){
         </div>
         ${l.patterns.length?`<div class="metro-pats" style="margin-top:8px">운행계통 <span class="metro-pat-chip${!_metroPatSel?' on':''}" onclick="setMetroPat(null)">전체</span>${l.patterns.map(p=>`<span class="metro-pat-chip${_metroPatSel===p?' on':''}" onclick="setMetroPat('${p.replace(/'/g,"\\'")}')">${p}</span>`).join('')}</div>`:''}
         ${patInfo}
-        <div style="margin-top:10px">
+        <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap">
           <button onclick="event.stopPropagation();showMetroOnMap('${l.id}')" style="padding:8px 14px;border-radius:10px;border:1px solid ${l.color};background:transparent;color:${l.color};font-size:12.5px;font-weight:700;cursor:pointer;font-family:var(--sans)">🗺️ 노선도에서 보기</button>
+          <button onclick="event.stopPropagation();openMetroSchematic('${l.id}')" style="padding:8px 14px;border-radius:10px;border:1px solid ${l.color};background:${l.color};color:#fff;font-size:12.5px;font-weight:700;cursor:pointer;font-family:var(--sans)">🛤️ 배선도(실시간)</button>
         </div>
       </div>
       <div class="mtl-live-head">
@@ -10738,6 +10739,59 @@ function openMetroTrain(line, svcIdx, hlClk){
   const cur=wrap.querySelector('.jr-stop.cur')||wrap.querySelector('.jr-stop.next'); if(cur)cur.scrollIntoView({block:'center'});
 }
 function closeMetroTrain(){ const el=document.getElementById('mtn-wrap'); if(el)el.remove(); document.body.classList.remove('metro-paired'); }
+
+// 🛤️ 배선도(간이): 복선 트랙 + 승강장 + 방향 화살표 열차. 상행(종점→기점)=좌측·▲, 하행(기점→종점)=우측·▼
+function openMetroSchematic(lineId){
+  const old=document.getElementById('msch-wrap'); if(old)old.remove();
+  const l=(typeof METRO_LINES!=='undefined')&&METRO_LINES.find(x=>x.id===lineId); if(!l)return;
+  const stns=l.stations, n=stns.length, color=l.color;
+  const ROW=54, TOP=26, LX=116, RX=146;
+  const Yi=i=>TOP+i*ROW, bottomY=Yi(n-1), H=bottomY+26;
+  // 레일(복선)
+  let svg=`<span class="msch-rail" style="left:${LX}px;top:${TOP}px;height:${bottomY-TOP}px"></span>
+           <span class="msch-rail" style="left:${RX}px;top:${TOP}px;height:${bottomY-TOP}px"></span>`;
+  // 역(승강장·틱·역명)
+  let body='';
+  stns.forEach((s,i)=>{ const y=Yi(i), end=(i===0||i===n-1);
+    body+=`<div class="msch-stn${end?' end':''}" style="top:${y}px">
+      <span class="msch-name">${_opsEsc(s)}</span>
+      <span class="msch-plat" style="left:${LX-31}px"></span>
+      <span class="msch-plat" style="left:${RX+18}px"></span>
+      <span class="msch-tick" style="left:${LX}px"></span>
+      <span class="msch-tick" style="left:${RX}px"></span>
+    </div>`;
+  });
+  // 운행 중 편성 — 상행(종점→기점, 위로)=좌측·▲, 하행(기점→종점, 아래로)=우측·▼
+  const idxOf={}; stns.forEach((s,i)=>{ if(idxOf[s]==null)idxOf[s]=i; });
+  let trains='', cnt=0;
+  _metroLineLiveTrains(l.name).forEach(t=>{
+    const fi=idxOf[t.fromStn], ti=idxOf[t.toStn]; if(fi==null||ti==null)return; cnt++;
+    const down=ti>fi, y=t.atStation?Yi(fi):Yi(fi)+t.frac*(Yi(ti)-Yi(fi)), x=down?RX:LX;
+    trains+=`<div class="msch-train ${down?'down':'up'}" style="top:${y}px;left:${x}px;--dc:${color}">
+      <span class="msch-arw">${down?'▼':'▲'}</span>
+      <span class="msch-lbl">${_opsEsc(t.dest)}</span>
+    </div>`;
+  });
+  const wrap=document.createElement('div'); wrap.id='msch-wrap';
+  wrap.innerHTML=`<div class="rail-ticket-backdrop" onclick="closeMetroSchematic()"></div>
+    <div class="msch-popup" role="dialog" aria-label="${_opsEsc(l.name)} 배선도" style="--mc:${color}">
+      <div class="msch-head">
+        <span><b style="color:${color}">🛤️ ${_opsEsc(l.name)}</b> 배선도</span>
+        <span class="msch-head-r"><span class="msch-run">🚇 <b>${cnt}</b>대</span>
+          <button class="mtl-live-refresh" onclick="openMetroSchematic('${l.id}')" title="새로고침">↻</button>
+          <button class="si-board-close" onclick="closeMetroSchematic()" aria-label="닫기">✕</button></span>
+      </div>
+      <div class="msch-legend"><span class="msch-lg up">▲ 상행 <small>종점→기점</small></span><span class="msch-lg down">하행 <small>기점→종점</small> ▼</span></div>
+      <div class="msch-body">
+        <div class="msch-canvas" style="height:${H}px;--mc:${color}">${svg}${body}${trains}</div>
+      </div>
+      <div class="msch-foot">인게임 시각표 기준 · 직선 복선 단순화(분기·회차선 제외)</div>
+    </div>`;
+  document.body.appendChild(wrap);
+  // 운행 중 편성이 있으면 첫 편성으로 스크롤
+  const first=wrap.querySelector('.msch-train'); if(first){ const cv=wrap.querySelector('.msch-body'); if(cv)cv.scrollTop=Math.max(0,first.offsetTop-cv.clientHeight/2); }
+}
+function closeMetroSchematic(){ const el=document.getElementById('msch-wrap'); if(el)el.remove(); }
 
 // ── 지연 예측 모델 (노선·등급별 확률/예상 지연) ──
 // ── 지연 예보/시뮬레이션 엔진은 js/features/nimbi_delay.js로 분리 (DELAY_MODEL·_delayForecast·_simProfile·_simDelay·_simFinalDelay·_liveDelayOf·_simCauseSummary·_simEventLog 등) ──

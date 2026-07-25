@@ -1511,6 +1511,30 @@ button, select, input[type=range],
 .mtl-live.down .mtl-live-dest{background:var(--mc,#666)}
 .mtl-live.up{left:calc(9px + var(--lane) + 13px);transform:translate(-100%,-50%);max-width:var(--lane);justify-content:flex-end}
 .mtl-live.up .mtl-live-dest{background:#d9782f}
+/* 🛤️ 배선도(간이 복선 + 승강장 + 화살표 열차) */
+.msch-popup{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);z-index:10001;width:min(340px,94vw);max-height:90vh;display:flex;flex-direction:column;background:var(--bg2);border:1px solid var(--border);border-top:3px solid var(--mc);border-radius:16px;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.5)}
+.msch-head{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:13px 15px;border-bottom:1px solid var(--border);font-size:14.5px;font-weight:700;color:var(--text1);flex-shrink:0}
+.msch-head-r{display:flex;align-items:center;gap:8px}
+.msch-run{font-size:12px;color:var(--text2)}.msch-run b{color:var(--mc);font-family:var(--mono);font-weight:800}
+.msch-legend{display:flex;justify-content:space-between;gap:8px;padding:7px 15px;font-size:10px;border-bottom:1px solid var(--border);flex-shrink:0}
+.msch-lg.up{color:#e8863d;font-weight:800}.msch-lg.down{color:var(--mc);font-weight:800}
+.msch-lg small{font-weight:600;color:var(--text3);opacity:.85}
+.msch-body{overflow:auto;flex:1;min-height:0}
+.msch-canvas{position:relative;width:300px;margin:0 auto}
+.msch-rail{position:absolute;width:5px;transform:translateX(-50%);background:var(--mc);border-radius:3px;opacity:.85}
+.msch-stn{position:absolute;left:0;right:0;height:0}
+.msch-name{position:absolute;left:2px;top:0;transform:translateY(-50%);width:44px;text-align:right;font-size:11px;font-weight:700;color:var(--text1);line-height:1.15;white-space:normal;word-break:keep-all}
+.msch-stn.end .msch-name{font-weight:800;color:var(--mc)}
+.msch-plat{position:absolute;top:0;transform:translateY(-50%);width:13px;height:34px;border-radius:3px;background:color-mix(in srgb,var(--text3) 34%,transparent);border:1px solid color-mix(in srgb,var(--text3) 22%,transparent)}
+.msch-tick{position:absolute;top:0;transform:translate(-50%,-50%);width:11px;height:11px;border-radius:50%;background:var(--bg2);border:2.5px solid var(--mc);z-index:2}
+.msch-stn.end .msch-tick{width:13px;height:13px;background:#fff}
+.msch-train{position:absolute;z-index:6}
+.msch-arw{position:absolute;left:0;top:0;transform:translate(-50%,-50%);font-size:14px;font-weight:900;line-height:1;filter:drop-shadow(0 1px 2px rgba(0,0,0,.55))}
+.msch-train.down .msch-arw{color:var(--dc)}.msch-train.up .msch-arw{color:#e8863d}
+.msch-lbl{position:absolute;top:0;transform:translateY(-50%);font-size:9.5px;font-weight:800;color:#fff;padding:1px 5px;border-radius:7px;white-space:nowrap;max-width:92px;overflow:hidden;text-overflow:ellipsis;box-shadow:0 1px 3px rgba(0,0,0,.4);border:1px solid var(--bg1)}
+.msch-train.down .msch-lbl{left:12px;background:var(--dc)}
+.msch-train.up .msch-lbl{right:12px;background:#d9782f}
+.msch-foot{font-size:9px;color:var(--text3);padding:8px 15px;border-top:1px solid var(--border);flex-shrink:0;text-align:center}
 .metro-stns{font-size:12px;line-height:2;color:var(--text2)}
 .metro-stn{cursor:pointer;font-weight:600;color:var(--text1)}
 .metro-stn:hover{color:var(--accent);text-decoration:underline}
