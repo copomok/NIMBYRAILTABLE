@@ -1485,15 +1485,32 @@ button, select, input[type=range],
 .mtl-xfer.train{border-color:var(--border);font-size:10px;padding:1px 5px;cursor:default}
 .mtl-row.pass .mtl-xfers{opacity:.85}
 .mtl-gap{position:relative;z-index:1;padding:4px 0;font-size:10.5px;font-weight:700;color:var(--text3);letter-spacing:.5px}
-/* 노선 상세 실시간 편성 위치 (버스앱식 마커) */
-.mtl-live-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:16px 4px 2px}
-.mtl-live-run{font-size:12.5px;font-weight:700;color:var(--text2)}
+/* 노선 상세 실시간 편성 위치 (버스앱식 마커, 상/하행 좌우 분리) */
+.mtl-live-head{display:flex;align-items:center;gap:9px;margin:16px 4px 2px;flex-wrap:wrap}
+.mtl-live-toggle{display:inline-flex;align-items:center;gap:6px;font-family:var(--sans);font-size:11.5px;font-weight:800;color:var(--text3);background:var(--bg3);border:1px solid var(--border);border-radius:20px;padding:4px 11px 4px 5px;cursor:pointer}
+.mtl-live-toggle .mtl-live-sw{width:26px;height:15px;border-radius:9px;background:var(--border);position:relative;transition:background .18s}
+.mtl-live-toggle .mtl-live-sw::after{content:'';position:absolute;top:1.5px;left:1.5px;width:12px;height:12px;border-radius:50%;background:#fff;transition:left .18s}
+.mtl-live-toggle.on{color:var(--mc);border-color:color-mix(in srgb,var(--mc) 50%,var(--border))}
+.mtl-live-toggle.on .mtl-live-sw{background:var(--mc)}
+.mtl-live-toggle.on .mtl-live-sw::after{left:12.5px}
+.mtl-live-run{font-size:12.5px;font-weight:700;color:var(--text2);margin-left:auto}
 .mtl-live-run b{color:var(--mc);font-family:var(--mono);font-weight:800;font-size:14px}
-.mtl-live-refresh{font-family:var(--sans);font-size:11.5px;font-weight:700;color:var(--text2);background:var(--bg3);border:1px solid var(--border);border-radius:9px;padding:5px 11px;cursor:pointer}
+.mtl-live-refresh{font-family:var(--sans);font-size:14px;font-weight:700;color:var(--text2);background:var(--bg3);border:1px solid var(--border);border-radius:9px;padding:3px 10px;cursor:pointer}
 .mtl-live-refresh:active{background:var(--bg2)}
-.mtl-live{position:absolute;left:1px;transform:translateY(-50%);display:flex;align-items:center;gap:2px;z-index:6;pointer-events:none;max-width:74%}
+.mtl-live-legend{display:flex;justify-content:space-between;gap:8px;margin:4px 4px 0;font-size:10px;color:var(--text3)}
+.mtl-live-lg b,.mtl-live-lg{font-weight:800}
+.mtl-live-lg small{font-weight:600;color:var(--text3);opacity:.85}
+.mtl-live-lg.up{color:#e8863d}.mtl-live-lg.down{color:var(--mc)}
+/* 실시간 마커 배치용 좌측 레인 */
+.mtl-tl.has-live{--lane:60px;padding-left:calc(26px + var(--lane))}
+.mtl-tl.has-live::before{left:calc(9px + var(--lane))}
+.mtl-live{position:absolute;transform:translateY(-50%);display:flex;align-items:center;gap:2px;z-index:6;pointer-events:none}
 .mtl-live-ico{font-size:14px;line-height:1;flex-shrink:0;filter:drop-shadow(0 1px 2px rgba(0,0,0,.45))}
-.mtl-live-dest{font-size:10px;font-weight:800;color:#fff;background:var(--mc,#666);padding:1px 6px;border-radius:9px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;box-shadow:0 1px 4px rgba(0,0,0,.4);border:1.5px solid var(--bg1)}
+.mtl-live-dest{font-size:10px;font-weight:800;color:#fff;padding:1px 6px;border-radius:9px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;box-shadow:0 1px 4px rgba(0,0,0,.4);border:1.5px solid var(--bg1)}
+.mtl-live.down{left:calc(9px + var(--lane));max-width:calc(100% - 26px - var(--lane))}
+.mtl-live.down .mtl-live-dest{background:var(--mc,#666)}
+.mtl-live.up{left:calc(9px + var(--lane) + 13px);transform:translate(-100%,-50%);max-width:var(--lane);justify-content:flex-end}
+.mtl-live.up .mtl-live-dest{background:#d9782f}
 .metro-stns{font-size:12px;line-height:2;color:var(--text2)}
 .metro-stn{cursor:pointer;font-weight:600;color:var(--text1)}
 .metro-stn:hover{color:var(--accent);text-decoration:underline}

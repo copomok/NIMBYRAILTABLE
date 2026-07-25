@@ -9433,10 +9433,12 @@ function _renderMetroLineDetail(el,id){
         </div>
       </div>
       <div class="mtl-live-head">
-        <span class="mtl-live-run" style="--mc:${l.color}">🚇 실시간 <b>${_metroLineLiveTrains(l.name).length}</b>대 운행 중</span>
-        <button class="mtl-live-refresh" onclick="openMetroLineDetail('${l.id}')" title="새로고침">↻ 새로고침</button>
+        <button class="mtl-live-toggle${_metroLiveOn?' on':''}" style="--mc:${l.color}" onclick="setMetroLiveOn(${_metroLiveOn?'false':'true'})"><span class="mtl-live-sw"></span>실시간 위치 ${_metroLiveOn?'ON':'OFF'}</button>
+        ${_metroLiveOn?`<span class="mtl-live-run" style="--mc:${l.color}">🚇 <b>${_metroLineLiveTrains(l.name).length}</b>대 운행 중</span>
+        <button class="mtl-live-refresh" onclick="openMetroLineDetail('${l.id}')" title="새로고침">↻</button>`:''}
       </div>
-      <div class="mtl-tl" style="--mc:${l.color}">
+      ${_metroLiveOn?`<div class="mtl-live-legend"><span class="mtl-live-lg up">◀ 상행 <small>종점→기점</small></span><span class="mtl-live-lg down">하행 <small>기점→종점</small> ▶</span></div>`:''}
+      <div class="mtl-tl${_metroLiveOn?' has-live':''}" style="--mc:${l.color}">
         ${(()=>{const _xm=_metroXferMap(l);return rows.map((r,i)=>{
           if(r.gap)return `<div class="mtl-gap">지선 · 경유 구간</div>`;
           const isEnd=(i===0||i===rows.length-1)&&r.stop;
@@ -9938,8 +9940,12 @@ function _metroLineLiveTrains(lineName){
   const out=[]; for(let s=0;s<ent.t.length;s++){ const p=_metroTrainLivePos(lineName,s); if(p)out.push(p); }
   return out;
 }
-// 노선 상세 타임라인 위에 운행 중 편성 마커를 실제 진행률 위치에 배치 (버스앱식)
+let _metroLiveOn=true;   // 노선 상세 실시간 위치 표시 on/off
+function setMetroLiveOn(on){ _metroLiveOn=on; if(_metroDetailId)renderMetroLinesTab(); }
+// 노선 상세 타임라인 위에 운행 중 편성 마커를 실제 진행률 위치에 배치 (버스앱식, 상/하행 좌우 분리)
+// 하행=기점→종점(행 아래로), 상행=종점→기점(행 위로)
 function _placeMetroLiveMarkers(container, lineName){
+  if(!_metroLiveOn)return;
   const tl=container.querySelector('.mtl-tl'); if(!tl)return;
   tl.querySelectorAll('.mtl-live').forEach(m=>m.remove());
   const rowEls={}; tl.querySelectorAll('.mtl-row').forEach(r=>{ const nm=r.dataset.stn; if(nm&&!rowEls[nm])rowEls[nm]=r; });
@@ -9947,11 +9953,12 @@ function _placeMetroLiveMarkers(container, lineName){
     const fromEl=rowEls[t.fromStn], toEl=rowEls[t.toStn], anchor=fromEl||toEl; if(!anchor)return;
     const aCtr=anchor.offsetTop+anchor.offsetHeight/2; let y=aCtr, downward=true;
     if(fromEl&&toEl){ const fCtr=fromEl.offsetTop+fromEl.offsetHeight/2, tCtr=toEl.offsetTop+toEl.offsetHeight/2;
-      y=t.atStation?fCtr:fCtr+(tCtr-fCtr)*t.frac; downward=toEl.offsetTop>=fromEl.offsetTop; }
+      y=t.atStation?fCtr:fCtr+(tCtr-fCtr)*t.frac; downward=toEl.offsetTop>=fromEl.offsetTop; }  // 아래로=기점→종점=하행
     const m=document.createElement('div');
     m.className='mtl-live'+(downward?' down':' up')+(t.atStation?' at':'');
     m.style.top=y+'px';
-    m.innerHTML=`<span class="mtl-live-ico">🚇</span><span class="mtl-live-dest">${downward?'▾':'▴'} ${_opsEsc(t.dest)}행</span>`;
+    const ico='<span class="mtl-live-ico">🚇</span>', dst=`<span class="mtl-live-dest">${_opsEsc(t.dest)}행</span>`;
+    m.innerHTML=downward?ico+dst:dst+ico;   // 하행: 선 오른쪽 / 상행: 선 왼쪽
     tl.appendChild(m);
   });
 }
