@@ -1525,7 +1525,8 @@ button, select, input[type=range],
 .msch-stn{position:absolute;left:0;right:0;height:0}
 .msch-name{position:absolute;left:2px;top:0;transform:translateY(-50%);width:44px;text-align:right;font-size:11px;font-weight:700;color:var(--text1);line-height:1.15;white-space:normal;word-break:keep-all}
 .msch-stn.end .msch-name{font-weight:800;color:var(--mc)}
-.msch-plat{position:absolute;top:0;transform:translateY(-50%);width:18px;height:34px;border-radius:3px;box-sizing:border-box;display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:9px;font-weight:800}
+.msch-svg{position:absolute;left:0;top:0;z-index:0;pointer-events:none}
+.msch-plat{position:absolute;top:0;transform:translate(-50%,-50%);width:15px;height:34px;border-radius:3px;box-sizing:border-box;display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:9px;font-weight:800;z-index:2}
 .msch-plat.k-cur{background:var(--pc);color:#fff;box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.9)}
 .msch-plat.k-metro{background:color-mix(in srgb,var(--pc) 72%,var(--bg2));color:#fff}
 .msch-plat.k-train{background:transparent;border:1px solid var(--pc);color:var(--pc)}

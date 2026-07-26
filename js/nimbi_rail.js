@@ -10764,45 +10764,51 @@ function _metroStationPlatforms(stn, curBase){
   return out.sort((a,b)=>a.pn-b.pn);
 }
 // 배선도 캔버스 HTML 생성 (탭 인라인 공용). 반환: {cnt, html}
-// 실제 배선처럼 이 노선 복선 트랙이 자기 승강장 사이(섬식)·옆(상대식)을 지나가고,
-// 타 노선·기차 승강장은 오른쪽으로 이어 붙인다.
+// 승강장은 번호순 고정 슬롯(1 2 3 4…), 이 노선 복선 트랙은 자기 승강장 위치로 휘어감(위빙).
 function _metroSchCanvas(l){
   const stns=l.stations, n=stns.length, color=l.color;
-  const ROW=54, TOP=26, LX=94, RX=118, CX=(94+118)/2;   // 복선 트랙 · 중앙
-  const PA=72, PB=122, ISL=97, OBASE=150, OSTEP=21, PCAP=12;  // 상대식 좌/우, 섬식, 타승강장 시작·간격
-  const Yi=i=>TOP+i*ROW, bottomY=Yi(n-1), H=bottomY+26;
-  let svg=`<span class="msch-rail" style="left:${LX}px;top:${TOP}px;height:${bottomY-TOP}px"></span>
-           <span class="msch-rail" style="left:${RX}px;top:${TOP}px;height:${bottomY-TOP}px"></span>`;
-  let body='', maxR=0;
-  const pblk=(p,x,extra)=>`<span class="msch-plat k-${p.kind}${p.shared?' shared':''}${extra||''}" style="left:${x}px;--pc:${p.color}" title="${_opsEsc(p.label)} ${p.pn}번${p.shared?' (공용)':''}">${p.pn}</span>`;
-  stns.forEach((s,i)=>{ const y=Yi(i), end=(i===0||i===n-1);
+  const ROW=56, TOP=32, PBASE=84, PSTEP=26, PH=7.5, TGAP=2.5, HP=18, PCAP=13;
+  const Yi=i=>TOP+i*ROW, H=Yi(n-1)+30, Xc=j=>PBASE+j*PSTEP;
+  let maxSlot=1;
+  const rows=stns.map((s,i)=>{
     const pfs=_metroStationPlatforms(s, l.name);
-    const cur=pfs.filter(p=>p.isCur), others=pfs.filter(p=>!p.isCur);
-    let plat='';
-    // 이 노선 승강장: 2개↑=상대식(트랙 양옆), 1개=섬식(트랙 사이)
-    if(cur.length>=2){ plat+=pblk(cur[0],PA)+pblk(cur[cur.length-1],PB); }
-    else if(cur.length===1){ plat+=pblk(cur[0],ISL,' island'); }
-    // 오른쪽: 이 노선 중간 승강장(3개↑) + 타 노선·기차, 번호순
-    const right=[...(cur.length>2?cur.slice(1,-1):[]),...others].sort((a,b)=>a.pn-b.pn);
-    const shown=right.slice(0,PCAP), moreN=right.length-shown.length;
-    const dispR=shown.length+(moreN>0?1:0); if(dispR>maxR)maxR=dispR;
-    shown.forEach((p,j)=>{ plat+=pblk(p,OBASE+j*OSTEP); });
-    if(moreN>0) plat+=`<span class="msch-plat k-more" style="left:${OBASE+shown.length*OSTEP}px" title="외 ${moreN}개 승강장">+${moreN}</span>`;
-    body+=`<div class="msch-stn${end?' end':''}" style="top:${y}px">
-      <span class="msch-name">${_opsEsc(s)}</span>
-      <span class="msch-tick" style="left:${LX}px"></span>
-      <span class="msch-tick" style="left:${RX}px"></span>
-      ${plat}
-    </div>`;
+    const shown=pfs.slice(0,PCAP), moreN=pfs.length-shown.length;
+    const slots=shown.length+(moreN>0?1:0); if(slots>maxSlot)maxSlot=slots;
+    const curSlots=[]; shown.forEach((p,j)=>{ if(p.isCur)curSlots.push(j); });
+    return {s,i,shown,moreN,curSlots};
   });
-  const CW=Math.max(300, OBASE + maxR*OSTEP + 8);
+  // 상행/하행 트랙 X (역마다 자기 승강장 위치): 2개↑=승강장 사이(상대식), 1개=승강장 양옆(섬식)
+  const upXs=[], dnXs=[];
+  rows.forEach(({curSlots},i)=>{ let up,dn;
+    if(curSlots.length>=2){ up=Xc(curSlots[0])+PH+TGAP; dn=Xc(curSlots[curSlots.length-1])-PH-TGAP; if(dn-up<5){const m=(up+dn)/2;up=m-3;dn=m+3;} }
+    else if(curSlots.length===1){ up=Xc(curSlots[0])-PH-TGAP; dn=Xc(curSlots[0])+PH+TGAP; }
+    else { up=(upXs[i-1]!=null?upXs[i-1]:PBASE-3); dn=(dnXs[i-1]!=null?dnXs[i-1]:PBASE+3); }
+    upXs.push(up); dnXs.push(dn);
+  });
+  // 트랙 폴리라인(역 구간 수직 + 역간 대각선 = 위빙)
+  const mk=arr=>{const p=[];for(let i=0;i<n;i++){const y=Yi(i),x=arr[i].toFixed(1);p.push(`${x},${(y-HP).toFixed(1)}`,`${x},${(y+HP).toFixed(1)}`);}return p.join(' ');};
+  const CW=Math.max(260, Xc(maxSlot-1)+PH+12);
+  const svg=`<svg class="msch-svg" width="${CW}" height="${H}" viewBox="0 0 ${CW} ${H}" preserveAspectRatio="none">
+    <polyline points="${mk(upXs)}" fill="none" stroke="${color}" stroke-width="4.5" stroke-linejoin="round" stroke-linecap="round"/>
+    <polyline points="${mk(dnXs)}" fill="none" stroke="${color}" stroke-width="4.5" stroke-linejoin="round" stroke-linecap="round"/></svg>`;
+  // 승강장 블록 + 역명 (번호순 고정 슬롯)
+  let body='';
+  rows.forEach(({s,i,shown,moreN})=>{ const y=Yi(i), end=(i===0||i===n-1);
+    let plat='';
+    shown.forEach((p,j)=>{ plat+=`<span class="msch-plat k-${p.kind}${p.shared?' shared':''}" style="left:${Xc(j)}px;--pc:${p.color}" title="${_opsEsc(p.label)} ${p.pn}번${p.shared?' (공용)':''}">${p.pn}</span>`; });
+    if(moreN>0) plat+=`<span class="msch-plat k-more" style="left:${Xc(shown.length)}px" title="외 ${moreN}개 승강장">+${moreN}</span>`;
+    body+=`<div class="msch-stn${end?' end':''}" style="top:${y}px"><span class="msch-name">${_opsEsc(s)}</span>${plat}</div>`;
+  });
+  // 열차: 트랙 위 진행률 위치(위빙 X 보간)
   const idxOf={}; stns.forEach((s,i)=>{ if(idxOf[s]==null)idxOf[s]=i; });
   let trains='', cnt=0;
   _metroLineLiveTrains(l.name).forEach(t=>{
     const fi=idxOf[t.fromStn], ti=idxOf[t.toStn]; if(fi==null||ti==null)return; cnt++;
-    const down=ti>fi, y=t.atStation?Yi(fi):Yi(fi)+t.frac*(Yi(ti)-Yi(fi)), x=down?RX:LX;
+    const down=ti>fi, arr=down?dnXs:upXs;
+    const y=t.atStation?Yi(fi):Yi(fi)+t.frac*(Yi(ti)-Yi(fi));
+    const x=t.atStation?arr[fi]:arr[fi]+t.frac*(arr[ti]-arr[fi]);
     trains+=`<span class="msch-arw ${down?'down':'up'}" style="left:${x}px;top:${y}px">${down?'▼':'▲'}</span>
-      <span class="msch-lbl ${down?'down':'up'}" style="left:${CX}px;top:${y}px;background:${down?color:'#d9782f'}">${_opsEsc(t.dest)}</span>`;
+      <span class="msch-lbl ${down?'down':'up'}" style="left:${x}px;top:${y}px;background:${down?color:'#d9782f'}">${_opsEsc(t.dest)}</span>`;
   });
   return {cnt, html:`<div class="msch-canvas" style="height:${H}px;width:${CW}px;--mc:${color}">${svg}${body}${trains}</div>`};
 }
