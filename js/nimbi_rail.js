@@ -10764,37 +10764,45 @@ function _metroStationPlatforms(stn, curBase){
   return out.sort((a,b)=>a.pn-b.pn);
 }
 // 배선도 캔버스 HTML 생성 (탭 인라인 공용). 반환: {cnt, html}
+// 실제 배선처럼 이 노선 복선 트랙이 자기 승강장 사이(섬식)·옆(상대식)을 지나가고,
+// 타 노선·기차 승강장은 오른쪽으로 이어 붙인다.
 function _metroSchCanvas(l){
   const stns=l.stations, n=stns.length, color=l.color;
-  const ROW=54, TOP=26, LX=100, RX=126, PBASE=196, PSTEP=21, PCAP=13;
+  const ROW=54, TOP=26, LX=94, RX=118, CX=(94+118)/2;   // 복선 트랙 · 중앙
+  const PA=72, PB=122, ISL=97, OBASE=150, OSTEP=21, PCAP=12;  // 상대식 좌/우, 섬식, 타승강장 시작·간격
   const Yi=i=>TOP+i*ROW, bottomY=Yi(n-1), H=bottomY+26;
   let svg=`<span class="msch-rail" style="left:${LX}px;top:${TOP}px;height:${bottomY-TOP}px"></span>
            <span class="msch-rail" style="left:${RX}px;top:${TOP}px;height:${bottomY-TOP}px"></span>`;
-  let body='', maxP=0;
+  let body='', maxR=0;
+  const pblk=(p,x,extra)=>`<span class="msch-plat k-${p.kind}${p.shared?' shared':''}${extra||''}" style="left:${x}px;--pc:${p.color}" title="${_opsEsc(p.label)} ${p.pn}번${p.shared?' (공용)':''}">${p.pn}</span>`;
   stns.forEach((s,i)=>{ const y=Yi(i), end=(i===0||i===n-1);
-    // 이 역의 모든 승강장(번호 오름차순·중복 없음)을 나란한 블록으로. 이 노선=강조, 타 전철=노선색, 기차=테두리
     const pfs=_metroStationPlatforms(s, l.name);
-    const shown=pfs.slice(0,PCAP), moreN=pfs.length-shown.length;
-    const dispCnt=shown.length+(moreN>0?1:0); if(dispCnt>maxP)maxP=dispCnt;
-    const platHTML=shown.map((p,j)=>`<span class="msch-plat k-${p.kind}${p.shared?' shared':''}" style="left:${PBASE+j*PSTEP}px;--pc:${p.color}" title="${_opsEsc(p.label)} ${p.pn}번${p.shared?' (공용)':''}">${p.pn}</span>`).join('')
-      +(moreN>0?`<span class="msch-plat k-more" style="left:${PBASE+shown.length*PSTEP}px" title="외 ${moreN}개 승강장">+${moreN}</span>`:'');
+    const cur=pfs.filter(p=>p.isCur), others=pfs.filter(p=>!p.isCur);
+    let plat='';
+    // 이 노선 승강장: 2개↑=상대식(트랙 양옆), 1개=섬식(트랙 사이)
+    if(cur.length>=2){ plat+=pblk(cur[0],PA)+pblk(cur[cur.length-1],PB); }
+    else if(cur.length===1){ plat+=pblk(cur[0],ISL,' island'); }
+    // 오른쪽: 이 노선 중간 승강장(3개↑) + 타 노선·기차, 번호순
+    const right=[...(cur.length>2?cur.slice(1,-1):[]),...others].sort((a,b)=>a.pn-b.pn);
+    const shown=right.slice(0,PCAP), moreN=right.length-shown.length;
+    const dispR=shown.length+(moreN>0?1:0); if(dispR>maxR)maxR=dispR;
+    shown.forEach((p,j)=>{ plat+=pblk(p,OBASE+j*OSTEP); });
+    if(moreN>0) plat+=`<span class="msch-plat k-more" style="left:${OBASE+shown.length*OSTEP}px" title="외 ${moreN}개 승강장">+${moreN}</span>`;
     body+=`<div class="msch-stn${end?' end':''}" style="top:${y}px">
       <span class="msch-name">${_opsEsc(s)}</span>
       <span class="msch-tick" style="left:${LX}px"></span>
       <span class="msch-tick" style="left:${RX}px"></span>
-      ${platHTML}
+      ${plat}
     </div>`;
   });
-  const CW=Math.max(300, PBASE + maxP*PSTEP + 8);
+  const CW=Math.max(300, OBASE + maxR*OSTEP + 8);
   const idxOf={}; stns.forEach((s,i)=>{ if(idxOf[s]==null)idxOf[s]=i; });
   let trains='', cnt=0;
   _metroLineLiveTrains(l.name).forEach(t=>{
     const fi=idxOf[t.fromStn], ti=idxOf[t.toStn]; if(fi==null||ti==null)return; cnt++;
     const down=ti>fi, y=t.atStation?Yi(fi):Yi(fi)+t.frac*(Yi(ti)-Yi(fi)), x=down?RX:LX;
-    trains+=`<div class="msch-train ${down?'down':'up'}" style="top:${y}px;left:${x}px;--dc:${color}">
-      <span class="msch-arw">${down?'▼':'▲'}</span>
-      <span class="msch-lbl">${_opsEsc(t.dest)}</span>
-    </div>`;
+    trains+=`<span class="msch-arw ${down?'down':'up'}" style="left:${x}px;top:${y}px">${down?'▼':'▲'}</span>
+      <span class="msch-lbl ${down?'down':'up'}" style="left:${CX}px;top:${y}px;background:${down?color:'#d9782f'}">${_opsEsc(t.dest)}</span>`;
   });
   return {cnt, html:`<div class="msch-canvas" style="height:${H}px;width:${CW}px;--mc:${color}">${svg}${body}${trains}</div>`};
 }
@@ -10821,7 +10829,7 @@ function renderMetroSchematicTab(){
       </div>
       <div class="msch-legend"><span class="msch-lg up">▲ 상행 <small>종점→기점</small></span><span class="msch-lg down">하행 <small>기점→종점</small> ▼</span></div>
       <div class="msch-body msch-body--inline">${html}</div>
-      <div class="msch-foot">직선 복선 단순화(분기·회차선 제외) · 우측 블록=이 역 전체 승강장(번호순) · 이 노선=진한 색·흰테, 타 전철=노선색, 기차=테두리, 공용=밑줄</div>
+      <div class="msch-foot">복선 트랙 양옆/사이=이 노선 승강장(상대식·섬식), 오른쪽=타 노선·기차 승강장(번호순) · 분기·회차선은 단순화 · 공용=밑줄</div>
     </div>`;
   } else { inner='<div style="text-align:center;color:var(--text3);font-size:13px;padding:44px 12px">위에서 노선을 선택하면<br>실시간 배선도가 표시됩니다</div>'; }
   el.innerHTML=`
