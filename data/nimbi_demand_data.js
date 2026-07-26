@@ -1,4 +1,4 @@
-var NIMBI_DEMAND_VERSION='od-v1.1.0';
+var NIMBI_DEMAND_VERSION='od-v1.2.0';
 var NIMBI_DAY_MULTIPLIERS=[1.07,1.03,.94,.95,.99,1.12,1.10];
 var NIMBI_STATION_DEMAND_PROFILE={
 '서울':{origin:1.7,destination:1.65,business:1.5,transfer:1.45,capital:true},

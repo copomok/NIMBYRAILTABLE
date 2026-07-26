@@ -6687,7 +6687,7 @@ function _seatAutoPick(mode){
   const composition=getCarComposition(getFormationType(t.grade,trainNo));
   const validCars=getCarsForClass(composition,seatClass);
   const car=validCars[_seatCarIdx]; if(!car||!car.cols){return;}
-  const booked=getBookedSeats(trainNo,travelDate), missing=new Set(car.missingSeats||[]);
+  const booked=getBookedSeats(trainNo,travelDate,null,null,seatClass), missing=new Set(car.missingSeats||[]);
   const count=window._bookingPassengerCount||1, cols=car.cols, n=cols.length;
   const half=Math.ceil(n/2);
   const isWin=idx=>idx===0||idx===n-1;
@@ -6740,7 +6740,7 @@ function openSeatSelector(trainNo, travelDate, seatClass){
   const composition=getCarComposition(formType);
   const validCars=getCarsForClass(composition,seatClass);
   if(!validCars.length){alert('해당 좌석 등급의 호차가 없습니다.');return;}
-  generateVirtualBookings(trainNo,travelDate,composition);
+  generateVirtualBookings(trainNo,travelDate,validCars,null,null,seatClass);
   _selectedSeats=[]; _seatCarIdx=0;
   document.getElementById('seat-selector-wrap')?.remove();
   const wrap=document.createElement('div');
@@ -6748,7 +6748,7 @@ function openSeatSelector(trainNo, travelDate, seatClass){
   wrap.dataset.trainNo=trainNo; wrap.dataset.travelDate=travelDate; wrap.dataset.seatClass=seatClass;
   wrap.style.cssText='position:fixed;inset:0;z-index:9500;display:flex;flex-direction:column;background:var(--bg)';
   document.body.appendChild(wrap);
-  _renderSeatMap(wrap,t,trainNo,travelDate,seatClass,validCars,getBookedSeats(trainNo,travelDate),composition);
+  _renderSeatMap(wrap,t,trainNo,travelDate,seatClass,validCars,getBookedSeats(trainNo,travelDate,null,null,seatClass),composition);
 }
 
 function _renderSeatMap(wrap,t,trainNo,travelDate,seatClass,validCars,booked,composition){
@@ -6902,7 +6902,7 @@ window.switchSeatCar=function(idx){
   const formType=getFormationType(t.grade,trainNo);
   const composition=getCarComposition(formType);
   const validCars=getCarsForClass(composition,seatClass);
-  _renderSeatMap(wrap,t,trainNo,travelDate,seatClass,validCars,getBookedSeats(trainNo,travelDate),composition);
+  _renderSeatMap(wrap,t,trainNo,travelDate,seatClass,validCars,getBookedSeats(trainNo,travelDate,null,null,seatClass),composition);
 };
 
 function closeSeatSelector(){

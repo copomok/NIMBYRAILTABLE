@@ -36,12 +36,18 @@
     cache.set(key,result);return result;
   }
   function available(train,from,to,date,seatClass,now){
-    const s=snapshot(train,date,now),od=s&&find(s.stops,from,to);if(!s||!od)return 0;
+    return classState(train,from,to,date,seatClass,now).available;
+  }
+  function classState(train,from,to,date,seatClass='general',now){
+    const s=snapshot(train,date,now),od=s&&find(s.stops,from,to);if(!s||!od)return{capacity:0,booked:0,simulatedBooked:0,userBooked:0,available:0};
     const cap=classCapacity(s.capacity,seatClass);
-    if(!seatClass||cap<=0)return seatClass&&cap<=0?0:Math.max(0,s.capacity.total-Math.max(0,...s.segmentLoads.slice(od[0],od[1])));
+    if(!seatClass)return{capacity:s.capacity.total,booked:Math.max(0,...s.segmentLoads.slice(od[0],od[1])),simulatedBooked:0,userBooked:0,available:Math.max(0,s.capacity.total-Math.max(0,...s.segmentLoads.slice(od[0],od[1])))};
+    if(cap<=0)return{capacity:0,booked:0,simulatedBooked:0,userBooked:0,available:0};
     const kind=classKey(seatClass),used=[];
-    for(let i=od[0];i<od[1];i++){const simulated=Math.max(0,s.segmentLoads[i]-s.userLoads[i]);used.push(s.userClassLoads[kind][i]+Math.ceil(simulated*cap/Math.max(1,s.capacity.total)));}
-    return Math.max(0,cap-Math.max(0,...used));
+    const user=[];
+    for(let i=od[0];i<od[1];i++){const simulated=Math.max(0,s.segmentLoads[i]-s.userLoads[i]);user.push(s.userClassLoads[kind][i]);used.push(s.userClassLoads[kind][i]+Math.ceil(simulated*cap/Math.max(1,s.capacity.total)));}
+    const booked=Math.min(cap,Math.max(0,...used)),userBooked=Math.min(booked,Math.max(0,...user));
+    return{capacity:cap,booked,simulatedBooked:Math.max(0,booked-userBooked),userBooked,available:Math.max(0,cap-booked)};
   }
   function congestion(train,from,to,date,now){
     const s=snapshot(train,date,now);if(!s)return null;const od=find(s.stops,from,to),loads=od?s.onboardLoads.slice(od[0],od[1]):s.onboardLoads,booked=Math.max(0,...loads),rate=booked/Math.max(1,s.capacity.total),percent=Math.round(rate*100);
@@ -51,6 +57,6 @@
   function invalidate(no,date){for(const k of cache.keys())if((!no||k.startsWith(no+'|'))&&(!date||k.includes('|'+date+'|')))cache.delete(k);}
   const addBookingToInventory=(train,from,to,count,date,seatClass)=>{const ok=available(train,from,to,date,seatClass)>=count;if(ok)invalidate(train?.no||train,date);return ok;};
   const removeBookingFromInventory=(train,from,to,count,date)=>{invalidate(train?.no||train,date);return true;};
-  g.NIMBI_Inventory={getTrainInventorySnapshot:snapshot,getSegmentLoads:(t,d,n)=>snapshot(t,d,n)?.segmentLoads||[],getAvailableSeats:available,canBookOD:(t,a,b,n,d,c,z)=>available(t,a,b,d,c,z)>=n,addBookingToInventory,removeBookingFromInventory,getCongestion:congestion,getODCongestion:congestion,invalidate,segmentsOverlap:(a,b,c,d)=>a<d&&c<b};
-  g.getTrainCapacity=t=>D().getTrainCapacity(t);g.getTrainInventorySnapshot=snapshot;g.getSegmentLoads=(t,d,n)=>snapshot(t,d,n)?.segmentLoads||[];g.getAvailableSeats=available;g.canBookOD=(t,a,b,n,d,c,z)=>available(t,a,b,d,c,z)>=n;g.addBookingToInventory=addBookingToInventory;g.removeBookingFromInventory=removeBookingFromInventory;g.getODCongestion=congestion;g.segmentsOverlap=(a,b,c,d)=>a<d&&c<b;
+  g.NIMBI_Inventory={getTrainInventorySnapshot:snapshot,getSegmentLoads:(t,d,n)=>snapshot(t,d,n)?.segmentLoads||[],getAvailableSeats:available,getSeatInventoryState:classState,canBookOD:(t,a,b,n,d,c,z)=>available(t,a,b,d,c,z)>=n,addBookingToInventory,removeBookingFromInventory,getCongestion:congestion,getODCongestion:congestion,invalidate,segmentsOverlap:(a,b,c,d)=>a<d&&c<b};
+  g.getTrainCapacity=t=>D().getTrainCapacity(t);g.getTrainInventorySnapshot=snapshot;g.getSegmentLoads=(t,d,n)=>snapshot(t,d,n)?.segmentLoads||[];g.getAvailableSeats=available;g.getSeatInventoryState=classState;g.canBookOD=(t,a,b,n,d,c,z)=>available(t,a,b,d,c,z)>=n;g.addBookingToInventory=addBookingToInventory;g.removeBookingFromInventory=removeBookingFromInventory;g.getODCongestion=congestion;g.segmentsOverlap=(a,b,c,d)=>a<d&&c<b;
 })(window);

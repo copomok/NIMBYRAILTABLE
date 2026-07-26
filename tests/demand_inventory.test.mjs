@@ -6,7 +6,13 @@ const train={no:'1202',grade:'무궁화호',stops:[{s:'서울',dep:'08:00'},{s:'
 c.loadTickets=()=>[];const a=c.getTrainInventorySnapshot(train,date,now);c.NIMBI_Inventory.invalidate();const b=c.getTrainInventorySnapshot(train,date,now);assert.deepEqual(a.segmentLoads,b.segmentLoads,'결정적 시드');assert.equal(c.buildTrainODDemand(train,date).length,6);assert.ok(c.getBaseDemandIndex(train)>.45);
 c.loadTickets=()=>[{id:'u',trainNo:'1202',travelDate:date,status:'active',fromStn:'서울',toStn:'대전',passengerCount:100,seats:[]}];c.NIMBI_Inventory.invalidate();assert.equal(c.getAvailableSeats(train,'서울','대전',date,null,now),0);assert.ok(c.getAvailableSeats(train,'대전','부산',date,null,now)>0);assert.equal(c.getAvailableSeats(train,'서울','부산',date,null,now),0);
 assert.equal(c.getTrainCapacity(train).premium,20);assert.equal(c.getTrainCapacity(train).standing,30);
+const classState=c.getSeatInventoryState(train,'대전','부산',date,'general',now);assert.equal(classState.available+classState.booked,classState.capacity,'좌석 선택과 등급별 잔여석은 동일 재고를 사용');
 assert.ok(c.getBookingProgress(24,'regional')>c.getBookingProgress(168,'regional'));
 const local={s:'대전',dep:'08:00'},capital={s:'서울',dep:'08:00'};assert.ok(c.NIMBI_Demand.getTimeDirectionMultiplier(train,local,capital,date)>c.NIMBI_Demand.getTimeDirectionMultiplier(train,capital,local,date));
 c.NIMBI_Inventory.invalidate();assert.equal(c.getTrainInventorySnapshot(train,'2026-07-29',now).userBookings.length,0);
+const ktx={...train,no:'1',grade:'KTX'};assert.ok(c.buildTrainODDemand(ktx,date).reduce((a,x)=>a+x.demand,0)>c.getTrainCapacity(ktx).total,'KTX 대편성도 충분한 잠재 수요 생성');
+c.getTrainByNo=no=>String(no)===String(train.no)?train:null;c.seatId=(car,row,col)=>`${car.car}호차 ${row}${col}`;c._bArgs={trainNo:train.no,fromStn:'대전',toStn:'부산'};
+vm.runInContext(fs.readFileSync('js/features/nimbi_congestion.js','utf8'),c,{filename:'js/features/nimbi_congestion.js'});
+const cars=c.getCarComposition(),seatState=c.getSeatInventoryState(train,'대전','부산',date,'general');c.generateVirtualBookings(train.no,date,cars,null,null,'general');
+assert.equal(c.getBookedSeats(train.no,date,null,null,'general').size,seatState.booked,'검색 잔여석과 실제 선택 가능한 좌석 수 동기화');
 console.log('demand_inventory.test: OK');
