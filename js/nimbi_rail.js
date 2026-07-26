@@ -10785,144 +10785,99 @@ function _metroStationPlatforms(stn, curBase, prevStn, nextStn){
 }
 // 배선도 캔버스 HTML 생성 (탭 인라인 공용). 반환: {cnt, html}
 // 승강장은 번호순 고정 슬롯(1 2 3 4…), 이 노선 복선 트랙은 자기 승강장 위치로 휘어감(위빙).
+// ── 도시철도 배선 렌더러 v2: 중심축 고정 직선 복선 + 저채도 승강장 + Bézier 분기/합류/회차 + 지선 완전배선 ──
+const SX={NAMEW:54,TOP:30,ROW:46,G:20,BW:12,BH:26,PO:8,SD:18};
+function _sxY(coords,ROW){ const n=coords.length; const rowH=new Array(Math.max(0,n-1)).fill(ROW);
+  if(coords&&coords.length===n&&coords.every(Boolean)&&n>=2){ const lat0=coords[0][1],kx=Math.cos(lat0*Math.PI/180)*111320,ky=110540;
+    const P=coords.map(([lo,la])=>[(lo-coords[0][0])*kx,(la-lat0)*ky]);
+    const seg=[];for(let i=0;i<n-1;i++)seg.push(Math.hypot(P[i+1][0]-P[i][0],P[i+1][1]-P[i][1]));
+    const sr=[...seg].filter(d=>d>1).sort((a,b)=>a-b),med=sr.length?sr[sr.length>>1]:1;
+    for(let i=0;i<n-1;i++)rowH[i]=Math.max(ROW,Math.min(ROW*2.1,seg[i]*(ROW/Math.max(200,med)))); }
+  const Y=new Array(n);Y[0]=SX.TOP;for(let i=1;i<n;i++)Y[i]=Y[i-1]+rowH[i-1]; return Y;
+}
+// 한 라우트(본선/지선) 렌더: 직선 복선 + 승강장 + 대피 유치선 + 종단 회차
+function _sxRoute(names,curBase,axisX,Y,color,opts){
+  opts=opts||{}; const n=names.length,{G,BW,BH,PO,SD}=SX, up=axisX-G/2, dn=axisX+G/2, F=x=>(+x).toFixed(1);
+  let plats='',side='',minX=up-2,maxX=dn+2;
+  const box=(cx,lab,y)=>{minX=Math.min(minX,cx-BW/2);maxX=Math.max(maxX,cx+BW/2);return `<rect x="${F(cx-BW/2)}" y="${F(y-BH/2)}" width="${BW}" height="${BH}" rx="2.5" class="tsx-plat"/>`+(lab!==''&&lab!=null?`<text x="${F(cx)}" y="${F(y+3)}" class="tsx-pnum">${lab}</text>`:'');};
+  for(let i=0;i<n;i++){ const y=Y[i];
+    const pfs=_metroStationPlatforms(names[i],curBase,names[i-1],names[i+1]);
+    const cur=pfs.filter(p=>p.isCur&&!p.branchOnly); let pns=cur.map(p=>p.pn); if(!pns.length)pns=[''];
+    const P=pns.length;
+    if(P<=1){ plats+=box(axisX,pns[0],y); }
+    else if(P===2){ plats+=box(up-PO-BW/2,pns[0],y)+box(dn+PO+BW/2,pns[1],y); }
+    else { plats+=box(up-PO-BW/2,pns[0],y)+box(dn+PO+BW/2,pns[1],y);
+      const rhU=y-(Y[i-1]!=null?Y[i-1]:y-SX.ROW), rhD=(Y[i+1]!=null?Y[i+1]:y+SX.ROW)-y;
+      const SH=Math.min(13,Math.min(rhU,rhD)*0.3), TA=Math.min(20,Math.min(rhU,rhD)*0.4);
+      for(let k=2;k<P;k++){ const e=k-2; const boxCx=dn+PO+BW/2+(e+1)*(BW+SD); const tx=boxCx-BW/2-PO;
+        plats+=box(boxCx,pns[k],y);
+        side+=`<path d="M ${F(dn)} ${F(y-SH-TA)} C ${F(dn)} ${F(y-SH-TA*0.4)}, ${F(tx)} ${F(y-SH-TA*0.4)}, ${F(tx)} ${F(y-SH)} L ${F(tx)} ${F(y+SH)} C ${F(tx)} ${F(y+SH+TA*0.4)}, ${F(dn)} ${F(y+SH+TA*0.4)}, ${F(dn)} ${F(y+SH+TA)}" fill="none" stroke="${color}" stroke-width="2.4" class="tsx-siding"/>`;
+      }
+    }
+  }
+  // 직선 본선 복선
+  const y0=Y[0], yN=Y[n-1];
+  let main=`<line x1="${F(up)}" y1="${F(y0)}" x2="${F(up)}" y2="${F(yN)}" stroke="${color}" stroke-width="3.4" stroke-linecap="round"/>`+
+           `<line x1="${F(dn)}" y1="${F(y0)}" x2="${F(dn)}" y2="${F(yN)}" stroke="${color}" stroke-width="3.4" stroke-linecap="round"/>`;
+  // 종단 회차(위/아래)
+  const term=(y,dir)=>{ const o=dir*15; return `<path d="M ${F(up)} ${F(y)} C ${F(up)} ${F(y+o)}, ${F(dn)} ${F(y+o)}, ${F(dn)} ${F(y)}" fill="none" stroke="${color}" stroke-width="3" stroke-linecap="round"/>`+
+      `<path d="M ${F(up)} ${F(y-dir*10)} L ${F(dn)} ${F(y)} M ${F(dn)} ${F(y-dir*10)} L ${F(up)} ${F(y)}" fill="none" stroke="${color}" stroke-width="1.7" opacity=".7"/>`; };
+  if(opts.termTop)main+=term(y0,-1);
+  if(opts.termBottom)main+=term(yN,1);
+  return {plats, tracks:side+main, up, dn, minX, maxX};
+}
+
 function _metroSchCanvas(l){
-  const stns=l.stations, n=stns.length, color=l.color;
-  const ROW=46, TOP=30, PSTEP=24, PH=7.5, TGAP=2.5, HP=15, PCAP=13, MAXS=48, PBASE=64+MAXS;
-  const Xc=j=>PBASE+j*PSTEP;
-  // ── 실좌표 기반 기하: 역간 거리로 행 높이(넓히기만), 커브로 추가 확대 + 좌우 스파인 휘어짐 ──
-  const GEOREC=(typeof METRO_GEO!=='undefined')?METRO_GEO[l.name]:null;
-  const G=(GEOREC&&GEOREC.m&&GEOREC.m.length===n&&GEOREC.m.every(Boolean))?GEOREC.m:null;
-  const rowH=new Array(Math.max(0,n-1)).fill(ROW), spineX=new Array(n).fill(0);
-  if(G&&n>=2){
-    const lat0=G[0][1], kx=Math.cos(lat0*Math.PI/180)*111320, ky=110540;
-    const P=G.map(([lo,la])=>[(lo-G[0][0])*kx,(la-lat0)*ky]); // 미터(동/북)
-    const seg=[]; for(let i=0;i<n-1;i++){const dx=P[i+1][0]-P[i][0],dy=P[i+1][1]-P[i][1];seg.push(Math.hypot(dx,dy));}
-    const sorted=[...seg].filter(d=>d>1).sort((a,b)=>a-b), med=sorted.length?sorted[sorted.length>>1]:1;
-    // 진행축(시종점 현) 기준 수직편차 = 스파인(커브 시각화)
-    let ang=Math.atan2(P[n-1][1]-P[0][1], P[n-1][0]-P[0][0]);
-    const ca=Math.cos(ang), sa=Math.sin(ang);
-    const u=P.map(([x,y])=>-x*sa+y*ca); // 수직편차(m)
-    let minU=Math.min(...u), maxU=Math.max(...u), midU=(minU+maxU)/2, rngU=Math.max(1,(maxU-minU)/2);
-    const usc=Math.min(0.04, MAXS/rngU);
-    for(let i=0;i<n;i++) spineX[i]=(u[i]-midU)*usc;
-    // 회전각(커브) : 인접 세그먼트 방향차
-    const bear=[]; for(let i=0;i<n-1;i++) bear.push(Math.atan2(P[i+1][1]-P[i][1],P[i+1][0]-P[i][0]));
-    const turn=new Array(n).fill(0);
-    for(let i=1;i<n-1;i++){let d=Math.abs(bear[i]-bear[i-1]);if(d>Math.PI)d=2*Math.PI-d;turn[i]=d;}
-    for(let i=0;i<n-1;i++){
-      let h=Math.max(ROW, Math.min(ROW*2.4, seg[i]*(ROW/Math.max(200,med)))); // 거리비례(넓히기만)
-      const cv=Math.max(turn[i],turn[i+1]); if(cv>0.35) h+=Math.min(ROW*0.7, (cv-0.35)*ROW*0.9); // 급커브 확대
-      rowH[i]=h;
-    }
-  }
-  const Y=new Array(n); Y[0]=TOP; for(let i=1;i<n;i++)Y[i]=Y[i-1]+rowH[i-1];
-  const H=Y[n-1]+30, Yi=i=>Y[i];
-  let maxSlot=1;
-  const rows=stns.map((s,i)=>{
-    const pfs=_metroStationPlatforms(s, l.name, stns[i-1], stns[i+1]).filter(p=>!p.branchOnly); // 지선 전용 승강장은 지선 열로
-    const shown=pfs.slice(0,PCAP), moreN=pfs.length-shown.length;
-    const slots=shown.length+(moreN>0?1:0); if(slots>maxSlot)maxSlot=slots;
-    const curSlots=[]; shown.forEach((p,j)=>{ if(p.isCur)curSlots.push(j); });
-    return {s,i,shown,moreN,curSlots};
+  const color=l.color, F=x=>(+x).toFixed(1), {NAMEW,TOP,ROW,G,BW,PO}=SX;
+  const GEO=(typeof METRO_GEO!=='undefined')?METRO_GEO[l.name]:null;
+  const mCoords=(GEO&&GEO.m)||l.stations.map(()=>null);
+  const Y=_sxY(mCoords, ROW), n=l.stations.length;
+  const MAINX=96;
+  const mainIdx={}; l.stations.forEach((s,i)=>{if(mainIdx[s]==null)mainIdx[s]=i;});
+  const R=_sxRoute(l.stations, l.name, MAINX, Y, color, {termTop:!l.loop, termBottom:!l.loop});
+  let platsSVG=R.plats, tracksSVG=R.tracks, namesHTML='', labelsHTML='';
+  // 역명(좌측 고정 게터)
+  l.stations.forEach((s,i)=>{ const end=(i===0||i===n-1);
+    namesHTML+=`<span class="tsx-name${end?' end':''}" style="top:${F(Y[i])}px">${_opsEsc(s)}</span>`; });
+  let curMaxX=R.maxX, H=Y[n-1]+34;
+  // ── 지선: 동일 엔진으로 완전 배선(자체 축) ──
+  ((GEO&&GEO.b)||[]).forEach(b=>{ if(!b.s||b.s.length<2||!b.c||b.c.some(x=>!x))return;
+    let jb=b.s.findIndex((s,i)=>mainIdx[s]!=null&&((i+1<b.s.length&&mainIdx[b.s[i+1]]==null)||(i-1>=0&&mainIdx[b.s[i-1]]==null)));
+    if(jb<0)jb=b.s.findIndex(s=>mainIdx[s]!=null); if(jb<0)jb=0;
+    const mj=mainIdx[b.s[jb]], anchorY=(mj!=null)?Y[mj]:TOP;
+    const rawY=_sxY(b.c, ROW); const shift=anchorY-rawY[jb]; let bY=rawY.map(y=>y+shift);
+    const mn=Math.min(...bY); if(mn<TOP){const d=TOP-mn;bY=bY.map(y=>y+d);}
+    const bx=curMaxX+64;
+    const BR=_sxRoute(b.s, l.name, bx, bY, color, {termTop:jb>0, termBottom:true});
+    platsSVG+=BR.plats; tracksSVG+=BR.tracks;
+    // 분기 연결선(본선 하행 → 지선) Bézier
+    const jy=bY[jb], tgtY=bY[jb<b.s.length-1?jb+1:jb];
+    tracksSVG+=`<path d="M ${F(MAINX+G/2)} ${F(anchorY)} C ${F((MAINX+G/2+BR.up)/2)} ${F(anchorY)}, ${F(BR.up)} ${F(anchorY)}, ${F(BR.up)} ${F(tgtY)}" fill="none" stroke="${color}" stroke-width="3" opacity=".85"/>`;
+    labelsHTML+=`<span class="tsx-brtag" style="left:${F(bx)}px;top:${F(Math.min(...bY)-16)}px;--pc:${color}">지선</span>`;
+    b.s.forEach((bn,bi)=>{ if(bi===jb)return; namesHTML+=`<span class="tsx-bname" style="left:${F(BR.maxX+7)}px;top:${F(bY[bi])}px">${_opsEsc(bn)}</span>`; });
+    curMaxX=Math.max(curMaxX,BR.maxX);
+    H=Math.max(H, Math.max(...bY)+34);
   });
-  // 본선 복선 X: 승강장 2개↑이면 중앙 승강장쌍 사이(상대식), 다승강장은 중앙 관통·바깥은 유치선, 1개=섬식
-  const upXs=[], dnXs=[], servedOf=[], centerXOf=[];
-  rows.forEach(({curSlots},i)=>{ let up,dn; const C=curSlots; const served=new Set(); let cs;
-    if(C.length>=3){ const m=(C.length-1)/2, a=C[Math.floor(m)], b=C[Math.ceil(m)]; cs=(Xc(a)+Xc(b))/2;
-      if(a===b){ up=Xc(a)-PH-TGAP; dn=Xc(a)+PH+TGAP; } else { up=Xc(a)+PH+TGAP; dn=Xc(b)-PH-TGAP; if(dn-up<5){const q=(up+dn)/2;up=q-3;dn=q+3;} }
-      served.add(a); served.add(b); }
-    else if(C.length===2){ up=Xc(C[0])+PH+TGAP; dn=Xc(C[1])-PH-TGAP; if(dn-up<5){const q=(up+dn)/2;up=q-3;dn=q+3;} cs=(Xc(C[0])+Xc(C[1]))/2; served.add(C[0]); served.add(C[1]); }
-    else if(C.length===1){ up=Xc(C[0])-PH-TGAP; dn=Xc(C[0])+PH+TGAP; cs=Xc(C[0]); served.add(C[0]); }
-    else { up=(upXs[i-1]!=null?upXs[i-1]-spineX[i-1]:PBASE-3); dn=(dnXs[i-1]!=null?dnXs[i-1]-spineX[i-1]:PBASE+3); cs=PBASE; }
-    upXs.push(up+spineX[i]); dnXs.push(dn+spineX[i]); servedOf.push(served); centerXOf.push(cs);
+  // ── 차량기지 인입선 Bézier ──
+  let depX=curMaxX+40; const depY={};
+  ((GEO&&GEO.d)||[]).forEach(d=>{ const j=d.j, y0=(Y[j]!=null?Y[j]:TOP), key=Math.round(y0/26); depY[key]=(depY[key]||0); const yy=y0+depY[key]*20; depY[key]++;
+    tracksSVG+=`<path d="M ${F(MAINX+G/2)} ${F(y0)} C ${F((MAINX+G/2+depX)/2)} ${F(y0)}, ${F(depX)} ${F(yy)}, ${F(depX+14)} ${F(yy)}" fill="none" stroke="#8b949e" stroke-width="2.2" stroke-dasharray="4 3" opacity=".85"/>`;
+    labelsHTML+=`<span class="tsx-depot" style="left:${F(depX+18)}px;top:${F(yy)}px">🏭 ${_opsEsc(String(d.n).replace('역 / ',' ').replace('주박선',' 주박').replace('차량사업소',' 사업소').trim())}</span>`;
+    curMaxX=Math.max(curMaxX,depX+120); H=Math.max(H,yy+26);
   });
-  const mk=arr=>{const p=[];for(let i=0;i<n;i++){const y=Y[i],x=arr[i].toFixed(1);p.push(`${x},${(y-HP).toFixed(1)}`,`${x},${(y+HP).toFixed(1)}`);}return p.join(' ');};
-
-  // ── 배선 상세(사진식): 다승강장 역=역 위 분기→아래 합류하는 유치선(바깥으로) + 역 앞뒤(구간) 건넘선 ──
-  let xtra='';
-  rows.forEach(({curSlots},i)=>{ if(curSlots.length<3)return; const y=Y[i], sx=spineX[i], up=upXs[i], dn=dnXs[i], cs=centerXOf[i], served=servedOf[i];
-    const rhU=rowH[i-1]||ROW, rhD=rowH[i]||ROW, SH=Math.min(16,Math.min(rhU,rhD)*0.34), TA=Math.min(rhU,rhD)*0.42;
-    curSlots.forEach(c=>{ if(served.has(c))return; const px=Xc(c);
-      const tx=px+(px<cs?-(PH+TGAP):(PH+TGAP))+sx, near=(px<cs?up:dn);
-      xtra+=`<path d="M ${near.toFixed(1)} ${(y-SH-TA).toFixed(1)} L ${tx.toFixed(1)} ${(y-SH).toFixed(1)} L ${tx.toFixed(1)} ${(y+SH).toFixed(1)} L ${near.toFixed(1)} ${(y+SH+TA).toFixed(1)}" fill="none" stroke="${color}" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>`;
-    });
+  // ── 열차: 실제 본선 트랙 위 ──
+  let cnt=0; const tr=[];
+  _metroLineLiveTrains(l.name).forEach(t=>{ const fi=mainIdx[t.fromStn],ti=mainIdx[t.toStn]; if(fi==null||ti==null)return; cnt++;
+    const down=ti>fi; const y=t.atStation?Y[fi]:Y[fi]+t.frac*(Y[ti]-Y[fi]); const x=down?MAINX+G/2:MAINX-G/2;
+    tr.push({x,y,down,dest:t.dest}); });
+  tr.sort((a,b)=>a.y-b.y); let lastY=-99;
+  tr.forEach(t=>{ const shift=(t.y-lastY<14)?1:0; lastY=t.y;
+    labelsHTML+=`<span class="tsx-arw ${t.down?'down':'up'}" style="left:${F(t.x)}px;top:${F(t.y)}px">${t.down?'▼':'▲'}</span>`+
+      `<span class="tsx-tlbl" style="left:${F(t.x+(t.down?10:-10))}px;top:${F(t.y)}px;--tc:${t.down?color:'#d9782f'};transform:translate(${t.down?'0':'-100%'},-50%)">${_opsEsc(t.dest)}</span>`;
   });
-  for(let i=0;i<n-1;i++){ const gap=Y[i+1]-Y[i]; if(gap<40)continue; const yc=Y[i]+gap*0.5;
-    const upA=(upXs[i]+upXs[i+1])/2, dnA=(dnXs[i]+dnXs[i+1])/2; if(Math.abs(dnA-upA)<5)continue;
-    const XH=Math.min(9,gap*0.16);
-    xtra+=`<path d="M ${upA.toFixed(1)} ${(yc-XH).toFixed(1)} L ${dnA.toFixed(1)} ${(yc+XH).toFixed(1)} M ${dnA.toFixed(1)} ${(yc-XH).toFixed(1)} L ${upA.toFixed(1)} ${(yc+XH).toFixed(1)}" fill="none" stroke="${color}" stroke-width="1.8" opacity=".65"/>`;
-  }
-
-  // ── 우측 밴드: 지선(같은 노선명·다른 구간을 옆에 평행하게) + 차량기지 인입선 ──
-  const mainIdx={}; stns.forEach((s,i)=>{if(mainIdx[s]==null)mainIdx[s]=i;});
-  let rightX=Xc(maxSlot-1)+PH+MAXS+18;
-  let brSVG='', brBody='', Hb=H;
-  const depShort=s=>String(s).replace('역 / ',' ').replace('주박선',' 주박').replace('차량사업소',' 사업소').trim();
-  ((GEOREC&&GEOREC.b)||[]).forEach(b=>{
-    const m=b.s, c=b.c, bn=m.length; if(bn<2||!c||c.some(x=>!x))return;
-    let jb=m.findIndex((s,i)=>mainIdx[s]!=null&&((i+1<bn&&mainIdx[m[i+1]]==null)||(i-1>=0&&mainIdx[m[i-1]]==null)));
-    if(jb<0)jb=m.findIndex(s=>mainIdx[s]!=null); if(jb<0)jb=0;
-    const mj=mainIdx[m[jb]], anchorY=(mj!=null)?Y[mj]:TOP;
-    const lat0=c[0][1],kx=Math.cos(lat0*Math.PI/180)*111320,ky=110540;
-    const P=c.map(([lo,la])=>[(lo-c[0][0])*kx,(la-lat0)*ky]);
-    const rh=[]; for(let i=0;i<bn-1;i++)rh.push(Math.hypot(P[i+1][0]-P[i][0],P[i+1][1]-P[i][1]));
-    const sd=[...rh].filter(d=>d>1).sort((a,b)=>a-b),med=sd.length?sd[sd.length>>1]:1;
-    const rowB=rh.map(d=>Math.max(ROW*0.82,Math.min(ROW*2.0,d*(ROW*0.82/Math.max(200,med)))));
-    const Yb=new Array(bn); Yb[jb]=anchorY;
-    for(let i=jb+1;i<bn;i++)Yb[i]=Yb[i-1]+rowB[i-1];
-    for(let i=jb-1;i>=0;i--)Yb[i]=Yb[i+1]-rowB[i];
-    const mn=Math.min(...Yb); if(mn<TOP){const sh=TOP-mn;for(let i=0;i<bn;i++)Yb[i]+=sh;}
-    const bx=rightX+16, jx=(mj!=null?dnXs[mj]:PBASE), cy=Yb[jb<bn-1?jb+1:jb];
-    brSVG+=`<path d="M ${jx.toFixed(1)} ${anchorY.toFixed(1)} C ${((jx+bx)/2).toFixed(1)} ${anchorY.toFixed(1)}, ${bx} ${anchorY.toFixed(1)}, ${bx} ${cy.toFixed(1)}" fill="none" stroke="${color}" stroke-width="3" opacity=".85"/>`;
-    const pts=[]; for(let i=0;i<bn;i++)pts.push(`${bx},${Yb[i].toFixed(1)}`);
-    brSVG+=`<polyline points="${pts.join(' ')}" fill="none" stroke="${color}" stroke-width="3.5" stroke-linejoin="round" stroke-linecap="round" opacity=".92"/>`;
-    brBody+=`<span class="msch-brtag" style="left:${bx}px;top:${(Math.min(...Yb)-15).toFixed(1)}px;--pc:${color}">지선</span>`;
-    for(let i=0;i<bn;i++){ const isJ=(i===jb), y=Yb[i];
-      const pfs=_metroStationPlatforms(m[i], l.name, m[i-1], m[i+1]);
-      const list=(isJ?pfs.filter(p=>p.branchOnly):pfs).slice(0,8), pnums=list.map(p=>p.pn).join('·');
-      brBody+=`<span class="msch-bdot${isJ?' j':''}" style="left:${bx}px;top:${y.toFixed(1)}px;--pc:${color}"></span>`;
-      if(!isJ) brBody+=`<span class="msch-bname" style="left:${(bx+11).toFixed(1)}px;top:${y.toFixed(1)}px">${_opsEsc(m[i])}${pnums?` <b>${pnums}</b>`:''}</span>`;
-      else if(pnums) brBody+=`<span class="msch-bname j" style="left:${(bx+11).toFixed(1)}px;top:${y.toFixed(1)}px"><b>${pnums}</b></span>`;
-      Hb=Math.max(Hb,y+30);
-    }
-    rightX=bx+98;
-  });
-  const depY={};
-  ((GEOREC&&GEOREC.d)||[]).forEach(d=>{
-    const j=d.j, y0=(Y[j]!=null?Y[j]:TOP), key=Math.round(y0/26);
-    depY[key]=(depY[key]||0); const y=y0+depY[key]*20; depY[key]++;
-    const dx=rightX+12, jx=(dnXs[j]!=null?dnXs[j]:PBASE);
-    brSVG+=`<path d="M ${jx.toFixed(1)} ${y0.toFixed(1)} L ${dx} ${y.toFixed(1)}" fill="none" stroke="#8b949e" stroke-width="2.5" stroke-dasharray="4 3" opacity=".8"/>`;
-    brBody+=`<span class="msch-depot" style="left:${dx}px;top:${y.toFixed(1)}px">🏭 ${_opsEsc(depShort(d.n))}</span>`;
-    Hb=Math.max(Hb,y+28);
-  });
-  if(((GEOREC&&GEOREC.d)||[]).length)rightX+=110;
-
-  const CW=Math.max(260, rightX+8), CH=Math.max(H,Hb);
-  const svg=`<svg class="msch-svg" width="${CW}" height="${CH}" viewBox="0 0 ${CW} ${CH}" preserveAspectRatio="none">
-    <polyline points="${mk(upXs)}" fill="none" stroke="${color}" stroke-width="4.5" stroke-linejoin="round" stroke-linecap="round"/>
-    <polyline points="${mk(dnXs)}" fill="none" stroke="${color}" stroke-width="4.5" stroke-linejoin="round" stroke-linecap="round"/>
-    ${xtra}${brSVG}</svg>`;
-  // 본선 승강장 블록 + 역명 (번호순 고정 슬롯, 스파인 편차 반영)
-  let body='';
-  rows.forEach(({s,i,shown,moreN})=>{ const y=Y[i], end=(i===0||i===n-1), sx=spineX[i];
-    let plat='';
-    shown.forEach((p,j)=>{ plat+=`<span class="msch-plat k-${p.kind}${p.shared?' shared':''}${p.junction?' jstart':''}" style="left:${(Xc(j)+sx).toFixed(1)}px;--pc:${p.color}" title="${_opsEsc(p.label)} ${p.pn}번${p.shared?' (공용)':''}${p.junction?' (분기 시작)':''}">${p.pn}</span>`; });
-    if(moreN>0) plat+=`<span class="msch-plat k-more" style="left:${(Xc(shown.length)+sx).toFixed(1)}px" title="외 ${moreN}개 승강장">+${moreN}</span>`;
-    body+=`<div class="msch-stn${end?' end':''}" style="top:${y}px"><span class="msch-name">${_opsEsc(s)}</span>${plat}</div>`;
-  });
-  // 열차: 트랙 위 진행률 위치(위빙 X 보간)
-  const idxOf={}; stns.forEach((s,i)=>{ if(idxOf[s]==null)idxOf[s]=i; });
-  let trains='', cnt=0;
-  _metroLineLiveTrains(l.name).forEach(t=>{
-    const fi=idxOf[t.fromStn], ti=idxOf[t.toStn]; if(fi==null||ti==null)return; cnt++;
-    const down=ti>fi, arr=down?dnXs:upXs;
-    const y=t.atStation?Y[fi]:Y[fi]+t.frac*(Y[ti]-Y[fi]);
-    const x=t.atStation?arr[fi]:arr[fi]+t.frac*(arr[ti]-arr[fi]);
-    trains+=`<span class="msch-arw ${down?'down':'up'}" style="left:${x}px;top:${y}px">${down?'▼':'▲'}</span>
-      <span class="msch-lbl ${down?'down':'up'}" style="left:${x}px;top:${y}px;background:${down?color:'#d9782f'}">${_opsEsc(t.dest)}</span>`;
-  });
-  return {cnt, html:`<div class="msch-canvas" style="height:${CH}px;width:${CW}px;--mc:${color}">${svg}${body}${brBody}${trains}</div>`};
+  const CW=Math.ceil(curMaxX+16), CH=Math.ceil(H);
+  const svg=`<svg class="tsx-svg" width="${CW}" height="${CH}" viewBox="0 0 ${CW} ${CH}"><g class="tsx-platlayer">${platsSVG}</g><g class="tsx-tracklayer">${tracksSVG}</g></svg>`;
+  return {cnt, html:`<div class="tsx-canvas" style="height:${CH}px;width:${CW}px;--mc:${color}">${svg}${namesHTML}${labelsHTML}</div>`};
 }
 // 노선 상세 버튼 → 배선 탭으로 이동하며 해당 노선 선택
 function openMetroSchematicTab(lineId){ _metroSchLine=lineId; if(_appMode!=='metro')setAppMode('metro'); switchTab('metroschematic'); }
@@ -10960,7 +10915,7 @@ function renderMetroSchematicTab(){
       </div>
       <div class="msch-legend"><span class="msch-lg up">▲ 상행 <small>종점→기점</small></span><span class="msch-lg down">하행 <small>기점→종점</small> ▼</span></div>
       <div class="msch-body msch-body--inline">${html}</div>
-      <div class="msch-foot">복선 본선 · 다승강장 역=역 앞뒤 분기/합류 유치선, 역 사이 구간=건넘선 · 트랙 양옆/사이=이 노선 승강장, 우측=평행 승강장 · 우측 열=지선, 🏭=차량기지 · ▲▼=실시간 편성</div>
+      <div class="msch-foot">중심축 고정 직선 복선 · 회색=승강장(상대·섬식), 대피·회차·분기만 곡선 · 종단=회차선 · 지선=동일 배선(자체 축) · 🏭=차량기지 · ▲▼=실시간 편성(트랙 위)</div>
     </div>`;
 }
 

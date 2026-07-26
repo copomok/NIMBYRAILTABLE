@@ -1539,6 +1539,18 @@ button, select, input[type=range],
 .msch-tname{position:absolute;left:5px;transform:translateY(-50%);font-size:11px;font-weight:700;color:var(--text1);z-index:3;white-space:nowrap;max-width:50px;overflow:hidden;text-overflow:ellipsis}
 .msch-tname.end{font-weight:800;color:var(--mc)}
 .msch-tplat{position:absolute;transform:translate(-50%,-50%);width:8.5px;height:22px;border-radius:2px;background:#8b98a5;box-shadow:0 0 0 1px rgba(0,0,0,.25);z-index:2}
+/* 도시철도 배선 렌더러 v2 */
+.tsx-canvas{position:relative;margin:0 auto;font-family:var(--sans)}
+.tsx-svg{position:absolute;left:0;top:0}
+.tsx-plat{fill:#6b7482;opacity:.5}
+.tsx-pnum{fill:#e6edf3;font-size:8px;text-anchor:middle;font-family:var(--mono);font-weight:700;opacity:.9}
+.tsx-name{position:absolute;left:5px;transform:translateY(-50%);font-size:11px;font-weight:700;color:var(--text1);white-space:nowrap;max-width:46px;overflow:hidden;text-overflow:ellipsis}
+.tsx-name.end{color:var(--mc);font-weight:800}
+.tsx-bname{position:absolute;transform:translateY(-50%);font-size:10px;font-weight:600;color:var(--text2);white-space:nowrap}
+.tsx-brtag{position:absolute;transform:translate(-50%,-100%);font-size:8.5px;font-weight:800;color:#fff;background:var(--pc);padding:1px 5px;border-radius:6px;white-space:nowrap}
+.tsx-depot{position:absolute;transform:translateY(-50%);font-size:9px;font-weight:700;color:var(--text2);background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:1px 5px;white-space:nowrap}
+.tsx-arw{position:absolute;transform:translate(-50%,-50%);font-size:12px;font-weight:900;line-height:1;color:#fff;z-index:6;filter:drop-shadow(0 1px 2px rgba(0,0,0,.7))}
+.tsx-tlbl{position:absolute;font-size:9px;font-weight:800;color:#fff;background:var(--tc);padding:1px 5px;border-radius:6px;white-space:nowrap;z-index:6;box-shadow:0 1px 3px rgba(0,0,0,.5)}
 /* 지선(우측 평행 열) */
 .msch-bdot{position:absolute;transform:translate(-50%,-50%);width:9px;height:9px;border-radius:50%;background:var(--bg2);border:2.5px solid var(--pc);z-index:2}
 .msch-bdot.j{width:11px;height:11px;background:var(--pc)}
