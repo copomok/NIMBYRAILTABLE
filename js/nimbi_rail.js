@@ -1963,8 +1963,9 @@ const SEAT_WATCH_KEY='nimbi_seat_watches';
 function loadSeatWatches(){try{return JSON.parse(localStorage.getItem(SEAT_WATCH_KEY))||[];}catch(e){return[];}}
 function saveSeatWatches(w){localStorage.setItem(SEAT_WATCH_KEY,JSON.stringify(w));}
 
-function openSeatWatchPopup(trainNo, fromStn, toStn){
-  const existing=loadSeatWatches().filter(w=>w.trainNo===trainNo&&w.active);
+function openSeatWatchPopup(trainNo, fromStn, toStn, travelDate){
+  travelDate=travelDate||todayLocalStr();
+  const existing=loadSeatWatches().filter(w=>w.trainNo===trainNo&&w.active&&(w.travelDate||travelDate)===travelDate);
   const existingLabel=existing.length?existing.map(w=>w.seatClassLabel).join(', '):'';
   const wrap=document.createElement('div');
   wrap.id='seat-watch-wrap';
@@ -1988,7 +1989,7 @@ function openSeatWatchPopup(trainNo, fromStn, toStn){
       </div>
       <div style="font-size:11px;color:var(--text3);margin-bottom:12px">여석이 생기면 브라우저 알림으로 알려드립니다. (시뮬레이션 기준)</div>
       <div style="display:flex;gap:8px">
-        <button class="btn btn-primary" style="flex:1" onclick="confirmSeatWatch('${trainNo}','${fromStn}','${toStn}')">알림 설정</button>
+        <button class="btn btn-primary" style="flex:1" onclick="confirmSeatWatch('${trainNo}','${fromStn}','${toStn}','${travelDate}')">알림 설정</button>
         <button class="btn alarm-popup-close" onclick="closeSeatWatchPopup()">취소</button>
       </div>
     </div>`;
@@ -1999,7 +2000,7 @@ function closeSeatWatchPopup(){
   document.getElementById('seat-watch-wrap')?.remove();
 }
 
-function confirmSeatWatch(trainNo, fromStn, toStn){
+function confirmSeatWatch(trainNo, fromStn, toStn, travelDate){
   const classes=[
     {id:'sw-general',key:'general',label:'일반실'},
     {id:'sw-special',key:'special',label:'특실'},
@@ -2008,10 +2009,11 @@ function confirmSeatWatch(trainNo, fromStn, toStn){
   if(!classes.length){alert('알림 받을 좌석 등급을 1개 이상 선택해주세요.');return;}
 
   requestNotifPermission(()=>{
-    const watches=loadSeatWatches().filter(w=>!(w.trainNo===trainNo));
+    travelDate=travelDate||todayLocalStr();
+    const watches=loadSeatWatches().filter(w=>!(w.trainNo===trainNo&&w.fromStn===fromStn&&w.toStn===toStn&&(w.travelDate||travelDate)===travelDate));
     classes.forEach(c=>{
       watches.push({id:`sw_${trainNo}_${c.key}_${Date.now()}`,trainNo,fromStn,toStn,
-        seatClass:c.key,seatClassLabel:c.label,active:true,createdAt:Date.now()});
+        travelDate,seatClass:c.key,seatClassLabel:c.label,active:true,createdAt:Date.now(),lastAvailable:0,notifiedEvents:[]});
     });
     saveSeatWatches(watches);
     closeSeatWatchPopup();
@@ -2024,19 +2026,20 @@ function removeSeatWatch(id){
 }
 
 function checkSeatWatches(){
-  const watches=loadSeatWatches().filter(w=>w.active);
+  const all=loadSeatWatches(),watches=all.filter(w=>w.active);
   if(!watches.length)return;
-  if(Notification.permission!=='granted')return;
+  let changed=false;
   watches.forEach(w=>{
-    // 10% 확률로 여석 발생 시뮬레이션 (실제 API 없음)
-    if(Math.random()<0.1){
-      sendNotification('🔔 여석 알림', `${w.trainNo}번 열차 ${w.seatClassLabel}에 좌석이 생겼어요!`);
-      // 알림 발송 후 해제
-      const watches2=loadSeatWatches();
-      const idx=watches2.findIndex(x=>x.id===w.id);
-      if(idx>=0){watches2[idx].active=false;saveSeatWatches(watches2);}
+    const t=getTrainByNo(w.trainNo),date=w.travelDate||todayLocalStr();if(!t)return;
+    const available=typeof getAvailableSeats==='function'?getAvailableSeats(t,w.fromStn,w.toStn,date,w.seatClass):0;
+    const eventId=`${w.trainNo}:${date}:${w.fromStn}:${w.toStn}:${available}`,was=Number(w.lastAvailable)||0,notified=Array.isArray(w.notifiedEvents)?w.notifiedEvents:[];
+    if(was===0&&available>0&&!notified.includes(eventId)){
+      if(typeof Notification!=='undefined'&&Notification.permission==='granted')sendNotification('🔔 여석 알림',`${w.trainNo}번 ${w.fromStn}→${w.toStn} ${w.seatClassLabel} 취소표 ${available}석이 생겼어요!`);
+      w.notifiedEvents=[...notified,eventId].slice(-12);w.active=false;
     }
+    w.lastAvailable=available;changed=true;
   });
+  if(changed)saveSeatWatches(all);
 }
 // 5분마다 여석 체크
 setInterval(checkSeatWatches, 5*60*1000);
@@ -5407,6 +5410,11 @@ function confirmBooking(trainNo,fromStn,toStn,depTime,arrTime){
 
   const dateInput=document.getElementById('booking-date');
   const travelDate=dateInput&&dateInput.value?dateInput.value:todayLocalStr();
+  if(typeof canBookOD==='function'&&!canBookOD(t,fromStn,toStn,count,travelDate,seatClass)){
+    const left=typeof getAvailableSeats==='function'?getAvailableSeats(t,fromStn,toStn,travelDate,seatClass):0;
+    alert(left>0?`선택한 구간에는 ${left}석만 남아 있습니다.`:'선택한 구간은 매진되었습니다. 여석 알림을 설정해 주세요.');
+    return;
+  }
 
   // 오늘 날짜 예매 시 출발 시각이 현재 시각보다 이전이면 차단
   // (지연 시뮬레이션 중 지연 열차는 '실제 지연 출발 예정 시각'까지 예매 가능)
@@ -5462,6 +5470,7 @@ function confirmBooking(trainNo,fromStn,toStn,depTime,arrTime){
     status:'active', // active | used | cancelled
   });
   saveTickets(tickets);
+  if(typeof invalidateCongestion==='function')invalidateCongestion(trainNo,travelDate);
 
   // 승차역/하차역 알람 자동 설정 (이미 설정되어 있으면 건너뜀, 안내 문구 없이 조용히)
   try{
@@ -5512,6 +5521,7 @@ function cancelTicket(id){
 
   tickets[idx].status='cancelled';
   saveTickets(tickets);
+  if(typeof invalidateCongestion==='function')invalidateCongestion(tk.trainNo,tk.travelDate);
 
   // 승하차 알람 자동 해제
   try{
@@ -8820,19 +8830,18 @@ function searchBookTrains(includeTransfer, includeAdj){
 
   // 좌석 가용 버튼 비동기 업데이트
   setTimeout(()=>{
-    trains.forEach(({t})=>{
+    trains.forEach(({t,aFrom,aTo})=>{
       const ft=getFormationType(t.grade,t.no);
       const comp=getCarComposition(ft);
-      const cong=getCongestionLevel(t.no,dateGo,comp);
+      const cong=getCongestionLevel(t.no,dateGo,comp,aFrom||from,aTo||to);
       const row=el.querySelector(`[data-train-no="${t.no}"]`);
       const btn=row?.querySelector('.seat-avail-btn');
       if(!btn)return;
-      const r=cong.rate||0;
+      const r=cong.rate||0,available=cong.available||0;
       const base='min-width:54px;height:44px;border-radius:8px;border:1.5px solid;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;font-family:var(--sans)';
-      if(r>=0.98){btn.textContent='매진';btn.style.cssText=base+';color:var(--red);border-color:var(--red);background:rgba(248,81,73,.08)';}
-      else if(r>=0.80){btn.textContent='혼잡';btn.style.cssText=base+';color:var(--orange);border-color:var(--orange);background:rgba(249,115,22,.08)';}
-      else if(r>=0.50){btn.textContent='보통';btn.style.cssText=base+';color:var(--accent2);border-color:var(--accent);background:rgba(56,139,253,.08)';}
-      else{btn.textContent='여유';btn.style.cssText=base+';color:var(--green);border-color:var(--green);background:rgba(63,185,80,.08)';}
+      if(available<=0){btn.textContent='매진';btn.style.cssText=base+';color:var(--red);border-color:var(--red);background:rgba(248,81,73,.08)';}
+      else if(available<=8){btn.textContent=available===1?'1석':`잔여 ${available}석`;btn.style.cssText=base+';color:var(--orange);border-color:var(--orange);background:rgba(249,115,22,.08);font-size:10px';}
+      else{btn.textContent=`여유 ${available}석`;btn.style.cssText=base+';color:var(--green);border-color:var(--green);background:rgba(63,185,80,.08);font-size:10px';}
     });
   },0);
 }
@@ -8842,6 +8851,10 @@ function searchBookTrains(includeTransfer, includeAdj){
 function openBookTrainDetail(trainNo, from, to, depT, arrT, travelDate){
   const t = getTrainByNo(trainNo);
   if(!t) return;
+  const inventory=typeof getTrainInventorySnapshot==='function'?getTrainInventorySnapshot(t,travelDate):null;
+  const odCong=typeof getCongestionLevel==='function'?getCongestionLevel(t.no,travelDate,null,from,to):null;
+  let busiest='';
+  if(inventory?.segmentLoads?.length){const max=Math.max(...inventory.segmentLoads),i=inventory.segmentLoads.indexOf(max);busiest=`${inventory.stops[i]}→${inventory.stops[i+1]} ${Math.round(max/Math.max(1,inventory.capacity.total)*100)}%`;}
 
   const old = document.getElementById('book-detail-wrap');
   if(old) old.remove();
@@ -8850,7 +8863,7 @@ function openBookTrainDetail(trainNo, from, to, depT, arrT, travelDate){
   let soldOut=false;
   try{
     const _comp=getCarComposition(getFormationType(t.grade,t.no));
-    soldOut=(getCongestionLevel(t.no,travelDate,_comp).rate||0)>=0.98;
+    soldOut=(getCongestionLevel(t.no,travelDate,_comp,from,to).available||0)<=0;
   }catch(e){}
 
   const fare = calcFare(t, from, to, 'general');
@@ -8892,6 +8905,13 @@ function openBookTrainDetail(trainNo, from, to, depT, arrT, travelDate){
       </div>
       <div class="book-detail-scroll" style="padding:0 20px">
         <div class="book-detail-fares">${fareSpec}</div>
+        ${inventory?`<div class="book-detail-fares" style="margin-top:10px">
+          <div class="book-detail-fare-row"><span>총 좌석</span><b>${inventory.capacity.total}석</b></div>
+          <div class="book-detail-fare-row"><span>조회 구간 현재 예약</span><b>${odCong?.booked||0}명</b></div>
+          <div class="book-detail-fare-row"><span>조회 구간 잔여석</span><b style="color:${(odCong?.available||0)<=8?'var(--orange)':'var(--green)'}">${odCong?.available||0}석</b></div>
+          <div class="book-detail-fare-row"><span>예상 최종 예약률</span><b>${Math.round((inventory.expectedFinalRate||0)*100)}%</b></div>
+          <div class="book-detail-fare-row"><span>가장 혼잡한 구간</span><b>${busiest||'-'}</b></div>
+        </div>`:''}
       </div>
       <div style="flex-shrink:0;padding:8px 20px 32px;display:flex;gap:8px">
         <button class="btn" id="bdd-detail-btn" style="flex:1;justify-content:center;font-size:13px">🔍 열차 상세</button>
@@ -8905,7 +8925,7 @@ function openBookTrainDetail(trainNo, from, to, depT, arrT, travelDate){
   addMobileTap(document.getElementById('bdd-close-x'), closeBookTrainDetail);
   addMobileTap(document.getElementById('bdd-detail-btn'), ()=>{ closeBookTrainDetail(); jumpToTrain(trainNo); });
   if(soldOut){
-    addMobileTap(document.getElementById('bdd-watch-btn'), ()=>{ closeBookTrainDetail(); openSeatWatchPopup(trainNo,from,to); });
+    addMobileTap(document.getElementById('bdd-watch-btn'), ()=>{ closeBookTrainDetail(); openSeatWatchPopup(trainNo,from,to,travelDate); });
   }else{
     addMobileTap(document.getElementById('bdd-book-btn'), ()=>{ closeBookTrainDetail(); _bookDetailConfirm(trainNo,from,to,depT,arrT||'',travelDate); });
   }
@@ -9185,6 +9205,14 @@ function confirmXferBooking(){
   if(!X.legs.every(L=>L.cls)){alert('두 구간 모두 좌석 등급을 선택해주세요.');return;}
   const travelDate=X.date||todayLocalStr();
   const count=X.count||1, discount=X.discount||'none';
+  for(const L of X.legs){
+    const inventoryTrain=getTrainByNo(L.no);
+    if(typeof canBookOD==='function'&&!canBookOD(inventoryTrain,L.from,L.to,count,travelDate,L.cls)){
+      const left=typeof getAvailableSeats==='function'?getAvailableSeats(inventoryTrain,L.from,L.to,travelDate,L.cls):0;
+      alert(`${L.from} → ${L.to} 구간은 ${left>0?`${left}석만 남아`:'매진되어'} 환승 예매를 진행할 수 없습니다.`);
+      return;
+    }
+  }
   // 오늘 예매 시 선행 열차가 이미 출발했으면 차단 (지연 열차는 지연 출발 시각까지 허용)
   if(travelDate===todayLocalStr()){
     const now=new Date(); const nowM=now.getHours()*60+now.getMinutes();
@@ -9225,6 +9253,7 @@ function confirmXferBooking(){
     tickets.push(tk); created.push(tk);
   });
   saveTickets(tickets);
+  created.forEach(tk=>{if(typeof invalidateCongestion==='function')invalidateCongestion(tk.trainNo,tk.travelDate);});
   created.forEach(tk=>_autoBookAlarms(getTrainByNo(tk.trainNo),tk.fromStn,tk.toStn,tk.depTime,tk.arrTime));
   closeBookTrainDetail();
   const totalFare=created.reduce((a,tk)=>a+tk.totalFare,0);

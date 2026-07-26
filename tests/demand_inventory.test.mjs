@@ -1,0 +1,12 @@
+import fs from'node:fs';import vm from'node:vm';import assert from'node:assert/strict';
+const c={console,Date,Math,Map,Set,JSON,Number,String,Array,Object,RegExp};c.window=c;c.localStorage={getItem:()=>null,setItem:()=>{}};vm.createContext(c);
+for(const f of['data/nimbi_demand_data.js','data/nimbi_train_demand.js','js/features/nimbi_demand.js','js/features/nimbi_booking_dynamics.js','js/features/nimbi_inventory.js'])vm.runInContext(fs.readFileSync(f,'utf8'),c,{filename:f});
+c.getFormationType=()=>'test';c.getCarComposition=()=>[{car:1,type:'general',rows:20,cols:['A','B','C','D'],totalSeats:80},{car:2,type:'special',rows:5,cols:['A','B','C','D'],totalSeats:20},{car:3,type:'free',totalSeats:0}];
+const train={no:'1202',grade:'무궁화호',stops:[{s:'서울',dep:'08:00'},{s:'대전',arr:'09:00',dep:'09:05'},{s:'남대구',arr:'10:00',dep:'10:05'},{s:'부산',arr:'11:00'}]},date='2026-07-28',now=new Date('2026-07-28T07:00:00');
+c.loadTickets=()=>[];const a=c.getTrainInventorySnapshot(train,date,now);c.NIMBI_Inventory.invalidate();const b=c.getTrainInventorySnapshot(train,date,now);assert.deepEqual(a.segmentLoads,b.segmentLoads,'결정적 시드');assert.equal(c.buildTrainODDemand(train,date).length,6);assert.ok(c.getBaseDemandIndex(train)>.45);
+c.loadTickets=()=>[{id:'u',trainNo:'1202',travelDate:date,status:'active',fromStn:'서울',toStn:'대전',passengerCount:100,seats:[]}];c.NIMBI_Inventory.invalidate();assert.equal(c.getAvailableSeats(train,'서울','대전',date,null,now),0);assert.ok(c.getAvailableSeats(train,'대전','부산',date,null,now)>0);assert.equal(c.getAvailableSeats(train,'서울','부산',date,null,now),0);
+assert.equal(c.getTrainCapacity(train).premium,20);assert.equal(c.getTrainCapacity(train).standing,30);
+assert.ok(c.getBookingProgress(24,'regional')>c.getBookingProgress(168,'regional'));
+const local={s:'대전',dep:'08:00'},capital={s:'서울',dep:'08:00'};assert.ok(c.NIMBI_Demand.getTimeDirectionMultiplier(train,local,capital,date)>c.NIMBI_Demand.getTimeDirectionMultiplier(train,capital,local,date));
+c.NIMBI_Inventory.invalidate();assert.equal(c.getTrainInventorySnapshot(train,'2026-07-29',now).userBookings.length,0);
+console.log('demand_inventory.test: OK');
