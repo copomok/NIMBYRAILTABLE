@@ -1525,9 +1525,12 @@ button, select, input[type=range],
 .msch-stn{position:absolute;left:0;right:0;height:0}
 .msch-name{position:absolute;left:2px;top:0;transform:translateY(-50%);width:44px;text-align:right;font-size:11px;font-weight:700;color:var(--text1);line-height:1.15;white-space:normal;word-break:keep-all}
 .msch-stn.end .msch-name{font-weight:800;color:var(--mc)}
-.msch-plat{position:absolute;top:0;transform:translateY(-50%);width:17px;height:34px;border-radius:3px;background:color-mix(in srgb,var(--text3) 26%,transparent);border:1px solid color-mix(in srgb,var(--text3) 20%,transparent);display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:9px;font-weight:800;color:var(--text3)}
-.msch-plat.on{background:color-mix(in srgb,var(--mc) 20%,var(--bg2));border-color:var(--mc);color:var(--mc)}
-.msch-plat.shared{box-shadow:inset 0 -3px 0 -1px color-mix(in srgb,var(--mc) 60%,#fff)}
+.msch-plat{position:absolute;top:0;transform:translateY(-50%);width:18px;height:34px;border-radius:3px;box-sizing:border-box;display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:9px;font-weight:800}
+.msch-plat.k-cur{background:var(--pc);color:#fff;box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.9)}
+.msch-plat.k-metro{background:color-mix(in srgb,var(--pc) 72%,var(--bg2));color:#fff}
+.msch-plat.k-train{background:transparent;border:1px solid var(--pc);color:var(--pc)}
+.msch-plat.k-more{background:var(--bg3);border:1px solid var(--border);color:var(--text3)}
+.msch-plat.shared::after{content:'';position:absolute;bottom:2px;left:50%;transform:translateX(-50%);width:9px;height:2px;border-radius:1px;background:rgba(255,255,255,.92)}
 /* 타 노선·기차 승강장 칩(우측) */
 .msch-pfrow{position:absolute;left:252px;top:0;transform:translateY(-50%);display:flex;gap:3px;align-items:center;z-index:3}
 .msch-pf{min-width:15px;height:18px;padding:0 3px;border-radius:4px;display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:8.5px;font-weight:800;color:#fff;background:var(--pc)}
@@ -1538,7 +1541,7 @@ button, select, input[type=range],
 .msch-train{position:absolute;z-index:6}
 .msch-arw{position:absolute;left:0;top:0;transform:translate(-50%,-50%);font-size:14px;font-weight:900;line-height:1;filter:drop-shadow(0 1px 2px rgba(0,0,0,.55))}
 .msch-train.down .msch-arw{color:var(--dc)}.msch-train.up .msch-arw{color:#e8863d}
-.msch-lbl{position:absolute;top:0;transform:translateY(-50%);font-size:9.5px;font-weight:800;color:#fff;padding:1px 5px;border-radius:7px;white-space:nowrap;max-width:92px;overflow:hidden;text-overflow:ellipsis;box-shadow:0 1px 3px rgba(0,0,0,.4);border:1px solid var(--bg1)}
+.msch-lbl{position:absolute;top:0;transform:translateY(-50%);font-size:9.5px;font-weight:800;color:#fff;padding:1px 5px;border-radius:7px;white-space:nowrap;max-width:54px;overflow:hidden;text-overflow:ellipsis;box-shadow:0 1px 3px rgba(0,0,0,.4);border:1px solid var(--bg1)}
 .msch-train.down .msch-lbl{left:12px;background:var(--dc)}
 .msch-train.up .msch-lbl{right:12px;background:#d9782f}
 .msch-foot{font-size:9px;color:var(--text3);padding:8px 15px;border-top:1px solid var(--border);flex-shrink:0;text-align:center}
