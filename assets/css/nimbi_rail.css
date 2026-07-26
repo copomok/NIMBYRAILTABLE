@@ -1962,6 +1962,8 @@ button, select, input[type=range],
 .mtt-hcell:not(:last-child){border-right:1px solid var(--border)}
 .mtt-row{display:flex;align-items:baseline;gap:9px;padding:5px 12px}
 .mtt-row--now{background:color-mix(in srgb,var(--mc) 18%,transparent)}
+.mtt-row--next{background:color-mix(in srgb,var(--mc) 22%,transparent);box-shadow:inset 3px 0 0 var(--mc)}
+.mtt-row--next .mtt-t{color:var(--mc)}
 .mtt-t{font-family:var(--mono);font-size:14px;font-weight:700;color:var(--text1);font-variant-numeric:tabular-nums;flex-shrink:0;min-width:44px}
 .mtt-od{font-size:11.5px;color:var(--text2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .mtt-empty{padding:5px 12px;color:var(--text3);font-size:11px;opacity:.4}
