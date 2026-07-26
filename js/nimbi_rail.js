@@ -9954,7 +9954,7 @@ function _metroTrainLivePos(line, svcIdx){
 }
 function _metroLineLiveTrains(lineName){
   const ent=(typeof METRO_SCHED!=='undefined')&&METRO_SCHED[lineName]; if(!ent)return [];
-  const out=[]; for(let s=0;s<ent.t.length;s++){ const p=_metroTrainLivePos(lineName,s); if(p)out.push(p); }
+  const out=[]; for(let s=0;s<ent.t.length;s++){ const p=_metroTrainLivePos(lineName,s); if(p)out.push({...p,svcIdx:s,cls:ent.c?ent.c[s]:0}); }
   return out;
 }
 let _metroLiveOn=true;   // 노선 상세 실시간 위치 표시 on/off
@@ -10913,7 +10913,7 @@ function _sxRoute(names,curBase,axisX,Y,color,opts){
   return {plats, tracks:side+main, up, dn, minX, maxX};
 }
 
-function _metroSchCanvas(l){
+function _metroSchCanvasLegacy(l){
   const color=l.color, F=x=>(+x).toFixed(1), {NAMEW,TOP,ROW,G,BW,PO}=SX;
   const GEO=(typeof METRO_GEO!=='undefined')?METRO_GEO[l.name]:null;
   const mCoords=(GEO&&GEO.m)||l.stations.map(()=>null);
@@ -10965,6 +10965,127 @@ function _metroSchCanvas(l){
   const svg=`<svg class="tsx-svg" width="${CW}" height="${CH}" viewBox="0 0 ${CW} ${CH}"><g class="tsx-platlayer">${platsSVG}</g><g class="tsx-tracklayer">${tracksSVG}</g></svg>`;
   return {cnt, html:`<div class="tsx-canvas" style="height:${CH}px;width:${CW}px;--mc:${color}">${svg}${namesHTML}${labelsHTML}</div>`};
 }
+
+// ── 도시철도 배선 렌더러 v3: 인게임 s/d 선로 geometry를 종단 배선으로 투영 ──
+// s=노선 중심선 누적거리, d=중심선 좌우 편차. 실제 분기·건넘선·대피선은 회색 기반선으로,
+// 장거리 본선과 중심축 연결선은 노선색 점유 경로로 표시한다.
+function _sxTrackY(s, ss, Y){
+  if(!ss||!ss.length||!Y||!Y.length)return SX.TOP;
+  if(s<=ss[0])return Y[0]; const last=ss.length-1;
+  if(s>=ss[last])return Y[Math.min(last,Y.length-1)];
+  let lo=0,hi=last;
+  while(lo+1<hi){const m=(lo+hi)>>1;if(ss[m]<=s)lo=m;else hi=m;}
+  const span=Math.max(1,ss[hi]-ss[lo]), f=(s-ss[lo])/span;
+  return Y[lo]+f*(Y[hi]-Y[lo]);
+}
+function _sxNormalizeStops(raw,total){
+  const ss=(raw||[]).map(Number),n=ss.length;if(!n)return ss;
+  ss[0]=0;
+  for(let i=1;i<n;i++)if(!Number.isFinite(ss[i])||ss[i]<=ss[i-1]){
+    let j=i+1;while(j<n&&(!Number.isFinite(ss[j])||ss[j]<=ss[i-1]))j++;
+    const end=j<n?ss[j]:Math.max(Number(total)||ss[i-1]+1,ss[i-1]+1);
+    for(let k=i;k<j;k++)ss[k]=ss[i-1]+(end-ss[i-1])*(k-i+1)/(j-i+1);
+  }
+  return ss;
+}
+function _sxTrackPath(run,ss,Y,axisX,scale){
+  if(!Array.isArray(run)||run.length<4)return '';
+  let d=''; for(let i=0;i+1<run.length;i+=2){
+    const x=axisX+Number(run[i+1]||0)*scale, y=_sxTrackY(Number(run[i]||0),ss,Y);
+    d+=(i?' L ':'M ')+x.toFixed(1)+' '+y.toFixed(1);
+  } return d;
+}
+function _sxTrackRunStats(run){
+  let minS=Infinity,maxS=-Infinity,near=0,n=0,minD=Infinity,maxD=-Infinity;
+  for(let i=0;i+1<run.length;i+=2){const s=Number(run[i]),d=Number(run[i+1]);if(!Number.isFinite(s)||!Number.isFinite(d))continue;
+    minS=Math.min(minS,s);maxS=Math.max(maxS,s);minD=Math.min(minD,d);maxD=Math.max(maxD,d);if(Math.abs(d)<=9)near++;n++;}
+  return {span:Math.max(0,maxS-minS),near:n?near/n:0,minD,maxD};
+}
+function _sxLocalTrackOffsets(track,s){
+  const vals=[];
+  (track.rn||[]).forEach(run=>{
+    for(let i=0;i+3<run.length;i+=2){const s1=Number(run[i]),d1=Number(run[i+1]),s2=Number(run[i+2]),d2=Number(run[i+3]);
+      if((s>=Math.min(s1,s2)-1)&&(s<=Math.max(s1,s2)+1)&&s1!==s2){
+        const f=(s-s1)/(s2-s1); vals.push(d1+(d2-d1)*f);
+      }
+    }
+    for(let i=0;i+1<run.length;i+=2)if(Math.abs(Number(run[i])-s)<90)vals.push(Number(run[i+1]));
+  });
+  vals.sort((a,b)=>a-b); const out=[]; vals.forEach(v=>{if(Number.isFinite(v)&&(!out.length||Math.abs(v-out[out.length-1])>2.2))out.push(v);});
+  return out;
+}
+function _sxDetailedPlatforms(l,track,Y,axisX,scale){
+  const F=x=>(+x).toFixed(1); let svg='',minX=axisX,maxX=axisX;
+  const box=(x,y)=>{minX=Math.min(minX,x-6);maxX=Math.max(maxX,x+6);svg+=`<rect x="${F(x-6)}" y="${F(y-16)}" width="12" height="32" rx="2" class="tsx-plat tsx-plat--game"/>`;};
+  l.stations.forEach((name,i)=>{
+    const pfs=_metroStationPlatforms(name,l.name,l.stations[i-1],l.stations[i+1]).filter(p=>p.isCur&&!p.branchOnly);
+    const count=Math.max(1,pfs.length||1), offsets=_sxLocalTrackOffsets(track,track.ss[i]||0);
+    const core=(offsets.length?offsets:[0,5]).filter(v=>Math.abs(v)<=22);
+    const lo=core.length?Math.min(...core):0, hi=core.length?Math.max(...core):5, y=Y[i];
+    if(count===1)box(axisX+((lo+hi)/2)*scale,y);
+    else {
+      box(axisX+(lo-5.5)*scale,y); box(axisX+(hi+5.5)*scale,y);
+      for(let k=2;k<count;k++){const f=(k-1)/(count-1);box(axisX+(lo+(hi-lo)*f)*scale,y);}
+    }
+  });
+  return {svg,minX,maxX};
+}
+function _sxDetailedTrackLayer(track,ss,Y,axisX,scale,color){
+  let base='',active='',minX=axisX,maxX=axisX;
+  (track.rn||[]).forEach(run=>{
+    const p=_sxTrackPath(run,ss,Y,axisX,scale); if(!p)return;
+    const st=_sxTrackRunStats(run); minX=Math.min(minX,axisX+st.minD*scale);maxX=Math.max(maxX,axisX+st.maxD*scale);
+    base+=`<path d="${p}" class="tsx-real-track"/>`;
+    if(st.span>=650||st.near>=.72)active+=`<path d="${p}" class="tsx-real-route" stroke="${color}"/>`;
+  });
+  return {svg:`<g class="tsx-real-base">${base}</g><g class="tsx-real-active">${active}</g>`,minX,maxX};
+}
+function _metroSchCanvas(l){
+  const track=(typeof METRO_TRACK!=='undefined')&&METRO_TRACK[l.name];
+  if(!track||!Array.isArray(track.ss)||track.ss.length!==l.stations.length||!Array.isArray(track.rn)||!track.rn.length)
+    return _metroSchCanvasLegacy(l);
+  const color=l.color,F=x=>(+x).toFixed(1),GEO=(typeof METRO_GEO!=='undefined')?METRO_GEO[l.name]:null;
+  const stopS=_sxNormalizeStops(track.ss,track.v);
+  const Y=_sxY((GEO&&GEO.m)||l.stations.map(()=>null),56), axisX=126, scale=2.15;
+  const layer=_sxDetailedTrackLayer(track,stopS,Y,axisX,scale,color);
+  const renderTrack={...track,ss:stopS},plats=_sxDetailedPlatforms(l,renderTrack,Y,axisX,scale);
+  let namesHTML='',labelsHTML='',minX=Math.min(layer.minX,plats.minX),maxX=Math.max(layer.maxX,plats.maxX);
+  const geometryRight=maxX, continuationX=geometryRight+22;
+  const mainIdx={}; l.stations.forEach((s,i)=>{if(mainIdx[s]==null)mainIdx[s]=i;
+    namesHTML+=`<span class="tsx-name tsx-name--game${i===0||i===l.stations.length-1?' end':''}" style="top:${F(Y[i])}px">${_opsEsc(s)}</span>`;});
+  // 연결 노선·지선은 실제 junction 옆에 목적지 안내로 표시한다.
+  ((GEO&&GEO.b)||[]).forEach((b,bi)=>{
+    const j=b.s&&b.s.findIndex(s=>mainIdx[s]!=null); if(j==null||j<0)return;
+    const mi=mainIdx[b.s[j]], dest=(b.s[b.s.length-1]||'지선'), x=continuationX, y=Y[mi]+bi*15;
+    labelsHTML+=`<span class="tsx-cont" style="left:${F(x)}px;top:${F(y)}px;--pc:${color}"><i></i>${_opsEsc(dest)} 방면 지선</span>`;
+    maxX=Math.max(maxX,x+100);
+  });
+  ((GEO&&GEO.d)||[]).forEach((d,di)=>{
+    const y=Y[d.j]!=null?Y[d.j]:Y[0],x=continuationX;
+    labelsHTML+=`<span class="tsx-depot tsx-depot--game" style="left:${F(x)}px;top:${F(y+di%2*18)}px">🏭 ${_opsEsc(String(d.n).replace('차량사업소','사업소'))}</span>`;
+    maxX=Math.max(maxX,x+110);
+  });
+  let cnt=0; const trains=[];
+  _metroLineLiveTrains(l.name).forEach(t=>{
+    const fi=mainIdx[t.fromStn],ti=mainIdx[t.toStn];if(fi==null||ti==null)return;cnt++;
+    const down=ti>fi,s=t.atStation?stopS[fi]:stopS[fi]+t.frac*(stopS[ti]-stopS[fi]);
+    const local=_sxLocalTrackOffsets(renderTrack,s).filter(v=>Math.abs(v)<=10);
+    const lane=local.length?(down?local[local.length-1]:local[0]):(down?5:0);
+    trains.push({x:axisX+lane*scale,y:_sxTrackY(s,stopS,Y),down,dest:t.dest,id:`S${String(t.svcIdx+1).padStart(4,'0')}`});
+  });
+  trains.sort((a,b)=>a.y-b.y); const occupied=[];
+  trains.forEach((t,i)=>{
+    let shift=0; while(occupied.some(o=>Math.abs(o.y-t.y)<18&&o.shift===shift))shift++;occupied.push({y:t.y,shift});
+    const side=t.down?1:-1,tx=t.x+side*(15+shift*42);
+    labelsHTML+=`<span class="tsx-train-arrow ${t.down?'down':'up'}" style="left:${F(t.x)}px;top:${F(t.y)}px">${t.down?'▼':'▲'}</span>`+
+      `<span class="tsx-train-card" style="left:${F(tx)}px;top:${F(t.y)}px;transform:translate(${t.down?'0':'-100%'},-50%);--tc:${color}"><b>${t.id}</b><span>${_opsEsc(t.dest)}행</span></span>`;
+  });
+  const H=Math.ceil(Y[Y.length-1]+42),shiftX=Math.max(0,74-minX),CW=Math.ceil(maxX+shiftX+18);
+  // 실제 d가 음수인 선로가 이름 게터를 침범하면 선로·라벨만 함께 우측 이동한다.
+  const svg=`<svg class="tsx-svg" width="${CW}" height="${H}" viewBox="0 0 ${CW} ${H}"><g transform="translate(${F(shiftX)} 0)"><g class="tsx-platlayer">${plats.svg}</g><g class="tsx-tracklayer">${layer.svg}</g></g></svg>`;
+  if(shiftX) labelsHTML=labelsHTML.replace(/left:([0-9.-]+)px/g,(m,v)=>`left:${F(Number(v)+shiftX)}px`);
+  return {cnt,html:`<div class="tsx-canvas tsx-canvas--game" style="height:${H}px;width:${CW}px;--mc:${color}">${svg}${namesHTML}${labelsHTML}</div>`};
+}
 // 노선 상세 버튼 → 배선 탭으로 이동하며 해당 노선 선택
 function openMetroSchematicTab(lineId){ _metroSchLine=lineId; if(_appMode!=='metro')setAppMode('metro'); switchTab('metroschematic'); }
 // ── 🛤️ 배선 탭 ──
@@ -11001,7 +11122,7 @@ function renderMetroSchematicTab(){
       </div>
       <div class="msch-legend"><span class="msch-lg up">▲ 상행 <small>종점→기점</small></span><span class="msch-lg down">하행 <small>기점→종점</small> ▼</span></div>
       <div class="msch-body msch-body--inline">${html}</div>
-      <div class="msch-foot">중심축 고정 직선 복선 · 회색=승강장(상대·섬식), 대피·회차·분기만 곡선 · 종단=회차선 · 지선=동일 배선(자체 축) · 🏭=차량기지 · ▲▼=실시간 편성(트랙 위)</div>
+      <div class="msch-foot">인게임 배선 데이터 기준 · 노선색=본선·연결선 · 회색=대피선·유치선·보조선 · 회색 블록=승강장 · ▲▼=실시간 편성</div>
     </div>`;
 }
 

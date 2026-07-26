@@ -1563,6 +1563,20 @@ button, select, input[type=range],
 .tsx-depot{position:absolute;transform:translateY(-50%);font-size:9px;font-weight:700;color:var(--text2);background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:1px 5px;white-space:nowrap}
 .tsx-arw{position:absolute;transform:translate(-50%,-50%);font-size:12px;font-weight:900;line-height:1;color:#fff;z-index:6;filter:drop-shadow(0 1px 2px rgba(0,0,0,.7))}
 .tsx-tlbl{position:absolute;font-size:9px;font-weight:800;color:#fff;background:var(--tc);padding:1px 5px;border-radius:6px;white-space:nowrap;z-index:6;box-shadow:0 1px 3px rgba(0,0,0,.5)}
+.tsx-canvas--game{min-width:250px}
+.tsx-real-track{fill:none;stroke:#838991;stroke-width:2.25;stroke-linecap:round;stroke-linejoin:round;opacity:.76}
+.tsx-real-route{fill:none;stroke-width:3.15;stroke-linecap:round;stroke-linejoin:round;opacity:.9}
+.tsx-real-active{filter:drop-shadow(0 0 1.5px color-mix(in srgb,var(--mc) 55%,transparent))}
+.tsx-plat--game{fill:#8a8a8a;opacity:.72}
+.tsx-name--game{left:8px;max-width:58px;font-size:11.5px}
+.tsx-cont{position:absolute;display:flex;align-items:center;gap:4px;transform:translateY(-50%);font-size:9.5px;font-weight:650;color:var(--text2);white-space:nowrap;z-index:5}
+.tsx-cont i{width:8px;height:8px;border-radius:50%;background:var(--pc);box-shadow:0 0 0 1px rgba(255,255,255,.75);flex:none}
+.tsx-depot--game{z-index:5}
+.tsx-train-arrow{position:absolute;transform:translate(-50%,-50%);z-index:9;color:#fff;font-size:23px;font-weight:900;line-height:1;-webkit-text-stroke:1.5px var(--bg1);filter:drop-shadow(0 1px 2px #000)}
+.tsx-train-arrow.up{color:#fff}.tsx-train-arrow.down{color:#fff}
+.tsx-train-card{position:absolute;z-index:8;display:flex;flex-direction:column;align-items:center;min-width:36px;max-width:66px;padding:2px 4px;border:1px solid rgba(255,255,255,.88);border-radius:2px;background:rgba(42,45,49,.86);box-shadow:0 1px 4px rgba(0,0,0,.7);font-size:8.5px;line-height:1.12;color:#fff;text-align:center;white-space:nowrap}
+.tsx-train-card b{font-family:var(--mono);font-size:8px;font-weight:700}
+.tsx-train-card span{max-width:58px;overflow:hidden;text-overflow:ellipsis;font-weight:800}
 /* 지선(우측 평행 열) */
 .msch-bdot{position:absolute;transform:translate(-50%,-50%);width:9px;height:9px;border-radius:50%;background:var(--bg2);border:2.5px solid var(--pc);z-index:2}
 .msch-bdot.j{width:11px;height:11px;background:var(--pc)}
