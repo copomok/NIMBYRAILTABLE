@@ -10745,21 +10745,41 @@ function closeMetroTrain(){ const el=document.getElementById('mtn-wrap'); if(el)
 let _mlNameSet=null;
 function _metroLineNameSet(){ if(_mlNameSet)return _mlNameSet; _mlNameSet=new Set((typeof METRO_LINES!=='undefined'?METRO_LINES:[]).map(l=>l.name)); return _mlNameSet; }
 // 역의 모든 승강장 정보 (PLATFORM_DB) — 이 노선/타 노선/기차 구분 + 대표색
-function _metroStationPlatforms(stn, curBase){
+// 역 홈의 전체 노선 이름 집합(승강장→노선 원문) — 평행성 판정용
+function _stnLineNames(s){
+  if(s==null||typeof PLATFORM_DB==='undefined')return new Set();
+  const k=PLATFORM_DB[s]?s:(PLATFORM_DB[s+'역']?s+'역':null); if(!k)return new Set();
+  const set=new Set(); const pl=PLATFORM_DB[k];
+  for(const pn of Object.keys(pl))(pl[pn].l||[]).forEach(x=>set.add(String(x)));
+  return set;
+}
+// 역 승강장 분류. prev/next 주어지면 타 노선은 '평행(전·다음역 연속)'만 남기고, 한쪽만=시작점, 없으면 제외.
+function _metroStationPlatforms(stn, curBase, prevStn, nextStn){
   if(typeof PLATFORM_DB==='undefined')return [];
   const key=PLATFORM_DB[stn]?stn:(PLATFORM_DB[stn+'역']?stn+'역':null); if(!key)return [];
   const plats=PLATFORM_DB[key], mset=_metroLineNameSet(), out=[];
+  const sides=[]; if(prevStn!=null)sides.push(_stnLineNames(prevStn)); if(nextStn!=null)sides.push(_stnLineNames(nextStn));
   for(const pn of Object.keys(plats)){
     const num=Number(pn); if(isNaN(num))continue;
-    const lines=plats[pn].l||[];
-    const bases=[...new Set(lines.map(x=>String(x).split('/')[0].split(' (')[0].trim()))];
+    const lines=(plats[pn].l||[]).map(String);
+    const bases=[...new Set(lines.map(x=>x.split('/')[0].split(' (')[0].trim()))];
     const metroBases=bases.filter(b=>mset.has(b));
     const isCur=metroBases.includes(curBase);
+    // 지선 전용 승강장(이 노선 관련 이름이 모두 '지선') → 본선에서 빼고 지선 열로
+    const curLines=lines.filter(l=>l.split('/')[0].split(' (')[0].trim()===curBase);
+    const branchOnly=isCur&&curLines.length>0&&curLines.every(l=>/지선/.test(l));
+    // 평행성: 타 노선 승강장은 전/다음역과 연속될 때만 배선에 포함
+    let through=2;
+    if(!isCur&&sides.length){
+      let at=0; sides.forEach(sd=>{ if(lines.some(l=>sd.has(l)))at++; });
+      through=(at===0)?0:(at<sides.length?1:2);
+      if(through===0)continue; // 평행 아님 → 제외
+    }
     let color,kind;
     if(isCur){ color=_metroLineColor(curBase); kind='cur'; }
     else if(metroBases.length){ color=_metroLineColor(metroBases[0]); kind='metro'; }
     else { color='#8b949e'; kind='train'; }
-    out.push({pn:num,isCur,color,kind,label:(metroBases[0]||lines[0]||''),shared:isCur&&metroBases.length>1});
+    out.push({pn:num,isCur,color,kind,label:(metroBases[0]||lines[0]||''),shared:isCur&&metroBases.length>1,junction:through===1,branchOnly});
   }
   return out.sort((a,b)=>a.pn-b.pn);
 }
@@ -10770,7 +10790,8 @@ function _metroSchCanvas(l){
   const ROW=46, TOP=30, PSTEP=24, PH=7.5, TGAP=2.5, HP=15, PCAP=13, MAXS=48, PBASE=64+MAXS;
   const Xc=j=>PBASE+j*PSTEP;
   // ── 실좌표 기반 기하: 역간 거리로 행 높이(넓히기만), 커브로 추가 확대 + 좌우 스파인 휘어짐 ──
-  const G=(typeof METRO_GEO!=='undefined'&&METRO_GEO[l.name]&&METRO_GEO[l.name].length===n&&METRO_GEO[l.name].every(Boolean))?METRO_GEO[l.name]:null;
+  const GEOREC=(typeof METRO_GEO!=='undefined')?METRO_GEO[l.name]:null;
+  const G=(GEOREC&&GEOREC.m&&GEOREC.m.length===n&&GEOREC.m.every(Boolean))?GEOREC.m:null;
   const rowH=new Array(Math.max(0,n-1)).fill(ROW), spineX=new Array(n).fill(0);
   if(G&&n>=2){
     const lat0=G[0][1], kx=Math.cos(lat0*Math.PI/180)*111320, ky=110540;
@@ -10798,7 +10819,7 @@ function _metroSchCanvas(l){
   const H=Y[n-1]+30, Yi=i=>Y[i];
   let maxSlot=1;
   const rows=stns.map((s,i)=>{
-    const pfs=_metroStationPlatforms(s, l.name);
+    const pfs=_metroStationPlatforms(s, l.name, stns[i-1], stns[i+1]).filter(p=>!p.branchOnly); // 지선 전용 승강장은 지선 열로
     const shown=pfs.slice(0,PCAP), moreN=pfs.length-shown.length;
     const slots=shown.length+(moreN>0?1:0); if(slots>maxSlot)maxSlot=slots;
     const curSlots=[]; shown.forEach((p,j)=>{ if(p.isCur)curSlots.push(j); });
@@ -10812,17 +10833,63 @@ function _metroSchCanvas(l){
     else { up=(upXs[i-1]!=null?upXs[i-1]-spineX[i-1]:PBASE-3); dn=(dnXs[i-1]!=null?dnXs[i-1]-spineX[i-1]:PBASE+3); }
     upXs.push(up+spineX[i]); dnXs.push(dn+spineX[i]);
   });
-  // 트랙 폴리라인(역 구간 수직 + 역간 대각선 = 위빙/커브)
-  const mk=arr=>{const p=[];for(let i=0;i<n;i++){const y=Yi(i),x=arr[i].toFixed(1);p.push(`${x},${(y-HP).toFixed(1)}`,`${x},${(y+HP).toFixed(1)}`);}return p.join(' ');};
-  const CW=Math.max(260, Xc(maxSlot-1)+PH+MAXS+12);
-  const svg=`<svg class="msch-svg" width="${CW}" height="${H}" viewBox="0 0 ${CW} ${H}" preserveAspectRatio="none">
+  const mk=arr=>{const p=[];for(let i=0;i<n;i++){const y=Y[i],x=arr[i].toFixed(1);p.push(`${x},${(y-HP).toFixed(1)}`,`${x},${(y+HP).toFixed(1)}`);}return p.join(' ');};
+
+  // ── 우측 밴드: 지선(같은 노선명·다른 구간을 옆에 평행하게) + 차량기지 인입선 ──
+  const mainIdx={}; stns.forEach((s,i)=>{if(mainIdx[s]==null)mainIdx[s]=i;});
+  let rightX=Xc(maxSlot-1)+PH+MAXS+18;
+  let brSVG='', brBody='', Hb=H;
+  const depShort=s=>String(s).replace('역 / ',' ').replace('주박선',' 주박').replace('차량사업소',' 사업소').trim();
+  ((GEOREC&&GEOREC.b)||[]).forEach(b=>{
+    const m=b.s, c=b.c, bn=m.length; if(bn<2||!c||c.some(x=>!x))return;
+    let jb=m.findIndex((s,i)=>mainIdx[s]!=null&&((i+1<bn&&mainIdx[m[i+1]]==null)||(i-1>=0&&mainIdx[m[i-1]]==null)));
+    if(jb<0)jb=m.findIndex(s=>mainIdx[s]!=null); if(jb<0)jb=0;
+    const mj=mainIdx[m[jb]], anchorY=(mj!=null)?Y[mj]:TOP;
+    const lat0=c[0][1],kx=Math.cos(lat0*Math.PI/180)*111320,ky=110540;
+    const P=c.map(([lo,la])=>[(lo-c[0][0])*kx,(la-lat0)*ky]);
+    const rh=[]; for(let i=0;i<bn-1;i++)rh.push(Math.hypot(P[i+1][0]-P[i][0],P[i+1][1]-P[i][1]));
+    const sd=[...rh].filter(d=>d>1).sort((a,b)=>a-b),med=sd.length?sd[sd.length>>1]:1;
+    const rowB=rh.map(d=>Math.max(ROW*0.82,Math.min(ROW*2.0,d*(ROW*0.82/Math.max(200,med)))));
+    const Yb=new Array(bn); Yb[jb]=anchorY;
+    for(let i=jb+1;i<bn;i++)Yb[i]=Yb[i-1]+rowB[i-1];
+    for(let i=jb-1;i>=0;i--)Yb[i]=Yb[i+1]-rowB[i];
+    const mn=Math.min(...Yb); if(mn<TOP){const sh=TOP-mn;for(let i=0;i<bn;i++)Yb[i]+=sh;}
+    const bx=rightX+16, jx=(mj!=null?dnXs[mj]:PBASE), cy=Yb[jb<bn-1?jb+1:jb];
+    brSVG+=`<path d="M ${jx.toFixed(1)} ${anchorY.toFixed(1)} C ${((jx+bx)/2).toFixed(1)} ${anchorY.toFixed(1)}, ${bx} ${anchorY.toFixed(1)}, ${bx} ${cy.toFixed(1)}" fill="none" stroke="${color}" stroke-width="3" opacity=".85"/>`;
+    const pts=[]; for(let i=0;i<bn;i++)pts.push(`${bx},${Yb[i].toFixed(1)}`);
+    brSVG+=`<polyline points="${pts.join(' ')}" fill="none" stroke="${color}" stroke-width="3.5" stroke-linejoin="round" stroke-linecap="round" opacity=".92"/>`;
+    brBody+=`<span class="msch-brtag" style="left:${bx}px;top:${(Math.min(...Yb)-15).toFixed(1)}px;--pc:${color}">지선</span>`;
+    for(let i=0;i<bn;i++){ const isJ=(i===jb), y=Yb[i];
+      const pfs=_metroStationPlatforms(m[i], l.name, m[i-1], m[i+1]);
+      const list=(isJ?pfs.filter(p=>p.branchOnly):pfs).slice(0,8), pnums=list.map(p=>p.pn).join('·');
+      brBody+=`<span class="msch-bdot${isJ?' j':''}" style="left:${bx}px;top:${y.toFixed(1)}px;--pc:${color}"></span>`;
+      if(!isJ) brBody+=`<span class="msch-bname" style="left:${(bx+11).toFixed(1)}px;top:${y.toFixed(1)}px">${_opsEsc(m[i])}${pnums?` <b>${pnums}</b>`:''}</span>`;
+      else if(pnums) brBody+=`<span class="msch-bname j" style="left:${(bx+11).toFixed(1)}px;top:${y.toFixed(1)}px"><b>${pnums}</b></span>`;
+      Hb=Math.max(Hb,y+30);
+    }
+    rightX=bx+98;
+  });
+  const depY={};
+  ((GEOREC&&GEOREC.d)||[]).forEach(d=>{
+    const j=d.j, y0=(Y[j]!=null?Y[j]:TOP), key=Math.round(y0/26);
+    depY[key]=(depY[key]||0); const y=y0+depY[key]*20; depY[key]++;
+    const dx=rightX+12, jx=(dnXs[j]!=null?dnXs[j]:PBASE);
+    brSVG+=`<path d="M ${jx.toFixed(1)} ${y0.toFixed(1)} L ${dx} ${y.toFixed(1)}" fill="none" stroke="#8b949e" stroke-width="2.5" stroke-dasharray="4 3" opacity=".8"/>`;
+    brBody+=`<span class="msch-depot" style="left:${dx}px;top:${y.toFixed(1)}px">🏭 ${_opsEsc(depShort(d.n))}</span>`;
+    Hb=Math.max(Hb,y+28);
+  });
+  if(((GEOREC&&GEOREC.d)||[]).length)rightX+=110;
+
+  const CW=Math.max(260, rightX+8), CH=Math.max(H,Hb);
+  const svg=`<svg class="msch-svg" width="${CW}" height="${CH}" viewBox="0 0 ${CW} ${CH}" preserveAspectRatio="none">
     <polyline points="${mk(upXs)}" fill="none" stroke="${color}" stroke-width="4.5" stroke-linejoin="round" stroke-linecap="round"/>
-    <polyline points="${mk(dnXs)}" fill="none" stroke="${color}" stroke-width="4.5" stroke-linejoin="round" stroke-linecap="round"/></svg>`;
-  // 승강장 블록 + 역명 (번호순 고정 슬롯, 스파인 편차 반영)
+    <polyline points="${mk(dnXs)}" fill="none" stroke="${color}" stroke-width="4.5" stroke-linejoin="round" stroke-linecap="round"/>
+    ${brSVG}</svg>`;
+  // 본선 승강장 블록 + 역명 (번호순 고정 슬롯, 스파인 편차 반영)
   let body='';
-  rows.forEach(({s,i,shown,moreN})=>{ const y=Yi(i), end=(i===0||i===n-1), sx=spineX[i];
+  rows.forEach(({s,i,shown,moreN})=>{ const y=Y[i], end=(i===0||i===n-1), sx=spineX[i];
     let plat='';
-    shown.forEach((p,j)=>{ plat+=`<span class="msch-plat k-${p.kind}${p.shared?' shared':''}" style="left:${(Xc(j)+sx).toFixed(1)}px;--pc:${p.color}" title="${_opsEsc(p.label)} ${p.pn}번${p.shared?' (공용)':''}">${p.pn}</span>`; });
+    shown.forEach((p,j)=>{ plat+=`<span class="msch-plat k-${p.kind}${p.shared?' shared':''}${p.junction?' jstart':''}" style="left:${(Xc(j)+sx).toFixed(1)}px;--pc:${p.color}" title="${_opsEsc(p.label)} ${p.pn}번${p.shared?' (공용)':''}${p.junction?' (분기 시작)':''}">${p.pn}</span>`; });
     if(moreN>0) plat+=`<span class="msch-plat k-more" style="left:${(Xc(shown.length)+sx).toFixed(1)}px" title="외 ${moreN}개 승강장">+${moreN}</span>`;
     body+=`<div class="msch-stn${end?' end':''}" style="top:${y}px"><span class="msch-name">${_opsEsc(s)}</span>${plat}</div>`;
   });
@@ -10832,12 +10899,12 @@ function _metroSchCanvas(l){
   _metroLineLiveTrains(l.name).forEach(t=>{
     const fi=idxOf[t.fromStn], ti=idxOf[t.toStn]; if(fi==null||ti==null)return; cnt++;
     const down=ti>fi, arr=down?dnXs:upXs;
-    const y=t.atStation?Yi(fi):Yi(fi)+t.frac*(Yi(ti)-Yi(fi));
+    const y=t.atStation?Y[fi]:Y[fi]+t.frac*(Y[ti]-Y[fi]);
     const x=t.atStation?arr[fi]:arr[fi]+t.frac*(arr[ti]-arr[fi]);
     trains+=`<span class="msch-arw ${down?'down':'up'}" style="left:${x}px;top:${y}px">${down?'▼':'▲'}</span>
       <span class="msch-lbl ${down?'down':'up'}" style="left:${x}px;top:${y}px;background:${down?color:'#d9782f'}">${_opsEsc(t.dest)}</span>`;
   });
-  return {cnt, html:`<div class="msch-canvas" style="height:${H}px;width:${CW}px;--mc:${color}">${svg}${body}${trains}</div>`};
+  return {cnt, html:`<div class="msch-canvas" style="height:${CH}px;width:${CW}px;--mc:${color}">${svg}${body}${brBody}${trains}</div>`};
 }
 // 노선 상세 버튼 → 배선 탭으로 이동하며 해당 노선 선택
 function openMetroSchematicTab(lineId){ _metroSchLine=lineId; if(_appMode!=='metro')setAppMode('metro'); switchTab('metroschematic'); }
@@ -10875,7 +10942,7 @@ function renderMetroSchematicTab(){
       </div>
       <div class="msch-legend"><span class="msch-lg up">▲ 상행 <small>종점→기점</small></span><span class="msch-lg down">하행 <small>기점→종점</small> ▼</span></div>
       <div class="msch-body msch-body--inline">${html}</div>
-      <div class="msch-foot">행 높이·좌우 휘어짐 = 실제 역간 거리·선형(커브) · 복선 트랙 양옆/사이=이 노선 승강장(상대식·섬식), 오른쪽=타 노선·기차 승강장(번호순) · 공용=밑줄</div>
+      <div class="msch-foot">행 높이·좌우 휘어짐 = 실제 역간 거리·선형(커브) · 트랙 양옆/사이=이 노선 승강장, 우측=평행(전·다음역 연속) 승강장만 · 우측 열=지선(같은 노선), 🏭=차량기지 인입선 · 점선=분기 시작</div>
     </div>`;
 }
 
