@@ -10767,8 +10767,35 @@ function _metroStationPlatforms(stn, curBase){
 // 승강장은 번호순 고정 슬롯(1 2 3 4…), 이 노선 복선 트랙은 자기 승강장 위치로 휘어감(위빙).
 function _metroSchCanvas(l){
   const stns=l.stations, n=stns.length, color=l.color;
-  const ROW=56, TOP=32, PBASE=84, PSTEP=26, PH=7.5, TGAP=2.5, HP=18, PCAP=13;
-  const Yi=i=>TOP+i*ROW, H=Yi(n-1)+30, Xc=j=>PBASE+j*PSTEP;
+  const ROW=46, TOP=30, PSTEP=24, PH=7.5, TGAP=2.5, HP=15, PCAP=13, MAXS=48, PBASE=64+MAXS;
+  const Xc=j=>PBASE+j*PSTEP;
+  // ── 실좌표 기반 기하: 역간 거리로 행 높이(넓히기만), 커브로 추가 확대 + 좌우 스파인 휘어짐 ──
+  const G=(typeof METRO_GEO!=='undefined'&&METRO_GEO[l.name]&&METRO_GEO[l.name].length===n&&METRO_GEO[l.name].every(Boolean))?METRO_GEO[l.name]:null;
+  const rowH=new Array(Math.max(0,n-1)).fill(ROW), spineX=new Array(n).fill(0);
+  if(G&&n>=2){
+    const lat0=G[0][1], kx=Math.cos(lat0*Math.PI/180)*111320, ky=110540;
+    const P=G.map(([lo,la])=>[(lo-G[0][0])*kx,(la-lat0)*ky]); // 미터(동/북)
+    const seg=[]; for(let i=0;i<n-1;i++){const dx=P[i+1][0]-P[i][0],dy=P[i+1][1]-P[i][1];seg.push(Math.hypot(dx,dy));}
+    const sorted=[...seg].filter(d=>d>1).sort((a,b)=>a-b), med=sorted.length?sorted[sorted.length>>1]:1;
+    // 진행축(시종점 현) 기준 수직편차 = 스파인(커브 시각화)
+    let ang=Math.atan2(P[n-1][1]-P[0][1], P[n-1][0]-P[0][0]);
+    const ca=Math.cos(ang), sa=Math.sin(ang);
+    const u=P.map(([x,y])=>-x*sa+y*ca); // 수직편차(m)
+    let minU=Math.min(...u), maxU=Math.max(...u), midU=(minU+maxU)/2, rngU=Math.max(1,(maxU-minU)/2);
+    const usc=Math.min(0.04, MAXS/rngU);
+    for(let i=0;i<n;i++) spineX[i]=(u[i]-midU)*usc;
+    // 회전각(커브) : 인접 세그먼트 방향차
+    const bear=[]; for(let i=0;i<n-1;i++) bear.push(Math.atan2(P[i+1][1]-P[i][1],P[i+1][0]-P[i][0]));
+    const turn=new Array(n).fill(0);
+    for(let i=1;i<n-1;i++){let d=Math.abs(bear[i]-bear[i-1]);if(d>Math.PI)d=2*Math.PI-d;turn[i]=d;}
+    for(let i=0;i<n-1;i++){
+      let h=Math.max(ROW, Math.min(ROW*2.4, seg[i]*(ROW/Math.max(200,med)))); // 거리비례(넓히기만)
+      const cv=Math.max(turn[i],turn[i+1]); if(cv>0.35) h+=Math.min(ROW*0.7, (cv-0.35)*ROW*0.9); // 급커브 확대
+      rowH[i]=h;
+    }
+  }
+  const Y=new Array(n); Y[0]=TOP; for(let i=1;i<n;i++)Y[i]=Y[i-1]+rowH[i-1];
+  const H=Y[n-1]+30, Yi=i=>Y[i];
   let maxSlot=1;
   const rows=stns.map((s,i)=>{
     const pfs=_metroStationPlatforms(s, l.name);
@@ -10777,26 +10804,26 @@ function _metroSchCanvas(l){
     const curSlots=[]; shown.forEach((p,j)=>{ if(p.isCur)curSlots.push(j); });
     return {s,i,shown,moreN,curSlots};
   });
-  // 상행/하행 트랙 X (역마다 자기 승강장 위치): 2개↑=승강장 사이(상대식), 1개=승강장 양옆(섬식)
+  // 상행/하행 트랙 X (역마다 자기 승강장 위치, 스파인 편차 반영): 2개↑=승강장 사이(상대식), 1개=승강장 양옆(섬식)
   const upXs=[], dnXs=[];
   rows.forEach(({curSlots},i)=>{ let up,dn;
     if(curSlots.length>=2){ up=Xc(curSlots[0])+PH+TGAP; dn=Xc(curSlots[curSlots.length-1])-PH-TGAP; if(dn-up<5){const m=(up+dn)/2;up=m-3;dn=m+3;} }
     else if(curSlots.length===1){ up=Xc(curSlots[0])-PH-TGAP; dn=Xc(curSlots[0])+PH+TGAP; }
-    else { up=(upXs[i-1]!=null?upXs[i-1]:PBASE-3); dn=(dnXs[i-1]!=null?dnXs[i-1]:PBASE+3); }
-    upXs.push(up); dnXs.push(dn);
+    else { up=(upXs[i-1]!=null?upXs[i-1]-spineX[i-1]:PBASE-3); dn=(dnXs[i-1]!=null?dnXs[i-1]-spineX[i-1]:PBASE+3); }
+    upXs.push(up+spineX[i]); dnXs.push(dn+spineX[i]);
   });
-  // 트랙 폴리라인(역 구간 수직 + 역간 대각선 = 위빙)
+  // 트랙 폴리라인(역 구간 수직 + 역간 대각선 = 위빙/커브)
   const mk=arr=>{const p=[];for(let i=0;i<n;i++){const y=Yi(i),x=arr[i].toFixed(1);p.push(`${x},${(y-HP).toFixed(1)}`,`${x},${(y+HP).toFixed(1)}`);}return p.join(' ');};
-  const CW=Math.max(260, Xc(maxSlot-1)+PH+12);
+  const CW=Math.max(260, Xc(maxSlot-1)+PH+MAXS+12);
   const svg=`<svg class="msch-svg" width="${CW}" height="${H}" viewBox="0 0 ${CW} ${H}" preserveAspectRatio="none">
     <polyline points="${mk(upXs)}" fill="none" stroke="${color}" stroke-width="4.5" stroke-linejoin="round" stroke-linecap="round"/>
     <polyline points="${mk(dnXs)}" fill="none" stroke="${color}" stroke-width="4.5" stroke-linejoin="round" stroke-linecap="round"/></svg>`;
-  // 승강장 블록 + 역명 (번호순 고정 슬롯)
+  // 승강장 블록 + 역명 (번호순 고정 슬롯, 스파인 편차 반영)
   let body='';
-  rows.forEach(({s,i,shown,moreN})=>{ const y=Yi(i), end=(i===0||i===n-1);
+  rows.forEach(({s,i,shown,moreN})=>{ const y=Yi(i), end=(i===0||i===n-1), sx=spineX[i];
     let plat='';
-    shown.forEach((p,j)=>{ plat+=`<span class="msch-plat k-${p.kind}${p.shared?' shared':''}" style="left:${Xc(j)}px;--pc:${p.color}" title="${_opsEsc(p.label)} ${p.pn}번${p.shared?' (공용)':''}">${p.pn}</span>`; });
-    if(moreN>0) plat+=`<span class="msch-plat k-more" style="left:${Xc(shown.length)}px" title="외 ${moreN}개 승강장">+${moreN}</span>`;
+    shown.forEach((p,j)=>{ plat+=`<span class="msch-plat k-${p.kind}${p.shared?' shared':''}" style="left:${(Xc(j)+sx).toFixed(1)}px;--pc:${p.color}" title="${_opsEsc(p.label)} ${p.pn}번${p.shared?' (공용)':''}">${p.pn}</span>`; });
+    if(moreN>0) plat+=`<span class="msch-plat k-more" style="left:${(Xc(shown.length)+sx).toFixed(1)}px" title="외 ${moreN}개 승강장">+${moreN}</span>`;
     body+=`<div class="msch-stn${end?' end':''}" style="top:${y}px"><span class="msch-name">${_opsEsc(s)}</span>${plat}</div>`;
   });
   // 열차: 트랙 위 진행률 위치(위빙 X 보간)
@@ -10815,36 +10842,41 @@ function _metroSchCanvas(l){
 // 노선 상세 버튼 → 배선 탭으로 이동하며 해당 노선 선택
 function openMetroSchematicTab(lineId){ _metroSchLine=lineId; if(_appMode!=='metro')setAppMode('metro'); switchTab('metroschematic'); }
 // ── 🛤️ 배선 탭 ──
-let _metroSchRegion='전체', _metroSchLine=null;
-function setMetroSchRegion(r){ _metroSchRegion=r; _metroSchLine=null; renderMetroSchematicTab(); }
+let _metroSchLine=null;
 function pickMetroSchLine(id){ _metroSchLine=id; renderMetroSchematicTab(); }
+function stepMetroSchLine(dir){
+  const i=METRO_LINES.findIndex(l=>l.id===_metroSchLine);
+  const ni=(i<0?0:(i+dir+METRO_LINES.length)%METRO_LINES.length);
+  _metroSchLine=METRO_LINES[ni].id; renderMetroSchematicTab();
+}
 function renderMetroSchematicTab(){
   const el=document.getElementById('result-metroschematic'); if(!el)return;
-  if(typeof METRO_LINES==='undefined'){ el.innerHTML='<div class="empty"><div class="empty-icon">🛤️</div><p>전철 노선 데이터가 없습니다.</p></div>'; return; }
-  const regions=['전체',...new Set(METRO_LINES.map(l=>l.region))];
-  const list=METRO_LINES.filter(l=>_metroSchRegion==='전체'||l.region===_metroSchRegion);
-  if(_metroSchLine&&!METRO_LINES.some(l=>l.id===_metroSchLine)) _metroSchLine=null;
-  const sel=_metroSchLine?METRO_LINES.find(l=>l.id===_metroSchLine):null;
-  let inner;
-  if(sel){ const {cnt,html}=_metroSchCanvas(sel);
-    inner=`<div class="msch-inline" style="--mc:${sel.color}">
+  if(typeof METRO_LINES==='undefined'||!METRO_LINES.length){ el.innerHTML='<div class="empty"><div class="empty-icon">🛤️</div><p>전철 노선 데이터가 없습니다.</p></div>'; return; }
+  if(!_metroSchLine||!METRO_LINES.some(l=>l.id===_metroSchLine)) _metroSchLine=METRO_LINES[0].id;
+  const sel=METRO_LINES.find(l=>l.id===_metroSchLine);
+  // 지역별 optgroup 드롭다운 (칩 무더기 대체)
+  const byReg={}; METRO_LINES.forEach(l=>{(byReg[l.region]=byReg[l.region]||[]).push(l);});
+  const opts=Object.keys(byReg).map(r=>`<optgroup label="${_opsEsc(r)}">${byReg[r].map(l=>`<option value="${l.id}"${l.id===_metroSchLine?' selected':''}>${_opsEsc(l.name)}</option>`).join('')}</optgroup>`).join('');
+  const {cnt,html}=_metroSchCanvas(sel);
+  el.innerHTML=`
+    <div class="msch-nav">
+      <button class="msch-navbtn" onclick="stepMetroSchLine(-1)" aria-label="이전 노선">◀</button>
+      <span class="msch-navsel" style="--mc:${sel.color}">
+        <span class="msch-navdot" style="background:${sel.color}"></span>
+        <select class="msch-select" onchange="pickMetroSchLine(this.value)" aria-label="노선 선택">${opts}</select>
+      </span>
+      <button class="msch-navbtn" onclick="stepMetroSchLine(1)" aria-label="다음 노선">▶</button>
+    </div>
+    <div class="msch-inline" style="--mc:${sel.color}">
       <div class="msch-head">
-        <span><b style="color:${sel.color}">🛤️ ${_opsEsc(sel.name)}</b> 배선도</span>
+        <span><b style="color:${sel.color}">🛤️ ${_opsEsc(sel.name)}</b> 배선도 <small style="font-weight:600;color:var(--text3)">· ${sel.stations.length}역</small></span>
         <span class="msch-head-r"><span class="msch-run">🚇 <b>${cnt}</b>대 운행</span>
           <button class="mtl-live-refresh" onclick="renderMetroSchematicTab()" title="새로고침">↻</button></span>
       </div>
       <div class="msch-legend"><span class="msch-lg up">▲ 상행 <small>종점→기점</small></span><span class="msch-lg down">하행 <small>기점→종점</small> ▼</span></div>
       <div class="msch-body msch-body--inline">${html}</div>
-      <div class="msch-foot">복선 트랙 양옆/사이=이 노선 승강장(상대식·섬식), 오른쪽=타 노선·기차 승강장(번호순) · 분기·회차선은 단순화 · 공용=밑줄</div>
+      <div class="msch-foot">행 높이·좌우 휘어짐 = 실제 역간 거리·선형(커브) · 복선 트랙 양옆/사이=이 노선 승강장(상대식·섬식), 오른쪽=타 노선·기차 승강장(번호순) · 공용=밑줄</div>
     </div>`;
-  } else { inner='<div style="text-align:center;color:var(--text3);font-size:13px;padding:44px 12px">위에서 노선을 선택하면<br>실시간 배선도가 표시됩니다</div>'; }
-  el.innerHTML=`
-    <div style="margin:14px 2px 4px;font-size:12px;color:var(--text3)">🛤️ 배선도 · 노선을 선택하면 실시간 편성 위치가 복선 트랙 위에 표시됩니다</div>
-    <div style="display:flex;gap:6px;flex-wrap:wrap;margin:8px 0 10px">
-      ${regions.map(r=>`<button class="metro-region-chip${_metroSchRegion===r?' on':''}" onclick="setMetroSchRegion('${r}')">${r}${r!=='전체'?` ${METRO_LINES.filter(l=>l.region===r).length}`:''}</button>`).join('')}
-    </div>
-    <div class="msch-linepick">${list.map(l=>`<button class="msch-linechip${_metroSchLine===l.id?' on':''}" style="--mc:${l.color}" onclick="pickMetroSchLine('${l.id}')"><span class="msch-linedot" style="background:${l.color}"></span>${l.name}</button>`).join('')}</div>
-    ${inner}`;
 }
 
 // ── 지연 예측 모델 (노선·등급별 확률/예상 지연) ──
