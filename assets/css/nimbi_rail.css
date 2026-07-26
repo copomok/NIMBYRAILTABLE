@@ -1533,6 +1533,12 @@ button, select, input[type=range],
 .msch-plat.k-more{background:var(--bg3);border:1px solid var(--border);color:var(--text3)}
 .msch-plat.shared::after{content:'';position:absolute;bottom:2px;left:50%;transform:translateX(-50%);width:9px;height:2px;border-radius:1px;background:rgba(255,255,255,.92)}
 .msch-plat.jstart{outline:1.5px dashed rgba(255,255,255,.6);outline-offset:1px}
+/* 실선로 배선(트랙 geometry) 역·승강장 */
+.msch-ttick{position:absolute;transform:translate(-50%,-50%);width:9px;height:9px;border-radius:50%;background:var(--bg2);border:2.5px solid var(--mc);z-index:3}
+.msch-ttick.end{width:12px;height:12px;background:#fff}
+.msch-tname{position:absolute;left:5px;transform:translateY(-50%);font-size:11px;font-weight:700;color:var(--text1);z-index:3;white-space:nowrap;max-width:50px;overflow:hidden;text-overflow:ellipsis}
+.msch-tname.end{font-weight:800;color:var(--mc)}
+.msch-tplat{position:absolute;transform:translate(-50%,-50%);width:8.5px;height:22px;border-radius:2px;background:#8b98a5;box-shadow:0 0 0 1px rgba(0,0,0,.25);z-index:2}
 /* 지선(우측 평행 열) */
 .msch-bdot{position:absolute;transform:translate(-50%,-50%);width:9px;height:9px;border-radius:50%;background:var(--bg2);border:2.5px solid var(--pc);z-index:2}
 .msch-bdot.j{width:11px;height:11px;background:var(--pc)}
