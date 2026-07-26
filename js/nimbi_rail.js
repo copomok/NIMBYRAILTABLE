@@ -10825,28 +10825,33 @@ function _metroSchCanvas(l){
     const curSlots=[]; shown.forEach((p,j)=>{ if(p.isCur)curSlots.push(j); });
     return {s,i,shown,moreN,curSlots};
   });
-  // 상행/하행 트랙 X (역마다 자기 승강장 위치, 스파인 편차 반영): 2개↑=승강장 사이(상대식), 1개=승강장 양옆(섬식)
-  const upXs=[], dnXs=[];
-  rows.forEach(({curSlots},i)=>{ let up,dn;
-    if(curSlots.length>=2){ up=Xc(curSlots[0])+PH+TGAP; dn=Xc(curSlots[curSlots.length-1])-PH-TGAP; if(dn-up<5){const m=(up+dn)/2;up=m-3;dn=m+3;} }
-    else if(curSlots.length===1){ up=Xc(curSlots[0])-PH-TGAP; dn=Xc(curSlots[0])+PH+TGAP; }
-    else { up=(upXs[i-1]!=null?upXs[i-1]-spineX[i-1]:PBASE-3); dn=(dnXs[i-1]!=null?dnXs[i-1]-spineX[i-1]:PBASE+3); }
-    upXs.push(up+spineX[i]); dnXs.push(dn+spineX[i]);
+  // 본선 복선 X: 승강장 2개↑이면 중앙 승강장쌍 사이(상대식), 다승강장은 중앙 관통·바깥은 유치선, 1개=섬식
+  const upXs=[], dnXs=[], servedOf=[], centerXOf=[];
+  rows.forEach(({curSlots},i)=>{ let up,dn; const C=curSlots; const served=new Set(); let cs;
+    if(C.length>=3){ const m=(C.length-1)/2, a=C[Math.floor(m)], b=C[Math.ceil(m)]; cs=(Xc(a)+Xc(b))/2;
+      if(a===b){ up=Xc(a)-PH-TGAP; dn=Xc(a)+PH+TGAP; } else { up=Xc(a)+PH+TGAP; dn=Xc(b)-PH-TGAP; if(dn-up<5){const q=(up+dn)/2;up=q-3;dn=q+3;} }
+      served.add(a); served.add(b); }
+    else if(C.length===2){ up=Xc(C[0])+PH+TGAP; dn=Xc(C[1])-PH-TGAP; if(dn-up<5){const q=(up+dn)/2;up=q-3;dn=q+3;} cs=(Xc(C[0])+Xc(C[1]))/2; served.add(C[0]); served.add(C[1]); }
+    else if(C.length===1){ up=Xc(C[0])-PH-TGAP; dn=Xc(C[0])+PH+TGAP; cs=Xc(C[0]); served.add(C[0]); }
+    else { up=(upXs[i-1]!=null?upXs[i-1]-spineX[i-1]:PBASE-3); dn=(dnXs[i-1]!=null?dnXs[i-1]-spineX[i-1]:PBASE+3); cs=PBASE; }
+    upXs.push(up+spineX[i]); dnXs.push(dn+spineX[i]); servedOf.push(served); centerXOf.push(cs);
   });
   const mk=arr=>{const p=[];for(let i=0;i<n;i++){const y=Y[i],x=arr[i].toFixed(1);p.push(`${x},${(y-HP).toFixed(1)}`,`${x},${(y+HP).toFixed(1)}`);}return p.join(' ');};
 
-  // ── 배선 상세(사진식): 역마다 건넘선(scissors crossover) + 승강장별 트랙(포켓) ──
+  // ── 배선 상세(사진식): 다승강장 역=역 위 분기→아래 합류하는 유치선(바깥으로) + 역 앞뒤(구간) 건넘선 ──
   let xtra='';
-  rows.forEach(({curSlots},i)=>{ if(!curSlots.length)return; const y=Y[i], sx=spineX[i], up=upXs[i], dn=dnXs[i];
-    const rh=rowH[Math.min(i,n-2)]||ROW, XH=Math.min(9,rh*0.2), PL=Math.min(12,rh*0.26);
-    if(Math.abs(dn-up)>5) xtra+=`<path d="M ${up.toFixed(1)} ${(y-XH).toFixed(1)} L ${dn.toFixed(1)} ${(y+XH).toFixed(1)} M ${dn.toFixed(1)} ${(y-XH).toFixed(1)} L ${up.toFixed(1)} ${(y+XH).toFixed(1)}" fill="none" stroke="${color}" stroke-width="1.8" opacity=".7"/>`;
-    const c0=curSlots[0], cl=curSlots[curSlots.length-1], center=(Xc(c0)+Xc(cl))/2;
-    curSlots.forEach(c=>{ const tx=Xc(c)+(Xc(c)<center?(PH+TGAP):-(PH+TGAP))+sx;
-      if(Math.abs(tx-up)<3||Math.abs(tx-dn)<3)return;
-      const near=Math.abs(tx-up)<Math.abs(tx-dn)?up:dn;
-      xtra+=`<path d="M ${near.toFixed(1)} ${(y-PL*1.5).toFixed(1)} L ${tx.toFixed(1)} ${(y-PL).toFixed(1)} L ${tx.toFixed(1)} ${(y+PL).toFixed(1)} L ${near.toFixed(1)} ${(y+PL*1.5).toFixed(1)}" fill="none" stroke="${color}" stroke-width="2.6" stroke-linejoin="round" stroke-linecap="round"/>`;
+  rows.forEach(({curSlots},i)=>{ if(curSlots.length<3)return; const y=Y[i], sx=spineX[i], up=upXs[i], dn=dnXs[i], cs=centerXOf[i], served=servedOf[i];
+    const rhU=rowH[i-1]||ROW, rhD=rowH[i]||ROW, SH=Math.min(16,Math.min(rhU,rhD)*0.34), TA=Math.min(rhU,rhD)*0.42;
+    curSlots.forEach(c=>{ if(served.has(c))return; const px=Xc(c);
+      const tx=px+(px<cs?-(PH+TGAP):(PH+TGAP))+sx, near=(px<cs?up:dn);
+      xtra+=`<path d="M ${near.toFixed(1)} ${(y-SH-TA).toFixed(1)} L ${tx.toFixed(1)} ${(y-SH).toFixed(1)} L ${tx.toFixed(1)} ${(y+SH).toFixed(1)} L ${near.toFixed(1)} ${(y+SH+TA).toFixed(1)}" fill="none" stroke="${color}" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>`;
     });
   });
+  for(let i=0;i<n-1;i++){ const gap=Y[i+1]-Y[i]; if(gap<40)continue; const yc=Y[i]+gap*0.5;
+    const upA=(upXs[i]+upXs[i+1])/2, dnA=(dnXs[i]+dnXs[i+1])/2; if(Math.abs(dnA-upA)<5)continue;
+    const XH=Math.min(9,gap*0.16);
+    xtra+=`<path d="M ${upA.toFixed(1)} ${(yc-XH).toFixed(1)} L ${dnA.toFixed(1)} ${(yc+XH).toFixed(1)} M ${dnA.toFixed(1)} ${(yc-XH).toFixed(1)} L ${upA.toFixed(1)} ${(yc+XH).toFixed(1)}" fill="none" stroke="${color}" stroke-width="1.8" opacity=".65"/>`;
+  }
 
   // ── 우측 밴드: 지선(같은 노선명·다른 구간을 옆에 평행하게) + 차량기지 인입선 ──
   const mainIdx={}; stns.forEach((s,i)=>{if(mainIdx[s]==null)mainIdx[s]=i;});
@@ -10955,7 +10960,7 @@ function renderMetroSchematicTab(){
       </div>
       <div class="msch-legend"><span class="msch-lg up">▲ 상행 <small>종점→기점</small></span><span class="msch-lg down">하행 <small>기점→종점</small> ▼</span></div>
       <div class="msch-body msch-body--inline">${html}</div>
-      <div class="msch-foot">복선 트랙+역별 건넘선·승강장별 트랙(포켓) · 트랙 양옆/사이=이 노선 승강장, 우측=평행 승강장 · 우측 열=지선(같은 노선), 🏭=차량기지 인입선 · ▲▼=실시간 편성</div>
+      <div class="msch-foot">복선 본선 · 다승강장 역=역 앞뒤 분기/합류 유치선, 역 사이 구간=건넘선 · 트랙 양옆/사이=이 노선 승강장, 우측=평행 승강장 · 우측 열=지선, 🏭=차량기지 · ▲▼=실시간 편성</div>
     </div>`;
 }
 
