@@ -5,6 +5,7 @@ import vm from 'node:vm';
 const context = {};
 vm.createContext(context);
 vm.runInContext(`${fs.readFileSync('data/nimbi_metro.js', 'utf8')}\nthis.lines=METRO_LINES;`, context);
+vm.runInContext(`${fs.readFileSync('data/nimbi_metro_geo.js', 'utf8')}\nthis.geo=METRO_GEO;`, context);
 vm.runInContext(`${fs.readFileSync('data/nimbi_metro_track.js', 'utf8')}\nthis.tracks=METRO_TRACK;`, context);
 
 assert.equal(context.lines.length, Object.keys(context.tracks).length, '모든 전철 노선에 배선 데이터가 있어야 합니다.');
@@ -42,5 +43,7 @@ assert.deepEqual(JSON.parse(JSON.stringify(side.blocks)), [
 ], '2선 2면역은 바깥쪽 상대식이어야 합니다.');
 assert.deepEqual(Array.from(context.platformModel(4, '경부선', '종로1가').mainIdx), [1,2], '일반 4선역은 2·3번이 본선이어야 합니다.');
 assert.deepEqual(Array.from(context.platformModel(4, '경부선', '성환').mainIdx), [0,3], '성환역은 1·4번이 본선이어야 합니다.');
+assert.ok(Object.values(context.tracks).some(t => t.b?.length), '같은 노선 지선 배선 데이터 누락');
+assert.ok(Object.values(context.geo).some(g => g.d?.length), '차량기지·주박선 연결 데이터 누락');
 
 console.log(`metro track: ${context.lines.length}개 노선 / ${Object.values(context.tracks).reduce((n, t) => n + t.rn.length, 0)}개 선로 런 검증 완료`);
