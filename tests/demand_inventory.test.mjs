@@ -12,8 +12,10 @@ const local={s:'대전',dep:'08:00'},capital={s:'서울',dep:'08:00'};assert.ok(
 c.NIMBI_Inventory.invalidate();assert.equal(c.getTrainInventorySnapshot(train,'2026-07-29',now).userBookings.length,0);
 const ktx={...train,no:'1',grade:'KTX'},ktxEum={...train,no:'901',grade:'KTX-이음'};
 const ktxDemand=c.buildTrainODDemand(ktx,date).reduce((a,x)=>a+x.demand,0),ktxEumDemand=c.buildTrainODDemand(ktxEum,date).reduce((a,x)=>a+x.demand,0);
-assert.ok(ktxDemand>=c.getTrainCapacity(ktx).total*2.5,'인게임 고수요 KTX는 대편성 좌석을 채울 충분한 잠재 수요가 필요');
-assert.ok(ktxEumDemand>=c.getTrainCapacity(ktxEum).total*2,'승객 수가 누락된 KTX-이음도 대편성 기본 수요를 유지');
+const ktxRatio=ktxDemand/c.getTrainCapacity(ktx).total,ktxEumRatio=ktxEumDemand/c.getTrainCapacity(ktxEum).total;
+assert.ok(ktxRatio>ktxEumRatio&&ktxRatio<2.8,'일반 KTX는 인게임 수요만 제한적으로 추가 반영해야 함');
+assert.equal(c.getBaseDemandIndex(ktxEum),1,'KTX-이음은 기존 기본 수요 지수를 사용해야 함');
+assert.equal(c.getBaseDemandIndex({...train,no:'missing',grade:'KTX-산천'}),1,'KTX-산천은 기존 기본 수요 지수를 사용해야 함');
 c.getTrainByNo=no=>String(no)===String(train.no)?train:null;c.seatId=(car,row,col)=>`${car.car}호차 ${row}${col}`;c._bArgs={trainNo:train.no,fromStn:'대전',toStn:'부산'};
 vm.runInContext(fs.readFileSync('js/features/nimbi_congestion.js','utf8'),c,{filename:'js/features/nimbi_congestion.js'});
 const cars=c.getCarComposition(),seatState=c.getSeatInventoryState(train,'대전','부산',date,'general');c.generateVirtualBookings(train.no,date,cars,null,null,'general');
