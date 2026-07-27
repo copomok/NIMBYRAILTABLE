@@ -65,6 +65,7 @@
     P_N:sliceSpec(northFromHapdeok,'평택','의정부'),
     S_S:sliceSpec(southFromUijeongbu,'청량리','신창'),
     S_N:sliceSpec(northFromHapdeok,'신창','청량리'),
+    K_N:sliceSpec(northFromHapdeok,'신창','구로'),
     H_S:sliceSpec(southFromUijeongbu,'청량리','합덕'),
     H_N:sliceSpec(northFromHapdeok,'합덕','청량리')
   };
@@ -93,15 +94,16 @@
 
   const departures={
     A_S:['05:54','09:06','12:43','15:31','18:42','20:19'],
-    A_N:['00:49','08:50','12:26','15:16','18:28','20:01'],
+    A_N:['23:04','08:50','12:26','15:16','18:28','20:01'],
     U_S:['08:23','11:11','13:58','16:47','20:47'],
     U_N:['08:01','10:52','13:37','16:25','20:26'],
-    P_S:['05:10','06:22','07:35','07:59','09:34','09:58','10:46','12:23','13:34','14:22','15:11','15:59','17:34','18:22','19:11','19:59','21:34','23:11'],
-    P_N:['23:39','05:41','06:53','07:17','08:50','09:15','10:04','11:38','12:51','13:41','14:28','15:17','16:50','17:41','18:29','19:16','20:50','21:40'],
-    S_S:['05:47','07:24','09:00','10:35','11:48','13:23','14:59','16:36','18:11','19:48','21:23','23:48'],
-    S_N:['23:33','05:58','07:33','09:10','10:23','11:57','13:34','15:08','16:44','18:22','19:57','21:35'],
-    H_S:['06:59','12:12','17:23','22:11'],
-    H_N:['05:24','10:35','15:46','20:33']
+    P_S:['05:10','06:22','07:35','07:59','09:34','10:46','12:23','13:34','14:22','15:11','15:59','17:34','18:22','19:11','19:59','21:34','23:11'],
+    P_N:['23:39','05:41','06:53','07:17','08:50','10:04','11:38','12:51','13:41','14:28','15:17','16:50','17:41','18:29','19:16','20:50','21:40'],
+    S_S:['05:47','07:24','09:00','10:35','11:48','13:23','14:59','16:36','18:11','21:23','23:48'],
+    S_N:['05:58','07:33','09:10','10:23','11:57','13:34','15:08','16:44','19:57','21:35'],
+    K_N:['23:33'],
+    H_S:['06:59','10:11','12:12','17:23','19:48','22:11'],
+    H_N:['05:24','08:34','10:35','15:46','18:11','20:33']
   };
 
   const revised=[];
@@ -120,11 +122,13 @@
   departures.A_S.slice(0,1).forEach(time=>revised.push(buildLeg(specs.A_S,time)));
   departures.A_N.slice(-1).forEach(time=>revised.push(buildLeg(specs.A_N,time)));
   addRoundTrips('U',5,1);
-  addRoundTrips('P',14,0,0,4);
-  departures.P_S.slice(-4).forEach(time=>revised.push(buildLeg(specs.P_S,time)));
-  departures.P_N.slice(0,4).forEach(time=>revised.push(buildLeg(specs.P_N,time)));
-  addRoundTrips('S',12,3);
-  addRoundTrips('H',4,1);
+  addRoundTrips('P',14,0,0,3);
+  departures.P_S.slice(-3).forEach(time=>revised.push(buildLeg(specs.P_S,time)));
+  departures.P_N.slice(0,3).forEach(time=>revised.push(buildLeg(specs.P_N,time)));
+  addRoundTrips('S',10,2);
+  departures.S_S.slice(-1).forEach(time=>revised.push(buildLeg(specs.S_S,time)));
+  departures.K_N.forEach(time=>revised.push(buildLeg(specs.K_N,time)));
+  addRoundTrips('H',6,2);
 
   const nextTrips=[];
   const nextClasses=[];

@@ -22,6 +22,8 @@ const expectedOrder = '<span class="mtt-t">${fClk(r.clk)}</span><span class="mtt
 assert.ok(source.includes(expectedOrder), '전체 시간표는 시각 → 출발지·행선지 → 급행 심볼 순이어야 합니다.');
 assert.ok(source.includes('onchange="setMetroTimetableExpressOnly(this.checked)"'), '급행만 보기 체크박스가 필터 함수와 연결되어야 합니다.');
 assert.ok(source.includes('${r.clk},${r.k0},${r.k1})'), '전체 시간표 클릭은 선택한 방향 leg 범위를 함께 전달해야 합니다.');
+assert.ok(source.includes("const METRO_MODE_TABS=['metrolines','metroschematic','metroroute','map','stationinfo','notice']"),'전철 공지는 가장 오른쪽 탭이어야 합니다.');
+assert.ok(source.includes("b.style.order=String(Math.max(0,visible.indexOf(id)))"),'모드별 탭 순서를 화면에 적용해야 합니다.');
 
 const rangesStart = source.indexOf('function _metroLegRanges');
 const rangesEnd = source.indexOf('\n// 🚇 개별 편성 역별 타임라인', rangesStart);

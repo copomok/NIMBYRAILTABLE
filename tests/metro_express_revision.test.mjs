@@ -6,6 +6,7 @@ const context={};
 vm.createContext(context);
 vm.runInContext(fs.readFileSync('data/nimbi_metro_sched.js','utf8'),context);
 vm.runInContext(fs.readFileSync('data/nimbi_metro_schedule_updates.js','utf8'),context);
+vm.runInContext(fs.readFileSync('data/nimbi_metro_service_policy.js','utf8'),context);
 
 const line=vm.runInContext("METRO_SCHED['경부선']",context);
 const revision=context.NIMBI_GYEONGBU_EXPRESS_REVISION;
@@ -51,7 +52,7 @@ for(const leg of legs){
   const key=`${leg[0].name}→${leg.at(-1).name}`;
   pairCounts[key]=(pairCounts[key]||0)+1;
   const names=leg.map(item=>item.name);
-  assert.ok(names.includes('청량리')&&names.includes('수원'),`${key}가 청량리–수원 공통 구간을 벗어났습니다.`);
+  assert.ok(names.includes('수원')&&(names.includes('청량리')||key==='신창→구로'),`${key}가 계획된 공통 구간을 벗어났습니다.`);
   assert.ok(!names.includes('남평택'),'급행은 남평택이 아닌 평택에서 착발해야 합니다.');
 
   let previous=null;
@@ -68,12 +69,13 @@ assert.deepEqual(pairCounts,{
   '수원→양주':6,
   '의정부→수원':5,
   '수원→의정부':5,
-  '의정부→평택':18,
-  '평택→의정부':18,
-  '청량리→신창':12,
-  '신창→청량리':12,
-  '청량리→합덕':4,
-  '합덕→청량리':4
+  '의정부→평택':17,
+  '평택→의정부':17,
+  '청량리→신창':11,
+  '신창→청량리':10,
+  '신창→구로':1,
+  '청량리→합덕':6,
+  '합덕→청량리':6
 });
 
 const departures={};
@@ -94,6 +96,7 @@ for(const [key,times] of Object.entries({
   '평택→의정부':revision.departures.P_N,
   '청량리→신창':revision.departures.S_S,
   '신창→청량리':revision.departures.S_N,
+  '신창→구로':revision.departures.K_N,
   '청량리→합덕':revision.departures.H_S,
   '합덕→청량리':revision.departures.H_N
 })){

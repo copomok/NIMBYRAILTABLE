@@ -398,7 +398,7 @@ function updateMinimap(){
 
 // ── 🚆/🚇 이용 모드 (기차/전철) ──
 let _appMode=(()=>{try{return localStorage.getItem('nimbi_mode')||'train';}catch(e){return 'train';}})();
-const METRO_MODE_TABS=['metrolines','metroschematic','metroroute','map','notice','stationinfo']; // 전철 모드에서 보이는 메인 탭
+const METRO_MODE_TABS=['metrolines','metroschematic','metroroute','map','stationinfo','notice']; // 전철 모드에서 보이는 메인 탭
 const TRAIN_MODE_TABS=['train','station','route','ops','map','stats','notice','stationinfo','delay']; // 기차 모드 상단바 탭
 // 그 외 탭(book/alarm/fav/ticket 등)은 마이페이지 전용 — 항상 숨김 유지
 function _applyModeTabs(){
@@ -407,8 +407,10 @@ function _applyModeTabs(){
     const id=(b.id||'').replace('tab-','');
     if(METRO_MODE_TABS.includes(id)||TRAIN_MODE_TABS.includes(id)){
       b.style.display=visible.includes(id)?'':'none';
+      b.style.order=String(Math.max(0,visible.indexOf(id)));
     } else {
       b.style.display='none';
+      b.style.order='';
     }
   });
 }
