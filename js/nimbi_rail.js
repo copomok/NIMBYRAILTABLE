@@ -10720,7 +10720,7 @@ function openMetroTimetable(stn, line, preserveFilter){
   const colData=groups.map(grp=>{
     const {entries}=_metroGroupEntries(dirs, grp);
     const rows=_mttFilterEntries(entries,_mttExpressOnly)
-      .map(o=>({m:Math.floor(o.sec/60),orig:o.orig,dest:o.dest,cls:o.cls,svc:o.svc,line:o.line}))
+      .map(o=>({m:Math.floor(o.sec/60),orig:o.orig,dest:o.dest,cls:o.cls,svc:o.svc,line:o.line,k0:o.k0,k1:o.k1}))
       .sort((a,b)=>a.m-b.m)
       .map(o=>({...o,clk:(o.m+240)%1440}));
     const ni=rows.findIndex(r=>r.m>=nowSrv);   // 이 방면의 다음 열차
@@ -10736,7 +10736,7 @@ function openMetroTimetable(stn, line, preserveFilter){
     const od=(r.orig&&r.orig!==r.dest)?`${r.orig} › ${r.dest}`:`${r.dest}`;
     const cur=r.isNext?' mtt-row--next':'';
     let idAttr=''; if(r.isNext&&!anchor.set&&r.m===nextAnchorM){ idAttr=' id="mtt-next"'; anchor.set=true; }
-    const clk=(r.svc!=null)?` onclick="openMetroTrain('${escL(r.line)}',${r.svc},${r.clk})"`:'';
+    const clk=(r.svc!=null)?` onclick="openMetroTrain('${escL(r.line)}',${r.svc},${r.clk},${r.k0},${r.k1})"`:'';
     return `<div class="mtt-row${cur}${r.svc!=null?' mtt-row--tap':''}"${idAttr}${clk}><span class="mtt-t">${fClk(r.clk)}</span><span class="mtt-od">${od}</span>${_metroClsTag(r.cls)}</div>`;
   };
   const grid=hours.map(h=>{
@@ -10779,8 +10779,21 @@ function _metroLegRanges(idxSeq){
   ranges.push([start,n-1]);
   return ranges.filter(([s,e])=>e>s);
 }
+function _metroLegRangeForClick(idxSeq,dT,hlClk,legStart,legEnd){
+  const ranges=_metroLegRanges(idxSeq);
+  if(Number.isInteger(legStart)&&Number.isInteger(legEnd)){
+    const exact=ranges.find(([s,e])=>s===legStart&&e===legEnd);
+    if(exact)return exact;
+  }
+  const norm=m=>(((m%1440)+1440)%1440);
+  let ci=0;
+  for(let i=0;i<dT.length;i++){if(norm(dT[i])===hlClk){ci=i;break;}}
+  // 회차역은 앞 운행의 종착점이자 다음 운행의 시발점이다.
+  // 전체 시간표는 출발 행을 여는 화면이므로 경계에서는 다음 leg를 우선한다.
+  return ranges.find(([s])=>s===ci)||ranges.find(([s,e])=>ci>=s&&ci<=e)||[0,idxSeq.length-1];
+}
 // 🚇 개별 편성 역별 타임라인 — 기차 탑승 여정과 동일한 디자인, 왕복은 실 종점 기준 방향 leg만 표시
-function openMetroTrain(line, svcIdx, hlClk){
+function openMetroTrain(line, svcIdx, hlClk, legStart, legEnd){
   const old=document.getElementById('mtn-wrap'); if(old)old.remove();
   const ent=(typeof METRO_SCHED!=='undefined')&&METRO_SCHED[line]; if(!ent)return;
   const f=ent.t[svcIdx]; if(!f)return;
@@ -10788,9 +10801,8 @@ function openMetroTrain(line, svcIdx, hlClk){
   const n=f.length/3, norm=m=>(((m%1440)+1440)%1440);
   const fmt=m=>`${Math.floor(norm(m)/60)}:${String(norm(m)%60).padStart(2,'0')}`;
   const idxSeq=[], aT=[], dT=[]; for(let i=0;i<n;i++){ idxSeq.push(f[3*i+2]); aT.push(f[3*i]); dT.push(f[3*i+1]); }
-  // 클릭 지점 → 그 지점이 속한 방향 leg (보드는 출발d 기준)
-  let ci=0; for(let i=0;i<n;i++){ if(norm(dT[i])===hlClk){ ci=i; break; } }
-  const [ls,le]=(_metroLegRanges(idxSeq).find(([s,e])=>ci>=s&&ci<=e))||[0,n-1];
+  // 클릭 지점 → 그 지점이 속한 방향 leg. 회차역 출발은 직전 종착편이 아닌 다음 운행을 엽니다.
+  const [ls,le]=_metroLegRangeForClick(idxSeq,dT,hlClk,legStart,legEnd);
   // 통과역=출발(d) 표시, leg 종착역=도착(a) 표시(반대방향 회차 출발시각 오기 방지)
   const seq=[]; for(let i=ls;i<=le;i++){ const st={s:names[idxSeq[i]], a:aT[i], d:(i===le?aT[i]:dT[i]), m:(i===le?aT[i]:dT[i])}; if(!seq.length||seq[seq.length-1].s!==st.s) seq.push(st); else seq[seq.length-1]=st; }
   const orig=seq[0].s, dest=seq[seq.length-1].s;

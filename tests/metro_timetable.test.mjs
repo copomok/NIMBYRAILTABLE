@@ -21,5 +21,18 @@ assert.deepEqual(Array.from(context.filterEntries(entries, true), entry => entry
 const expectedOrder = '<span class="mtt-t">${fClk(r.clk)}</span><span class="mtt-od">${od}</span>${_metroClsTag(r.cls)}';
 assert.ok(source.includes(expectedOrder), '전체 시간표는 시각 → 출발지·행선지 → 급행 심볼 순이어야 합니다.');
 assert.ok(source.includes('onchange="setMetroTimetableExpressOnly(this.checked)"'), '급행만 보기 체크박스가 필터 함수와 연결되어야 합니다.');
+assert.ok(source.includes('${r.clk},${r.k0},${r.k1})'), '전체 시간표 클릭은 선택한 방향 leg 범위를 함께 전달해야 합니다.');
+
+const rangesStart = source.indexOf('function _metroLegRanges');
+const rangesEnd = source.indexOf('\n// 🚇 개별 편성 역별 타임라인', rangesStart);
+assert.ok(rangesStart >= 0 && rangesEnd > rangesStart, '전철 회차 구간 선택 함수 누락');
+const rangeContext={Number};
+vm.createContext(rangeContext);
+vm.runInContext(`${source.slice(rangesStart,rangesEnd)}
+this.pick=_metroLegRangeForClick;`,rangeContext);
+const idxSeq=[0,1,2,1,0];
+const depTimes=[100,110,200,210,220];
+assert.deepEqual(Array.from(rangeContext.pick(idxSeq,depTimes,200,2,4)),[2,4],'회차역 시발편은 다음 방향 leg를 열어야 합니다.');
+assert.deepEqual(Array.from(rangeContext.pick(idxSeq,depTimes,200)),[2,4],'구형 호출도 회차역 출발 시 다음 방향 leg를 우선해야 합니다.');
 
 console.log('metro timetable: 행 정보 순서 및 급행·특급 필터 검증 완료');

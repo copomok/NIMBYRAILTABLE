@@ -52,6 +52,7 @@ for(const leg of legs){
   pairCounts[key]=(pairCounts[key]||0)+1;
   const names=leg.map(item=>item.name);
   assert.ok(names.includes('청량리')&&names.includes('수원'),`${key}가 청량리–수원 공통 구간을 벗어났습니다.`);
+  assert.ok(!names.includes('남평택'),'급행은 남평택이 아닌 평택에서 착발해야 합니다.');
 
   let previous=null;
   for(const item of leg){
@@ -63,14 +64,14 @@ for(const leg of legs){
 }
 
 assert.deepEqual(pairCounts,{
-  '양주→수원':11,
-  '수원→양주':11,
-  '의정부→수원':10,
-  '수원→의정부':10,
-  '의정부→남평택':12,
-  '남평택→의정부':12,
-  '청량리→신창':8,
-  '신창→청량리':8,
+  '양주→수원':6,
+  '수원→양주':6,
+  '의정부→수원':5,
+  '수원→의정부':5,
+  '의정부→평택':18,
+  '평택→의정부':18,
+  '청량리→신창':12,
+  '신창→청량리':12,
   '청량리→합덕':4,
   '합덕→청량리':4
 });
@@ -89,8 +90,8 @@ for(const [key,times] of Object.entries({
   '수원→양주':revision.departures.A_N,
   '의정부→수원':revision.departures.U_S,
   '수원→의정부':revision.departures.U_N,
-  '의정부→남평택':revision.departures.N_S,
-  '남평택→의정부':revision.departures.N_N,
+  '의정부→평택':revision.departures.P_S,
+  '평택→의정부':revision.departures.P_N,
   '청량리→신창':revision.departures.S_S,
   '신창→청량리':revision.departures.S_N,
   '청량리→합덕':revision.departures.H_S,

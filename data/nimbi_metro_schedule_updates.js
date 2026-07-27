@@ -61,17 +61,8 @@
     ],
     U_S:sliceSpec(southFromUijeongbu,'의정부','수원'),
     U_N:sliceSpec(northFromHapdeok,'수원','의정부'),
-    N_S:[
-      ...sliceSpec(southFromUijeongbu,'의정부','평택')
-        .map((item,index,array)=>index===array.length-1?stop(item.name,item.arr,item.arr):item),
-      stop('남평택',79,79)
-    ],
-    N_N:[
-      stop('남평택',-1,0), stop('평택',2,2),
-      ...northFromHapdeok
-        .slice(northFromHapdeok.findIndex(item=>item.name==='오산'))
-        .map(item=>stop(item.name,item.arr-39,item.dep-39))
-    ],
+    P_S:sliceSpec(southFromUijeongbu,'의정부','평택'),
+    P_N:sliceSpec(northFromHapdeok,'평택','의정부'),
     S_S:sliceSpec(southFromUijeongbu,'청량리','신창'),
     S_N:sliceSpec(northFromHapdeok,'신창','청량리'),
     H_S:sliceSpec(southFromUijeongbu,'청량리','합덕'),
@@ -80,9 +71,6 @@
   specs.A_S[0].arr=-1;
   specs.A_S[specs.A_S.length-1].dep=specs.A_S[specs.A_S.length-1].arr;
   specs.A_N[0].arr=-1;
-  specs.N_S[specs.N_S.length-1].dep=specs.N_S[specs.N_S.length-1].arr;
-  specs.N_N[specs.N_N.length-1].dep=specs.N_N[specs.N_N.length-1].arr;
-
   function buildLeg(spec,departure){
     const base=minute(departure);
     return spec.flatMap(item=>{
@@ -104,16 +92,16 @@
   }
 
   const departures={
-    A_S:['05:54','07:07','09:06','10:42','12:43','13:54','15:31','16:43','18:42','20:19','23:31'],
-    A_N:['06:51','08:01','10:03','11:39','13:37','14:51','16:25','17:37','19:39','21:13','00:49'],
-    U_S:['08:23','09:34','11:11','13:34','15:11','16:23','18:22','19:11','20:47','21:10'],
-    U_N:['09:13','10:27','12:01','14:27','16:01','17:13','19:15','20:01','21:37','22:03'],
-    N_S:['05:10','06:22','07:35','08:47','10:22','11:35','13:10','14:22','15:59','17:58','19:59','23:11'],
-    N_N:['05:39','06:51','08:01','09:13','10:51','12:01','13:39','14:51','16:25','18:27','20:25','00:01'],
-    S_S:['05:47','08:12','10:11','12:36','14:59','17:47','19:48','21:47'],
-    S_N:['05:35','07:57','09:59','12:21','14:47','17:35','19:33','21:35'],
+    A_S:['05:54','09:06','12:43','15:31','18:42','20:19'],
+    A_N:['00:49','08:50','12:26','15:16','18:28','20:01'],
+    U_S:['08:23','11:11','13:58','16:47','20:47'],
+    U_N:['08:01','10:52','13:37','16:25','20:26'],
+    P_S:['05:10','06:22','07:35','07:59','09:34','09:58','10:46','12:23','13:34','14:22','15:11','15:59','17:34','18:22','19:11','19:59','21:34','23:11'],
+    P_N:['23:39','05:41','06:53','07:17','08:50','09:15','10:04','11:38','12:51','13:41','14:28','15:17','16:50','17:41','18:29','19:16','20:50','21:40'],
+    S_S:['05:47','07:24','09:00','10:35','11:48','13:23','14:59','16:36','18:11','19:48','21:23','23:48'],
+    S_N:['23:33','05:58','07:33','09:10','10:23','11:57','13:34','15:08','16:44','18:22','19:57','21:35'],
     H_S:['06:59','12:12','17:23','22:11'],
-    H_N:['06:36','11:46','17:00','22:58']
+    H_N:['05:24','10:35','15:46','20:33']
   };
 
   const revised=[];
@@ -128,14 +116,14 @@
   }
 
   // 기존 40왕복 + 출퇴근 편도 보강 10편의 운용 규모를 유지합니다.
-  addRoundTrips('A',8,4,3,0);
-  departures.A_S.slice(0,3).forEach(time=>revised.push(buildLeg(specs.A_S,time)));
-  departures.A_N.slice(-3).forEach(time=>revised.push(buildLeg(specs.A_N,time)));
-  addRoundTrips('U',10,1);
-  addRoundTrips('N',10,0,0,2);
-  departures.N_S.slice(-2).forEach(time=>revised.push(buildLeg(specs.N_S,time)));
-  departures.N_N.slice(0,2).forEach(time=>revised.push(buildLeg(specs.N_N,time)));
-  addRoundTrips('S',8,1);
+  addRoundTrips('A',5,2,1,0);
+  departures.A_S.slice(0,1).forEach(time=>revised.push(buildLeg(specs.A_S,time)));
+  departures.A_N.slice(-1).forEach(time=>revised.push(buildLeg(specs.A_N,time)));
+  addRoundTrips('U',5,1);
+  addRoundTrips('P',14,0,0,4);
+  departures.P_S.slice(-4).forEach(time=>revised.push(buildLeg(specs.P_S,time)));
+  departures.P_N.slice(0,4).forEach(time=>revised.push(buildLeg(specs.P_N,time)));
+  addRoundTrips('S',12,3);
   addRoundTrips('H',4,1);
 
   const nextTrips=[];
