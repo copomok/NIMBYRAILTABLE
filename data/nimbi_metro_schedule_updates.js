@@ -1,0 +1,165 @@
+// ── 전철 시간표 개정 레이어 ──
+// 원본 인게임 시간표를 보존하면서, 이용 패턴에 맞춰 확정된 시간표 개정만 적용합니다.
+(function applyGyeongbuExpressRevision(global){
+  'use strict';
+
+  const schedule=typeof METRO_SCHED!=='undefined'?METRO_SCHED:global.METRO_SCHED;
+  const line=schedule&&schedule['경부선'];
+  if(!line||!Array.isArray(line.s)||!Array.isArray(line.t)||!Array.isArray(line.c))return;
+
+  const stationIndex=new Map(line.s.map((name,index)=>[name,index]));
+  const minute=value=>{
+    const [hour,min]=value.split(':').map(Number);
+    return hour*60+min;
+  };
+  const wrap=value=>((value%1440)+1440)%1440;
+  const stop=(name,arr,dep)=>({name,arr,dep});
+
+  // 기존 의정부↔합덕 급행의 정차역과 역간 소요시간을 그대로 옮긴 기준표입니다.
+  const southFromUijeongbu=[
+    stop('의정부',-1,0), stop('도봉',4,4), stop('청량리',13,13),
+    stop('장신대',15,16), stop('종로5가',18,18), stop('종로1가',20,20),
+    stop('서울',23,23), stop('한강로',26,26), stop('구로',32,33),
+    stop('북안양',38,39), stop('남안양',43,44), stop('의왕',48,48),
+    stop('수원',54,55), stop('병점',59,60), stop('오산',65,65),
+    stop('평택',77,77), stop('성환',83,83), stop('천안',91,92),
+    stop('아산',100,100), stop('온양',102,103), stop('신창',107,107),
+    stop('합덕',118,118)
+  ];
+  const northFromHapdeok=[
+    stop('합덕',-1,0), stop('신창',11,11), stop('온양',15,15),
+    stop('아산',18,18), stop('천안',26,27), stop('성환',34,35),
+    stop('평택',41,41), stop('오산',53,53), stop('병점',58,58),
+    stop('수원',63,64), stop('의왕',69,70), stop('남안양',74,75),
+    stop('북안양',79,80), stop('구로',85,86), stop('한강로',92,92),
+    stop('서울',95,95), stop('종로1가',97,98), stop('종로5가',100,100),
+    stop('장신대',102,102), stop('청량리',104,105), stop('도봉',113,114),
+    stop('의정부',118,119)
+  ];
+
+  function sliceSpec(base,startName,endName){
+    const start=base.findIndex(item=>item.name===startName);
+    const end=base.findIndex(item=>item.name===endName);
+    if(start<0||end<start)throw new Error(`경부선 급행 구간 오류: ${startName}→${endName}`);
+    const shift=base[start].dep;
+    const result=base.slice(start,end+1).map(item=>stop(item.name,item.arr-shift,item.dep-shift));
+    result[0].arr=-1;
+    result[result.length-1].dep=result[result.length-1].arr;
+    return result;
+  }
+
+  const specs={
+    A_S:[
+      stop('양주',-1,0),
+      ...sliceSpec(southFromUijeongbu,'의정부','수원')
+        .map(item=>stop(item.name,item.arr+4,item.dep+4))
+    ],
+    A_N:[
+      ...sliceSpec(northFromHapdeok,'수원','의정부')
+        .map((item,index,array)=>index===array.length-1?stop(item.name,item.arr,item.arr+1):item),
+      stop('양주',58,58)
+    ],
+    U_S:sliceSpec(southFromUijeongbu,'의정부','수원'),
+    U_N:sliceSpec(northFromHapdeok,'수원','의정부'),
+    N_S:[
+      ...sliceSpec(southFromUijeongbu,'의정부','평택')
+        .map((item,index,array)=>index===array.length-1?stop(item.name,item.arr,item.arr):item),
+      stop('남평택',79,79)
+    ],
+    N_N:[
+      stop('남평택',-1,0), stop('평택',2,2),
+      ...northFromHapdeok
+        .slice(northFromHapdeok.findIndex(item=>item.name==='오산'))
+        .map(item=>stop(item.name,item.arr-39,item.dep-39))
+    ],
+    S_S:sliceSpec(southFromUijeongbu,'청량리','신창'),
+    S_N:sliceSpec(northFromHapdeok,'신창','청량리'),
+    H_S:sliceSpec(southFromUijeongbu,'청량리','합덕'),
+    H_N:sliceSpec(northFromHapdeok,'합덕','청량리')
+  };
+  specs.A_S[0].arr=-1;
+  specs.A_S[specs.A_S.length-1].dep=specs.A_S[specs.A_S.length-1].arr;
+  specs.A_N[0].arr=-1;
+  specs.N_S[specs.N_S.length-1].dep=specs.N_S[specs.N_S.length-1].arr;
+  specs.N_N[specs.N_N.length-1].dep=specs.N_N[specs.N_N.length-1].arr;
+
+  function buildLeg(spec,departure){
+    const base=minute(departure);
+    return spec.flatMap(item=>{
+      const idx=stationIndex.get(item.name);
+      if(idx===undefined)throw new Error(`경부선 급행 역 누락: ${item.name}`);
+      return [wrap(base+item.arr),wrap(base+item.dep),idx];
+    });
+  }
+
+  function buildRoundTrip(southSpec,southDeparture,northSpec,northDeparture){
+    const south=buildLeg(southSpec,southDeparture);
+    const north=buildLeg(northSpec,northDeparture);
+    const southTerminal=stationIndex.get(southSpec[southSpec.length-1].name);
+    const northOrigin=stationIndex.get(northSpec[0].name);
+    if(southTerminal!==northOrigin)throw new Error('경부선 급행 왕복 시종착 불일치');
+    // 회차역은 한 번만 기록하고 도착 시각과 반대편 출발 시각을 함께 보존합니다.
+    south[south.length-2]=north[1];
+    return south.concat(north.slice(3));
+  }
+
+  const departures={
+    A_S:['05:54','07:07','09:06','10:42','12:43','13:54','15:31','16:43','18:42','20:19','23:31'],
+    A_N:['06:51','08:01','10:03','11:39','13:37','14:51','16:25','17:37','19:39','21:13','00:49'],
+    U_S:['08:23','09:34','11:11','13:34','15:11','16:23','18:22','19:11','20:47','21:10'],
+    U_N:['09:13','10:27','12:01','14:27','16:01','17:13','19:15','20:01','21:37','22:03'],
+    N_S:['05:10','06:22','07:35','08:47','10:22','11:35','13:10','14:22','15:59','17:58','19:59','23:11'],
+    N_N:['05:39','06:51','08:01','09:13','10:51','12:01','13:39','14:51','16:25','18:27','20:25','00:01'],
+    S_S:['05:47','08:12','10:11','12:36','14:59','17:47','19:48','21:47'],
+    S_N:['05:35','07:57','09:59','12:21','14:47','17:35','19:33','21:35'],
+    H_S:['06:59','12:12','17:23','22:11'],
+    H_N:['06:36','11:46','17:00','22:58']
+  };
+
+  const revised=[];
+  function addRoundTrips(key,count,shift,southStart=0,northStart=0){
+    for(let i=0;i<count;i++){
+      const northIndex=(i+shift)%count;
+      revised.push(buildRoundTrip(
+        specs[`${key}_S`],departures[`${key}_S`][southStart+i],
+        specs[`${key}_N`],departures[`${key}_N`][northStart+northIndex]
+      ));
+    }
+  }
+
+  // 기존 40왕복 + 출퇴근 편도 보강 10편의 운용 규모를 유지합니다.
+  addRoundTrips('A',8,4,3,0);
+  departures.A_S.slice(0,3).forEach(time=>revised.push(buildLeg(specs.A_S,time)));
+  departures.A_N.slice(-3).forEach(time=>revised.push(buildLeg(specs.A_N,time)));
+  addRoundTrips('U',10,1);
+  addRoundTrips('N',10,0,0,2);
+  departures.N_S.slice(-2).forEach(time=>revised.push(buildLeg(specs.N_S,time)));
+  departures.N_N.slice(0,2).forEach(time=>revised.push(buildLeg(specs.N_N,time)));
+  addRoundTrips('S',8,1);
+  addRoundTrips('H',4,1);
+
+  const nextTrips=[];
+  const nextClasses=[];
+  let inserted=false;
+  line.t.forEach((trip,index)=>{
+    if(line.c[index]===1){
+      if(!inserted){
+        revised.forEach(item=>{nextTrips.push(item);nextClasses.push(1);});
+        inserted=true;
+      }
+      return;
+    }
+    nextTrips.push(trip);
+    nextClasses.push(line.c[index]);
+  });
+  if(!inserted)revised.forEach(item=>{nextTrips.push(item);nextClasses.push(1);});
+  line.t=nextTrips;
+  line.c=nextClasses;
+
+  global.NIMBI_GYEONGBU_EXPRESS_REVISION={
+    version:'2026-07-27',
+    serviceObjects:revised.length,
+    oneWayTrips:90,
+    departures
+  };
+})(typeof globalThis!=='undefined'?globalThis:window);
