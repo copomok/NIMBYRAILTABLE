@@ -64,6 +64,7 @@ const platformResolver = lineName => (route, index) => {
 
 const started = performance.now();
 let routeCount = 0;
+const analyzed = [];
 for (const line of context.METRO_LINES) {
   const track = context.METRO_TRACK[line.name];
   const result = api.analyzeLine({
@@ -73,6 +74,7 @@ for (const line of context.METRO_LINES) {
     platformVersion:'semantic-test',
     platformResolver:platformResolver(line.name)
   });
+  analyzed.push(result);
   assert.equal(result.routes.length, 1 + (track.b?.length || 0), `${line.name}: 지선도 같은 분석기를 거쳐야 합니다.`);
   assert.equal(result.graph.routes.length, result.routes.length, `${line.name}: 통합 Track Graph 경로 누락`);
   assert.ok(result.graph.componentCount > 0, `${line.name}: Connected Component 누락`);
@@ -105,5 +107,17 @@ assert.ok(elapsed < 10000, `전체 노선 의미 분석이 너무 느립니다: 
 const source = fs.readFileSync('js/features/nimbi_track_semantic.js', 'utf8');
 assert.ok(!source.includes('성환'), '특정 역 예외를 Track Semantic Analyzer에 하드코딩하면 안 됩니다.');
 assert.ok(stored.has('nimbi_track_semantic_patterns_v2'), '고신뢰 구조 패턴 캐시가 생성되어야 합니다.');
+
+const appSource = fs.readFileSync('js/nimbi_rail.js', 'utf8');
+const simpleStart = appSource.indexOf('function _sxPlatformModel');
+const simpleEnd = appSource.indexOf('\n// 인게임 실좌표에서 배선의 의미만 추출한다.', simpleStart);
+vm.runInContext(`${appSource.slice(simpleStart, simpleEnd)}\nthis.toSimpleTopology=_sxSimpleTopology;`, context);
+for (const result of analyzed) for (const route of result.routes) for (const station of route.stations) {
+  const simple = context.toSimpleTopology(station.topology);
+  assert.ok(simple.trackDs.length >= 1 && simple.trackDs.length <= 6, `${result.lineName} ${station.name}: 단순 배선 선로 수 범위 오류`);
+  assert.ok(simple.trackDs.every((d, i) => i === 0 || d > simple.trackDs[i - 1]), `${result.lineName} ${station.name}: 단순 배선 좌우 순서 오류`);
+  assert.ok(simple.mainIdx.every(i => i >= 0 && i < simple.trackDs.length), `${result.lineName} ${station.name}: 단순 배선 본선 위치 오류`);
+  assert.ok(simple.parallelGroups.length <= 2 && simple.sidings.length <= 2, `${result.lineName} ${station.name}: 단순 배선 보조 선로 상한 초과`);
+}
 
 console.log(`track semantic: ${context.METRO_LINES.length}개 노선 / ${routeCount}개 경로 / ${elapsed.toFixed(0)}ms 검증 완료`);

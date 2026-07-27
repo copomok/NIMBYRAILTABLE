@@ -34,19 +34,10 @@ assert.ok(trackLoad >= 0 && trackLoad < appLoad, '인게임 배선 데이터는 
 assert.ok(semanticLoad > trackLoad && semanticLoad < appLoad, 'Track Semantic Analyzer는 원본 데이터 다음, 렌더러 전에 로드해야 합니다.');
 
 const app = fs.readFileSync('js/nimbi_rail.js', 'utf8');
-const repStart = app.indexOf('function _sxTrackRunStats');
-const repEnd = app.indexOf('function _sxLocalTrackOffsets', repStart);
-assert.ok(repStart >= 0 && repEnd > repStart, '원본 선로 대표 선분 선택 함수 누락');
-vm.runInContext(`${app.slice(repStart, repEnd)}\nthis.representativeRuns=_sxRepresentativeTrackRuns;`, context);
-for (const line of context.lines) {
-  const selected = context.representativeRuns(context.tracks[line.name], context.tracks[line.name].ss);
-  assert.ok(selected.size > 0, `${line.name}: 표시할 원본 선로가 하나도 선택되지 않음`);
-  assert.ok(selected.size <= line.stations.length * 4, `${line.name}: 원본 선로 단순화 상한 초과`);
-}
 const modelStart = app.indexOf('function _sxPlatformModel');
 const modelEnd = app.indexOf('\n// 인게임 실좌표에서 배선의 의미만 추출한다.', modelStart);
 assert.ok(modelStart >= 0 && modelEnd > modelStart, '승강장 배선 모델 함수 누락');
-vm.runInContext(`${app.slice(modelStart, modelEnd)}\nthis.platformModel=_sxPlatformModel;`, context);
+vm.runInContext(`${app.slice(modelStart, modelEnd)}\nthis.platformModel=_sxPlatformModel;this.simpleTopology=_sxSimpleTopology;`, context);
 const side = context.platformModel(2, '경부선', '신묵');
 assert.deepEqual(JSON.parse(JSON.stringify(side.blocks)), [
   {kind:'outside', d:0, side:'left'},
@@ -55,6 +46,14 @@ assert.deepEqual(JSON.parse(JSON.stringify(side.blocks)), [
 assert.deepEqual(Array.from(context.platformModel(4, '경부선', '종로1가').mainIdx), [1,2], '일반 4선역은 2·3번이 본선이어야 합니다.');
 assert.deepEqual(Array.from(context.platformModel(4, '임의노선', '임의역').mainIdx), [1,2], '폴백 모델도 특정 역 예외 없이 구조 규칙만 사용해야 합니다.');
 assert.ok(!app.slice(modelStart, modelEnd).includes('성환'), '특정 역의 본선 위치를 하드코딩하면 안 됩니다.');
+const simple = context.simpleTopology({
+  observed:true,trackDs:[-18,-6,7,19],mainDs:[-6,7],mainIdx:[1,2],
+  blocks:[{kind:'between',a:-18,b:-6},{kind:'between',a:7,b:19}],
+  sidings:[{d:-25,connected:true},{d:28,connected:false}],parallelGroups:[],cross:2,platforms:4,trackMeta:[]
+});
+assert.deepEqual(Array.from(simple.trackDs), [-5,0,5,10], '원본 좌우 순서는 유지하되 배선 간격은 단순화해야 합니다.');
+assert.deepEqual(Array.from(simple.mainIdx), [1,2], '단순 배선에서도 본선 선로 위치를 유지해야 합니다.');
+assert.equal(simple.cross, 1, '건넘선은 알아보기 쉽게 한 개 기호로 단순화해야 합니다.');
 vm.runInContext('this.alignedBranchY=_sxAlignedBranchY;this.platformMatchesRoute=_sxPlatformMatchesRoute;', context);
 assert.deepEqual(Array.from(context.alignedBranchY(['분기역','지선중간','합류역'], {분기역:0,합류역:2}, [30,90,150], 44)), [30,90,150], '지선의 공통역은 본선과 같은 높이에 정렬되어야 합니다.');
 assert.equal(context.platformMatchesRoute({variants:['구로-남평택']},{label:'평택→남평택',names:['평택','남평택']}), true, '가지 노선 전용 승강장은 지선 종착역으로 연결되어야 합니다.');
@@ -87,5 +86,10 @@ assert.equal(context.sidingConnected([[{s:100,d:-10},{s:240,d:-10}]], -10, [0,5]
 assert.equal(context.sidingConnected([[{s:100,d:-5},{s:500,d:0}]], -5, [0,5]), false, '멀리 떨어진 좌표를 억지 분기로 연결하면 안 됩니다.');
 assert.ok(Object.values(context.tracks).some(t => t.b?.length), '같은 노선 지선 배선 데이터 누락');
 assert.ok(Object.values(context.geo).some(g => g.d?.length), '차량기지·주박선 연결 데이터 누락');
+const canvasStart=app.indexOf('function _metroSchCanvas(l)');
+const canvasEnd=app.indexOf('\\nfunction ',canvasStart+10);
+const canvasBody=app.slice(canvasStart,canvasEnd);
+assert.ok(!canvasBody.includes('_sxDetailedTrackLayer('), '단순 배선도에 원본 선로 조각을 직접 겹쳐 그리면 안 됩니다.');
+assert.ok(canvasBody.includes('_sxSchematicTrackLayer('), '본선과 가지 노선은 동일한 단순 배선 렌더러를 사용해야 합니다.');
 
 console.log(`metro track: ${context.lines.length}개 노선 / ${Object.values(context.tracks).reduce((n, t) => n + t.rn.length, 0)}개 선로 런 검증 완료`);
