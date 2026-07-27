@@ -1573,7 +1573,7 @@ button, select, input[type=range],
 .tsx-symbol-pocket{fill:none;stroke:#9aa2ac;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;opacity:.9}
 .tsx-symbol-stop{fill:none;stroke:#9aa2ac;stroke-width:2;stroke-linecap:round;opacity:.9}
 .tsx-symbol-turnback{fill:none;stroke:#9aa2ac;stroke-width:2.1;stroke-linecap:round;opacity:.9}
-.tsx-plat--game{fill:#929292;opacity:.68}
+.tsx-plat--game{fill:#8f8f8f;opacity:.74;stroke:rgba(255,255,255,.1);stroke-width:.7}
 .tsx-name--game{left:8px;max-width:58px;font-size:11.5px}
 .tsx-cont{position:absolute;display:flex;align-items:center;gap:4px;transform:translateY(-50%);font-size:9.5px;font-weight:650;color:var(--text2);white-space:nowrap;z-index:5}
 .tsx-cont i{width:8px;height:8px;border-radius:50%;background:var(--pc);box-shadow:0 0 0 1px rgba(255,255,255,.75);flex:none}

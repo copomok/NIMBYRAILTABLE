@@ -11022,16 +11022,30 @@ function _sxLocalTrackOffsets(track,s){
 }
 function _sxDetailedPlatforms(l,track,Y,axisX,scale){
   const F=x=>(+x).toFixed(1); let svg='',minX=axisX,maxX=axisX;
-  const box=(x,y)=>{minX=Math.min(minX,x-6);maxX=Math.max(maxX,x+6);svg+=`<rect x="${F(x-6)}" y="${F(y-16)}" width="12" height="32" rx="2" class="tsx-plat tsx-plat--game"/>`;};
+  const box=(x,y,w,h)=>{minX=Math.min(minX,x-w/2);maxX=Math.max(maxX,x+w/2);svg+=`<rect x="${F(x-w/2)}" y="${F(y-h/2)}" width="${F(w)}" height="${F(h)}" rx="2" class="tsx-plat tsx-plat--game"/>`;};
   l.stations.forEach((name,i)=>{
-    const pfs=_metroStationPlatforms(name,l.name,l.stations[i-1],l.stations[i+1]).filter(p=>p.isCur&&!p.branchOnly);
-    const count=Math.max(1,pfs.length||1), y=Y[i], up=0,down=5;
-    // 승강장은 인게임의 본선 기준 d=0/5 주변에 고정한다. 분기선의 극단 편차를
-    // 승강장 위치로 오인하면 플랫폼이 선로에서 멀리 튀므로 사용하지 않는다.
-    if(count===1)box(axisX+((up+down)/2)*scale,y);
-    else {
-      box(axisX+(up-6)*scale,y); box(axisX+(down+6)*scale,y);
-      for(let k=2;k<count;k++){const side=(k%2?1:-1),ring=Math.ceil((k-1)/2);box(axisX+(side>0?down+6+ring*8:up-6-ring*8)*scale,y);}
+    const topo=_sxStationTopology(l,track,track.ss,i), y=Y[i];
+    const rails=[0,5,...topo.lanes].sort((a,b)=>a-b);
+    // 승강장 번호 수는 승강장에 접한 선로 수에 가깝다. 회색 박스(섬/상대식 구조)는
+    // 보통 두 선로가 하나를 공유하므로 구조물 수는 절반으로 환산한다.
+    const structures=Math.max(1,Math.ceil(topo.platforms/2)), h=Math.min(42,34+Math.max(0,topo.platforms-2)*2);
+    const gaps=[];
+    for(let k=0;k<rails.length-1;k++){
+      const px=(rails[k+1]-rails[k])*scale;
+      if(px>=11)gaps.push({d:(rails[k]+rails[k+1])/2,px,rank:Math.abs((rails[k]+rails[k+1])/2-2.5)});
+    }
+    gaps.sort((a,b)=>a.rank-b.rank);
+    let made=0;
+    for(const g of gaps){
+      if(made>=structures)break;
+      const w=Math.max(7,Math.min(12,g.px-5));
+      box(axisX+g.d*scale,y,w,h);made++;
+    }
+    // 선로 사이 공간이 부족할 때만 가장 바깥 선로 외측에 상대식 승강장을 둔다.
+    let side=0;
+    while(made<structures){
+      const left=side++%2===0,d=left?rails[0]:rails[rails.length-1],w=10;
+      box(axisX+d*scale+(left?-(w/2+5):(w/2+5)),y,w,h);made++;
     }
   });
   return {svg,minX,maxX};
@@ -11109,7 +11123,7 @@ function _metroSchCanvas(l){
     return _metroSchCanvasLegacy(l);
   const color=l.color,F=x=>(+x).toFixed(1),GEO=(typeof METRO_GEO!=='undefined')?METRO_GEO[l.name]:null;
   const stopS=_sxNormalizeStops(track.ss,track.v);
-  const Y=_sxY((GEO&&GEO.m)||l.stations.map(()=>null),58), axisX=116, scale=1.55;
+  const Y=_sxY((GEO&&GEO.m)||l.stations.map(()=>null),62), axisX=122, scale=3.2;
   const layer=_sxSchematicTrackLayer(l,track,stopS,Y,axisX,scale,color);
   const renderTrack={...track,ss:stopS},plats=_sxDetailedPlatforms(l,renderTrack,Y,axisX,scale);
   let namesHTML='',labelsHTML='',minX=Math.min(layer.minX,plats.minX),maxX=Math.max(layer.maxX,plats.maxX);
