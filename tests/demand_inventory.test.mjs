@@ -8,6 +8,9 @@ c.loadTickets=()=>[{id:'u',trainNo:'1202',travelDate:date,status:'active',fromSt
 assert.equal(c.getTrainCapacity(train).premium,20);assert.equal(c.getTrainCapacity(train).standing,30);
 const classState=c.getSeatInventoryState(train,'대전','부산',date,'general',now);assert.equal(classState.available+classState.booked,classState.capacity,'좌석 선택과 등급별 잔여석은 동일 재고를 사용');
 assert.ok(c.getBookingProgress(24,'regional')>c.getBookingProgress(168,'regional'));
+assert.ok(c.getBookingProgress(168,'business','2026-07-31')>c.getBookingProgress(168,'business','2026-07-29'),'금요일은 같은 리드타임의 평일보다 선예약 비율이 높아야 함');
+assert.ok(c.getBookingProgress(168,'business','2026-08-01')>c.getBookingProgress(168,'business','2026-07-29'),'토요일은 같은 리드타임의 평일보다 선예약 비율이 높아야 함');
+assert.ok(c.getBookingProgress(168,'business','2026-08-02')>c.getBookingProgress(168,'business','2026-07-29'),'일요일은 같은 리드타임의 평일보다 선예약 비율이 높아야 함');
 const local={s:'대전',dep:'08:00'},capital={s:'서울',dep:'08:00'};assert.ok(c.NIMBI_Demand.getTimeDirectionMultiplier(train,local,capital,date)>c.NIMBI_Demand.getTimeDirectionMultiplier(train,capital,local,date));
 c.NIMBI_Inventory.invalidate();assert.equal(c.getTrainInventorySnapshot(train,'2026-07-29',now).userBookings.length,0);
 const ktx={...train,no:'1',grade:'KTX'},ktxEum={...train,no:'901',grade:'KTX-이음'};

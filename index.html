@@ -6,7 +6,7 @@
 <title>님비레일 시간표</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="assets/css/nimbi_rail.css?v=2026072751">
+<link rel="stylesheet" href="assets/css/nimbi_rail.css?v=2026072801">
 <!-- PWA -->
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#161b22">
@@ -374,6 +374,7 @@
       <span id="map-train-count" class="badge blue" style="white-space:nowrap"></span>
       <!-- 역/열차 우선 (항상 표시) -->
       <button class="map-layer-btn" id="map-layer-btn" onclick="toggleMapLayer()">🚉 역 우선</button>
+      <button class="map-layer-btn map-fullscreen-btn" id="map-fullscreen-btn" onclick="toggleMapFullscreen()">⛶ 전체화면</button>
       <!-- 필터 토글 버튼 -->
       <button class="map-layer-btn" id="map-filter-toggle-btn" onclick="toggleMapFilterPanel()" style="display:flex;align-items:center;gap:3px">필터 <span id="map-filter-arrow">▾</span></button>
     </div>
@@ -494,13 +495,13 @@
   <script src="data/nimbi_rail_notices.js?v=2026072704"></script>
   <script src="data/nimbi_pax.js?v=2026072003"></script>
   <script src="data/nimbi_train_demand.js?v=2026072701"></script>
-  <script src="data/nimbi_demand_data.js?v=2026072802"></script>
+  <script src="data/nimbi_demand_data.js?v=2026072803"></script>
   <script src="js/features/nimbi_demand.js?v=2026072802"></script>
-  <script src="js/features/nimbi_booking_dynamics.js?v=2026072701"></script>
+  <script src="js/features/nimbi_booking_dynamics.js?v=2026072802"></script>
   <script src="js/features/nimbi_inventory.js?v=2026072702"></script>
 <script src="js/features/nimbi_delay.js?v=2026072327"></script>
 <script src="js/features/nimbi_track_semantic.js?v=2026072703"></script>
-<script src="js/nimbi_rail.js?v=2026072801"></script>
+<script src="js/nimbi_rail.js?v=2026072802"></script>
   <script src="js/features/nimbi_congestion.js?v=2026072702"></script>
   <script src="js/features/nimbi_engagement.js?v=2026072331"></script>
   <script>

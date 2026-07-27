@@ -28,9 +28,10 @@ assert.ok(source.includes('${hasExpress?`<div class="mtt-filterbar">'),'급행 �
 assert.ok(source.includes('${r.clk},${r.k0},${r.k1})'), '전체 시간표 클릭은 선택한 방향 leg 범위를 함께 전달해야 합니다.');
 assert.ok(source.includes("const METRO_MODE_TABS=['metrolines','metroschematic','metroroute','map','stationinfo','notice']"),'전철 공지는 가장 오른쪽 탭이어야 합니다.');
 assert.ok(source.includes("b.style.order=String(Math.max(0,visible.indexOf(id)))"),'모드별 탭 순서를 화면에 적용해야 합니다.');
-assert.ok(source.includes('${_opsEsc(t.dest)}행${_metroClsTag(t.cls)}'),'노선 정보의 기본 실시간 위치 마커에 급행 표시가 있어야 합니다.');
-assert.ok(source.includes('${esc(t.dest)}</b>${_metroClsTag(t.cls)}'),'노선 정보의 배선형 실시간 위치 마커에 급행 표시가 있어야 합니다.');
-assert.ok(css.includes('.mtl-live-dest .mtb-exp,.mtl-ltl-train .mtb-exp'),'실시간 위치 급행 배지가 작은 마커 안에서 보이도록 스타일이 있어야 합니다.');
+assert.ok(source.includes('function _metroLiveTrainLabel(dest,cls)'),'실시간 열차 행선 표기 공통 함수가 있어야 합니다.');
+assert.ok(source.includes("cls===1?`${dest} 급행`:`${dest}행`"),'일반은 ○○행, 급행은 ○○ 급행 형식이어야 합니다.');
+assert.ok(source.includes("onclick=\"openMetroTrain('${lineArg}',${t.svcIdx},${t.clickClock})\""),'실시간 위치 마커에서 해당 편성 시간표를 열어야 합니다.');
+assert.ok(css.includes('.mtl-live.clickable{pointer-events:auto;cursor:pointer}'),'실시간 열차 마커가 클릭 가능해야 합니다.');
 
 const rangesStart = source.indexOf('function _metroLegRanges');
 const rangesEnd = source.indexOf('\n// 🚇 개별 편성 역별 타임라인', rangesStart);

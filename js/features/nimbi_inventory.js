@@ -24,7 +24,7 @@
     }
     const departure=B().departureDate(train,date),hours=(departure-now)/36e5,ods=D().buildTrainODDemand(train,date),simulatedBookings=[],cancellationEvents=[];
     for(const od of ods){
-      let wanted=Math.floor(od.demand*B().getBookingProgress(hours,B().getBookingProfile(train,od,date)));
+      let wanted=Math.floor(od.demand*B().getBookingProgress(hours,B().getBookingProfile(train,od,date),date));
       const cancellation=B().generateCancellationEvents(train,date,od)[0];
       if(hours<=cancellation.hoursBefore){const released=Math.floor(wanted*cancellation.rate);wanted-=released;if(released)cancellationEvents.push({...cancellation,seats:released,from:od.from,to:od.to});}
       const group=B().generateGroupBookingEvent(train,date,od);if(group&&!group.cancelled)wanted+=group.seats;
