@@ -1977,6 +1977,9 @@ button, select, input[type=range],
 /* 🚇 전철 역 전체 시간표 모달 (시간대별 정렬 그리드) */
 .mtt-popup{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);z-index:10001;width:min(560px,94vw);max-height:88vh;display:flex;flex-direction:column;background:var(--bg2);border:1px solid var(--border);border-top:3px solid var(--mc);border-radius:16px;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.5)}
 .mtt-head{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:14px 16px;border-bottom:1px solid var(--border);font-size:15px;font-weight:700;color:var(--text1);flex-shrink:0}
+.mtt-filterbar{display:flex;align-items:center;padding:8px 16px;border-bottom:1px solid var(--border);background:var(--bg3);flex-shrink:0}
+.mtt-filtercheck{display:inline-flex;align-items:center;gap:7px;color:var(--text2);font-size:11.5px;font-weight:700;cursor:pointer;user-select:none}
+.mtt-filtercheck input{width:15px;height:15px;margin:0;accent-color:var(--mc)}
 .mtt-scroll{overflow-y:auto;overflow-x:auto;flex:1}
 .mtt-headrow{position:sticky;top:0;z-index:2;display:grid;grid-template-columns:repeat(var(--cols),1fr);min-width:calc(var(--cols)*148px);background:color-mix(in srgb,var(--mc) 16%,var(--bg2));border-bottom:1px solid color-mix(in srgb,var(--mc) 28%,var(--border))}
 .mtt-dirhead{padding:10px 12px;font-size:12.5px;font-weight:800;color:var(--text1);text-align:center;line-height:1.3;word-break:keep-all}
@@ -1987,11 +1990,12 @@ button, select, input[type=range],
 .mtt-hcell{padding:4px 0;min-width:0}
 .mtt-hcell:not(:last-child){border-right:1px solid var(--border)}
 .mtt-row{display:flex;align-items:baseline;gap:9px;padding:5px 12px}
+.mtt-row>.mtb-exp{margin-left:auto;margin-right:0;flex-shrink:0}
 .mtt-row--now{background:color-mix(in srgb,var(--mc) 18%,transparent)}
 .mtt-row--next{background:color-mix(in srgb,var(--mc) 22%,transparent);box-shadow:inset 3px 0 0 var(--mc)}
 .mtt-row--next .mtt-t{color:var(--mc)}
 .mtt-t{font-family:var(--mono);font-size:14px;font-weight:700;color:var(--text1);font-variant-numeric:tabular-nums;flex-shrink:0;min-width:44px}
-.mtt-od{font-size:11.5px;color:var(--text2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mtt-od{flex:1;min-width:0;font-size:11.5px;color:var(--text2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .mtt-empty{padding:5px 12px;color:var(--text3);font-size:11px;opacity:.4}
 .mtt-foot{font-size:9.5px;color:var(--text3);padding:9px 16px;border-top:1px solid var(--border);flex-shrink:0}
 .mtt-row--tap{cursor:pointer}

@@ -10693,10 +10693,20 @@ function closeStationBoard(){
   _siBoardName=null; _siBoardTrains=null;
 }
 // 🚇 전철 역 전체 시간표 — 카카오지하철식(방면별 열, 같은 시간대는 같은 행에 정렬)
-function openMetroTimetable(stn, line){
+let _mttExpressOnly=false, _mttStation=null, _mttLine=null;
+function _mttFilterEntries(entries,expressOnly){
+  return expressOnly?entries.filter(entry=>Number(entry.cls)>0):entries;
+}
+function setMetroTimetableExpressOnly(checked){
+  _mttExpressOnly=!!checked;
+  if(_mttStation&&_mttLine)openMetroTimetable(_mttStation,_mttLine,true);
+}
+function openMetroTimetable(stn, line, preserveFilter){
   const old=document.getElementById('mtt-wrap'); if(old)old.remove();
   const deps=_metroStationDeps(stn).filter(o=>o.line===line);
   if(!deps.length) return;
+  if(!preserveFilter)_mttExpressOnly=false;
+  _mttStation=stn;_mttLine=line;
   const fClk=m=>Math.floor(m/60)+':'+String(m%60).padStart(2,'0');
   const dirs={}; deps.forEach(o=>{ (dirs[o.next]=dirs[o.next]||[]).push(o); });
   // 분기역은 좌표 기준 2개 물리 방면으로 병합 — 같은 쪽 계통은 한 열에 통합
@@ -10709,7 +10719,8 @@ function openMetroTimetable(stn, line){
   // 방면(그룹)별 시각순 편 목록 (지선별 분내 중복 제거 후 병합) + 방면별 '다음 열차' 표시
   const colData=groups.map(grp=>{
     const {entries}=_metroGroupEntries(dirs, grp);
-    const rows=entries.map(o=>({m:Math.floor(o.sec/60),orig:o.orig,dest:o.dest,cls:o.cls,svc:o.svc,line:o.line}))
+    const rows=_mttFilterEntries(entries,_mttExpressOnly)
+      .map(o=>({m:Math.floor(o.sec/60),orig:o.orig,dest:o.dest,cls:o.cls,svc:o.svc,line:o.line}))
       .sort((a,b)=>a.m-b.m)
       .map(o=>({...o,clk:(o.m+240)%1440}));
     const ni=rows.findIndex(r=>r.m>=nowSrv);   // 이 방면의 다음 열차
@@ -10726,7 +10737,7 @@ function openMetroTimetable(stn, line){
     const cur=r.isNext?' mtt-row--next':'';
     let idAttr=''; if(r.isNext&&!anchor.set&&r.m===nextAnchorM){ idAttr=' id="mtt-next"'; anchor.set=true; }
     const clk=(r.svc!=null)?` onclick="openMetroTrain('${escL(r.line)}',${r.svc},${r.clk})"`:'';
-    return `<div class="mtt-row${cur}${r.svc!=null?' mtt-row--tap':''}"${idAttr}${clk}><span class="mtt-t">${fClk(r.clk)}${_metroClsTag(r.cls)}</span><span class="mtt-od">${od}</span></div>`;
+    return `<div class="mtt-row${cur}${r.svc!=null?' mtt-row--tap':''}"${idAttr}${clk}><span class="mtt-t">${fClk(r.clk)}</span><span class="mtt-od">${od}</span>${_metroClsTag(r.cls)}</div>`;
   };
   const grid=hours.map(h=>{
     const cells=colData.map(rows=>{
@@ -10743,6 +10754,9 @@ function openMetroTimetable(stn, line){
     <div class="mtt-popup" role="dialog" aria-label="${line} ${stn} 시간표" style="--mc:${color}">
       <div class="mtt-head"><span><b style="color:${color}">🚇 ${line}</b> · ${stn}</span>
         <button class="si-board-close" onclick="closeMetroTimetable()" aria-label="닫기">✕</button></div>
+      <div class="mtt-filterbar">
+        <label class="mtt-filtercheck"><input type="checkbox"${_mttExpressOnly?' checked':''} onchange="setMetroTimetableExpressOnly(this.checked)"><span>급행만 보기</span></label>
+      </div>
       <div class="mtt-scroll" style="--cols:${groups.length}">
         <div class="mtt-headrow">${heads}</div>
         <div class="mtt-grid">${grid}</div>
@@ -10754,7 +10768,7 @@ function openMetroTimetable(stn, line){
   const nx=wrap.querySelector('#mtt-next'), sc=wrap.querySelector('.mtt-scroll');
   if(nx) nx.scrollIntoView({block:'center'}); else if(sc) sc.scrollTop=0;
 }
-function closeMetroTimetable(){ const el=document.getElementById('mtt-wrap'); if(el)el.remove(); const t=document.getElementById('mtn-wrap'); if(t)t.remove(); document.body.classList.remove('metro-paired'); }
+function closeMetroTimetable(){ const el=document.getElementById('mtt-wrap'); if(el)el.remove(); const t=document.getElementById('mtn-wrap'); if(t)t.remove(); _mttStation=null;_mttLine=null;_mttExpressOnly=false; document.body.classList.remove('metro-paired'); }
 // 왕복 편성을 회차점(A>B>A·연속중복) 기준 방향별 leg 구간으로 분할
 function _metroLegRanges(idxSeq){
   const ranges=[]; let start=0; const n=idxSeq.length;
