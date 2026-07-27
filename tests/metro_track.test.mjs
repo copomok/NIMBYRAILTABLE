@@ -28,8 +28,10 @@ for (const line of context.lines) {
 
 const index = fs.readFileSync('index.html', 'utf8');
 const trackLoad = index.indexOf('data/nimbi_metro_track.js');
+const semanticLoad = index.indexOf('js/features/nimbi_track_semantic.js');
 const appLoad = index.indexOf('js/nimbi_rail.js');
 assert.ok(trackLoad >= 0 && trackLoad < appLoad, '인게임 배선 데이터는 앱 렌더러보다 먼저 로드해야 합니다.');
+assert.ok(semanticLoad > trackLoad && semanticLoad < appLoad, 'Track Semantic Analyzer는 원본 데이터 다음, 렌더러 전에 로드해야 합니다.');
 
 const app = fs.readFileSync('js/nimbi_rail.js', 'utf8');
 const repStart = app.indexOf('function _sxTrackRunStats');
@@ -51,7 +53,8 @@ assert.deepEqual(JSON.parse(JSON.stringify(side.blocks)), [
   {kind:'outside', d:5, side:'right'}
 ], '2선 2면역은 바깥쪽 상대식이어야 합니다.');
 assert.deepEqual(Array.from(context.platformModel(4, '경부선', '종로1가').mainIdx), [1,2], '일반 4선역은 2·3번이 본선이어야 합니다.');
-assert.deepEqual(Array.from(context.platformModel(4, '경부선', '성환').mainIdx), [0,3], '성환역은 1·4번이 본선이어야 합니다.');
+assert.deepEqual(Array.from(context.platformModel(4, '임의노선', '임의역').mainIdx), [1,2], '폴백 모델도 특정 역 예외 없이 구조 규칙만 사용해야 합니다.');
+assert.ok(!app.slice(modelStart, modelEnd).includes('성환'), '특정 역의 본선 위치를 하드코딩하면 안 됩니다.');
 vm.runInContext('this.alignedBranchY=_sxAlignedBranchY;this.platformMatchesRoute=_sxPlatformMatchesRoute;', context);
 assert.deepEqual(Array.from(context.alignedBranchY(['분기역','지선중간','합류역'], {분기역:0,합류역:2}, [30,90,150], 44)), [30,90,150], '지선의 공통역은 본선과 같은 높이에 정렬되어야 합니다.');
 assert.equal(context.platformMatchesRoute({variants:['구로-남평택']},{label:'평택→남평택',names:['평택','남평택']}), true, '가지 노선 전용 승강장은 지선 종착역으로 연결되어야 합니다.');

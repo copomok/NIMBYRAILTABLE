@@ -11063,10 +11063,10 @@ function _sxLocalTrackOffsets(track,s){
   vals.sort((a,b)=>a-b); const out=[]; vals.forEach(v=>{if(Number.isFinite(v)&&(!out.length||Math.abs(v-out[out.length-1])>2.2))out.push(v);});
   return out;
 }
-function _sxDetailedPlatforms(l,track,Y,axisX,scale,routeHint){
+function _sxDetailedPlatforms(l,track,Y,axisX,scale,routeHint,semanticRoute){
   const F=x=>(+x).toFixed(1); let svg='',minX=axisX,maxX=axisX;
   const box=(x,y,w,h)=>{minX=Math.min(minX,x-w/2);maxX=Math.max(maxX,x+w/2);svg+=`<rect x="${F(x-w/2)}" y="${F(y-h/2)}" width="${F(w)}" height="${F(h)}" rx="2" class="tsx-plat tsx-plat--game"/>`;};
-  const parallelMap=_sxParallelColumnMap(l,track,track.ss,routeHint);
+  const parallelMap=_sxParallelColumnMap(l,track,track.ss,routeHint,semanticRoute);
   const addBlocks=(blocks,y,h,offset)=>{
     blocks.forEach(b=>{
       if(b.kind==='between'){
@@ -11079,32 +11079,35 @@ function _sxDetailedPlatforms(l,track,Y,axisX,scale,routeHint){
     });
   };
   l.stations.forEach((name,i)=>{
-    const topo=_sxStationTopology(l,track,track.ss,i,routeHint), y=Y[i];
+    const topo=_sxStationTopology(l,track,track.ss,i,routeHint,semanticRoute), y=Y[i];
     const h=Math.min(44,36+Math.max(0,topo.platforms-2)*2);
     addBlocks(topo.blocks,y,h,0);
-    topo.parallelGroups.forEach(g=>{const pm=parallelMap[g.key];if(pm)addBlocks(g.model.blocks,y,Math.min(40,34+g.count*2),pm.offset);});
+    topo.parallelGroups.forEach(g=>{const pm=parallelMap[g.key];if(pm&&g.model.observed!==false)addBlocks(g.model.blocks,y,Math.min(40,34+g.count*2),pm.offset);});
   });
   return {svg,minX,maxX};
 }
 function _sxDetailedTrackLayer(track,ss,Y,axisX,scale,color,opts){
   opts=opts||{};
   let base='',minX=axisX,maxX=axisX;
-  const picked=_sxRepresentativeTrackRuns(track,ss);
+  const semanticRuns=opts.semanticRoute&&opts.semanticRoute.semanticRuns;
+  const picked=semanticRuns?null:_sxRepresentativeTrackRuns(track,ss);
   (track.rn||[]).forEach((run,idx)=>{
-    if(!picked.has(idx))return;
+    const semantic=semanticRuns&&semanticRuns[idx];
+    if(semantic?!semantic.visible:!picked.has(idx))return;
     const st=_sxTrackRunStats(run), lateral=Math.max(0,st.maxD-st.minD);
     // 종방향 길이가 거의 없고 횡편차만 큰 조각은 종단 투영 시 의미 없는 수평선이 된다.
     // 아주 짧은 장식성 조각과 비정상 급경사 조각만 제외하고 실제 배선은 보존한다.
     if(st.span<22||(st.span<45&&lateral>st.span*1.15))return;
     const p=_sxTrackPath(run,ss,Y,axisX,scale); if(!p)return;
     minX=Math.min(minX,axisX+st.minD*scale);maxX=Math.max(maxX,axisX+st.maxD*scale);
-    const detail=st.span<90?' tsx-real-track--minor':'';
-    base+=`<path d="${p}" class="tsx-real-track${detail}"/>`;
+    const detail=st.span<90?' tsx-real-track--minor':'',type=semantic?` tsx-real-track--${semantic.type}`:'';
+    base+=`<path d="${p}" class="tsx-real-track${detail}${type}" data-confidence="${semantic?semantic.confidence.toFixed(2):''}"/>`;
   });
   const y0=Y[0],yN=Y[Y.length-1],up=axisX,down=axisX+5*scale;
   const trunk=`<path d="M ${up.toFixed(1)} ${y0.toFixed(1)} L ${up.toFixed(1)} ${yN.toFixed(1)}" class="tsx-real-trunk" stroke="${color}"/>`+
     `<path d="M ${down.toFixed(1)} ${y0.toFixed(1)} L ${down.toFixed(1)} ${yN.toFixed(1)}" class="tsx-real-trunk" stroke="${color}"/>`;
-  return {svg:`<g class="tsx-real-base tsx-real-base--representative">${base}</g>${opts.trunks===false?'':`<g class="tsx-real-trunks">${trunk}</g>`}`,minX,maxX,count:picked.size};
+  const count=semanticRuns?semanticRuns.filter(r=>r.visible).length:picked.size;
+  return {svg:`<g class="tsx-real-base tsx-real-base--representative">${base}</g>${opts.trunks===false?'':`<g class="tsx-real-trunks">${trunk}</g>`}`,minX,maxX,count};
 }
 function _sxPlatformModel(platforms,lineName,stationName){
   platforms=Math.max(1,Number(platforms)||1);
@@ -11116,8 +11119,7 @@ function _sxPlatformModel(platforms,lineName,stationName){
     for(;k+1<platforms;k+=2)blocks.push({kind:'between',a:trackDs[k],b:trackDs[k+1]});
   }
   let mainIdx;
-  if(lineName==='경부선'&&String(stationName).replace(/역$/,'')==='성환'&&platforms>=4)mainIdx=[0,platforms-1];
-  else if(platforms===1)mainIdx=[0,0];
+  if(platforms===1)mainIdx=[0,0];
   else if(platforms===2)mainIdx=[0,1];
   else mainIdx=[Math.floor((platforms-1)/2),Math.ceil((platforms-1)/2)];
   return {trackDs,blocks,mainIdx,mainDs:mainIdx.map(k=>trackDs[k])};
@@ -11170,7 +11172,9 @@ function _sxSidingIsConnected(localRuns,sidingD,stationTrackDs){
 }
 // 인게임 실좌표에서 배선의 의미만 추출한다. 원본 폴리라인을 그대로 축소하지 않고
 // 부본선 수·건넘선·회차/유치선 존재를 관제 배선 기호로 다시 그린다.
-function _sxStationTopology(l,track,ss,i,routeHint){
+function _sxStationTopology(l,track,ss,i,routeHint,semanticRoute){
+  const semanticTopology=semanticRoute&&semanticRoute.stations&&semanticRoute.stations[i]&&semanticRoute.stations[i].topology;
+  if(semanticTopology)return semanticTopology;
   const s=ss[i],prev=i?ss[i-1]:s,next=i+1<ss.length?ss[i+1]:s;
   const window=Math.min(720,Math.max(260,Math.min(i?s-prev:Infinity,i+1<ss.length?next-s:Infinity)*.24));
   const supports=new Map(),localRuns=[];let cross=0,pocket=0;
@@ -11210,16 +11214,16 @@ function _sxStationTopology(l,track,ss,i,routeHint){
   const parallelGroups=[...secondaryCur,...variantGroups,...other].map(g=>({...g,count:g.items.length,platformNums:g.items.map(p=>p.pn),model:_sxPlatformModel(g.items.length,g.label,l.stations[i])}));
   return {trackDs,mainDs,mainIdx,blocks,sidings,parallelGroups,cross:Math.min(2,cross),pocket:pocket>0,platforms,nums};
 }
-function _sxParallelColumnMap(l,track,ss,routeHint){
-  const keys={};l.stations.forEach((s,i)=>_sxStationTopology(l,track,ss,i,routeHint).parallelGroups.forEach(g=>{keys[g.key]=g;}));
+function _sxParallelColumnMap(l,track,ss,routeHint,semanticRoute){
+  const keys={};l.stations.forEach((s,i)=>_sxStationTopology(l,track,ss,i,routeHint,semanticRoute).parallelGroups.forEach(g=>{if(g.model.observed!==false)keys[g.key]=g;}));
   const out={};Object.keys(keys).sort().forEach((k,i)=>{const m=keys[k].model;out[k]={offset:25+i*15-m.trackDs[0],color:keys[k].color,label:keys[k].label};});
   return out;
 }
-function _sxSchematicTrackLayer(l,track,ss,Y,axisX,scale,color,routeHint,opts){
+function _sxSchematicTrackLayer(l,track,ss,Y,axisX,scale,color,routeHint,opts,semanticRoute){
   opts=opts||{};
   const F=x=>(+x).toFixed(1),up=axisX,down=axisX+5*scale,y0=Y[0],yN=Y[Y.length-1];
   let aux='',minX=up,maxX=down;
-  const topos=l.stations.map((s,i)=>_sxStationTopology(l,track,ss,i,routeHint)),parallelMap=_sxParallelColumnMap(l,track,ss,routeHint);
+  const topos=l.stations.map((s,i)=>_sxStationTopology(l,track,ss,i,routeHint,semanticRoute)),parallelMap=_sxParallelColumnMap(l,track,ss,routeHint,semanticRoute);
   const routes=[`M ${F(up)} ${F(y0)}`,`M ${F(down)} ${F(y0)}`];
   l.stations.forEach((name,i)=>{
     const y=Y[i],topo=topos[i];
@@ -11228,7 +11232,12 @@ function _sxSchematicTrackLayer(l,track,ss,Y,axisX,scale,color,routeHint,opts){
       if(topo.mainIdx.includes(ti))return;
       const x=axisX+d*scale,main=d<2.5?up:down;
       minX=Math.min(minX,x);maxX=Math.max(maxX,x);
-      aux+=`<path d="M ${F(main)} ${F(y-throat)} C ${F(main)} ${F(y-throat+6)}, ${F(x)} ${F(y-half-5)}, ${F(x)} ${F(y-half)} L ${F(x)} ${F(y+half)} C ${F(x)} ${F(y+half+5)}, ${F(main)} ${F(y+throat-6)}, ${F(main)} ${F(y+throat)}" class="tsx-symbol-track"/>`;
+      const meta=topo.trackMeta&&topo.trackMeta[ti];
+      if(meta&&meta.observed&&!meta.connected){
+        aux+=`<path d="M ${F(x)} ${F(y-half)} L ${F(x)} ${F(y+half)} M ${F(x-3)} ${F(y-half)} L ${F(x+3)} ${F(y-half)} M ${F(x-3)} ${F(y+half)} L ${F(x+3)} ${F(y+half)}" class="tsx-symbol-track tsx-symbol-detached"/>`;
+      }else{
+        aux+=`<path d="M ${F(main)} ${F(y-throat)} C ${F(main)} ${F(y-throat+6)}, ${F(x)} ${F(y-half-5)}, ${F(x)} ${F(y-half)} L ${F(x)} ${F(y+half)} C ${F(x)} ${F(y+half+5)}, ${F(main)} ${F(y+throat-6)}, ${F(main)} ${F(y+throat)}" class="tsx-symbol-track"/>`;
+      }
     });
     topo.sidings.forEach((siding,si)=>{
       const d=siding.d;
@@ -11243,6 +11252,7 @@ function _sxSchematicTrackLayer(l,track,ss,Y,axisX,scale,color,routeHint,opts){
       }
     });
     topo.parallelGroups.forEach(g=>{
+      if(g.model.observed===false)return;
       const pm=parallelMap[g.key];if(!pm)return;
       const ph=Math.min(22,17+g.count),prev=topos[i-1]?.parallelGroups.some(x=>x.key===g.key),next=topos[i+1]?.parallelGroups.some(x=>x.key===g.key);
       g.model.trackDs.forEach(d=>{
@@ -11285,7 +11295,7 @@ function _sxTopologyTrainLane(layer,topo,axisX,scale,down,serviceStops){
     const parts=String(k).split(/[\s→\-_()]+/).filter(x=>x.length>=2);
     return parts.length&&parts.every(p=>routeText.includes(p));
   }));
-  if(group){
+  if(group&&group.model.observed!==false){
     const pm=layer.parallelMap[group.key],d=group.model.mainDs[down?1:0];
     if(pm)return axisX+(d+pm.offset)*scale;
   }
@@ -11296,11 +11306,16 @@ function _metroSchCanvas(l){
   if(!track||!Array.isArray(track.ss)||track.ss.length!==l.stations.length||!Array.isArray(track.rn)||!track.rn.length)
     return _metroSchCanvasLegacy(l);
   const color=l.color,F=x=>(+x).toFixed(1),GEO=(typeof METRO_GEO!=='undefined')?METRO_GEO[l.name]:null;
-  const stopS=_sxNormalizeStops(track.ss,track.v);
+  const semantic=(typeof NIMBI_TRACK_SEMANTIC!=='undefined')?NIMBI_TRACK_SEMANTIC.analyzeLine({
+    line:l,track,geo:GEO,schedule:(typeof METRO_SCHED!=='undefined'&&METRO_SCHED[l.name])||null,
+    platformVersion:'20260727',
+    platformResolver:(route,i)=>_metroStationPlatforms(route.names[i],l.name,route.names[i-1],route.names[i+1])
+  }):null;
+  const mainSemantic=semantic&&semantic.routes&&semantic.routes[0],stopS=mainSemantic?mainSemantic.ss:_sxNormalizeStops(track.ss,track.v);
   const Y=_sxY((GEO&&GEO.m)||l.stations.map(()=>null),62), axisX=122, scale=3.2;
-  const layer=_sxSchematicTrackLayer(l,track,stopS,Y,axisX,scale,color);
-  const renderTrack={...track,ss:stopS},plats=_sxDetailedPlatforms(l,renderTrack,Y,axisX,scale);
-  const original=_sxDetailedTrackLayer(renderTrack,stopS,Y,axisX,scale,color,{trunks:false});
+  const layer=_sxSchematicTrackLayer(l,track,stopS,Y,axisX,scale,color,null,null,mainSemantic);
+  const renderTrack={...track,ss:stopS},plats=_sxDetailedPlatforms(l,renderTrack,Y,axisX,scale,null,mainSemantic);
+  const original=_sxDetailedTrackLayer(renderTrack,stopS,Y,axisX,scale,color,{trunks:false,semanticRoute:mainSemantic});
   let namesHTML='',labelsHTML='',platSVG=plats.svg,trackSVG=original.svg+layer.svg;
   let minX=Math.min(layer.minX,plats.minX,original.minX),maxX=Math.max(layer.maxX,plats.maxX,original.maxX),H=Y[Y.length-1]+42;
   const geometryRight=maxX;
@@ -11310,11 +11325,11 @@ function _metroSchCanvas(l){
   const branchRoutes=[];let branchX=geometryRight+42;
   ((track&&track.b)||[]).forEach((b,bi)=>{
     if(!Array.isArray(b.names)||b.names.length<2||!Array.isArray(b.ss)||!Array.isArray(b.rn))return;
-    const bs=_sxNormalizeStops(b.ss,b.v),bY=_sxAlignedBranchY(b.names,mainIdx,Y,44);
+    const branchSemantic=semantic&&semantic.routes&&semantic.routes[bi+1],bs=branchSemantic?branchSemantic.ss:_sxNormalizeStops(b.ss,b.v),bY=_sxAlignedBranchY(b.names,mainIdx,Y,44);
     const hint={label:b.lbl||'',names:b.names},bl={...l,stations:b.names,loop:false},bt={...b,ss:bs};
     const firstCommon=mainIdx[b.names[0]]!=null,lastCommon=mainIdx[b.names[b.names.length-1]]!=null;
-    const bLayer=_sxSchematicTrackLayer(bl,bt,bs,bY,axisX,scale,color,hint,{termTop:!firstCommon,termBottom:!lastCommon});
-    const bPlats=_sxDetailedPlatforms(bl,bt,bY,axisX,scale,hint),bOriginal=_sxDetailedTrackLayer(bt,bs,bY,axisX,scale,color,{trunks:false});
+    const bLayer=_sxSchematicTrackLayer(bl,bt,bs,bY,axisX,scale,color,hint,{termTop:!firstCommon,termBottom:!lastCommon},branchSemantic);
+    const bPlats=_sxDetailedPlatforms(bl,bt,bY,axisX,scale,hint,branchSemantic),bOriginal=_sxDetailedTrackLayer(bt,bs,bY,axisX,scale,color,{trunks:false,semanticRoute:branchSemantic});
     const dx=branchX-axisX;
     platSVG+=`<g transform="translate(${F(dx)} 0)">${bPlats.svg}</g>`;
     trackSVG+=`<g transform="translate(${F(dx)} 0)">${bOriginal.svg}${bLayer.svg}</g>`;
