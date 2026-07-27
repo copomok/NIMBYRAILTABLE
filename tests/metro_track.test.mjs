@@ -30,4 +30,17 @@ const trackLoad = index.indexOf('data/nimbi_metro_track.js');
 const appLoad = index.indexOf('js/nimbi_rail.js');
 assert.ok(trackLoad >= 0 && trackLoad < appLoad, '인게임 배선 데이터는 앱 렌더러보다 먼저 로드해야 합니다.');
 
+const app = fs.readFileSync('js/nimbi_rail.js', 'utf8');
+const modelStart = app.indexOf('function _sxPlatformModel');
+const modelEnd = app.indexOf('\n// 인게임 실좌표에서 배선의 의미만 추출한다.', modelStart);
+assert.ok(modelStart >= 0 && modelEnd > modelStart, '승강장 배선 모델 함수 누락');
+vm.runInContext(`${app.slice(modelStart, modelEnd)}\nthis.platformModel=_sxPlatformModel;`, context);
+const side = context.platformModel(2, '경부선', '신묵');
+assert.deepEqual(JSON.parse(JSON.stringify(side.blocks)), [
+  {kind:'outside', d:0, side:'left'},
+  {kind:'outside', d:5, side:'right'}
+], '2선 2면역은 바깥쪽 상대식이어야 합니다.');
+assert.deepEqual(Array.from(context.platformModel(4, '경부선', '종로1가').mainIdx), [1,2], '일반 4선역은 2·3번이 본선이어야 합니다.');
+assert.deepEqual(Array.from(context.platformModel(4, '경부선', '성환').mainIdx), [0,3], '성환역은 1·4번이 본선이어야 합니다.');
+
 console.log(`metro track: ${context.lines.length}개 노선 / ${Object.values(context.tracks).reduce((n, t) => n + t.rn.length, 0)}개 선로 런 검증 완료`);

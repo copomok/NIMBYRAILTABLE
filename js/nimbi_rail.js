@@ -11025,28 +11025,16 @@ function _sxDetailedPlatforms(l,track,Y,axisX,scale){
   const box=(x,y,w,h)=>{minX=Math.min(minX,x-w/2);maxX=Math.max(maxX,x+w/2);svg+=`<rect x="${F(x-w/2)}" y="${F(y-h/2)}" width="${F(w)}" height="${F(h)}" rx="2" class="tsx-plat tsx-plat--game"/>`;};
   l.stations.forEach((name,i)=>{
     const topo=_sxStationTopology(l,track,track.ss,i), y=Y[i];
-    const rails=[0,5,...topo.lanes].sort((a,b)=>a-b);
-    // 승강장 번호 수는 승강장에 접한 선로 수에 가깝다. 회색 박스(섬/상대식 구조)는
-    // 보통 두 선로가 하나를 공유하므로 구조물 수는 절반으로 환산한다.
-    const structures=Math.max(1,Math.ceil(topo.platforms/2)), h=Math.min(42,34+Math.max(0,topo.platforms-2)*2);
-    const gaps=[];
-    for(let k=0;k<rails.length-1;k++){
-      const px=(rails[k+1]-rails[k])*scale;
-      if(px>=11)gaps.push({d:(rails[k]+rails[k+1])/2,px,rank:Math.abs((rails[k]+rails[k+1])/2-2.5)});
-    }
-    gaps.sort((a,b)=>a.rank-b.rank);
-    let made=0;
-    for(const g of gaps){
-      if(made>=structures)break;
-      const w=Math.max(7,Math.min(12,g.px-5));
-      box(axisX+g.d*scale,y,w,h);made++;
-    }
-    // 선로 사이 공간이 부족할 때만 가장 바깥 선로 외측에 상대식 승강장을 둔다.
-    let side=0;
-    while(made<structures){
-      const left=side++%2===0,d=left?rails[0]:rails[rails.length-1],w=10;
-      box(axisX+d*scale+(left?-(w/2+5):(w/2+5)),y,w,h);made++;
-    }
+    const h=Math.min(44,36+Math.max(0,topo.platforms-2)*2);
+    topo.blocks.forEach(b=>{
+      if(b.kind==='between'){
+        const gap=(b.b-b.a)*scale,w=Math.max(8,Math.min(12,gap-5));
+        box(axisX+((b.a+b.b)/2)*scale,y,w,h);
+      }else{
+        const w=10,x=axisX+b.d*scale+(b.side==='left'?-(w/2+5):(w/2+5));
+        box(x,y,w,h);
+      }
+    });
   });
   return {svg,minX,maxX};
 }
@@ -11067,6 +11055,22 @@ function _sxDetailedTrackLayer(track,ss,Y,axisX,scale,color){
     `<path d="M ${down.toFixed(1)} ${y0.toFixed(1)} L ${down.toFixed(1)} ${yN.toFixed(1)}" class="tsx-real-trunk" stroke="${color}"/>`;
   return {svg:`<g class="tsx-real-base">${base}</g><g class="tsx-real-trunks">${trunk}</g>`,minX,maxX};
 }
+function _sxPlatformModel(platforms,lineName,stationName){
+  platforms=Math.max(1,Number(platforms)||1);
+  const trackDs=Array.from({length:platforms},(_,k)=>2.5+(k-(platforms-1)/2)*5),blocks=[];
+  if(platforms===1)blocks.push({kind:'outside',d:trackDs[0],side:'right'});
+  else if(platforms===2)blocks.push({kind:'outside',d:trackDs[0],side:'left'},{kind:'outside',d:trackDs[1],side:'right'});
+  else{
+    let k=0;if(platforms%2){blocks.push({kind:'outside',d:trackDs[0],side:'left'});k=1;}
+    for(;k+1<platforms;k+=2)blocks.push({kind:'between',a:trackDs[k],b:trackDs[k+1]});
+  }
+  let mainIdx;
+  if(lineName==='경부선'&&String(stationName).replace(/역$/,'')==='성환'&&platforms>=4)mainIdx=[0,platforms-1];
+  else if(platforms===1)mainIdx=[0,0];
+  else if(platforms===2)mainIdx=[0,1];
+  else mainIdx=[Math.floor((platforms-1)/2),Math.ceil((platforms-1)/2)];
+  return {trackDs,blocks,mainIdx,mainDs:mainIdx.map(k=>trackDs[k])};
+}
 // 인게임 실좌표에서 배선의 의미만 추출한다. 원본 폴리라인을 그대로 축소하지 않고
 // 부본선 수·건넘선·회차/유치선 존재를 관제 배선 기호로 다시 그린다.
 function _sxStationTopology(l,track,ss,i){
@@ -11084,26 +11088,41 @@ function _sxStationTopology(l,track,ss,i){
     if(whollyLocal&&st.span>=80&&st.span<=760&&st.minD>-1&&st.maxD<7)pocket++;
   });
   const pfs=_metroStationPlatforms(l.stations[i],l.name,l.stations[i-1],l.stations[i+1]).filter(p=>p.isCur&&!p.branchOnly);
-  const need=Math.max(0,Math.min(4,pfs.length-2));
-  let lanes=[...supports].filter(([,n])=>n>=2).sort((a,b)=>b[1]-a[1]).map(([d])=>d).slice(0,4);
-  const defaults=[-5,10,-10,15];for(const d of defaults){if(lanes.length>=need)break;if(!lanes.includes(d))lanes.push(d);}
-  lanes=lanes.sort((a,b)=>a-b);
-  return {lanes,cross:Math.min(2,cross),pocket:pocket>0,platforms:Math.max(1,pfs.length||1)};
+  const platforms=Math.max(1,pfs.length||1),nums=pfs.length?pfs.map(p=>p.pn).sort((a,b)=>a-b):[1];
+  // 승강장 번호는 좌→우 선로 순서로 사용하며 상대식/섬식 구조와 본선 번호를
+  // 하나의 모델에서 함께 산출한다.
+  const model=_sxPlatformModel(platforms,l.name,l.stations[i]);
+  const {trackDs,blocks,mainIdx,mainDs}=model;
+  // 승강장이 없는 인게임 외측 선로가 반복 검출될 때만 추가 유치/대피선으로 남긴다.
+  const occupiedMin=trackDs[0],occupiedMax=trackDs[trackDs.length-1];
+  let sidings=[...supports].filter(([d,n])=>n>=3&&(d<occupiedMin-2||d>occupiedMax+2)).sort((a,b)=>b[1]-a[1]).map(([d])=>d).slice(0,2);
+  return {trackDs,mainDs,mainIdx,blocks,sidings,cross:Math.min(2,cross),pocket:pocket>0,platforms,nums};
 }
 function _sxSchematicTrackLayer(l,track,ss,Y,axisX,scale,color){
   const F=x=>(+x).toFixed(1),up=axisX,down=axisX+5*scale,y0=Y[0],yN=Y[Y.length-1];
   let aux='',minX=up,maxX=down;
-  const trunk=`<path d="M ${F(up)} ${F(y0)} L ${F(up)} ${F(yN)}" class="tsx-real-trunk" stroke="${color}"/>`+
-    `<path d="M ${F(down)} ${F(y0)} L ${F(down)} ${F(yN)}" class="tsx-real-trunk" stroke="${color}"/>`;
+  const routes=[`M ${F(up)} ${F(y0)}`,`M ${F(down)} ${F(y0)}`];
   l.stations.forEach((name,i)=>{
     const y=Y[i],topo=_sxStationTopology(l,track,ss,i);
-    topo.lanes.forEach((d,li)=>{
-      const x=axisX+d*scale,main=d<0?up:down,half=15+Math.min(8,li*2),throat=25+Math.min(10,li*3);
+    const half=Math.min(24,18+Math.max(0,topo.platforms-2)*1.5),throat=half+13;
+    topo.trackDs.forEach((d,ti)=>{
+      if(topo.mainIdx.includes(ti))return;
+      const x=axisX+d*scale,main=d<2.5?up:down;
       minX=Math.min(minX,x);maxX=Math.max(maxX,x);
       aux+=`<path d="M ${F(main)} ${F(y-throat)} C ${F(main)} ${F(y-throat+6)}, ${F(x)} ${F(y-half-5)}, ${F(x)} ${F(y-half)} L ${F(x)} ${F(y+half)} C ${F(x)} ${F(y+half+5)}, ${F(main)} ${F(y+throat-6)}, ${F(main)} ${F(y+throat)}" class="tsx-symbol-track"/>`;
     });
+    topo.sidings.forEach((d,si)=>{
+      const x=axisX+d*scale,main=d<2.5?up:down,h=half-3-si*2,t=throat+5+si*3;
+      minX=Math.min(minX,x);maxX=Math.max(maxX,x);
+      aux+=`<path d="M ${F(main)} ${F(y-t)} C ${F(main)} ${F(y-t+6)}, ${F(x)} ${F(y-h-5)}, ${F(x)} ${F(y-h)} L ${F(x)} ${F(y+h)} C ${F(x)} ${F(y+h+5)}, ${F(main)} ${F(y+t-6)}, ${F(main)} ${F(y+t)}" class="tsx-symbol-track tsx-symbol-siding"/>`;
+    });
+    [up,down].forEach((trunkX,dir)=>{
+      const target=axisX+topo.mainDs[dir]*scale;
+      minX=Math.min(minX,target);maxX=Math.max(maxX,target);
+      routes[dir]+=` L ${F(trunkX)} ${F(y-throat)} C ${F(trunkX)} ${F(y-throat+6)}, ${F(target)} ${F(y-half-5)}, ${F(target)} ${F(y-half)} L ${F(target)} ${F(y+half)} C ${F(target)} ${F(y+half+5)}, ${F(trunkX)} ${F(y+throat-6)}, ${F(trunkX)} ${F(y+throat)}`;
+    });
     if(topo.cross){
-      const cy=y-(topo.lanes.length?31:16);
+      const cy=y-throat-8;
       aux+=`<path d="M ${F(up)} ${F(cy-8)} L ${F(down)} ${F(cy+8)}${topo.cross>1?` M ${F(down)} ${F(cy-8)} L ${F(up)} ${F(cy+8)}`:''}" class="tsx-symbol-switch"/>`;
     }
     if(topo.pocket){
@@ -11115,6 +11134,7 @@ function _sxSchematicTrackLayer(l,track,ss,Y,axisX,scale,color){
     aux+=`<path d="M ${F(up)} ${F(y0)} C ${F(up)} ${F(y0-13)}, ${F(down)} ${F(y0-13)}, ${F(down)} ${F(y0)}" class="tsx-symbol-turnback"/>`+
       `<path d="M ${F(up)} ${F(yN)} C ${F(up)} ${F(yN+13)}, ${F(down)} ${F(yN+13)}, ${F(down)} ${F(yN)}" class="tsx-symbol-turnback"/>`;
   }
+  const trunk=routes.map((d,dir)=>`<path d="${d} L ${F(dir?down:up)} ${F(yN)}" class="tsx-real-trunk" stroke="${color}"/>`).join('');
   return {svg:`<g class="tsx-symbol-aux">${aux}</g><g class="tsx-real-trunks">${trunk}</g>`,minX,maxX};
 }
 function _metroSchCanvas(l){
@@ -11146,7 +11166,8 @@ function _metroSchCanvas(l){
   _metroLineLiveTrains(l.name).forEach(t=>{
     const fi=mainIdx[t.fromStn],ti=mainIdx[t.toStn];if(fi==null||ti==null)return;cnt++;
     const down=ti>fi,s=t.atStation?stopS[fi]:stopS[fi]+t.frac*(stopS[ti]-stopS[fi]);
-    const lane=down?5:0;
+    const atTopo=t.atStation?_sxStationTopology(l,renderTrack,stopS,fi):null;
+    const lane=atTopo?atTopo.mainDs[down?1:0]:(down?5:0);
     trains.push({x:axisX+lane*scale,y:_sxTrackY(s,stopS,Y),down,dest:t.dest,id:`S${String(t.svcIdx+1).padStart(4,'0')}`});
   });
   trains.sort((a,b)=>a.y-b.y); const occupied=[];
