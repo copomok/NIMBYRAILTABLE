@@ -1,11 +1,13 @@
-// ── 전철 공통 운행 정책 ──
-// 자정 전에 출발해 계속 운행하는 열차는 유지하되, 00:00~03:59에 새로 시발하는 운행은 제거합니다.
+// ── 경부선 급행 심야 운행 정책 ──
+// 자정 전에 출발해 계속 운행하는 급행은 유지하되, 00:00~03:59에 새로 시발하는 경부선 급행만 제거합니다.
 (function applyMetroServicePolicy(global){
   'use strict';
 
   const schedule=typeof METRO_SCHED!=='undefined'?METRO_SCHED:global.METRO_SCHED;
   if(!schedule)return;
 
+  const targetLine='경부선';
+  const targetClass=1;
   const wrap=value=>((value%1440)+1440)%1440;
   const isMidnightStart=departure=>wrap(departure)<240;
   function legRanges(trip){
@@ -31,11 +33,17 @@
   const affectedLines={};
 
   for(const [lineName,line] of Object.entries(schedule)){
+    if(lineName!==targetLine)continue;
     if(!Array.isArray(line.t))continue;
     const classes=Array.isArray(line.c)?line.c:null;
     const nextTrips=[];
     const nextClasses=[];
     line.t.forEach((trip,serviceIndex)=>{
+      if(!classes||classes[serviceIndex]!==targetClass){
+        nextTrips.push(trip);
+        if(classes)nextClasses.push(classes[serviceIndex]);
+        return;
+      }
       const ranges=legRanges(trip);
       const keep=ranges.map(([start])=>!isMidnightStart(trip[start*3+1]));
       const removed=keep.filter(value=>!value).length;
@@ -72,6 +80,8 @@
 
   global.NIMBI_METRO_SERVICE_POLICY={
     version:'2026-07-27',
+    targetLine,
+    targetClass,
     cutoffMinutes:240,
     removedLegs,
     splitServices,

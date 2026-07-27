@@ -9976,7 +9976,7 @@ function _placeMetroLiveMarkers(container, lineName){
     const m=document.createElement('div');
     m.className='mtl-live'+(downward?' down':' up')+(t.atStation?' at':'');
     m.style.top=y+'px';
-    const ico='<span class="mtl-live-ico">🚇</span>', dst=`<span class="mtl-live-dest">${_opsEsc(t.dest)}행</span>`;
+    const ico='<span class="mtl-live-ico">🚇</span>', dst=`<span class="mtl-live-dest">${_opsEsc(t.dest)}행${_metroClsTag(t.cls)}</span>`;
     m.innerHTML=downward?ico+dst:dst+ico;   // 하행: 선 오른쪽 / 상행: 선 왼쪽
     tl.appendChild(m);
   });
@@ -10028,14 +10028,14 @@ function _renderMetroLiveTimeline(l,rows){
   const up=[],dn=[];
   _metroLineLiveTrains(l.name).forEach(t=>{ const fy=stnY[t.fromStn], ty=stnY[t.toStn]; if(fy==null&&ty==null)return;
     const f=(fy!=null?fy:ty), tt=(ty!=null?ty:fy); const down=tt>=f; const ey=t.atStation?f:f+(tt-f)*(t.frac||0);
-    (down?dn:up).push({ey,dest:t.dest,at:t.atStation}); });
+    (down?dn:up).push({ey,dest:t.dest,at:t.atStation,cls:t.cls}); });
   let chips='';
   const lane=(arr,side,col)=>{ arr.sort((a,b)=>a.ey-b.ey); let prev=-99; const left=(side==='left'), railX=left?railU:railD, dir=left?-1:1;
     arr.forEach(t=>{ let cy=Math.max(t.ey, prev+22); prev=cy;
       svg+=`<path d="M ${railX} ${F(t.ey)} L ${F(railX+dir*9)} ${F(cy)}" stroke="${col}" stroke-width="1.4" opacity=".7" fill="none"/>`+
            `<path d="M ${F(railX-dir*4)} ${F(t.ey-4)} L ${F(railX+dir*4)} ${F(t.ey)} L ${F(railX-dir*4)} ${F(t.ey+4)} Z" fill="${col}"/>`;
       const style=left?`right:${F(W-(railU-11))}px;top:${F(cy)}px`:`left:${F(railD+11)}px;top:${F(cy)}px`;
-      chips+=`<span class="mtl-ltl-train ${left?'down':'up'}${t.at?' at':''}" style="${style};--tc:${col}">🚇 <b>${esc(t.dest)}</b></span>`;
+      chips+=`<span class="mtl-ltl-train ${left?'down':'up'}${t.at?' at':''}" style="${style};--tc:${col}">🚇 <b>${esc(t.dest)}</b>${_metroClsTag(t.cls)}</span>`;
     });
   };
   lane(dn,'left',color); lane(up,'right','#e8863d');

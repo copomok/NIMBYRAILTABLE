@@ -3,6 +3,7 @@ import fs from 'node:fs';
 import vm from 'node:vm';
 
 const source = fs.readFileSync('js/nimbi_rail.js', 'utf8');
+const css = fs.readFileSync('assets/css/nimbi_rail.css', 'utf8');
 const filterStart = source.indexOf('function _mttFilterEntries');
 const filterEnd = source.indexOf('\nfunction setMetroTimetableExpressOnly', filterStart);
 assert.ok(filterStart >= 0 && filterEnd > filterStart, '전체 시간표 급행 필터 함수 누락');
@@ -24,6 +25,9 @@ assert.ok(source.includes('onchange="setMetroTimetableExpressOnly(this.checked)"
 assert.ok(source.includes('${r.clk},${r.k0},${r.k1})'), '전체 시간표 클릭은 선택한 방향 leg 범위를 함께 전달해야 합니다.');
 assert.ok(source.includes("const METRO_MODE_TABS=['metrolines','metroschematic','metroroute','map','stationinfo','notice']"),'전철 공지는 가장 오른쪽 탭이어야 합니다.');
 assert.ok(source.includes("b.style.order=String(Math.max(0,visible.indexOf(id)))"),'모드별 탭 순서를 화면에 적용해야 합니다.');
+assert.ok(source.includes('${_opsEsc(t.dest)}행${_metroClsTag(t.cls)}'),'노선 정보의 기본 실시간 위치 마커에 급행 표시가 있어야 합니다.');
+assert.ok(source.includes('${esc(t.dest)}</b>${_metroClsTag(t.cls)}'),'노선 정보의 배선형 실시간 위치 마커에 급행 표시가 있어야 합니다.');
+assert.ok(css.includes('.mtl-live-dest .mtb-exp,.mtl-ltl-train .mtb-exp'),'실시간 위치 급행 배지가 작은 마커 안에서 보이도록 스타일이 있어야 합니다.');
 
 const rangesStart = source.indexOf('function _metroLegRanges');
 const rangesEnd = source.indexOf('\n// 🚇 개별 편성 역별 타임라인', rangesStart);

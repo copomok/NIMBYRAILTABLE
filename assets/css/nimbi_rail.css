@@ -1390,7 +1390,7 @@ button, select, input[type=range],
 .mtl-ltl-name.pass{color:var(--text3);font-weight:500}
 .mtl-ltl-name .mtl-ltl-tag{display:block;font-size:8px;font-weight:800;color:var(--mc);opacity:.9}
 .mtl-ltl-gap{position:absolute;transform:translateY(-50%);font-size:9px;color:var(--text3);z-index:2}
-.mtl-ltl-train{position:absolute;transform:translateY(-50%);z-index:4;font-size:9.5px;font-weight:800;color:#fff;background:var(--tc);padding:2px 6px;border-radius:9px;white-space:nowrap;box-shadow:0 1px 3px rgba(0,0,0,.5);max-width:112px;overflow:hidden;text-overflow:ellipsis;display:flex;align-items:center;gap:2px}
+.mtl-ltl-train{position:absolute;transform:translateY(-50%);z-index:4;font-size:9.5px;font-weight:800;color:#fff;background:var(--tc);padding:2px 6px;border-radius:9px;white-space:nowrap;box-shadow:0 1px 3px rgba(0,0,0,.5);max-width:145px;overflow:hidden;text-overflow:ellipsis;display:flex;align-items:center;gap:2px}
 .mtl-ltl-train.up{flex-direction:row}
 .mtl-ltl-train.at{outline:2px solid rgba(255,255,255,.5);outline-offset:1px}
 .mtl-ltl-train b{font-weight:800}
@@ -1523,6 +1523,7 @@ button, select, input[type=range],
 .mtl-live.down .mtl-live-dest{background:var(--mc,#666)}
 .mtl-live.up{left:calc(9px + var(--lane) + 13px);transform:translate(-100%,-50%);max-width:var(--lane);justify-content:flex-end}
 .mtl-live.up .mtl-live-dest{background:#d9782f}
+.mtl-live-dest .mtb-exp,.mtl-ltl-train .mtb-exp{font-size:8px;line-height:1.2;padding:0 2px;margin:0 0 0 3px;color:#fff;border-color:rgba(255,255,255,.82);vertical-align:0;flex-shrink:0}
 /* 🛤️ 배선도(간이 복선 + 승강장 + 화살표 열차) */
 .msch-popup{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);z-index:10001;width:min(340px,94vw);max-height:90vh;display:flex;flex-direction:column;background:var(--bg2);border:1px solid var(--border);border-top:3px solid var(--mc);border-radius:16px;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.5)}
 .msch-head{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:13px 15px;border-bottom:1px solid var(--border);font-size:14.5px;font-weight:700;color:var(--text1);flex-shrink:0}
