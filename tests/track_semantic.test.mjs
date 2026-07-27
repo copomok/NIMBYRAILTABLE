@@ -19,7 +19,8 @@ for (const [file, name] of [
   ['data/nimbi_metro.js', 'METRO_LINES'],
   ['data/nimbi_metro_track.js', 'METRO_TRACK'],
   ['data/nimbi_metro_geo.js', 'METRO_GEO'],
-  ['data/nimbi_platform_db.js', 'PLATFORM_DB']
+  ['data/nimbi_platform_db.js', 'PLATFORM_DB'],
+  ['data/nimbi_track_reference.js', 'NIMBI_TRACK_REFERENCE']
 ]) {
   vm.runInContext(`${fs.readFileSync(file, 'utf8')}\nthis.${name}=${name};`, context, {filename:file});
 }
@@ -52,14 +53,19 @@ assert.deepEqual(JSON.parse(JSON.stringify(api._test.applyBlockPattern([12,18], 
   {kind:'outside',d:18,side:'right',confidence:.8}
 ], '학습 캐시는 다른 역의 좌표가 아니라 승강장 구조만 재사용해야 합니다.');
 
+const lineColors = Object.fromEntries(context.METRO_LINES.map(line => [line.name, line.color]));
 const platformResolver = lineName => (route, index) => {
   const db = context.PLATFORM_DB[route.names[index]] || context.PLATFORM_DB[`${route.names[index]}역`] || {};
-  return Object.entries(db)
-    .filter(([, value]) => (value.l || []).some(raw => String(raw).split('/')[0].split(' (')[0].trim() === lineName))
-    .map(([pn, value]) => ({
-      pn:Number(pn), isCur:true, branchOnly:false, variants:[],
-      kind:(value.g || []).length ? 'train' : 'metro'
-    }));
+  return Object.entries(db).map(([pn, value]) => {
+    const lines=(value.l || []).map(String);
+    const bases=[...new Set(lines.map(raw => raw.split('/')[0].split(' (')[0].trim()))];
+    const isCur=bases.includes(lineName),metro=bases.find(base => lineColors[base]);
+    return {
+      pn:Number(pn),isCur,branchOnly:false,variants:[],junction:false,
+      kind:(value.g || []).length?'train':(metro?'metro':'train'),
+      label:metro||bases[0]||'',color:metro?lineColors[metro]:'#8b949e',lines
+    };
+  });
 };
 
 const started = performance.now();
@@ -72,6 +78,7 @@ for (const line of context.METRO_LINES) {
     track,
     geo:context.METRO_GEO[line.name],
     platformVersion:'semantic-test',
+    parallelColorResolver:name=>lineColors[name],
     platformResolver:platformResolver(line.name)
   });
   analyzed.push(result);
@@ -84,6 +91,7 @@ for (const line of context.METRO_LINES) {
     track,
     geo:context.METRO_GEO[line.name],
     platformVersion:'semantic-test',
+    parallelColorResolver:name=>lineColors[name],
     platformResolver:platformResolver(line.name)
   }), result, `${line.name}: 같은 구조 분석 결과를 캐시해야 합니다.`);
   for (const route of result.routes) {
@@ -103,6 +111,18 @@ for (const line of context.METRO_LINES) {
 }
 const elapsed = performance.now() - started;
 assert.ok(elapsed < 10000, `전체 노선 의미 분석이 너무 느립니다: ${elapsed.toFixed(0)}ms`);
+
+const gyeongbu = analyzed.find(result => result.lineName === '경부선');
+assert.ok(gyeongbu?.reference, '경부선 SVG 배선 기준이 의미 분석기에 연결되어야 합니다.');
+const yangju = gyeongbu.routes[0].stations.find(station => station.name === '양주');
+const cheongnyangni = gyeongbu.routes[0].stations.find(station => station.name === '청량리');
+const uijeongbu = gyeongbu.routes[0].stations.find(station => station.name === '의정부');
+assert.equal(yangju?.topology.reference?.currentPlatforms, 2, '양주 경부선 사용 승강장은 SVG의 주황색 2개를 따라야 합니다.');
+assert.equal(yangju?.topology.reference?.otherPlatforms, 4, '양주 일반·타 노선 승강장 수를 보존해야 합니다.');
+assert.equal(cheongnyangni?.topology.reference?.mirror, true, '청량리–서울 동서 구간의 좌우 반전을 보존해야 합니다.');
+const shinNowonGroup = uijeongbu?.topology.parallelGroups.find(group => group.referenceOwner === '신노원선');
+assert.equal(shinNowonGroup?.label, '신노원선', '파란 승강장은 신노원선 평행 승강장으로 표시해야 합니다.');
+assert.equal(shinNowonGroup?.color, lineColors['신노원선'], '신노원선 평행 선로는 신노원선 실제 노선색을 사용해야 합니다.');
 
 const source = fs.readFileSync('js/features/nimbi_track_semantic.js', 'utf8');
 assert.ok(!source.includes('성환'), '특정 역 예외를 Track Semantic Analyzer에 하드코딩하면 안 됩니다.');

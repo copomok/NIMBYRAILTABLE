@@ -28,10 +28,12 @@ for (const line of context.lines) {
 
 const index = fs.readFileSync('index.html', 'utf8');
 const trackLoad = index.indexOf('data/nimbi_metro_track.js');
+const referenceLoad = index.indexOf('data/nimbi_track_reference.js');
 const semanticLoad = index.indexOf('js/features/nimbi_track_semantic.js');
 const appLoad = index.indexOf('js/nimbi_rail.js');
 assert.ok(trackLoad >= 0 && trackLoad < appLoad, '인게임 배선 데이터는 앱 렌더러보다 먼저 로드해야 합니다.');
-assert.ok(semanticLoad > trackLoad && semanticLoad < appLoad, 'Track Semantic Analyzer는 원본 데이터 다음, 렌더러 전에 로드해야 합니다.');
+assert.ok(referenceLoad > trackLoad && referenceLoad < semanticLoad, 'SVG 배선 기준은 원본 데이터 다음, 의미 분석기 전에 로드해야 합니다.');
+assert.ok(semanticLoad > referenceLoad && semanticLoad < appLoad, 'Track Semantic Analyzer는 원본·기준 데이터 다음, 렌더러 전에 로드해야 합니다.');
 
 const app = fs.readFileSync('js/nimbi_rail.js', 'utf8');
 const modelStart = app.indexOf('function _sxPlatformModel');
@@ -54,6 +56,17 @@ const simple = context.simpleTopology({
 assert.deepEqual(Array.from(simple.trackDs), [-5,0,5,10], '원본 좌우 순서는 유지하되 배선 간격은 단순화해야 합니다.');
 assert.deepEqual(Array.from(simple.mainIdx), [1,2], '단순 배선에서도 본선 선로 위치를 유지해야 합니다.');
 assert.equal(simple.cross, 1, '건넘선은 알아보기 쉽게 한 개 기호로 단순화해야 합니다.');
+const laneStart = app.indexOf('function _sxTopologyTrainLane');
+const laneEnd = app.indexOf('\nfunction _metroSchCanvas', laneStart);
+assert.ok(laneStart >= 0 && laneEnd > laneStart, '우측통행 열차 선로 선택 함수 누락');
+vm.runInContext(`${app.slice(laneStart, laneEnd)}\nthis.topologyTrainLane=_sxTopologyTrainLane;`, context);
+const laneLayer = {parallelMap:{}};
+const regularTopology = {mainDs:[0,5],parallelGroups:[],reference:{mirror:false}};
+const mirroredTopology = {mainDs:[0,5],parallelGroups:[],reference:{mirror:true}};
+assert.equal(context.topologyTrainLane(laneLayer, regularTopology, 100, 3.2, true, []), 116, '일반 구간 하행 열차는 우측 선로를 사용해야 합니다.');
+assert.equal(context.topologyTrainLane(laneLayer, regularTopology, 100, 3.2, false, []), 100, '일반 구간 상행 열차는 좌측 선로를 사용해야 합니다.');
+assert.equal(context.topologyTrainLane(laneLayer, mirroredTopology, 100, 3.2, true, []), 100, '청량리–서울 반전 구간 하행 선로를 좌우 반전해야 합니다.');
+assert.equal(context.topologyTrainLane(laneLayer, mirroredTopology, 100, 3.2, false, []), 116, '청량리–서울 반전 구간 상행 선로를 좌우 반전해야 합니다.');
 vm.runInContext('this.alignedBranchY=_sxAlignedBranchY;this.platformMatchesRoute=_sxPlatformMatchesRoute;', context);
 assert.deepEqual(Array.from(context.alignedBranchY(['분기역','지선중간','합류역'], {분기역:0,합류역:2}, [30,90,150], 44)), [30,90,150], '지선의 공통역은 본선과 같은 높이에 정렬되어야 합니다.');
 assert.equal(context.platformMatchesRoute({variants:['구로-남평택']},{label:'평택→남평택',names:['평택','남평택']}), true, '가지 노선 전용 승강장은 지선 종착역으로 연결되어야 합니다.');

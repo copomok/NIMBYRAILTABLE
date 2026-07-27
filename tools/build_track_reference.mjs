@@ -1,0 +1,133 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import crypto from 'node:crypto';
+
+const [inputArg, outputArg] = process.argv.slice(2);
+if (!inputArg || !outputArg) {
+  console.error('usage: node tools/build_track_reference.mjs <input.svg> <output.js>');
+  process.exit(1);
+}
+
+const input = path.resolve(inputArg);
+const output = path.resolve(outputArg);
+const svg = fs.readFileSync(input, 'utf8');
+const viewBox = (svg.match(/\bviewBox="([^"]+)"/) || [,'0 0 1 1'])[1].split(/[\s,]+/).map(Number);
+const viewWidth = viewBox[2] || 1;
+
+const decode = value => String(value || '')
+  .replace(/&nbsp;|&#160;/gi, ' ')
+  .replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>')
+  .replace(/\s+/g, ' ').trim();
+const canonicalStation = value => decode(value).replace(/역$/, '');
+const attrs = tag => Object.fromEntries([...tag.matchAll(/([\w:-]+)="([^"]*)"/g)].map(match => [match[1], match[2]]));
+const round = value => Math.round(value * 10) / 10;
+
+// 편집기의 최상위 그룹 안에서 실제 도형 하나만 가진 translate 그룹을 찾는다.
+const leafGroups = [...svg.matchAll(/<g transform="translate\(\s*([-\d.]+)[,\s]+([-\d.]+)\s*\)">((?:(?!<g(?:\s|>))[\s\S])*?)<\/g>/g)]
+  .map(match => ({x:Number(match[1]), y:Number(match[2]), body:match[3]}));
+
+const stations = leafGroups.filter(group => /<text\b[^>]*font-size="24"/.test(group.body)).map(group => ({
+  name:canonicalStation((group.body.match(/<tspan\b[^>]*>([\s\S]*?)<\/tspan>/) || [,''])[1]),
+  x:group.x,
+  y:group.y
+})).filter(station => station.name);
+
+const ownerForFill = fill => {
+  const normalized = String(fill || '').toLowerCase();
+  if (normalized === '#f39c12') return 'current';
+  if (normalized === '#2980b9') return '신노원선';
+  return 'other';
+};
+const platforms = leafGroups.map(group => {
+  const rectTag = (group.body.match(/<rect\b[^>]*>/) || [])[0];
+  if (!rectTag) return null;
+  const rect = attrs(rectTag);
+  if (rect.fill === 'transparent' || Number(rect.width) !== 250 || Number(rect.height) !== 30) return null;
+  return {
+    x:group.x + Number(rect.width) / 2,
+    y:group.y + Number(rect.height) / 2,
+    fill:String(rect.fill || '').toLowerCase(),
+    owner:ownerForFill(rect.fill)
+  };
+}).filter(Boolean);
+
+// 긴 점선은 편집 화면에서 접힌 노선 행의 경계다.
+const rowBreaks = [];
+for (const match of svg.matchAll(/<path\b[^>]*>/g)) {
+  const attr = attrs(match[0]);
+  if (attr['stroke-dasharray'] !== '2 2' || !attr.d) continue;
+  const nums = [...attr.d.matchAll(/[-+]?(?:\d*\.)?\d+/g)].map(item => Number(item[0]));
+  if (nums.length < 4) continue;
+  const [x1,y1,x2,y2] = nums;
+  if (Math.abs(y1 - y2) <= 1 && Math.abs(x2 - x1) >= viewWidth * .75) rowBreaks.push(round(y1));
+}
+rowBreaks.sort((a,b) => a-b);
+const uniqueBreaks = rowBreaks.filter((value,index) => !index || Math.abs(value-rowBreaks[index-1]) > 2);
+const rowFor = y => uniqueBreaks.filter(boundary => y >= boundary).length;
+stations.forEach(station => { station.row = rowFor(station.y); station.platforms = []; });
+
+for (const platform of platforms) {
+  platform.row = rowFor(platform.y);
+  let nearest = null;
+  let nearestScore = Infinity;
+  for (const station of stations) {
+    if (station.row !== platform.row) continue;
+    const dx = Math.abs(platform.x - station.x);
+    const score = dx * 2 + Math.abs(platform.y - station.y) * .25;
+    if (dx <= 250 && score < nearestScore) { nearest = station; nearestScore = score; }
+  }
+  if (nearest) nearest.platforms.push(platform);
+}
+
+const mirroredStations = new Set(['청량리','장신대','종로5가','종로1가','서울']);
+const stationData = {};
+for (const station of stations.sort((a,b) => a.row-b.row || a.x-b.x)) {
+  const ordered = station.platforms.sort((a,b) => a.y-b.y);
+  const counts = {current:0, '신노원선':0, other:0};
+  ordered.forEach(platform => { counts[platform.owner]++; });
+  stationData[station.name] = {
+    diagram:{row:station.row,x:round(station.x),y:round(station.y)},
+    platforms:{
+      current:counts.current,
+      parallel:{'신노원선':counts['신노원선']},
+      other:counts.other,
+      order:ordered.map(platform => ({
+        owner:platform.owner,
+        offsetY:round(platform.y-station.y)
+      }))
+    },
+    mirror:mirroredStations.has(station.name)
+  };
+}
+
+const reference = {
+  version:'20260727.1',
+  generatedFrom:path.basename(input),
+  sourceHash:crypto.createHash('sha256').update(svg).digest('hex').slice(0,16),
+  rules:{
+    trafficSide:'right',
+    platformLegend:{
+      '#f39c12':'current',
+      '#2980b9':'신노원선',
+      '#ecf0f1':'other'
+    }
+  },
+  lines:{
+    '경부선':{
+      direction:{
+        down:{from:'양주',via:'청량리',toward:'노량진'},
+        diagram:{left:'north',right:'south'}
+      },
+      orientationExceptions:[{
+        from:'청량리',to:'서울',axis:'east-west',mirror:true,
+        stations:['청량리','장신대','종로5가','종로1가','서울']
+      }],
+      rowBreaks:uniqueBreaks,
+      stations:stationData
+    }
+  }
+};
+
+fs.mkdirSync(path.dirname(output), {recursive:true});
+fs.writeFileSync(output, `// Generated by tools/build_track_reference.mjs. Do not edit by hand.\nconst NIMBI_TRACK_REFERENCE=${JSON.stringify(reference,null,2)};\n`);
+console.log(`track reference: ${stations.length} stations / ${platforms.length} platforms -> ${output}`);

@@ -11253,15 +11253,16 @@ function _sxMetroServiceStops(lineName,svcIdx){
 }
 function _sxTopologyTrainLane(layer,topo,axisX,scale,down,serviceStops){
   const routeText=(serviceStops||[]).join(' ');
+  const laneDown=topo.reference&&topo.reference.mirror?!down:down;
   const group=topo.parallelGroups.find(g=>g.kind==='variant'&&(g.routeKeys||[]).some(k=>{
     const parts=String(k).split(/[\s→\-_()]+/).filter(x=>x.length>=2);
     return parts.length&&parts.every(p=>routeText.includes(p));
   }));
   if(group&&group.model.observed!==false){
-    const pm=layer.parallelMap[group.key],d=group.model.mainDs[down?1:0];
+    const pm=layer.parallelMap[group.key],d=group.model.mainDs[laneDown?1:0];
     if(pm)return axisX+(d+pm.offset)*scale;
   }
-  return axisX+topo.mainDs[down?1:0]*scale;
+  return axisX+topo.mainDs[laneDown?1:0]*scale;
 }
 function _metroSchCanvas(l){
   const track=(typeof METRO_TRACK!=='undefined')&&METRO_TRACK[l.name];
@@ -11270,7 +11271,10 @@ function _metroSchCanvas(l){
   const color=l.color,F=x=>(+x).toFixed(1),GEO=(typeof METRO_GEO!=='undefined')?METRO_GEO[l.name]:null;
   const semantic=(typeof NIMBI_TRACK_SEMANTIC!=='undefined')?NIMBI_TRACK_SEMANTIC.analyzeLine({
     line:l,track,geo:GEO,schedule:(typeof METRO_SCHED!=='undefined'&&METRO_SCHED[l.name])||null,
-    platformVersion:'20260727',
+    platformVersion:'20260727-reference1',
+    reference:(typeof NIMBI_TRACK_REFERENCE!=='undefined'&&NIMBI_TRACK_REFERENCE.lines&&NIMBI_TRACK_REFERENCE.lines[l.name])||null,
+    referenceVersion:(typeof NIMBI_TRACK_REFERENCE!=='undefined'&&NIMBI_TRACK_REFERENCE.version)||'',
+    parallelColorResolver:name=>_metroLineColor(name),
     platformResolver:(route,i)=>_metroStationPlatforms(route.names[i],l.name,route.names[i-1],route.names[i+1])
   }):null;
   const mainSemantic=semantic&&semantic.routes&&semantic.routes[0],stopS=mainSemantic?mainSemantic.ss:_sxNormalizeStops(track.ss,track.v);

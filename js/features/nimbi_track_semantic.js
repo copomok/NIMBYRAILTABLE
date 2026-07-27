@@ -2,7 +2,7 @@
 // Raw s/d polylines -> exact-connectivity graph -> corridors -> semantic track types -> platform relations.
 (function(global){
   'use strict';
-  const VERSION='20260727.2',MEM=new Map(),PATTERN_KEY='nimbi_track_semantic_patterns_v2';
+  const VERSION='20260727.3',MEM=new Map(),PATTERN_KEY='nimbi_track_semantic_patterns_v2';
   const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
   const escKey=v=>String(v==null?'':v).replace(/[|:]/g,'_');
   const hash=s=>{let h=2166136261;for(let i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,16777619);}return (h>>>0).toString(36);};
@@ -181,9 +181,10 @@
   }
   function loadPatterns(){try{return JSON.parse(localStorage.getItem(PATTERN_KEY)||'{}')||{};}catch(e){return {};}}
   function savePatterns(p){try{localStorage.setItem(PATTERN_KEY,JSON.stringify(p));}catch(e){}}
-  function buildStationSemantics(route,graph,stations,lineColor){
+  function buildStationSemantics(route,graph,stations,lineColor,reference,parallelColorResolver){
     const patterns=loadPatterns();
     stations.forEach(st=>{
+      const refStation=route.id==='main'&&reference&&reference.stations&&reference.stations[st.name];
       const scored=st.tracks.map(t=>{const cs=[...t.corridors].map(id=>graph.corridors[id]).filter(Boolean),best=[...cs].sort((a,b)=>(b.scores?.main||0)-(a.scores?.main||0))[0];
         return {...t,corridors:[...t.corridors],type:best?.type||'unknown',confidence:best?.confidence||0,mainScore:best?.scores?.main||0,connected:cs.some(c=>c.junctions>0)};});
       const routeTokens=[route.label,...route.names].flatMap(v=>String(v||'').split(/[\s→\-_/()]+/)).filter(v=>v.length>=2);
@@ -192,7 +193,9 @@
       const currentPool=routeSpecific.length?routeSpecific:(route.id!=='main'&&branchOnly.length?branchOnly:st.platforms.filter(p=>p.isCur&&!p.branchOnly));
       const curGroups=consecutiveGroups(currentPool,()=>route.label)
         .sort((a,b)=>b.items.length-a.items.length||a.items[0].pn-b.items[0].pn);
-      const current=curGroups[0]?.items||[],wanted=Math.max(1,current.length||Math.min(2,scored.length)||1);
+      const current=curGroups[0]?.items||[];
+      const referenceCurrent=Math.max(0,Number(refStation?.platforms?.current)||0);
+      const wanted=Math.max(1,referenceCurrent||current.length||Math.min(2,scored.length)||1);
       let active=[...scored].sort((a,b)=>(b.mainScore-a.mainScore)||(b.confidence-a.confidence)).slice(0,Math.min(wanted,scored.length));
       active.sort((a,b)=>a.d-b.d);
       const observed=active.length>0;
@@ -214,6 +217,15 @@
         ...variant.map(g=>mkGroup(g,'variant',`${route.label} ${g.key}`,lineColor)),
         ...other.map(g=>mkGroup(g,g.items[0].kind,g.key,g.items[0].color))
       ];
+      // 도면에서 소유 노선이 명시된 평행 승강장은 기존 승강장 DB의 첫 번째
+      // 노선명에 끌려가지 않도록 실제 소유 노선의 이름과 색을 사용한다.
+      Object.entries(refStation?.platforms?.parallel||{}).forEach(([owner,count])=>{
+        if(!(Number(count)>0))return;
+        const group=parallelGroups.find(g=>g.items.some(p=>(p.lines||[]).some(raw=>String(raw).split('/')[0].split(' (')[0].trim()===owner)));
+        if(!group)return;
+        group.label=owner;group.referenceOwner=owner;
+        if(typeof parallelColorResolver==='function')group.color=parallelColorResolver(owner)||group.color;
+      });
       const signature=[active.length,st.platforms.length,st.junctions,sidings.length,active.map(t=>t.type).join(',')].join('|');
       const confidence=active.reduce((n,t)=>n+t.confidence,0)/Math.max(1,active.length);
       const directBlocks=observed?platformBlocks(trackDs):[];
@@ -221,7 +233,15 @@
       const learned=patterns[signature],learnedBlocks=learned&&learned.trackCount===active.length?applyBlockPattern(trackDs,learned.blockPattern):null;
       const blocks=!observed?[]:(learnedBlocks||directBlocks);
       const trackMeta=active.map((t,index)=>({index,d:t.d,type:t.type,confidence:t.confidence,connected:t.connected,observed}));
-      st.topology={trackDs,trackMeta,mainDs,mainIdx,blocks,sidings,parallelGroups,cross:observed?Math.min(2,st.junctions):0,pocket:sidings.some(s=>s.type==='turnback'),platforms:current.length,nums:current.map(p=>p.pn),confidence,signature,observed,patternSource:learnedBlocks?'cache':'direct'};
+      const referenceMeta=refStation?{
+        currentPlatforms:referenceCurrent,
+        parallelPlatforms:{...(refStation.platforms?.parallel||{})},
+        otherPlatforms:Math.max(0,Number(refStation.platforms?.other)||0),
+        platformOrder:(refStation.platforms?.order||[]).map(item=>({...item})),
+        mirror:!!refStation.mirror,
+        confidence:1
+      }:null;
+      st.topology={trackDs,trackMeta,mainDs,mainIdx,blocks,sidings,parallelGroups,cross:observed?Math.min(2,st.junctions):0,pocket:sidings.some(s=>s.type==='turnback'),platforms:referenceCurrent||current.length,nums:current.map(p=>p.pn),reference:referenceMeta,confidence,signature,observed,patternSource:learnedBlocks?'cache':'direct'};
     });
     savePatterns(patterns);
   }
@@ -247,14 +267,16 @@
   }
   function analyzeRoute(def,ctx){
     const graph=makeGraph(def),stations=stationTrackCuts(def,graph,ctx.platformResolver);
-    addTrafficFeatures(def,graph,stations,ctx.pairUsage,ctx.geo);classifyCorridors(def,graph);buildStationSemantics(def,graph,stations,ctx.line.color);
+    addTrafficFeatures(def,graph,stations,ctx.pairUsage,ctx.geo);classifyCorridors(def,graph);buildStationSemantics(def,graph,stations,ctx.line.color,ctx.reference,ctx.parallelColorResolver);
     return {...def,graph,stations,semanticRuns:semanticRuns(def,graph)};
   }
   function analyzeLine(opts){
     const line=opts.line,track=opts.track,geo=opts.geo||{},schedule=opts.schedule||null;
-    const key=[VERSION,line.name,track.rn?.length||0,track.b?.length||0,track.v||0,opts.platformVersion||''].join('|');
+    const reference=opts.reference||(global.NIMBI_TRACK_REFERENCE&&global.NIMBI_TRACK_REFERENCE.lines&&global.NIMBI_TRACK_REFERENCE.lines[line.name])||null;
+    const referenceVersion=opts.referenceVersion||(global.NIMBI_TRACK_REFERENCE&&global.NIMBI_TRACK_REFERENCE.version)||'';
+    const key=[VERSION,line.name,track.rn?.length||0,track.b?.length||0,track.v||0,opts.platformVersion||'',referenceVersion,reference?.direction?.down?.from||''].join('|');
     if(MEM.has(key))return MEM.get(key);
-    const pairUsage=servicePairUsage(schedule),defs=routeDefs(line,track),routes=defs.map(def=>analyzeRoute(def,{line,geo,pairUsage,platformResolver:opts.platformResolver}));
+    const pairUsage=servicePairUsage(schedule),defs=routeDefs(line,track),routes=defs.map(def=>analyzeRoute(def,{line,geo,pairUsage,platformResolver:opts.platformResolver,reference,parallelColorResolver:opts.parallelColorResolver}));
     const links=[];for(let i=1;i<routes.length;i++)routes[i].names.forEach((name,j)=>{const mi=routes[0].names.indexOf(name);if(mi>=0)links.push({fromRoute:'main',fromStation:mi,toRoute:routes[i].id,toStation:j,name,confidence:1});});
     const graph={
       routes:routes.map(r=>({routeId:r.id,graph:r.graph})),
@@ -262,7 +284,7 @@
       corridorCount:routes.reduce((n,r)=>n+r.graph.corridors.length,0),
       links
     };
-    const result={version:VERSION,key:hash(key),lineName:line.name,graph,routes,links,createdAt:Date.now()};MEM.set(key,result);return result;
+    const result={version:VERSION,key:hash(key),lineName:line.name,reference:reference?{version:referenceVersion,direction:reference.direction,orientationExceptions:reference.orientationExceptions||[]}:null,graph,routes,links,createdAt:Date.now()};MEM.set(key,result);return result;
   }
   global.NIMBI_TRACK_SEMANTIC={VERSION,analyzeLine,clearCache(){MEM.clear();},_test:{normalizeStops,makeGraph,classifyCorridors,platformBlocks,encodeBlockPattern,applyBlockPattern,routeDefs}};
 })(typeof window!=='undefined'?window:globalThis);
