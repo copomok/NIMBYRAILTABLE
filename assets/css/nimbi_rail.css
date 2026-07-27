@@ -1569,6 +1569,7 @@ button, select, input[type=range],
 .tsx-real-trunk{fill:none;stroke-width:3.2;stroke-linecap:round;opacity:.96}
 .tsx-real-trunks{filter:drop-shadow(0 0 1.5px color-mix(in srgb,var(--mc) 55%,transparent))}
 .tsx-symbol-track{fill:none;stroke:#9aa2ac;stroke-width:2.1;stroke-linecap:round;stroke-linejoin:round;opacity:.9}
+.tsx-symbol-detached{stroke:#838c97;stroke-width:1.85;opacity:.78}
 .tsx-symbol-switch{fill:none;stroke:#aab2bc;stroke-width:1.75;stroke-linecap:round;opacity:.9}
 .tsx-symbol-pocket{fill:none;stroke:#9aa2ac;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;opacity:.9}
 .tsx-symbol-stop{fill:none;stroke:#9aa2ac;stroke-width:2;stroke-linecap:round;opacity:.9}

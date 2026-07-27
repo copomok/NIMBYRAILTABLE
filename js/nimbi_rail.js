@@ -11083,17 +11083,32 @@ function _sxConsecutivePlatformGroups(items,keyFn){
     if(g.length)out.push({key:k,items:g});
   });return out;
 }
+function _sxSidingIsConnected(localRuns,sidingD,stationTrackDs){
+  const onSiding=d=>Math.abs(Number(d)-sidingD)<=2.75;
+  const onStationTrack=d=>stationTrackDs.some(td=>Math.abs(Number(d)-td)<=2.75);
+  return localRuns.some(points=>{
+    for(let i=0;i+1<points.length;i++){
+      const a=points[i],b=points[i+1],longitudinal=Math.abs(b.s-a.s),lateral=Math.abs(b.d-a.d);
+      // 같은 폴리라인에 우연히 두 선로가 들어 있다는 이유만으로 연결하지 않는다.
+      // 역 구내의 짧고 연속된 분기 선분이 실제 양 선로를 잇는 경우만 연결로 인정한다.
+      if(longitudinal<2||longitudinal>220||lateral<2.5||lateral>8.5)continue;
+      if((onSiding(a.d)&&onStationTrack(b.d))||(onSiding(b.d)&&onStationTrack(a.d)))return true;
+    }
+    return false;
+  });
+}
 // 인게임 실좌표에서 배선의 의미만 추출한다. 원본 폴리라인을 그대로 축소하지 않고
 // 부본선 수·건넘선·회차/유치선 존재를 관제 배선 기호로 다시 그린다.
 function _sxStationTopology(l,track,ss,i){
   const s=ss[i],prev=i?ss[i-1]:s,next=i+1<ss.length?ss[i+1]:s;
   const window=Math.min(720,Math.max(260,Math.min(i?s-prev:Infinity,i+1<ss.length?next-s:Infinity)*.24));
-  const supports=new Map();let cross=0,pocket=0;
+  const supports=new Map(),localRuns=[];let cross=0,pocket=0;
   (track.rn||[]).forEach(run=>{
     const st=_sxTrackRunStats(run);if(st.span<22)return;
-    let minS=Infinity,maxS=-Infinity;const ds=[];
-    for(let k=0;k+1<run.length;k+=2){const rs=Number(run[k]),d=Number(run[k+1]);minS=Math.min(minS,rs);maxS=Math.max(maxS,rs);if(Math.abs(rs-s)<=window)ds.push(d);}
+    let minS=Infinity,maxS=-Infinity;const ds=[],points=[];
+    for(let k=0;k+1<run.length;k+=2){const rs=Number(run[k]),d=Number(run[k+1]);minS=Math.min(minS,rs);maxS=Math.max(maxS,rs);if(Math.abs(rs-s)<=window){ds.push(d);points.push({s:rs,d});}}
     if(maxS<s-window||minS>s+window||!ds.length)return;
+    if(points.length>1)localRuns.push(points);
     if(st.span>=70)ds.forEach(d=>{const q=Math.round(d/5)*5;if(q<-1||q>6)supports.set(q,(supports.get(q)||0)+1);});
     if(st.span<=520&&st.minD<=1&&st.maxD>=4&&st.maxD-st.minD<=13)cross++;
     const whollyLocal=minS>=s-window&&maxS<=s+window;
@@ -11110,7 +11125,8 @@ function _sxStationTopology(l,track,ss,i){
   const {trackDs,blocks,mainIdx,mainDs}=model;
   // 승강장이 없는 인게임 외측 선로가 반복 검출될 때만 추가 유치/대피선으로 남긴다.
   const occupiedMin=trackDs[0],occupiedMax=trackDs[trackDs.length-1];
-  let sidings=[...supports].filter(([d,n])=>n>=3&&(d<occupiedMin-2||d>occupiedMax+2)).sort((a,b)=>b[1]-a[1]).map(([d])=>d).slice(0,2);
+  let sidings=[...supports].filter(([d,n])=>n>=3&&(d<occupiedMin-2||d>occupiedMax+2)).sort((a,b)=>b[1]-a[1])
+    .map(([d])=>({d,connected:_sxSidingIsConnected(localRuns,d,trackDs)})).slice(0,2);
   const secondaryCur=curGroups.slice(1).map((g,gi)=>({key:`${l.name}:분리${gi}`,label:`${l.name} 분리 승강장`,color:l.color,items:g.items}));
   const other=_sxConsecutivePlatformGroups(allPfs.filter(p=>!p.isCur&&p.kind==='metro'&&!p.junction),p=>p.label||'평행선')
     .map(g=>({key:`평행:${g.key}`,label:g.key,color:g.items[0].color,items:g.items}));
@@ -11136,10 +11152,17 @@ function _sxSchematicTrackLayer(l,track,ss,Y,axisX,scale,color){
       minX=Math.min(minX,x);maxX=Math.max(maxX,x);
       aux+=`<path d="M ${F(main)} ${F(y-throat)} C ${F(main)} ${F(y-throat+6)}, ${F(x)} ${F(y-half-5)}, ${F(x)} ${F(y-half)} L ${F(x)} ${F(y+half)} C ${F(x)} ${F(y+half+5)}, ${F(main)} ${F(y+throat-6)}, ${F(main)} ${F(y+throat)}" class="tsx-symbol-track"/>`;
     });
-    topo.sidings.forEach((d,si)=>{
+    topo.sidings.forEach((siding,si)=>{
+      const d=siding.d;
       const x=axisX+d*scale,main=d<2.5?up:down,h=half-3-si*2,t=throat+5+si*3;
       minX=Math.min(minX,x);maxX=Math.max(maxX,x);
-      aux+=`<path d="M ${F(main)} ${F(y-t)} C ${F(main)} ${F(y-t+6)}, ${F(x)} ${F(y-h-5)}, ${F(x)} ${F(y-h)} L ${F(x)} ${F(y+h)} C ${F(x)} ${F(y+h+5)}, ${F(main)} ${F(y+t-6)}, ${F(main)} ${F(y+t)}" class="tsx-symbol-track tsx-symbol-siding"/>`;
+      if(siding.connected){
+        aux+=`<path d="M ${F(main)} ${F(y-t)} C ${F(main)} ${F(y-t+6)}, ${F(x)} ${F(y-h-5)}, ${F(x)} ${F(y-h)} L ${F(x)} ${F(y+h)} C ${F(x)} ${F(y+h+5)}, ${F(main)} ${F(y+t-6)}, ${F(main)} ${F(y+t)}" class="tsx-symbol-track tsx-symbol-siding"/>`;
+      }else{
+        // 인게임에서 본선 연결이 확인되지 않은 평행선·높이가 다른 선로·유치선은
+        // 본선에 억지로 붙이지 않고 독립 선로로 끝낸다.
+        aux+=`<path d="M ${F(x)} ${F(y-h)} L ${F(x)} ${F(y+h)} M ${F(x-3)} ${F(y-h)} L ${F(x+3)} ${F(y-h)} M ${F(x-3)} ${F(y+h)} L ${F(x+3)} ${F(y+h)}" class="tsx-symbol-track tsx-symbol-detached"/>`;
+      }
     });
     topo.parallelGroups.forEach(g=>{
       const pm=parallelMap[g.key];if(!pm)return;
