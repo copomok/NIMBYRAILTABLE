@@ -11016,6 +11016,40 @@ function _sxTrackRunStats(run){
     minS=Math.min(minS,s);maxS=Math.max(maxS,s);minD=Math.min(minD,d);maxD=Math.max(maxD,d);if(Math.abs(d)<=9)near++;n++;}
   return {span:Math.max(0,maxS-minS),near:n?near/n:0,minD,maxD};
 }
+function _sxRepresentativeTrackRuns(track,ss){
+  const runs=(track&&track.rn)||[],stats=runs.map((run,idx)=>{
+    const st=_sxTrackRunStats(run);let minS=Infinity,maxS=-Infinity;
+    for(let i=0;i+1<run.length;i+=2){minS=Math.min(minS,Number(run[i]));maxS=Math.max(maxS,Number(run[i]));}
+    return {...st,idx,run,minS,maxS,mid:(minS+maxS)/2,lateral:Math.max(0,st.maxD-st.minD)};
+  });
+  const gaps=[];for(let i=1;i<(ss||[]).length;i++){const g=ss[i]-ss[i-1];if(g>0)gaps.push(g);}
+  gaps.sort((a,b)=>a-b);const medianGap=gaps.length?gaps[gaps.length>>1]:2500;
+  const longThreshold=Math.max(420,Math.min(1100,medianGap*.18)),picked=new Set();
+  // 역간마다 장거리 선로를 최대 두 개만 남겨 같은 선이 여러 번 겹쳐 보이는 현상을 막는다.
+  for(let i=0;i+1<(ss||[]).length;i++){
+    const lo=ss[i],hi=ss[i+1],seen=new Set();
+    const cand=stats.filter(st=>st.span>=longThreshold&&st.maxS>=lo&&st.minS<=hi)
+      .sort((a,b)=>(a.lateral-b.lateral)||(b.span-a.span));
+    for(const st of cand){
+      const avgD=(st.minD+st.maxD)/2,key=Math.round(avgD/5);
+      if(seen.has(key))continue;seen.add(key);picked.add(st.idx);
+      if(seen.size>=2)break;
+    }
+  }
+  // 역 구내에서는 실제 분기 방향을 보여주는 대표 선분만 두 개까지 보존한다.
+  (ss||[]).forEach((s,i)=>{
+    const prev=i?ss[i-1]:s,next=i+1<ss.length?ss[i+1]:s;
+    const window=Math.min(520,Math.max(180,Math.min(i?s-prev:Infinity,i+1<ss.length?next-s:Infinity)*.2));
+    const seen=new Set(),cand=stats.filter(st=>st.span>=65&&st.span<=760&&st.lateral>=3&&st.lateral<=22&&st.mid>=s-window&&st.mid<=s+window)
+      .sort((a,b)=>(b.lateral-a.lateral)||(b.span-a.span));
+    for(const st of cand){
+      const a=Math.round(Number(st.run[1])/5),b=Math.round(Number(st.run[st.run.length-1])/5),key=[Math.min(a,b),Math.max(a,b)].join(':');
+      if(seen.has(key))continue;seen.add(key);picked.add(st.idx);
+      if(seen.size>=2)break;
+    }
+  });
+  return picked;
+}
 function _sxLocalTrackOffsets(track,s){
   const vals=[];
   (track.rn||[]).forEach(run=>{
@@ -11052,9 +11086,12 @@ function _sxDetailedPlatforms(l,track,Y,axisX,scale,routeHint){
   });
   return {svg,minX,maxX};
 }
-function _sxDetailedTrackLayer(track,ss,Y,axisX,scale,color){
+function _sxDetailedTrackLayer(track,ss,Y,axisX,scale,color,opts){
+  opts=opts||{};
   let base='',minX=axisX,maxX=axisX;
-  (track.rn||[]).forEach(run=>{
+  const picked=_sxRepresentativeTrackRuns(track,ss);
+  (track.rn||[]).forEach((run,idx)=>{
+    if(!picked.has(idx))return;
     const st=_sxTrackRunStats(run), lateral=Math.max(0,st.maxD-st.minD);
     // 종방향 길이가 거의 없고 횡편차만 큰 조각은 종단 투영 시 의미 없는 수평선이 된다.
     // 아주 짧은 장식성 조각과 비정상 급경사 조각만 제외하고 실제 배선은 보존한다.
@@ -11067,7 +11104,7 @@ function _sxDetailedTrackLayer(track,ss,Y,axisX,scale,color){
   const y0=Y[0],yN=Y[Y.length-1],up=axisX,down=axisX+5*scale;
   const trunk=`<path d="M ${up.toFixed(1)} ${y0.toFixed(1)} L ${up.toFixed(1)} ${yN.toFixed(1)}" class="tsx-real-trunk" stroke="${color}"/>`+
     `<path d="M ${down.toFixed(1)} ${y0.toFixed(1)} L ${down.toFixed(1)} ${yN.toFixed(1)}" class="tsx-real-trunk" stroke="${color}"/>`;
-  return {svg:`<g class="tsx-real-base">${base}</g><g class="tsx-real-trunks">${trunk}</g>`,minX,maxX};
+  return {svg:`<g class="tsx-real-base tsx-real-base--representative">${base}</g>${opts.trunks===false?'':`<g class="tsx-real-trunks">${trunk}</g>`}`,minX,maxX,count:picked.size};
 }
 function _sxPlatformModel(platforms,lineName,stationName){
   platforms=Math.max(1,Number(platforms)||1);
@@ -11164,7 +11201,7 @@ function _sxStationTopology(l,track,ss,i,routeHint){
   const occupiedMin=trackDs[0],occupiedMax=trackDs[trackDs.length-1];
   let sidings=[...supports].filter(([d,n])=>n>=3&&(d<occupiedMin-2||d>occupiedMax+2)).sort((a,b)=>b[1]-a[1])
     .map(([d])=>({d,connected:_sxSidingIsConnected(localRuns,d,trackDs)})).slice(0,2);
-  const secondaryCur=routeHint?[]:curGroups.slice(1).map((g,gi)=>({key:`${l.name}:분리${gi}`,label:`${l.name} 분리 승강장`,color:l.color,kind:'main',items:g.items}));
+  const secondaryCur=routeHint?[]:curGroups.slice(1).map((g,gi)=>({key:`${l.name}:주요${gi}`,label:'',color:l.color,kind:'main',items:g.items}));
   const mappedBranch=!routeHint&&(track.b||[]).some(b=>Array.isArray(b.names)&&b.names.includes(l.stations[i]));
   const variantGroups=routeHint||mappedBranch?[]:_sxConsecutivePlatformGroups(allPfs.filter(p=>p.isCur&&p.branchOnly),p=>p.variants?.join('·')||'가지')
     .map(g=>({key:`가지:${l.name}:${g.key}`,label:`${l.name} ${g.key}`,color:l.color,kind:'variant',routeKeys:g.items.flatMap(p=>p.variants||[]),items:g.items}));
@@ -11210,9 +11247,10 @@ function _sxSchematicTrackLayer(l,track,ss,Y,axisX,scale,color,routeHint,opts){
       const ph=Math.min(22,17+g.count),prev=topos[i-1]?.parallelGroups.some(x=>x.key===g.key),next=topos[i+1]?.parallelGroups.some(x=>x.key===g.key);
       g.model.trackDs.forEach(d=>{
         const x=axisX+(d+pm.offset)*scale;minX=Math.min(minX,x);maxX=Math.max(maxX,x);
-        aux+=`<path d="M ${F(x)} ${F(y-ph)} L ${F(x)} ${F(next?Y[i+1]-ph:y+ph)}" class="tsx-parallel-track" stroke="${g.color}"/>`;
+        const major=g.kind==='main'||g.kind==='variant';
+        aux+=`<path d="M ${F(x)} ${F(y-ph)} L ${F(x)} ${F(next?Y[i+1]-ph:y+ph)}" class="tsx-parallel-track${major?' tsx-parallel-track--major':''}" stroke="${g.color}"/>`;
       });
-      if(!prev)aux+=`<text x="${F(axisX+(g.model.trackDs[g.model.trackDs.length-1]+pm.offset)*scale+7)}" y="${F(y+3)}" class="tsx-parallel-label" fill="${g.color}">${_opsEsc(g.label)}</text>`;
+      if(!prev&&g.label)aux+=`<text x="${F(axisX+(g.model.trackDs[g.model.trackDs.length-1]+pm.offset)*scale+7)}" y="${F(y+3)}" class="tsx-parallel-label" fill="${g.color}">${_opsEsc(g.label)}</text>`;
     });
     [up,down].forEach((trunkX,dir)=>{
       const target=axisX+topo.mainDs[dir]*scale;
@@ -11262,8 +11300,9 @@ function _metroSchCanvas(l){
   const Y=_sxY((GEO&&GEO.m)||l.stations.map(()=>null),62), axisX=122, scale=3.2;
   const layer=_sxSchematicTrackLayer(l,track,stopS,Y,axisX,scale,color);
   const renderTrack={...track,ss:stopS},plats=_sxDetailedPlatforms(l,renderTrack,Y,axisX,scale);
-  let namesHTML='',labelsHTML='',platSVG=plats.svg,trackSVG=layer.svg;
-  let minX=Math.min(layer.minX,plats.minX),maxX=Math.max(layer.maxX,plats.maxX),H=Y[Y.length-1]+42;
+  const original=_sxDetailedTrackLayer(renderTrack,stopS,Y,axisX,scale,color,{trunks:false});
+  let namesHTML='',labelsHTML='',platSVG=plats.svg,trackSVG=original.svg+layer.svg;
+  let minX=Math.min(layer.minX,plats.minX,original.minX),maxX=Math.max(layer.maxX,plats.maxX,original.maxX),H=Y[Y.length-1]+42;
   const geometryRight=maxX;
   const mainIdx={}; l.stations.forEach((s,i)=>{if(mainIdx[s]==null)mainIdx[s]=i;
     namesHTML+=`<span class="tsx-name tsx-name--game${i===0||i===l.stations.length-1?' end':''}" style="top:${F(Y[i])}px">${_opsEsc(s)}</span>`;});
@@ -11275,10 +11314,10 @@ function _metroSchCanvas(l){
     const hint={label:b.lbl||'',names:b.names},bl={...l,stations:b.names,loop:false},bt={...b,ss:bs};
     const firstCommon=mainIdx[b.names[0]]!=null,lastCommon=mainIdx[b.names[b.names.length-1]]!=null;
     const bLayer=_sxSchematicTrackLayer(bl,bt,bs,bY,axisX,scale,color,hint,{termTop:!firstCommon,termBottom:!lastCommon});
-    const bPlats=_sxDetailedPlatforms(bl,bt,bY,axisX,scale,hint);
+    const bPlats=_sxDetailedPlatforms(bl,bt,bY,axisX,scale,hint),bOriginal=_sxDetailedTrackLayer(bt,bs,bY,axisX,scale,color,{trunks:false});
     const dx=branchX-axisX;
     platSVG+=`<g transform="translate(${F(dx)} 0)">${bPlats.svg}</g>`;
-    trackSVG+=`<g transform="translate(${F(dx)} 0)">${bLayer.svg}</g>`;
+    trackSVG+=`<g transform="translate(${F(dx)} 0)">${bOriginal.svg}${bLayer.svg}</g>`;
     // 공통 구간의 진입·이탈 경계에서만 본선과 연결한다. 공통역 전부를 가로선으로 묶지 않는다.
     const junctions=[];b.names.forEach((n,j)=>{
       if(mainIdx[n]==null)return;
@@ -11294,7 +11333,7 @@ function _metroSchCanvas(l){
     b.names.forEach((n,j)=>{if(mainIdx[n]!=null)return;namesHTML+=`<span class="tsx-bname tsx-bname--game" style="left:${F(branchX+bLayer.maxX-axisX+9)}px;top:${F(bY[j])}px">${_opsEsc(n)}</span>`;});
     const route={b,bs,bY,axisX:branchX,layer:bLayer,bl,bt,hint,exclusive:new Set(b.names.filter(n=>mainIdx[n]==null))};
     branchRoutes.push(route);
-    maxX=Math.max(maxX,branchX+Math.max(bLayer.maxX,bPlats.maxX)-axisX+78);H=Math.max(H,Math.max(...bY)+42);
+    maxX=Math.max(maxX,branchX+Math.max(bLayer.maxX,bPlats.maxX,bOriginal.maxX)-axisX+78);H=Math.max(H,Math.max(...bY)+42);
     branchX=maxX+26;
   });
   // ── 차량기지·주박선: 중간역과 종점 모두 현재 역 높이에서 인입, 선군 바깥에 유치선 표시 ──

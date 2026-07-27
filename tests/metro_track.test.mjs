@@ -32,6 +32,15 @@ const appLoad = index.indexOf('js/nimbi_rail.js');
 assert.ok(trackLoad >= 0 && trackLoad < appLoad, '인게임 배선 데이터는 앱 렌더러보다 먼저 로드해야 합니다.');
 
 const app = fs.readFileSync('js/nimbi_rail.js', 'utf8');
+const repStart = app.indexOf('function _sxTrackRunStats');
+const repEnd = app.indexOf('function _sxLocalTrackOffsets', repStart);
+assert.ok(repStart >= 0 && repEnd > repStart, '원본 선로 대표 선분 선택 함수 누락');
+vm.runInContext(`${app.slice(repStart, repEnd)}\nthis.representativeRuns=_sxRepresentativeTrackRuns;`, context);
+for (const line of context.lines) {
+  const selected = context.representativeRuns(context.tracks[line.name], context.tracks[line.name].ss);
+  assert.ok(selected.size > 0, `${line.name}: 표시할 원본 선로가 하나도 선택되지 않음`);
+  assert.ok(selected.size <= line.stations.length * 4, `${line.name}: 원본 선로 단순화 상한 초과`);
+}
 const modelStart = app.indexOf('function _sxPlatformModel');
 const modelEnd = app.indexOf('\n// 인게임 실좌표에서 배선의 의미만 추출한다.', modelStart);
 assert.ok(modelStart >= 0 && modelEnd > modelStart, '승강장 배선 모델 함수 누락');
@@ -48,6 +57,7 @@ assert.deepEqual(Array.from(context.alignedBranchY(['분기역','지선중간','
 assert.equal(context.platformMatchesRoute({variants:['구로-남평택']},{label:'평택→남평택',names:['평택','남평택']}), true, '가지 노선 전용 승강장은 지선 종착역으로 연결되어야 합니다.');
 assert.ok(app.includes("p.kind==='metro'||p.kind==='train'"), '일반열차 병행 승강장을 평행 선로군에 포함해야 합니다.');
 assert.ok(app.includes('branchRoutes.find'), '지선 운행 열차는 본선이 아닌 지선 선로군에 배치해야 합니다.');
+assert.ok(!app.includes('분리 승강장'), '같은 노선의 별도 승강장에 분리 승강장 표기를 남기면 안 됩니다.');
 for (const line of context.lines) {
   const track = context.tracks[line.name];
   const mainIndex = Object.fromEntries(line.stations.map((name, i) => [name, i]));
