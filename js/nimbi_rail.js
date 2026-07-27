@@ -10975,8 +10975,14 @@ function _sxTrackY(s, ss, Y){
   if(s>=ss[last])return Y[Math.min(last,Y.length-1)];
   let lo=0,hi=last;
   while(lo+1<hi){const m=(lo+hi)>>1;if(ss[m]<=s)lo=m;else hi=m;}
-  const span=Math.max(1,ss[hi]-ss[lo]), f=(s-ss[lo])/span;
-  return Y[lo]+f*(Y[hi]-Y[lo]);
+  const span=Math.max(1,ss[hi]-ss[lo]), gap=Y[hi]-Y[lo], rel=s-ss[lo];
+  // 실제 역 구내 분기기는 수십~수백 m에 불과하다. 이를 수 km 역간 거리와 같은
+  // 축척으로 줄이면 수평 가시처럼 겹치므로 양쪽 역 전후 구간에 화면 높이를 더 배정한다.
+  const throatM=Math.min(650,span*.22), throatPx=Math.min(19,gap*.32);
+  if(rel<=throatM)return Y[lo]+(rel/throatM)*throatPx;
+  if(span-rel<=throatM)return Y[hi]-((span-rel)/throatM)*throatPx;
+  const midM=Math.max(1,span-throatM*2),midPx=Math.max(1,gap-throatPx*2);
+  return Y[lo]+throatPx+((rel-throatM)/midM)*midPx;
 }
 function _sxNormalizeStops(raw,total){
   const ss=(raw||[]).map(Number),n=ss.length;if(!n)return ss;
@@ -11031,19 +11037,21 @@ function _sxDetailedPlatforms(l,track,Y,axisX,scale){
   return {svg,minX,maxX};
 }
 function _sxDetailedTrackLayer(track,ss,Y,axisX,scale,color){
-  let base='',active='',minX=axisX,maxX=axisX;
+  let base='',minX=axisX,maxX=axisX;
   (track.rn||[]).forEach(run=>{
+    const st=_sxTrackRunStats(run), lateral=Math.max(0,st.maxD-st.minD);
+    // 종방향 길이가 거의 없고 횡편차만 큰 조각은 종단 투영 시 의미 없는 수평선이 된다.
+    // 아주 짧은 장식성 조각과 비정상 급경사 조각만 제외하고 실제 배선은 보존한다.
+    if(st.span<22||(st.span<45&&lateral>st.span*1.15))return;
     const p=_sxTrackPath(run,ss,Y,axisX,scale); if(!p)return;
-    const st=_sxTrackRunStats(run); minX=Math.min(minX,axisX+st.minD*scale);maxX=Math.max(maxX,axisX+st.maxD*scale);
-    base+=`<path d="${p}" class="tsx-real-track"/>`;
-    // 긴 런만 본선색으로 강조한다. 짧은 건넘선·분기선까지 모두 칠하면
-    // 역 구내가 한 덩어리처럼 보여 보조선은 회색으로 남긴다.
-    if(st.span>=650)active+=`<path d="${p}" class="tsx-real-route" stroke="${color}"/>`;
+    minX=Math.min(minX,axisX+st.minD*scale);maxX=Math.max(maxX,axisX+st.maxD*scale);
+    const detail=st.span<90?' tsx-real-track--minor':'';
+    base+=`<path d="${p}" class="tsx-real-track${detail}"/>`;
   });
   const y0=Y[0],yN=Y[Y.length-1],up=axisX,down=axisX+5*scale;
   const trunk=`<path d="M ${up.toFixed(1)} ${y0.toFixed(1)} L ${up.toFixed(1)} ${yN.toFixed(1)}" class="tsx-real-trunk" stroke="${color}"/>`+
     `<path d="M ${down.toFixed(1)} ${y0.toFixed(1)} L ${down.toFixed(1)} ${yN.toFixed(1)}" class="tsx-real-trunk" stroke="${color}"/>`;
-  return {svg:`<g class="tsx-real-base">${base}</g><g class="tsx-real-trunks">${trunk}</g><g class="tsx-real-active">${active}</g>`,minX,maxX};
+  return {svg:`<g class="tsx-real-base">${base}</g><g class="tsx-real-trunks">${trunk}</g>`,minX,maxX};
 }
 function _metroSchCanvas(l){
   const track=(typeof METRO_TRACK!=='undefined')&&METRO_TRACK[l.name];
