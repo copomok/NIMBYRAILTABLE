@@ -10699,6 +10699,9 @@ let _mttExpressOnly=false, _mttStation=null, _mttLine=null;
 function _mttFilterEntries(entries,expressOnly){
   return expressOnly?entries.filter(entry=>Number(entry.cls)>0):entries;
 }
+function _mttHasExpress(entries){
+  return entries.some(entry=>Number(entry.cls)>0);
+}
 function setMetroTimetableExpressOnly(checked){
   _mttExpressOnly=!!checked;
   if(_mttStation&&_mttLine)openMetroTimetable(_mttStation,_mttLine,true);
@@ -10708,6 +10711,8 @@ function openMetroTimetable(stn, line, preserveFilter){
   const deps=_metroStationDeps(stn).filter(o=>o.line===line);
   if(!deps.length) return;
   if(!preserveFilter)_mttExpressOnly=false;
+  const hasExpress=_mttHasExpress(deps);
+  if(!hasExpress)_mttExpressOnly=false;
   _mttStation=stn;_mttLine=line;
   const fClk=m=>Math.floor(m/60)+':'+String(m%60).padStart(2,'0');
   const dirs={}; deps.forEach(o=>{ (dirs[o.next]=dirs[o.next]||[]).push(o); });
@@ -10756,9 +10761,9 @@ function openMetroTimetable(stn, line, preserveFilter){
     <div class="mtt-popup" role="dialog" aria-label="${line} ${stn} 시간표" style="--mc:${color}">
       <div class="mtt-head"><span><b style="color:${color}">🚇 ${line}</b> · ${stn}</span>
         <button class="si-board-close" onclick="closeMetroTimetable()" aria-label="닫기">✕</button></div>
-      <div class="mtt-filterbar">
+      ${hasExpress?`<div class="mtt-filterbar">
         <label class="mtt-filtercheck"><input type="checkbox"${_mttExpressOnly?' checked':''} onchange="setMetroTimetableExpressOnly(this.checked)"><span>급행만 보기</span></label>
-      </div>
+      </div>`:''}
       <div class="mtt-scroll" style="--cols:${groups.length}">
         <div class="mtt-headrow">${heads}</div>
         <div class="mtt-grid">${grid}</div>

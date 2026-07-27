@@ -10,7 +10,7 @@ assert.ok(filterStart >= 0 && filterEnd > filterStart, '전체 시간표 급행 
 
 const context = {};
 vm.createContext(context);
-vm.runInContext(`${source.slice(filterStart, filterEnd)}\nthis.filterEntries=_mttFilterEntries;`, context);
+vm.runInContext(`${source.slice(filterStart, filterEnd)}\nthis.filterEntries=_mttFilterEntries;this.hasExpress=_mttHasExpress;`, context);
 const entries = [
   {id:'local', cls:0},
   {id:'express', cls:1},
@@ -18,10 +18,13 @@ const entries = [
 ];
 assert.deepEqual(Array.from(context.filterEntries(entries, false), entry => entry.id), ['local','express','limited'], '필터 해제 시 모든 열차를 표시해야 합니다.');
 assert.deepEqual(Array.from(context.filterEntries(entries, true), entry => entry.id), ['express','limited'], '급행만 보기에는 급행·특급만 표시해야 합니다.');
+assert.equal(context.hasExpress([{cls:0},{cls:0}]),false,'일반열차만 정차하는 역에는 급행 필터를 숨겨야 합니다.');
+assert.equal(context.hasExpress([{cls:0},{cls:1}]),true,'급행이 정차하는 역에는 급행 필터를 표시해야 합니다.');
 
 const expectedOrder = '<span class="mtt-t">${fClk(r.clk)}</span><span class="mtt-od">${od}</span>${_metroClsTag(r.cls)}';
 assert.ok(source.includes(expectedOrder), '전체 시간표는 시각 → 출발지·행선지 → 급행 심볼 순이어야 합니다.');
 assert.ok(source.includes('onchange="setMetroTimetableExpressOnly(this.checked)"'), '급행만 보기 체크박스가 필터 함수와 연결되어야 합니다.');
+assert.ok(source.includes('${hasExpress?`<div class="mtt-filterbar">'),'급행 필터 영역은 실제 급행 정차 여부에 따라 렌더링해야 합니다.');
 assert.ok(source.includes('${r.clk},${r.k0},${r.k1})'), '전체 시간표 클릭은 선택한 방향 leg 범위를 함께 전달해야 합니다.');
 assert.ok(source.includes("const METRO_MODE_TABS=['metrolines','metroschematic','metroroute','map','stationinfo','notice']"),'전철 공지는 가장 오른쪽 탭이어야 합니다.');
 assert.ok(source.includes("b.style.order=String(Math.max(0,visible.indexOf(id)))"),'모드별 탭 순서를 화면에 적용해야 합니다.');

@@ -81,17 +81,6 @@
     });
   }
 
-  function buildRoundTrip(southSpec,southDeparture,northSpec,northDeparture){
-    const south=buildLeg(southSpec,southDeparture);
-    const north=buildLeg(northSpec,northDeparture);
-    const southTerminal=stationIndex.get(southSpec[southSpec.length-1].name);
-    const northOrigin=stationIndex.get(northSpec[0].name);
-    if(southTerminal!==northOrigin)throw new Error('경부선 급행 왕복 시종착 불일치');
-    // 회차역은 한 번만 기록하고 도착 시각과 반대편 출발 시각을 함께 보존합니다.
-    south[south.length-2]=north[1];
-    return south.concat(north.slice(3));
-  }
-
   const departures={
     A_S:['05:54','09:06','12:43','15:31','18:42','20:19'],
     A_N:['23:04','08:50','12:26','15:16','18:28','20:01'],
@@ -107,28 +96,15 @@
   };
 
   const revised=[];
-  function addRoundTrips(key,count,shift,southStart=0,northStart=0){
-    for(let i=0;i<count;i++){
-      const northIndex=(i+shift)%count;
-      revised.push(buildRoundTrip(
-        specs[`${key}_S`],departures[`${key}_S`][southStart+i],
-        specs[`${key}_N`],departures[`${key}_N`][northStart+northIndex]
-      ));
-    }
+  function addDirectionalLegs(key){
+    departures[`${key}_S`].forEach(time=>revised.push(buildLeg(specs[`${key}_S`],time)));
+    departures[`${key}_N`].forEach(time=>revised.push(buildLeg(specs[`${key}_N`],time)));
   }
 
-  // 기존 40왕복 + 출퇴근 편도 보강 10편의 운용 규모를 유지합니다.
-  addRoundTrips('A',5,2,1,0);
-  departures.A_S.slice(0,1).forEach(time=>revised.push(buildLeg(specs.A_S,time)));
-  departures.A_N.slice(-1).forEach(time=>revised.push(buildLeg(specs.A_N,time)));
-  addRoundTrips('U',5,1);
-  addRoundTrips('P',14,0,0,3);
-  departures.P_S.slice(-3).forEach(time=>revised.push(buildLeg(specs.P_S,time)));
-  departures.P_N.slice(0,3).forEach(time=>revised.push(buildLeg(specs.P_N,time)));
-  addRoundTrips('S',10,2);
-  departures.S_S.slice(-1).forEach(time=>revised.push(buildLeg(specs.S_S,time)));
+  // 상·하행 시각표는 그대로 유지하되 서로 다른 편성으로 기록합니다.
+  // 관련 없는 반대편 출발 시각을 종착역 회차시각으로 합쳐 장시간 정차처럼 보이던 구조를 제거합니다.
+  ['A','U','P','S','H'].forEach(addDirectionalLegs);
   departures.K_N.forEach(time=>revised.push(buildLeg(specs.K_N,time)));
-  addRoundTrips('H',6,2);
 
   const nextTrips=[];
   const nextClasses=[];
@@ -152,6 +128,7 @@
     version:'2026-07-27',
     serviceObjects:revised.length,
     oneWayTrips:90,
+    independentDirectionalLegs:true,
     departures
   };
 })(typeof globalThis!=='undefined'?globalThis:window);

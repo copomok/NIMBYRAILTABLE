@@ -11,7 +11,8 @@ vm.runInContext(fs.readFileSync('data/nimbi_metro_service_policy.js','utf8'),con
 const line=vm.runInContext("METRO_SCHED['경부선']",context);
 const revision=context.NIMBI_GYEONGBU_EXPRESS_REVISION;
 assert.equal(revision.version,'2026-07-27');
-assert.equal(revision.serviceObjects,50,'기존 급행 운용 객체 50개를 유지해야 합니다.');
+assert.equal(revision.serviceObjects,90,'상·하행 급행은 장시간 회차 대기가 생기지 않도록 90개 독립 운행이어야 합니다.');
+assert.equal(revision.independentDirectionalLegs,true);
 
 const routeOrder=[
   '양주','의정부','도봉','청량리','장신대','종로5가','종로1가','서울','한강로',
@@ -20,7 +21,7 @@ const routeOrder=[
 ];
 const order=new Map(routeOrder.map((name,index)=>[name,index]));
 const expressTrips=line.t.filter((_,index)=>line.c[index]===1);
-assert.equal(expressTrips.length,50);
+assert.equal(expressTrips.length,90);
 
 function records(trip){
   const result=[];
@@ -46,6 +47,7 @@ function splitLegs(trip){
 
 const legs=expressTrips.flatMap(splitLegs);
 assert.equal(legs.length,90,'방향별 45회, 총 90회여야 합니다.');
+assert.ok(expressTrips.every(trip=>splitLegs(trip).length===1),'서로 관련 없는 상·하행을 하나의 장시간 회차 편성으로 연결하면 안 됩니다.');
 
 const pairCounts={};
 for(const leg of legs){
