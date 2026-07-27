@@ -11053,6 +11053,56 @@ function _sxDetailedTrackLayer(track,ss,Y,axisX,scale,color){
     `<path d="M ${down.toFixed(1)} ${y0.toFixed(1)} L ${down.toFixed(1)} ${yN.toFixed(1)}" class="tsx-real-trunk" stroke="${color}"/>`;
   return {svg:`<g class="tsx-real-base">${base}</g><g class="tsx-real-trunks">${trunk}</g>`,minX,maxX};
 }
+// 인게임 실좌표에서 배선의 의미만 추출한다. 원본 폴리라인을 그대로 축소하지 않고
+// 부본선 수·건넘선·회차/유치선 존재를 관제 배선 기호로 다시 그린다.
+function _sxStationTopology(l,track,ss,i){
+  const s=ss[i],prev=i?ss[i-1]:s,next=i+1<ss.length?ss[i+1]:s;
+  const window=Math.min(720,Math.max(260,Math.min(i?s-prev:Infinity,i+1<ss.length?next-s:Infinity)*.24));
+  const supports=new Map();let cross=0,pocket=0;
+  (track.rn||[]).forEach(run=>{
+    const st=_sxTrackRunStats(run);if(st.span<22)return;
+    let minS=Infinity,maxS=-Infinity;const ds=[];
+    for(let k=0;k+1<run.length;k+=2){const rs=Number(run[k]),d=Number(run[k+1]);minS=Math.min(minS,rs);maxS=Math.max(maxS,rs);if(Math.abs(rs-s)<=window)ds.push(d);}
+    if(maxS<s-window||minS>s+window||!ds.length)return;
+    if(st.span>=70)ds.forEach(d=>{const q=Math.round(d/5)*5;if(q<-1||q>6)supports.set(q,(supports.get(q)||0)+1);});
+    if(st.span<=520&&st.minD<=1&&st.maxD>=4&&st.maxD-st.minD<=13)cross++;
+    const whollyLocal=minS>=s-window&&maxS<=s+window;
+    if(whollyLocal&&st.span>=80&&st.span<=760&&st.minD>-1&&st.maxD<7)pocket++;
+  });
+  const pfs=_metroStationPlatforms(l.stations[i],l.name,l.stations[i-1],l.stations[i+1]).filter(p=>p.isCur&&!p.branchOnly);
+  const need=Math.max(0,Math.min(4,pfs.length-2));
+  let lanes=[...supports].filter(([,n])=>n>=2).sort((a,b)=>b[1]-a[1]).map(([d])=>d).slice(0,4);
+  const defaults=[-5,10,-10,15];for(const d of defaults){if(lanes.length>=need)break;if(!lanes.includes(d))lanes.push(d);}
+  lanes=lanes.sort((a,b)=>a-b);
+  return {lanes,cross:Math.min(2,cross),pocket:pocket>0,platforms:Math.max(1,pfs.length||1)};
+}
+function _sxSchematicTrackLayer(l,track,ss,Y,axisX,scale,color){
+  const F=x=>(+x).toFixed(1),up=axisX,down=axisX+5*scale,y0=Y[0],yN=Y[Y.length-1];
+  let aux='',minX=up,maxX=down;
+  const trunk=`<path d="M ${F(up)} ${F(y0)} L ${F(up)} ${F(yN)}" class="tsx-real-trunk" stroke="${color}"/>`+
+    `<path d="M ${F(down)} ${F(y0)} L ${F(down)} ${F(yN)}" class="tsx-real-trunk" stroke="${color}"/>`;
+  l.stations.forEach((name,i)=>{
+    const y=Y[i],topo=_sxStationTopology(l,track,ss,i);
+    topo.lanes.forEach((d,li)=>{
+      const x=axisX+d*scale,main=d<0?up:down,half=15+Math.min(8,li*2),throat=25+Math.min(10,li*3);
+      minX=Math.min(minX,x);maxX=Math.max(maxX,x);
+      aux+=`<path d="M ${F(main)} ${F(y-throat)} C ${F(main)} ${F(y-throat+6)}, ${F(x)} ${F(y-half-5)}, ${F(x)} ${F(y-half)} L ${F(x)} ${F(y+half)} C ${F(x)} ${F(y+half+5)}, ${F(main)} ${F(y+throat-6)}, ${F(main)} ${F(y+throat)}" class="tsx-symbol-track"/>`;
+    });
+    if(topo.cross){
+      const cy=y-(topo.lanes.length?31:16);
+      aux+=`<path d="M ${F(up)} ${F(cy-8)} L ${F(down)} ${F(cy+8)}${topo.cross>1?` M ${F(down)} ${F(cy-8)} L ${F(up)} ${F(cy+8)}`:''}" class="tsx-symbol-switch"/>`;
+    }
+    if(topo.pocket){
+      const cx=(up+down)/2,dir=(i===l.stations.length-1?-1:1),a=y+dir*18,b=y+dir*35;
+      aux+=`<path d="M ${F(up)} ${F(a)} C ${F(up)} ${F(a+dir*5)}, ${F(cx)} ${F(a+dir*7)}, ${F(cx)} ${F(a+dir*12)} L ${F(cx)} ${F(b)}" class="tsx-symbol-pocket"/><path d="M ${F(cx-3)} ${F(b)} L ${F(cx+3)} ${F(b)}" class="tsx-symbol-stop"/>`;
+    }
+  });
+  if(!l.loop){
+    aux+=`<path d="M ${F(up)} ${F(y0)} C ${F(up)} ${F(y0-13)}, ${F(down)} ${F(y0-13)}, ${F(down)} ${F(y0)}" class="tsx-symbol-turnback"/>`+
+      `<path d="M ${F(up)} ${F(yN)} C ${F(up)} ${F(yN+13)}, ${F(down)} ${F(yN+13)}, ${F(down)} ${F(yN)}" class="tsx-symbol-turnback"/>`;
+  }
+  return {svg:`<g class="tsx-symbol-aux">${aux}</g><g class="tsx-real-trunks">${trunk}</g>`,minX,maxX};
+}
 function _metroSchCanvas(l){
   const track=(typeof METRO_TRACK!=='undefined')&&METRO_TRACK[l.name];
   if(!track||!Array.isArray(track.ss)||track.ss.length!==l.stations.length||!Array.isArray(track.rn)||!track.rn.length)
@@ -11060,7 +11110,7 @@ function _metroSchCanvas(l){
   const color=l.color,F=x=>(+x).toFixed(1),GEO=(typeof METRO_GEO!=='undefined')?METRO_GEO[l.name]:null;
   const stopS=_sxNormalizeStops(track.ss,track.v);
   const Y=_sxY((GEO&&GEO.m)||l.stations.map(()=>null),58), axisX=116, scale=1.55;
-  const layer=_sxDetailedTrackLayer(track,stopS,Y,axisX,scale,color);
+  const layer=_sxSchematicTrackLayer(l,track,stopS,Y,axisX,scale,color);
   const renderTrack={...track,ss:stopS},plats=_sxDetailedPlatforms(l,renderTrack,Y,axisX,scale);
   let namesHTML='',labelsHTML='',minX=Math.min(layer.minX,plats.minX),maxX=Math.max(layer.maxX,plats.maxX);
   const geometryRight=maxX, continuationX=geometryRight+22;
@@ -11134,7 +11184,7 @@ function renderMetroSchematicTab(){
       </div>
       <div class="msch-legend"><span class="msch-lg up">▲ 상행 <small>종점→기점</small></span><span class="msch-lg down">하행 <small>기점→종점</small> ▼</span></div>
       <div class="msch-body msch-body--inline">${html}</div>
-      <div class="msch-foot">인게임 배선 데이터 기준 · 노선색=본선·연결선 · 회색=대피선·유치선·보조선 · 회색 블록=승강장 · ▲▼=실시간 편성</div>
+      <div class="msch-foot">인게임 선로 구조를 관제 배선 기호로 재구성 · 노선색=본선 · 회색=부본선·건넘선·회차/유치선 · 회색 블록=승강장 · ▲▼=실시간 편성</div>
     </div>`;
 }
 
