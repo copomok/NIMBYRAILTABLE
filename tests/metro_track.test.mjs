@@ -43,6 +43,28 @@ assert.deepEqual(JSON.parse(JSON.stringify(side.blocks)), [
 ], '2선 2면역은 바깥쪽 상대식이어야 합니다.');
 assert.deepEqual(Array.from(context.platformModel(4, '경부선', '종로1가').mainIdx), [1,2], '일반 4선역은 2·3번이 본선이어야 합니다.');
 assert.deepEqual(Array.from(context.platformModel(4, '경부선', '성환').mainIdx), [0,3], '성환역은 1·4번이 본선이어야 합니다.');
+vm.runInContext('this.alignedBranchY=_sxAlignedBranchY;this.platformMatchesRoute=_sxPlatformMatchesRoute;', context);
+assert.deepEqual(Array.from(context.alignedBranchY(['분기역','지선중간','합류역'], {분기역:0,합류역:2}, [30,90,150], 44)), [30,90,150], '지선의 공통역은 본선과 같은 높이에 정렬되어야 합니다.');
+assert.equal(context.platformMatchesRoute({variants:['구로-남평택']},{label:'평택→남평택',names:['평택','남평택']}), true, '가지 노선 전용 승강장은 지선 종착역으로 연결되어야 합니다.');
+assert.ok(app.includes("p.kind==='metro'||p.kind==='train'"), '일반열차 병행 승강장을 평행 선로군에 포함해야 합니다.');
+assert.ok(app.includes('branchRoutes.find'), '지선 운행 열차는 본선이 아닌 지선 선로군에 배치해야 합니다.');
+for (const line of context.lines) {
+  const track = context.tracks[line.name];
+  const mainIndex = Object.fromEntries(line.stations.map((name, i) => [name, i]));
+  const mainY = line.stations.map((_, i) => 30 + i * 62);
+  for (const branch of track.b || []) {
+    const common = branch.names.filter(name => mainIndex[name] != null);
+    assert.ok(common.length, `${line.name} ${branch.lbl}: 본선 분기역 누락`);
+    const branchY = Array.from(context.alignedBranchY(branch.names, mainIndex, mainY, 44));
+    assert.ok(branchY.every((y, i) => i === 0 || y >= branchY[i - 1]), `${line.name} ${branch.lbl}: 지선 세로 순서 역전`);
+    branch.names.forEach((name, i) => {
+      if (mainIndex[name] != null) assert.equal(branchY[i], mainY[mainIndex[name]], `${line.name} ${branch.lbl}: 공통역 높이 불일치`);
+    });
+  }
+  for (const depot of context.geo[line.name]?.d || []) {
+    assert.ok(Number.isInteger(depot.j) && depot.j >= 0 && depot.j < line.stations.length, `${line.name} ${depot.n}: 기지 인입역 인덱스 오류`);
+  }
+}
 const linkStart = app.indexOf('function _sxSidingIsConnected');
 const linkEnd = app.indexOf('\n// 인게임 실좌표에서 배선의 의미만 추출한다.', linkStart);
 assert.ok(linkStart >= 0 && linkEnd > linkStart, '독립·연결 선로 판정 함수 누락');

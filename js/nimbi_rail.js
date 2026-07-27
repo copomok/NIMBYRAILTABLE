@@ -10839,6 +10839,13 @@ function _stnLineNames(s){
   for(const pn of Object.keys(pl))(pl[pn].l||[]).forEach(x=>set.add(String(x)));
   return set;
 }
+function _metroLineVariant(raw,base){
+  const s=String(raw||'').trim();
+  if(s===base)return '';
+  if(s.startsWith(base+'/'))return s.slice(base.length+1).trim();
+  if(s.startsWith(base+' ('))return s.slice(base.length).replace(/^\s*\(|\)\s*$/g,'').trim();
+  return null;
+}
 // 역 승강장 분류. prev/next 주어지면 타 노선은 '평행(전·다음역 연속)'만 남기고, 한쪽만=시작점, 없으면 제외.
 function _metroStationPlatforms(stn, curBase, prevStn, nextStn){
   if(typeof PLATFORM_DB==='undefined')return [];
@@ -10853,7 +10860,9 @@ function _metroStationPlatforms(stn, curBase, prevStn, nextStn){
     const isCur=metroBases.includes(curBase);
     // 지선 전용 승강장(이 노선 관련 이름이 모두 '지선') → 본선에서 빼고 지선 열로
     const curLines=lines.filter(l=>l.split('/')[0].split(' (')[0].trim()===curBase);
-    const branchOnly=isCur&&curLines.length>0&&curLines.every(l=>/지선/.test(l));
+    const variants=[...new Set(curLines.map(l=>_metroLineVariant(l,curBase)).filter(v=>v!=null&&v!==''))];
+    // 기본 노선명이 없는 /1·/2·○○지선 전용 홈은 본선 홈과 별도 선로군으로 유지한다.
+    const branchOnly=isCur&&curLines.length>0&&!curLines.some(l=>_metroLineVariant(l,curBase)==='');
     // 평행성: 타 노선 승강장은 전/다음역과 연속될 때만 배선에 포함
     let through=2;
     if(!isCur&&sides.length){
@@ -10865,7 +10874,7 @@ function _metroStationPlatforms(stn, curBase, prevStn, nextStn){
     if(isCur){ color=_metroLineColor(curBase); kind='cur'; }
     else if(metroBases.length){ color=_metroLineColor(metroBases[0]); kind='metro'; }
     else { color='#8b949e'; kind='train'; }
-    out.push({pn:num,isCur,color,kind,label:(metroBases[0]||lines[0]||''),shared:isCur&&metroBases.length>1,junction:through===1,branchOnly,lines});
+    out.push({pn:num,isCur,color,kind,label:(metroBases[0]||lines[0]||''),shared:isCur&&metroBases.length>1,junction:through===1,through,branchOnly,variants,lines});
   }
   return out.sort((a,b)=>a.pn-b.pn);
 }
@@ -11020,10 +11029,10 @@ function _sxLocalTrackOffsets(track,s){
   vals.sort((a,b)=>a-b); const out=[]; vals.forEach(v=>{if(Number.isFinite(v)&&(!out.length||Math.abs(v-out[out.length-1])>2.2))out.push(v);});
   return out;
 }
-function _sxDetailedPlatforms(l,track,Y,axisX,scale){
+function _sxDetailedPlatforms(l,track,Y,axisX,scale,routeHint){
   const F=x=>(+x).toFixed(1); let svg='',minX=axisX,maxX=axisX;
   const box=(x,y,w,h)=>{minX=Math.min(minX,x-w/2);maxX=Math.max(maxX,x+w/2);svg+=`<rect x="${F(x-w/2)}" y="${F(y-h/2)}" width="${F(w)}" height="${F(h)}" rx="2" class="tsx-plat tsx-plat--game"/>`;};
-  const parallelMap=_sxParallelColumnMap(l,track,track.ss);
+  const parallelMap=_sxParallelColumnMap(l,track,track.ss,routeHint);
   const addBlocks=(blocks,y,h,offset)=>{
     blocks.forEach(b=>{
       if(b.kind==='between'){
@@ -11036,7 +11045,7 @@ function _sxDetailedPlatforms(l,track,Y,axisX,scale){
     });
   };
   l.stations.forEach((name,i)=>{
-    const topo=_sxStationTopology(l,track,track.ss,i), y=Y[i];
+    const topo=_sxStationTopology(l,track,track.ss,i,routeHint), y=Y[i];
     const h=Math.min(44,36+Math.max(0,topo.platforms-2)*2);
     addBlocks(topo.blocks,y,h,0);
     topo.parallelGroups.forEach(g=>{const pm=parallelMap[g.key];if(pm)addBlocks(g.model.blocks,y,Math.min(40,34+g.count*2),pm.offset);});
@@ -11083,6 +11092,31 @@ function _sxConsecutivePlatformGroups(items,keyFn){
     if(g.length)out.push({key:k,items:g});
   });return out;
 }
+function _sxRouteTokens(routeHint){
+  if(!routeHint)return [];
+  return [...new Set([routeHint.label,...(routeHint.names||[])]
+    .flatMap(v=>String(v||'').split(/[\s→\-_/()]+/)).map(v=>v.trim()).filter(v=>v.length>=2))];
+}
+function _sxPlatformMatchesRoute(p,routeHint){
+  if(!p||!routeHint||!p.variants?.length)return false;
+  const tokens=_sxRouteTokens(routeHint);
+  return p.variants.some(v=>tokens.some(t=>String(v).includes(t)||t.includes(String(v))));
+}
+function _sxAlignedBranchY(names,mainIdx,mainY,row){
+  row=Number(row)||44;const common=[];
+  names.forEach((n,i)=>{if(mainIdx[n]!=null)common.push(i);});
+  if(!common.length)return _sxY(names.map(()=>null),row);
+  const out=new Array(names.length),first=common[0],last=common[common.length-1];
+  common.forEach(i=>{out[i]=mainY[mainIdx[names[i]]];});
+  const upStep=first?Math.min(row,Math.max(18,(out[first]-12)/first)):row;
+  for(let i=first-1;i>=0;i--)out[i]=out[i+1]-upStep;
+  for(let i=last+1;i<names.length;i++)out[i]=out[i-1]+row;
+  for(let c=0;c+1<common.length;c++){
+    const a=common[c],b=common[c+1],span=b-a;
+    for(let i=a+1;i<b;i++)out[i]=out[a]+(out[b]-out[a])*(i-a)/span;
+  }
+  return out;
+}
 function _sxSidingIsConnected(localRuns,sidingD,stationTrackDs){
   const onSiding=d=>Math.abs(Number(d)-sidingD)<=2.75;
   const onStationTrack=d=>stationTrackDs.some(td=>Math.abs(Number(d)-td)<=2.75);
@@ -11099,7 +11133,7 @@ function _sxSidingIsConnected(localRuns,sidingD,stationTrackDs){
 }
 // 인게임 실좌표에서 배선의 의미만 추출한다. 원본 폴리라인을 그대로 축소하지 않고
 // 부본선 수·건넘선·회차/유치선 존재를 관제 배선 기호로 다시 그린다.
-function _sxStationTopology(l,track,ss,i){
+function _sxStationTopology(l,track,ss,i,routeHint){
   const s=ss[i],prev=i?ss[i-1]:s,next=i+1<ss.length?ss[i+1]:s;
   const window=Math.min(720,Math.max(260,Math.min(i?s-prev:Infinity,i+1<ss.length?next-s:Infinity)*.24));
   const supports=new Map(),localRuns=[];let cross=0,pocket=0;
@@ -11114,8 +11148,11 @@ function _sxStationTopology(l,track,ss,i){
     const whollyLocal=minS>=s-window&&maxS<=s+window;
     if(whollyLocal&&st.span>=80&&st.span<=760&&st.minD>-1&&st.maxD<7)pocket++;
   });
-  const allPfs=_metroStationPlatforms(l.stations[i],l.name,l.stations[i-1],l.stations[i+1]).filter(p=>!p.branchOnly);
-  const curGroups=_sxConsecutivePlatformGroups(allPfs.filter(p=>p.isCur),()=>l.name);
+  const allPfs=_metroStationPlatforms(l.stations[i],l.name,l.stations[i-1],l.stations[i+1]);
+  const matchedRoutePfs=routeHint?allPfs.filter(p=>p.isCur&&_sxPlatformMatchesRoute(p,routeHint)):[];
+  const routePfs=matchedRoutePfs.length?matchedRoutePfs:(routeHint?allPfs.filter(p=>p.isCur&&p.branchOnly):[]);
+  const mainPool=routePfs.length?routePfs:allPfs.filter(p=>p.isCur&&!p.branchOnly);
+  const curGroups=_sxConsecutivePlatformGroups(mainPool,()=>l.name);
   curGroups.sort((a,b)=>b.items.length-a.items.length||a.items[0].pn-b.items[0].pn);
   const pfs=curGroups.length?curGroups[0].items:[];
   const platforms=Math.max(1,pfs.length||1),nums=pfs.length?pfs.map(p=>p.pn).sort((a,b)=>a-b):[1];
@@ -11127,21 +11164,25 @@ function _sxStationTopology(l,track,ss,i){
   const occupiedMin=trackDs[0],occupiedMax=trackDs[trackDs.length-1];
   let sidings=[...supports].filter(([d,n])=>n>=3&&(d<occupiedMin-2||d>occupiedMax+2)).sort((a,b)=>b[1]-a[1])
     .map(([d])=>({d,connected:_sxSidingIsConnected(localRuns,d,trackDs)})).slice(0,2);
-  const secondaryCur=curGroups.slice(1).map((g,gi)=>({key:`${l.name}:분리${gi}`,label:`${l.name} 분리 승강장`,color:l.color,items:g.items}));
-  const other=_sxConsecutivePlatformGroups(allPfs.filter(p=>!p.isCur&&p.kind==='metro'&&!p.junction),p=>p.label||'평행선')
-    .map(g=>({key:`평행:${g.key}`,label:g.key,color:g.items[0].color,items:g.items}));
-  const parallelGroups=[...secondaryCur,...other].map(g=>({...g,count:g.items.length,model:_sxPlatformModel(g.items.length,g.label,l.stations[i])}));
+  const secondaryCur=routeHint?[]:curGroups.slice(1).map((g,gi)=>({key:`${l.name}:분리${gi}`,label:`${l.name} 분리 승강장`,color:l.color,kind:'main',items:g.items}));
+  const mappedBranch=!routeHint&&(track.b||[]).some(b=>Array.isArray(b.names)&&b.names.includes(l.stations[i]));
+  const variantGroups=routeHint||mappedBranch?[]:_sxConsecutivePlatformGroups(allPfs.filter(p=>p.isCur&&p.branchOnly),p=>p.variants?.join('·')||'가지')
+    .map(g=>({key:`가지:${l.name}:${g.key}`,label:`${l.name} ${g.key}`,color:l.color,kind:'variant',routeKeys:g.items.flatMap(p=>p.variants||[]),items:g.items}));
+  const other=routeHint?[]:_sxConsecutivePlatformGroups(allPfs.filter(p=>!p.isCur&&!p.junction&&(p.kind==='metro'||p.kind==='train')),p=>p.kind==='train'?'일반열차 병행선':(p.label||'평행선'))
+    .map(g=>({key:`평행:${g.key}`,label:g.key,color:g.items[0].color,kind:g.items[0].kind,items:g.items}));
+  const parallelGroups=[...secondaryCur,...variantGroups,...other].map(g=>({...g,count:g.items.length,platformNums:g.items.map(p=>p.pn),model:_sxPlatformModel(g.items.length,g.label,l.stations[i])}));
   return {trackDs,mainDs,mainIdx,blocks,sidings,parallelGroups,cross:Math.min(2,cross),pocket:pocket>0,platforms,nums};
 }
-function _sxParallelColumnMap(l,track,ss){
-  const keys={};l.stations.forEach((s,i)=>_sxStationTopology(l,track,ss,i).parallelGroups.forEach(g=>{keys[g.key]=g;}));
+function _sxParallelColumnMap(l,track,ss,routeHint){
+  const keys={};l.stations.forEach((s,i)=>_sxStationTopology(l,track,ss,i,routeHint).parallelGroups.forEach(g=>{keys[g.key]=g;}));
   const out={};Object.keys(keys).sort().forEach((k,i)=>{const m=keys[k].model;out[k]={offset:25+i*15-m.trackDs[0],color:keys[k].color,label:keys[k].label};});
   return out;
 }
-function _sxSchematicTrackLayer(l,track,ss,Y,axisX,scale,color){
+function _sxSchematicTrackLayer(l,track,ss,Y,axisX,scale,color,routeHint,opts){
+  opts=opts||{};
   const F=x=>(+x).toFixed(1),up=axisX,down=axisX+5*scale,y0=Y[0],yN=Y[Y.length-1];
   let aux='',minX=up,maxX=down;
-  const topos=l.stations.map((s,i)=>_sxStationTopology(l,track,ss,i)),parallelMap=_sxParallelColumnMap(l,track,ss);
+  const topos=l.stations.map((s,i)=>_sxStationTopology(l,track,ss,i,routeHint)),parallelMap=_sxParallelColumnMap(l,track,ss,routeHint);
   const routes=[`M ${F(up)} ${F(y0)}`,`M ${F(down)} ${F(y0)}`];
   l.stations.forEach((name,i)=>{
     const y=Y[i],topo=topos[i];
@@ -11188,11 +11229,29 @@ function _sxSchematicTrackLayer(l,track,ss,Y,axisX,scale,color){
     }
   });
   if(!l.loop){
-    aux+=`<path d="M ${F(up)} ${F(y0)} C ${F(up)} ${F(y0-13)}, ${F(down)} ${F(y0-13)}, ${F(down)} ${F(y0)}" class="tsx-symbol-turnback"/>`+
-      `<path d="M ${F(up)} ${F(yN)} C ${F(up)} ${F(yN+13)}, ${F(down)} ${F(yN+13)}, ${F(down)} ${F(yN)}" class="tsx-symbol-turnback"/>`;
+    if(opts.termTop!==false)aux+=`<path d="M ${F(up)} ${F(y0)} C ${F(up)} ${F(y0-13)}, ${F(down)} ${F(y0-13)}, ${F(down)} ${F(y0)}" class="tsx-symbol-turnback"/>`;
+    if(opts.termBottom!==false)aux+=`<path d="M ${F(up)} ${F(yN)} C ${F(up)} ${F(yN+13)}, ${F(down)} ${F(yN+13)}, ${F(down)} ${F(yN)}" class="tsx-symbol-turnback"/>`;
   }
   const trunk=routes.map((d,dir)=>`<path d="${d} L ${F(dir?down:up)} ${F(yN)}" class="tsx-real-trunk" stroke="${color}"/>`).join('');
-  return {svg:`<g class="tsx-symbol-aux">${aux}</g><g class="tsx-real-trunks">${trunk}</g>`,minX,maxX};
+  return {svg:`<g class="tsx-symbol-aux">${aux}</g><g class="tsx-real-trunks">${trunk}</g>`,minX,maxX,topos,parallelMap};
+}
+function _sxMetroServiceStops(lineName,svcIdx){
+  const ent=(typeof METRO_SCHED!=='undefined')&&METRO_SCHED[lineName],f=ent&&ent.t&&ent.t[svcIdx];
+  if(!ent||!Array.isArray(f))return [];
+  const out=[];for(let i=2;i<f.length;i+=3){const n=ent.s[f[i]];if(n!=null&&out[out.length-1]!==n)out.push(n);}
+  return out;
+}
+function _sxTopologyTrainLane(layer,topo,axisX,scale,down,serviceStops){
+  const routeText=(serviceStops||[]).join(' ');
+  const group=topo.parallelGroups.find(g=>g.kind==='variant'&&(g.routeKeys||[]).some(k=>{
+    const parts=String(k).split(/[\s→\-_()]+/).filter(x=>x.length>=2);
+    return parts.length&&parts.every(p=>routeText.includes(p));
+  }));
+  if(group){
+    const pm=layer.parallelMap[group.key],d=group.model.mainDs[down?1:0];
+    if(pm)return axisX+(d+pm.offset)*scale;
+  }
+  return axisX+topo.mainDs[down?1:0]*scale;
 }
 function _metroSchCanvas(l){
   const track=(typeof METRO_TRACK!=='undefined')&&METRO_TRACK[l.name];
@@ -11208,44 +11267,72 @@ function _metroSchCanvas(l){
   const geometryRight=maxX;
   const mainIdx={}; l.stations.forEach((s,i)=>{if(mainIdx[s]==null)mainIdx[s]=i;
     namesHTML+=`<span class="tsx-name tsx-name--game${i===0||i===l.stations.length-1?' end':''}" style="top:${F(Y[i])}px">${_opsEsc(s)}</span>`;});
-  // ── 차량기지·주박선: 이름표만 붙이지 않고 실제 인입선 + 3개 유치선으로 표시 ──
-  const depotX=geometryRight+35,depotRows={};
-  ((GEO&&GEO.d)||[]).forEach((d,di)=>{
-    const baseY=Y[d.j]!=null?Y[d.j]:Y[0],key=Math.round(baseY/28),row=depotRows[key]||0;depotRows[key]=row+1;
-    const x=depotX+row*42,y=baseY+row*18,src=axisX+5*scale;
-    trackSVG+=`<g class="tsx-yard"><path d="M ${F(src)} ${F(baseY)} C ${F((src+x)/2)} ${F(baseY)}, ${F(x-10)} ${F(y)}, ${F(x)} ${F(y)}"/>`+
-      [0,1,2].map(k=>`<path d="M ${F(x+k*8)} ${F(y-18)} L ${F(x+k*8)} ${F(y+18)}"/>`).join('')+
-      `<path d="M ${F(x)} ${F(y-13)} L ${F(x+8)} ${F(y-7)} L ${F(x+16)} ${F(y-1)} M ${F(x)} ${F(y+13)} L ${F(x+8)} ${F(y+7)} L ${F(x+16)} ${F(y+1)}"/></g>`;
-    labelsHTML+=`<span class="tsx-depot tsx-depot--game" style="left:${F(x+27)}px;top:${F(y)}px">🏭 ${_opsEsc(String(d.n).replace('차량사업소','사업소'))}</span>`;
-    maxX=Math.max(maxX,x+130);H=Math.max(H,y+35);
-  });
-  // ── 같은 노선 이름의 지선: METRO_TRACK.b를 독립 배선 축으로 전체 표시 ──
-  let branchX=Math.max(maxX+35,geometryRight+155);
+  // ── 같은 노선 지선: 실제 분기역 높이에 맞춰 본선 옆에서 시작하고 평행하게 진행 ──
+  const branchRoutes=[];let branchX=geometryRight+42;
   ((track&&track.b)||[]).forEach((b,bi)=>{
     if(!Array.isArray(b.names)||b.names.length<2||!Array.isArray(b.ss)||!Array.isArray(b.rn))return;
-    const bs=_sxNormalizeStops(b.ss,b.v),bY=_sxY(b.names.map(()=>null),54);
-    const bl={...l,stations:b.names,loop:false},bt={...b,ss:bs};
-    const bLayer=_sxSchematicTrackLayer(bl,bt,bs,bY,axisX,scale,color),bPlats=_sxDetailedPlatforms(bl,bt,bY,axisX,scale);
+    const bs=_sxNormalizeStops(b.ss,b.v),bY=_sxAlignedBranchY(b.names,mainIdx,Y,44);
+    const hint={label:b.lbl||'',names:b.names},bl={...l,stations:b.names,loop:false},bt={...b,ss:bs};
+    const firstCommon=mainIdx[b.names[0]]!=null,lastCommon=mainIdx[b.names[b.names.length-1]]!=null;
+    const bLayer=_sxSchematicTrackLayer(bl,bt,bs,bY,axisX,scale,color,hint,{termTop:!firstCommon,termBottom:!lastCommon});
+    const bPlats=_sxDetailedPlatforms(bl,bt,bY,axisX,scale,hint);
     const dx=branchX-axisX;
     platSVG+=`<g transform="translate(${F(dx)} 0)">${bPlats.svg}</g>`;
     trackSVG+=`<g transform="translate(${F(dx)} 0)">${bLayer.svg}</g>`;
-    const common=b.names.findIndex(n=>mainIdx[n]!=null);
-    if(common>=0){
-      const my=Y[mainIdx[b.names[common]]],by=bY[common],bx=branchX;
-      trackSVG+=`<path d="M ${F(axisX+5*scale)} ${F(my)} C ${F((axisX+5*scale+bx)/2)} ${F(my)}, ${F(bx)} ${F(by)}, ${F(bx)} ${F(by)}" class="tsx-branch-link" stroke="${color}"/>`;
+    // 공통 구간의 진입·이탈 경계에서만 본선과 연결한다. 공통역 전부를 가로선으로 묶지 않는다.
+    const junctions=[];b.names.forEach((n,j)=>{
+      if(mainIdx[n]==null)return;
+      const prevExclusive=j>0&&mainIdx[b.names[j-1]]==null,nextExclusive=j+1<b.names.length&&mainIdx[b.names[j+1]]==null;
+      if(prevExclusive||nextExclusive||j===0||j===b.names.length-1)junctions.push(j);
+    });
+    [...new Set(junctions)].forEach(j=>{
+      const my=Y[mainIdx[b.names[j]]],bx=branchX,src=axisX+5*scale;
+      trackSVG+=`<path d="M ${F(src)} ${F(my)} C ${F(src+12)} ${F(my)}, ${F(bx-12)} ${F(bY[j])}, ${F(bx)} ${F(bY[j])}" class="tsx-branch-link" stroke="${color}"/>`;
+    });
+    const firstExclusive=b.names.findIndex(n=>mainIdx[n]==null),tagAt=firstExclusive>=0?firstExclusive:0;
+    labelsHTML+=`<span class="tsx-brtag tsx-brtag--game" style="left:${F(branchX+2)}px;top:${F(Math.max(12,bY[tagAt]-11))}px;--pc:${color}">${_opsEsc(b.lbl||`${b.names[0]}→${b.names[b.names.length-1]}`)}</span>`;
+    b.names.forEach((n,j)=>{if(mainIdx[n]!=null)return;namesHTML+=`<span class="tsx-bname tsx-bname--game" style="left:${F(branchX+bLayer.maxX-axisX+9)}px;top:${F(bY[j])}px">${_opsEsc(n)}</span>`;});
+    const route={b,bs,bY,axisX:branchX,layer:bLayer,bl,bt,hint,exclusive:new Set(b.names.filter(n=>mainIdx[n]==null))};
+    branchRoutes.push(route);
+    maxX=Math.max(maxX,branchX+Math.max(bLayer.maxX,bPlats.maxX)-axisX+78);H=Math.max(H,Math.max(...bY)+42);
+    branchX=maxX+26;
+  });
+  // ── 차량기지·주박선: 중간역과 종점 모두 현재 역 높이에서 인입, 선군 바깥에 유치선 표시 ──
+  const depotX=maxX+30,depotRows={};
+  ((GEO&&GEO.d)||[]).forEach((d,di)=>{
+    const baseY=Y[d.j]!=null?Y[d.j]:Y[0],key=Math.round(baseY/28),row=depotRows[key]||0;depotRows[key]=row+1;
+    if(d.j===Y.length-1){
+      const center=axisX+2.5*scale,fanY=baseY+64+row*34,lanes=[-30,-15,0,15,30].map(v=>center+v);
+      trackSVG+=`<g class="tsx-yard tsx-yard--terminal">${lanes.map((x,k)=>{
+        const src=k<2?axisX:axisX+5*scale;
+        return `<path d="M ${F(src)} ${F(baseY+5)} C ${F(src)} ${F(baseY+24)}, ${F(x)} ${F(baseY+27)}, ${F(x)} ${F(fanY)}"/>`;
+      }).join('')}<path d="M ${F(lanes[0])} ${F(fanY)} L ${F(lanes[lanes.length-1])} ${F(fanY)}"/></g>`;
+      labelsHTML+=`<span class="tsx-depot tsx-depot--game" style="left:${F(lanes[lanes.length-1]+12)}px;top:${F(fanY-8)}px">🏭 ${_opsEsc(String(d.n).replace('차량사업소','사업소'))}</span>`;
+      minX=Math.min(minX,lanes[0]);maxX=Math.max(maxX,lanes[lanes.length-1]+130);H=Math.max(H,fanY+24);
+      return;
     }
-    labelsHTML+=`<span class="tsx-brtag tsx-brtag--game" style="left:${F(branchX+2)}px;top:${F(Math.max(12,bY[0]-11))}px;--pc:${color}">${_opsEsc(b.lbl||`${b.names[0]}→${b.names[b.names.length-1]}`)}</span>`;
-    b.names.forEach((n,j)=>{namesHTML+=`<span class="tsx-bname tsx-bname--game" style="left:${F(branchX+bLayer.maxX-axisX+9)}px;top:${F(bY[j])}px">${_opsEsc(n)}</span>`;});
-    maxX=Math.max(maxX,branchX+Math.max(bLayer.maxX,bPlats.maxX)-axisX+90);H=Math.max(H,bY[bY.length-1]+42);
-    branchX=maxX+35;
+    const x=depotX+row*42,y=baseY+row*18,src=axisX+5*scale;
+    trackSVG+=`<g class="tsx-yard"><path d="M ${F(src)} ${F(baseY)} C ${F(src+14)} ${F(baseY)}, ${F(x-14)} ${F(y)}, ${F(x)} ${F(y)}"/>`+
+      [0,1,2].map(k=>`<path d="M ${F(x+k*8)} ${F(y-20)} L ${F(x+k*8)} ${F(y+20)}"/>`).join('')+
+      `<path d="M ${F(x)} ${F(y-14)} L ${F(x+8)} ${F(y-7)} L ${F(x+16)} ${F(y)} M ${F(x)} ${F(y+14)} L ${F(x+8)} ${F(y+7)} L ${F(x+16)} ${F(y)}"/></g>`;
+    labelsHTML+=`<span class="tsx-depot tsx-depot--game" style="left:${F(x+27)}px;top:${F(y)}px">🏭 ${_opsEsc(String(d.n).replace('차량사업소','사업소'))}</span>`;
+    maxX=Math.max(maxX,x+130);H=Math.max(H,y+38);
   });
   let cnt=0; const trains=[];
   _metroLineLiveTrains(l.name).forEach(t=>{
+    const serviceStops=_sxMetroServiceStops(l.name,t.svcIdx);
+    const branch=branchRoutes.find(r=>serviceStops.some(n=>r.exclusive.has(n))&&r.b.names.includes(t.fromStn)&&r.b.names.includes(t.toStn));
+    if(branch){
+      const fi=branch.b.names.indexOf(t.fromStn),ti=branch.b.names.indexOf(t.toStn);if(fi<0||ti<0)return;cnt++;
+      const down=ti>fi,s=t.atStation?branch.bs[fi]:branch.bs[fi]+t.frac*(branch.bs[ti]-branch.bs[fi]);
+      const topo=branch.layer.topos[fi],x=_sxTopologyTrainLane(branch.layer,topo,branch.axisX,scale,down,serviceStops);
+      trains.push({x,y:_sxTrackY(s,branch.bs,branch.bY),down,dest:t.dest,id:`S${String(t.svcIdx+1).padStart(4,'0')}`});
+      return;
+    }
     const fi=mainIdx[t.fromStn],ti=mainIdx[t.toStn];if(fi==null||ti==null)return;cnt++;
-    const down=ti>fi,s=t.atStation?stopS[fi]:stopS[fi]+t.frac*(stopS[ti]-stopS[fi]);
-    const atTopo=t.atStation?_sxStationTopology(l,renderTrack,stopS,fi):null;
-    const lane=atTopo?atTopo.mainDs[down?1:0]:(down?5:0);
-    trains.push({x:axisX+lane*scale,y:_sxTrackY(s,stopS,Y),down,dest:t.dest,id:`S${String(t.svcIdx+1).padStart(4,'0')}`});
+    const down=ti>fi,s=t.atStation?stopS[fi]:stopS[fi]+t.frac*(stopS[ti]-stopS[fi]),topo=layer.topos[fi];
+    const x=_sxTopologyTrainLane(layer,topo,axisX,scale,down,serviceStops);
+    trains.push({x,y:_sxTrackY(s,stopS,Y),down,dest:t.dest,id:`S${String(t.svcIdx+1).padStart(4,'0')}`});
   });
   trains.sort((a,b)=>a.y-b.y); const occupied=[];
   trains.forEach((t,i)=>{
