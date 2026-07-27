@@ -11019,13 +11019,13 @@ function _sxDetailedPlatforms(l,track,Y,axisX,scale){
   const box=(x,y)=>{minX=Math.min(minX,x-6);maxX=Math.max(maxX,x+6);svg+=`<rect x="${F(x-6)}" y="${F(y-16)}" width="12" height="32" rx="2" class="tsx-plat tsx-plat--game"/>`;};
   l.stations.forEach((name,i)=>{
     const pfs=_metroStationPlatforms(name,l.name,l.stations[i-1],l.stations[i+1]).filter(p=>p.isCur&&!p.branchOnly);
-    const count=Math.max(1,pfs.length||1), offsets=_sxLocalTrackOffsets(track,track.ss[i]||0);
-    const core=(offsets.length?offsets:[0,5]).filter(v=>Math.abs(v)<=22);
-    const lo=core.length?Math.min(...core):0, hi=core.length?Math.max(...core):5, y=Y[i];
-    if(count===1)box(axisX+((lo+hi)/2)*scale,y);
+    const count=Math.max(1,pfs.length||1), y=Y[i], up=0,down=5;
+    // 승강장은 인게임의 본선 기준 d=0/5 주변에 고정한다. 분기선의 극단 편차를
+    // 승강장 위치로 오인하면 플랫폼이 선로에서 멀리 튀므로 사용하지 않는다.
+    if(count===1)box(axisX+((up+down)/2)*scale,y);
     else {
-      box(axisX+(lo-5.5)*scale,y); box(axisX+(hi+5.5)*scale,y);
-      for(let k=2;k<count;k++){const f=(k-1)/(count-1);box(axisX+(lo+(hi-lo)*f)*scale,y);}
+      box(axisX+(up-6)*scale,y); box(axisX+(down+6)*scale,y);
+      for(let k=2;k<count;k++){const side=(k%2?1:-1),ring=Math.ceil((k-1)/2);box(axisX+(side>0?down+6+ring*8:up-6-ring*8)*scale,y);}
     }
   });
   return {svg,minX,maxX};
@@ -11036,9 +11036,14 @@ function _sxDetailedTrackLayer(track,ss,Y,axisX,scale,color){
     const p=_sxTrackPath(run,ss,Y,axisX,scale); if(!p)return;
     const st=_sxTrackRunStats(run); minX=Math.min(minX,axisX+st.minD*scale);maxX=Math.max(maxX,axisX+st.maxD*scale);
     base+=`<path d="${p}" class="tsx-real-track"/>`;
-    if(st.span>=650||st.near>=.72)active+=`<path d="${p}" class="tsx-real-route" stroke="${color}"/>`;
+    // 긴 런만 본선색으로 강조한다. 짧은 건넘선·분기선까지 모두 칠하면
+    // 역 구내가 한 덩어리처럼 보여 보조선은 회색으로 남긴다.
+    if(st.span>=650)active+=`<path d="${p}" class="tsx-real-route" stroke="${color}"/>`;
   });
-  return {svg:`<g class="tsx-real-base">${base}</g><g class="tsx-real-active">${active}</g>`,minX,maxX};
+  const y0=Y[0],yN=Y[Y.length-1],up=axisX,down=axisX+5*scale;
+  const trunk=`<path d="M ${up.toFixed(1)} ${y0.toFixed(1)} L ${up.toFixed(1)} ${yN.toFixed(1)}" class="tsx-real-trunk" stroke="${color}"/>`+
+    `<path d="M ${down.toFixed(1)} ${y0.toFixed(1)} L ${down.toFixed(1)} ${yN.toFixed(1)}" class="tsx-real-trunk" stroke="${color}"/>`;
+  return {svg:`<g class="tsx-real-base">${base}</g><g class="tsx-real-trunks">${trunk}</g><g class="tsx-real-active">${active}</g>`,minX,maxX};
 }
 function _metroSchCanvas(l){
   const track=(typeof METRO_TRACK!=='undefined')&&METRO_TRACK[l.name];
@@ -11046,7 +11051,7 @@ function _metroSchCanvas(l){
     return _metroSchCanvasLegacy(l);
   const color=l.color,F=x=>(+x).toFixed(1),GEO=(typeof METRO_GEO!=='undefined')?METRO_GEO[l.name]:null;
   const stopS=_sxNormalizeStops(track.ss,track.v);
-  const Y=_sxY((GEO&&GEO.m)||l.stations.map(()=>null),56), axisX=126, scale=2.15;
+  const Y=_sxY((GEO&&GEO.m)||l.stations.map(()=>null),58), axisX=116, scale=1.55;
   const layer=_sxDetailedTrackLayer(track,stopS,Y,axisX,scale,color);
   const renderTrack={...track,ss:stopS},plats=_sxDetailedPlatforms(l,renderTrack,Y,axisX,scale);
   let namesHTML='',labelsHTML='',minX=Math.min(layer.minX,plats.minX),maxX=Math.max(layer.maxX,plats.maxX);
@@ -11069,14 +11074,13 @@ function _metroSchCanvas(l){
   _metroLineLiveTrains(l.name).forEach(t=>{
     const fi=mainIdx[t.fromStn],ti=mainIdx[t.toStn];if(fi==null||ti==null)return;cnt++;
     const down=ti>fi,s=t.atStation?stopS[fi]:stopS[fi]+t.frac*(stopS[ti]-stopS[fi]);
-    const local=_sxLocalTrackOffsets(renderTrack,s).filter(v=>Math.abs(v)<=10);
-    const lane=local.length?(down?local[local.length-1]:local[0]):(down?5:0);
+    const lane=down?5:0;
     trains.push({x:axisX+lane*scale,y:_sxTrackY(s,stopS,Y),down,dest:t.dest,id:`S${String(t.svcIdx+1).padStart(4,'0')}`});
   });
   trains.sort((a,b)=>a.y-b.y); const occupied=[];
   trains.forEach((t,i)=>{
     let shift=0; while(occupied.some(o=>Math.abs(o.y-t.y)<18&&o.shift===shift))shift++;occupied.push({y:t.y,shift});
-    const side=t.down?1:-1,tx=t.x+side*(15+shift*42);
+    const side=t.down?1:-1,tx=t.x+side*(12+shift*38);
     labelsHTML+=`<span class="tsx-train-arrow ${t.down?'down':'up'}" style="left:${F(t.x)}px;top:${F(t.y)}px">${t.down?'▼':'▲'}</span>`+
       `<span class="tsx-train-card" style="left:${F(tx)}px;top:${F(t.y)}px;transform:translate(${t.down?'0':'-100%'},-50%);--tc:${color}"><b>${t.id}</b><span>${_opsEsc(t.dest)}행</span></span>`;
   });
