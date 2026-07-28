@@ -40,6 +40,15 @@ assert.ok(css.includes('margin-left:auto;text-align:right'),'현위치 문구는
 assert.ok(source.includes("p.state==='접근'?'당역 접근'"),'조회역 접근 중에는 당역 접근으로 표시해야 합니다.');
 assert.ok(source.includes("<span>${start}</span>"),'운행 전 열차는 첫 역 출발 시각을 교대로 표시해야 합니다.');
 assert.ok(source.includes("<span>${p.away}전역 <b>${p.state}</b></span>"),'역명과 n전역 양쪽에 접근·도착·출발 상태를 유지해야 합니다.');
+assert.ok(source.includes("const METRO_COMMUTER_BOARD_LINES=new Set(["),'광역철도 전광판 노선 분류가 있어야 합니다.');
+assert.ok(source.includes("boardKind=_metroBoardKind(line)"),'노선에 따라 광역·도시철도 전광판을 자동 선택해야 합니다.');
+assert.ok(source.includes('mtb2-line mtb2-line--${boardKind}'),'두 전광판 디자인 클래스가 렌더링되어야 합니다.');
+for(const line of ['경부선','구인선','전북선','충청선','전남선','구미선','고령하양선','GTX-A','GTX-B','GTX-C','중앙선','장호원선','종원선','춘천선','광주진목선','평택안성선','화성선','경의선','동남선','김해거제선','대구밀양선','포항선']){
+  assert.ok(source.includes(`'${line}'`),`${line}은 광역철도형 전광판 목록에 포함되어야 합니다.`);
+}
+assert.ok(css.includes('.mtb2-line--regional{border:5px solid'),'광역철도 LED 전광판 스타일이 있어야 합니다.');
+assert.ok(css.includes('.mtb2-line--urban{border:3px solid'),'도시철도 LCD 전광판 스타일이 있어야 합니다.');
+assert.ok(css.includes('grid-column:4/6'),'광역형 현위치는 시각·상태 열을 합쳐 표시해야 합니다.');
 
 const orderStart=source.indexOf('function _metroOrderDirGroups');
 const orderEnd=source.indexOf('\n// 분기역 다방면',orderStart);

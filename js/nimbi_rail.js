@@ -10039,6 +10039,24 @@ function _nearestStn(fromBase, cands){
 function _metroLineColor(name){ const l=(typeof METRO_LINES!=='undefined')&&METRO_LINES.find(x=>x.name===name); return l?l.color:'#8b949e'; }
 // 등급 배지: 1=급행, 2=특급 (일반은 표시 없음)
 function _metroClsTag(c){ return c===2?'<span class="mtb-exp mtb-exp--t">특급</span>':c===1?'<span class="mtb-exp">급행</span>':''; }
+// 역 전광판 외형 분류. 운행 로직은 동일하고 표시 장치의 세대·형태만 구분한다.
+const METRO_COMMUTER_BOARD_LINES=new Set([
+  '경부선','구인선','전북선','충청선','전남선','구미선','고령하양선',
+  'GTX-A','GTX-B','GTX-C','중앙선','장호원선','종원선','춘천선',
+  '광주진목선','평택안성선','화성선','경의선','동남선','김해거제선',
+  '대구밀양선','포항선'
+]);
+function _metroBoardKind(line){return METRO_COMMUTER_BOARD_LINES.has(line)?'regional':'urban';}
+function _metroBoardPlatforms(stn,line){
+  if(typeof PLATFORM_DB==='undefined')return [];
+  const key=PLATFORM_DB[stn]?stn:(PLATFORM_DB[stn+'역']?stn+'역':null); if(!key)return [];
+  return Object.keys(PLATFORM_DB[key]).map(Number).filter(Number.isFinite).filter(p=>
+    (PLATFORM_DB[key][p]?.l||[]).some(raw=>{
+      const base=String(raw).split('/')[0].split(' (')[0].trim();
+      return base===line;
+    })
+  ).sort((a,b)=>a-b);
+}
 // v6 시각표 기반: 각 편성 t[i]=[도착분,출발분,역idx, ...] (정차마다 도착·출발 쌍, 복원 없음).
 // 한 역을 지나는 모든 지점에서 출발편 생성. 행선지=진행방향 회차점(왕복)·마지막역(직통),
 // 출발지=진행 반대방향 회차점·첫역. atSec=이 역 출발(d), arr=마지막역 도착(a).
@@ -10310,12 +10328,14 @@ function _metroStationBoardHTML(stn){
     return cb-ca;
   });
   const blocks=lineOrder.map(line=>{
-    const color=_metroLineColor(line), dirs=lines[line];
+    const color=_metroLineColor(line), dirs=lines[line], boardKind=_metroBoardKind(line);
     // 분기역(계통 다수)은 좌표 기준 2개 물리 방면으로 병합 — 같은 쪽 계통은 한 열에 통합
     const dirCounts={}; Object.keys(dirs).forEach(k=>dirCounts[k]=dirs[k].length);
     const groups=_metroDirGroups(line, stn, dirCounts);
-    const cols=groups.map(grp=>{
+    const platformNos=_metroBoardPlatforms(stn,line);
+    const cols=groups.map((grp,grpIdx)=>{
       const label=grp.join(' • ');
+      const plat=platformNos.length?(platformNos[Math.min(grpIdx,platformNos.length-1)]+'홈'):'—';
       const {entries,first,last}=_metroGroupEntries(dirs, grp);
       let trainsHtml;
       if(nowS>last){
@@ -10353,23 +10373,29 @@ function _metroStationBoardHTML(stn){
           } else {
             infoHtml=`<span class="mtb2-rel">${relTxt(u.rel)}</span><span class="mtb2-clk">${fSrvClock(u.sec)}</span>`;
           }
-          return `<div class="mtb2-train${i===0?' mtb2-train--now':''}">${destHtml}${infoHtml}</div>`;
+          return `<div class="mtb2-train${i===0?' mtb2-train--now':''}">
+            <span class="mtb2-seq">${i+1}</span><span class="mtb2-plat">${plat}</span>${destHtml}${infoHtml}</div>`;
         }).join('')||'<div class="mtb2-none">운행 정보 없음</div>';
       }
       return `<div class="mtb2-col">
         <div class="mtb2-dir"><span class="mtb2-arr">▸</span>${label} 방면</div>
+        <div class="mtb2-led-head"><span>순번</span><span>타는 곳</span><span>행선지</span><span>시각</span><span>${_metroBoardMode==='pos'?'현위치':'상태'}</span></div>
         ${trainsHtml}
+        <div class="mtb2-urban-route"><span>${_opsEsc(stn)}</span><i></i><i></i><i></i><b>${_opsEsc(grp[0]||label)}</b></div>
         <div class="mtb2-fl">첫 ${fSrvClock(first)} · 막 ${fSrvClock(last)}</div>
       </div>`;
     }).join('');
     const esc=x=>String(x).replace(/\\/g,'\\\\').replace(/'/g,"\\'");
-    return `<div class="mtb2-line" style="--mc:${color};cursor:pointer" onclick="openMetroTimetable('${esc(stn)}','${esc(line)}')" role="button" title="전체 시간표 보기">
-      <div class="mtb2-lhead"><span class="mtb2-dot"></span><b>${line}</b><span class="mtb2-more">전체 시간표 ›</span></div>
+    const clock=`${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+    return `<div class="mtb2-line mtb2-line--${boardKind}" style="--mc:${color};cursor:pointer" onclick="openMetroTimetable('${esc(stn)}','${esc(line)}')" role="button" title="전체 시간표 보기">
+      <div class="mtb2-lhead"><span class="mtb2-dot"></span><b>${line}</b>
+        <span class="mtb2-device-title">${boardKind==='regional'?`${stn} 방면 타는 곳 안내`:'이번열차 운행 안내'}</span>
+        <time>${clock}</time><span class="mtb2-more">전체 시간표 ›</span></div>
       <div class="mtb2-cols">${cols}</div>
     </div>`;
   }).join('');
   return `<div id="metro-board" style="padding:12px 16px;border-bottom:1px solid var(--border)">
-    <div class="mtb-head"><span class="mtb-title">🚇 실시간 도착</span>
+    <div class="mtb-head"><span class="mtb-title">🚇 역 전광판</span>
       <span class="mtb-modetog">
         <button class="mtb-mode${_metroBoardMode==='time'?' on':''}" onclick="setMetroBoardMode('time')">시간</button>
         <button class="mtb-mode${_metroBoardMode==='pos'?' on':''}" onclick="setMetroBoardMode('pos')">현위치</button>
