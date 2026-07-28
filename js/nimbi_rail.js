@@ -10186,7 +10186,8 @@ function setMetroDisplayDirection(index){
   _metroDisplayDirIndex=Math.max(0,Number(index)||0);
   _refreshMetroDisplayBoard();
 }
-// 편성의 현재 위치(현위치 보기): 정차 중=도착, 인접 구간 전반=출발(직전역), 후반=접근(다음역)
+// 편성의 현재 위치(현위치 보기): 정차 중=도착, 역간=직전역 출발,
+// 다음 역 도착 1분 전부터만 접근으로 전환한다.
 // 편성 현위치. k0/k1 주면 해당 leg(단일방향 구간)만 계산 → 회차 열차의 상·하행을 서로 다른 열차로 취급
 function _metroTrainPos(line, svcIdx, k0, k1, targetStn){
   const ent=(typeof METRO_SCHED!=='undefined')&&METRO_SCHED[line]; if(!ent)return null;
@@ -10199,15 +10200,14 @@ function _metroTrainPos(line, svcIdx, k0, k1, targetStn){
   const flat=[]; for(let i=0;i<n;i++){ flat.push(srv(f[3*(k0+i)]), srv(f[3*(k0+i)+1])); }
   let off=0; const mono=[]; for(let i=0;i<flat.length;i++){ let v=flat[i]+off; if(i>0&&v<mono[i-1]){off+=1440;v+=1440;} mono.push(v); }
   const absA=[],absD=[]; for(let i=0;i<n;i++){absA.push(mono[2*i]);absD.push(mono[2*i+1]);}
-  const nowc=new Date(); let now=srv(nowc.getHours()*60+nowc.getMinutes());
+  const nowc=new Date(); let now=srv(nowc.getHours()*60+nowc.getMinutes()+nowc.getSeconds()/60);
   while(now<absA[0]-720)now+=1440; while(now>absD[n-1]+720)now-=1440;
   if(now<absA[0]) return result('before',nm(0),0);
   if(now>=absD[n-1]) return result('after',nm(n-1),n-1);
   for(let i=0;i<n;i++){
     if(now>=absA[i]&&now<=absD[i]) return result('도착',nm(i),i);
     if(i<n-1&&now>absD[i]&&now<absA[i+1]){
-      const mid=(absD[i]+absA[i+1])/2;
-      return now<mid ? result('출발',nm(i),i) : result('접근',nm(i+1),i+1);
+      return now>=absA[i+1]-1 ? result('접근',nm(i+1),i+1) : result('출발',nm(i),i);
     }
   }
   return result('after',nm(n-1),n-1);
@@ -10336,23 +10336,22 @@ function _renderMetroLiveTimeline(l,rows){
 }
 function _metroDisplayDestination(dest,cls,show=true){
   if(!show)return '&nbsp;';
-  return `${_opsEsc(dest)}${cls===2?'특':cls===1?'급':'행'}`;
+  return `${_opsEsc(dest)}${cls===1?'<em class="mtb2-r-express">급행</em>':cls===2?'특급':'행'}`;
 }
-function _metroRegionalPositionHTML(u,p,fSrvClock){
-  const clock=`<span class="mtb2-rclock">${fSrvClock(u.sec)}</span>`;
+function _metroRegionalPositionHTML(p){
   if(!p||p.state==='before'){
-    return `${clock}<span class="mtb2-rloc">운행 전</span><span class="mtb2-rstate">출발 예정</span>`;
+    return `<span class="mtb2-rloc"><span>운행 전</span></span><span class="mtb2-rstate">출발 예정</span>`;
   }
   if(p.state==='after'){
-    return `${clock}<span class="mtb2-rloc">종착</span><span class="mtb2-rstate">운행 종료</span>`;
+    return `<span class="mtb2-rloc"><span>종착</span></span><span class="mtb2-rstate">운행 종료</span>`;
   }
   const loc=p.away===0?'당역':_opsEsc(p.stn);
   const away=Number.isFinite(p.away)&&p.away>0?`${p.away}전역`:loc;
   const locHTML=away!==loc
-    ?`<span class="mtb2-rloc mtb2-rloc--flip"><span>${loc}</span><span>${away}</span></span>`
-    :`<span class="mtb2-rloc">${loc}</span>`;
+    ?`<span class="mtb2-rloc"><span class="mtb2-rstation">${loc}</span><span class="mtb2-raway">${away}</span></span>`
+    :`<span class="mtb2-rloc"><span class="mtb2-rstation">${loc}</span></span>`;
   const state=p.away===0&&p.state==='접근'?'접근':p.state;
-  return `${clock}${locHTML}<span class="mtb2-rstate">${state}</span>`;
+  return `${locHTML}<span class="mtb2-rstate">${state}</span>`;
 }
 function _metroUrbanRouteHTML(line,stn,u,entries,fSrvClock){
   const ent=(typeof METRO_SCHED!=='undefined')&&METRO_SCHED[line];
@@ -10365,8 +10364,8 @@ function _metroUrbanRouteHTML(line,stn,u,entries,fSrvClock){
   }
   if(!seq.length)return '';
   let target=seq.indexOf(stn); if(target<0)target=0;
-  let start=Math.max(0,Math.min(target-2,seq.length-5));
-  const shown=seq.slice(start,start+5);
+  const start=Math.max(0,target-4);
+  const shown=seq.slice(start,target+1);
   let trainIndex=target;
   const srv=x=>(((x-240)%1440)+1440)%1440, raw=[];
   let offset=0, previous=-Infinity;
@@ -10377,7 +10376,7 @@ function _metroUrbanRouteHTML(line,stn,u,entries,fSrvClock){
     previous=dep;
     raw.push({name:names[f[3*k+2]],arr,dep});
   }
-  const nowDate=new Date(); let now=srv(nowDate.getHours()*60+nowDate.getMinutes());
+  const nowDate=new Date(); let now=srv(nowDate.getHours()*60+nowDate.getMinutes()+nowDate.getSeconds()/60);
   while(raw.length&&now<raw[0].arr-720)now+=1440;
   while(raw.length&&now>raw[raw.length-1].dep+720)now-=1440;
   if(raw.length&&now<=raw[0].arr)trainIndex=0;
@@ -10473,7 +10472,7 @@ function _metroStationBoardHTML(stn,displayBoard=false){
           const destHtml=`<span class="mtb2-dest">${destHTML}</span>`;
           let infoHtml;
           if(displayBoard&&boardKind==='regional'){
-            infoHtml=_metroRegionalPositionHTML(u,_metroTrainPos(u.line,u.svc,u.k0,u.k1,stn),fSrvClock);
+            infoHtml=_metroRegionalPositionHTML(_metroTrainPos(u.line,u.svc,u.k0,u.k1,stn));
           } else if(viewMode==='pos'){
             const p=_metroTrainPos(u.line,u.svc,u.k0,u.k1,stn);
             if(!p||p.state==='before'){
@@ -10504,7 +10503,7 @@ function _metroStationBoardHTML(stn,displayBoard=false){
         :`<div class="mtb2-urban-route"><span>${_opsEsc(stn)}</span><i></i><i></i><i></i><b>${_opsEsc(grp[0]||label)}</b></div>`;
       return `<div class="mtb2-col" data-dir="${grpIdx}">
         <div class="mtb2-dir"><span class="mtb2-arr">▸</span>${label} 방면</div>
-        <div class="mtb2-led-head"><span>순번</span><span>타는 곳</span><span>행선지</span><span>시각</span><span>위치</span><span>상태</span></div>
+        <div class="mtb2-led-head"><span>순번</span><span>타는 곳</span><span>행선지</span><span>현위치</span><span>상태</span></div>
         ${trainsHtml}
         ${routeHTML}
         <div class="mtb2-fl">첫 ${fSrvClock(first)} · 막 ${fSrvClock(last)}</div>
