@@ -9662,7 +9662,11 @@ function _renderMetroLineDetail(el,id){
   const patInfo=patSeq?`<div style="margin:10px 2px 0;font-size:12px;color:var(--text2)"><b style="color:var(--text1)">${_metroPatSel}</b> · ${stopRows[0].n} ↔ ${stopRows[stopRows.length-1].n} · 정차 <b>${stopRows.length}</b>역${passN?` · 통과 ${passN}역 <span style="color:var(--text3)">(음영)</span>`:''}</div>`:'';
   el.innerHTML=`
     <div style="padding:14px 0 24px">
-      <button onclick="closeMetroLineDetail()" style="margin-bottom:12px;padding:7px 14px;border-radius:10px;border:1px solid var(--border);background:var(--bg3);color:var(--text1);font-size:12.5px;font-weight:700;cursor:pointer;font-family:var(--sans)">← 노선 목록</button>
+      <div class="mtl-detail-nav">
+        <button class="mtl-detail-list" onclick="closeMetroLineDetail()">← 노선 목록</button>
+        <button class="msch-navbtn" onclick="stepMetroLineDetail(-1)" aria-label="이전 노선">◀</button>
+        <button class="msch-navbtn" onclick="stepMetroLineDetail(1)" aria-label="다음 노선">▶</button>
+      </div>
       <div class="metro-card" style="border-left:4px solid ${l.color};cursor:default">
         <div class="metro-head">
           <span class="metro-dot" style="background:${l.color}"></span>
@@ -9698,6 +9702,12 @@ function _renderMetroLineDetail(el,id){
 function setMetroRegion(r){_metroRegion=r;_metroDetailId=null;_metroPatSel=null;renderMetroLinesTab();}
 function openMetroLineDetail(id){_metroDetailId=id;_metroPatSel=null;renderMetroLinesTab();}
 function closeMetroLineDetail(){_metroDetailId=null;_metroPatSel=null;renderMetroLinesTab();}
+function stepMetroLineDetail(dir){
+  if(typeof METRO_LINES==='undefined'||!METRO_LINES.length)return;
+  const i=METRO_LINES.findIndex(l=>l.id===_metroDetailId);
+  const ni=(i<0?0:(i+dir+METRO_LINES.length)%METRO_LINES.length);
+  openMetroLineDetail(METRO_LINES[ni].id);
+}
 function showMetroOnMap(id){
   const l=METRO_LINES.find(x=>x.id===id);
   if(l){_metroMapRegion=l.region;_metroMapId=id;}
@@ -10353,7 +10363,7 @@ function _metroRegionalPositionHTML(p){
   const state=p.away===0&&p.state==='접근'?'접근':p.state;
   return `${locHTML}<span class="mtb2-rstate">${state}</span>`;
 }
-function _metroUrbanRouteHTML(line,stn,u,entries,fSrvClock){
+function _metroUrbanRouteHTML(line,stn,u,entries){
   const ent=(typeof METRO_SCHED!=='undefined')&&METRO_SCHED[line];
   if(!ent||!u)return '';
   const f=ent.t[u.svc]; if(!f)return '';
@@ -10366,50 +10376,54 @@ function _metroUrbanRouteHTML(line,stn,u,entries,fSrvClock){
   let target=seq.indexOf(stn); if(target<0)target=0;
   const start=Math.max(0,target-4);
   const shown=seq.slice(start,target+1);
-  let trainIndex=target;
-  const srv=x=>(((x-240)%1440)+1440)%1440, raw=[];
-  let offset=0, previous=-Infinity;
-  for(let k=u.k0;k<=u.k1;k++){
-    let arr=srv(f[3*k])+offset, dep=srv(f[3*k+1])+offset;
-    while(arr<previous){offset+=1440;arr+=1440;dep+=1440;}
-    if(dep<arr)dep+=1440;
-    previous=dep;
-    raw.push({name:names[f[3*k+2]],arr,dep});
-  }
-  const nowDate=new Date(); let now=srv(nowDate.getHours()*60+nowDate.getMinutes()+nowDate.getSeconds()/60);
-  while(raw.length&&now<raw[0].arr-720)now+=1440;
-  while(raw.length&&now>raw[raw.length-1].dep+720)now-=1440;
-  if(raw.length&&now<=raw[0].arr)trainIndex=0;
-  else if(raw.length&&now>=raw[raw.length-1].dep)trainIndex=seq.length-1;
-  else {
+  const denominator=Math.max(1,shown.length-1);
+  const stationHTML=shown.map((name,i)=>`<span class="mtb-urban-stop${name===stn?' current':''}" style="--stop-pos:${shown.length===1?50:(i/denominator)*100}%"><i></i><b>${_opsEsc(name)}</b></span>`).join('');
+  const srv=x=>(((x-240)%1440)+1440)%1440;
+  const nowDate=new Date();
+  const clockNow=srv(nowDate.getHours()*60+nowDate.getMinutes()+nowDate.getSeconds()/60);
+  const uniqueEntries=[...new Map((entries||[]).map(e=>[`${e.svc}|${e.k0}|${e.k1}`,e])).values()];
+  const trainPositions=uniqueEntries.map(e=>{
+    const service=ent.t[e.svc];
+    if(!service)return null;
+    const raw=[];
+    let offset=0, previous=-Infinity;
+    for(let k=e.k0;k<=e.k1;k++){
+      let arr=srv(service[3*k])+offset, dep=srv(service[3*k+1])+offset;
+      while(arr<previous){offset+=1440;arr+=1440;dep+=1440;}
+      if(dep<arr)dep+=1440;
+      previous=dep;
+      raw.push({name:names[service[3*k+2]],arr,dep});
+    }
+    if(!raw.length)return null;
+    let now=clockNow;
+    while(now<raw[0].arr-720)now+=1440;
+    while(now>raw[raw.length-1].dep+720)now-=1440;
+    if(now<raw[0].arr||now>raw[raw.length-1].dep)return null;
+    let trainIndex=null;
     for(let i=0;i<raw.length;i++){
       const here=seq.indexOf(raw[i].name);
-      if(now>=raw[i].arr&&now<=raw[i].dep){trainIndex=Math.max(0,here);break;}
+      if(here<0)continue;
+      if(now>=raw[i].arr&&now<=raw[i].dep){trainIndex=here;break;}
       if(i<raw.length-1&&now>raw[i].dep&&now<raw[i+1].arr){
         const there=seq.indexOf(raw[i+1].name);
+        if(there<0)continue;
         const frac=(now-raw[i].dep)/Math.max(1,raw[i+1].arr-raw[i].dep);
-        trainIndex=Math.max(0,here)+(Math.max(0,there)-Math.max(0,here))*frac;
+        trainIndex=here+(there-here)*frac;
         break;
       }
     }
-  }
-  const denominator=Math.max(1,shown.length-1);
-  const trainPos=Math.max(0,Math.min(100,((trainIndex-start)/denominator)*100));
-  const stationHTML=shown.map((name,i)=>`<span class="mtb-urban-stop${name===stn?' current':''}" style="--stop-pos:${shown.length===1?50:(i/denominator)*100}%"><i></i><b>${_opsEsc(name)}</b></span>`).join('');
-  const services=[];
-  const byDest={};
-  (entries||[]).forEach(e=>(byDest[e.dest]=byDest[e.dest]||[]).push(e.sec));
-  Object.entries(byDest).slice(0,3).forEach(([dest,secs])=>{
-    secs.sort((a,b)=>a-b);
-    services.push(`${_opsEsc(dest)}행 첫 ${fSrvClock(secs[0])} · 막 ${fSrvClock(secs[secs.length-1])}`);
-  });
+    if(trainIndex==null||trainIndex<start||trainIndex>target)return null;
+    return Math.max(0,Math.min(100,((trainIndex-start)/denominator)*100));
+  }).filter(Number.isFinite).sort((a,b)=>a-b);
+  const laneEnds=[-Infinity,-Infinity,-Infinity,-Infinity];
+  const trainHTML=trainPositions.map((pos,i)=>{
+    let lane=laneEnds.findIndex(last=>pos-last>=7);
+    if(lane<0)lane=i%laneEnds.length;
+    laneEnds[lane]=pos;
+    return `<span class="mtb-urban-train" style="--train-pos:${pos}%;--train-lane:${lane*8}px" aria-label="운행 중 열차 ${i+1} 현재 위치">🚇</span>`;
+  }).join('');
   return `<div class="mtb2-urban-route">
-    <div class="mtb-urban-track"><span class="mtb-urban-line"></span>${stationHTML}
-      <span class="mtb-urban-train" style="--train-pos:${trainPos}%" aria-label="열차 현재 위치">🚇</span>
-    </div>
-    <div class="mtb-urban-alternate">
-      <span>${services.join('　')}</span>
-    </div>
+    <div class="mtb-urban-track"><span class="mtb-urban-line"></span>${stationHTML}${trainHTML}</div>
   </div>`;
 }
 function _metroStationBoardHTML(stn,displayBoard=false){
@@ -10499,14 +10513,14 @@ function _metroStationBoardHTML(stn,displayBoard=false){
         }).join('')||'<div class="mtb2-none">운행 정보 없음</div>';
       }
       const routeHTML=displayBoard&&boardKind==='urban'
-        ?_metroUrbanRouteHTML(line,stn,routeTrain,entries,fSrvClock)
+        ?_metroUrbanRouteHTML(line,stn,routeTrain,entries)
         :`<div class="mtb2-urban-route"><span>${_opsEsc(stn)}</span><i></i><i></i><i></i><b>${_opsEsc(grp[0]||label)}</b></div>`;
       return `<div class="mtb2-col" data-dir="${grpIdx}">
         <div class="mtb2-dir"><span class="mtb2-arr">▸</span>${label} 방면</div>
         <div class="mtb2-led-head"><span>순번</span><span>타는 곳</span><span>행선지</span><span>현위치</span><span>상태</span></div>
         ${trainsHtml}
         ${routeHTML}
-        <div class="mtb2-fl">첫 ${fSrvClock(first)} · 막 ${fSrvClock(last)}</div>
+        ${displayBoard&&boardKind==='urban'?'':`<div class="mtb2-fl">첫 ${fSrvClock(first)} · 막 ${fSrvClock(last)}</div>`}
       </div>`;
     }).join('');
     const esc=x=>String(x).replace(/\\/g,'\\\\').replace(/'/g,"\\'");
