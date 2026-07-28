@@ -7864,7 +7864,7 @@ const _APP_MODAL_IDS=[
   'alarm-popup-wrap','seat-watch-wrap','fav-cat-popup-wrap','group-manager-wrap','rotation-wrap',
   'booking-popup-wrap','qr-popup-wrap','manboard-overlay','fmt-popup-wrap','pass-day-wrap',
   'seat-selector-wrap','book-stn-picker-wrap','book-pass-picker-wrap','book-detail-wrap',
-  'si-board-wrap','delay-explanation-modal','cmp-wrap'
+  'si-board-wrap','metro-display-wrap','delay-explanation-modal','cmp-wrap'
 ];
 function _syncAppModalLock(){
   const open=_APP_MODAL_IDS.some(id=>document.getElementById(id));
@@ -10158,7 +10158,15 @@ function _metroGroupEntries(dirsMap, keys){
 }
 let _metroBoardMode='time';   // 'time' | 'pos'(현위치)
 let _metroBoardStn=null;
-function setMetroBoardMode(m){ _metroBoardMode=m; const host=document.getElementById('metro-board'); if(host&&_metroBoardStn){ const html=_metroStationBoardHTML(_metroBoardStn); if(html){const tmp=document.createElement('div');tmp.innerHTML=html;host.replaceWith(tmp.firstElementChild);} } }
+function setMetroBoardMode(m,targetId){
+  _metroBoardMode=m;
+  const id=targetId||'metro-board';
+  const host=document.getElementById(id);
+  if(host&&_metroBoardStn){
+    const html=_metroStationBoardHTML(_metroBoardStn,id==='metro-display-board');
+    if(html){const tmp=document.createElement('div');tmp.innerHTML=html;host.replaceWith(tmp.firstElementChild);}
+  }
+}
 // 편성의 현재 위치(현위치 보기): 정차 중=도착, 인접 구간 전반=출발(직전역), 후반=접근(다음역)
 // 편성 현위치. k0/k1 주면 해당 leg(단일방향 구간)만 계산 → 회차 열차의 상·하행을 서로 다른 열차로 취급
 function _metroTrainPos(line, svcIdx, k0, k1, targetStn){
@@ -10307,7 +10315,7 @@ function _renderMetroLiveTimeline(l,rows){
   lane(dn,'left',color); lane(up,'right','#e8863d');
   return `<div class="mtl-ltl" style="height:${F(H)}px;width:${W}px;--mc:${color}"><svg class="mtl-ltl-svg" width="${W}" height="${F(H)}" viewBox="0 0 ${W} ${F(H)}">${svg}</svg>${names.join('')}${chips}</div>`;
 }
-function _metroStationBoardHTML(stn){
+function _metroStationBoardHTML(stn,displayBoard=false){
   if(typeof METRO_SCHED==='undefined') return '';
   _metroBoardStn=stn;
   const deps=_metroStationDeps(stn);
@@ -10387,18 +10395,24 @@ function _metroStationBoardHTML(stn){
     }).join('');
     const esc=x=>String(x).replace(/\\/g,'\\\\').replace(/'/g,"\\'");
     const clock=`${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
-    return `<div class="mtb2-line mtb2-line--${boardKind}" style="--mc:${color};cursor:pointer" onclick="openMetroTimetable('${esc(stn)}','${esc(line)}')" role="button" title="전체 시간표 보기">
+    const lineClass=displayBoard?` mtb2-line--${boardKind}`:'';
+    const openAction=displayBoard
+      ?`closeMetroStationDisplay();openMetroTimetable('${esc(stn)}','${esc(line)}')`
+      :`openMetroTimetable('${esc(stn)}','${esc(line)}')`;
+    return `<div class="mtb2-line${lineClass}" style="--mc:${color};cursor:pointer" onclick="${openAction}" role="button" title="전체 시간표 보기">
       <div class="mtb2-lhead"><span class="mtb2-dot"></span><b>${line}</b>
-        <span class="mtb2-device-title">${boardKind==='regional'?`${stn} 방면 타는 곳 안내`:'이번열차 운행 안내'}</span>
-        <time>${clock}</time><span class="mtb2-more">전체 시간표 ›</span></div>
+        ${displayBoard?`<span class="mtb2-device-title">${boardKind==='regional'?`${stn} 방면 타는 곳 안내`:'이번열차 운행 안내'}</span>
+        <time>${clock}</time>`:''}<span class="mtb2-more">전체 시간표 ›</span></div>
       <div class="mtb2-cols">${cols}</div>
     </div>`;
   }).join('');
-  return `<div id="metro-board" style="padding:12px 16px;border-bottom:1px solid var(--border)">
-    <div class="mtb-head"><span class="mtb-title">🚇 역 전광판</span>
+  const boardId=displayBoard?'metro-display-board':'metro-board';
+  const modeTarget=displayBoard?",'metro-display-board'":'';
+  return `<div id="${boardId}" style="padding:12px 16px;border-bottom:1px solid var(--border)">
+    <div class="mtb-head"><span class="mtb-title">${displayBoard?'🚇 역 전광판':'🚇 실시간 도착'}</span>
       <span class="mtb-modetog">
-        <button class="mtb-mode${_metroBoardMode==='time'?' on':''}" onclick="setMetroBoardMode('time')">시간</button>
-        <button class="mtb-mode${_metroBoardMode==='pos'?' on':''}" onclick="setMetroBoardMode('pos')">현위치</button>
+        <button class="mtb-mode${_metroBoardMode==='time'?' on':''}" onclick="setMetroBoardMode('time'${modeTarget})">시간</button>
+        <button class="mtb-mode${_metroBoardMode==='pos'?' on':''}" onclick="setMetroBoardMode('pos'${modeTarget})">현위치</button>
       </span></div>
     ${blocks}
     <div class="mtb-foot">인게임 시각표 기준 · 운행 ${running}편 · ${_metroBoardMode==='pos'?'편성 현위치(역명·남은 역 수)':'계통별 실제 착발 반영'}</div>
@@ -10464,6 +10478,9 @@ function renderSICard(name){
       </div>
       ${_appMode!=='metro'?`<div style="padding:12px 16px 4px">
         <button class="si-board-btn" onclick="openStationBoard('${nameEsc}')">🚉 출발 안내 전광판 열기</button>
+      </div>`:''}
+      ${_appMode==='metro'?`<div style="padding:12px 16px 4px">
+        <button class="si-board-btn" onclick="openMetroStationDisplay('${trainName.replace(/\\/g,'\\\\').replace(/'/g,"\\'")}')">🚇 역 전광판 열기</button>
       </div>`:''}
       ${_appMode==='metro'?(()=>{ // 🚇 전철: 노선(route)별 전역/다음역 — 경유 노선·지선 분기 모두 표시
         if(typeof METRO_LINES==='undefined')return '';
@@ -10980,6 +10997,36 @@ function closeStationBoard(){
   const el=document.getElementById('si-board-wrap'); if(el)el.remove();
   if(_siBoardTimer){clearInterval(_siBoardTimer);_siBoardTimer=null;}
   _siBoardName=null; _siBoardTrains=null;
+}
+// 🚇 전철 역 전광판 팝업 — 역 상세의 기존 실시간 도착 카드는 유지하고 별도 버튼으로 엽니다.
+let _metroDisplayTimer=null;
+function openMetroStationDisplay(stn){
+  closeMetroStationDisplay();
+  const html=_metroStationBoardHTML(stn,true);
+  if(!html)return;
+  const safe=_opsEsc(stn);
+  const wrap=document.createElement('div');
+  wrap.id='metro-display-wrap';
+  wrap.innerHTML=`
+    <div class="rail-ticket-backdrop" onclick="closeMetroStationDisplay()"></div>
+    <div class="metro-display-popup" role="dialog" aria-modal="true" aria-label="${safe}역 전광판">
+      <div class="metro-display-head">
+        <span>🚇 ${safe}역 전광판</span>
+        <button class="si-board-close" onclick="closeMetroStationDisplay()" aria-label="닫기">✕</button>
+      </div>
+      <div class="metro-display-scroll">${html}</div>
+    </div>`;
+  document.body.appendChild(wrap);
+  _metroDisplayTimer=setInterval(()=>{
+    const host=document.getElementById('metro-display-board');
+    if(!host)return;
+    const next=_metroStationBoardHTML(stn,true);
+    if(next){const tmp=document.createElement('div');tmp.innerHTML=next;host.replaceWith(tmp.firstElementChild);}
+  },15000);
+}
+function closeMetroStationDisplay(){
+  const el=document.getElementById('metro-display-wrap'); if(el)el.remove();
+  if(_metroDisplayTimer){clearInterval(_metroDisplayTimer);_metroDisplayTimer=null;}
 }
 // 🚇 전철 역 전체 시간표 — 카카오지하철식(방면별 열, 같은 시간대는 같은 행에 정렬)
 let _mttExpressOnly=false, _mttStation=null, _mttLine=null;
