@@ -63,5 +63,10 @@ assert.ok(source.includes('function openSeatFacilityInfo()'),'편의시설 전�
 assert.ok(!source.includes('seat-consist-guide'),'불필요한 앞·뒤 전체 호차 안내가 남아 있습니다.');
 assert.ok(!source.includes('seat-end-mark'),'좌석 배치 안에 선두·후두 표시가 남아 있습니다.');
 assert.ok(source.includes("if(r===1) return `win ${side}`"),'2열 공유 창의 1열 단독 창 규칙이 누락되었습니다.');
+assert.ok(css.includes('background:#4a9eff88'),'창문 표시의 기존 파란색이 유지되어야 합니다.');
+assert.ok(
+  css.includes('.seat-layout-shell .seatmap-grid.pick .seat.win.win-wide::before{\n    width:calc(200% + 2px);height:3px'),
+  'PC 가로 배치에서 넓은 창문 레이어의 높이가 좌석까지 확장되면 안 됩니다.'
+);
 
 console.log('seat layout revision: 실제 배치·호차 오름차순·시설 분리·창문 규칙 검증 완료');

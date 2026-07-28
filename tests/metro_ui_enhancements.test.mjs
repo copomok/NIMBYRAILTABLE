@@ -31,4 +31,15 @@ assert.ok(groups[1].label.includes('분기'),'지선 그룹에 분기 안내가 
 assert.ok(source.includes('const groups=patSeq?'),'계통 전체 선택 시 route 그룹을 사용해야 합니다.');
 assert.ok(source.includes('_metroRouteGroupsHTML(l,groups,_metroLiveOn)'),'분기 계통은 별도 타임라인으로 렌더링해야 합니다.');
 
+const arrowStart=source.indexOf('function _metroLiveArrowPath');
+const arrowEnd=source.indexOf('\nlet _metroLiveOn',arrowStart);
+assert.ok(arrowStart>=0&&arrowEnd>arrowStart,'실시간 열차의 수직 진행 방향 화살표 함수가 누락되었습니다.');
+const arrowContext={};
+vm.createContext(arrowContext);
+vm.runInContext(`${source.slice(arrowStart,arrowEnd)}\nthis.arrowPath=_metroLiveArrowPath;`,arrowContext);
+assert.equal(arrowContext.arrowPath(10,20,true),'M 6.0 16.0 L 14.0 16.0 L 10.0 24.0 Z','하행 열차 화살표는 아래를 향해야 합니다.');
+assert.equal(arrowContext.arrowPath(10,20,false),'M 6.0 24.0 L 14.0 24.0 L 10.0 16.0 Z','상행 열차 화살표는 위를 향해야 합니다.');
+assert.ok(source.includes('▼ 하행 <small>기점→종점</small>'),'하행 범례도 아래 방향을 표시해야 합니다.');
+assert.ok(source.includes('▲ 상행 <small>종점→기점</small>'),'상행 범례도 위 방향을 표시해야 합니다.');
+
 console.log('metro UI enhancements: PC 전체화면·실시간 편성 클릭·전체 지선 표시 검증 완료');

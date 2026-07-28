@@ -9689,7 +9689,7 @@ function _renderMetroLineDetail(el,id){
         ${_metroLiveOn?`<span class="mtl-live-run" style="--mc:${l.color}">🚇 <b>${_metroLineLiveTrains(l.name).length}</b>대 운행 중</span>
         <button class="mtl-live-refresh" onclick="openMetroLineDetail('${l.id}')" title="새로고침">↻</button>`:''}
       </div>
-      ${_metroLiveOn?`<div class="mtl-live-legend"><span class="mtl-live-lg down">◀ 하행 <small>기점→종점</small></span><span class="mtl-live-lg up">상행 <small>종점→기점</small> ▶</span></div>`:''}
+      ${_metroLiveOn?`<div class="mtl-live-legend"><span class="mtl-live-lg down">▼ 하행 <small>기점→종점</small></span><span class="mtl-live-lg up">▲ 상행 <small>종점→기점</small></span></div>`:''}
       ${_metroRouteGroupsHTML(l,groups,_metroLiveOn)}
     </div>`;
   if(!_metroLiveOn)_placeMetroLiveMarkers(el, l.name);
@@ -10180,6 +10180,12 @@ function _metroLineLiveTrains(lineName){
   return out;
 }
 function _metroLiveTrainLabel(dest,cls){return cls===2?`${dest} 특급`:cls===1?`${dest} 급행`:`${dest}행`;}
+function _metroLiveArrowPath(x,y,downward){
+  const F=n=>(+n).toFixed(1);
+  return downward
+    ? `M ${F(x-4)} ${F(y-4)} L ${F(x+4)} ${F(y-4)} L ${F(x)} ${F(y+4)} Z`
+    : `M ${F(x-4)} ${F(y+4)} L ${F(x+4)} ${F(y+4)} L ${F(x)} ${F(y-4)} Z`;
+}
 let _metroLiveOn=true;   // 노선 상세 실시간 위치 표시 on/off
 function setMetroLiveOn(on){ _metroLiveOn=on; if(_metroDetailId)renderMetroLinesTab(); }
 // 노선 상세 타임라인 위에 운행 중 편성 마커를 실제 진행률 위치에 배치 (버스앱식, 상/하행 좌우 분리)
@@ -10259,7 +10265,7 @@ function _renderMetroLiveTimeline(l,rows){
   const lane=(arr,side,col)=>{ arr.sort((a,b)=>a.ey-b.ey); let prev=-99; const left=(side==='left'), railX=left?railU:railD, dir=left?-1:1;
     arr.forEach(t=>{ let cy=Math.max(t.ey, prev+22); prev=cy;
       svg+=`<path d="M ${railX} ${F(t.ey)} L ${F(railX+dir*9)} ${F(cy)}" stroke="${col}" stroke-width="1.4" opacity=".7" fill="none"/>`+
-           `<path d="M ${F(railX-dir*4)} ${F(t.ey-4)} L ${F(railX+dir*4)} ${F(t.ey)} L ${F(railX-dir*4)} ${F(t.ey+4)} Z" fill="${col}"/>`;
+           `<path d="${_metroLiveArrowPath(railX,t.ey,left)}" fill="${col}"/>`;
       const style=left?`right:${F(W-(railU-11))}px;top:${F(cy)}px`:`left:${F(railD+11)}px;top:${F(cy)}px`;
       const lineArg=String(l.name).replace(/\\/g,'\\\\').replace(/'/g,"\\'");
       chips+=`<button type="button" class="mtl-ltl-train ${left?'down':'up'}${t.at?' at':''}" style="${style};--tc:${col}" onclick="openMetroTrain('${lineArg}',${t.svcIdx},${t.clickClock})" title="열차 시간표 보기">${esc(_metroLiveTrainLabel(t.dest,t.cls))}</button>`;
