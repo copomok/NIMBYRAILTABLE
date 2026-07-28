@@ -1319,6 +1319,27 @@ tbody td{padding:10px 14px;font-size:13px;white-space:nowrap}
   transition:all .15s;
 }
 .seat-car-tab.active{color:var(--accent2);border-bottom-color:var(--accent)}
+.seat-car-edge{
+  display:inline-flex;align-items:center;justify-content:center;margin:0 4px;
+  padding:1px 4px;border-radius:5px;background:rgba(56,139,253,.12);
+  color:var(--accent2);font-size:8px;font-style:normal;font-weight:800;
+}
+.seat-consist-guide{
+  display:flex;align-items:center;justify-content:center;gap:8px;padding:5px 16px;
+  border-bottom:1px solid var(--border);background:var(--bg2);color:var(--text3);
+  font-size:9px;white-space:nowrap;overflow-x:auto;scrollbar-width:none;
+}
+.seat-consist-guide b{color:var(--accent2);font-size:10px}
+.seat-car-notice{
+  margin:8px 16px 0;padding:8px 10px;border:1px solid rgba(56,139,253,.25);
+  border-radius:9px;background:rgba(56,139,253,.07);color:var(--text2);
+  font-size:11px;line-height:1.45;
+}
+.seat-car-tags{display:flex;gap:6px;padding:7px 16px 0;flex-wrap:wrap}
+.seat-car-tags span{
+  padding:3px 7px;border-radius:999px;background:rgba(56,139,253,.1);
+  color:var(--accent2);font-size:9px;font-weight:800;
+}
 .seat-legend{
   display:flex;align-items:center;gap:14px;flex-wrap:wrap;
   padding:8px 16px;background:var(--bg2);font-size:12px;color:var(--text2);
@@ -1335,7 +1356,7 @@ tbody td{padding:10px 14px;font-size:13px;white-space:nowrap}
 }
 .seat-side-label{display:flex;gap:20px}
 .seat-map{
-  flex:1;overflow-y:auto;padding:8px 16px 16px;
+  flex:1;overflow:auto;padding:8px 16px 16px;
   display:flex;flex-direction:column;gap:6px;
 }
 .seat-row{
@@ -1943,6 +1964,63 @@ button, select, input[type=range],
 .seatmap-arrow.rev{color:#e5734d}
 .seatmap-dir-legend{text-align:center;font-size:10px;font-weight:700;color:var(--text3);margin-bottom:8px;display:flex;gap:10px;justify-content:center;align-items:center}
 .seatmap-dir-legend .seatmap-arrow{font-size:12px}
+.seat-layout-shell{
+  display:flex;flex-direction:column;align-items:center;justify-content:flex-start;
+  gap:8px;width:100%;min-height:min-content;padding:8px 0 18px;
+}
+.seat-end-mark{
+  display:flex;align-items:center;justify-content:center;gap:7px;width:min(270px,100%);
+  padding:6px 10px;border-radius:8px;background:var(--bg2);border:1px dashed var(--border);
+  color:var(--text3);
+}
+.seat-end-mark b{font-size:11px;color:var(--accent2)}
+.seat-end-mark small{font-size:9px}
+.seat-facility-panel{
+  display:flex;align-items:stretch;justify-content:center;gap:6px;flex-wrap:wrap;
+  width:min(270px,100%);
+}
+.seat-facility-item{
+  min-width:58px;min-height:48px;display:flex;flex-direction:column;align-items:center;
+  justify-content:center;gap:2px;padding:6px;border-radius:9px;border:1px solid var(--border);
+  background:var(--bg2);color:var(--text2);
+}
+.seat-facility-item b{font-size:18px;line-height:1}
+.seat-facility-item small{font-size:9px;white-space:nowrap}
+
+/* 넓은 화면에서는 실제 차량 배치도처럼 앞→뒤를 좌우로 펼친다. */
+@media (min-width:900px){
+  .seat-layout-shell{
+    flex-direction:row;align-items:center;justify-content:center;width:max-content;
+    min-width:100%;padding:16px 12px 22px;
+  }
+  .seat-layout-shell .seatmap-grid.pick{
+    flex-direction:row;min-width:max-content;gap:6px;
+  }
+  .seat-layout-shell .seatmap-grid.pick .seatmap-row{
+    flex-direction:column;justify-content:center;gap:6px;
+  }
+  .seat-layout-shell .seatmap-rownum{display:none}
+  .seat-layout-shell .seat-facility-panel{
+    width:72px;max-width:72px;flex-direction:column;flex-wrap:nowrap;align-self:stretch;
+  }
+  .seat-layout-shell .seat-facility-item{min-width:58px;min-height:48px}
+  .seat-layout-shell .seat-end-mark{
+    width:34px;align-self:stretch;flex-direction:column;padding:6px 4px;text-align:center;
+  }
+  .seat-layout-shell .seat-end-mark small{writing-mode:vertical-rl}
+  .seat-layout-shell .seat.win::before{
+    left:2px;right:2px;width:auto;height:2px;top:auto;bottom:auto;
+  }
+  .seat-layout-shell .seat.win.wl::before{top:-4px}
+  .seat-layout-shell .seat.win.wr::before{right:2px;bottom:-4px}
+  .seat-layout-shell .seat.win.win-wide::before{
+    width:calc(200% + 2px);height:3px;bottom:auto;
+  }
+  .seat-layout-shell .seat.win.win-wide.wl::before{top:-4px}
+  .seat-layout-shell .seat.win.win-wide.wr::before{top:auto;bottom:-4px}
+  .seat-layout-shell .seat.aisle.seatmap-arrow{transform:rotate(-90deg)}
+  .seat-label-row{display:none}
+}
 
 /* ── 역 전광판 (출발 안내 LED) ── */
 .stn-board{background:#05080c;border:1px solid #1b2a36;border-radius:12px;padding:10px 12px 12px;margin:0 16px 4px;box-shadow:inset 0 0 30px rgba(0,40,80,.25)}

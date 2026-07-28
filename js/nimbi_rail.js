@@ -6566,6 +6566,23 @@ function getFormationType(grade, trainNo){
   return 'mgh';
 }
 
+function _makeFourAcrossCar(car, rows, starts, ends, extra={}){
+  const cols=['A','B','C','D'];
+  const missingSeats=[];
+  cols.forEach(col=>{
+    const first=starts?.[col]||1;
+    const last=ends?.[col]||rows;
+    for(let row=1;row<=rows;row++){
+      if(row<first||row>last) missingSeats.push(`${row}${col}`);
+    }
+  });
+  return {
+    car,type:'general',label:'일반실',rows,cols,revRows:0,
+    missingSeats,totalSeats:(rows*cols.length)-missingSeats.length,
+    ...extra
+  };
+}
+
 function getCarComposition(formType){
   switch(formType){
     case 'ktx-1':
@@ -6613,20 +6630,59 @@ function getCarComposition(formType){
     case 'itx-cc':
       return Array.from({length:10},(_,i)=>({car:i+1,type:'general',label:'일반실',rows:13,cols:['A','B','C','D'],revRows:0,totalSeats:52}));
     case 'itx-sm':
-      return Array.from({length:6},(_,i)=>({car:i+1,type:'general',label:'일반실',rows:13,cols:['A','B','C','D'],revRows:0,totalSeats:52}));
+      // 실제 ITX-새마을 6량 좌석·시설 배치. 시설 공간은 판매 좌석에서 제외한다.
+      return [
+        _makeFourAcrossCar(1,15,{A:1,B:1,C:1,D:1},{A:15,B:15,C:14,D:14},{
+          facilities:{start:[],end:[{icon:'🧳',label:'수하물'},{icon:'🚻',label:'화장실'}]}
+        }),
+        _makeFourAcrossCar(2,19,{A:2,B:2,C:1,D:1},null,{
+          facilities:{start:[{icon:'🧳',label:'수하물'}],end:[]}
+        }),
+        _makeFourAcrossCar(3,14,{A:3,B:3,C:4,D:4},null,{
+          tags:['휠체어석','전동휠체어석'],
+          facilities:{start:[{icon:'🫀',label:'AED'},{icon:'♿',label:'휠체어석'},{icon:'🧳',label:'수하물'}],end:[{icon:'🥤',label:'자동판매기'}]}
+        }),
+        _makeFourAcrossCar(4,16,{A:2,B:2,C:1,D:1},null,{
+          facilities:{start:[{icon:'🥤',label:'자동판매기'},{icon:'🧳',label:'수하물'}],end:[{icon:'🚻',label:'화장실'}]}
+        }),
+        _makeFourAcrossCar(5,19,{A:2,B:2,C:1,D:1},null,{
+          tags:['유아동반석'],
+          notice:'유아동반 고객을 배려하기 위한 객실입니다.',
+          facilities:{start:[{icon:'🧳',label:'수하물'}],end:[]}
+        }),
+        _makeFourAcrossCar(6,15,{A:2,B:2,C:1,D:1},null,{
+          facilities:{start:[{icon:'🍼',label:'수유실'},{icon:'🧳',label:'수하물'}],end:[{icon:'🚻',label:'화장실'}]}
+        })
+      ];
     case 'itx-maum':
-      // ITX-마음 한강로-충주 4량
-      return Array.from({length:4},(_,i)=>({car:i+1,type:'general',label:'일반실',rows:13,cols:['A','B','C','D'],revRows:0,totalSeats:52}));
+      // 실제 ITX-마음 4량 좌석·시설 배치
+      return [
+        _makeFourAcrossCar(1,13,null,null,{
+          tags:['휠체어석','전동휠체어석'],
+          facilities:{start:[],end:[{icon:'♿',label:'휠체어석'},{icon:'🦼',label:'전동휠체어석'}]}
+        }),
+        _makeFourAcrossCar(2,19,{A:1,B:1,C:2,D:2},null,{
+          facilities:{start:[],end:[]}
+        }),
+        _makeFourAcrossCar(3,17,null,null,{
+          tags:['유아동반석'],
+          notice:'유아동반 고객을 배려하기 위한 객실입니다.',
+          facilities:{start:[],end:[{icon:'🚻',label:'가족 화장실'}]}
+        }),
+        _makeFourAcrossCar(4,16,{A:2,B:2,C:1,D:1},null,{
+          facilities:{start:[],end:[]}
+        })
+      ];
     case 'mgh':
     default:
       // 무궁화 6량: 4호차 카페객차(입석·좌석0), 나머지 5량 좌석 1~72 연번 4석 1열(18열)
       return [
-        {car:1,type:'general',label:'일반실',numbered:true,rows:18,cols:['1','2','3','4'],perRow:4,totalSeats:72},
-        {car:2,type:'general',label:'일반실',numbered:true,rows:18,cols:['1','2','3','4'],perRow:4,totalSeats:72},
-        {car:3,type:'general',label:'일반실',numbered:true,rows:18,cols:['1','2','3','4'],perRow:4,totalSeats:72},
+        {car:1,type:'general',label:'일반실',numbered:true,rows:18,cols:['1','2','3','4'],seatOrder:[3,4,2,1],perRow:4,totalSeats:72},
+        {car:2,type:'general',label:'일반실',numbered:true,rows:18,cols:['1','2','3','4'],seatOrder:[3,4,2,1],perRow:4,totalSeats:72},
+        {car:3,type:'general',label:'일반실',numbered:true,rows:18,cols:['1','2','3','4'],seatOrder:[3,4,2,1],perRow:4,totalSeats:72},
         {car:4,type:'free',label:'카페객차',cafe:true,totalSeats:0},
-        {car:5,type:'general',label:'일반실',numbered:true,rows:18,cols:['1','2','3','4'],perRow:4,totalSeats:72},
-        {car:6,type:'general',label:'일반실',numbered:true,rows:18,cols:['1','2','3','4'],perRow:4,totalSeats:72},
+        {car:5,type:'general',label:'일반실',numbered:true,rows:18,cols:['1','2','3','4'],seatOrder:[3,4,2,1],perRow:4,totalSeats:72},
+        {car:6,type:'general',label:'일반실',numbered:true,rows:18,cols:['1','2','3','4'],seatOrder:[3,4,2,1],perRow:4,totalSeats:72},
       ];
   }
 }
@@ -6641,9 +6697,20 @@ function getCarsForClass(composition, seatClass){
 
 // 좌석 열문자 → 인덱스, 좌석 고유 ID 생성 (연번/열+문자 통일)
 const SEAT_COL_IDX={'가':0,'나':1,'다':2,'라':3,'A':0,'B':1,'C':2,'D':3,'1':0,'2':1,'3':2,'4':3};
-function seatSeqNum(car,row,col){ return (row-1)*((car.cols?car.cols.length:4))+((SEAT_COL_IDX[col]||0))+1; }
+function seatSeqNum(car,row,col){
+  const idx=SEAT_COL_IDX[col]||0;
+  const order=car.seatOrder||null;
+  const withinRow=order?.[idx]||idx+1;
+  return (row-1)*((car.cols?car.cols.length:4))+withinRow;
+}
 function seatId(car,row,col){
   return car.numbered ? `${car.car}호차 ${seatSeqNum(car,row,col)}번` : `${car.car}호차 ${row}${col}`;
+}
+
+// 운행 방향 기준으로 앞쪽 호차부터 표시한다.
+function getSeatDisplayCars(composition,seatClass,train){
+  const cars=getCarsForClass(composition,seatClass).slice();
+  return cars.sort((a,b)=>train?.dir==='down'?b.car-a.car:a.car-b.car);
 }
 // 넓은 창(2열당 1창) 차량 판별 — KTX-산천 계열(산천·SRT)과 ITX-마음만 좁은 창(1열당 1창)
 function _wideWindow(grade){ return grade!=='KTX-산천' && grade!=='ITX-마음' && grade!=='SRT'; }
@@ -6720,7 +6787,7 @@ function _seatAutoPick(mode){
   const trainNo=wrap.dataset.trainNo, travelDate=wrap.dataset.travelDate, seatClass=wrap.dataset.seatClass;
   const t=getTrainByNo(trainNo); if(!t)return;
   const composition=getCarComposition(getFormationType(t.grade,trainNo));
-  const validCars=getCarsForClass(composition,seatClass);
+  const validCars=getSeatDisplayCars(composition,seatClass,t);
   const car=validCars[_seatCarIdx]; if(!car||!car.cols){return;}
   const booked=getBookedSeats(trainNo,travelDate,null,null,seatClass), missing=new Set(car.missingSeats||[]);
   const count=window._bookingPassengerCount||1, cols=car.cols, n=cols.length;
@@ -6773,7 +6840,7 @@ function openSeatSelector(trainNo, travelDate, seatClass){
   if(!t)return;
   const formType=getFormationType(t.grade,trainNo);
   const composition=getCarComposition(formType);
-  const validCars=getCarsForClass(composition,seatClass);
+  const validCars=getSeatDisplayCars(composition,seatClass,t);
   if(!validCars.length){alert('해당 좌석 등급의 호차가 없습니다.');return;}
   generateVirtualBookings(trainNo,travelDate,validCars,null,null,seatClass);
   _selectedSeats=[]; _seatCarIdx=0;
@@ -6781,6 +6848,7 @@ function openSeatSelector(trainNo, travelDate, seatClass){
   const wrap=document.createElement('div');
   wrap.id='seat-selector-wrap';
   wrap.dataset.trainNo=trainNo; wrap.dataset.travelDate=travelDate; wrap.dataset.seatClass=seatClass;
+  wrap.dataset.trainDir=t.dir||'up';
   const xLeg=window._xferSeatCtx&&window._xfer?.legs?.[window._xferSeatCtx.legIdx];
   const direct=window._bArgs&&String(window._bArgs.trainNo)===String(trainNo)?window._bArgs:null;
   wrap.dataset.from=xLeg?.from||direct?.fromStn||t.stops?.[0]?.s||'';
@@ -6823,7 +6891,9 @@ function _renderSeatMap(wrap,t,trainNo,travelDate,seatClass,validCars,booked,com
     const half=Math.ceil(cols.length/2);
     const faceOf=r=>r<=revRows?'rev':'fwd';
     let html='';
-    for(let r=1;r<=car.rows;r++){
+    const rowOrder=Array.from({length:car.rows},(_,idx)=>idx+1);
+    if(t.dir==='down') rowOrder.reverse();
+    for(const r of rowOrder){
       const face=faceOf(r);
       let cells='';
       cols.forEach((col,idx)=>{
@@ -6850,11 +6920,28 @@ function _renderSeatMap(wrap,t,trainNo,travelDate,seatClass,validCars,booked,com
     return html;
   }
 
+  function facilityHTML(items,side){
+    if(!items?.length) return '';
+    return `<div class="seat-facility-panel ${side}" aria-label="${side==='front'?'차량 앞쪽':'차량 뒤쪽'} 시설">
+      ${items.map(item=>`<span class="seat-facility-item"><b>${item.icon||'•'}</b><small>${item.label}</small></span>`).join('')}
+    </div>`;
+  }
+
   // 현재 호차만 잔여석 계산, 나머지는 클릭 시 계산 (성능 최적화)
   const curRem=calcRem(car);
   const carTabs=validCars.map((c,i)=>`<button class="seat-car-tab${i===_seatCarIdx?' active':''}" onclick="switchSeatCar(${i})">
-      ${c.car}호차<br><span style="font-size:10px;font-weight:400">${i===_seatCarIdx?curRem+'석':'…'}</span>
+      ${i===0?'<em class="seat-car-edge">앞</em>':''}${c.car}호차${i===validCars.length-1?'<em class="seat-car-edge">뒤</em>':''}<br>
+      <span style="font-size:10px;font-weight:400">${i===_seatCarIdx?curRem+'석':'…'}</span>
     </button>`).join('');
+  const physicalFacilities=car.facilities||{};
+  const frontFacilities=t.dir==='down'?physicalFacilities.end:physicalFacilities.start;
+  const rearFacilities=t.dir==='down'?physicalFacilities.start:physicalFacilities.end;
+  const carNotice=car.notice
+    ? `<div class="seat-car-notice">ⓘ ${car.notice}</div>`
+    : '';
+  const carTags=car.tags?.length
+    ? `<div class="seat-car-tags">${car.tags.map(tag=>`<span>${tag}</span>`).join('')}</div>`
+    : '';
 
   wrap.innerHTML=`
     <div class="seat-header">
@@ -6867,6 +6954,9 @@ function _renderSeatMap(wrap,t,trainNo,travelDate,seatClass,validCars,booked,com
       <div style="font-size:12px;color:var(--text2);font-family:var(--mono)" id="seat-sel-clock"></div>
     </div>
     <div class="seat-car-tabs">${carTabs}</div>
+    <div class="seat-consist-guide"><b>앞</b><span>${validCars.map(c=>`${c.car}호차`).join(' · ')}</span><b>뒤</b></div>
+    ${carNotice}
+    ${carTags}
     <div class="seat-legend">
       <span class="seat-legend-item"><span class="seat-dot available"></span>선택가능</span>
       <span class="seat-legend-item"><span class="seat-dot selected"></span>선택됨</span>
@@ -6898,7 +6988,13 @@ function _renderSeatMap(wrap,t,trainNo,travelDate,seatClass,validCars,booked,com
     </div>
     <div class="seat-map">${isFreeCar
       ? `<div class="seatmap"><div class="seatmap-caption" style="margin-top:48px;font-size:13px">🚉 <b>${car.car}호차 · ${car.label||'자유석'}</b><br><br><span style="color:var(--text3)">지정 좌석이 없는 입석·자유석 전용 칸입니다.<br>좌석 선택 없이 예매해 주세요.</span></div></div>`
-      : `<div class="seatmap-grid pick">${seatHTML()}</div>`}</div>
+      : `<div class="seat-layout-shell" aria-label="${car.car}호차 좌석 배치">
+          ${facilityHTML(frontFacilities,'front')}
+          <div class="seat-end-mark front"><b>앞</b><small>${validCars[0]?.car===car.car?'열차 선두':'앞 호차 연결'}</small></div>
+          <div class="seatmap-grid pick">${seatHTML()}</div>
+          <div class="seat-end-mark rear"><b>뒤</b><small>${validCars[validCars.length-1]?.car===car.car?'열차 후미':'뒤 호차 연결'}</small></div>
+          ${facilityHTML(rearFacilities,'rear')}
+        </div>`}</div>
     <div class="seat-footer">
       <div id="seat-footer-info" style="flex:1;font-size:12px;color:var(--text2)">좌석을 선택해주세요 (${count}명)</div>
       <button class="seat-confirm-btn" id="seat-confirm-btn" disabled style="opacity:.5"
@@ -6941,7 +7037,7 @@ window.switchSeatCar=function(idx){
   const t=getTrainByNo(trainNo); if(!t)return;
   const formType=getFormationType(t.grade,trainNo);
   const composition=getCarComposition(formType);
-  const validCars=getCarsForClass(composition,seatClass);
+  const validCars=getSeatDisplayCars(composition,seatClass,t);
   _renderSeatMap(wrap,t,trainNo,travelDate,seatClass,validCars,getBookedSeats(trainNo,travelDate,null,null,seatClass),composition);
 };
 
