@@ -41,7 +41,7 @@ assert.ok(source.includes("p.state==='접근'?'당역 접근'"),'조회역 접�
 assert.ok(source.includes("<span>${start}</span>"),'운행 전 열차는 첫 역 출발 시각을 교대로 표시해야 합니다.');
 assert.ok(source.includes("<span>${p.away}전역 <b>${p.state}</b></span>"),'역명과 n전역 양쪽에 접근·도착·출발 상태를 유지해야 합니다.');
 assert.ok(source.includes("const METRO_COMMUTER_BOARD_LINES=new Set(["),'광역철도 전광판 노선 분류가 있어야 합니다.');
-assert.ok(source.includes("boardKind=_metroBoardKind(line)"),'노선에 따라 광역·도시철도 전광판을 자동 선택해야 합니다.');
+assert.ok(source.includes("boardKind=_metroBoardKind(line,stn)"),'노선과 현재 역에 따라 광역·도시철도 전광판을 자동 선택해야 합니다.');
 assert.ok(source.includes("const lineClass=displayBoard?` mtb2-line--${boardKind}`:''"),'전광판 전용 디자인은 별도 전광판에서만 렌더링되어야 합니다.');
 assert.ok(source.includes('<span class="mtb-title">🚇 실시간 도착</span>'),'기존 역 시간표 카드는 실시간 도착 제목을 유지해야 합니다.');
 assert.ok(source.includes("onclick=\"openMetroStationDisplay("),'역 상세에 전광판 열기 버튼이 있어야 합니다.');
@@ -63,8 +63,24 @@ assert.ok(!source.includes('class="mtb-urban-alternate"'),'도시철도 전광�
 assert.ok(source.includes("${displayBoard&&boardKind==='urban'?'':`<div class=\"mtb2-fl\">"),'도시철도 전광판 하단의 첫·막차 정보도 숨겨야 합니다.');
 assert.ok(source.includes('const start=Math.max(0,target-4)')&&source.includes('seq.slice(start,target+1)'),'도시철도 노선 막대는 이전 4개 역과 현재역만 표시해야 합니다.');
 assert.ok(source.includes("now>=absA[i+1]-1 ? result('접근'"),'다음 역 도착 1분 전부터만 접근으로 표시해야 합니다.');
-for(const line of ['경부선','구인선','전북선','충청선','전남선','구미선','고령하양선','GTX-A','GTX-B','GTX-C','중앙선','장호원선','종원선','춘천선','광주진목선','평택안성선','화성선','경의선','동남선','김해거제선','대구밀양선','포항선']){
+for(const line of ['경부선','구인선','전북선','충청선','전남선','구미선','고령하양선','중앙선','장호원선','춘천선','광주진목선','평택안성선','화성선','경의선','동남선','김해거제선','대구밀양선','포항선']){
   assert.ok(source.includes(`'${line}'`),`${line}은 광역철도형 전광판 목록에 포함되어야 합니다.`);
+}
+assert.ok(source.includes("'경부선':new Set(['청량리','장신대','종로5가','종로1가','서울'])"),'경부선 서울–청량리 사이 전 역은 도시철도형 전광판이어야 합니다.');
+for(const line of ['GTX-A','GTX-B','GTX-C','종원선']){
+  assert.ok(!source.slice(source.indexOf('const METRO_COMMUTER_BOARD_LINES'),source.indexOf('const METRO_URBAN_BOARD_SECTIONS')).includes(`'${line}'`),`${line}은 도시철도형 전광판이어야 합니다.`);
+}
+const boardKindStart=source.indexOf('const METRO_COMMUTER_BOARD_LINES');
+const boardKindEnd=source.indexOf('\nfunction _metroBoardPlatforms',boardKindStart);
+const boardKindContext={};
+vm.createContext(boardKindContext);
+vm.runInContext(`${source.slice(boardKindStart,boardKindEnd)}\nthis.boardKind=_metroBoardKind;`,boardKindContext);
+for(const station of ['청량리','장신대','종로5가','종로1가','서울']){
+  assert.equal(boardKindContext.boardKind('경부선',station),'urban',`경부선 ${station} 전광판은 도시철도형이어야 합니다.`);
+}
+assert.equal(boardKindContext.boardKind('경부선','한강로'),'regional','경부선 서울–청량리 구간 밖은 기존 광역철도형을 유지해야 합니다.');
+for(const line of ['GTX-A','GTX-B','GTX-C','종원선']){
+  assert.equal(boardKindContext.boardKind(line,'임의역'),'urban',`${line} 전광판은 전 구간 도시철도형이어야 합니다.`);
 }
 assert.ok(css.includes('.mtb2-line--regional{border:5px solid'),'광역철도 LED 전광판 스타일이 있어야 합니다.');
 assert.ok(css.includes('.mtb2-line--urban{border:3px solid'),'도시철도 LCD 전광판 스타일이 있어야 합니다.');

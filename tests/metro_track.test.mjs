@@ -26,6 +26,26 @@ for (const line of context.lines) {
   }
 }
 
+const samrangjin = context.lines.find(line => line.name === '삼랑진기장선');
+assert.deepEqual(
+  Array.from(samrangjin.stations.slice(0, 3)),
+  ['진영', '남진영', '진례'],
+  '삼랑진기장선은 진영–남진영–진례가 하나의 본선으로 이어져야 합니다.'
+);
+assert.equal(samrangjin.routes.length, 1, '삼랑진기장선의 남진영 지선 정의를 제거해야 합니다.');
+assert.ok(!context.tracks['삼랑진기장선'].b?.length, '삼랑진기장선 배선에도 별도 남진영 지선이 남으면 안 됩니다.');
+assert.ok(!context.geo['삼랑진기장선'].b?.length, '삼랑진기장선 지도에도 별도 남진영 지선이 남으면 안 됩니다.');
+
+vm.runInContext(`${fs.readFileSync('data/nimbi_station_data.js', 'utf8')}\nthis.stations=STATION_DB;`, context);
+vm.runInContext(`${fs.readFileSync('data/nimbi_platform_db.js', 'utf8')}\nthis.platforms=PLATFORM_DB;`, context);
+vm.runInContext(`${fs.readFileSync('data/nimbi_metro_sched.js', 'utf8')}\nthis.schedules=METRO_SCHED;`, context);
+assert.ok(context.stations['회덕'] && !context.stations['회덕역 / 대전차량기지'], '회덕 역 정보는 회덕 키 하나로 통합해야 합니다.');
+assert.ok(context.platforms['회덕'] && !context.platforms['회덕역 / 대전차량기지'], '회덕 승강장 정보는 회덕 키 하나로 통합해야 합니다.');
+for (const line of ['충청선', '노은산내선']) {
+  assert.ok(context.schedules[line].s.includes('회덕'), `${line} 시간표는 통합된 회덕 역명을 사용해야 합니다.`);
+  assert.ok(!context.schedules[line].s.includes('회덕역 / 대전차량기지'), `${line} 시간표에 이전 회덕 역명이 남으면 안 됩니다.`);
+}
+
 const index = fs.readFileSync('index.html', 'utf8');
 const trackLoad = index.indexOf('data/nimbi_metro_track.js');
 const referenceLoad = index.indexOf('data/nimbi_track_reference.js');

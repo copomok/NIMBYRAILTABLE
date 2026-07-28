@@ -88,7 +88,7 @@ function _stnCoord(name){
   if(typeof STATION_DB==='undefined'||!name) return null;
   let d=STATION_DB[name]||STATION_DB[name+'역']||(name.endsWith('역')?STATION_DB[name.slice(0,-1)]:null);
   if(!d){
-    // 별칭 폴백: "회덕" → "회덕역 / 대전차량기지" 처럼 부가 표기가 붙은 키 매칭
+    // 별칭 폴백: 역명 뒤에 부가 표기가 붙은 데이터 키도 기본 역명으로 매칭
     if(!_stnAliasMap){
       _stnAliasMap={};
       for(const k of Object.keys(STATION_DB)){
@@ -2510,7 +2510,7 @@ function checkDataAnomalies(){
   const issues={dup:[],speed:[],nocoord:new Set()};
   const seen={}; ALL_TRAINS.forEach(t=>{seen[t.no]=(seen[t.no]||0)+1;});
   Object.entries(seen).forEach(([k,v])=>{ if(v>1) issues.dup.push(`${k} (${v}건)`); });
-  const coord=b=>_stnCoord(b); // 별칭 폴백 포함(회덕역 / 대전차량기지 등)
+  const coord=b=>_stnCoord(b); // 부가 표기 역명 별칭 폴백 포함
   // 인접 정차역 간 직선거리·속도 이상(좌표 오류 탐지) — 역쌍 단위로 중복 제거
   const pairMax={};
   ALL_TRAINS.forEach(t=>{
@@ -10052,11 +10052,17 @@ function _metroClsTag(c){ return c===2?'<span class="mtb-exp mtb-exp--t">특급<
 // 역 전광판 외형 분류. 운행 로직은 동일하고 표시 장치의 세대·형태만 구분한다.
 const METRO_COMMUTER_BOARD_LINES=new Set([
   '경부선','구인선','전북선','충청선','전남선','구미선','고령하양선',
-  'GTX-A','GTX-B','GTX-C','중앙선','장호원선','종원선','춘천선',
+  '중앙선','장호원선','춘천선',
   '광주진목선','평택안성선','화성선','경의선','동남선','김해거제선',
   '대구밀양선','포항선'
 ]);
-function _metroBoardKind(line){return METRO_COMMUTER_BOARD_LINES.has(line)?'regional':'urban';}
+const METRO_URBAN_BOARD_SECTIONS={
+  '경부선':new Set(['청량리','장신대','종로5가','종로1가','서울'])
+};
+function _metroBoardKind(line,stn){
+  if(METRO_URBAN_BOARD_SECTIONS[line]?.has(stn))return 'urban';
+  return METRO_COMMUTER_BOARD_LINES.has(line)?'regional':'urban';
+}
 function _metroBoardPlatforms(stn,line){
   if(typeof PLATFORM_DB==='undefined')return [];
   const key=PLATFORM_DB[stn]?stn:(PLATFORM_DB[stn+'역']?stn+'역':null); if(!key)return [];
@@ -10454,7 +10460,7 @@ function _metroStationBoardHTML(stn,displayBoard=false){
   const renderLines=displayBoard?[lineOrder[_metroDisplayLineIndex]]:lineOrder;
   let displayDirLabels=[];
   const blocks=renderLines.map(line=>{
-    const color=_metroLineColor(line), dirs=lines[line], boardKind=_metroBoardKind(line);
+    const color=_metroLineColor(line), dirs=lines[line], boardKind=_metroBoardKind(line,stn);
     // 분기역(계통 다수)은 좌표 기준 2개 물리 방면으로 병합 — 같은 쪽 계통은 한 열에 통합
     const dirCounts={}; Object.keys(dirs).forEach(k=>dirCounts[k]=dirs[k].length);
     const groups=_metroDirGroups(line, stn, dirCounts);
