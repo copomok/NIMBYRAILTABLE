@@ -10131,26 +10131,29 @@ let _metroBoardStn=null;
 function setMetroBoardMode(m){ _metroBoardMode=m; const host=document.getElementById('metro-board'); if(host&&_metroBoardStn){ const html=_metroStationBoardHTML(_metroBoardStn); if(html){const tmp=document.createElement('div');tmp.innerHTML=html;host.replaceWith(tmp.firstElementChild);} } }
 // 편성의 현재 위치(현위치 보기): 정차 중=도착, 인접 구간 전반=출발(직전역), 후반=접근(다음역)
 // 편성 현위치. k0/k1 주면 해당 leg(단일방향 구간)만 계산 → 회차 열차의 상·하행을 서로 다른 열차로 취급
-function _metroTrainPos(line, svcIdx, k0, k1){
+function _metroTrainPos(line, svcIdx, k0, k1, targetStn){
   const ent=(typeof METRO_SCHED!=='undefined')&&METRO_SCHED[line]; if(!ent)return null;
   const f=ent.t[svcIdx], names=ent.s; if(!f)return null;
   const N=f.length/3; if(k0==null)k0=0; if(k1==null||k1>N-1)k1=N-1; if(k1<=k0)return null;
   const n=k1-k0+1, srv=x=>(((x-240)%1440)+1440)%1440, nm=k=>names[f[3*(k0+k)+2]];
+  const startMin=((f[3*k0+1]%1440)+1440)%1440;
+  let targetIdx=-1; if(targetStn!=null){for(let i=0;i<n;i++){if(nm(i)===targetStn){targetIdx=i;break;}}}
+  const result=(state,stn,index)=>({state,stn,index,targetIdx,away:targetIdx<0?null:targetIdx-index,startMin});
   const flat=[]; for(let i=0;i<n;i++){ flat.push(srv(f[3*(k0+i)]), srv(f[3*(k0+i)+1])); }
   let off=0; const mono=[]; for(let i=0;i<flat.length;i++){ let v=flat[i]+off; if(i>0&&v<mono[i-1]){off+=1440;v+=1440;} mono.push(v); }
   const absA=[],absD=[]; for(let i=0;i<n;i++){absA.push(mono[2*i]);absD.push(mono[2*i+1]);}
   const nowc=new Date(); let now=srv(nowc.getHours()*60+nowc.getMinutes());
   while(now<absA[0]-720)now+=1440; while(now>absD[n-1]+720)now-=1440;
-  if(now<absA[0]) return {state:'before'};
-  if(now>=absD[n-1]) return {state:'after'};
+  if(now<absA[0]) return result('before',nm(0),0);
+  if(now>=absD[n-1]) return result('after',nm(n-1),n-1);
   for(let i=0;i<n;i++){
-    if(now>=absA[i]&&now<=absD[i]) return {state:'도착', stn:nm(i)};
+    if(now>=absA[i]&&now<=absD[i]) return result('도착',nm(i),i);
     if(i<n-1&&now>absD[i]&&now<absA[i+1]){
       const mid=(absD[i]+absA[i+1])/2;
-      return now<mid ? {state:'출발', stn:nm(i)} : {state:'접근', stn:nm(i+1)};
+      return now<mid ? result('출발',nm(i),i) : result('접근',nm(i+1),i+1);
     }
   }
-  return {state:'after'};
+  return result('after',nm(n-1),n-1);
 }
 // 편성 현위치(노선도 마커용): 운행 중이면 구간·진행률·진행방향 행선지 반환, 아니면 null
 function _metroTrainLivePos(line, svcIdx){
@@ -10201,7 +10204,7 @@ function _placeMetroLiveMarkers(container, lineName){
     if(fromEl&&toEl){ const fCtr=fromEl.offsetTop+fromEl.offsetHeight/2, tCtr=toEl.offsetTop+toEl.offsetHeight/2;
       y=t.atStation?fCtr:fCtr+(tCtr-fCtr)*t.frac; downward=toEl.offsetTop>=fromEl.offsetTop; }  // 아래로=기점→종점=하행
     const m=document.createElement('div');
-    m.className='mtl-live clickable'+(downward?' down':' up')+(t.atStation?' at':'');
+    m.className='mtl-live clickable'+(downward?' down':' up')+(t.atStation?' at':'')+(t.cls>0?' express':'');
     m.style.top=y+'px';
     m.setAttribute('role','button');m.setAttribute('tabindex','0');m.setAttribute('title','열차 시간표 보기');
     const open=()=>openMetroTrain(lineName,t.svcIdx,t.clickClock);
@@ -10268,7 +10271,7 @@ function _renderMetroLiveTimeline(l,rows){
            `<path d="${_metroLiveArrowPath(railX,t.ey,left)}" fill="${col}"/>`;
       const style=left?`right:${F(W-(railU-11))}px;top:${F(cy)}px`:`left:${F(railD+11)}px;top:${F(cy)}px`;
       const lineArg=String(l.name).replace(/\\/g,'\\\\').replace(/'/g,"\\'");
-      chips+=`<button type="button" class="mtl-ltl-train ${left?'down':'up'}${t.at?' at':''}" style="${style};--tc:${col}" onclick="openMetroTrain('${lineArg}',${t.svcIdx},${t.clickClock})" title="열차 시간표 보기">${esc(_metroLiveTrainLabel(t.dest,t.cls))}</button>`;
+      chips+=`<button type="button" class="mtl-ltl-train ${left?'down':'up'}${t.at?' at':''}${t.cls>0?' express':''}" style="${style};--tc:${col}" onclick="openMetroTrain('${lineArg}',${t.svcIdx},${t.clickClock})" title="열차 시간표 보기">${esc(_metroLiveTrainLabel(t.dest,t.cls))}</button>`;
     });
   };
   lane(dn,'left',color); lane(up,'right','#e8863d');
@@ -10318,10 +10321,22 @@ function _metroStationBoardHTML(stn){
           const destHtml=`<span class="mtb2-dest">${_metroClsTag(u.cls)}${showDest?u.dest+'행':'&nbsp;'}</span>`;
           let infoHtml;
           if(_metroBoardMode==='pos'){
-            const p=_metroTrainPos(u.line,u.svc,u.k0,u.k1);
-            if(!p||p.state==='before') infoHtml='<span class="mtb2-pos mtb2-pos--wait">운행 전</span>';
+            const p=_metroTrainPos(u.line,u.svc,u.k0,u.k1,stn);
+            if(!p||p.state==='before'){
+              const start=p&&Number.isFinite(p.startMin)?`${Math.floor(p.startMin/60)}:${String(p.startMin%60).padStart(2,'0')} 운행 시작`:'';
+              infoHtml=start?`<span class="mtb2-pos mtb2-pos--wait mtb2-pos--flip"><span>운행 전</span><span>${start}</span></span>`:'<span class="mtb2-pos mtb2-pos--wait">운행 전</span>';
+            }
             else if(p.state==='after') infoHtml='<span class="mtb2-pos mtb2-pos--wait">운행 종료</span>';
-            else{ const sc=p.state==='도착'?'at':p.state==='출발'?'dep':'app'; infoHtml=`<span class="mtb2-pos mtb2-pos--${sc}">${_opsEsc(p.stn)} <b>${p.state}</b></span>`; }
+            else if(p.away===0){
+              const txt=p.state==='접근'?'당역 접근':p.state==='도착'?'당역 도착':'당역 출발';
+              const sc=p.state==='도착'?'at':p.state==='출발'?'dep':'app';
+              infoHtml=`<span class="mtb2-pos mtb2-pos--${sc}"><b>${txt}</b></span>`;
+            } else if(Number.isFinite(p.away)&&p.away>0){
+              infoHtml=`<span class="mtb2-pos mtb2-pos--flip"><span>${_opsEsc(p.stn)}</span><span>${p.away}전역</span></span>`;
+            } else {
+              const sc=p.state==='도착'?'at':p.state==='출발'?'dep':'app';
+              infoHtml=`<span class="mtb2-pos mtb2-pos--${sc}">${_opsEsc(p.stn)} <b>${p.state}</b></span>`;
+            }
           } else {
             infoHtml=`<span class="mtb2-rel">${relTxt(u.rel)}</span><span class="mtb2-clk">${fSrvClock(u.sec)}</span>`;
           }
@@ -10347,7 +10362,7 @@ function _metroStationBoardHTML(stn){
         <button class="mtb-mode${_metroBoardMode==='pos'?' on':''}" onclick="setMetroBoardMode('pos')">현위치</button>
       </span></div>
     ${blocks}
-    <div class="mtb-foot">인게임 시각표 기준 · 운행 ${running}편 · ${_metroBoardMode==='pos'?'편성 현위치(접근·도착·출발)':'계통별 실제 착발 반영'}</div>
+    <div class="mtb-foot">인게임 시각표 기준 · 운행 ${running}편 · ${_metroBoardMode==='pos'?'편성 현위치(역명·남은 역 수)':'계통별 실제 착발 반영'}</div>
   </div>`;
 }
 function renderSICard(name){
@@ -10939,6 +10954,12 @@ function setMetroTimetableExpressOnly(checked){
   _mttExpressOnly=!!checked;
   if(_mttStation&&_mttLine)openMetroTimetable(_mttStation,_mttLine,true);
 }
+function _openMetroTimetableRow(row,line,svc,clk,k0,k1){
+  const wrap=row&&row.closest?row.closest('#mtt-wrap'):null;
+  if(wrap)wrap.querySelectorAll('.mtt-row--selected').forEach(el=>el.classList.remove('mtt-row--selected'));
+  if(row&&row.classList)row.classList.add('mtt-row--selected');
+  openMetroTrain(line,svc,clk,k0,k1);
+}
 function openMetroTimetable(stn, line, preserveFilter){
   const old=document.getElementById('mtt-wrap'); if(old)old.remove();
   const deps=_metroStationDeps(stn).filter(o=>o.line===line);
@@ -10976,7 +10997,7 @@ function openMetroTimetable(stn, line, preserveFilter){
     const od=(r.orig&&r.orig!==r.dest)?`${r.orig} › ${r.dest}`:`${r.dest}`;
     const cur=r.isNext?' mtt-row--next':'';
     let idAttr=''; if(r.isNext&&!anchor.set&&r.m===nextAnchorM){ idAttr=' id="mtt-next"'; anchor.set=true; }
-    const clk=(r.svc!=null)?` onclick="openMetroTrain('${escL(r.line)}',${r.svc},${r.clk},${r.k0},${r.k1})"`:'';
+    const clk=(r.svc!=null)?` onclick="_openMetroTimetableRow(this,'${escL(r.line)}',${r.svc},${r.clk},${r.k0},${r.k1})"`:'';
     return `<div class="mtt-row${cur}${r.svc!=null?' mtt-row--tap':''}"${idAttr}${clk}><span class="mtt-t">${fClk(r.clk)}</span><span class="mtt-od">${od}</span>${_metroClsTag(r.cls)}</div>`;
   };
   const grid=hours.map(h=>{
@@ -11022,8 +11043,10 @@ function _metroLegRanges(idxSeq){
 function _metroLegRangeForClick(idxSeq,dT,hlClk,legStart,legEnd){
   const ranges=_metroLegRanges(idxSeq);
   if(Number.isInteger(legStart)&&Number.isInteger(legEnd)){
-    const exact=ranges.find(([s,e])=>s===legStart&&e===legEnd);
-    if(exact)return exact;
+    // 전체 시간표 행은 실제 출발역→종착역 leg를 이미 계산해 전달한다.
+    // 회차·지선 구조를 다시 추정하면 직전 반대 방향 편성으로 되돌아갈 수 있으므로
+    // 유효한 명시 범위는 모든 노선에서 추정보다 우선한다.
+    if(legStart>=0&&legEnd<idxSeq.length&&legEnd>legStart)return [legStart,legEnd];
   }
   const norm=m=>(((m%1440)+1440)%1440);
   let ci=0;
