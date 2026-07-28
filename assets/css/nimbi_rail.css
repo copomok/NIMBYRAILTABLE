@@ -2131,7 +2131,8 @@ button, select, input[type=range],
 .mtb-urban-stop i{display:block;width:12px;height:12px;margin:0 auto 4px;border-radius:50%;background:#08111f;border:3px solid var(--mc);box-sizing:border-box}
 .mtb-urban-stop.current i{background:#fff;box-shadow:0 0 0 2px color-mix(in srgb,var(--mc) 35%,transparent)}
 .mtb-urban-stop b{display:block;color:#dce5f4;font-size:8px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.mtb-urban-train{position:absolute;left:var(--train-pos);top:calc(-8px + var(--train-lane,0px));transform:translateX(-50%);z-index:3;font-size:15px;line-height:1;filter:drop-shadow(0 2px 2px rgba(0,0,0,.8));transition:left .5s ease}
+.mtb-urban-train{position:absolute;left:var(--train-pos);top:calc(-8px + var(--train-lane,0px));transform:translateX(-50%);z-index:3;padding:0;border:0;background:transparent;color:inherit;appearance:none;font-family:inherit;font-size:15px;line-height:1;cursor:pointer;filter:drop-shadow(0 2px 2px rgba(0,0,0,.8));transition:left .5s ease,transform .12s ease}
+.mtb-urban-train:hover,.mtb-urban-train:focus-visible{transform:translateX(-50%) scale(1.18);outline:none}
 .mtb2-line--urban .mtb2-fl{border-color:#243147;color:#738197}
 @media(max-width:600px){
   .mtb2-device-title{display:none}
@@ -2205,12 +2206,15 @@ button, select, input[type=range],
 .mtn-row--now .mtn-t{color:var(--mc);font-weight:800}
 .mtn-foot{font-size:9.5px;color:var(--text3);padding:9px 16px;border-top:1px solid var(--border);flex-shrink:0}
 /* 🚇 역 시간표 + 편성 시간표 페어(같이 열림) 레이아웃 */
-.mtt-popup,.mtn-popup{transition:transform .16s ease,filter .16s ease}
+.mtt-popup,.mtn-popup,.metro-display-popup{transition:transform .16s ease,filter .16s ease}
 /* PC(넓은 화면): 역 시간표 왼쪽 · 편성 시간표 오른쪽으로 나란히 */
 @media(min-width:1060px){
   body.metro-paired #mtt-wrap .mtt-popup{transform:translate(calc(-50% - 228px),-50%)}
   body.metro-paired #mtn-wrap .mtn-popup{transform:translate(calc(-50% + 288px),-50%)}
   body.metro-paired #mtn-wrap .rail-ticket-backdrop{background:transparent;backdrop-filter:none;-webkit-backdrop-filter:none}
+  body.metro-display-paired #metro-display-wrap .metro-display-popup{width:min(720px,55vw);transform:translate(calc(-50% - 230px),-50%)}
+  body.metro-display-paired #mtn-wrap .mtn-popup{width:min(440px,36vw);transform:translate(calc(-50% + 370px),-50%)}
+  body.metro-display-paired #mtn-wrap .rail-ticket-backdrop{background:transparent;backdrop-filter:none;-webkit-backdrop-filter:none;pointer-events:none}
 }
 /* 모바일·좁은 화면: 편성 시간표가 역 시간표를 덮되, 역 시간표 창은 블러+터치 차단 */
 @media(max-width:1059px){

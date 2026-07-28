@@ -57,31 +57,54 @@ assert.ok(source.includes('mtb2-rloc mtb2-rloc--flip'),'광역철도 역명과 N
 assert.ok(!source.includes('class="mtb2-rclock"'),'광역철도 전광판에서 출발 시각 열은 제거되어야 합니다.');
 assert.ok(source.includes('class="mtb-urban-train"')&&source.includes('--train-pos:'),'도시철도 노선 막대에 실제 위치 열차 아이콘이 있어야 합니다.');
 assert.ok(source.includes('const uniqueEntries=[...new Map((entries||[]).map(e=>[`${e.svc}|${e.k0}|${e.k1}`,e])).values()]'),'도시철도 노선 막대는 동일 편성을 중복 없이 계산해야 합니다.');
-assert.ok(source.includes('const trainHTML=trainPositions.map((pos,i)=>'),'도시철도 노선 막대는 범위 안의 모든 운행 편성을 표시해야 합니다.');
+assert.ok(source.includes('const trainHTML=trainPositions.map((train,i)=>'),'도시철도 노선 막대는 범위 안의 모든 운행 편성을 표시해야 합니다.');
 assert.ok(source.includes("if(now<raw[0].arr||now>raw[raw.length-1].dep)return null"),'도시철도 노선 막대는 실제 운행 중인 편성만 표시해야 합니다.');
 assert.ok(!source.includes('class="mtb-urban-alternate"'),'도시철도 전광판에서 첫·막차 교대 문구를 제거해야 합니다.');
 assert.ok(source.includes("${displayBoard&&boardKind==='urban'?'':`<div class=\"mtb2-fl\">"),'도시철도 전광판 하단의 첫·막차 정보도 숨겨야 합니다.');
 assert.ok(source.includes('const start=Math.max(0,target-4)')&&source.includes('seq.slice(start,target+1)'),'도시철도 노선 막대는 이전 4개 역과 현재역만 표시해야 합니다.');
 assert.ok(source.includes("now>=absA[i+1]-1 ? result('접근'"),'다음 역 도착 1분 전부터만 접근으로 표시해야 합니다.');
-for(const line of ['경부선','구인선','전북선','충청선','전남선','구미선','고령하양선','중앙선','장호원선','춘천선','광주진목선','평택안성선','화성선','경의선','동남선','김해거제선','대구밀양선','포항선']){
+for(const line of ['경부선','구인선','전북선','충청선','전남선','구미선','고령하양선','중앙선','장호원선','종원선','춘천선','광주진목선','평택안성선','화성선','경의선','동남선','김해거제선','대구밀양선','포항선']){
   assert.ok(source.includes(`'${line}'`),`${line}은 광역철도형 전광판 목록에 포함되어야 합니다.`);
 }
-assert.ok(source.includes("'경부선':new Set(['청량리','장신대','종로5가','종로1가','서울'])"),'경부선 서울–청량리 사이 전 역은 도시철도형 전광판이어야 합니다.');
-for(const line of ['GTX-A','GTX-B','GTX-C','종원선']){
-  assert.ok(!source.slice(source.indexOf('const METRO_COMMUTER_BOARD_LINES'),source.indexOf('const METRO_URBAN_BOARD_SECTIONS')).includes(`'${line}'`),`${line}은 도시철도형 전광판이어야 합니다.`);
+for(const rule of [
+  "{line:'경부선',from:'청량리',to:'서울',kind:'urban'}",
+  "{line:'경기북부선',from:'철원',to:'의정부',kind:'regional'}",
+  "{line:'노원선',from:'철원',to:'의정부',kind:'regional'}",
+  "{line:'종원선',from:'청량리',to:'상희공원',kind:'urban'}",
+  "{line:'포항선',from:'포항',to:'오천',kind:'urban'}"
+]){
+  assert.ok(source.includes(rule),`전광판 구간 규칙 ${rule} 누락`);
+}
+for(const line of ['GTX-A','GTX-B','GTX-C']){
+  assert.ok(!source.slice(source.indexOf('const METRO_COMMUTER_BOARD_LINES'),source.indexOf('const METRO_BOARD_SECTION_RULES')).includes(`'${line}'`),`${line}은 도시철도형 전광판이어야 합니다.`);
 }
 const boardKindStart=source.indexOf('const METRO_COMMUTER_BOARD_LINES');
 const boardKindEnd=source.indexOf('\nfunction _metroBoardPlatforms',boardKindStart);
-const boardKindContext={};
+const boardKindContext={METRO_SCHED:{
+  '경부선':{s:['청량리','장신대','종로5가','종로1가','서울','한강로']},
+  '경기북부선':{s:['철원','신서','연천','전곡','동두천','덕계','양주','의정부','장암']},
+  '노원선':{s:['철원','동송','신철원','영북','영중','포천','선단','송우리','남옥정','고읍','의정부','회룡']},
+  '종원선':{s:['청량리','답십리','군자송정','자양','잠실','가락','복정','수진','야탑','상희공원','직동']},
+  '포항선':{s:['청하','포항','초곡','포항농산물도매시장','우현','대신','죽도시장','해도','포스코(포항스틸야드)','인덕','오천']}
+}};
 vm.createContext(boardKindContext);
 vm.runInContext(`${source.slice(boardKindStart,boardKindEnd)}\nthis.boardKind=_metroBoardKind;`,boardKindContext);
 for(const station of ['청량리','장신대','종로5가','종로1가','서울']){
   assert.equal(boardKindContext.boardKind('경부선',station),'urban',`경부선 ${station} 전광판은 도시철도형이어야 합니다.`);
 }
 assert.equal(boardKindContext.boardKind('경부선','한강로'),'regional','경부선 서울–청량리 구간 밖은 기존 광역철도형을 유지해야 합니다.');
-for(const line of ['GTX-A','GTX-B','GTX-C','종원선']){
+for(const line of ['GTX-A','GTX-B','GTX-C']){
   assert.equal(boardKindContext.boardKind(line,'임의역'),'urban',`${line} 전광판은 전 구간 도시철도형이어야 합니다.`);
 }
+for(const line of ['경기북부선','노원선']){
+  for(const station of ['철원','의정부'])assert.equal(boardKindContext.boardKind(line,station),'regional',`${line} ${station}은 광역철도형이어야 합니다.`);
+}
+assert.equal(boardKindContext.boardKind('경기북부선','장암'),'urban','경기북부선 의정부 이남은 기존 도시철도형이어야 합니다.');
+assert.equal(boardKindContext.boardKind('노원선','회룡'),'urban','노원선 의정부 이남은 기존 도시철도형이어야 합니다.');
+for(const station of ['청량리','상희공원'])assert.equal(boardKindContext.boardKind('종원선',station),'urban',`종원선 ${station}은 도시철도형이어야 합니다.`);
+assert.equal(boardKindContext.boardKind('종원선','직동'),'regional','종원선 상희공원 이후는 광역철도형이어야 합니다.');
+for(const station of ['포항','오천'])assert.equal(boardKindContext.boardKind('포항선',station),'urban',`포항선 ${station}은 도시철도형이어야 합니다.`);
+assert.equal(boardKindContext.boardKind('포항선','청하'),'regional','포항선 포항 이전은 광역철도형이어야 합니다.');
 assert.ok(css.includes('.mtb2-line--regional{border:5px solid'),'광역철도 LED 전광판 스타일이 있어야 합니다.');
 assert.ok(css.includes('.mtb2-line--urban{border:3px solid'),'도시철도 LCD 전광판 스타일이 있어야 합니다.');
 assert.ok(css.includes('.mtb2-r-express{color:#ff624f'),'광역형 급행 글자만 빨간색이어야 합니다.');
@@ -93,6 +116,10 @@ assert.ok(css.includes('#metro-display-board .mtb-display-dir-0 .mtb2-col[data-d
 assert.ok(css.includes('.mtb-display-dir-nav{display:none}'),'PC에서는 상·하행 전환 토글을 숨겨야 합니다.');
 assert.ok(css.includes('@media(max-width:600px)'),'모바일 방향 분리는 600px 이하에서만 적용되어야 합니다.');
 assert.ok(css.includes('top:calc(-8px + var(--train-lane,0px))'),'같은 구간의 여러 도시철도 편성은 겹치지 않게 층을 나눠 표시해야 합니다.');
+assert.ok(css.includes('body.metro-display-paired #metro-display-wrap .metro-display-popup'),'PC에서는 도시철도 전광판과 열차 시간표를 나란히 표시해야 합니다.');
+assert.ok(source.includes("else if(document.getElementById('metro-display-wrap')) document.body.classList.add('metro-display-paired')"),'전광판에서 연 열차 시간표는 전광판 페어 레이아웃을 사용해야 합니다.');
+assert.ok(css.includes('body.metro-display-paired #mtn-wrap .rail-ticket-backdrop{background:transparent;backdrop-filter:none;-webkit-backdrop-filter:none;pointer-events:none}'),'PC 병렬 화면에서는 투명 배경이 전광판 조작을 막으면 안 됩니다.');
+assert.ok(source.includes("if(document.body.classList.contains('metro-display-paired'))closeMetroTrain()"),'전광판을 닫으면 함께 열린 편성 시간표도 정리해야 합니다.');
 assert.ok(source.includes('function stepMetroLineDetail(dir)'),'노선 상세에서 이전·다음 노선 이동 함수가 있어야 합니다.');
 assert.ok(source.includes('onclick="stepMetroLineDetail(-1)"')&&source.includes('onclick="stepMetroLineDetail(1)"'),'노선 목록 옆 좌우 노선 이동 버튼이 있어야 합니다.');
 assert.ok(css.includes('.mtl-detail-nav{display:flex'),'노선 목록과 좌우 이동 버튼은 한 줄로 배치되어야 합니다.');
@@ -117,6 +144,8 @@ const urbanRouteHTML=urbanRouteContext.urbanRoute('도시선','조회역',{svc:0
   {svc:0,k0:0,k1:2},{svc:1,k0:0,k1:2},{svc:1,k0:0,k1:2}
 ]);
 assert.equal((urbanRouteHTML.match(/class="mtb-urban-train"/g)||[]).length,2,'같은 전역 범위에 운행 중인 모든 편성을 중복 없이 표시해야 합니다.');
+assert.equal(urbanRouteHTML.split("openMetroTrain('도시선'").length-1,2,'도시철도 전광판의 각 열차 아이콘은 해당 편성 시간표를 열어야 합니다.');
+assert.ok(urbanRouteHTML.includes('event.stopPropagation()'),'열차 아이콘 클릭은 전광판 전체 시간표 클릭으로 전파되면 안 됩니다.');
 assert.ok(!urbanRouteHTML.includes('첫')&&!urbanRouteHTML.includes('막'),'도시철도 노선 막대에 첫·막차 정보를 표시하면 안 됩니다.');
 
 const trainPosStart=source.indexOf('function _metroTrainPos');

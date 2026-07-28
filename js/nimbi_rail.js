@@ -10052,15 +10052,27 @@ function _metroClsTag(c){ return c===2?'<span class="mtb-exp mtb-exp--t">특급<
 // 역 전광판 외형 분류. 운행 로직은 동일하고 표시 장치의 세대·형태만 구분한다.
 const METRO_COMMUTER_BOARD_LINES=new Set([
   '경부선','구인선','전북선','충청선','전남선','구미선','고령하양선',
-  '중앙선','장호원선','춘천선',
+  '중앙선','장호원선','종원선','춘천선',
   '광주진목선','평택안성선','화성선','경의선','동남선','김해거제선',
   '대구밀양선','포항선'
 ]);
-const METRO_URBAN_BOARD_SECTIONS={
-  '경부선':new Set(['청량리','장신대','종로5가','종로1가','서울'])
-};
+const METRO_BOARD_SECTION_RULES=[
+  {line:'경부선',from:'청량리',to:'서울',kind:'urban'},
+  {line:'경기북부선',from:'철원',to:'의정부',kind:'regional'},
+  {line:'노원선',from:'철원',to:'의정부',kind:'regional'},
+  {line:'종원선',from:'청량리',to:'상희공원',kind:'urban'},
+  {line:'포항선',from:'포항',to:'오천',kind:'urban'}
+];
+function _metroBoardSectionContains(rule,stn){
+  const ent=(typeof METRO_SCHED!=='undefined')&&METRO_SCHED[rule.line];
+  const names=ent&&ent.s;
+  if(!names)return false;
+  const a=names.indexOf(rule.from),b=names.indexOf(rule.to),i=names.indexOf(stn);
+  return a>=0&&b>=0&&i>=Math.min(a,b)&&i<=Math.max(a,b);
+}
 function _metroBoardKind(line,stn){
-  if(METRO_URBAN_BOARD_SECTIONS[line]?.has(stn))return 'urban';
+  const section=METRO_BOARD_SECTION_RULES.find(rule=>rule.line===line&&_metroBoardSectionContains(rule,stn));
+  if(section)return section.kind;
   return METRO_COMMUTER_BOARD_LINES.has(line)?'regional':'urban';
 }
 function _metroBoardPlatforms(stn,line){
@@ -10419,14 +10431,20 @@ function _metroUrbanRouteHTML(line,stn,u,entries){
       }
     }
     if(trainIndex==null||trainIndex<start||trainIndex>target)return null;
-    return Math.max(0,Math.min(100,((trainIndex-start)/denominator)*100));
-  }).filter(Number.isFinite).sort((a,b)=>a-b);
+    return {
+      pos:Math.max(0,Math.min(100,((trainIndex-start)/denominator)*100)),
+      svc:e.svc,k0:e.k0,k1:e.k1,
+      clickClock:((service[3*e.k0+1]%1440)+1440)%1440
+    };
+  }).filter(Boolean).sort((a,b)=>a.pos-b.pos);
   const laneEnds=[-Infinity,-Infinity,-Infinity,-Infinity];
-  const trainHTML=trainPositions.map((pos,i)=>{
+  const lineArg=String(line).replace(/\\/g,'\\\\').replace(/'/g,"\\'");
+  const trainHTML=trainPositions.map((train,i)=>{
+    const pos=train.pos;
     let lane=laneEnds.findIndex(last=>pos-last>=7);
     if(lane<0)lane=i%laneEnds.length;
     laneEnds[lane]=pos;
-    return `<span class="mtb-urban-train" style="--train-pos:${pos}%;--train-lane:${lane*8}px" aria-label="운행 중 열차 ${i+1} 현재 위치">🚇</span>`;
+    return `<button type="button" class="mtb-urban-train" style="--train-pos:${pos}%;--train-lane:${lane*8}px" aria-label="운행 중 열차 ${i+1} 시간표 보기" title="열차 시간표 보기" onclick="event.stopPropagation();openMetroTrain('${lineArg}',${train.svc},${train.clickClock},${train.k0},${train.k1})">🚇</button>`;
   }).join('');
   return `<div class="mtb2-urban-route">
     <div class="mtb-urban-track"><span class="mtb-urban-line"></span>${stationHTML}${trainHTML}</div>
@@ -11174,6 +11192,8 @@ function openMetroStationDisplay(stn){
 function closeMetroStationDisplay(){
   const el=document.getElementById('metro-display-wrap'); if(el)el.remove();
   if(_metroDisplayTimer){clearInterval(_metroDisplayTimer);_metroDisplayTimer=null;}
+  if(document.body.classList.contains('metro-display-paired'))closeMetroTrain();
+  document.body.classList.remove('metro-display-paired');
 }
 // 🚇 전철 역 전체 시간표 — 카카오지하철식(방면별 열, 같은 시간대는 같은 행에 정렬)
 let _mttExpressOnly=false, _mttStation=null, _mttLine=null;
@@ -11291,6 +11311,7 @@ function _metroLegRangeForClick(idxSeq,dT,hlClk,legStart,legEnd){
 // 🚇 개별 편성 역별 타임라인 — 기차 탑승 여정과 동일한 디자인, 왕복은 실 종점 기준 방향 leg만 표시
 function openMetroTrain(line, svcIdx, hlClk, legStart, legEnd){
   const old=document.getElementById('mtn-wrap'); if(old)old.remove();
+  document.body.classList.remove('metro-paired','metro-display-paired');
   const ent=(typeof METRO_SCHED!=='undefined')&&METRO_SCHED[line]; if(!ent)return;
   const f=ent.t[svcIdx]; if(!f)return;
   const names=ent.s, cls=ent.c?ent.c[svcIdx]:0, color=_metroLineColor(line);
@@ -11345,9 +11366,10 @@ function openMetroTrain(line, svcIdx, hlClk, legStart, legEnd){
   document.body.appendChild(wrap);
   // 역 시간표(mtt)에서 열렸으면 나란히/오버레이 페어 레이아웃 적용
   if(document.getElementById('mtt-wrap')) document.body.classList.add('metro-paired');
+  else if(document.getElementById('metro-display-wrap')) document.body.classList.add('metro-display-paired');
   const cur=wrap.querySelector('.jr-stop.cur')||wrap.querySelector('.jr-stop.next'); if(cur)cur.scrollIntoView({block:'center'});
 }
-function closeMetroTrain(){ const el=document.getElementById('mtn-wrap'); if(el)el.remove(); document.body.classList.remove('metro-paired'); }
+function closeMetroTrain(){ const el=document.getElementById('mtn-wrap'); if(el)el.remove(); document.body.classList.remove('metro-paired','metro-display-paired'); }
 
 // 🛤️ 배선도(간이): 복선 트랙 + 승강장 + 방향 화살표 열차. 상행(종점→기점)=좌측·▲, 하행(기점→종점)=우측·▼
 let _mlNameSet=null;
