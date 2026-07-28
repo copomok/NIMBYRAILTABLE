@@ -10332,7 +10332,8 @@ function _metroStationBoardHTML(stn){
               const sc=p.state==='도착'?'at':p.state==='출발'?'dep':'app';
               infoHtml=`<span class="mtb2-pos mtb2-pos--${sc}"><b>${txt}</b></span>`;
             } else if(Number.isFinite(p.away)&&p.away>0){
-              infoHtml=`<span class="mtb2-pos mtb2-pos--flip"><span>${_opsEsc(p.stn)}</span><span>${p.away}전역</span></span>`;
+              const sc=p.state==='도착'?'at':p.state==='출발'?'dep':'app';
+              infoHtml=`<span class="mtb2-pos mtb2-pos--${sc} mtb2-pos--flip"><span>${_opsEsc(p.stn)} <b>${p.state}</b></span><span>${p.away}전역 <b>${p.state}</b></span></span>`;
             } else {
               const sc=p.state==='도착'?'at':p.state==='출발'?'dep':'app';
               infoHtml=`<span class="mtb2-pos mtb2-pos--${sc}">${_opsEsc(p.stn)} <b>${p.state}</b></span>`;

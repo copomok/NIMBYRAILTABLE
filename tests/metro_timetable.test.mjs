@@ -36,8 +36,10 @@ assert.ok(css.includes('.mtl-live.clickable{pointer-events:auto;cursor:pointer}'
 assert.ok(css.includes('.mtl-ltl-train.express{background:#e5484d}'),'급행·특급 실시간 위치 라벨은 빨간색이어야 합니다.');
 assert.ok(css.includes('.mtt-row--selected{background:rgba(158,103,255,.2)'),'조회 중 강조는 다음 열차의 노선색과 다른 색이어야 합니다.');
 assert.ok(css.includes('@keyframes mtb2PosPrimary'),'현위치 역명과 남은 역 수가 교대로 표시되어야 합니다.');
+assert.ok(css.includes('margin-left:auto;text-align:right'),'현위치 문구는 기존처럼 우측 정렬되어야 합니다.');
 assert.ok(source.includes("p.state==='접근'?'당역 접근'"),'조회역 접근 중에는 당역 접근으로 표시해야 합니다.');
 assert.ok(source.includes("<span>${start}</span>"),'운행 전 열차는 첫 역 출발 시각을 교대로 표시해야 합니다.');
+assert.ok(source.includes("<span>${p.away}전역 <b>${p.state}</b></span>"),'역명과 n전역 양쪽에 접근·도착·출발 상태를 유지해야 합니다.');
 
 const rangesStart = source.indexOf('function _metroLegRanges');
 const rangesEnd = source.indexOf('\n// 🚇 개별 편성 역별 타임라인', rangesStart);

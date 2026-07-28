@@ -2048,13 +2048,13 @@ button, select, input[type=range],
 .mtb-mode{font-family:var(--sans);font-size:10.5px;font-weight:800;color:var(--text3);background:transparent;border:0;border-radius:6px;padding:3px 9px;cursor:pointer}
 .mtb-mode.on{background:var(--mc,var(--accent));color:#fff}
 /* 현위치 라벨(접근·도착·출발) */
-.mtb2-pos{flex-shrink:0;font-size:11px;font-weight:700;color:var(--text2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:60%}
+.mtb2-pos{flex-shrink:0;margin-left:auto;text-align:right;font-size:11px;font-weight:700;color:var(--text2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:60%}
 .mtb2-pos b{font-family:var(--sans);font-weight:800;margin-left:2px}
 .mtb2-pos--app b{color:#e8a33d}
 .mtb2-pos--at b{color:var(--green)}
 .mtb2-pos--dep b{color:var(--accent)}
 .mtb2-pos--wait{color:var(--text3);font-weight:600}
-.mtb2-pos--flip{display:grid;align-items:center}
+.mtb2-pos--flip{display:grid;align-items:center;justify-items:end}
 .mtb2-pos--flip>span{grid-area:1/1;animation:mtb2PosPrimary 6s steps(1,end) infinite}
 .mtb2-pos--flip>span+span{opacity:0;animation-name:mtb2PosSecondary}
 @keyframes mtb2PosPrimary{0%,49.99%{opacity:1}50%,100%{opacity:0}}
