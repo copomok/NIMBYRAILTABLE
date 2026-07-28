@@ -53,6 +53,7 @@ assert.ok(source.includes('function setMetroDisplayLine(step)'),'환승역 전�
 assert.ok(source.includes('function setMetroDisplayDirection(index)'),'모바일 전광판은 상·하행을 따로 전환해야 합니다.');
 assert.ok(source.includes("cls===1?'<em class=\"mtb2-r-express\">급행</em>'"),'광역철도 급행은 행선지 뒤에 급행 표기를 붙여야 합니다.');
 assert.ok(source.includes('class="mtb2-rloc"')&&source.includes('class="mtb2-rstate"'),'광역철도 위치·상태는 별도 LED 열이어야 합니다.');
+assert.ok(source.includes('mtb2-rloc mtb2-rloc--flip'),'광역철도 역명과 N전역은 한 위치 열에서 교대로 표시해야 합니다.');
 assert.ok(!source.includes('class="mtb2-rclock"'),'광역철도 전광판에서 출발 시각 열은 제거되어야 합니다.');
 assert.ok(source.includes('class="mtb-urban-train"')&&source.includes('--train-pos:'),'도시철도 노선 막대에 실제 위치 열차 아이콘이 있어야 합니다.');
 assert.ok(source.includes('services.push(`${_opsEsc(dest)}행 첫 ${fSrvClock(secs[0])} · 막 ${fSrvClock(secs[secs.length-1])}`)'),'도시철도 노선 막대는 행선지별 첫·막차를 교대 표시해야 합니다.');
@@ -66,6 +67,7 @@ assert.ok(css.includes('.mtb2-line--urban{border:3px solid'),'도시철도 LCD �
 assert.ok(css.includes('.mtb2-r-express{color:#ff624f'),'광역형 급행 글자만 빨간색이어야 합니다.');
 assert.ok(css.includes('.mtb2-line--regional .mtb2-rloc{grid-column:4'),'광역형 현위치 문구는 확대된 독립 열이어야 합니다.');
 assert.ok(css.includes('.mtb2-line--regional .mtb2-rstate{grid-column:5'),'광역형 접근·도착·출발 상태는 독립된 빨간색 열이어야 합니다.');
+assert.ok(css.includes('@keyframes mtbRegionalLocA'),'광역형 역명과 N전역 교대 애니메이션이 있어야 합니다.');
 assert.ok(css.includes('.metro-display-popup{position:fixed'),'전철 역 전광판 모달 스타일이 있어야 합니다.');
 assert.ok(css.includes('#metro-display-board .mtb-display-dir-0 .mtb2-col[data-dir]:not([data-dir="0"])'),'모바일에서는 선택한 한 방향 전광판만 보여야 합니다.');
 assert.ok(css.includes('.mtb-display-dir-nav{display:none}'),'PC에서는 상·하행 전환 토글을 숨겨야 합니다.');

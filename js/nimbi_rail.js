@@ -10348,7 +10348,7 @@ function _metroRegionalPositionHTML(p){
   const loc=p.away===0?'당역':_opsEsc(p.stn);
   const away=Number.isFinite(p.away)&&p.away>0?`${p.away}전역`:loc;
   const locHTML=away!==loc
-    ?`<span class="mtb2-rloc"><span class="mtb2-rstation">${loc}</span><span class="mtb2-raway">${away}</span></span>`
+    ?`<span class="mtb2-rloc mtb2-rloc--flip"><span class="mtb2-rstation">${loc}</span><span class="mtb2-raway">${away}</span></span>`
     :`<span class="mtb2-rloc"><span class="mtb2-rstation">${loc}</span></span>`;
   const state=p.away===0&&p.state==='접근'?'접근':p.state;
   return `${locHTML}<span class="mtb2-rstate">${state}</span>`;
