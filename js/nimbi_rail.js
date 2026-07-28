@@ -10102,13 +10102,26 @@ function _metroLineXY(lineName){
 }
 function _metroXYof(xm,name){ if(xm[name])return xm[name]; const a=String(name).replace(/역$/,''); if(xm[a])return xm[a];
   const h=String(name).split(' / ')[0].replace(/역$/,''); return xm[h]||null; }
+// 도착 카드 방면 열 고정: 노선 배열의 기점→종점(하행)은 왼쪽, 역순(상행)은 오른쪽.
+// 운행 편수나 첫차 시각이 달라져도 열 위치가 뒤바뀌지 않게 한다.
+function _metroOrderDirGroups(lineName,stnName,groups){
+  const ent=(typeof METRO_SCHED!=='undefined')&&METRO_SCHED[lineName], names=ent&&ent.s;
+  if(!names||!groups||groups.length<2)return groups||[];
+  const si=names.indexOf(stnName);
+  if(si<0)return groups;
+  const score=g=>{
+    const ds=g.map(k=>names.indexOf(k)).filter(i=>i>=0).map(i=>i-si);
+    return ds.length?ds.reduce((a,b)=>a+b,0)/ds.length:0;
+  };
+  return groups.map((g,i)=>({g,i,s:score(g)})).sort((a,b)=>(b.s-a.s)||(a.i-b.i)).map(x=>x.g);
+}
 // 분기역 다방면(3+) → 실제 좌표 방향으로 2개 물리 방면(극)으로 병합. 같은 쪽 계통은 한 열로.
 function _metroDirGroups(lineName, stnName, dirCounts){
   const keys=Object.keys(dirCounts).sort((a,b)=>dirCounts[b]-dirCounts[a]);
-  if(keys.length<=2) return keys.map(k=>[k]);
+  if(keys.length<=2) return _metroOrderDirGroups(lineName,stnName,keys.map(k=>[k]));
   const xm=_metroLineXY(lineName), S=_metroXYof(xm,stnName);
   const withXY=keys.filter(k=>_metroXYof(xm,k)), noXY=keys.filter(k=>!_metroXYof(xm,k));
-  if(!S||withXY.length<2) return [[keys[0]], keys.slice(1)];        // 좌표 부족 시 폴백
+  if(!S||withXY.length<2) return _metroOrderDirGroups(lineName,stnName,[[keys[0]], keys.slice(1)]); // 좌표 부족 시 폴백
   const vec=k=>{const p=_metroXYof(xm,k);const dx=p[0]-S[0],dy=p[1]-S[1],L=Math.hypot(dx,dy)||1;return [dx/L,dy/L];};
   const p1=vec(withXY[0]); let p2=null,mn=2;
   for(const k of withXY){const v=vec(k);const d=v[0]*p1[0]+v[1]*p1[1];if(d<mn){mn=d;p2=v;}}
@@ -10116,8 +10129,7 @@ function _metroDirGroups(lineName, stnName, dirCounts){
   for(const k of withXY){const v=vec(k);const d1=v[0]*p1[0]+v[1]*p1[1];const d2=p2?v[0]*p2[0]+v[1]*p2[1]:-2;(d1>=d2?g1:g2).push(k);}
   if(noXY.length){const names=METRO_SCHED[lineName].s;const ai=g=>g.length?g.reduce((s,k)=>s+names.indexOf(k),0)/g.length:names.indexOf(stnName);
     const a1=ai(g1),a2=ai(g2);for(const k of noXY){const ni=names.indexOf(k);(Math.abs(ni-a1)<=Math.abs(ni-a2)?g1:g2).push(k);}}
-  const sum=g=>g.reduce((s,k)=>s+dirCounts[k],0);
-  return [g1,g2].filter(g=>g.length).sort((a,b)=>sum(b)-sum(a));
+  return _metroOrderDirGroups(lineName,stnName,[g1,g2].filter(g=>g.length));
 }
 // 방면 그룹(다중 다음역) 편 병합 — 지선별로 분내 중복 제거 후 합침(서로 다른 계통 동시각은 유지)
 function _metroGroupEntries(dirsMap, keys){

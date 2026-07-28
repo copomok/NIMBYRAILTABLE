@@ -41,6 +41,15 @@ assert.ok(source.includes("p.state==='접근'?'당역 접근'"),'조회역 접�
 assert.ok(source.includes("<span>${start}</span>"),'운행 전 열차는 첫 역 출발 시각을 교대로 표시해야 합니다.');
 assert.ok(source.includes("<span>${p.away}전역 <b>${p.state}</b></span>"),'역명과 n전역 양쪽에 접근·도착·출발 상태를 유지해야 합니다.');
 
+const orderStart=source.indexOf('function _metroOrderDirGroups');
+const orderEnd=source.indexOf('\n// 분기역 다방면',orderStart);
+assert.ok(orderStart>=0&&orderEnd>orderStart,'상·하행 도착 카드 고정 정렬 함수 누락');
+const orderContext={METRO_SCHED:{테스트선:{s:['기점','중간','종점']}}};
+vm.createContext(orderContext);
+vm.runInContext(`${source.slice(orderStart,orderEnd)}\nthis.orderGroups=_metroOrderDirGroups;`,orderContext);
+assert.deepEqual(Array.from(orderContext.orderGroups('테스트선','중간',[['기점'],['종점']]),g=>Array.from(g)),[['종점'],['기점']],'하행은 왼쪽, 상행은 오른쪽에 고정해야 합니다.');
+assert.deepEqual(Array.from(orderContext.orderGroups('테스트선','중간',[['종점'],['기점']]),g=>Array.from(g)),[['종점'],['기점']],'입력·운행 편수 순서와 무관하게 방면 열이 고정되어야 합니다.');
+
 const rangesStart = source.indexOf('function _metroLegRanges');
 const rangesEnd = source.indexOf('\n// 🚇 개별 편성 역별 타임라인', rangesStart);
 assert.ok(rangesStart >= 0 && rangesEnd > rangesStart, '전철 회차 구간 선택 함수 누락');
