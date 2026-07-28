@@ -2072,6 +2072,15 @@ button, select, input[type=range],
 .mtb2-ended-first b{color:var(--mc);font-weight:700}
 .mtb2-fl{font-size:9.5px;color:var(--text3);font-family:var(--mono);font-variant-numeric:tabular-nums;margin-top:2px;padding-top:5px;border-top:1px dashed var(--border)}
 .mtb-foot{font-size:9.5px;color:var(--text3);margin-top:5px}
+/* 전광판 전용 노선·방향 선택 */
+.mtb-display-line-nav{display:grid;grid-template-columns:34px minmax(0,1fr) 34px;align-items:center;gap:8px;margin-bottom:10px}
+.mtb-display-line-nav>button{height:34px;border:1px solid color-mix(in srgb,var(--mc) 55%,var(--border));border-radius:9px;background:var(--bg3);color:var(--mc);font-size:13px;font-weight:900;cursor:pointer}
+.mtb-display-line-nav>button:disabled{visibility:hidden;cursor:default}
+.mtb-display-line-nav>span{height:34px;display:flex;align-items:center;justify-content:center;gap:8px;min-width:0;border:1px solid color-mix(in srgb,var(--mc) 55%,var(--border));border-radius:9px;background:color-mix(in srgb,var(--mc) 10%,var(--bg3))}
+.mtb-display-line-nav>span i{width:9px;height:9px;border-radius:50%;background:var(--mc);flex-shrink:0}
+.mtb-display-line-nav>span b{font-size:13px;color:var(--text1);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mtb-display-line-nav>span small{font-family:var(--mono);font-size:9px;color:var(--text3)}
+.mtb-display-dir-nav{display:none}
 /* 광역철도형: 1~3번 사진의 저상형 LED 출발 안내기 */
 .mtb2-line--regional{border:5px solid #353b42;border-radius:4px;background:#080b0c;box-shadow:inset 0 0 0 1px #08090a,0 5px 15px rgba(0,0,0,.32)}
 .mtb2-line--regional .mtb2-lhead{padding:6px 10px;background:#080b0c;border-color:#342d17}
@@ -2084,14 +2093,18 @@ button, select, input[type=range],
 .mtb2-line--regional .mtb2-col{background:#080b0c;padding:6px 8px;gap:2px}
 .mtb2-line--regional .mtb2-dir{justify-content:center;color:#e6a52c;font-family:var(--mono);font-size:10px;border-bottom:1px solid #5b451e;padding-bottom:4px}
 .mtb2-line--regional .mtb2-dir .mtb2-arr{color:#e6a52c}
-.mtb2-line--regional .mtb2-led-head{display:grid;grid-template-columns:24px 37px minmax(54px,1fr) 39px minmax(34px,.7fr);gap:4px;color:#a77420;font-family:var(--mono);font-size:8px;text-align:center;padding:2px 0}
-.mtb2-line--regional .mtb2-train{display:grid;grid-template-columns:24px 37px minmax(54px,1fr) 39px minmax(34px,.7fr);align-items:center;gap:4px;min-height:22px;border-top:1px solid rgba(180,125,28,.16);font-family:var(--mono)}
+.mtb2-line--regional .mtb2-led-head{display:grid;grid-template-columns:24px 37px minmax(54px,1fr) 39px minmax(42px,.8fr) 38px;gap:4px;color:#a77420;font-family:var(--mono);font-size:8px;text-align:center;padding:2px 0}
+.mtb2-line--regional .mtb2-train{display:grid;grid-template-columns:24px 37px minmax(54px,1fr) 39px minmax(42px,.8fr) 38px;align-items:center;gap:4px;min-height:24px;border-top:1px solid rgba(180,125,28,.16);font-family:var(--mono)}
 .mtb2-line--regional .mtb2-seq,.mtb2-line--regional .mtb2-plat{display:block;text-align:center;color:#e9a52c;font-size:13px;font-weight:800;text-shadow:0 0 5px rgba(233,165,44,.55)}
 .mtb2-line--regional .mtb2-dest{color:#47e468;font-family:var(--mono);font-size:13px;text-align:center;text-shadow:0 0 5px rgba(71,228,104,.5)}
-.mtb2-line--regional .mtb2-rel,.mtb2-line--regional .mtb2-pos{grid-column:5;font-family:var(--mono);color:#ff624f;font-size:10px;text-align:right;text-shadow:0 0 5px rgba(255,98,79,.5);max-width:100%;margin:0}
-.mtb2-line--regional .mtb2-clk{display:block;grid-column:4;grid-row:1;color:#47e468;font-family:var(--mono);font-size:9px;text-align:center;text-shadow:0 0 5px rgba(71,228,104,.45)}
-.mtb2-line--regional .mtb2-pos{grid-column:4/6}
-.mtb2-line--regional .mtb2-pos b{color:inherit}
+.mtb2-line--regional .mtb2-rclock{grid-column:4;color:#47e468;font-size:10px;text-align:center;text-shadow:0 0 5px rgba(71,228,104,.45)}
+.mtb2-line--regional .mtb2-rloc{grid-column:5;color:#47e468;font-size:10px;text-align:center;text-shadow:0 0 5px rgba(71,228,104,.5);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mtb2-line--regional .mtb2-rstate{grid-column:6;color:#ff624f;font-size:10px;text-align:center;text-shadow:0 0 5px rgba(255,98,79,.5);white-space:nowrap}
+.mtb2-line--regional .mtb2-rloc--flip{display:grid;align-items:center}
+.mtb2-line--regional .mtb2-rloc--flip>span{grid-area:1/1;animation:mtbRegionalLocA 6s steps(1,end) infinite}
+.mtb2-line--regional .mtb2-rloc--flip>span+span{opacity:0;animation-name:mtbRegionalLocB}
+@keyframes mtbRegionalLocA{0%,49.99%{opacity:1}50%,100%{opacity:0}}
+@keyframes mtbRegionalLocB{0%,49.99%{opacity:0}50%,100%{opacity:1}}
 .mtb2-line--regional .mtb-exp{font-family:var(--sans);font-size:7px;margin-right:2px}
 .mtb2-line--regional .mtb2-fl{border-color:#493919;color:#a77420;text-align:right}
 .mtb2-line--regional .mtb2-ended{grid-column:1/-1;color:#ff624f;font-family:var(--mono)}
@@ -2108,16 +2121,37 @@ button, select, input[type=range],
 .mtb2-line--urban .mtb2-train--now{min-height:37px;background:linear-gradient(90deg,color-mix(in srgb,var(--mc) 20%,transparent),rgba(255,255,255,.02))}
 .mtb2-line--urban .mtb2-train--now .mtb2-dest{font-size:18px;color:#d8e55c}
 .mtb2-line--urban .mtb2-train--now .mtb2-pos,.mtb2-line--urban .mtb2-train--now .mtb2-rel{font-size:12px;color:#fff}
-.mtb2-line--urban .mtb2-urban-route{display:flex;align-items:center;gap:0;padding:5px 3px 2px;color:#dce5f4;font-size:8px}
-.mtb2-line--urban .mtb2-urban-route span,.mtb2-line--urban .mtb2-urban-route b{white-space:nowrap;font-weight:700}
-.mtb2-line--urban .mtb2-urban-route i{height:4px;flex:1;background:var(--mc);position:relative}
-.mtb2-line--urban .mtb2-urban-route i::after{content:'';position:absolute;right:-2px;top:-2px;width:7px;height:7px;border-radius:50%;background:#fff;border:2px solid var(--mc);box-sizing:border-box;z-index:1}
-.mtb2-line--urban .mtb2-urban-route b{color:var(--mc)}
+.mtb2-line--urban .mtb2-urban-route{display:block;position:relative;padding:7px 5px 2px;color:#dce5f4;font-size:8px;min-height:50px}
+.mtb-urban-track{position:relative;height:31px;margin:0 9px}
+.mtb-urban-line{position:absolute;left:0;right:0;top:8px;height:5px;border-radius:4px;background:var(--mc);box-shadow:0 0 7px color-mix(in srgb,var(--mc) 55%,transparent)}
+.mtb-urban-stop{position:absolute;left:var(--stop-pos);top:3px;transform:translateX(-50%);width:52px;text-align:center}
+.mtb-urban-stop i{display:block;width:12px;height:12px;margin:0 auto 4px;border-radius:50%;background:#08111f;border:3px solid var(--mc);box-sizing:border-box}
+.mtb-urban-stop.current i{background:#fff;box-shadow:0 0 0 2px color-mix(in srgb,var(--mc) 35%,transparent)}
+.mtb-urban-stop b{display:block;color:#dce5f4;font-size:8px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;animation:mtbUrbanNames 8s steps(1,end) infinite}
+.mtb-urban-train{position:absolute;left:var(--train-pos);top:-8px;transform:translateX(-50%);z-index:3;font-size:18px;line-height:1;filter:drop-shadow(0 2px 2px rgba(0,0,0,.8));transition:left .5s ease}
+.mtb-urban-alternate{height:13px;display:grid;place-items:center;text-align:center;color:#d8e55c;font-size:9px;font-weight:800;font-family:var(--mono)}
+.mtb-urban-alternate>span{grid-area:1/1;opacity:0;animation:mtbUrbanService 8s steps(1,end) infinite}
+@keyframes mtbUrbanNames{0%,49.99%{opacity:1}50%,100%{opacity:0}}
+@keyframes mtbUrbanService{0%,49.99%{opacity:0}50%,100%{opacity:1}}
 .mtb2-line--urban .mtb2-fl{border-color:#243147;color:#738197}
-@media(max-width:520px){
+@media(max-width:600px){
   .mtb2-device-title{display:none}
   .mtb2-line--regional .mtb2-lhead time,.mtb2-line--urban .mtb2-lhead time{margin-left:auto}
-  .mtb2-line--regional .mtb2-col,.mtb2-line--urban .mtb2-col{flex-basis:210px;min-width:210px}
+  #metro-display-board .mtb2-line--regional .mtb2-col,#metro-display-board .mtb2-line--urban .mtb2-col{flex-basis:100%;min-width:0}
+  #metro-display-board .mtb2-cols{overflow:visible}
+  #metro-display-board .mtb-display-dir-0 .mtb2-col[data-dir]:not([data-dir="0"]),
+  #metro-display-board .mtb-display-dir-1 .mtb2-col[data-dir]:not([data-dir="1"]){display:none}
+  .mtb-display-dir-nav{display:flex;gap:5px;margin:0 0 9px}
+  .mtb-display-dir-nav>button{flex:1;min-width:0;padding:8px 5px;border:1px solid var(--border);border-radius:8px;background:var(--bg3);color:var(--text3);font-size:10px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .mtb-display-dir-nav>button.on{background:color-mix(in srgb,var(--mc,var(--accent)) 24%,var(--bg3));border-color:var(--mc,var(--accent));color:var(--text1)}
+  .mtb2-line--regional .mtb2-led-head,.mtb2-line--regional .mtb2-train{grid-template-columns:20px 32px minmax(48px,1fr) 35px minmax(38px,.8fr) 34px;gap:3px}
+  .mtb2-line--regional .mtb2-seq,.mtb2-line--regional .mtb2-plat,.mtb2-line--regional .mtb2-dest{font-size:10px}
+  .mtb2-line--regional .mtb2-rclock,.mtb2-line--regional .mtb2-rloc,.mtb2-line--regional .mtb2-rstate{font-size:8px}
+}
+@media (prefers-reduced-motion:reduce){
+  .mtb2-line--regional .mtb2-rloc--flip>span,.mtb-urban-stop b,.mtb-urban-alternate>span{animation:none}
+  .mtb2-line--regional .mtb2-rloc--flip>span+span{display:none}
+  .mtb-urban-alternate{display:none}
 }
 /* 🚇 전철 역 전체 시간표 모달 (시간대별 정렬 그리드) */
 .mtt-popup{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);z-index:10001;width:min(560px,94vw);max-height:88vh;display:flex;flex-direction:column;background:var(--bg2);border:1px solid var(--border);border-top:3px solid var(--mc);border-radius:16px;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.5)}

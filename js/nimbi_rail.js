@@ -10158,6 +10158,9 @@ function _metroGroupEntries(dirsMap, keys){
 }
 let _metroBoardMode='time';   // 'time' | 'pos'(현위치)
 let _metroBoardStn=null;
+let _metroDisplayLineIndex=0;
+let _metroDisplayDirIndex=0;
+let _metroDisplayLines=[];
 function setMetroBoardMode(m,targetId){
   _metroBoardMode=m;
   const id=targetId||'metro-board';
@@ -10166,6 +10169,22 @@ function setMetroBoardMode(m,targetId){
     const html=_metroStationBoardHTML(_metroBoardStn,id==='metro-display-board');
     if(html){const tmp=document.createElement('div');tmp.innerHTML=html;host.replaceWith(tmp.firstElementChild);}
   }
+}
+function _refreshMetroDisplayBoard(){
+  const host=document.getElementById('metro-display-board');
+  if(!host||!_metroBoardStn)return;
+  const html=_metroStationBoardHTML(_metroBoardStn,true);
+  if(html){const tmp=document.createElement('div');tmp.innerHTML=html;host.replaceWith(tmp.firstElementChild);}
+}
+function setMetroDisplayLine(step){
+  if(!_metroDisplayLines.length)return;
+  _metroDisplayLineIndex=(_metroDisplayLineIndex+Number(step)+_metroDisplayLines.length)%_metroDisplayLines.length;
+  _metroDisplayDirIndex=0;
+  _refreshMetroDisplayBoard();
+}
+function setMetroDisplayDirection(index){
+  _metroDisplayDirIndex=Math.max(0,Number(index)||0);
+  _refreshMetroDisplayBoard();
 }
 // 편성의 현재 위치(현위치 보기): 정차 중=도착, 인접 구간 전반=출발(직전역), 후반=접근(다음역)
 // 편성 현위치. k0/k1 주면 해당 leg(단일방향 구간)만 계산 → 회차 열차의 상·하행을 서로 다른 열차로 취급
@@ -10315,9 +10334,89 @@ function _renderMetroLiveTimeline(l,rows){
   lane(dn,'left',color); lane(up,'right','#e8863d');
   return `<div class="mtl-ltl" style="height:${F(H)}px;width:${W}px;--mc:${color}"><svg class="mtl-ltl-svg" width="${W}" height="${F(H)}" viewBox="0 0 ${W} ${F(H)}">${svg}</svg>${names.join('')}${chips}</div>`;
 }
+function _metroDisplayDestination(dest,cls,show=true){
+  if(!show)return '&nbsp;';
+  return `${_opsEsc(dest)}${cls===2?'특':cls===1?'급':'행'}`;
+}
+function _metroRegionalPositionHTML(u,p,fSrvClock){
+  const clock=`<span class="mtb2-rclock">${fSrvClock(u.sec)}</span>`;
+  if(!p||p.state==='before'){
+    return `${clock}<span class="mtb2-rloc">운행 전</span><span class="mtb2-rstate">출발 예정</span>`;
+  }
+  if(p.state==='after'){
+    return `${clock}<span class="mtb2-rloc">종착</span><span class="mtb2-rstate">운행 종료</span>`;
+  }
+  const loc=p.away===0?'당역':_opsEsc(p.stn);
+  const away=Number.isFinite(p.away)&&p.away>0?`${p.away}전역`:loc;
+  const locHTML=away!==loc
+    ?`<span class="mtb2-rloc mtb2-rloc--flip"><span>${loc}</span><span>${away}</span></span>`
+    :`<span class="mtb2-rloc">${loc}</span>`;
+  const state=p.away===0&&p.state==='접근'?'접근':p.state;
+  return `${clock}${locHTML}<span class="mtb2-rstate">${state}</span>`;
+}
+function _metroUrbanRouteHTML(line,stn,u,entries,fSrvClock){
+  const ent=(typeof METRO_SCHED!=='undefined')&&METRO_SCHED[line];
+  if(!ent||!u)return '';
+  const f=ent.t[u.svc]; if(!f)return '';
+  const names=ent.s, seq=[];
+  for(let k=u.k0;k<=u.k1;k++){
+    const name=names[f[3*k+2]];
+    if(name&&seq[seq.length-1]!==name)seq.push(name);
+  }
+  if(!seq.length)return '';
+  let target=seq.indexOf(stn); if(target<0)target=0;
+  let start=Math.max(0,Math.min(target-2,seq.length-5));
+  const shown=seq.slice(start,start+5);
+  let trainIndex=target;
+  const srv=x=>(((x-240)%1440)+1440)%1440, raw=[];
+  let offset=0, previous=-Infinity;
+  for(let k=u.k0;k<=u.k1;k++){
+    let arr=srv(f[3*k])+offset, dep=srv(f[3*k+1])+offset;
+    while(arr<previous){offset+=1440;arr+=1440;dep+=1440;}
+    if(dep<arr)dep+=1440;
+    previous=dep;
+    raw.push({name:names[f[3*k+2]],arr,dep});
+  }
+  const nowDate=new Date(); let now=srv(nowDate.getHours()*60+nowDate.getMinutes());
+  while(raw.length&&now<raw[0].arr-720)now+=1440;
+  while(raw.length&&now>raw[raw.length-1].dep+720)now-=1440;
+  if(raw.length&&now<=raw[0].arr)trainIndex=0;
+  else if(raw.length&&now>=raw[raw.length-1].dep)trainIndex=seq.length-1;
+  else {
+    for(let i=0;i<raw.length;i++){
+      const here=seq.indexOf(raw[i].name);
+      if(now>=raw[i].arr&&now<=raw[i].dep){trainIndex=Math.max(0,here);break;}
+      if(i<raw.length-1&&now>raw[i].dep&&now<raw[i+1].arr){
+        const there=seq.indexOf(raw[i+1].name);
+        const frac=(now-raw[i].dep)/Math.max(1,raw[i+1].arr-raw[i].dep);
+        trainIndex=Math.max(0,here)+(Math.max(0,there)-Math.max(0,here))*frac;
+        break;
+      }
+    }
+  }
+  const denominator=Math.max(1,shown.length-1);
+  const trainPos=Math.max(0,Math.min(100,((trainIndex-start)/denominator)*100));
+  const stationHTML=shown.map((name,i)=>`<span class="mtb-urban-stop${name===stn?' current':''}" style="--stop-pos:${shown.length===1?50:(i/denominator)*100}%"><i></i><b>${_opsEsc(name)}</b></span>`).join('');
+  const services=[];
+  const byDest={};
+  (entries||[]).forEach(e=>(byDest[e.dest]=byDest[e.dest]||[]).push(e.sec));
+  Object.entries(byDest).slice(0,3).forEach(([dest,secs])=>{
+    secs.sort((a,b)=>a-b);
+    services.push(`${_opsEsc(dest)}행 첫 ${fSrvClock(secs[0])} · 막 ${fSrvClock(secs[secs.length-1])}`);
+  });
+  return `<div class="mtb2-urban-route">
+    <div class="mtb-urban-track"><span class="mtb-urban-line"></span>${stationHTML}
+      <span class="mtb-urban-train" style="--train-pos:${trainPos}%" aria-label="열차 현재 위치">🚇</span>
+    </div>
+    <div class="mtb-urban-alternate">
+      <span>${services.join('　')}</span>
+    </div>
+  </div>`;
+}
 function _metroStationBoardHTML(stn,displayBoard=false){
   if(typeof METRO_SCHED==='undefined') return '';
   _metroBoardStn=stn;
+  const viewMode=displayBoard?'pos':_metroBoardMode;
   const deps=_metroStationDeps(stn);
   if(!deps.length) return '';
   const now=new Date();
@@ -10335,32 +10434,47 @@ function _metroStationBoardHTML(stn,displayBoard=false){
     const cb=Object.values(lines[b]).reduce((s,v)=>s+v.length,0);
     return cb-ca;
   });
-  const blocks=lineOrder.map(line=>{
+  if(displayBoard){
+    _metroDisplayLines=lineOrder;
+    _metroDisplayLineIndex=Math.max(0,Math.min(_metroDisplayLineIndex,lineOrder.length-1));
+  }
+  const renderLines=displayBoard?[lineOrder[_metroDisplayLineIndex]]:lineOrder;
+  let displayDirLabels=[];
+  const blocks=renderLines.map(line=>{
     const color=_metroLineColor(line), dirs=lines[line], boardKind=_metroBoardKind(line);
     // 분기역(계통 다수)은 좌표 기준 2개 물리 방면으로 병합 — 같은 쪽 계통은 한 열에 통합
     const dirCounts={}; Object.keys(dirs).forEach(k=>dirCounts[k]=dirs[k].length);
     const groups=_metroDirGroups(line, stn, dirCounts);
+    if(displayBoard)displayDirLabels=groups.map((grp,i)=>`${i===0?'하행':'상행'} · ${grp.join('·')} 방면`);
+    _metroDisplayDirIndex=Math.max(0,Math.min(_metroDisplayDirIndex,groups.length-1));
     const platformNos=_metroBoardPlatforms(stn,line);
     const cols=groups.map((grp,grpIdx)=>{
       const label=grp.join(' • ');
       const plat=platformNos.length?(platformNos[Math.min(grpIdx,platformNos.length-1)]+'홈'):'—';
       const {entries,first,last}=_metroGroupEntries(dirs, grp);
-      let trainsHtml;
+      const toTrain=o=>({rel:o.sec-nowS,dest:o.dest,sec:o.sec,cls:o.cls,svc:o.svc,line:o.line,k0:o.k0,k1:o.k1});
+      let trainsHtml, routeTrain=entries[0]?toTrain(entries[0]):null;
       if(nowS>last){
         // 오늘 막차 이후 → 운행 종료 + 첫차·행선지 안내
         const fd=entries[0]&&entries[0].dest; const showFd=fd&&fd!==stn;
         trainsHtml=`<div class="mtb2-ended"><span class="mtb2-ended-t">운행 종료</span>
           <span class="mtb2-ended-first">첫차 ${fSrvClock(first)}${showFd?` <b>${fd}행</b>`:''}</span></div>`;
       } else {
-        const up=entries.map(o=>({rel:o.sec-nowS,dest:o.dest,sec:o.sec,cls:o.cls,svc:o.svc,line:o.line,k0:o.k0,k1:o.k1}))
+        const up=entries.map(toTrain)
           .filter(u=>u.rel>=-60)     // 당 영업일 남은 열차만(다음날로 감싸 억지로 채우지 않음)
           .sort((a,b)=>a.rel-b.rel)
           .slice(0,3);
+        routeTrain=up[0]||null;
         trainsHtml=up.map((u,i)=>{
           const showDest=u.dest&&u.dest!==stn;   // 자기참조 라벨만 숨김(인접역 종착은 표기)
-          const destHtml=`<span class="mtb2-dest">${_metroClsTag(u.cls)}${showDest?u.dest+'행':'&nbsp;'}</span>`;
+          const destHTML=displayBoard&&boardKind==='regional'
+            ?_metroDisplayDestination(u.dest,u.cls,showDest)
+            :`${_metroClsTag(u.cls)}${showDest?u.dest+'행':'&nbsp;'}`;
+          const destHtml=`<span class="mtb2-dest">${destHTML}</span>`;
           let infoHtml;
-          if(_metroBoardMode==='pos'){
+          if(displayBoard&&boardKind==='regional'){
+            infoHtml=_metroRegionalPositionHTML(u,_metroTrainPos(u.line,u.svc,u.k0,u.k1,stn),fSrvClock);
+          } else if(viewMode==='pos'){
             const p=_metroTrainPos(u.line,u.svc,u.k0,u.k1,stn);
             if(!p||p.state==='before'){
               const start=p&&Number.isFinite(p.startMin)?`${Math.floor(p.startMin/60)}:${String(p.startMin%60).padStart(2,'0')} 운행 시작`:'';
@@ -10385,11 +10499,14 @@ function _metroStationBoardHTML(stn,displayBoard=false){
             <span class="mtb2-seq">${i+1}</span><span class="mtb2-plat">${plat}</span>${destHtml}${infoHtml}</div>`;
         }).join('')||'<div class="mtb2-none">운행 정보 없음</div>';
       }
-      return `<div class="mtb2-col">
+      const routeHTML=displayBoard&&boardKind==='urban'
+        ?_metroUrbanRouteHTML(line,stn,routeTrain,entries,fSrvClock)
+        :`<div class="mtb2-urban-route"><span>${_opsEsc(stn)}</span><i></i><i></i><i></i><b>${_opsEsc(grp[0]||label)}</b></div>`;
+      return `<div class="mtb2-col" data-dir="${grpIdx}">
         <div class="mtb2-dir"><span class="mtb2-arr">▸</span>${label} 방면</div>
-        <div class="mtb2-led-head"><span>순번</span><span>타는 곳</span><span>행선지</span><span>시각</span><span>${_metroBoardMode==='pos'?'현위치':'상태'}</span></div>
+        <div class="mtb2-led-head"><span>순번</span><span>타는 곳</span><span>행선지</span><span>시각</span><span>위치</span><span>상태</span></div>
         ${trainsHtml}
-        <div class="mtb2-urban-route"><span>${_opsEsc(stn)}</span><i></i><i></i><i></i><b>${_opsEsc(grp[0]||label)}</b></div>
+        ${routeHTML}
         <div class="mtb2-fl">첫 ${fSrvClock(first)} · 막 ${fSrvClock(last)}</div>
       </div>`;
     }).join('');
@@ -10407,15 +10524,27 @@ function _metroStationBoardHTML(stn,displayBoard=false){
     </div>`;
   }).join('');
   const boardId=displayBoard?'metro-display-board':'metro-board';
-  const modeTarget=displayBoard?",'metro-display-board'":'';
+  const selectedLine=displayBoard?lineOrder[_metroDisplayLineIndex]:'';
+  const selectedColor=displayBoard?_metroLineColor(selectedLine):'';
+  const lineNav=displayBoard?`<div class="mtb-display-line-nav" style="--mc:${selectedColor}">
+    <button onclick="event.stopPropagation();setMetroDisplayLine(-1)" aria-label="이전 노선"${lineOrder.length<2?' disabled':''}>◀</button>
+    <span><i></i><b>${_opsEsc(selectedLine)}</b><small>${_metroDisplayLineIndex+1} / ${lineOrder.length}</small></span>
+    <button onclick="event.stopPropagation();setMetroDisplayLine(1)" aria-label="다음 노선"${lineOrder.length<2?' disabled':''}>▶</button>
+  </div>`:'';
+  const dirNav=displayBoard&&displayDirLabels.length>1?`<div class="mtb-display-dir-nav" style="--mc:${selectedColor}">
+    ${displayDirLabels.slice(0,2).map((label,i)=>`<button class="${_metroDisplayDirIndex===i?'on':''}" onclick="event.stopPropagation();setMetroDisplayDirection(${i})">${_opsEsc(label)}</button>`).join('')}
+  </div>`:'';
   return `<div id="${boardId}" style="padding:12px 16px;border-bottom:1px solid var(--border)">
-    <div class="mtb-head"><span class="mtb-title">${displayBoard?'🚇 역 전광판':'🚇 실시간 도착'}</span>
+    ${displayBoard?lineNav:`<div class="mtb-head"><span class="mtb-title">🚇 실시간 도착</span>
       <span class="mtb-modetog">
-        <button class="mtb-mode${_metroBoardMode==='time'?' on':''}" onclick="setMetroBoardMode('time'${modeTarget})">시간</button>
-        <button class="mtb-mode${_metroBoardMode==='pos'?' on':''}" onclick="setMetroBoardMode('pos'${modeTarget})">현위치</button>
-      </span></div>
+        <button class="mtb-mode${_metroBoardMode==='time'?' on':''}" onclick="setMetroBoardMode('time')">시간</button>
+        <button class="mtb-mode${_metroBoardMode==='pos'?' on':''}" onclick="setMetroBoardMode('pos')">현위치</button>
+      </span></div>`}
+    ${dirNav}
+    <div class="${displayBoard?'mtb-display-selected-dir mtb-display-dir-'+_metroDisplayDirIndex:''}">
     ${blocks}
-    <div class="mtb-foot">인게임 시각표 기준 · 운행 ${running}편 · ${_metroBoardMode==='pos'?'편성 현위치(역명·남은 역 수)':'계통별 실제 착발 반영'}</div>
+    </div>
+    <div class="mtb-foot">인게임 시각표 기준 · 운행 ${running}편 · ${viewMode==='pos'?'편성 현위치(역명·남은 역 수)':'계통별 실제 착발 반영'}</div>
   </div>`;
 }
 function renderSICard(name){
@@ -11002,6 +11131,10 @@ function closeStationBoard(){
 let _metroDisplayTimer=null;
 function openMetroStationDisplay(stn){
   closeMetroStationDisplay();
+  _metroBoardMode='pos';
+  _metroDisplayLineIndex=0;
+  _metroDisplayDirIndex=0;
+  _metroDisplayLines=[];
   const html=_metroStationBoardHTML(stn,true);
   if(!html)return;
   const safe=_opsEsc(stn);
@@ -11017,12 +11150,7 @@ function openMetroStationDisplay(stn){
       <div class="metro-display-scroll">${html}</div>
     </div>`;
   document.body.appendChild(wrap);
-  _metroDisplayTimer=setInterval(()=>{
-    const host=document.getElementById('metro-display-board');
-    if(!host)return;
-    const next=_metroStationBoardHTML(stn,true);
-    if(next){const tmp=document.createElement('div');tmp.innerHTML=next;host.replaceWith(tmp.firstElementChild);}
-  },15000);
+  _metroDisplayTimer=setInterval(_refreshMetroDisplayBoard,15000);
 }
 function closeMetroStationDisplay(){
   const el=document.getElementById('metro-display-wrap'); if(el)el.remove();
