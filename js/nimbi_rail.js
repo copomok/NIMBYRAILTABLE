@@ -6707,23 +6707,17 @@ function seatId(car,row,col){
   return car.numbered ? `${car.car}호차 ${seatSeqNum(car,row,col)}번` : `${car.car}호차 ${row}${col}`;
 }
 
-// 운행 방향 기준으로 앞쪽 호차부터 표시한다.
+// 좌석 선택 화면은 운행 방향과 관계없이 항상 낮은 호차부터 표시한다.
 function getSeatDisplayCars(composition,seatClass,train){
   const cars=getCarsForClass(composition,seatClass).slice();
-  return cars.sort((a,b)=>train?.dir==='down'?b.car-a.car:a.car-b.car);
+  return cars.sort((a,b)=>a.car-b.car);
 }
 // 넓은 창(2열당 1창) 차량 판별 — KTX-산천 계열(산천·SRT)과 ITX-마음만 좁은 창(1열당 1창)
 function _wideWindow(grade){ return grade!=='KTX-산천' && grade!=='ITX-마음' && grade!=='SRT'; }
 // 창문 배치 클래스 — 무궁화: 전 구간 2열 정렬창 / KTX 계열: 좌·우 한 열씩 엇갈린 걸침창 / 그 외: 좌석당 1창
 function _winClass(grade, side, r, total){
   if(!_wideWindow(grade)) return `win ${side}`;
-  if(grade==='무궁화호'||grade==='남도해양'||grade==='국악와인'){ // [1·2],[3·4]… 양쪽 동일
-    return r%2===1 ? (r+1<=total?`win win-wide ${side}`:`win ${side}`) : `${side}`;
-  }
-  // KTX 계열 걸침: 왼쪽은 홀수행 시작, 오른쪽은 맨앞 단독 + 짝수행 시작 (좌우 엇갈림)
-  if(side==='wl'){
-    return r%2===1 ? (r+1<=total?`win win-wide ${side}`:`win ${side}`) : `${side}`;
-  }
+  // 1열은 단독 창, 이후 [2·3], [4·5]… 두 열이 한 창을 공유한다.
   if(r===1) return `win ${side}`;
   return r%2===0 ? (r+1<=total?`win win-wide ${side}`:`win ${side}`) : `${side}`;
 }
@@ -6892,7 +6886,6 @@ function _renderSeatMap(wrap,t,trainNo,travelDate,seatClass,validCars,booked,com
     const faceOf=r=>r<=revRows?'rev':'fwd';
     let html='';
     const rowOrder=Array.from({length:car.rows},(_,idx)=>idx+1);
-    if(t.dir==='down') rowOrder.reverse();
     for(const r of rowOrder){
       const face=faceOf(r);
       let cells='';
@@ -6920,28 +6913,12 @@ function _renderSeatMap(wrap,t,trainNo,travelDate,seatClass,validCars,booked,com
     return html;
   }
 
-  function facilityHTML(items,side){
-    if(!items?.length) return '';
-    return `<div class="seat-facility-panel ${side}" aria-label="${side==='front'?'차량 앞쪽':'차량 뒤쪽'} 시설">
-      ${items.map(item=>`<span class="seat-facility-item"><b>${item.icon||'•'}</b><small>${item.label}</small></span>`).join('')}
-    </div>`;
-  }
-
   // 현재 호차만 잔여석 계산, 나머지는 클릭 시 계산 (성능 최적화)
   const curRem=calcRem(car);
   const carTabs=validCars.map((c,i)=>`<button class="seat-car-tab${i===_seatCarIdx?' active':''}" onclick="switchSeatCar(${i})">
-      ${i===0?'<em class="seat-car-edge">앞</em>':''}${c.car}호차${i===validCars.length-1?'<em class="seat-car-edge">뒤</em>':''}<br>
+      ${c.car}호차<br>
       <span style="font-size:10px;font-weight:400">${i===_seatCarIdx?curRem+'석':'…'}</span>
     </button>`).join('');
-  const physicalFacilities=car.facilities||{};
-  const frontFacilities=t.dir==='down'?physicalFacilities.end:physicalFacilities.start;
-  const rearFacilities=t.dir==='down'?physicalFacilities.start:physicalFacilities.end;
-  const carNotice=car.notice
-    ? `<div class="seat-car-notice">ⓘ ${car.notice}</div>`
-    : '';
-  const carTags=car.tags?.length
-    ? `<div class="seat-car-tags">${car.tags.map(tag=>`<span>${tag}</span>`).join('')}</div>`
-    : '';
 
   wrap.innerHTML=`
     <div class="seat-header">
@@ -6951,12 +6928,10 @@ function _renderSeatMap(wrap,t,trainNo,travelDate,seatClass,validCars,booked,com
         <div style="font-size:11px;color:var(--text2)">${car.car}호차 · 잔여 ${curRem}석</div>
       </div>
       <button class="seat-info-btn" onclick="openSeatDemandInfo()" aria-label="예매 현황 정보" title="예매 현황 정보">i</button>
+      <button class="seat-facility-btn" onclick="openSeatFacilityInfo()" aria-label="차내 편의시설" title="차내 편의시설">🚻</button>
       <div style="font-size:12px;color:var(--text2);font-family:var(--mono)" id="seat-sel-clock"></div>
     </div>
     <div class="seat-car-tabs">${carTabs}</div>
-    <div class="seat-consist-guide"><b>앞</b><span>${validCars.map(c=>`${c.car}호차`).join(' · ')}</span><b>뒤</b></div>
-    ${carNotice}
-    ${carTags}
     <div class="seat-legend">
       <span class="seat-legend-item"><span class="seat-dot available"></span>선택가능</span>
       <span class="seat-legend-item"><span class="seat-dot selected"></span>선택됨</span>
@@ -6989,11 +6964,7 @@ function _renderSeatMap(wrap,t,trainNo,travelDate,seatClass,validCars,booked,com
     <div class="seat-map">${isFreeCar
       ? `<div class="seatmap"><div class="seatmap-caption" style="margin-top:48px;font-size:13px">🚉 <b>${car.car}호차 · ${car.label||'자유석'}</b><br><br><span style="color:var(--text3)">지정 좌석이 없는 입석·자유석 전용 칸입니다.<br>좌석 선택 없이 예매해 주세요.</span></div></div>`
       : `<div class="seat-layout-shell" aria-label="${car.car}호차 좌석 배치">
-          ${facilityHTML(frontFacilities,'front')}
-          <div class="seat-end-mark front"><b>앞</b><small>${validCars[0]?.car===car.car?'열차 선두':'앞 호차 연결'}</small></div>
           <div class="seatmap-grid pick">${seatHTML()}</div>
-          <div class="seat-end-mark rear"><b>뒤</b><small>${validCars[validCars.length-1]?.car===car.car?'열차 후미':'뒤 호차 연결'}</small></div>
-          ${facilityHTML(rearFacilities,'rear')}
         </div>`}</div>
     <div class="seat-footer">
       <div id="seat-footer-info" style="flex:1;font-size:12px;color:var(--text2)">좌석을 선택해주세요 (${count}명)</div>
@@ -7043,7 +7014,40 @@ window.switchSeatCar=function(idx){
 
 function closeSeatSelector(){
   document.getElementById('seat-demand-info-wrap')?.remove();
+  document.getElementById('seat-facility-info-wrap')?.remove();
   document.getElementById('seat-selector-wrap')?.remove();
+}
+
+function openSeatFacilityInfo(){
+  const seatWrap=document.getElementById('seat-selector-wrap');if(!seatWrap)return;
+  const t=getTrainByNo(seatWrap.dataset.trainNo);if(!t)return;
+  const composition=getCarComposition(getFormationType(t.grade,t.no)).slice().sort((a,b)=>a.car-b.car);
+  const rows=composition.map(car=>{
+    const facilities=[...(car.facilities?.start||[]),...(car.facilities?.end||[])];
+    const names=[...new Set(facilities.map(item=>`${item.icon||'•'} ${item.label}`))];
+    const tags=car.tags||[];
+    const tagIcon=tag=>tag.includes('유아')?'👶':tag.includes('휠체어')?'♿':'•';
+    const contents=[...names,...tags.map(tag=>`${tagIcon(tag)} ${tag}`)];
+    if(car.cafe) contents.push('☕ 카페객차');
+    return `<div class="seat-facility-row">
+      <b>${car.car}호차</b>
+      <div>${contents.length?contents.map(x=>`<span>${x}</span>`).join(''):'<small>별도 편의시설 없음</small>'}</div>
+      ${car.notice?`<p>${car.notice}</p>`:''}
+    </div>`;
+  }).join('');
+  document.getElementById('seat-facility-info-wrap')?.remove();
+  const info=document.createElement('div');
+  info.id='seat-facility-info-wrap';
+  info.innerHTML=`<div class="seat-demand-info-backdrop"></div>
+    <section class="seat-facility-info-card" role="dialog" aria-modal="true" aria-label="차내 편의시설 위치">
+      <div class="seat-demand-info-head"><div><small>${t.grade} ${t.no}</small><b>차내 편의시설 위치</b></div><button aria-label="닫기">✕</button></div>
+      <div class="seat-facility-list">${rows}</div>
+      <p>편성 운용에 따라 실제 설비 위치가 달라질 수 있습니다.</p>
+    </section>`;
+  document.body.appendChild(info);
+  const close=()=>info.remove();
+  info.querySelector('button')?.addEventListener('click',close);
+  info.querySelector('.seat-demand-info-backdrop')?.addEventListener('click',close);
 }
 
 function openSeatDemandInfo(){
@@ -9014,24 +9018,42 @@ function _bookSeatStatus(cong){
   return{label:'혼잡',color:'var(--orange)',bg:'rgba(249,115,22,.08)'};
 }
 function _hydrateBookSeatStatuses(trains,el,dateGo,from,to){
-  const buttons=new Map([...el.querySelectorAll('.book-train-row[data-train-no]')].map(row=>[String(row.dataset.trainNo),row.querySelector('.seat-avail-btn')]));
   const base='min-width:54px;height:44px;border-radius:8px;border:1.5px solid;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;font-family:var(--sans)';
-  let index=0;
-  const run=()=>{
-    const end=Math.min(index+6,trains.length);
-    for(;index<end;index++){
-      const {t,aFrom,aTo}=trains[index],btn=buttons.get(String(t.no));if(!btn)continue;
+  const entries=[...el.querySelectorAll('.book-train-row[data-train-no]:not(.book-xfer-card)')].map((row,index)=>({
+    row,btn:row.querySelector('.seat-avail-btn'),result:trains[index]
+  })).filter(x=>x.btn&&x.result);
+  const hydrate=entry=>{
+    if(entry.btn.dataset.seatHydrated==='1')return;
+    entry.btn.dataset.seatHydrated='1';
+    const {t,aFrom,aTo}=entry.result;
+    const run=()=>{
       const cong=typeof getODCongestion==='function'?getODCongestion(t,aFrom||from,aTo||to,dateGo):null;
       const meta=_bookSeatStatus(cong);
-      btn.textContent=meta.label;
-      btn.style.cssText=`${base};color:${meta.color};border-color:${meta.color};background:${meta.bg}`;
-    }
-    if(index<trains.length){
-      if(window.requestAnimationFrame)window.requestAnimationFrame(run);
-      else window.setTimeout(run,0);
-    }
+      entry.btn.textContent=meta.label;
+      entry.btn.style.cssText=`${base};color:${meta.color};border-color:${meta.color};background:${meta.bg}`;
+    };
+    if(window.requestIdleCallback)window.requestIdleCallback(run,{timeout:700});
+    else window.setTimeout(run,0);
   };
-  run();
+  if('IntersectionObserver' in window){
+    window._bookSeatObserver?.disconnect();
+    const observer=new IntersectionObserver(items=>{
+      items.forEach(item=>{
+        if(!item.isIntersecting)return;
+        const entry=entries.find(x=>x.row===item.target);
+        if(entry)hydrate(entry);
+        observer.unobserve(item.target);
+      });
+    },{root:null,rootMargin:'240px 0px'});
+    window._bookSeatObserver=observer;
+    entries.forEach(entry=>observer.observe(entry.row));
+    window.setTimeout(()=>{
+      if(!el.isConnected||window._bookSeatObserver!==observer)observer.disconnect();
+    },120000);
+  }else{
+    // 구형 브라우저는 앞쪽 결과만 즉시 계산하고 나머지는 짧은 간격으로 분산한다.
+    entries.forEach((entry,index)=>window.setTimeout(()=>hydrate(entry),Math.floor(index/4)*32));
+  }
 }
 
 

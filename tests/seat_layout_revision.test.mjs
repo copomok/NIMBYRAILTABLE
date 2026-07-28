@@ -47,8 +47,8 @@ assert.deepEqual(
 
 assert.deepEqual(
   Array.from(context.getSeatDisplayCars(saemaeul,'general',{dir:'down'}),c=>c.car),
-  [6,5,4,3,2,1],
-  '하행은 높은 호차가 앞이어야 합니다.'
+  [1,2,3,4,5,6],
+  '하행도 낮은 호차부터 표시해야 합니다.'
 );
 assert.deepEqual(
   Array.from(context.getSeatDisplayCars(saemaeul,'general',{dir:'up'}),c=>c.car),
@@ -58,6 +58,10 @@ assert.deepEqual(
 
 assert.ok(css.includes('@media (min-width:900px)'),'PC 가로 좌석 배치 반응형 규칙이 누락되었습니다.');
 assert.ok(css.includes('.seat-layout-shell .seatmap-grid.pick'),'PC 좌우 좌석 배치 규칙이 누락되었습니다.');
-assert.ok(source.includes("if(t.dir==='down') rowOrder.reverse()"),'하행 차량 내부 좌석 순서 반전이 누락되었습니다.');
+assert.ok(!source.includes("if(t.dir==='down') rowOrder.reverse()"),'하행 좌석 배치를 별도로 뒤집으면 안 됩니다.');
+assert.ok(source.includes('function openSeatFacilityInfo()'),'편의시설 전용 정보창이 누락되었습니다.');
+assert.ok(!source.includes('seat-consist-guide'),'불필요한 앞·뒤 전체 호차 안내가 남아 있습니다.');
+assert.ok(!source.includes('seat-end-mark'),'좌석 배치 안에 선두·후두 표시가 남아 있습니다.');
+assert.ok(source.includes("if(r===1) return `win ${side}`"),'2열 공유 창의 1열 단독 창 규칙이 누락되었습니다.');
 
-console.log('seat layout revision: ITX-새마을·ITX-마음·무궁화 실제 배치 및 운행 방향 검증 완료');
+console.log('seat layout revision: 실제 배치·호차 오름차순·시설 분리·창문 규칙 검증 완료');

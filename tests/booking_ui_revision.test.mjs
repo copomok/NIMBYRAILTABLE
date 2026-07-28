@@ -9,6 +9,8 @@ for(const label of ['여유','보통','혼잡'])assert.ok(source.includes(`label
 assert.ok(!source.includes("btn.textContent=available===1?'1석'"),'검색 결과에 잔여 좌석 수를 직접 표시하면 안 됩니다.');
 assert.ok(source.includes('function _hydrateBookSeatStatuses'),'좌석 상태 점진 표출 함수가 누락되었습니다.');
 assert.ok(source.includes("getODCongestion(t,aFrom||from,aTo||to,dateGo)"),'검색 결과는 조회 구간 공통 재고를 사용해야 합니다.');
+assert.ok(source.includes("if('IntersectionObserver' in window)"),'화면 밖 열차의 재고 계산을 미루는 최적화가 누락되었습니다.');
+assert.ok(source.includes('window.requestIdleCallback'),'좌석 상태 계산은 유휴 시간에 처리해야 합니다.');
 
 assert.ok(source.includes('const initialPassengerCount=Math.max(1,Math.min(6,Number(window._bookingPassengerCount)||1))'),'조회 인원을 예매 팝업에 이어야 합니다.');
 assert.ok(source.includes('<span id="booking-passenger-count">${initialPassengerCount}</span>'),'예매 인원 초기 표시가 조회 인원을 사용해야 합니다.');
