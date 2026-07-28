@@ -5277,6 +5277,7 @@ function genTicketId(){
 function openBookingPopup(trainNo, fromStn, toStn, depTime, arrTime, travelDate){
   const t=getTrainByNo(trainNo);
   if(!t){alert('열차 정보를 찾을 수 없습니다.');return;}
+  const initialPassengerCount=Math.max(1,Math.min(6,Number(window._bookingPassengerCount)||1));
   // book-detail-backdrop(z-index:9900)이 booking popup(z-index:9400)을 가리는 것 방지
   document.getElementById('book-detail-wrap')?.remove();
   const classes=availableSeatClasses(t.grade);
@@ -5335,7 +5336,7 @@ function openBookingPopup(trainNo, fromStn, toStn, depTime, arrTime, travelDate)
           <div class="booking-section-label">인원</div>
           <div class="booking-passenger-control">
             <button class="booking-stepper-btn" id="booking-stepper-minus">−</button>
-            <span id="booking-passenger-count">1</span>
+            <span id="booking-passenger-count">${initialPassengerCount}</span>
             <button class="booking-stepper-btn" id="booking-stepper-plus">+</button>
           </div>
         </div>
@@ -5380,7 +5381,7 @@ function openBookingPopup(trainNo, fromStn, toStn, depTime, arrTime, travelDate)
     obs.observe(document.body,{childList:true});
   })();
   window._bookingSeatClass=null;
-  window._bookingPassengerCount=1;
+  window._bookingPassengerCount=initialPassengerCount;
   window._bookingDiscount='none';
 }
 function selectDiscount(btn,key){
@@ -6780,6 +6781,10 @@ function openSeatSelector(trainNo, travelDate, seatClass){
   const wrap=document.createElement('div');
   wrap.id='seat-selector-wrap';
   wrap.dataset.trainNo=trainNo; wrap.dataset.travelDate=travelDate; wrap.dataset.seatClass=seatClass;
+  const xLeg=window._xferSeatCtx&&window._xfer?.legs?.[window._xferSeatCtx.legIdx];
+  const direct=window._bArgs&&String(window._bArgs.trainNo)===String(trainNo)?window._bArgs:null;
+  wrap.dataset.from=xLeg?.from||direct?.fromStn||t.stops?.[0]?.s||'';
+  wrap.dataset.to=xLeg?.to||direct?.toStn||t.stops?.[t.stops.length-1]?.s||'';
   wrap.style.cssText='position:fixed;inset:0;z-index:9500;display:flex;flex-direction:column;background:var(--bg)';
   document.body.appendChild(wrap);
   _renderSeatMap(wrap,t,trainNo,travelDate,seatClass,validCars,getBookedSeats(trainNo,travelDate,null,null,seatClass),composition);
@@ -6858,6 +6863,7 @@ function _renderSeatMap(wrap,t,trainNo,travelDate,seatClass,validCars,booked,com
         <div style="font-size:14px;font-weight:700">${t.grade} ${trainNo}</div>
         <div style="font-size:11px;color:var(--text2)">${car.car}호차 · 잔여 ${curRem}석</div>
       </div>
+      <button class="seat-info-btn" onclick="openSeatDemandInfo()" aria-label="예매 현황 정보" title="예매 현황 정보">i</button>
       <div style="font-size:12px;color:var(--text2);font-family:var(--mono)" id="seat-sel-clock"></div>
     </div>
     <div class="seat-car-tabs">${carTabs}</div>
@@ -6940,7 +6946,44 @@ window.switchSeatCar=function(idx){
 };
 
 function closeSeatSelector(){
+  document.getElementById('seat-demand-info-wrap')?.remove();
   document.getElementById('seat-selector-wrap')?.remove();
+}
+
+function openSeatDemandInfo(){
+  const seatWrap=document.getElementById('seat-selector-wrap');if(!seatWrap)return;
+  const t=getTrainByNo(seatWrap.dataset.trainNo),date=seatWrap.dataset.travelDate;
+  if(!t)return;
+  const from=seatWrap.dataset.from,to=seatWrap.dataset.to;
+  const inventory=typeof getTrainInventorySnapshot==='function'?getTrainInventorySnapshot(t,date):null;
+  const cong=typeof getODCongestion==='function'?getODCongestion(t,from,to,date):null;
+  if(!inventory)return;
+  let busiest='-';
+  if(inventory.segmentLoads?.length){
+    let max=-1,index=0;
+    inventory.segmentLoads.forEach((value,i)=>{if(value>max){max=value;index=i;}});
+    busiest=`${inventory.stops[index]} → ${inventory.stops[index+1]} · ${Math.round(max/Math.max(1,inventory.capacity.total)*100)}%`;
+  }
+  const status=_bookSeatStatus(cong);
+  document.getElementById('seat-demand-info-wrap')?.remove();
+  const info=document.createElement('div');
+  info.id='seat-demand-info-wrap';
+  info.innerHTML=`<div class="seat-demand-info-backdrop"></div>
+    <section class="seat-demand-info-card" role="dialog" aria-modal="true" aria-label="예매 현황">
+      <div class="seat-demand-info-head"><div><small>${from} → ${to}</small><b>예매 현황</b></div><button aria-label="닫기">✕</button></div>
+      <div class="seat-demand-info-grid">
+        <div><span>총 좌석</span><b>${inventory.capacity.total}석</b></div>
+        <div><span>조회 구간 현재 예약</span><b>${cong?.booked||0}명</b></div>
+        <div><span>조회 구간 상태</span><b style="color:${status.color}">${status.label}</b></div>
+        <div><span>예상 최종 예매율</span><b>${Math.round((inventory.expectedFinalRate||0)*100)}%</b></div>
+      </div>
+      <div class="seat-demand-info-busiest"><span>가장 혼잡한 구간</span><b>${busiest}</b></div>
+      <p>수요·예약 시점·취소표를 반영한 시뮬레이션 정보이며 실제 예매 상황에 따라 달라질 수 있습니다.</p>
+    </section>`;
+  document.body.appendChild(info);
+  const close=()=>info.remove();
+  info.querySelector('button')?.addEventListener('click',close);
+  info.querySelector('.seat-demand-info-backdrop')?.addEventListener('click',close);
 }
 
 function confirmSeatSelection(){
@@ -8862,22 +8905,37 @@ function searchBookTrains(includeTransfer, includeAdj){
     });
   });
 
-  // 좌석 가용 버튼 비동기 업데이트
-  setTimeout(()=>{
-    trains.forEach(({t,aFrom,aTo})=>{
-      const ft=getFormationType(t.grade,t.no);
-      const comp=getCarComposition(ft);
-      const cong=getCongestionLevel(t.no,dateGo,comp,aFrom||from,aTo||to);
-      const row=el.querySelector(`[data-train-no="${t.no}"]`);
-      const btn=row?.querySelector('.seat-avail-btn');
-      if(!btn)return;
-      const r=cong.rate||0,available=cong.available||0;
-      const base='min-width:54px;height:44px;border-radius:8px;border:1.5px solid;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;font-family:var(--sans)';
-      if(available<=0){btn.textContent='매진';btn.style.cssText=base+';color:var(--red);border-color:var(--red);background:rgba(248,81,73,.08)';}
-      else if(available<=8){btn.textContent=available===1?'1석':`잔여 ${available}석`;btn.style.cssText=base+';color:var(--orange);border-color:var(--orange);background:rgba(249,115,22,.08);font-size:10px';}
-      else{btn.textContent=`여유 ${available}석`;btn.style.cssText=base+';color:var(--green);border-color:var(--green);background:rgba(63,185,80,.08);font-size:10px';}
-    });
-  },0);
+  // 조회 구간 공통 재고만 먼저 계산하고 앞쪽 결과부터 표출한다.
+  // 좌석 등급별 상세 계산은 좌석 선택 시점까지 미뤄 초기 검색을 가볍게 유지한다.
+  _hydrateBookSeatStatuses(trains,el,dateGo,from,to);
+}
+
+function _bookSeatStatus(cong){
+  const rate=Math.max(0,Number(cong?.rate)||0),available=Math.max(0,Number(cong?.available)||0);
+  if(available<=0||rate>=1)return{label:'매진',color:'var(--red)',bg:'rgba(248,81,73,.08)'};
+  if(rate<=.55)return{label:'여유',color:'var(--green)',bg:'rgba(63,185,80,.08)'};
+  if(rate<=.75)return{label:'보통',color:'var(--accent2)',bg:'rgba(56,139,253,.08)'};
+  return{label:'혼잡',color:'var(--orange)',bg:'rgba(249,115,22,.08)'};
+}
+function _hydrateBookSeatStatuses(trains,el,dateGo,from,to){
+  const buttons=new Map([...el.querySelectorAll('.book-train-row[data-train-no]')].map(row=>[String(row.dataset.trainNo),row.querySelector('.seat-avail-btn')]));
+  const base='min-width:54px;height:44px;border-radius:8px;border:1.5px solid;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;font-family:var(--sans)';
+  let index=0;
+  const run=()=>{
+    const end=Math.min(index+6,trains.length);
+    for(;index<end;index++){
+      const {t,aFrom,aTo}=trains[index],btn=buttons.get(String(t.no));if(!btn)continue;
+      const cong=typeof getODCongestion==='function'?getODCongestion(t,aFrom||from,aTo||to,dateGo):null;
+      const meta=_bookSeatStatus(cong);
+      btn.textContent=meta.label;
+      btn.style.cssText=`${base};color:${meta.color};border-color:${meta.color};background:${meta.bg}`;
+    }
+    if(index<trains.length){
+      if(window.requestAnimationFrame)window.requestAnimationFrame(run);
+      else window.setTimeout(run,0);
+    }
+  };
+  run();
 }
 
 
@@ -8885,10 +8943,6 @@ function searchBookTrains(includeTransfer, includeAdj){
 function openBookTrainDetail(trainNo, from, to, depT, arrT, travelDate){
   const t = getTrainByNo(trainNo);
   if(!t) return;
-  const inventory=typeof getTrainInventorySnapshot==='function'?getTrainInventorySnapshot(t,travelDate):null;
-  const odCong=typeof getCongestionLevel==='function'?getCongestionLevel(t.no,travelDate,null,from,to):null;
-  let busiest='';
-  if(inventory?.segmentLoads?.length){const max=Math.max(...inventory.segmentLoads),i=inventory.segmentLoads.indexOf(max);busiest=`${inventory.stops[i]}→${inventory.stops[i+1]} ${Math.round(max/Math.max(1,inventory.capacity.total)*100)}%`;}
 
   const old = document.getElementById('book-detail-wrap');
   if(old) old.remove();
@@ -8896,8 +8950,7 @@ function openBookTrainDetail(trainNo, from, to, depT, arrT, travelDate){
   // 매진 여부 판정 (예매 탭 매진 열차 전용 여석 알림)
   let soldOut=false;
   try{
-    const _comp=getCarComposition(getFormationType(t.grade,t.no));
-    soldOut=(getCongestionLevel(t.no,travelDate,_comp,from,to).available||0)<=0;
+    soldOut=(getODCongestion(t,from,to,travelDate)?.available||0)<=0;
   }catch(e){}
 
   const fare = calcFare(t, from, to, 'general');
@@ -8939,13 +8992,6 @@ function openBookTrainDetail(trainNo, from, to, depT, arrT, travelDate){
       </div>
       <div class="book-detail-scroll" style="padding:0 20px">
         <div class="book-detail-fares">${fareSpec}</div>
-        ${inventory?`<div class="book-detail-fares" style="margin-top:10px">
-          <div class="book-detail-fare-row"><span>총 좌석</span><b>${inventory.capacity.total}석</b></div>
-          <div class="book-detail-fare-row"><span>조회 구간 현재 예약</span><b>${odCong?.booked||0}명</b></div>
-          <div class="book-detail-fare-row"><span>조회 구간 잔여석</span><b style="color:${(odCong?.available||0)<=8?'var(--orange)':'var(--green)'}">${odCong?.available||0}석</b></div>
-          <div class="book-detail-fare-row"><span>예상 최종 예약률</span><b>${Math.round((inventory.expectedFinalRate||0)*100)}%</b></div>
-          <div class="book-detail-fare-row"><span>가장 혼잡한 구간</span><b>${busiest||'-'}</b></div>
-        </div>`:''}
       </div>
       <div style="flex-shrink:0;padding:8px 20px 32px;display:flex;gap:8px">
         <button class="btn" id="bdd-detail-btn" style="flex:1;justify-content:center;font-size:13px">🔍 열차 상세</button>
@@ -9411,20 +9457,27 @@ function _metroPatSeq(l,p){
   return seq.filter(x=>!x.gap).length>=2?seq:null;
 }
 function setMetroPat(p){_metroPatSel=p;renderMetroLinesTab();}
-function _metroAllRouteRows(l){
+function _metroRouteGroups(l){
   const routes=(l.routes&&l.routes.length?l.routes:[{stations:l.stations||[]}]).filter(r=>r.stations&&r.stations.length);
-  if(routes.length<=1){const names=routes[0]?.stations||l.stations||[];return names.map((n,i)=>({n,stop:true,route:0,routeStart:i===0,routeEnd:i===names.length-1}));}
+  if(!routes.length)return[];
   const primary=routes.find(r=>r.stations.length===(l.stations||[]).length&&r.stations.every((n,i)=>n===l.stations[i]))||routes[0];
-  const ordered=[primary,...routes.filter(r=>r!==primary)], mainSet=new Set(primary.stations), rows=[];
-  ordered.forEach((route,routeIndex)=>{
-    if(routeIndex){
-      const junctions=route.stations.filter(n=>mainSet.has(n));
-      const label=junctions.length?`${junctions[0]} 분기 · 지선`:'별도 지선';
-      rows.push({gap:true,label,route:routeIndex});
-    }
-    route.stations.forEach((n,i)=>rows.push({n,stop:true,route:routeIndex,branch:routeIndex>0,routeStart:i===0,routeEnd:i===route.stations.length-1}));
+  const ordered=[primary,...routes.filter(r=>r!==primary)], mainSet=new Set(primary.stations);
+  return ordered.map((route,routeIndex)=>{
+    const junctions=routeIndex?route.stations.filter(n=>mainSet.has(n)):[];
+    const start=route.stations[0],end=route.stations[route.stations.length-1];
+    return{
+      route:routeIndex,
+      branch:routeIndex>0,
+      label:routeIndex?(junctions.length?`${junctions[0]} 분기 · ${end} 방면`:`별도 운행계통 · ${start}–${end}`):'본선',
+      rows:route.stations.map((n,i)=>({n,stop:true,route:routeIndex,branch:routeIndex>0,routeStart:i===0,routeEnd:i===route.stations.length-1}))
+    };
   });
-  return rows;
+}
+function _metroRouteGroupsHTML(l,groups,live){
+  return groups.map((group,index)=>`<section class="mtl-route-group${group.branch?' branch':''}">
+    ${index?`<div class="mtl-route-group-head"><span style="background:${l.color}"></span><b>${_opsEsc(group.label)}</b></div>`:''}
+    ${live?_renderMetroLiveTimeline(l,group.rows):_metroStaticTLHTML(l,group.rows)}
+  </section>`).join('');
 }
 function renderMetroLinesTab(){
   const el=document.getElementById('result-metrolines');
@@ -9485,7 +9538,8 @@ function _renderMetroLineDetail(el,id){
   if(_metroPatSel&&!l.patterns.includes(_metroPatSel))_metroPatSel=null;
   const patSeq=_metroPatSel?_metroPatSeq(l,_metroPatSel):null;
   if(_metroPatSel&&!patSeq)_metroPatSel=null;
-  const rows=patSeq||_metroAllRouteRows(l);
+  const groups=patSeq?[{route:0,branch:false,label:_metroPatSel,rows:patSeq}]:_metroRouteGroups(l);
+  const rows=groups.flatMap(group=>group.rows);
   const stopRows=rows.filter(x=>!x.gap&&x.stop), passN=rows.filter(x=>!x.gap&&!x.stop).length;
   const patInfo=patSeq?`<div style="margin:10px 2px 0;font-size:12px;color:var(--text2)"><b style="color:var(--text1)">${_metroPatSel}</b> · ${stopRows[0].n} ↔ ${stopRows[stopRows.length-1].n} · 정차 <b>${stopRows.length}</b>역${passN?` · 통과 ${passN}역 <span style="color:var(--text3)">(음영)</span>`:''}</div>`:'';
   el.innerHTML=`
@@ -9518,7 +9572,7 @@ function _renderMetroLineDetail(el,id){
         <button class="mtl-live-refresh" onclick="openMetroLineDetail('${l.id}')" title="새로고침">↻</button>`:''}
       </div>
       ${_metroLiveOn?`<div class="mtl-live-legend"><span class="mtl-live-lg down">◀ 하행 <small>기점→종점</small></span><span class="mtl-live-lg up">상행 <small>종점→기점</small> ▶</span></div>`:''}
-      ${_metroLiveOn?_renderMetroLiveTimeline(l,rows):_metroStaticTLHTML(l,rows)}
+      ${_metroRouteGroupsHTML(l,groups,_metroLiveOn)}
     </div>`;
   if(!_metroLiveOn)_placeMetroLiveMarkers(el, l.name);
   window.scrollTo(0,0);

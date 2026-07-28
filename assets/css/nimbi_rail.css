@@ -1286,6 +1286,28 @@ tbody td{padding:10px 14px;font-size:13px;white-space:nowrap}
   background:var(--bg3);color:var(--text1);font-size:16px;cursor:pointer;
 }
 .seat-header-info{flex:1}
+.seat-info-btn{
+  width:30px;height:30px;border-radius:50%;border:1.5px solid var(--accent);
+  background:rgba(56,139,253,.1);color:var(--accent2);font:800 15px/1 var(--sans);
+  cursor:pointer;flex-shrink:0;
+}
+.seat-demand-info-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.62);backdrop-filter:blur(2px)}
+#seat-demand-info-wrap{position:fixed;inset:0;z-index:10030;display:flex;align-items:center;justify-content:center;padding:18px}
+.seat-demand-info-card{position:relative;width:min(420px,100%);background:var(--bg2);border:1px solid var(--border);border-radius:16px;padding:18px;box-shadow:0 20px 60px rgba(0,0,0,.55)}
+.seat-demand-info-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+.seat-demand-info-head>div{display:flex;flex-direction:column;gap:2px}
+.seat-demand-info-head small{color:var(--text3);font-size:11px}
+.seat-demand-info-head b{font-size:17px;color:var(--text1)}
+.seat-demand-info-head button{width:30px;height:30px;border-radius:9px;border:1px solid var(--border);background:var(--bg3);color:var(--text1);cursor:pointer}
+.seat-demand-info-grid{display:grid;grid-template-columns:1fr 1fr;border:1px solid var(--border);border-radius:12px;overflow:hidden}
+.seat-demand-info-grid>div{display:flex;flex-direction:column;gap:5px;padding:12px;border-bottom:1px solid var(--border)}
+.seat-demand-info-grid>div:nth-child(odd){border-right:1px solid var(--border)}
+.seat-demand-info-grid>div:nth-last-child(-n+2){border-bottom:none}
+.seat-demand-info-grid span,.seat-demand-info-busiest span{font-size:11px;color:var(--text3)}
+.seat-demand-info-grid b{font-size:15px;color:var(--text1)}
+.seat-demand-info-busiest{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-top:10px;padding:11px 12px;border-radius:10px;background:var(--bg3)}
+.seat-demand-info-busiest b{font-size:12px;text-align:right;color:var(--text1)}
+.seat-demand-info-card p{margin:11px 2px 0;color:var(--text3);font-size:10.5px;line-height:1.55}
 .seat-car-tabs{
   display:flex;gap:0;overflow-x:auto;scrollbar-width:none;
   background:var(--bg2);border-bottom:1px solid var(--border);flex-shrink:0;
@@ -1534,6 +1556,11 @@ button, select, input[type=range],
 .mtl-live.up{left:calc(9px + var(--lane) + 13px);transform:translate(-100%,-50%);max-width:var(--lane);justify-content:flex-end}
 .mtl-live.up .mtl-live-dest{background:#d9782f}
 .mtl-live-dest .mtb-exp,.mtl-ltl-train .mtb-exp{font-size:8px;line-height:1.2;padding:0 2px;margin:0 0 0 3px;color:#fff;border-color:rgba(255,255,255,.82);vertical-align:0;flex-shrink:0}
+.mtl-route-group{margin-top:2px}
+.mtl-route-group.branch{margin-top:14px;padding-top:12px;border-top:1px solid var(--border)}
+.mtl-route-group-head{display:flex;align-items:center;gap:7px;margin:0 3px 8px;color:var(--text2);font-size:11.5px}
+.mtl-route-group-head span{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.mtl-route-group-head b{font-weight:800}
 /* 🛤️ 배선도(간이 복선 + 승강장 + 화살표 열차) */
 .msch-popup{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);z-index:10001;width:min(340px,94vw);max-height:90vh;display:flex;flex-direction:column;background:var(--bg2);border:1px solid var(--border);border-top:3px solid var(--mc);border-radius:16px;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.5)}
 .msch-head{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:13px 15px;border-bottom:1px solid var(--border);font-size:14.5px;font-weight:700;color:var(--text1);flex-shrink:0}
@@ -1959,7 +1986,7 @@ button, select, input[type=range],
 .mtb2-train{display:flex;align-items:baseline;gap:6px;min-width:0}
 .mtb2-dest{flex:1;min-width:0;font-size:12px;font-weight:700;color:var(--text2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .mtb-exp{display:inline-block;font-size:9.5px;font-weight:800;color:#ff4d4f;border:1px solid #ff4d4f;border-radius:4px;padding:0 3px;margin-right:4px;vertical-align:1px;line-height:1.35}
-.mtb-exp--t{color:#9254de;border-color:#9254de}
+.mtb-exp--t{color:#ff4d4f;border-color:#ff4d4f}
 .mtb2-rel{font-family:var(--mono);font-weight:800;font-size:13px;color:var(--text3);font-variant-numeric:tabular-nums;flex-shrink:0}
 .mtb2-train--now .mtb2-dest{color:var(--text1)}
 .mtb2-train--now .mtb2-rel{color:var(--mc)}

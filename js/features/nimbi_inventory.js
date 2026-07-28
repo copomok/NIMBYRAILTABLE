@@ -1,8 +1,11 @@
 (function(g){
   const cache=new Map,D=()=>g.NIMBI_Demand,B=()=>g.NIMBI_BookingDynamics;
   const find=(stops,from,to)=>{const a=stops.indexOf(from),b=stops.indexOf(to);return a>=0&&b>a?[a,b]:null;};
-  const add=(loads,a,b,count,capacity)=>{const room=Math.min(...loads.slice(a,b).map(x=>capacity-x)),n=Math.max(0,Math.min(Math.floor(count),room));for(let i=a;i<b;i++)loads[i]+=n;return n;};
-  const ticketSig=(no,date)=>{try{return(g.loadTickets?.()||[]).filter(x=>String(x.trainNo)===String(no)&&x.travelDate===date&&x.status==='active').map(x=>x.id+':'+x.passengerCount).sort().join('|');}catch(e){return'';}};
+  let ticketCache=null,ticketCacheAt=0;
+  const tickets=()=>{const now=Date.now();if(ticketCache&&now-ticketCacheAt<80)return ticketCache;try{ticketCache=g.loadTickets?.()||[];}catch(e){ticketCache=[];}ticketCacheAt=now;return ticketCache;};
+  const add=(loads,a,b,count,capacity)=>{let room=capacity;for(let i=a;i<b;i++)room=Math.min(room,capacity-loads[i]);const n=Math.max(0,Math.min(Math.floor(count),room));for(let i=a;i<b;i++)loads[i]+=n;return n;};
+  const rangeMax=(values,a,b)=>{let max=0;for(let i=a;i<b;i++)if(values[i]>max)max=values[i];return max;};
+  const ticketSig=(no,date)=>{try{return tickets().filter(x=>String(x.trainNo)===String(no)&&x.travelDate===date&&x.status==='active').map(x=>x.id+':'+x.passengerCount).sort().join('|');}catch(e){return'';}};
   const classKey=x=>x==='special'||x==='premium'?'premium':x==='standing'?'standing':'standard';
   function classCapacity(cap,cls){if(!cls)return cap.total;return cls==='special'||cls==='premium'?cap.premium:cls==='standing'?cap.standing:cap.standard;}
 
@@ -14,7 +17,7 @@
     const segmentLoads=Array(length).fill(0),userLoads=Array(length).fill(0);
     const userClassLoads={standard:Array(length).fill(0),premium:Array(length).fill(0),standing:Array(length).fill(0)};
     const userBookings=[],seen=new Set;
-    for(const ticket of g.loadTickets?.()||[]){
+    for(const ticket of tickets()){
       if(String(ticket.trainNo)!==String(train.no)||ticket.travelDate!==date||ticket.status!=='active'||seen.has(ticket.id))continue;
       seen.add(ticket.id);const od=find(stops,ticket.fromStn,ticket.toStn);if(!od)continue;
       const count=Math.max(1,+ticket.passengerCount||ticket.seats?.length||1),standing=ticket.seatClass==='standing';
@@ -41,7 +44,7 @@
   function classState(train,from,to,date,seatClass='general',now){
     const s=snapshot(train,date,now),od=s&&find(s.stops,from,to);if(!s||!od)return{capacity:0,booked:0,simulatedBooked:0,userBooked:0,available:0};
     const cap=classCapacity(s.capacity,seatClass);
-    if(!seatClass)return{capacity:s.capacity.total,booked:Math.max(0,...s.segmentLoads.slice(od[0],od[1])),simulatedBooked:0,userBooked:0,available:Math.max(0,s.capacity.total-Math.max(0,...s.segmentLoads.slice(od[0],od[1])))};
+    if(!seatClass){const booked=rangeMax(s.segmentLoads,od[0],od[1]);return{capacity:s.capacity.total,booked,simulatedBooked:0,userBooked:0,available:Math.max(0,s.capacity.total-booked)};}
     if(cap<=0)return{capacity:0,booked:0,simulatedBooked:0,userBooked:0,available:0};
     const kind=classKey(seatClass),used=[];
     const user=[];
@@ -50,11 +53,11 @@
     return{capacity:cap,booked,simulatedBooked:Math.max(0,booked-userBooked),userBooked,available:Math.max(0,cap-booked)};
   }
   function congestion(train,from,to,date,now){
-    const s=snapshot(train,date,now);if(!s)return null;const od=find(s.stops,from,to),loads=od?s.onboardLoads.slice(od[0],od[1]):s.onboardLoads,booked=Math.max(0,...loads),rate=booked/Math.max(1,s.capacity.total),percent=Math.round(rate*100);
+    const s=snapshot(train,date,now);if(!s)return null;const od=find(s.stops,from,to),booked=od?rangeMax(s.onboardLoads,od[0],od[1]):rangeMax(s.onboardLoads,0,s.onboardLoads.length),rate=booked/Math.max(1,s.capacity.total),percent=Math.round(rate*100);
     const level=percent<=30?'매우 여유':percent<=55?'여유':percent<=75?'보통':percent<=90?'혼잡':percent<100?'매우 혼잡':'매진';
     return{rate,loadFactor:rate,percent,level,label:level,booked,capacity:s.capacity.total,available:Math.max(0,s.capacity.total-booked)};
   }
-  function invalidate(no,date){for(const k of cache.keys())if((!no||k.startsWith(no+'|'))&&(!date||k.includes('|'+date+'|')))cache.delete(k);}
+  function invalidate(no,date){ticketCache=null;ticketCacheAt=0;for(const k of cache.keys())if((!no||k.startsWith(no+'|'))&&(!date||k.includes('|'+date+'|')))cache.delete(k);}
   const addBookingToInventory=(train,from,to,count,date,seatClass)=>{const ok=available(train,from,to,date,seatClass)>=count;if(ok)invalidate(train?.no||train,date);return ok;};
   const removeBookingFromInventory=(train,from,to,count,date)=>{invalidate(train?.no||train,date);return true;};
   g.NIMBI_Inventory={getTrainInventorySnapshot:snapshot,getSegmentLoads:(t,d,n)=>snapshot(t,d,n)?.segmentLoads||[],getAvailableSeats:available,getSeatInventoryState:classState,canBookOD:(t,a,b,n,d,c,z)=>available(t,a,b,d,c,z)>=n,addBookingToInventory,removeBookingFromInventory,getCongestion:congestion,getODCongestion:congestion,invalidate,segmentsOverlap:(a,b,c,d)=>a<d&&c<b};
