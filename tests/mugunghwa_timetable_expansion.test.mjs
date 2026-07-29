@@ -145,6 +145,41 @@ test('각 계통 첫 운행과 배차 간격이 명세 범위 안이다',()=>{
   }
 });
 
+test('광주–무주 1436·1438·1503은 균등 배차하며 구간 중 추월하지 않는다',()=>{
+  const serviceNumbers=['1436','1438','1503'];
+  const services=serviceNumbers.map(no=>trains.find(train=>train.no===no));
+  assert.ok(services.every(Boolean),'광주–무주 검증 대상 열차가 모두 존재해야 합니다.');
+
+  const corridor=['광주','고서','옥과','곡성','남원','보절','남산서','장수(전북)','장계','계북','남무주','무주'];
+  const timesByTrain=services.map(train=>{
+    const times=new Map(absoluteStops(train).map(stop=>[
+      stop.s,
+      stop.depMinute??stop.arrMinute
+    ]));
+    return corridor.map(station=>{
+      const value=times.get(station);
+      assert.ok(Number.isFinite(value),`${train.no} ${station}: 검증 시각이 없습니다.`);
+      return value;
+    });
+  });
+
+  for(let stationIndex=0;stationIndex<corridor.length;stationIndex++){
+    const firstGap=timesByTrain[1][stationIndex]-timesByTrain[0][stationIndex];
+    const secondGap=timesByTrain[2][stationIndex]-timesByTrain[1][stationIndex];
+    assert.ok(firstGap>=85&&firstGap<=95,`${corridor[stationIndex]}: 1436→1438 간격 ${firstGap}분`);
+    assert.ok(secondGap>=85&&secondGap<=100,`${corridor[stationIndex]}: 1438→1503 간격 ${secondGap}분`);
+    assert.ok(Math.abs(firstGap-secondGap)<=10,`${corridor[stationIndex]}: 앞뒤 배차가 불균형합니다.`);
+  }
+
+  for(let serviceIndex=0;serviceIndex<services.length-1;serviceIndex++){
+    for(let stationIndex=1;stationIndex<corridor.length;stationIndex++){
+      const previousGap=timesByTrain[serviceIndex+1][stationIndex-1]-timesByTrain[serviceIndex][stationIndex-1];
+      const currentGap=timesByTrain[serviceIndex+1][stationIndex]-timesByTrain[serviceIndex][stationIndex];
+      assert.ok(previousGap>0&&currentGap>0,`${services[serviceIndex].no}/${services[serviceIndex+1].no}: ${corridor[stationIndex-1]}–${corridor[stationIndex]}에서 운행 순서가 뒤집힙니다.`);
+    }
+  }
+});
+
 test('인게임 승강장과 동명이역 구분이 열차 데이터에 반영된다',()=>{
   for(const train of newTrains){
     assert.ok(realPlat[train.no],`${train.no}: 인게임 승강장 정보가 없습니다.`);
