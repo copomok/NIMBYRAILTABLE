@@ -3167,7 +3167,7 @@ const GRADE_COLORS = {
 };
 
 // 노선명 → MAP_LINES 키, 노선별 인접역 쌍 캐시 (구간 소속 판별용)
-const _lineNameToKey={'경부선':'gyeongbu','경부고속선':'gyeongbuhs','호남고속선':'honamhs','호남선':'honam','전라선':'jeolla','중앙선':'jungang','동해선':'donghae','영동선':'yeongdong','강릉선':'gangreung','중부내륙선':'jungnaelyuk','경전선':'gyeongjeon','제주선':'jeju','충북선':'chungbuk','장항선':'janghang','남부내륙선':'nambunaelyuk','서산선':'seosan','태안선':'taean','경강선':'seogang','소백선':'sobaek','경북선':'gyeongbuk','태백선':'taebaek','정선선':'jeongseon'};
+const _lineNameToKey={'경부선':'gyeongbu','경부고속선':'gyeongbuhs','호남고속선':'honamhs','호남선':'honam','전라선':'jeolla','중앙선':'jungang','동해선':'donghae','영동선':'yeongdong','강릉선':'gangreung','중부내륙선':'jungnaelyuk','경전선':'gyeongjeon','제주선':'jeju','충북선':'chungbuk','장항선':'janghang','남부내륙선':'nambunaelyuk','서산선':'seosan','태안선':'taean','경강선':'seogang','소백선':'sobaek','경북선':'gyeongbuk','태백선':'taebaek','정선선':'jeongseon','밀양선':'miryang','세종세천선':'sejongsecheon'};
 const _mapEdgeCache={};
 function _mapLineEdgeSet(key){
   if(_mapEdgeCache[key])return _mapEdgeCache[key];
@@ -3987,6 +3987,35 @@ jeongseon:{
     {n:'정선',x:600,y:174},
     {n:'화암',x:632,y:195},
     {n:'사북',x:635,y:221}
+    ]}
+  ]
+},
+
+miryang:{
+  name:'밀양선', color:'#a16207',
+  routes:[
+    {color:'#a16207', stations:[
+    {n:'남대구',x:567,y:635},
+    {n:'가창',x:589,y:643},
+    {n:'청도',x:615,y:683},
+    {n:'밀양',x:611,y:721},
+    {n:'삼랑진',x:628,y:752},
+    {n:'물금',x:667,y:778},
+    {n:'북부산',x:699,y:792}
+    ]}
+  ]
+},
+
+sejongsecheon:{
+  name:'세종세천선', color:'#8b5cf6',
+  routes:[
+    {color:'#8b5cf6', stations:[
+    {n:'천안',x:239,y:342},
+    {n:'조치원',x:276,y:414},
+    {n:'세종',x:268,y:441},
+    {n:'판암',x:312,y:487},
+    {n:'서대전',x:300,y:493},
+    {n:'대전',x:307,y:482}
     ]}
   ]
 },
@@ -9980,10 +10009,28 @@ function _gradeMatchesPlatform(trainGrade, platformGrades){
 
 // ── 실사용 승강장 (게임 DB 기반, data/nimbi_realplat.js) ──
 // trainName: 역 접미사 없는 역 이름 (REAL_PLAT 키). name: STATION_DB/PLATFORM_DB 키(역 포함).
+if(typeof PLATFORM_DB!=='undefined'){
+  if(!PLATFORM_DB['장수(전북)역']){
+    PLATFORM_DB['장수(전북)역']={
+      1:{g:['무궁화호'],l:['소백선']},
+      2:{g:[],l:[]},
+      3:{g:[],l:[]},
+      4:{g:['무궁화호'],l:['소백선']}
+    };
+  }
+  if(!PLATFORM_DB['북평(정선)역']){
+    PLATFORM_DB['북평(정선)역']={
+      1:{g:['무궁화호'],l:['정선선']},
+      2:{g:['무궁화호'],l:['정선선']}
+    };
+  }
+}
 function _realPlatform(trainNo, trainName){
   if(typeof REAL_PLAT==='undefined')return null;
   const m=REAL_PLAT[trainNo]; if(!m)return null;
-  const v=m[trainName];
+  const legacyName=trainName==='장수(전북)'?'장수':
+    trainName==='북평(정선)'?'북평':trainName;
+  const v=m[trainName]??m[legacyName];
   return (v==null)?null:v;
 }
 // 실데이터가 없는 정차만 휴리스틱(등급·방면·트윈)으로 폴백
