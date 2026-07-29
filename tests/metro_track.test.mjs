@@ -50,10 +50,9 @@ const index = fs.readFileSync('index.html', 'utf8');
 const trackLoad = index.indexOf('data/nimbi_metro_track.js');
 const referenceLoad = index.indexOf('data/nimbi_track_reference.js');
 const semanticLoad = index.indexOf('js/features/nimbi_track_semantic.js');
-const appLoad = index.indexOf('js/nimbi_rail.js');
-assert.ok(trackLoad >= 0 && trackLoad < appLoad, '인게임 배선 데이터는 앱 렌더러보다 먼저 로드해야 합니다.');
-assert.ok(referenceLoad > trackLoad && referenceLoad < semanticLoad, 'SVG 배선 기준은 원본 데이터 다음, 의미 분석기 전에 로드해야 합니다.');
-assert.ok(semanticLoad > referenceLoad && semanticLoad < appLoad, 'Track Semantic Analyzer는 원본·기준 데이터 다음, 렌더러 전에 로드해야 합니다.');
+assert.equal(trackLoad,-1,'삭제된 배선 기능의 대용량 원본 데이터를 앱에서 불러오면 안 됩니다.');
+assert.equal(referenceLoad,-1,'삭제된 배선 기능의 SVG 기준 데이터를 앱에서 불러오면 안 됩니다.');
+assert.equal(semanticLoad,-1,'삭제된 배선 기능의 의미 분석기를 앱에서 불러오면 안 됩니다.');
 
 const app = fs.readFileSync('js/nimbi_rail.js', 'utf8');
 const modelStart = app.indexOf('function _sxPlatformModel');

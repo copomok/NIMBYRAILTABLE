@@ -27,7 +27,10 @@ assert.ok(source.includes('onchange="setMetroTimetableExpressOnly(this.checked)"
 assert.ok(source.includes('${hasExpress?`<div class="mtt-filterbar">'),'급행 필터 영역은 실제 급행 정차 여부에 따라 렌더링해야 합니다.');
 assert.ok(source.includes("_openMetroTimetableRow(this,'${escL(r.line)}',${r.svc},${r.clk},${r.k0},${r.k1})"), '전체 시간표 클릭은 선택 행과 방향 leg 범위를 함께 전달해야 합니다.');
 assert.ok(source.includes("row.classList.add('mtt-row--selected')"), 'PC 병행 화면에서 조회 중인 시간표 행을 표시해야 합니다.');
-assert.ok(source.includes("const METRO_MODE_TABS=['metrolines','metroschematic','metroroute','map','stationinfo','notice']"),'전철 공지는 가장 오른쪽 탭이어야 합니다.');
+assert.ok(source.includes("timetable.querySelectorAll('.mtt-row--selected').forEach(row=>row.classList.remove('mtt-row--selected'))"),'열차 시간표를 닫으면 전체 시간표의 선택 강조를 해제해야 합니다.');
+assert.ok(source.includes("const METRO_MODE_TABS=['metrolines','metroroute','map','stationinfo','notice']"),'배선 탭 없이 전철 공지는 가장 오른쪽 탭이어야 합니다.');
+assert.ok(!source.includes("switchTab('metroschematic')"),'삭제된 배선 기능의 탭 진입점이 남으면 안 됩니다.');
+assert.ok(!source.includes('배선도(실시간)'),'노선 상세에 삭제된 배선도 버튼이 남으면 안 됩니다.');
 assert.ok(source.includes("b.style.order=String(Math.max(0,visible.indexOf(id)))"),'모드별 탭 순서를 화면에 적용해야 합니다.');
 assert.ok(source.includes('function _metroLiveTrainLabel(dest,cls)'),'실시간 열차 행선 표기 공통 함수가 있어야 합니다.');
 assert.ok(source.includes("cls===1?`${dest} 급행`:`${dest}행`"),'일반은 ○○행, 급행은 ○○ 급행 형식이어야 합니다.');
@@ -44,7 +47,8 @@ assert.ok(source.includes("const METRO_COMMUTER_BOARD_LINES=new Set(["),'광역�
 assert.ok(source.includes("boardKind=_metroBoardKind(line,stn)"),'노선과 현재 역에 따라 광역·도시철도 전광판을 자동 선택해야 합니다.');
 assert.ok(source.includes("const lineClass=displayBoard?` mtb2-line--${boardKind}`:''"),'전광판 전용 디자인은 별도 전광판에서만 렌더링되어야 합니다.');
 assert.ok(source.includes('<span class="mtb-title">🚇 실시간 도착</span>'),'기존 역 시간표 카드는 실시간 도착 제목을 유지해야 합니다.');
-assert.ok(source.includes("onclick=\"openMetroStationDisplay("),'역 상세에 전광판 열기 버튼이 있어야 합니다.');
+assert.ok(source.includes('🚇 출발 안내 전광판 열기'),'역 상세의 전광판 명칭은 기차 탭과 같은 출발 안내 전광판이어야 합니다.');
+assert.ok(source.includes("onclick=\"openMetroStationDisplay("),'역 상세에 출발 안내 전광판 열기 버튼이 있어야 합니다.');
 assert.ok(source.includes('function openMetroStationDisplay(stn)'),'전철 전광판은 별도 모달로 열려야 합니다.');
 assert.ok(source.includes("_metroStationBoardHTML(stn,true)"),'전광판 모달은 광역·도시철도 전용 디자인을 사용해야 합니다.');
 assert.ok(source.includes("const viewMode=displayBoard?'pos':_metroBoardMode"),'전광판 모달은 항상 현위치를 기본 표시해야 합니다.');

@@ -118,7 +118,6 @@
     <button class="tab" onclick="switchTab('route')" id="tab-route">🔍 출도착</button>
     <button class="tab" onclick="switchTab('ops')" id="tab-ops">🔁 운용</button>
     <button class="tab" onclick="switchTab('metrolines')" id="tab-metrolines" style="display:none">🚇 노선</button>
-    <button class="tab" onclick="switchTab('metroschematic')" id="tab-metroschematic" style="display:none">🛤️ 배선</button>
     <button class="tab" onclick="switchTab('metroroute')" id="tab-metroroute" style="display:none">🔍 경로</button>
     <button class="tab" onclick="switchTab('map')" id="tab-map">🗺️ 노선도</button>
     <button class="tab" onclick="switchTab('stats')" id="tab-stats">📊 통계</button>
@@ -444,9 +443,6 @@
   <div class="panel" id="panel-metrolines">
     <div id="result-metrolines"></div>
   </div>
-  <div class="panel" id="panel-metroschematic">
-    <div id="result-metroschematic"></div>
-  </div>
   <div class="panel" id="panel-metroroute">
     <div id="result-metroroute"></div>
   </div>
@@ -487,9 +483,7 @@
 <script src="data/nimbi_metro_schedule_updates.js?v=2026072801"></script>
 <script src="data/nimbi_metro_service_policy.js?v=2026072702"></script>
 <script src="data/nimbi_metro_geo.js?v=2026072801"></script>
-<script src="data/nimbi_metro_track.js?v=2026072801"></script>
 <script src="data/nimbi_platform_db.js?v=2026072801"></script>
-<script src="data/nimbi_track_reference.js?v=2026072701"></script>
 <script src="data/nimbi_realplat.js?v=2026072320"></script>
 <script src="data/nimbi_station_history.js?v=2026072003"></script>
   <script src="data/nimbi_rail_notices.js?v=2026072704"></script>
@@ -500,8 +494,7 @@
   <script src="js/features/nimbi_booking_dynamics.js?v=2026072802"></script>
   <script src="js/features/nimbi_inventory.js?v=2026072801"></script>
 <script src="js/features/nimbi_delay.js?v=2026072327"></script>
-<script src="js/features/nimbi_track_semantic.js?v=2026072703"></script>
-<script src="js/nimbi_rail.js?v=2026072819"></script>
+<script src="js/nimbi_rail.js?v=2026072901"></script>
   <script src="js/features/nimbi_congestion.js?v=2026072702"></script>
   <script src="js/features/nimbi_engagement.js?v=2026072331"></script>
   <script>
