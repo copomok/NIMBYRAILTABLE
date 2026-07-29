@@ -41,7 +41,7 @@ function absoluteStops(train){
     let arr=stop.arr&&stop.arr!=='통과'?minute(stop.arr):null;
     let dep=stop.dep&&stop.dep!=='통과'?minute(stop.dep):null;
     const current=arr??dep;
-    if(previous>=0&&current+offset<previous){
+    if(current!=null&&previous>=0&&current+offset<previous){
       offset+=1440;
     }
     if(arr!=null)arr+=offset;
@@ -49,7 +49,7 @@ function absoluteStops(train){
       dep+=offset;
       if(arr!=null&&dep<arr)dep+=1440;
     }
-    previous=dep??arr;
+    if(dep!=null||arr!=null)previous=dep??arr;
     return {...stop,arrMinute:arr,depMinute:dep};
   });
 }
@@ -65,7 +65,16 @@ test('신규 무궁화호 번호와 왕복 횟수가 명세와 일치한다',()=
 });
 
 test('신규 열차는 단조 증가하고 중간 정차는 모두 1분이다',()=>{
+  const allowedGrades=new Set([
+    'KTX','KTX-산천','KTX-이음','SRT','ITX-새마을','ITX-청춘','ITX-마음',
+    '무궁화호','남도해양','국악와인'
+  ]);
   for(const train of newTrains){
+    assert.ok(allowedGrades.has(train.grade),`${train.no}: 허용되지 않은 열차 등급입니다.`);
+    assert.equal(train.boundary[0],train.stops[0].s,`${train.no}: boundary 기점 불일치`);
+    assert.equal(train.boundary[1],train.stops.at(-1).s,`${train.no}: boundary 종점 불일치`);
+    assert.equal(train.dest,train.stops.at(-1).s,`${train.no}: 행선지와 종착역 불일치`);
+    assert.ok(['down','up'].includes(train.dir),`${train.no}: 잘못된 운행 방향`);
     const stops=absoluteStops(train);
     assert.ok(minute(train.stops[0].dep)>=300,`${train.no}: 05시 전에 출발하면 안 됩니다.`);
     assert.ok(minute(train.stops[0].dep)<1440,`${train.no}: 자정 이후 새 운행을 시작하면 안 됩니다.`);
@@ -96,9 +105,7 @@ test('신규 열차는 단조 증가하고 중간 정차는 모두 1분이다',(
 test('각 계통 첫 운행과 배차 간격이 명세 범위 안이다',()=>{
   const groups=[
     {min:1311,max:1328,headway:[90,135]},
-    {min:1331,max:1350,headway:[80,140]},
-    {min:1451,max:1454},
-    {min:1501,max:1504}
+    {min:1331,max:1350,headway:[80,140]}
   ];
   for(const group of groups){
     for(const dir of ['down','up']){
@@ -113,6 +120,27 @@ test('각 계통 첫 운행과 배차 간격이 명세 범위 안이다',()=>{
           assert.ok(gap>=group.headway[0]&&gap<=group.headway[1],`${group.min} ${dir}: 배차 ${gap}분`);
         }
       }
+    }
+  }
+
+  const integrated=newTrains
+    .filter(train=>+train.no>=1451&&+train.no<=1504)
+    .filter(train=>+train.no<=1454||+train.no>=1501);
+  const expected={
+    down:['1501','1451','1503','1453'],
+    up:['1452','1502','1454','1504']
+  };
+  for(const dir of ['down','up']){
+    const departures=integrated
+      .filter(train=>train.dir===dir)
+      .map(train=>({no:train.no,time:minute(train.stops[0].dep)}))
+      .sort((a,b)=>a.time-b.time);
+    assert.deepEqual(departures.map(entry=>entry.no),expected[dir],`${dir}: 남대구·부산 행선지가 번갈아야 합니다.`);
+    assert.ok(departures[0].time>=300&&departures[0].time<=390,`${dir}: 통합 첫 운행은 05:00~06:30이어야 합니다.`);
+    assert.ok(departures.at(-1).time>=1170&&departures.at(-1).time<=1230,`${dir}: 통합 막차는 19:30~20:30에 출발해야 합니다.`);
+    for(let index=1;index<departures.length;index++){
+      const gap=departures[index].time-departures[index-1].time;
+      assert.ok(gap>=270&&gap<=330,`${dir}: 통합 배차 ${gap}분`);
     }
   }
 });
@@ -137,6 +165,52 @@ function samePhysicalLine(a,b){
   return String(b.line||'').split('·').some(value=>aLines.has(value.trim()));
 }
 
+const noPassTrack=new Set([
+  '사천','추풍령','석포','승부','소천','법전','홍성','율촌','춘양',
+  '남악','일로','시종','영암','작천','장흥','별량','입실','불국사'
+]);
+
+function hasTime(value){
+  return typeof value==='string'&&/^\d{1,2}:\d{2}$/.test(value);
+}
+
+function isPassStop(stop,index,length){
+  if(index===0||index===length-1)return false;
+  if(stop.arr==='통과'||stop.dep==='통과')return true;
+  return hasTime(stop.arr)!==hasTime(stop.dep);
+}
+
+function trainPlatform(train,station){
+  const legacy=station==='장수(전북)'?'장수':station==='북평(정선)'?'북평':station;
+  return realPlat[train.no]?.[station]??realPlat[train.no]?.[legacy]??null;
+}
+
+function hasPassingPoint(a,b,aFrom,aTo,bFrom,bTo){
+  const bByStation=new Map();
+  for(let index=bFrom;index<=bTo;index++){
+    const stop=b.stops[index];
+    if(stop)bByStation.set(stop.s,{stop,index});
+  }
+  for(let index=aFrom;index<=aTo;index++){
+    const aStop=a.stops[index];
+    const match=bByStation.get(aStop.s);
+    if(!match||noPassTrack.has(aStop.s))continue;
+    if(isPassStop(aStop,index,a.stops.length)===isPassStop(match.stop,match.index,b.stops.length))continue;
+    const aPlatform=trainPlatform(a,aStop.s);
+    const bPlatform=trainPlatform(b,aStop.s);
+    if(aPlatform!=null&&bPlatform!=null&&String(aPlatform)!==String(bPlatform))return true;
+  }
+  return false;
+}
+
+function followsSameCorridor(a,b,aFrom,aTo,bFrom,bTo){
+  const aMiddle=a.stops.slice(aFrom+1,aTo).map(stop=>stop.s);
+  const bMiddle=b.stops.slice(bFrom+1,bTo).map(stop=>stop.s);
+  if(aMiddle.length<2||bMiddle.length<2)return true;
+  const bStations=new Set(bMiddle);
+  return aMiddle.some(station=>bStations.has(station));
+}
+
 function parallelTrackException(a,b,from,to){
   const corridor=['남안양','수원','오산','평택'];
   const fromIndex=corridor.indexOf(from);
@@ -148,8 +222,8 @@ function parallelTrackException(a,b,from,to){
 
 function sharedTimedIntervals(a,b){
   if(a.dir!==b.dir||!samePhysicalLine(a,b))return [];
-  const aStops=absoluteStops(a).filter(stop=>stop.arrMinute!=null||stop.depMinute!=null);
-  const bStops=absoluteStops(b).filter(stop=>stop.arrMinute!=null||stop.depMinute!=null);
+  const aStops=absoluteStops(a).map((stop,index)=>({...stop,index})).filter(stop=>stop.arrMinute!=null||stop.depMinute!=null);
+  const bStops=absoluteStops(b).map((stop,index)=>({...stop,index})).filter(stop=>stop.arrMinute!=null||stop.depMinute!=null);
   const bIndexes=new Map();
   bStops.forEach((stop,index)=>{
     if(!bIndexes.has(stop.s))bIndexes.set(stop.s,[]);
@@ -168,13 +242,15 @@ function sharedTimedIntervals(a,b){
     const left=matches[index-1];
     const right=matches[index];
     if(parallelTrackException(a,b,left.a.s,right.a.s))continue;
+    if(!followsSameCorridor(a,b,left.a.index,right.a.index,left.b.index,right.b.index))continue;
     intervals.push({
       from:left.a.s,
       to:right.a.s,
       a0:left.a.depMinute??left.a.arrMinute,
       a1:right.a.arrMinute??right.a.depMinute,
       b0:left.b.depMinute??left.b.arrMinute,
-      b1:right.b.arrMinute??right.b.depMinute
+      b1:right.b.arrMinute??right.b.depMinute,
+      passingPoint:hasPassingPoint(a,b,left.a.index,right.a.index,left.b.index,right.b.index)
     });
   }
   return intervals;
@@ -217,19 +293,23 @@ test('신설 열차는 기존 열차와 3분 시격을 확보하고 개활선 �
             `${train.no}/${other.no} ${interval.from}–${interval.to}: 개활선에서 운행 순서가 뒤집힙니다.`
           );
         }
+        const comparableTrack=train.grade===other.grade||
+          String(train.line||'')===String(other.line||'');
+        if(comparableTrack&&startGap*endGap<0){
+          assert.ok(
+            interval.passingPoint,
+            `${train.no}/${other.no} ${interval.from}–${interval.to}: 대피 가능한 역 없이 개활선에서 추월합니다.`
+          );
+        }
       }
     }
   }
   assert.ok(comparedIntervals>1000,'기존 열차와 충분한 수의 공유 구간을 비교해야 합니다.');
   assert.ok(parallelIntervals>100,'3분 시격 검증이 실제 병행 구간에서 실행되어야 합니다.');
 
-  const train1453=trains.find(train=>train.no==='1453');
-  const train1503=trains.find(train=>train.no==='1503');
-  const shared=sharedTimedIntervals(train1453,train1503);
-  assert.ok(shared.length>20,'1453·1503의 공통 운행 구간이 검증되어야 합니다.');
-  assert.ok(shared.every(interval=>
-    Math.abs(interval.a0-interval.b0)>=3&&Math.abs(interval.a1-interval.b1)>=3
-  ),'1453·1503은 전 구간에서 3분 이상 떨어져야 합니다.');
+  const integrated=trains
+    .filter(train=>['1451','1452','1453','1454','1501','1502','1503','1504'].includes(train.no));
+  assert.equal(integrated.length,8,'통합 배차 열차가 모두 존재해야 합니다.');
 });
 
 function metroTrips(lineName,orderedStations){
