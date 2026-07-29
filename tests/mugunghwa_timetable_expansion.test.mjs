@@ -132,6 +132,106 @@ test('인게임 승강장과 동명이역 구분이 열차 데이터에 반영�
   }
 });
 
+function samePhysicalLine(a,b){
+  const aLines=new Set(String(a.line||'').split('·').map(value=>value.trim()));
+  return String(b.line||'').split('·').some(value=>aLines.has(value.trim()));
+}
+
+function parallelTrackException(a,b,from,to){
+  const corridor=['남안양','수원','오산','평택'];
+  const fromIndex=corridor.indexOf(from);
+  const toIndex=corridor.indexOf(to);
+  const itx=train=>String(train.grade).startsWith('ITX');
+  return fromIndex>=0&&toIndex>fromIndex&&
+    ((itx(a)&&b.grade==='무궁화호')||(itx(b)&&a.grade==='무궁화호'));
+}
+
+function sharedTimedIntervals(a,b){
+  if(a.dir!==b.dir||!samePhysicalLine(a,b))return [];
+  const aStops=absoluteStops(a).filter(stop=>stop.arrMinute!=null||stop.depMinute!=null);
+  const bStops=absoluteStops(b).filter(stop=>stop.arrMinute!=null||stop.depMinute!=null);
+  const bIndexes=new Map();
+  bStops.forEach((stop,index)=>{
+    if(!bIndexes.has(stop.s))bIndexes.set(stop.s,[]);
+    bIndexes.get(stop.s).push(index);
+  });
+  const matches=[];
+  let cursor=-1;
+  for(const stop of aStops){
+    const found=(bIndexes.get(stop.s)||[]).find(index=>index>cursor);
+    if(found==null)continue;
+    matches.push({a:stop,b:bStops[found]});
+    cursor=found;
+  }
+  const intervals=[];
+  for(let index=1;index<matches.length;index++){
+    const left=matches[index-1];
+    const right=matches[index];
+    if(parallelTrackException(a,b,left.a.s,right.a.s))continue;
+    intervals.push({
+      from:left.a.s,
+      to:right.a.s,
+      a0:left.a.depMinute??left.a.arrMinute,
+      a1:right.a.arrMinute??right.a.depMinute,
+      b0:left.b.depMinute??left.b.arrMinute,
+      b1:right.b.arrMinute??right.b.depMinute
+    });
+  }
+  return intervals;
+}
+
+test('신설 열차는 기존 열차와 3분 시격을 확보하고 개활선 중복 운행이 없다',()=>{
+  let comparedIntervals=0;
+  let parallelIntervals=0;
+  const checkedPairs=new Set();
+  for(const train of newTrains){
+    for(const other of trains){
+      if(train===other)continue;
+      const pair=[train.no,other.no].sort().join('/');
+      if(checkedPairs.has(pair))continue;
+      checkedPairs.add(pair);
+      const intervals=sharedTimedIntervals(train,other);
+      if(!intervals.length)continue;
+      comparedIntervals+=intervals.length;
+      const parallelPair=train.grade===other.grade&&intervals.filter(interval=>
+        Math.abs((interval.a1-interval.a0)-(interval.b1-interval.b0))<=1
+      ).length>=2;
+      for(const interval of intervals){
+        const startGap=interval.a0-interval.b0;
+        const endGap=interval.a1-interval.b1;
+        const sameSpeed=Math.abs(
+          (interval.a1-interval.a0)-(interval.b1-interval.b0)
+        )<=1;
+        assert.ok(
+          startGap!==0||endGap!==0,
+          `${train.no}/${other.no} ${interval.from}–${interval.to}: 같은 선로를 같은 시각에 운행합니다.`
+        );
+        if(parallelPair&&sameSpeed){
+          parallelIntervals++;
+          assert.ok(
+            Math.abs(startGap)>=3&&Math.abs(endGap)>=3,
+            `${train.no}/${other.no} ${interval.from}–${interval.to}: 병행 운행 시격이 3분 미만입니다.`
+          );
+          assert.ok(
+            startGap*endGap>0,
+            `${train.no}/${other.no} ${interval.from}–${interval.to}: 개활선에서 운행 순서가 뒤집힙니다.`
+          );
+        }
+      }
+    }
+  }
+  assert.ok(comparedIntervals>1000,'기존 열차와 충분한 수의 공유 구간을 비교해야 합니다.');
+  assert.ok(parallelIntervals>100,'3분 시격 검증이 실제 병행 구간에서 실행되어야 합니다.');
+
+  const train1453=trains.find(train=>train.no==='1453');
+  const train1503=trains.find(train=>train.no==='1503');
+  const shared=sharedTimedIntervals(train1453,train1503);
+  assert.ok(shared.length>20,'1453·1503의 공통 운행 구간이 검증되어야 합니다.');
+  assert.ok(shared.every(interval=>
+    Math.abs(interval.a0-interval.b0)>=3&&Math.abs(interval.a1-interval.b1)>=3
+  ),'1453·1503은 전 구간에서 3분 이상 떨어져야 합니다.');
+});
+
 function metroTrips(lineName,orderedStations){
   const data=metro[lineName];
   const result=[];
