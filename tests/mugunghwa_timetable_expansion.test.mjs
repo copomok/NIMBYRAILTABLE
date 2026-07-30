@@ -255,8 +255,8 @@ function parallelTrackException(a,b,from,to){
     ((itx(a)&&b.grade==='무궁화호')||(itx(b)&&a.grade==='무궁화호'));
 }
 
-function sharedTimedIntervals(a,b){
-  if(a.dir!==b.dir||!samePhysicalLine(a,b))return [];
+function sharedTimedIntervals(a,b,{useRouteDirection=false}={}){
+  if((!useRouteDirection&&a.dir!==b.dir)||!samePhysicalLine(a,b))return [];
   const aStops=absoluteStops(a).map((stop,index)=>({...stop,index})).filter(stop=>stop.arrMinute!=null||stop.depMinute!=null);
   const bStops=absoluteStops(b).map((stop,index)=>({...stop,index})).filter(stop=>stop.arrMinute!=null||stop.depMinute!=null);
   const bIndexes=new Map();
@@ -345,6 +345,30 @@ test('신설 열차는 기존 열차와 3분 시격을 확보하고 개활선 �
   const integrated=trains
     .filter(train=>['1451','1452','1453','1454','1501','1502','1503','1504'].includes(train.no));
   assert.equal(integrated.length,8,'통합 배차 열차가 모두 존재해야 합니다.');
+});
+
+test('시격 검증은 계통 dir이 아니라 공통 역의 실제 진행 순서를 사용한다',()=>{
+  const train1452=trains.find(train=>train.no==='1452');
+  const train1861=trains.find(train=>train.no==='1861');
+  assert.notEqual(train1452.dir,train1861.dir,'회귀 검증 대상은 계통상 상하행 표기가 달라야 합니다.');
+
+  const intervals=sharedTimedIntervals(train1452,train1861,{useRouteDirection:true});
+  assert.deepEqual(
+    intervals.map(interval=>`${interval.from}→${interval.to}`),
+    ['남대구→호림','호림→하빈'],
+    '상하행 표기가 달라도 같은 순서로 공유하는 실제 운행 구간을 찾아야 합니다.'
+  );
+  for(const interval of intervals){
+    assert.ok(
+      Math.abs(interval.a0-interval.b0)>=3&&Math.abs(interval.a1-interval.b1)>=3,
+      `1452/1861 ${interval.from}–${interval.to}: 실제 운행 시격이 3분 미만입니다.`
+    );
+  }
+
+  const train1862=trains.find(train=>train.no==='1862');
+  const arrival1861=absoluteStops(train1861).at(-1).arrMinute;
+  const departure1862=absoluteStops(train1862)[0].depMinute;
+  assert.ok(departure1862-arrival1861>=3,'1861→1862 고현 회차 시간이 3분 미만입니다.');
 });
 
 function metroTrips(lineName,orderedStations){
