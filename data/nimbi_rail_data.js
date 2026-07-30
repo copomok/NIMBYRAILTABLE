@@ -1448,22 +1448,26 @@ ALL_TRAINS.push(
 {
   const minute=s=>{const [h,m]=s.split(':').map(Number);return h*60+m;};
   const clock=m=>`${Math.floor(((m%1440)+1440)%1440/60)}:${String(((m%1440)+1440)%1440%60).padStart(2,'0')}`;
-  const insertPasses=(train,left,right,names)=>{
+  const insertPasses=(train,left,right,names,ratios)=>{
     const li=train.stops.findIndex(s=>s.s===left);
     if(li<0||train.stops[li+1]?.s!==right)return;
     let a=minute(train.stops[li].dep||train.stops[li].arr);
     let b=minute(train.stops[li+1].arr||train.stops[li+1].dep);
     if(b<a)b+=1440;
-    const added=names.map((s,i)=>({s,arr:clock(Math.round(a+(b-a)*(i+1)/(names.length+1))),dep:null}));
+    const added=names.map((s,i)=>({s,arr:clock(Math.round(a+(b-a)*(ratios?.[i]??((i+1)/(names.length+1))))),dep:null}));
     train.stops.splice(li+1,0,...added);
   };
   for(const train of ALL_TRAINS){
     const no=+train.no;
     if(no>=681&&no<=690){
+      insertPasses(train,'여주','원주',['지정'],[7/9]);
+      insertPasses(train,'원주','여주',['지정'],[2/9]);
       insertPasses(train,'남횡성','평창',['방림']);
       insertPasses(train,'평창','남횡성',['방림']);
     }
     if(no>=691&&no<=700){
+      insertPasses(train,'여주','원주',['지정'],[7/9]);
+      insertPasses(train,'원주','여주',['지정'],[2/9]);
       insertPasses(train,'남횡성','북평',['방림','평창']);
       insertPasses(train,'북평','남횡성',['평창','방림']);
     }
@@ -1479,6 +1483,48 @@ for(const train of ALL_TRAINS){
   for(let i=1;i<train.stops.length-1;i++){
     const stop=train.stops[i];
     if(stop.arr&&stop.dep&&stop.arr===stop.dep) stop.dep=null;
+  }
+}
+
+// 신설 SRT 보정:
+// - 691~700은 태백황지가 아니라 인게임 사진의 황지역에 정차한다.
+// - 직전 하행 도착과 상행 출발 사이 회차시간을 5분 이상 확보한다.
+//   간성·봉화 상행은 4분, 목포 상행은 3분 순연한다.
+{
+  const shiftClock=(value,delta)=>{
+    if(!value)return value;
+    const [h,m]=value.split(':').map(Number);
+    const total=(h*60+m+delta+1440)%1440;
+    return `${Math.floor(total/60)}:${String(total%60).padStart(2,'0')}`;
+  };
+  // 전 편 공유선로 검증에서 확인된 기존 열차와의 동일 승강장 근접 및
+  // 추월 금지구간 역전을 해소하는 최소 단위 보정값.
+  const conflictOffset={
+    684:1,692:12,698:3,699:1,700:1,
+    805:-14,806:20,807:-6,812:5
+  };
+  for(const train of ALL_TRAINS){
+    const no=+train.no;
+    if(no>=691&&no<=700){
+      for(const stop of train.stops){
+        if(stop.s==='태백황지')stop.s='황지';
+      }
+    }
+    const baseShift=((no>=682&&no<=690&&no%2===0)||(no>=692&&no<=700&&no%2===0))?4:
+      (no>=802&&no<=818&&no%2===0)?3:0;
+    const shift=baseShift+(conflictOffset[no]||0);
+    if(shift){
+      for(const stop of train.stops){
+        stop.arr=shiftClock(stop.arr,shift);
+        stop.dep=shiftClock(stop.dep,shift);
+      }
+    }
+    if(no>=4401&&no<=4436){
+      // 두 편성으로 64분 간격 순환을 유지하기 위해 서울 진입 구간만
+      // 사진상 운전 여유 안에서 3분 단축(62→59분)한다.
+      const terminal=train.stops[train.stops.length-1];
+      terminal.arr=shiftClock(terminal.arr,-3);
+    }
   }
 }
 
