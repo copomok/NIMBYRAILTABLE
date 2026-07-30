@@ -1444,6 +1444,44 @@ ALL_TRAINS.push(
   {no:"818",dest:"잠실",dir:"up",line:"호남선·호남고속선·경부고속선",grade:"SRT",boundary:["목포","잠실"],stops:[{s:"목포",arr:null,dep:"22:42",p:"3"},{s:"도림",arr:"22:46",dep:"22:46"},{s:"무안",arr:"22:49",dep:"22:49"},{s:"함평",arr:"22:51",dep:"22:51"},{s:"나산",arr:"22:53",dep:"22:53"},{s:"광주",arr:"22:58",dep:"23:00",p:"12"},{s:"정읍",arr:"23:11",dep:"23:11"},{s:"전주",arr:"23:20",dep:"23:22",p:"4"},{s:"공주",arr:"23:38",dep:"23:38"},{s:"정안",arr:"23:41",dep:"23:41"},{s:"천안",arr:"23:47",dep:"23:48",p:"6"},{s:"동탄",arr:"23:59",dep:"0:00",p:"8"},{s:"수진",arr:"0:07",dep:"0:07"},{s:"잠실",arr:"0:10",dep:null,p:"4"}]}
 );
 
+// 사진의 WP를 실제 노선 순서에 맞는 역으로 복원한다. 예외 WP는 삽입하지 않는다.
+{
+  const minute=s=>{const [h,m]=s.split(':').map(Number);return h*60+m;};
+  const clock=m=>`${Math.floor(((m%1440)+1440)%1440/60)}:${String(((m%1440)+1440)%1440%60).padStart(2,'0')}`;
+  const insertPasses=(train,left,right,names)=>{
+    const li=train.stops.findIndex(s=>s.s===left);
+    if(li<0||train.stops[li+1]?.s!==right)return;
+    let a=minute(train.stops[li].dep||train.stops[li].arr);
+    let b=minute(train.stops[li+1].arr||train.stops[li+1].dep);
+    if(b<a)b+=1440;
+    const added=names.map((s,i)=>({s,arr:clock(Math.round(a+(b-a)*(i+1)/(names.length+1))),dep:null}));
+    train.stops.splice(li+1,0,...added);
+  };
+  for(const train of ALL_TRAINS){
+    const no=+train.no;
+    if(no>=681&&no<=690){
+      insertPasses(train,'남횡성','평창',['방림']);
+      insertPasses(train,'평창','남횡성',['방림']);
+    }
+    if(no>=691&&no<=700){
+      insertPasses(train,'남횡성','북평',['방림','평창']);
+      insertPasses(train,'북평','남횡성',['평창','방림']);
+    }
+  }
+}
+
+// 사진 원본에서 도착·출발 시각이 같은 0초 정차는 영업 정차가 아니라
+// WP 통과 시각이다. 시각은 arr에 보존하고 dep를 비워 UI가 통과역으로
+// 판정하게 한다(수진·남횡성·방림·정안·나산 등).
+for(const train of ALL_TRAINS){
+  const no=+train.no;
+  if(!((no>=681&&no<=700)||(no>=801&&no<=818))) continue;
+  for(let i=1;i<train.stops.length-1;i++){
+    const stop=train.stops[i];
+    if(stop.arr&&stop.dep&&stop.arr===stop.dep) stop.dep=null;
+  }
+}
+
 // 동명이역은 운행 노선에 따라 구분한다. 기존 열차번호와 승차권 호환성은 유지한다.
 for(const train of ALL_TRAINS){
   const isSobaek=train.line.split('·').includes('소백선');
