@@ -11,7 +11,7 @@ vm.runInContext(`${data};globalThis.__trains=ALL_TRAINS`,ctx);
 const train=no=>ctx.__trains.find(t=>t.no===String(no));
 
 test('신설 SRT의 0초 정차는 통과 시각을 보존한 단방향 시각이다',()=>{
-  for(const no of [...Array.from({length:20},(_,i)=>681+i),...Array.from({length:18},(_,i)=>801+i)]){
+  for(const no of [...Array.from({length:20},(_,i)=>681+i),...Array.from({length:22},(_,i)=>801+i)]){
     const t=train(no);
     assert.ok(t,`#${no}`);
     for(const s of t.stops.slice(1,-1)){

@@ -1528,6 +1528,72 @@ for(const train of ALL_TRAINS){
   }
 }
 
+// 잠실–목포 SRT 증편: 9왕복(2시간 간격)에서 11왕복(96분 간격)으로 확대.
+// 사진의 구간 소요·정차·통과 패턴은 #801/#802를 그대로 사용한다.
+{
+  const minute=value=>{
+    const [hour,min]=value.split(':').map(Number);
+    return hour*60+min;
+  };
+  const clock=value=>{
+    const normalized=(value%1440+1440)%1440;
+    return `${Math.floor(normalized/60)}:${String(normalized%60).padStart(2,'0')}`;
+  };
+  const cloneTrain=(source,no)=>({
+    ...JSON.parse(JSON.stringify(source)),
+    no:String(no)
+  });
+  const downTemplate=ALL_TRAINS.find(train=>train.no==='801');
+  const upTemplate=ALL_TRAINS.find(train=>train.no==='802');
+  for(const [template,firstNo,firstDeparture] of [
+    [downTemplate,801,5*60+12],
+    [upTemplate,802,6*60+45]
+  ]){
+    const templateStart=minute(template.stops[0].dep);
+    const offsets=template.stops.map(stop=>{
+      const result={};
+      for(const key of ['arr','dep']){
+        if(!/^\d{1,2}:\d{2}$/.test(stop[key]||''))continue;
+        let value=minute(stop[key]);
+        if(value<templateStart)value+=1440;
+        result[key]=value-templateStart;
+      }
+      return result;
+    });
+    for(let index=0;index<11;index++){
+      const no=firstNo+index*2;
+      let train=ALL_TRAINS.find(item=>item.no===String(no));
+      if(!train){
+        train=cloneTrain(template,no);
+        ALL_TRAINS.push(train);
+      }
+      const departure=firstDeparture+index*96;
+      train.stops.forEach((stop,stopIndex)=>{
+        for(const key of ['arr','dep']){
+          if(offsets[stopIndex][key]!=null)stop[key]=clock(departure+offsets[stopIndex][key]);
+        }
+      });
+    }
+  }
+  // 96분 균등 배차를 유지하는 범위에서 기존 열차의 동일 승강장
+  // 3분 시격 및 개활 추월 검증 결과를 반영한 미세 조정.
+  const conflictOffset={
+    804:5,807:2,808:2,810:2,
+    815:-3,816:7,817:1,818:6
+  };
+  for(const train of ALL_TRAINS){
+    const delta=conflictOffset[Number(train.no)]||0;
+    if(!delta)continue;
+    for(const stop of train.stops){
+      for(const key of ['arr','dep']){
+        if(/^\d{1,2}:\d{2}$/.test(stop[key]||'')){
+          stop[key]=clock(minute(stop[key])+delta);
+        }
+      }
+    }
+  }
+}
+
 // 동명이역은 운행 노선에 따라 구분한다. 기존 열차번호와 승차권 호환성은 유지한다.
 for(const train of ALL_TRAINS){
   const isSobaek=train.line.split('·').includes('소백선');

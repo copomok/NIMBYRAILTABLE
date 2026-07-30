@@ -8,7 +8,7 @@
     return (n>=1241&&n<=1252)||
       (n>=4401&&n<=4436)||
       (n>=681&&n<=700)||
-      (n>=801&&n<=818);
+      (n>=801&&n<=822);
   };
   for(const train of ALL_TRAINS){
     if(!isRegionalTrain(train.no))continue;
