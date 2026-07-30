@@ -3175,7 +3175,7 @@ const GRADE_COLORS = {
 };
 
 // 노선명 → MAP_LINES 키, 노선별 인접역 쌍 캐시 (구간 소속 판별용)
-const _lineNameToKey={'경부선':'gyeongbu','경부고속선':'gyeongbuhs','호남고속선':'honamhs','호남선':'honam','전라선':'jeolla','중앙선':'jungang','동해선':'donghae','영동선':'yeongdong','강릉선':'gangreung','중부내륙선':'jungnaelyuk','경전선':'gyeongjeon','제주선':'jeju','충북선':'chungbuk','장항선':'janghang','남부내륙선':'nambunaelyuk','서산선':'seosan','태안선':'taean','경강선':'seogang','소백선':'sobaek','경북선':'gyeongbuk','태백선':'taebaek','정선선':'jeongseon','밀양선':'miryang','세종세천선':'sejongsecheon'};
+const _lineNameToKey={'경부선':'gyeongbu','경부고속선':'gyeongbuhs','호남고속선':'honamhs','호남선':'honam','전라선':'jeolla','중앙선':'jungang','동해선':'donghae','영동선':'yeongdong','강릉선':'gangreung','중부내륙선':'jungnaelyuk','경전선':'gyeongjeon','제주선':'jeju','충북선':'chungbuk','장항선':'janghang','남부내륙선':'nambunaelyuk','서산선':'seosan','태안선':'taean','경강선':'seogang','소백선':'sobaek','경북선':'gyeongbuk','태백선':'taebaek','정선선':'jeongseon','밀양선':'miryang','세종세천선':'sejongsecheon','교외선':'gyooe','보은선':'boeun'};
 const _mapEdgeCache={};
 function _mapLineEdgeSet(key){
   if(_mapEdgeCache[key])return _mapEdgeCache[key];
@@ -4030,9 +4030,46 @@ sejongsecheon:{
     {n:'천안',x:239,y:342},
     {n:'조치원',x:276,y:414},
     {n:'세종',x:268,y:441},
+    {n:'반석',x:286,y:461},
     {n:'판암',x:312,y:487},
     {n:'서대전',x:300,y:493},
     {n:'대전',x:307,y:482}
+    ]}
+  ]
+},
+
+gyooe:{
+  name:'교외선', color:'#65a30d',
+  routes:[
+    {color:'#65a30d', stations:[
+    {n:'의정부',x:220,y:48},
+    {n:'가능',x:207,y:56},
+    {n:'송추',x:191,y:65},
+    {n:'장흥',x:174,y:74},
+    {n:'고양',x:159,y:85},
+    {n:'관산',x:148,y:97},
+    {n:'주교',x:137,y:108},
+    {n:'능곡',x:128,y:119},
+    {n:'행신',x:137,y:128}
+    ]}
+  ]
+},
+
+boeun:{
+  name:'보은선', color:'#0d9488',
+  routes:[
+    {color:'#0d9488', stations:[
+    {n:'문의',x:321,y:426},
+    {n:'회인',x:343,y:433},
+    {n:'수한',x:361,y:438},
+    {n:'보은',x:379,y:442},
+    {n:'장안',x:397,y:447},
+    {n:'속리산',x:415,y:451},
+    {n:'화남',x:432,y:456},
+    {n:'화령',x:449,y:461},
+    {n:'낙서',x:466,y:466},
+    {n:'서상주',x:483,y:471},
+    {n:'상주',x:500,y:477}
     ]}
   ]
 },
