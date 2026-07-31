@@ -8309,6 +8309,7 @@ const MY_TITLES = {
 };
 
 function openMySection(section){
+  window._tripAddMode=null; // 여정 추가 모드는 섹션 전환 시 항상 해제
   const titleEl = document.getElementById('my-sub-title');
   const contentEl = document.getElementById('my-sub-content');
   if(titleEl) titleEl.textContent = MY_TITLES[section]||'';
@@ -9148,6 +9149,11 @@ function searchBookTrains(includeTransfer, includeAdj){
   // addEventListener 방식으로 클릭 등록 (iOS Safari: overflow-y:auto 내부 div onclick 미동작 방지)
   el.querySelectorAll('.book-train-row[data-train-no]:not(.book-xfer-card)').forEach(row=>{
     row.addEventListener('click', ()=>{
+      // 내 여행 '일정 추가' 모드: 예매 대신 여정 담기 창을 연다
+      if(window._tripAddMode){
+        openTripLegPicker(row.dataset.trainNo, row.dataset.from||from, row.dataset.to||to, row.dataset.dep||'', row.dataset.arr||'', row.dataset.date||dateGo);
+        return;
+      }
       // 정기권 예매 흐름: 중간 요금 시트를 건너뛰고 바로 요일·등급 선택창을 연다
       const go=()=> window._activePassId
         ? openPassDaySelector(window._activePassId, row.dataset.trainNo, row.dataset.from||from, row.dataset.to||to, row.dataset.dep||'', row.dataset.arr||'')
@@ -13653,7 +13659,7 @@ function _tripDetailHTML(trip){
   // 날짜별 그룹
   let body='';
   if(!legs.length){
-    body=`<div class="trip-empty"><div class="trip-empty-ic">🗓️</div><p>담긴 일정이 없습니다.<br>아래 '일정 추가'로 열차를 조회한 뒤<br>🧳 <b>여행에 담기</b>를 눌러 담으세요.</p></div>`;
+    body=`<div class="trip-empty"><div class="trip-empty-ic">🗓️</div><p>담긴 일정이 없습니다.<br>아래 <b>＋ 일정 추가</b>로 구간을 조회하고<br>열차를 눌러 담아보세요.</p></div>`;
   } else {
     let curDate=null, dayNo=0;
     legs.forEach(l=>{
@@ -13680,7 +13686,7 @@ function _tripDetailHTML(trip){
     <div class="trip-total-bar">
       <div><span class="trip-total-label">예상 합계</span><span class="trip-total-fare">${_tripEstFare(trip).toLocaleString()}원</span></div>
       <div class="trip-total-btns">
-        <button class="btn trip-add-btn" onclick="openMySection('book')">＋ 일정 추가</button>
+        <button class="btn trip-add-btn" onclick="openTripAddSearch('${trip.id}')">＋ 일정 추가</button>
         <button class="btn btn-primary trip-book-btn" onclick="bulkBookTrip('${trip.id}')"${unbooked?'':' disabled'}>🎫 일괄 예매${unbooked?` (${unbooked})`:' 완료'}</button>
       </div>
     </div>
@@ -13751,4 +13757,66 @@ function _commitLegToTrip(tripId,leg){
   const tp=loadTrips().find(t=>t.id===tripId);
   _tripToast(`🧳 '${tp?tp.name:'여행'}'에 일정을 담았습니다`);
   if(document.getElementById('result-mytrip'))renderMyTrips();
+}
+
+// ── 내 여행: 일정 추가 (구간 조회 → 열차 목록 → 눌러서 담기) ──
+function openTripAddSearch(tripId){
+  window._tripAddMode=tripId;
+  const el=document.getElementById('result-mytrip'); if(!el)return;
+  const tp=loadTrips().find(t=>t.id===tripId);
+  el.innerHTML=`<div class="trip-wrap">
+    <button class="trip-back" onclick="backFromTripAdd('${tripId}')">‹ ${_tesc(tp?tp.name:'여행')}</button>
+    <div class="trip-add-hd">🧳 <b>일정 추가</b> — 구간을 조회한 뒤 열차를 눌러 담으세요 (예매 아님)</div>
+    <div id="trip-add-book"></div>
+  </div>`;
+  const box=document.getElementById('trip-add-book');
+  if(box && typeof _renderBookTabInto==='function') _renderBookTabInto(box, 'my-book-results');
+}
+function backFromTripAdd(tripId){ window._tripAddMode=null; openTrip(tripId); }
+function openTripLegPicker(trainNo, from, to, dep, arr, date){
+  const t=getTrainByNo(trainNo); if(!t){alert('열차 정보를 찾을 수 없습니다.');return;}
+  if(!window._tripAddMode){alert('여행을 먼저 선택해주세요.');return;}
+  document.getElementById('trip-leg-picker-wrap')?.remove();
+  const classes=availableSeatClasses(t.grade);
+  const pax0=Math.max(1,Math.min(6,(typeof _bookPassengerCount!=='undefined'&&_bookPassengerCount)||1));
+  window._tlp={trainNo,from,to,dep,arr,date,cls:null,pax:pax0};
+  const opts=classes.map(c=>`<button class="booking-seat-option" data-class="${c}"><span class="booking-seat-label">${SEAT_CLASSES[c].label}</span><span class="booking-seat-fare">${calcFare(t,from,to,c).toLocaleString()}원</span></button>`).join('');
+  const wrap=document.createElement('div'); wrap.id='trip-leg-picker-wrap';
+  wrap.style.cssText='position:fixed;inset:0;z-index:9600;display:flex;align-items:center;justify-content:center;padding:16px;box-sizing:border-box';
+  wrap.innerHTML=`<div style="position:absolute;inset:0;background:rgba(0,0,0,.6)"></div>
+    <div class="alarm-popup" style="position:relative;transform:none;top:auto;left:auto;max-height:88vh;overflow-y:auto;width:100%;max-width:420px">
+      <div class="alarm-popup-title">🧳 여정에 담기</div>
+      <div class="alarm-popup-sub">${_tesc(t.grade)} ${_tesc(trainNo)} · ${_tesc(from)} ${dep} → ${_tesc(to)} ${arr||''}</div>
+      <div class="alarm-popup-sub" style="color:var(--text3)">${date}</div>
+      <div class="booking-section-label" style="margin-top:12px">좌석 등급</div>
+      <div class="booking-seat-options">${opts}</div>
+      <div class="booking-section-label">인원</div>
+      <div class="booking-passenger-control">
+        <button class="booking-stepper-btn" id="tlp-minus">−</button>
+        <span id="tlp-pax">${window._tlp.pax}</span>
+        <button class="booking-stepper-btn" id="tlp-plus">+</button>
+      </div>
+      <button class="btn btn-primary" id="tlp-add" disabled style="width:100%;justify-content:center;margin-top:14px;opacity:.4;cursor:not-allowed">🧳 이 여행에 담기</button>
+      <button class="alarm-popup-close" id="tlp-cancel">취소</button>
+    </div>`;
+  document.body.appendChild(wrap);
+  wrap.addEventListener('click',e=>{if(e.target===wrap||e.target===wrap.firstElementChild)wrap.remove();});
+  wrap.querySelectorAll('.booking-seat-option').forEach(b=>b.addEventListener('click',()=>{
+    wrap.querySelectorAll('.booking-seat-option').forEach(x=>x.classList.remove('active'));
+    b.classList.add('active'); window._tlp.cls=b.dataset.class;
+    const add=document.getElementById('tlp-add'); if(add){add.disabled=false;add.style.opacity='1';add.style.cursor='pointer';}
+  }));
+  document.getElementById('tlp-minus').addEventListener('click',()=>{window._tlp.pax=Math.max(1,window._tlp.pax-1);document.getElementById('tlp-pax').textContent=window._tlp.pax;});
+  document.getElementById('tlp-plus').addEventListener('click',()=>{window._tlp.pax=Math.min(6,window._tlp.pax+1);document.getElementById('tlp-pax').textContent=window._tlp.pax;});
+  document.getElementById('tlp-cancel').addEventListener('click',()=>wrap.remove());
+  document.getElementById('tlp-add').addEventListener('click',()=>{
+    const x=window._tlp; if(!x||!x.cls)return;
+    const leg={id:genTripId(),trainNo:x.trainNo,grade:t.grade,line:t.line,fromStn:x.from,toStn:x.to,
+      depTime:x.dep,arrTime:x.arr,date:x.date,seatClass:x.cls,seatClassLabel:SEAT_CLASSES[x.cls].label,
+      passengerCount:x.pax,discount:'none',ticketId:null};
+    if(!addLegToTrip(window._tripAddMode,leg)){alert('여행을 찾을 수 없습니다.');return;}
+    wrap.remove();
+    const tp=loadTrips().find(tt=>tt.id===window._tripAddMode);
+    _tripToast(`🧳 '${tp?tp.name:'여행'}'에 담았습니다 · 일정 ${tp?tp.legs.length:''}개`);
+  });
 }
