@@ -1520,11 +1520,22 @@ for(const train of ALL_TRAINS){
       }
     }
     if(no>=4401&&no<=4436){
-      // 두 편성으로 64분 간격 순환을 유지하기 위해 서울 진입 구간만
-      // 사진상 운전 여유 안에서 3분 단축(62→59분)한다.
-      const terminal=train.stops[train.stops.length-1];
-      terminal.arr=shiftClock(terminal.arr,-3);
+      // 남금호→서울은 반대 방향 서울→남금호를 역산한 4분을 유지한다.
+      // 62분 운행 뒤 최소 5분 회차와 단선 서울–행신 구간의 교행 금지를
+      // 함께 지키도록 같은 방향 순환을 80분 간격으로 전 구간 순연한다.
+      const cycleIndex=Math.floor((no-4401)/2);
+      const cycleShift=cycleIndex*16;
+      for(const stop of train.stops){
+        stop.arr=shiftClock(stop.arr,cycleShift);
+        stop.dep=shiftClock(stop.dep,cycleShift);
+      }
     }
+  }
+  // 2편성 모두 하루 운행 횟수를 짝수(각 14회)로 유지하고 막차를
+  // 00:30 전에 서울에 도착시키기 위해 #4429 이후는 감회한다.
+  for(let index=ALL_TRAINS.length-1;index>=0;index--){
+    const no=+ALL_TRAINS[index].no;
+    if(no>=4429&&no<=4436)ALL_TRAINS.splice(index,1);
   }
 }
 
@@ -1622,5 +1633,116 @@ for(const train of ALL_TRAINS){
   for(const stop of train.stops){
     if(isSobaek&&stop.s==='장수') stop.s='장수(전북)';
     if(isJeongseon&&stop.s==='북평') stop.s='북평(정선)';
+  }
+}
+
+// 인게임 #210030 강릉–부산 왕복 운행표를 분리해 ITX-새마을
+// #1201~1216의 구간 소요시간·정차·통과·승강장을 전면 대치한다.
+{
+  const minute=value=>{const [h,m]=value.split(':').map(Number);return h*60+m;};
+  const clock=value=>`${Math.floor(((value%1440)+1440)%1440/60)}:${String(((value%1440)+1440)%1440%60).padStart(2,'0')}`;
+  const down=[
+    ['강릉',null,0,21],['동강릉',5,null],['옥계',11,null],['동해',18,19,5],
+    ['북평',22,null],['삼척',26,27,2],['근덕',33,null],['원덕',43,null],
+    ['부구',48,49,1],['울진',54,55,3],['평해',68,null],['영해',79,80,1],
+    ['영덕',87,89,3],['강구',92,null],['청하',99,100,1],['포항',105,106,3],
+    ['안강',113,null],['경주',121,122,5],['불국사',126,127,1],['입실',130,131,1],
+    ['북울산',135,null],['태화강',140,141,7],['울주',148,null],['좌천',152,null],
+    ['기장',156,157,3],['해운대',164,null],['부산',169,null,7]
+  ];
+  const up=[
+    ['부산',null,0,7],['해운대',5,null],['기장',11,12,4],['좌천',16,null],
+    ['울주',21,null],['태화강',27,28,8],['북울산',33,null],['입실',37,38,1],
+    ['불국사',42,43,1],['경주',46,47,6],['안강',55,null],['포항',62,63,4],
+    ['청하',68,69,4],['강구',77,null],['영덕',80,81,4],['영해',88,89,4],
+    ['평해',98,null],['울진',113,114,4],['부구',120,121,2],['원덕',125,null],
+    ['근덕',133,null],['삼척',139,140,5],['북평',143,null],['동해',145,146,6],
+    ['옥계',152,null],['동강릉',160,null],['강릉',165,null,21]
+  ];
+  for(const train of ALL_TRAINS){
+    const no=+train.no;
+    if(no<1201||no>1216)continue;
+    const template=no%2?down:up;
+    const start=minute(train.stops[0].dep);
+    train.grade='ITX-새마을';
+    train.line='영동선·동해선';
+    train.stops=template.map(([s,arr,dep,p],index)=>{
+      const stop={s,arr:arr==null?null:clock(start+arr),dep:dep==null?null:clock(start+dep)};
+      if(p!=null&&(index===0||index===template.length-1||arr!==dep))stop.p=String(p);
+      return stop;
+    });
+  }
+  // 기존 열차와 3분 시격 및 금지구간 무추월을 확보하는 전 구간 보정.
+  const conflictOffset={
+    1201:19,1202:10,1203:-14,1204:5,1205:2,1206:5,1207:-22,1208:15,
+    1209:0,1210:-16,1211:0,1212:13,1213:2,1214:2,1215:0,1216:-23
+  };
+  for(const train of ALL_TRAINS){
+    const delta=conflictOffset[+train.no]||0;
+    if(!delta)continue;
+    for(const stop of train.stops){
+      if(/^\d{1,2}:\d{2}$/.test(stop.arr||''))stop.arr=clock(minute(stop.arr)+delta);
+      if(/^\d{1,2}:\d{2}$/.test(stop.dep||''))stop.dep=clock(minute(stop.dep)+delta);
+    }
+  }
+}
+
+// 인게임 #220001 의정부–대전 왕복 운행표를 방향별 템플릿으로 분리한다.
+// #1251·#1252는 기존 문의–상주 계통이 사용하므로 다음 빈 번호
+// #1253~1264를 사용하며, 방향별 3시간 간격으로 6왕복 운행한다.
+{
+  const clock=value=>`${Math.floor(((value%1440)+1440)%1440/60)}:${String(((value%1440)+1440)%1440%60).padStart(2,'0')}`;
+  const down=[
+    ['의정부',null,0,2],['가능',2,null],['송추',6,7,2],['장흥',11,12,2],
+    ['고양',16,17,1],['관산',20,null],['주교',23,null],['능곡',26,null],
+    ['행신',28,29,1],['서울',38,39,3],['한강로',53,null],['수원',60,61,4],
+    ['오산',69,null],['평택',77,null],['천안',87,89,11],['목천',94,null],
+    ['병천',97,null],['북청주',103,null],['서청주',107,108,3],
+    ['상당',112,null],['문의',116,null],['신탄진',125,null],
+    ['회덕',128,129,11],['대전조차장',136,141,7],['대전',150,null,12]
+  ];
+  const up=[
+    ['대전',null,0,12],['대전조차장',3,null],['회덕',7,null],['신탄진',12,null],
+    ['문의',16,null],['상당',17,null],['서청주',19,20,4],['북청주',25,null],
+    ['병천',30,null],['목천',34,null],['천안',38,40,12],['평택',50,null],
+    ['오산',59,null],['수원',66,67,5],['한강로',75,null],['서울',88,90,4],
+    ['행신',97,99,2],['능곡',102,103,2],['주교',107,null],['가능',107,null],
+    ['의정부',110,111,2]
+  ];
+  const departuresDown=[318,498,678,858,1038,1218];
+  const departuresUp=[350,530,710,890,1070,1250];
+  for(let index=0;index<6;index++){
+    for(const [no,dir,start,template] of [
+      [1253+index*2,'down',departuresDown[index],down],
+      [1254+index*2,'up',departuresUp[index],up]
+    ]){
+      const train={
+        no:String(no),dest:dir==='down'?'대전':'의정부',dir,
+        line:'교외선·경의선·경부선',grade:'ITX-마음',
+        boundary:dir==='down'?['의정부','대전']:['대전','의정부'],
+        stops:template.map(([s,arr,dep,p],stopIndex)=>{
+          const stop={s,arr:arr==null?null:clock(start+arr),dep:dep==null?null:clock(start+dep)};
+          if(p!=null&&(stopIndex===0||stopIndex===template.length-1||arr!==dep))stop.p=String(p);
+          return stop;
+        })
+      };
+      ALL_TRAINS.push(train);
+    }
+  }
+  const serviceOffset={
+    1253:8,1254:4,1255:8,1256:4,1257:8,1258:4,
+    1259:8,1260:4,1261:8,1262:4,1263:8,1264:4
+  };
+  for(const train of ALL_TRAINS){
+    const delta=serviceOffset[+train.no]||0;
+    if(!delta)continue;
+    for(const stop of train.stops){
+      for(const key of ['arr','dep']){
+        if(/^\d{1,2}:\d{2}$/.test(stop[key]||'')){
+          const [hour,min]=stop[key].split(':').map(Number);
+          stop[key]=clock(hour*60+min+delta);
+        }
+      }
+    }
   }
 }

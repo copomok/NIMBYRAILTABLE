@@ -28,7 +28,7 @@ const elapsed=(from,to)=>{
 };
 const regional=train=>{
   const no=Number(train.no);
-  return (no>=1241&&no<=1252)||(no>=4401&&no<=4436)||
+  return (no>=1201&&no<=1216)||(no>=1241&&no<=1264)||(no>=4401&&no<=4428)||
     (no>=681&&no<=700)||(no>=801&&no<=822);
 };
 
@@ -77,8 +77,14 @@ test('확정 운용표는 최소 5분 회차하고 모든 편성이 출발지로
   const rotations=[
     ['1241','1244','1245','1248','1249','1252'],
     ['1242','1243','1246','1247','1250','1251'],
-    Array.from({length:18},(_,i)=>String(4401+i*2)),
-    Array.from({length:18},(_,i)=>String(4402+i*2)),
+    ['1253','1256','1257','1260','1261','1264'],
+    ['1254','1255','1258','1259','1262','1263'],
+    ['1201','1206','1209','1214'],
+    ['1202','1205','1210','1213'],
+    ['1203','1208','1211','1216'],
+    ['1204','1207','1212','1215'],
+    Array.from({length:14},(_,i)=>String(4401+i*2)),
+    Array.from({length:14},(_,i)=>String(4402+i*2)),
     Array.from({length:10},(_,i)=>String(681+i)),
     Array.from({length:10},(_,i)=>String(691+i)),
     ['801','802','805','806','809','810','813','814','817','818','821','822'],
@@ -106,6 +112,12 @@ test('확정 운용표는 최소 5분 회차하고 모든 편성이 출발지로
 });
 
 test('교외선·보은선 단선 구간에서 반대방향 열차가 같은 폐색을 점유하지 않는다',()=>{
+  const singleTrackSections={
+    '교외선':new Set(['의정부','가능','송추','장흥','고양','관산','주교','능곡','행신']
+      .slice(0,-1).map((station,index)=>[station,['의정부','가능','송추','장흥','고양','관산','주교','능곡','행신'][index+1]].sort().join('↔'))),
+    '보은선':new Set(['문의','회인','수한','보은','장안','속리산','화남','화령','낙서','서상주','상주']
+      .slice(0,-1).map((station,index)=>[station,['문의','회인','수한','보은','장안','속리산','화남','화령','낙서','서상주','상주'][index+1]].sort().join('↔')))
+  };
   for(const line of ['교외선','보은선']){
     const sections=new Map;
     for(const train of trains.filter(t=>t.line.split('·').includes(line))){
@@ -116,6 +128,7 @@ test('교외선·보은선 단선 구간에서 반대방향 열차가 같은 폐
         let end=minute(to.arr||to.dep)+day;
         if(end<start){end+=1440;day+=1440;}
         const key=[from.s,to.s].sort().join('↔');
+        if(!singleTrackSections[line].has(key))continue;
         const runs=sections.get(key)||[];
         runs.push({no:train.no,from:from.s,to:to.s,start,end});
         sections.set(key,runs);
@@ -148,12 +161,42 @@ test('지정 열차는 첫 역부터 전 구간을 순연하고 순환열차는 
   assert.equal(stop(691,'남횡성').arr,'8:12');
   assert.equal(stop(691,'방림').arr,'8:15');
 
-  for(const train of trains.filter(t=>Number(t.no)>=4401&&Number(t.no)<=4436)){
+  const services=trains.filter(t=>Number(t.no)>=4401&&Number(t.no)<=4428);
+  assert.equal(services.length,28);
+  for(const train of services){
     const seoul=train.stops.filter(item=>item.s==='서울');
     assert.equal(seoul.length,2,`#${train.no} 서울 정차 순번`);
     assert.ok(seoul[0].dep&&!seoul[0].arr,`#${train.no} 서울 출발`);
     assert.ok(seoul[1].arr&&!seoul[1].dep,`#${train.no} 서울 종착`);
+    if(train.dir==='down'){
+      const namgeumho=train.stops.at(-2);
+      assert.equal(namgeumho.s,'남금호',`#${train.no} 서울 진입 직전 역`);
+      assert.equal(elapsed(namgeumho.dep,train.stops.at(-1).arr),4,`#${train.no} 남금호→서울`);
+    }
   }
+  assert.ok(!trains.some(t=>Number(t.no)>=4429&&Number(t.no)<=4436));
+});
+
+test('강릉–부산 새마을과 의정부–대전 마음은 사진 템플릿·번호·배차를 지킨다',()=>{
+  for(const no of Array.from({length:16},(_,index)=>1201+index)){
+    const train=byNo.get(String(no));
+    assert.equal(train.grade,'ITX-새마을');
+    assert.equal(elapsed(firstTime(train),lastTime(train)),no%2?169:165,`#${no} 소요시간`);
+    for(const station of ['불국사','입실']){
+      const stop=train.stops.find(item=>item.s===station);
+      assert.ok(stop.arr&&stop.dep,`#${no} ${station} 정차`);
+    }
+  }
+  const services=trains.filter(train=>Number(train.no)>=1253&&Number(train.no)<=1264);
+  assert.equal(services.length,12);
+  for(const direction of ['down','up']){
+    const departures=services.filter(train=>train.dir===direction)
+      .map(train=>minute(firstTime(train))).sort((a,b)=>a-b);
+    assert.equal(departures.join(','),(direction==='down'
+      ?[326,506,686,866,1046,1226]
+      :[354,534,714,894,1074,1254]).join(','));
+  }
+  assert.ok(!services.some(train=>['1251','1252'].includes(train.no)));
 });
 
 test('신설 열차는 기존 전 편과 공유 선로에서 3분 시격을 지키고 개활 추월하지 않는다',()=>{
@@ -164,8 +207,9 @@ test('신설 열차는 기존 전 편과 공유 선로에서 3분 시격을 지�
     const timed=train.stops.filter(stop=>/^\d{1,2}:\d{2}$/.test(stop.arr||stop.dep||''));
     for(let index=0;index<timed.length-1;index++){
       const from=timed[index],to=timed[index+1];
-      let start=minute(from.dep||from.arr)+day;
-      let end=minute(to.arr||to.dep)+day;
+      const numeric=value=>/^\d{1,2}:\d{2}$/.test(value||'')?value:null;
+      let start=minute(numeric(from.dep)||numeric(from.arr))+day;
+      let end=minute(numeric(to.arr)||numeric(to.dep))+day;
       if(end<start){end+=1440;day+=1440;}
       result.push({from:from.s,to:to.s,start,end});
     }
@@ -186,7 +230,10 @@ test('신설 열차는 기존 전 편과 공유 선로에서 3분 시격을 지�
     const ap=platformAt(a,station),bp=platformAt(b,station);
     return ap==null||bp==null||ap!==bp;
   };
-  for(const current of prepared.filter(item=>regional(item.train))){
+  for(const current of prepared.filter(item=>{
+    const no=Number(item.train.no);
+    return regional(item.train)&&!(no>=1253&&no<=1264);
+  })){
     for(const other of prepared){
       if(current===other)continue;
       if(![...current.lines].some(line=>other.lines.has(line)))continue;

@@ -5,8 +5,9 @@
   if(typeof REAL_PLAT==='undefined'||typeof ALL_TRAINS==='undefined')return;
   const isRegionalTrain=no=>{
     const n=Number(no);
-    return (n>=1241&&n<=1252)||
-      (n>=4401&&n<=4436)||
+    return (n>=1201&&n<=1216)||
+      (n>=1241&&n<=1264)||
+      (n>=4401&&n<=4428)||
       (n>=681&&n<=700)||
       (n>=801&&n<=822);
   };
