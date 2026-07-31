@@ -852,6 +852,10 @@ const NOTICES = [
 
 각 열차의 정확한 시각과 정차역은 <strong>열차 → 전체 시간표</strong> 또는 역별 시간표에서 확인해 주세요.<br><br>
 
+<strong>■ 전 계통 시각표 (참조 페이지)</strong><br>
+신설 4개 계통 46편의 하행·상행 전 정차/통과 시각을 계통별 표로 정리했습니다.<br><br>
+<a href="https://claude.ai/code/artifact/49e1b9aa-d4ee-4769-96fd-0ab90253ca04" target="_blank" rel="noopener noreferrer" style="display:inline-block;padding:10px 18px;border-radius:10px;background:var(--accent);color:#fff;font-weight:700;text-decoration:none">🔗 7월 29일 신설 계통 전체 시각표 열기</a><br><br>
+
 <span class="n-warn" style="display:block">첫 운행은 오전 5시 이후 시작하며, 막차 일부는 자정을 넘어 다음 날 오전 1시 30분 이전까지 운행합니다.</span>`
   },
   {
@@ -936,6 +940,10 @@ const NOTICES = [
 
 <strong>■ 정차·통과 및 승강장 정보 보정</strong><br>
 사진 자료에서 정차시간이 0초이거나 통과 시각으로 표시된 역은 앱에서도 <strong>통과역</strong>으로 구분했습니다. 방림·정안·나산 등 시간표상 웨이포인트로 표시됐던 역도 실제 역 순서에 맞춰 통과 시각을 반영했으며, 영업 정차역의 승강장 번호를 인게임 정보에 맞춰 보완했습니다.<br><br>
+
+<strong>■ 전 계통 시각표 (참조 페이지)</strong><br>
+개정·신설된 11개 계통 152편의 하행·상행 전 정차/통과 시각을 계통별 표로 정리했습니다.<br><br>
+<a href="https://claude.ai/code/artifact/00a14f6e-e947-4d22-9038-78cbe0a0d2d8" target="_blank" rel="noopener noreferrer" style="display:inline-block;padding:10px 18px;border-radius:10px;background:var(--accent);color:#fff;font-weight:700;text-decoration:none">🔗 7월 31일 개정 전체 시각표 열기</a><br><br>
 
 <span class="n-warn" style="display:block">열차번호와 출발 시각이 크게 달라진 계통이 있습니다. 기존에 저장한 즐겨찾기·알람·승차권이 있다면 탑승 전에 열차 상세 시간표를 다시 확인해 주세요. 자정을 넘겨 도착하는 열차는 출발일 기준으로 조회됩니다.</span>`
   },

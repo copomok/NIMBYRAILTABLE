@@ -5740,6 +5740,40 @@ function confirmMixedBooking(trainNo,fromStn,toStn,depTime,arrTime,travelDate,mi
   if(window._afterBookingCallback){const cb=window._afterBookingCallback;window._afterBookingCallback=null;cb();}
 }
 
+// 입석+좌석 결합 승차권 제안 카드 (미리보기 아티팩트와 동일한 스타일)
+function showMixedBookingDialog(t,fromStn,toStn,depTime,arrTime,travelDate,mix,count,discount,seatClass){
+  document.getElementById('mixed-dialog-wrap')?.remove();
+  const seatLbl=seatClassDisplayLabel(t,seatClass);
+  const perDisc=mix.reduce((a,r)=>a+applyDiscount(r.baseFarePerPerson,discount||'none'),0);
+  const legs=mix.map(r=>{
+    const stand=r.kind==='standing';
+    return `<div class="mxd-leg">
+      <span class="mxd-ico">${stand?'🚉':'🪑'}</span>
+      <b>${r.fromStn} → ${r.toStn}</b>
+      <span class="mxd-kind ${stand?'stand':'seat'}">${stand?'입석':r.seatClassLabel}</span>
+    </div>`;}).join('');
+  const wrap=document.createElement('div');
+  wrap.id='mixed-dialog-wrap';
+  wrap.innerHTML=`<div class="mxd-backdrop"></div>
+    <div class="mxd-card" role="dialog" aria-modal="true">
+      <h3 class="mxd-title">🎫 입석 ＋ 좌석 결합 승차권</h3>
+      <p class="mxd-desc">선택하신 ${seatLbl}은 일부 구간이 매진되었습니다. 아래와 같이 이어서 예매할 수 있어요.</p>
+      <div class="mxd-legs">${legs}</div>
+      <div class="mxd-fare"><span>총 운임 · ${count}명</span><b>${(perDisc*count).toLocaleString()}원</b></div>
+      <div class="mxd-btns">
+        <button class="mxd-no" id="mxd-cancel">취소</button>
+        <button class="mxd-yes" id="mxd-confirm">이대로 예매</button>
+      </div>
+    </div>`;
+  document.body.appendChild(wrap);
+  const close=()=>wrap.remove();
+  wrap.querySelector('.mxd-backdrop').addEventListener('click',close);
+  const cancelBtn=document.getElementById('mxd-cancel');
+  if(cancelBtn)addMobileTap(cancelBtn,close);
+  const confirmBtn=document.getElementById('mxd-confirm');
+  if(confirmBtn)addMobileTap(confirmBtn,()=>{close();confirmMixedBooking(t.no,fromStn,toStn,depTime,arrTime,travelDate,mix,count,discount);});
+}
+
 function confirmBooking(trainNo,fromStn,toStn,depTime,arrTime){
   const t=getTrainByNo(trainNo);
   if(!t)return;
@@ -5759,13 +5793,8 @@ function confirmBooking(trainNo,fromStn,toStn,depTime,arrTime){
     if(seatClass!=='standing'){
       const mix=computeMixedSegments(t,fromStn,toStn,travelDate,count,seatClass);
       if(mix){
-        const per=mix.reduce((a,r)=>a+r.baseFarePerPerson,0);
-        const perDisc=mix.reduce((a,r)=>a+r.farePerPerson,0);
-        const lines=mix.map(r=>`· ${r.fromStn}→${r.toStn} : ${r.kind==='standing'?'입석':r.seatClassLabel}`).join('\n');
-        const seatLbl=seatClassDisplayLabel(t,seatClass);
-        if(confirm(`선택하신 ${seatLbl}은(는) 일부 구간이 매진되었습니다.\n\n장거리 승객을 위해 한 열차에서 입석과 좌석을 이어서 이용하는\n"입석 + 좌석 결합 승차권"으로 예매할 수 있습니다.\n\n${lines}\n\n총 운임 ${(perDisc*count).toLocaleString()}원 (${count}명)\n\n이대로 예매하시겠습니까?`)){
-          confirmMixedBooking(trainNo,fromStn,toStn,depTime,arrTime,travelDate,mix,count,discount);
-        }
+        // 네이티브 confirm 대신 인앱 스타일 결합권 제안 카드 표시
+        showMixedBookingDialog(t,fromStn,toStn,depTime,arrTime,travelDate,mix,count,discount,seatClass);
         return;
       }
     }
@@ -13762,8 +13791,14 @@ function removeTripLeg(tripId,legId){
 }
 function _dayLegs(trip,day){return trip.legs.filter(l=>l.day===day).sort((a,b)=>(toMin(a.depTime)||0)-(toMin(b.depTime)||0));}
 function _tripNightsLabel(trip){const d=trip.days||1;return d<=1?'당일':`${d-1}박 ${d}일`;}
+function _tripClsLabel(c){return c==='mixed'?'입석＋좌석':(SEAT_CLASSES[c]?.label||c);}
 function _legFare(leg){
   const t=getTrainByNo(leg.trainNo); if(!t)return 0;
+  // 결합권(입석+좌석)으로 예매된 일정은 실제 승차권 운임을 사용
+  if(leg.seatClass==='mixed'){
+    if(leg.ticketId){const tk=loadTickets().find(x=>x.id===leg.ticketId&&x.status==='active');if(tk)return tk.totalFare;}
+    return calcFare(t,leg.fromStn,leg.toStn,'general')*(leg.passengerCount||1);
+  }
   const base=calcFare(t,leg.fromStn,leg.toStn,leg.seatClass);
   return applyDiscount(base,leg.discount||'none')*(leg.passengerCount||1);
 }
@@ -13779,15 +13814,28 @@ function _bookOneLegInto(leg, tripName, tickets){
   const t=getTrainByNo(leg.trainNo);
   if(!t)return {ok:false,err:'열차 정보 없음'};
   const date=leg.date, count=leg.passengerCount||1;
-  let cls=leg.seatClass, seatChanged=null;
+  const disc=leg.discount||'none';
+  let cls=leg.seatClass, seatChanged=null, mixSegments=null;
   if(typeof canBookOD==='function'&&!canBookOD(t,leg.fromStn,leg.toStn,count,date,cls)){
     // 설정: 매진 시 예매 가능한 다른 좌석 등급으로 자동 대체
+    // 우선순위: 전 구간 다른 좌석 등급 > 입석+좌석 결합권(부분 좌석) > 전 구간 입석
+    const autoOn=typeof tripAutoSeatEnabled==='function'&&tripAutoSeatEnabled();
+    const soldOut=()=>{const left=typeof getAvailableSeats==='function'?getAvailableSeats(t,leg.fromStn,leg.toStn,date,cls):0;return {ok:false,err:left>0?`${left}석만 남음`:'매진'};};
+    if(!autoOn)return soldOut();
+    // 1) 전 구간 착석 가능한 다른 좌석 등급 (입석 제외)
     let alt=null;
-    if(typeof tripAutoSeatEnabled==='function'&&tripAutoSeatEnabled()){
-      for(const c of availableSeatClasses(t.grade)){ if(c===cls)continue; if(canBookOD(t,leg.fromStn,leg.toStn,count,date,c)){ alt=c; break; } }
-    }
+    for(const c of availableSeatClasses(t.grade)){ if(c===cls||c==='standing')continue; if(canBookOD(t,leg.fromStn,leg.toStn,count,date,c)){ alt=c; break; } }
     if(alt){ seatChanged={from:cls,to:alt}; cls=alt; }
-    else { const left=typeof getAvailableSeats==='function'?getAvailableSeats(t,leg.fromStn,leg.toStn,date,cls):0; return {ok:false,err:left>0?`${left}석만 남음`:'매진'}; }
+    else if(cls!=='standing'&&typeof computeMixedSegments==='function'&&computeMixedSegments(t,leg.fromStn,leg.toStn,date,count,cls)){
+      // 2) 입석+좌석 결합권 (좌석 구간은 앉고, 매진 구간만 입석)
+      mixSegments=computeMixedSegments(t,leg.fromStn,leg.toStn,date,count,cls);
+      seatChanged={from:cls,to:'mixed',mixed:true};
+    }
+    else if(cls!=='standing'&&canBookOD(t,leg.fromStn,leg.toStn,count,date,'standing')){
+      // 3) 전 구간 입석
+      seatChanged={from:cls,to:'standing'}; cls='standing';
+    }
+    else return soldOut();
   }
   if(date===todayLocalStr()){
     const now=new Date(), nowM=now.getHours()*60+now.getMinutes(), depM=toMin(leg.depTime);
@@ -13799,15 +13847,38 @@ function _bookOneLegInto(leg, tripName, tickets){
     const conflict=tickets.find(tk=>{ if(tk.status!=='active'||tk.travelDate!==date)return false; const ed=toMin(tk.depTime),ea=toMin(tk.arrTime);if(ed===null||ea===null)return false; const bS=ed,bE=ea>=ed?ea:ed+1440; return aS<bE&&bS<aE; });
     if(conflict)return {ok:false,err:`시간 겹침(${conflict.trainNo})`};
   }
+  // 결합권(입석+좌석) 승차권
+  if(mixSegments){
+    const segments=mixSegments.map(r=>{
+      const seats=Array.from({length:count},()=>r.kind==='standing'?'입석':randomSeat(r.seatClass,leg.trainNo));
+      const b=r.baseFarePerPerson,f=applyDiscount(b,disc);
+      return {...r,seats,baseFarePerPerson:b,farePerPerson:f};
+    });
+    const farePerPerson=segments.reduce((a,s)=>a+s.farePerPerson,0);
+    const baseFarePerPerson=segments.reduce((a,s)=>a+s.baseFarePerPerson,0);
+    const topSeats=Array.from({length:count},(_,i)=>segments.map(s=>s.seats[i]).join(' / '));
+    const tk={
+      id:genTicketId(),trainNo:leg.trainNo,grade:t.grade,line:t.line,
+      fromStn:leg.fromStn,toStn:leg.toStn,depTime:leg.depTime,arrTime:leg.arrTime,
+      seatClass:'mixed',seatClassLabel:'입석＋좌석',mixed:segments,
+      seats:topSeats,passengerCount:count,
+      farePerPerson,totalFare:farePerPerson*count,discount:disc,
+      discountLabel:DISCOUNTS[disc].label,baseFarePerPerson,
+      distanceKm:Math.round(routeDistanceKm(t,leg.fromStn,leg.toStn)),
+      bookedAt:Date.now(),travelDate:date,status:'active',tripName:tripName||''
+    };
+    tickets.push(tk);
+    return {ok:true,ticketId:tk.id,trainNo:leg.trainNo,date,t,leg,bookedClass:'mixed',seatChanged};
+  }
   const base=calcFare(t,leg.fromStn,leg.toStn,cls);
-  const fare=applyDiscount(base,leg.discount||'none');
+  const fare=applyDiscount(base,disc);
   const seats=Array.from({length:count},()=>randomSeat(cls,leg.trainNo));
   const tk={
     id:genTicketId(),trainNo:leg.trainNo,grade:t.grade,line:t.line,
     fromStn:leg.fromStn,toStn:leg.toStn,depTime:leg.depTime,arrTime:leg.arrTime,
     seatClass:cls,seatClassLabel:SEAT_CLASSES[cls].label,seats,passengerCount:count,
-    farePerPerson:fare,totalFare:fare*count,discount:leg.discount||'none',
-    discountLabel:DISCOUNTS[leg.discount||'none'].label,baseFarePerPerson:base,
+    farePerPerson:fare,totalFare:fare*count,discount:disc,
+    discountLabel:DISCOUNTS[disc].label,baseFarePerPerson:base,
     distanceKm:Math.round(routeDistanceKm(t,leg.fromStn,leg.toStn)),
     bookedAt:Date.now(),travelDate:date,status:'active',tripName:tripName||''
   };
@@ -13835,7 +13906,7 @@ function bulkBookTrip(tripId){
     const leg=todo[i];
     const r=_bookOneLegInto(leg, trip.name, tickets);
     if(r.ok){ leg.ticketId=r.ticketId;
-      if(r.seatChanged){ leg.seatClass=r.bookedClass; leg.seatClassLabel=SEAT_CLASSES[r.bookedClass].label; }
+      if(r.seatChanged){ leg.seatClass=r.bookedClass; leg.seatClassLabel=_tripClsLabel(r.bookedClass); }
       ok++; done.push(r); }
     else fails.push(`· ${leg.trainNo} ${leg.fromStn}→${leg.toStn} (${leg.day}일차): ${r.err}`);
     i++;
@@ -13849,7 +13920,7 @@ function bulkBookTrip(tripId){
       done.forEach(r=>{ if(typeof _autoBookAlarms==='function')_autoBookAlarms(r.t,r.leg.fromStn,r.leg.toStn,r.leg.depTime,r.leg.arrTime); });
       const changed=done.filter(r=>r.seatChanged);
       let msg=`🧳 일괄 예매 결과\n\n✅ 성공 ${ok}건`;
-      if(changed.length)msg+=`\n🎟️ 매진으로 좌석 등급 변경 ${changed.length}건\n`+changed.map(r=>` · ${r.trainNo} ${SEAT_CLASSES[r.seatChanged.from].label}→${SEAT_CLASSES[r.seatChanged.to].label}`).join('\n');
+      if(changed.length)msg+=`\n🎟️ 매진으로 좌석 등급 변경 ${changed.length}건\n`+changed.map(r=>` · ${r.trainNo} ${_tripClsLabel(r.seatChanged.from)}→${_tripClsLabel(r.seatChanged.to)}`).join('\n');
       if(fails.length)msg+=`\n❌ 실패 ${fails.length}건\n\n`+fails.join('\n');
       if(!fails.length&&!changed.length)msg+='\n모든 일정이 예매되었습니다!';
       alert(msg);

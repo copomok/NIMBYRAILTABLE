@@ -870,9 +870,32 @@ tbody td{padding:10px 14px;font-size:13px;white-space:nowrap}
 .ticket-mixed-seg.mx-seat{border-left-color:var(--accent2,#3fb950)}
 .ticket-mixed-seg.mx-stand{border-left-color:#d29922}
 .ticket-mixed-seg .mx-icon{flex:none}
-.ticket-mixed-seg .mx-route{font-weight:600;color:var(--text1)}
-.ticket-mixed-seg .mx-kind{color:var(--text2)}
-.ticket-mixed-seg .mx-seat-no{margin-left:auto;color:var(--text1);font-weight:500}
+.ticket-mixed-seg .mx-route{font-weight:700;color:var(--text1)}
+.ticket-mixed-seg .mx-kind{font-weight:700}
+.ticket-mixed-seg.mx-seat .mx-kind{color:var(--accent2,#3fb950)}
+.ticket-mixed-seg.mx-stand .mx-kind{color:#d29922}
+.ticket-mixed-seg .mx-seat-no{margin-left:auto;color:var(--text1);font-weight:600}
+
+/* 입석+좌석 결합 승차권 제안 카드 (예매 화면) */
+#mixed-dialog-wrap{position:fixed;inset:0;z-index:10060;display:flex;align-items:center;justify-content:center;padding:22px}
+.mxd-backdrop{position:absolute;inset:0;background:rgba(0,0,0,.55)}
+.mxd-card{position:relative;width:100%;max-width:400px;background:var(--card,var(--bg2));border:1px dashed color-mix(in srgb,#d29922 55%,var(--border));
+  background:color-mix(in srgb,#d29922 9%,var(--bg2,#161b22));border-radius:16px;padding:18px 18px 16px;box-shadow:0 12px 40px rgba(0,0,0,.45)}
+.mxd-title{margin:0 0 9px;font-size:15px;font-weight:800;color:var(--text1);display:flex;align-items:center;gap:7px}
+.mxd-desc{margin:0 0 12px;font-size:12.5px;line-height:1.6;color:var(--text2)}
+.mxd-legs{display:flex;flex-direction:column;gap:6px;margin:10px 0}
+.mxd-leg{display:flex;align-items:center;gap:8px;font-size:13px;background:var(--bg3,rgba(127,127,127,.1));border-radius:9px;padding:9px 11px}
+.mxd-leg b{color:var(--text1);font-weight:700}
+.mxd-leg .mxd-ico{flex:none}
+.mxd-leg .mxd-kind{margin-left:auto;font-weight:800}
+.mxd-leg .mxd-kind.stand{color:#d29922}
+.mxd-leg .mxd-kind.seat{color:var(--accent2,#3fb950)}
+.mxd-fare{display:flex;justify-content:space-between;align-items:baseline;margin-top:10px;padding-top:11px;border-top:1px solid var(--border);font-size:12.5px;color:var(--text2)}
+.mxd-fare b{font-size:19px;color:var(--text1);font-weight:800}
+.mxd-btns{display:flex;gap:9px;margin-top:14px}
+.mxd-btns button{flex:1;border:none;border-radius:11px;padding:12px 0;font-size:14px;font-weight:800;cursor:pointer;font-family:inherit}
+.mxd-no{background:var(--bg3,rgba(127,127,127,.15));color:var(--text2)}
+.mxd-yes{background:var(--accent);color:#fff}
 .ticket-fare{font-size:15px!important;font-weight:700!important;color:var(--text1)!important}
 
 .ticket-card-id{font-size:11px;color:var(--text3);font-family:var(--mono);margin-bottom:10px}
