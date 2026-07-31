@@ -1594,6 +1594,26 @@ for(const train of ALL_TRAINS){
   }
 }
 
+// 개별 역 이후가 아니라 첫 역부터 종착까지 열차 전체를 동일하게 순연한다.
+// #1934: 완도 21:05 동시출발(#918) 해소, #691: 방림 08:15 정상 추월.
+{
+  const wholeTrainOffset={1934:3,691:1};
+  const shiftClock=(value,delta)=>{
+    if(!/^\d{1,2}:\d{2}$/.test(value||''))return value;
+    const [hour,min]=value.split(':').map(Number);
+    const total=(hour*60+min+delta+1440)%1440;
+    return `${Math.floor(total/60)}:${String(total%60).padStart(2,'0')}`;
+  };
+  for(const train of ALL_TRAINS){
+    const delta=wholeTrainOffset[Number(train.no)]||0;
+    if(!delta)continue;
+    for(const stop of train.stops){
+      stop.arr=shiftClock(stop.arr,delta);
+      stop.dep=shiftClock(stop.dep,delta);
+    }
+  }
+}
+
 // 동명이역은 운행 노선에 따라 구분한다. 기존 열차번호와 승차권 호환성은 유지한다.
 for(const train of ALL_TRAINS){
   const isSobaek=train.line.split('·').includes('소백선');

@@ -134,6 +134,28 @@ test('교외선·보은선 단선 구간에서 반대방향 열차가 같은 폐
   }
 });
 
+test('지정 열차는 첫 역부터 전 구간을 순연하고 순환열차는 서울 종착 시각을 가진다',()=>{
+  const stop=(no,station,occurrence=0)=>byNo.get(String(no)).stops
+    .filter(item=>item.s===station)[occurrence];
+  assert.equal(stop(918,'완도').dep,'21:05');
+  assert.equal(stop(1934,'완도').dep,'21:08');
+
+  assert.equal(stop(1761,'남횡성').arr,'8:06');
+  assert.equal(stop(1761,'남횡성').dep,'8:07');
+  assert.equal(stop(1761,'방림').arr,'8:15');
+  assert.equal(stop(1761,'방림').dep,'8:16');
+  assert.equal(stop(691,'잠실').dep,'7:33');
+  assert.equal(stop(691,'남횡성').arr,'8:12');
+  assert.equal(stop(691,'방림').arr,'8:15');
+
+  for(const train of trains.filter(t=>Number(t.no)>=4401&&Number(t.no)<=4436)){
+    const seoul=train.stops.filter(item=>item.s==='서울');
+    assert.equal(seoul.length,2,`#${train.no} 서울 정차 순번`);
+    assert.ok(seoul[0].dep&&!seoul[0].arr,`#${train.no} 서울 출발`);
+    assert.ok(seoul[1].arr&&!seoul[1].dep,`#${train.no} 서울 종착`);
+  }
+});
+
 test('신설 열차는 기존 전 편과 공유 선로에서 3분 시격을 지키고 개활 추월하지 않는다',()=>{
   const lineTokens=train=>new Set(train.line.split('·'));
   const legs=train=>{

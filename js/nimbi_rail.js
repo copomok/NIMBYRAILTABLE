@@ -116,13 +116,29 @@ const UNTRUSTED_COORDS=new Set(['장성','장흥','춘양']);
 // 등급별 대표 표정속도(km/h) — 좌표 없는 구간을 시간으로 환산할 때 사용
 const GRADE_KMH={'KTX':190,'KTX-산천':190,'KTX-이음':150,'SRT':190,'ITX-새마을':100,'ITX-마음':100,'ITX-청춘':100,'무궁화호':75,'남도해양':75,'국악와인':75};
 
+// 같은 역이 두 번 등장하는 순환열차도 출발 occurrence와 이후 도착
+// occurrence를 정확히 짝짓는다(예: 서울 출발 → 서울 종착).
+function travelStopIndexes(t,fromStn,toStn){
+  if(!t||!Array.isArray(t.stops))return null;
+  for(let fi=0;fi<t.stops.length;fi++){
+    const from=t.stops[fi];
+    if(from.s!==fromStn||!hasTime(from.dep))continue;
+    for(let ti=fi+1;ti<t.stops.length;ti++){
+      const to=t.stops[ti];
+      if(to.s===toStn&&hasTime(to.arr))return {fi,ti};
+    }
+  }
+  return null;
+}
+
 // 열차 경로(fromStn~toStn) 실제 거리(km).
 // 좌표 이상치/미확보 구간은 "해당 열차의 소요시간 × 구간 평균속도"로 추정.
 function routeDistanceKm(t, fromStn, toStn){
   if(!t||!t.stops)return 0;
   const S=t.stops;
-  const fi=S.findIndex(s=>s.s===fromStn), ti=S.findIndex(s=>s.s===toStn);
-  if(fi<0||ti<0||ti<=fi)return 0;
+  const pair=travelStopIndexes(t,fromStn,toStn);
+  if(!pair)return 0;
+  const {fi,ti}=pair;
   const kmh=GRADE_KMH[t.grade]||90, vpm=kmh/60; // km/분 폴백
   // 구간 내 정거장: 좌표(신뢰 불가/미확보 시 null)와 시각(분)
   const E=[];
@@ -719,7 +735,8 @@ function getCurrentStatus(t, atMin){
 
 function renderDetail(t){
   const valid=t.stops.filter(s=>s.arr||s.dep);
-  const originStn=valid[0]?.s, terminusStn=valid[valid.length-1]?.s;
+  const firstTimedIndex=t.stops.findIndex(s=>s.arr||s.dep);
+  const lastTimedIndex=t.stops.length-1-[...t.stops].reverse().findIndex(s=>s.arr||s.dep);
   const liveDelay=(typeof _liveDelayOf==='function')?_liveDelayOf(t):0;
   const now=new Date(), nowM=now.getHours()*60+now.getMinutes();
   const status=getCurrentStatus(t,nowM-liveDelay);
@@ -727,10 +744,10 @@ function renderDetail(t){
 
   // ── 타임라인 rows ──
   let rows=''; let seq=0;
-  t.stops.forEach(s=>{
+  t.stops.forEach((s,stopIndex)=>{
     const arr=s.arr, dep=s.dep;
     if(!arr&&!dep)return;
-    const isOrigin=s.s===originStn, isTerm=s.s===terminusStn;
+    const isOrigin=stopIndex===firstTimedIndex, isTerm=stopIndex===lastTimedIndex;
     const isPass=!isOrigin&&!isTerm&&isPassStop(t,s.s);
     seq++;
 
@@ -887,21 +904,25 @@ function searchByStation(){
     if(dir!=='all'&&t.dir!==dir)return;
     if(lineF!=='all'&&!t.line.includes(lineF))return;
     if(!gradeMatch(t.grade,gradeF))return;
-    const stop=t.stops.find(s=>s.s===stn);
-    if(!stop||(!stop.arr&&!stop.dep))return;
-    const isPass=isPassStop(t,stn);
-    if(passF==='stop'&&isPass)return;
-    // 당역 종착 제외 필터
-    if(terminusF==='exclude'){
-      const valid=t.stops.filter(s=>s.arr||s.dep);
-      const terminus=valid.length?valid[valid.length-1].s:null;
-      if(terminus===stn)return;
+    const timedIndexes=t.stops.map((stop,index)=>({stop,index}))
+      .filter(item=>item.stop.s===stn&&(item.stop.arr||item.stop.dep));
+    const first=t.stops.findIndex(stop=>stop.arr||stop.dep);
+    const last=t.stops.length-1-[...t.stops].reverse().findIndex(stop=>stop.arr||stop.dep);
+    for(const {stop,index} of timedIndexes){
+      const isEndpoint=index===first||index===last;
+      const isPass=!isEndpoint&&(
+        stop.arr==='통과'||stop.dep==='통과'||
+        (hasTime(stop.arr)&&!hasTime(stop.dep))||
+        (hasTime(stop.dep)&&!hasTime(stop.arr))
+      );
+      if(passF==='stop'&&isPass)continue;
+      if(terminusF==='exclude'&&index===last)continue;
+      const sortT=toMin(hasTime(stop.dep)?stop.dep:null)??toMin(hasTime(stop.arr)?stop.arr:null)??9999;
+      if(afterMin!==null&&sortT!==9999&&sortT<afterMin)continue;
+      const timeV2=hasTime(stop.dep)?stop.dep:hasTime(stop.arr)?stop.arr:null;
+      if(nightF==='only'&&!isNightTrain(timeV2))continue;
+      results.push({t,stop,isPass,sortT,isNight:isNightTrain(timeV2)});
     }
-    const sortT=toMin(hasTime(stop.dep)?stop.dep:null)??toMin(hasTime(stop.arr)?stop.arr:null)??9999;
-    if(afterMin!==null&&sortT!==9999&&sortT<afterMin)return;
-    const timeV2=hasTime(stop.dep)?stop.dep:hasTime(stop.arr)?stop.arr:null;
-    if(nightF==='only'&&!isNightTrain(timeV2))return;
-    results.push({t,stop,isPass,sortT,isNight:isNightTrain(timeV2)});
   });
   results.sort((a,b)=>a.sortT-b.sortT);
   if(!results.length){el.innerHTML=`<div class="empty"><div class="empty-icon">🚫</div><p><b>${stn}</b>에 정차하는 열차가 없습니다</p></div>`;return;}
@@ -1035,9 +1056,10 @@ function searchByRoute(){
   let directs=[];
   ALL_TRAINS.forEach(t=>{
     if(!gradeMatch(t.grade,gradeF))return;
-    const stops=t.stops;   const fi=stops.findIndex(s=>s.s===from);
-    const ti=stops.findIndex(s=>s.s===to);
-    if(fi===-1||ti===-1||fi>=ti)return;
+    const stops=t.stops;
+    const pair=travelStopIndexes(t,from,to);
+    if(!pair)return;
+    const {fi,ti}=pair;
     if(isPassStop(t,from)||isPassStop(t,to))return;
     const depT=getStopTime(stops[fi]);
     const arrT=hasTime(stops[ti].arr)?stops[ti].arr:hasTime(stops[ti].dep)?stops[ti].dep:null;
@@ -2761,11 +2783,12 @@ function renderTableView(t){
   let tableRows = '';
   let seq = 0;
   const valid = t.stops.filter(s => s.arr || s.dep);
-  const originStn = valid[0]?.s, terminusStn = valid[valid.length-1]?.s;
-  t.stops.forEach(s => {
+  const firstTimedIndex=t.stops.findIndex(s=>s.arr||s.dep);
+  const lastTimedIndex=t.stops.length-1-[...t.stops].reverse().findIndex(s=>s.arr||s.dep);
+  t.stops.forEach((s,stopIndex) => {
     const arr = s.arr, dep = s.dep;
     if(!arr && !dep) return;
-    const isOrigin = s.s === originStn, isTerm = s.s === terminusStn;
+    const isOrigin=stopIndex===firstTimedIndex, isTerm=stopIndex===lastTimedIndex;
     const isPass = !isOrigin && !isTerm && isPassStop(t, s.s);
     seq++;
     // 현재 위치 하이라이트
