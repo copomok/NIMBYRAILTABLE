@@ -13486,12 +13486,9 @@ function _renderJourney(){
 }
 
 // ══════════════════════════════════════════
-// 🧳 내 여행 — 여러 날 일정을 하나로 묶어 일괄 예매
+// 🧳 내 여행 — N일차 일정을 묶어 일괄 예매
 // ══════════════════════════════════════════
 const TRIP_KEY='nimbi_trips';
-function loadTrips(){try{return JSON.parse(localStorage.getItem(TRIP_KEY))||[];}catch(e){return[];}}
-function saveTrips(t){try{localStorage.setItem(TRIP_KEY,JSON.stringify(t));}catch(e){}}
-function genTripId(){return 'TR'+Date.now().toString(36)+Math.random().toString(36).slice(2,5);}
 function _tesc(s){return String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
 function _tripToast(msg){
   const old=document.getElementById('trip-toast'); if(old)old.remove();
@@ -13500,11 +13497,32 @@ function _tripToast(msg){
   d.textContent=msg; document.body.appendChild(d);
   setTimeout(()=>{d.style.transition='opacity .4s';d.style.opacity='0';setTimeout(()=>d.remove(),400);},1900);
 }
+// ── 날짜/일차 헬퍼 ──
+function _addDays(dateStr,n){const d=new Date((dateStr||todayLocalStr())+'T00:00');d.setDate(d.getDate()+n);return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;}
+function _daysBetween(a,b){return Math.round((new Date(b+'T00:00')-new Date(a+'T00:00'))/86400000);}
+function _dayDate(trip,day){return _addDays(trip.startDate,day-1);}
+function _migrateTrip(tp){
+  if(!tp||typeof tp!=='object')return tp;
+  if(!Array.isArray(tp.legs))tp.legs=[];
+  if(tp.startDate&&tp.days){
+    tp.days=Math.max(1,Math.min(30,tp.days|0));
+    tp.legs.forEach(l=>{ if(!l.day)l.day=l.date?Math.max(1,_daysBetween(tp.startDate,l.date)+1):1; if(l.day>tp.days)l.day=tp.days; if(l.day<1)l.day=1; });
+    return tp;
+  }
+  const ds=tp.legs.map(l=>l.date).filter(Boolean).sort();
+  const start=ds[0]||todayLocalStr(), end=ds[ds.length-1]||start;
+  tp.startDate=start; tp.days=Math.max(1,Math.min(30,_daysBetween(start,end)+1));
+  tp.legs.forEach(l=>{ l.day=l.date?Math.max(1,Math.min(tp.days,_daysBetween(start,l.date)+1)):1; });
+  return tp;
+}
+function loadTrips(){try{return (JSON.parse(localStorage.getItem(TRIP_KEY))||[]).map(_migrateTrip);}catch(e){return[];}}
+function saveTrips(t){try{localStorage.setItem(TRIP_KEY,JSON.stringify(t));}catch(e){}}
+function genTripId(){return 'TR'+Date.now().toString(36)+Math.random().toString(36).slice(2,5);}
 
 // ── 데이터 조작 ──
-function createTrip(name){
+function createTrip(name,startDate,days){
   const trips=loadTrips();
-  const trip={id:genTripId(),name:(name||'내 여행').trim()||'내 여행',createdAt:Date.now(),legs:[]};
+  const trip={id:genTripId(),name:(name||'내 여행').trim()||'내 여행',createdAt:Date.now(),startDate:startDate||todayLocalStr(),days:Math.max(1,Math.min(30,days||1)),legs:[]};
   trips.push(trip); saveTrips(trips); return trip.id;
 }
 function deleteTrip(id){
@@ -13513,10 +13531,14 @@ function deleteTrip(id){
   if(window._activeTripId===id)window._activeTripId=null;
   renderMyTrips();
 }
-function renameTrip(id){
+function _syncLegDates(trip){trip.legs.forEach(l=>{if(l.day>trip.days)l.day=trip.days;if(l.day<1)l.day=1;l.date=_dayDate(trip,l.day);});}
+function updateTrip(id,name,startDate,days){
   const trips=loadTrips(); const tp=trips.find(t=>t.id===id); if(!tp)return;
-  const nm=prompt('여행 이름',tp.name); if(nm===null)return;
-  tp.name=nm.trim()||tp.name; saveTrips(trips); renderMyTrips();
+  tp.name=(name||tp.name).trim()||tp.name;
+  tp.startDate=startDate||tp.startDate;
+  tp.days=Math.max(1,Math.min(30,days||tp.days));
+  _syncLegDates(tp);
+  saveTrips(trips); renderMyTrips();
 }
 function addLegToTrip(tripId,leg){
   const trips=loadTrips(); const tp=trips.find(t=>t.id===tripId); if(!tp)return false;
@@ -13526,24 +13548,8 @@ function removeTripLeg(tripId,legId){
   const trips=loadTrips(); const tp=trips.find(t=>t.id===tripId); if(!tp)return;
   tp.legs=tp.legs.filter(l=>l.id!==legId); saveTrips(trips); renderMyTrips();
 }
-function _tripLegsSorted(trip){
-  return [...trip.legs].sort((a,b)=>{
-    if(a.date!==b.date)return a.date<b.date?-1:1;
-    return (toMin(a.depTime)||0)-(toMin(b.depTime)||0);
-  });
-}
-function _tripDateRange(trip){
-  const ds=trip.legs.map(l=>l.date).filter(Boolean).sort();
-  return ds.length?[ds[0],ds[ds.length-1]]:[null,null];
-}
-function _tripNightsLabel(trip){
-  const [mn,mx]=_tripDateRange(trip);
-  if(!mn)return '일정 없음';
-  if(mn===mx)return '당일';
-  const d1=new Date(mn+'T00:00'), d2=new Date(mx+'T00:00');
-  const nights=Math.round((d2-d1)/86400000);
-  return `${nights}박 ${nights+1}일`;
-}
+function _dayLegs(trip,day){return trip.legs.filter(l=>l.day===day).sort((a,b)=>(toMin(a.depTime)||0)-(toMin(b.depTime)||0));}
+function _tripNightsLabel(trip){const d=trip.days||1;return d<=1?'당일':`${d-1}박 ${d}일`;}
 function _legFare(leg){
   const t=getTrainByNo(leg.trainNo); if(!t)return 0;
   const base=calcFare(t,leg.fromStn,leg.toStn,leg.seatClass);
@@ -13602,7 +13608,7 @@ function bulkBookTrip(tripId){
   for(const leg of todo){
     const r=_bookOneLeg(leg,trip.name);
     if(r.ok){leg.ticketId=r.ticketId;ok++;}
-    else fails.push(`· ${leg.trainNo} ${leg.fromStn}→${leg.toStn} (${leg.date}): ${r.err}`);
+    else fails.push(`· ${leg.trainNo} ${leg.fromStn}→${leg.toStn} (${leg.day}일차): ${r.err}`);
   }
   saveTrips(trips);
   let msg=`🧳 일괄 예매 결과\n\n✅ 성공 ${ok}건`;
@@ -13623,9 +13629,8 @@ function renderMyTrips(){
 }
 function _tripListHTML(trips){
   const cards = trips.length ? trips.slice().sort((a,b)=>b.createdAt-a.createdAt).map(tp=>{
-    const [mn,mx]=_tripDateRange(tp);
     const booked=tp.legs.filter(_legBooked).length;
-    const range=mn?(mn===mx?mn:`${mn} ~ ${mx}`):'일정 없음';
+    const range=tp.days>1?`${tp.startDate} ~ ${_dayDate(tp,tp.days)}`:tp.startDate;
     return `<div class="trip-card" onclick="openTrip('${tp.id}')">
       <div class="trip-card-top">
         <span class="trip-card-name">🧳 ${_tesc(tp.name)}</span>
@@ -13638,55 +13643,89 @@ function _tripListHTML(trips){
         <span class="trip-card-fare">${_tripEstFare(tp).toLocaleString()}원</span>
       </div>
     </div>`;
-  }).join('') : `<div class="trip-empty"><div class="trip-empty-ic">🧳</div><p>아직 만든 여행이 없습니다.<br>여행을 만들고 열차 일정을 담아 한 번에 예매해 보세요.</p></div>`;
+  }).join('') : `<div class="trip-empty"><div class="trip-empty-ic">🧳</div><p>아직 만든 여행이 없습니다.<br>여행을 만들고 날짜별로 열차 일정을 담아<br>한 번에 예매해 보세요.</p></div>`;
   return `<div class="trip-wrap">
-    <div class="trip-intro">1박 2일, 3박 4일 등 여러 날의 열차 일정을 하나의 여행으로 묶어 <b>일괄 예매</b>할 수 있습니다.</div>
-    <button class="btn btn-primary trip-new" onclick="createTripPrompt()">＋ 새 여행 만들기</button>
+    <div class="trip-intro">1박 2일, 3박 4일 등 <b>며칠 일정</b>인지 정하고, 날짜(일차)별로 열차를 담아 <b>일괄 예매</b>할 수 있습니다.</div>
+    <button class="btn btn-primary trip-new" onclick="openTripCreateModal()">＋ 새 여행 만들기</button>
     <div class="trip-list">${cards}</div>
   </div>`;
 }
-function createTripPrompt(){
-  const nm=prompt('새 여행 이름을 입력하세요','내 여행');
-  if(nm===null)return;
-  const id=createTrip(nm); openTrip(id);
+
+// ── 생성/설정 모달 (이름·시작일·일수) ──
+function _openTripFormModal(opt){
+  document.getElementById('trip-form-wrap')?.remove();
+  const today=todayLocalStr(), maxD=_addDays(today,365);
+  const wrap=document.createElement('div'); wrap.id='trip-form-wrap';
+  wrap.style.cssText='position:fixed;inset:0;z-index:9600;display:flex;align-items:center;justify-content:center;padding:16px;box-sizing:border-box';
+  wrap.innerHTML=`<div style="position:absolute;inset:0;background:rgba(0,0,0,.6)"></div>
+    <div class="alarm-popup" style="position:relative;transform:none;top:auto;left:auto;width:100%;max-width:420px">
+      <div class="alarm-popup-title">${opt.title}</div>
+      <div class="trip-form-field"><label>여행 이름</label><input type="text" id="tf-name" class="trip-form-input" value="${_tesc(opt.name||'')}" placeholder="예: 여름 부산 여행" maxlength="30"></div>
+      <div class="trip-form-field"><label>시작일 (1일차)</label><input type="date" id="tf-start" class="trip-form-input" value="${opt.startDate||today}" min="${today}" max="${maxD}"></div>
+      <div class="trip-form-field"><label>여행 일수</label>
+        <div class="booking-passenger-control" style="justify-content:center;gap:20px">
+          <button class="booking-stepper-btn" id="tf-minus" type="button">−</button>
+          <span id="tf-days" style="min-width:96px;text-align:center"></span>
+          <button class="booking-stepper-btn" id="tf-plus" type="button">+</button>
+        </div>
+      </div>
+      <button class="btn btn-primary" id="tf-save" style="width:100%;justify-content:center;margin-top:16px">${opt.saveLabel||'저장'}</button>
+      <button class="alarm-popup-close" id="tf-cancel">취소</button>
+    </div>`;
+  document.body.appendChild(wrap);
+  let days=Math.max(1,Math.min(30,opt.days||1));
+  const upd=()=>{const el=document.getElementById('tf-days');if(el)el.innerHTML=`<b style="font-size:17px">${days}</b>일 <span style="color:var(--text3);font-size:12px">${days<=1?'· 당일':'· '+(days-1)+'박'}</span>`;};
+  upd();
+  wrap.addEventListener('click',e=>{if(e.target===wrap||e.target===wrap.firstElementChild)wrap.remove();});
+  document.getElementById('tf-minus').addEventListener('click',()=>{days=Math.max(1,days-1);upd();});
+  document.getElementById('tf-plus').addEventListener('click',()=>{days=Math.min(30,days+1);upd();});
+  document.getElementById('tf-cancel').addEventListener('click',()=>wrap.remove());
+  document.getElementById('tf-save').addEventListener('click',()=>{
+    const name=document.getElementById('tf-name').value.trim()||'내 여행';
+    const start=document.getElementById('tf-start').value||today;
+    const ok=opt.onSave(name,start,days);
+    if(ok!==false)wrap.remove();
+  });
 }
+function openTripCreateModal(){ _openTripFormModal({title:'🧳 새 여행 만들기',saveLabel:'만들기',days:2,onSave:(n,s,d)=>{const id=createTrip(n,s,d);openTrip(id);}}); }
+function openTripEditModal(id){
+  const tp=loadTrips().find(t=>t.id===id); if(!tp)return;
+  _openTripFormModal({title:'🧳 여행 설정',saveLabel:'저장',name:tp.name,startDate:tp.startDate,days:tp.days,onSave:(n,s,d)=>{
+    const stranded=tp.legs.filter(l=>l.day>d).length;
+    if(stranded && !confirm(`${d}일차 이후의 일정 ${stranded}건이 마지막 날(${d}일차)로 이동됩니다.\n계속하시겠습니까?`))return false;
+    updateTrip(id,n,s,d);
+  }});
+}
+
 function _tripDetailHTML(trip){
-  const legs=_tripLegsSorted(trip);
-  const [mn,mx]=_tripDateRange(trip);
-  const range=mn?(mn===mx?mn:`${mn} ~ ${mx}`):'일정 없음';
-  const booked=legs.filter(_legBooked).length;
-  const unbooked=legs.length-booked;
-  // 날짜별 그룹
+  const booked=trip.legs.filter(_legBooked).length;
+  const unbooked=trip.legs.length-booked;
+  const range=trip.days>1?`${trip.startDate} ~ ${_dayDate(trip,trip.days)}`:trip.startDate;
   let body='';
-  if(!legs.length){
-    body=`<div class="trip-empty"><div class="trip-empty-ic">🗓️</div><p>담긴 일정이 없습니다.<br>아래 <b>＋ 일정 추가</b>로 구간을 조회하고<br>열차를 눌러 담아보세요.</p></div>`;
-  } else {
-    let curDate=null, dayNo=0;
-    legs.forEach(l=>{
-      if(l.date!==curDate){
-        if(curDate!==null)body+='</div>';
-        curDate=l.date; dayNo++;
-        body+=`<div class="trip-day-head"><span class="trip-day-no">DAY ${dayNo}</span><span class="trip-day-date">${l.date||'-'}</span></div><div class="trip-day-legs">`;
-      }
-      body+=_tripLegHTML(trip.id,l);
-    });
-    body+='</div>';
+  for(let day=1; day<=trip.days; day++){
+    const legs=_dayLegs(trip,day);
+    body+=`<div class="trip-day-head">
+      <span class="trip-day-no">${day}일차</span>
+      <span class="trip-day-date">${_dayDate(trip,day)}</span>
+      <button class="trip-day-add" onclick="openTripAddSearch('${trip.id}',${day})">＋ 일정</button>
+    </div>`;
+    if(legs.length) body+=`<div class="trip-day-legs">${legs.map(l=>_tripLegHTML(trip.id,l)).join('')}</div>`;
+    else body+=`<div class="trip-day-empty" onclick="openTripAddSearch('${trip.id}',${day})"><span>＋ 첫 일정을 추가해보세요</span></div>`;
   }
   return `<div class="trip-wrap trip-detail">
     <button class="trip-back" onclick="backToTripList()">‹ 전체 여행</button>
     <div class="trip-detail-head">
       <div class="trip-detail-name">🧳 ${_tesc(trip.name)}</div>
       <div class="trip-detail-actions">
-        <button class="trip-mini-btn" onclick="renameTrip('${trip.id}')">이름 수정</button>
+        <button class="trip-mini-btn" onclick="openTripEditModal('${trip.id}')">⚙ 설정</button>
         <button class="trip-mini-btn trip-mini-danger" onclick="deleteTrip('${trip.id}')">삭제</button>
       </div>
     </div>
-    <div class="trip-detail-meta">${_tripNightsLabel(trip)} · ${range} · 일정 ${legs.length}개 · 예매 ${booked}/${legs.length}</div>
+    <div class="trip-detail-meta">${_tripNightsLabel(trip)} · ${range} · 일정 ${trip.legs.length}개 · 예매 ${booked}/${trip.legs.length}</div>
     ${body}
     <div class="trip-total-bar">
       <div><span class="trip-total-label">예상 합계</span><span class="trip-total-fare">${_tripEstFare(trip).toLocaleString()}원</span></div>
       <div class="trip-total-btns">
-        <button class="btn trip-add-btn" onclick="openTripAddSearch('${trip.id}')">＋ 일정 추가</button>
         <button class="btn btn-primary trip-book-btn" onclick="bulkBookTrip('${trip.id}')"${unbooked?'':' disabled'}>🎫 일괄 예매${unbooked?` (${unbooked})`:' 완료'}</button>
       </div>
     </div>
@@ -13694,7 +13733,6 @@ function _tripDetailHTML(trip){
 }
 function _tripLegHTML(tripId,leg){
   const booked=_legBooked(leg);
-  const dur=(typeof durMin==='function')?durMin(leg.depTime,leg.arrTime):null;
   return `<div class="trip-leg${booked?' trip-leg-booked':''}">
     <div class="trip-leg-main">
       <div class="trip-leg-route"><b>${_tesc(leg.fromStn)}</b> <span class="trip-leg-time">${leg.depTime||''}</span> → <b>${_tesc(leg.toStn)}</b> <span class="trip-leg-time">${leg.arrTime||''}</span></div>
@@ -13707,94 +13745,47 @@ function _tripLegHTML(tripId,leg){
   </div>`;
 }
 
-// ── 예매 팝업에서 '여행에 담기' ──
-function addCurrentBookingToTrip(){
-  if(!window._bookingSeatClass){alert('좌석 등급을 먼저 선택해주세요.');return;}
-  const a=window._bArgs||{};
-  const dateInput=document.getElementById('booking-date');
-  const date=dateInput&&dateInput.value?dateInput.value:todayLocalStr();
-  const t=getTrainByNo(a.trainNo);
-  const leg={
-    id:genTripId(),trainNo:a.trainNo,grade:t?t.grade:'',line:t?t.line:'',
-    fromStn:a.fromStn,toStn:a.toStn,depTime:a.depTime,arrTime:a.arrTime,date,
-    seatClass:window._bookingSeatClass,seatClassLabel:SEAT_CLASSES[window._bookingSeatClass].label,
-    passengerCount:window._bookingPassengerCount||1,discount:window._bookingDiscount||'none',ticketId:null
-  };
-  openTripChooser(leg);
-}
-function openTripChooser(leg){
-  const trips=loadTrips();
-  document.getElementById('trip-chooser-wrap')?.remove();
-  const wrap=document.createElement('div'); wrap.id='trip-chooser-wrap';
-  wrap.style.cssText='position:fixed;inset:0;z-index:9600;display:flex;align-items:center;justify-content:center;padding:16px;box-sizing:border-box';
-  const list=trips.length?trips.slice().sort((a,b)=>b.createdAt-a.createdAt).map(tp=>{
-    const [mn,mx]=_tripDateRange(tp);
-    return `<button class="trip-choose-item" data-id="${tp.id}">
-      <span class="trip-choose-name">🧳 ${_tesc(tp.name)}</span>
-      <span class="trip-choose-meta">${tp.legs.length}개 일정${mn?` · ${_tripNightsLabel(tp)}`:''}</span>
-    </button>`;
-  }).join(''):'<div style="color:var(--text3);text-align:center;padding:12px 0;font-size:13px">아직 만든 여행이 없습니다</div>';
-  wrap.innerHTML=`<div style="position:absolute;inset:0;background:rgba(0,0,0,.6)"></div>
-    <div class="alarm-popup" style="position:relative;transform:none;top:auto;left:auto;max-height:80vh;overflow-y:auto;width:100%;max-width:420px">
-      <div class="alarm-popup-title">🧳 여행에 담기</div>
-      <div class="alarm-popup-sub">${_tesc(leg.fromStn)} → ${_tesc(leg.toStn)} · ${leg.date}</div>
-      <div class="trip-choose-list">${list}</div>
-      <button class="btn btn-primary" id="trip-new-btn" style="width:100%;justify-content:center;margin-top:4px">＋ 새 여행 만들기</button>
-      <button class="alarm-popup-close" id="trip-choose-cancel">취소</button>
-    </div>`;
-  document.body.appendChild(wrap);
-  wrap.addEventListener('click',e=>{if(e.target===wrap||e.target===wrap.firstElementChild)wrap.remove();});
-  wrap.querySelectorAll('.trip-choose-item').forEach(b=>b.addEventListener('click',()=>{_commitLegToTrip(b.dataset.id,leg);wrap.remove();}));
-  document.getElementById('trip-new-btn').addEventListener('click',()=>{
-    const nm=prompt('새 여행 이름을 입력하세요','내 여행'); if(nm===null)return;
-    const id=createTrip(nm); _commitLegToTrip(id,leg); wrap.remove();
-  });
-  document.getElementById('trip-choose-cancel').addEventListener('click',()=>wrap.remove());
-}
-function _commitLegToTrip(tripId,leg){
-  addLegToTrip(tripId,leg);
-  closeBookingPopup();
-  const tp=loadTrips().find(t=>t.id===tripId);
-  _tripToast(`🧳 '${tp?tp.name:'여행'}'에 일정을 담았습니다`);
-  if(document.getElementById('result-mytrip'))renderMyTrips();
-}
-
-// ── 내 여행: 일정 추가 (구간 조회 → 열차 목록 → 눌러서 담기) ──
-function openTripAddSearch(tripId){
-  window._tripAddMode=tripId;
+// ── 일정 추가 (특정 일차에 구간 조회 → 열차 담기) ──
+function openTripAddSearch(tripId,day){
+  const trip=loadTrips().find(t=>t.id===tripId); if(!trip)return;
+  day=Math.max(1,Math.min(trip.days,day||1));
+  window._tripAddMode={tripId,day};
+  window._activeTripId=tripId;
   const el=document.getElementById('result-mytrip'); if(!el)return;
-  const tp=loadTrips().find(t=>t.id===tripId);
   el.innerHTML=`<div class="trip-wrap">
-    <button class="trip-back" onclick="backFromTripAdd('${tripId}')">‹ ${_tesc(tp?tp.name:'여행')}</button>
-    <div class="trip-add-hd">🧳 <b>일정 추가</b> — 구간을 조회한 뒤 열차를 눌러 담으세요 (예매 아님)</div>
+    <button class="trip-back" onclick="backFromTripAdd('${tripId}')">‹ ${_tesc(trip.name)}</button>
+    <div class="trip-add-hd">🧳 <b>${day}일차</b> (${_dayDate(trip,day)}) 일정 추가 — 열차를 눌러 담으세요 <span style="color:var(--text3)">(예매 아님)</span></div>
     <div id="trip-add-book"></div>
   </div>`;
   const box=document.getElementById('trip-add-book');
   if(box && typeof _renderBookTabInto==='function') _renderBookTabInto(box, 'my-book-results');
+  const dg=document.getElementById('book-date-go'); if(dg){dg.value=_dayDate(trip,day);}
 }
 function backFromTripAdd(tripId){ window._tripAddMode=null; openTrip(tripId); }
 function openTripLegPicker(trainNo, from, to, dep, arr, date){
   const t=getTrainByNo(trainNo); if(!t){alert('열차 정보를 찾을 수 없습니다.');return;}
-  if(!window._tripAddMode){alert('여행을 먼저 선택해주세요.');return;}
+  const mode=window._tripAddMode; if(!mode||!mode.tripId){alert('여행을 먼저 선택해주세요.');return;}
+  const trip=loadTrips().find(x=>x.id===mode.tripId); if(!trip)return;
+  const dayDate=_dayDate(trip,mode.day);
   document.getElementById('trip-leg-picker-wrap')?.remove();
   const classes=availableSeatClasses(t.grade);
   const pax0=Math.max(1,Math.min(6,(typeof _bookPassengerCount!=='undefined'&&_bookPassengerCount)||1));
-  window._tlp={trainNo,from,to,dep,arr,date,cls:null,pax:pax0};
+  window._tlp={trainNo,from,to,dep,arr,cls:null,pax:pax0};
   const opts=classes.map(c=>`<button class="booking-seat-option" data-class="${c}"><span class="booking-seat-label">${SEAT_CLASSES[c].label}</span><span class="booking-seat-fare">${calcFare(t,from,to,c).toLocaleString()}원</span></button>`).join('');
   const wrap=document.createElement('div'); wrap.id='trip-leg-picker-wrap';
   wrap.style.cssText='position:fixed;inset:0;z-index:9600;display:flex;align-items:center;justify-content:center;padding:16px;box-sizing:border-box';
   wrap.innerHTML=`<div style="position:absolute;inset:0;background:rgba(0,0,0,.6)"></div>
     <div class="alarm-popup" style="position:relative;transform:none;top:auto;left:auto;max-height:88vh;overflow-y:auto;width:100%;max-width:420px">
-      <div class="alarm-popup-title">🧳 여정에 담기</div>
+      <div class="alarm-popup-title">🧳 ${mode.day}일차에 담기</div>
       <div class="alarm-popup-sub">${_tesc(t.grade)} ${_tesc(trainNo)} · ${_tesc(from)} ${dep} → ${_tesc(to)} ${arr||''}</div>
-      <div class="alarm-popup-sub" style="color:var(--text3)">${date}</div>
+      <div class="alarm-popup-sub" style="color:var(--text3)">${dayDate}</div>
       <div class="booking-section-label" style="margin-top:12px">좌석 등급</div>
       <div class="booking-seat-options">${opts}</div>
       <div class="booking-section-label">인원</div>
       <div class="booking-passenger-control">
-        <button class="booking-stepper-btn" id="tlp-minus">−</button>
+        <button class="booking-stepper-btn" id="tlp-minus" type="button">−</button>
         <span id="tlp-pax">${window._tlp.pax}</span>
-        <button class="booking-stepper-btn" id="tlp-plus">+</button>
+        <button class="booking-stepper-btn" id="tlp-plus" type="button">+</button>
       </div>
       <button class="btn btn-primary" id="tlp-add" disabled style="width:100%;justify-content:center;margin-top:14px;opacity:.4;cursor:not-allowed">🧳 이 여행에 담기</button>
       <button class="alarm-popup-close" id="tlp-cancel">취소</button>
@@ -13810,13 +13801,14 @@ function openTripLegPicker(trainNo, from, to, dep, arr, date){
   document.getElementById('tlp-plus').addEventListener('click',()=>{window._tlp.pax=Math.min(6,window._tlp.pax+1);document.getElementById('tlp-pax').textContent=window._tlp.pax;});
   document.getElementById('tlp-cancel').addEventListener('click',()=>wrap.remove());
   document.getElementById('tlp-add').addEventListener('click',()=>{
-    const x=window._tlp; if(!x||!x.cls)return;
+    const x=window._tlp, m=window._tripAddMode; if(!x||!x.cls||!m)return;
+    const tp=loadTrips().find(z=>z.id===m.tripId); if(!tp){alert('여행을 찾을 수 없습니다.');return;}
     const leg={id:genTripId(),trainNo:x.trainNo,grade:t.grade,line:t.line,fromStn:x.from,toStn:x.to,
-      depTime:x.dep,arrTime:x.arr,date:x.date,seatClass:x.cls,seatClassLabel:SEAT_CLASSES[x.cls].label,
+      depTime:x.dep,arrTime:x.arr,day:m.day,date:_dayDate(tp,m.day),seatClass:x.cls,seatClassLabel:SEAT_CLASSES[x.cls].label,
       passengerCount:x.pax,discount:'none',ticketId:null};
-    if(!addLegToTrip(window._tripAddMode,leg)){alert('여행을 찾을 수 없습니다.');return;}
+    addLegToTrip(m.tripId,leg);
     wrap.remove();
-    const tp=loadTrips().find(tt=>tt.id===window._tripAddMode);
-    _tripToast(`🧳 '${tp?tp.name:'여행'}'에 담았습니다 · 일정 ${tp?tp.legs.length:''}개`);
+    const tp2=loadTrips().find(z=>z.id===m.tripId);
+    _tripToast(`🧳 ${m.day}일차에 담았습니다 · 일정 ${tp2?tp2.legs.length:''}개`);
   });
 }

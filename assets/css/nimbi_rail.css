@@ -2786,11 +2786,18 @@ body.app-modal-open{overflow:hidden;overscroll-behavior:none}
 .trip-mini-btn:hover{color:var(--text1)}
 .trip-mini-danger:hover{color:var(--red);border-color:var(--red)}
 .trip-detail-meta{font-size:12px;color:var(--text2);font-family:var(--mono);margin-bottom:16px}
-.trip-day-head{display:flex;align-items:center;gap:10px;margin:16px 0 8px}
-.trip-day-no{font-size:11px;font-weight:700;letter-spacing:1px;color:#fff;background:var(--accent);border-radius:5px;padding:3px 9px}
+.trip-day-head{display:flex;align-items:center;gap:9px;margin:18px 0 8px}
+.trip-day-no{font-size:12.5px;font-weight:800;color:#fff;background:var(--accent);border-radius:6px;padding:4px 11px}
 .trip-day-date{font-size:12.5px;color:var(--text2);font-family:var(--mono)}
-.trip-day-head::after{content:"";flex:1;height:1px;background:var(--border)}
+.trip-day-add{margin-left:auto;font-size:11.5px;font-weight:700;color:var(--accent2);background:rgba(88,166,255,.12);border:0;border-radius:999px;padding:6px 13px;cursor:pointer;font-family:var(--sans)}
+.trip-day-add:hover{background:rgba(88,166,255,.2)}
 .trip-day-legs{display:flex;flex-direction:column;gap:8px}
+.trip-day-empty{border:1.5px dashed var(--border);border-radius:9px;padding:16px;text-align:center;color:var(--text3);font-size:12.5px;cursor:pointer}
+.trip-day-empty:hover{border-color:var(--accent);color:var(--text2)}
+.trip-form-field{margin-top:13px}
+.trip-form-field>label{display:block;font-size:12px;color:var(--text2);margin-bottom:6px}
+.trip-form-input{width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:9px;color:var(--text1);font-family:var(--sans);font-size:14px;padding:11px 12px;outline:none;color-scheme:dark}
+.trip-form-input:focus{border-color:var(--accent)}
 .trip-leg{display:flex;align-items:center;gap:12px;background:var(--bg2);border:1px solid var(--border);border-left:3px solid var(--accent2);border-radius:8px;padding:11px 13px}
 .trip-leg-booked{border-left-color:var(--green);opacity:.92}
 .trip-leg-main{flex:1;min-width:0}
