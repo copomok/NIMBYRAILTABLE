@@ -7498,7 +7498,7 @@ function renderTripWidgetCompact(active){
     <div class="trip-mini-train">
       <span class="trip-mini-grade-badge" style="background:${gc}">${train.grade}</span>
       <strong class="trip-mini-no">${train.no}</strong>
-      <span class="trip-mini-bound">${ticket.toStn}행</span>
+      <span class="trip-mini-bound">${(train&&train.dest)||ticket.toStn}행</span>
       <button type="button" class="trip-mini-go" onclick="event.stopPropagation();openQRPopup(&quot;${idEsc}&quot;)">승차권 <b>›</b></button>
     </div>
     <div class="trip-mini-route">${routeInner}</div>
@@ -7541,7 +7541,7 @@ function renderPlanSlide(u, mini){
       <span class="myplan-slide-top">
         <span class="myplan-slide-badge" style="background:${gc}">${grade}</span>
         <strong class="myplan-slide-no">${ticket.trainNo}</strong>
-        <span class="myplan-slide-bound">${ticket.toStn}행</span>
+        <span class="myplan-slide-bound">${(train&&train.dest)||ticket.toStn}행</span>
         <span class="myplan-slide-when">${when}</span>
       </span>
       <span class="myplan-slide-foot"><span>${ticket.fromStn} ${ticket.depTime||'-'} → ${ticket.toStn} ${ticket.arrTime||'-'}</span><em>승차권 ›</em></span>
@@ -7551,7 +7551,7 @@ function renderPlanSlide(u, mini){
     <span class="myplan-slide-top">
       <span class="myplan-slide-badge" style="background:${gc}">${grade}</span>
       <strong class="myplan-slide-no">${ticket.trainNo}</strong>
-      <span class="myplan-slide-bound">${ticket.toStn}행</span>
+      <span class="myplan-slide-bound">${(train&&train.dest)||ticket.toStn}행</span>
       <span class="myplan-slide-when">${when}</span>
     </span>
     <span class="myplan-slide-route">
