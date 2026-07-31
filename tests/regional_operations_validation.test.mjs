@@ -275,6 +275,22 @@ test('신설 열차는 기존 전 편과 공유 선로에서 3분 시격을 지�
   assert.deepEqual([...new Set(issues)],[],'공유 선로 시격·개활 추월 결함');
 });
 
+test('2075는 불국사·입실에서 1069를 추월시키지 않는다',()=>{
+  const slower=byNo.get('2075');
+  const faster=byNo.get('1069');
+  assert.equal(firstTime(slower),'11:46','2075 전 구간 4분 이동');
+  for(const station of ['불국사','입실','북울산']){
+    const left=slower.stops.find(item=>item.s===station);
+    const right=faster.stops.find(item=>item.s===station);
+    assert.ok(minute(left.arr)<minute(right.arr),`${station}에서 2075가 계속 선행`);
+  }
+  assert.ok(elapsed(
+    slower.stops.find(item=>item.s==='입실').dep,
+    faster.stops.find(item=>item.s==='입실').arr
+  )>=4,
+    '추월 불가역 입실에서 4분 시격');
+});
+
 test('교외선 노선도 정의는 하나만 존재한다',()=>{
   const source=fs.readFileSync(new URL('../js/nimbi_rail.js',import.meta.url),'utf8');
   assert.equal((source.match(/name:'교외선'/g)||[]).length,1);
