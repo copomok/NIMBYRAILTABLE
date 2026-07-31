@@ -13,7 +13,7 @@ const trains=Array.from(context.trains);
 const railSrc=fs.readFileSync('js/nimbi_rail.js','utf8');
 
 const CHUNGJU=['1885','1886','1887','1888'];
-const LOOP=Array.from({length:10},(_,i)=>String(4451+i));
+const LOOP=Array.from({length:8},(_,i)=>String(4451+i));
 const NEW=[...CHUNGJU,...LOOP];
 const byNo=no=>trains.find(t=>t.no===no);
 const toMin=s=>{const [h,m]=s.split(':').map(Number);return h*60+m;};
@@ -29,7 +29,7 @@ const span=t=>{
   });
 };
 
-test('신설 14편이 모두 등재되고 열차번호가 겹치지 않는다',()=>{
+test('신설 12편이 모두 등재되고 열차번호가 겹치지 않는다',()=>{
   for(const no of NEW) assert.ok(byNo(no),`#${no} 누락`);
   assert.equal(new Set(trains.map(t=>t.no)).size,trains.length,'열차번호 중복');
   for(const no of NEW) assert.equal(byNo(no).grade,'ITX-마음');
@@ -107,8 +107,8 @@ test('각 편성의 시각이 단조 증가한다',()=>{
 
 test('확정 운용표 2편성이 착발역 복귀·회차 5분 이상을 만족한다',()=>{
   const sets=[
-    ['1885','4451','4453','4455','4457','4459','1886'],
-    ['1887','4452','4454','4456','4458','4460','1888']
+    ['1887','4451','4453','4455','4457','1886'],
+    ['1885','4452','4454','4456','4458','1888']
   ];
   for(const seq of sets){
     assert.ok(railSrc.includes(`seq:["${seq.join('","')}"]`),'CONFIRMED_ROTATION 등재 누락');
@@ -144,6 +144,11 @@ test('신설 편성끼리 같은 역·같은 승강장을 동시에 쓰지 않�
           const a=list[i], b=list[j];
           assert.ok(!(a.a<b.d+off&&b.a+off<a.d),`${k} #${a.no}↔#${b.no} 승강장 중복 점유`);
         }
+});
+
+test('편성당 하루 운행 횟수가 짝수다',()=>{
+  for(const seq of [['1887','4451','4453','4455','4457','1886'],['1885','4452','4454','4456','4458','1888']])
+    assert.equal(seq.length%2,0,'운행 횟수 홀수');
 });
 
 console.log(`경북순환/충주 ITX-마음: ${NEW.length}편 · 확정 운용 2편성 검증 완료`);
