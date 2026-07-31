@@ -5322,8 +5322,40 @@ function availableSeatClasses(grade){
   if(grade==='KTX'||grade==='KTX-산천'||grade==='SRT') return ['special','general','standing'];
   if(grade==='KTX-이음') return ['premium','general','standing'];
   if(grade==='무궁화호') return ['general','standing'];
-  if(grade==='남도해양'||grade==='국악와인') return ['general']; // 관광열차: 전석 지정
+  if(grade==='남도해양'||grade==='국악와인') return ['general','standing'];
   return ['general','standing']; // ITX-새마을, ITX-마음, ITX-청춘
+}
+function seatClassDisplayLabel(train,seatClass){
+  if(seatClass!=='standing')return SEAT_CLASSES[seatClass]?.label||seatClass;
+  try{return getTrainCapacity(train)?.standingMode==='free'?'자유석':'입석';}catch(e){return'입석';}
+}
+function seatClassSaleMeta(train,from,to,date,seatClass){
+  try{
+    const state=getSeatInventoryState(train,from,to,date,seatClass);
+    if(seatClass==='standing'){
+      const threshold=Math.round((state.threshold||.76)*100);
+      return{...state,label:state.label||seatClassDisplayLabel(train,seatClass),
+        reason:!state.eligible?`좌석 혼잡도 ${threshold}%부터 판매`:state.available<=0?'판매 종료':`${state.available}명 가능`};
+    }
+    return{...state,label:seatClassDisplayLabel(train,seatClass),reason:state.available<=0?'매진':`${state.available}석`};
+  }catch(e){return{available:1,eligible:true,label:seatClassDisplayLabel(train,seatClass),reason:''};}
+}
+function refreshBookingSeatOptions(){
+  const args=window._bArgs||{},train=getTrainByNo(args.trainNo),date=document.getElementById('booking-date')?.value||todayLocalStr();
+  if(!train)return;
+  document.querySelectorAll('#booking-popup-wrap .booking-seat-option').forEach(btn=>{
+    const meta=seatClassSaleMeta(train,args.fromStn,args.toStn,date,btn.dataset.class);
+    const disabled=!meta.eligible||meta.available<=0;
+    btn.disabled=disabled;btn.style.opacity=disabled?'.45':'1';btn.style.cursor=disabled?'not-allowed':'pointer';
+    btn.title=meta.reason||'';
+    const label=btn.querySelector('.booking-seat-label');
+    if(label)label.textContent=meta.label+(meta.reason?` · ${meta.reason}`:'');
+    if(disabled&&btn.classList.contains('active')){
+      btn.classList.remove('active');window._bookingSeatClass=null;
+      const confirm=document.getElementById('booking-confirm-btn');
+      if(confirm){confirm.disabled=true;confirm.textContent='좌석 등급을 선택하세요';}
+    }
+  });
 }
 
 // 거리비례 운임: 등급별 기본운임 + 거리(km)×등급 km단가 + 좌석등급 배율
@@ -5476,6 +5508,7 @@ function openBookingPopup(trainNo, fromStn, toStn, depTime, arrTime, travelDate)
   document.getElementById('booking-date')?.addEventListener('change',e=>{
     const slot=document.getElementById('booking-delay-banner-slot');
     if(slot)slot.innerHTML=_bookingDelayBannerHTML(t,e.target.value);
+    refreshBookingSeatOptions();
   });
   wrap.querySelectorAll('.booking-discount-option').forEach(btn=>{
     btn.addEventListener('click', ()=>selectDiscount(btn, btn.dataset.discount));
@@ -5493,6 +5526,7 @@ function openBookingPopup(trainNo, fromStn, toStn, depTime, arrTime, travelDate)
   window._bookingSeatClass=null;
   window._bookingPassengerCount=initialPassengerCount;
   window._bookingDiscount='none';
+  refreshBookingSeatOptions();
 }
 function selectDiscount(btn,key){
   document.querySelectorAll('.booking-discount-option').forEach(b=>b.classList.remove('active'));
@@ -5510,6 +5544,7 @@ function closeBookingPopup(){
   if(w)w.remove();
 }
 function selectSeatClass(btn,cls){
+  if(btn.disabled)return;
   document.querySelectorAll('.booking-seat-option').forEach(b=>b.classList.remove('active'));
   btn.classList.add('active');
   window._bookingSeatClass=cls;
@@ -5605,7 +5640,7 @@ function confirmBooking(trainNo,fromStn,toStn,depTime,arrTime){
     id:genTicketId(),
     trainNo,grade:t.grade,line:t.line,
     fromStn,toStn,depTime,arrTime,
-    seatClass,seatClassLabel:SEAT_CLASSES[seatClass].label,
+    seatClass,seatClassLabel:seatClassDisplayLabel(t,seatClass),
     seats,passengerCount:count,
     farePerPerson:fare,totalFare:fare*count,
     discount,discountLabel:DISCOUNTS[discount].label,baseFarePerPerson:baseFare,
@@ -5638,7 +5673,7 @@ function confirmBooking(trainNo,fromStn,toStn,depTime,arrTime){
   }catch(e){console.warn('자동 알람 설정 실패:',e);}
 
   closeBookingPopup();
-  alert(`예매가 완료되었습니다!\n${travelDate} · ${fromStn} → ${toStn}\n${SEAT_CLASSES[seatClass].label} ${count}명${discount!=='none'?' · '+DISCOUNTS[discount].label:''} · ${(fare*count).toLocaleString()}원`);
+  alert(`예매가 완료되었습니다!\n${travelDate} · ${fromStn} → ${toStn}\n${seatClassDisplayLabel(t,seatClass)} ${count}명${discount!=='none'?' · '+DISCOUNTS[discount].label:''} · ${(fare*count).toLocaleString()}원`);
   if(document.getElementById('panel-ticket')?.classList.contains('active')) renderTickets();
   // 왕복 예매 콜백 (편도 예매 완료 후 복편 조회)
   if(window._afterBookingCallback){
@@ -9122,7 +9157,10 @@ function searchBookTrains(includeTransfer, includeAdj){
 
 function _bookSeatStatus(cong){
   const rate=Math.max(0,Number(cong?.rate)||0),available=Math.max(0,Number(cong?.available)||0);
-  if(available<=0||rate>=1)return{label:'매진',color:'var(--red)',bg:'rgba(248,81,73,.08)'};
+  if(available<=0||rate>=1){
+    if((Number(cong?.standingAvailable)||0)>0&&cong?.standingEligible)return{label:'입석',color:'var(--orange)',bg:'rgba(249,115,22,.08)'};
+    return{label:'매진',color:'var(--red)',bg:'rgba(248,81,73,.08)'};
+  }
   if(rate<=.55)return{label:'여유',color:'var(--green)',bg:'rgba(63,185,80,.08)'};
   if(rate<=.75)return{label:'보통',color:'var(--accent2)',bg:'rgba(56,139,253,.08)'};
   return{label:'혼잡',color:'var(--orange)',bg:'rgba(249,115,22,.08)'};
@@ -9178,14 +9216,14 @@ function openBookTrainDetail(trainNo, from, to, depT, arrT, travelDate){
   // 매진 여부 판정 (예매 탭 매진 열차 전용 여석 알림)
   let soldOut=false;
   try{
-    soldOut=(getODCongestion(t,from,to,travelDate)?.available||0)<=0;
+    soldOut=_bookSeatStatus(getODCongestion(t,from,to,travelDate)).label==='매진';
   }catch(e){}
 
   const fare = calcFare(t, from, to, 'general');
   const fareSpec = availableSeatClasses(t.grade).map(c=>{
     const f = calcFare(t, from, to, c);
     return `<div class="book-detail-fare-row">
-      <span>${SEAT_CLASSES[c].label}</span>
+      <span>${seatClassDisplayLabel(t,c)}</span>
       <span style="font-family:var(--mono);color:var(--accent);font-weight:600">${f.toLocaleString()}원</span>
     </div>`;
   }).join('');
@@ -9437,8 +9475,10 @@ function _renderXferBody(){
     const dur=durMin(L.depT,L.arrT);
     const opts=classes.map(c=>{
       const fare=applyDiscount(calcFare(t,L.from,L.to,c),X.discount);
-      return `<button class="booking-seat-option${L.cls===c?' active':''}" data-leg="${idx}" data-class="${c}">
-        <span class="booking-seat-label">${SEAT_CLASSES[c].label}</span>
+      const sale=seatClassSaleMeta(t,L.from,L.to,X.date,c),disabled=!sale.eligible||sale.available<=0;
+      return `<button class="booking-seat-option${L.cls===c?' active':''}" data-leg="${idx}" data-class="${c}" ${disabled?'disabled':''}
+        style="${disabled?'opacity:.45;cursor:not-allowed':''}" title="${sale.reason||''}">
+        <span class="booking-seat-label">${sale.label}${sale.reason?` · ${sale.reason}`:''}</span>
         <span class="booking-seat-fare">${fare.toLocaleString()}원</span></button>`;
     }).join('');
     const seatRow = L.cls==='standing'
@@ -9478,11 +9518,11 @@ function _renderXferBody(){
     <div class="xfer-total"><span>총 운임 <span style="color:var(--text3);font-weight:400">· ${X.count}명</span></span><b>${bothCls?total.toLocaleString()+'원':'구간 선택 필요'}</b></div>`;
   const cbtn=document.getElementById('bxd-confirm');
   if(cbtn){cbtn.disabled=!bothCls;cbtn.style.opacity=bothCls?'1':'.5';cbtn.textContent=bothCls?'🎫 환승 예매하기':'두 구간의 좌석 등급을 선택하세요';}
-  body.querySelector('#bxd-date')?.addEventListener('change',e=>{X.date=e.target.value;});
+  body.querySelector('#bxd-date')?.addEventListener('change',e=>{X.date=e.target.value;X.legs.forEach(L=>{L.cls=null;L.seats=null;});_renderXferBody();});
   body.querySelector('#bxd-minus')?.addEventListener('click',()=>{X.count=Math.max(1,X.count-1);X.legs.forEach(L=>L.seats=null);_renderXferBody();});
   body.querySelector('#bxd-plus')?.addEventListener('click',()=>{X.count=Math.min(6,X.count+1);X.legs.forEach(L=>L.seats=null);_renderXferBody();});
   body.querySelectorAll('.booking-discount-option').forEach(b=>b.addEventListener('click',()=>{X.discount=b.dataset.discount;_renderXferBody();}));
-  body.querySelectorAll('.booking-seat-option').forEach(b=>b.addEventListener('click',()=>{const i=+b.dataset.leg;X.legs[i].cls=b.dataset.class;X.legs[i].seats=null;_renderXferBody();}));
+  body.querySelectorAll('.booking-seat-option:not([disabled])').forEach(b=>b.addEventListener('click',()=>{const i=+b.dataset.leg;X.legs[i].cls=b.dataset.class;X.legs[i].seats=null;_renderXferBody();}));
   body.querySelectorAll('.xfer-seat-btn').forEach(b=>{ if(!b.hasAttribute('disabled')) b.addEventListener('click',()=>openXferSeatSelector(+b.dataset.leg)); });
 }
 function openXferSeatSelector(legIdx){
@@ -9553,7 +9593,7 @@ function confirmXferBooking(){
     const tk={
       id:genTicketId(), trainNo:L.no,grade:t.grade,line:t.line,
       fromStn:L.from,toStn:L.to,depTime:L.depT,arrTime:L.arrT,
-      seatClass:L.cls,seatClassLabel:SEAT_CLASSES[L.cls].label, seats,passengerCount:count,
+      seatClass:L.cls,seatClassLabel:seatClassDisplayLabel(t,L.cls), seats,passengerCount:count,
       farePerPerson:fare,totalFare:fare*count, discount,discountLabel:DISCOUNTS[discount].label,baseFarePerPerson:base,
       distanceKm:Math.round(routeDistanceKm(t,L.from,L.to)), bookedAt:Date.now(), travelDate, status:'active',
       xferGroup:grp, xferSeq:idx+1, xferTotal:X.legs.length, xferVia:X.via, xferOrigin:X.from, xferDest:X.to

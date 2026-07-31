@@ -1,14 +1,237 @@
-(function(g){const C=(v,a,b)=>Math.max(a,Math.min(b,v)),H=s=>{let h=2166136261;for(const c of String(s)){h^=c.charCodeAt(0);h=Math.imul(h,16777619)}return h>>>0},R=s=>H(s)/4294967296,T=v=>{if(!/^\d{1,2}:\d{2}$/.test(v||''))return null;const[a,b]=v.split(':').map(Number);return a*60+b},S=t=>(t?.stops||[]).filter(x=>T(x.arr)!==null||T(x.dep)!==null);
-function profile(n){if(g.NIMBI_STATION_DEMAND_PROFILE?.[n])return{...g.NIMBI_STATION_DEMAND_PROFILE[n]};const p=+g.STATION_PAX?.[n],w=p>0?C(.72+Math.sqrt(p/100)*.55,.72,1.27):1;return{origin:w,destination:w,business:1,leisure:1,transfer:p>=55?1.15:1,capital:false}}
-function capacity(t){try{if(g.getCarComposition&&g.getFormationType){const x={standard:0,premium:0,standing:0};for(const c of g.getCarComposition(g.getFormationType(t.grade,t.no))){const n=+c.totalSeats||0;if(c.type==='special'||c.type==='premium')x.premium+=n;else if(c.type==='free')x.standing+=n||30;else x.standard+=n}return{total:x.standard+x.premium,...x}}}catch(e){}const q=/KTX$/.test(t?.grade)?999:/산천|SRT/.test(t?.grade)?453:/이음/.test(t?.grade)?416:/청춘/.test(t?.grade)?520:/새마을/.test(t?.grade)?312:/마음/.test(t?.grade)?208:360;return{total:q,standard:q,premium:0,standing:0}}
-function game(t){const x=[t?.passengers,t?.pax,t?.passengerCount,t?.pax_boarded].map(Number).find(Number.isFinite);if(x>0)return x;const y=+g.NIMBI_GAME_PAX_PER_RUN?.[String(+t?.no)];return y>0?y:null}
-const group=x=>/KTX|SRT/.test(x)?'high':/ITX/.test(x)?'itx':'local';
-const isKtx=t=>t?.grade==='KTX';
-function base(t){const p=game(t),cap=Math.max(1,capacity(t).total),q=group(t.grade);if(!(p>0))return isKtx(t)?1.05:1;if(isKtx(t))return C(.64+Math.log1p(p/(cap*.42))*.68,.92,1.85);const raw=C(.55+Math.log1p(p/cap)*.38,.45,1.55),floor=q==='high'?.82:q==='itx'?.70:.55;return Math.max(floor,raw)}
-function km(t,a,b){try{const x=+g.routeDistanceKm?.(t,a.s,b.s);if(x>0)return x}catch(e){}const x=T(a.dep||a.arr),y=T(b.arr||b.dep);return x!=null&&y!=null?Math.max(8,(y<x?y+1440:y)-x)*1.25:30}
-function dist(t,k){const q=group(t.grade);return k<50?q==='high'?.75:q==='itx'?1.12:1.1:k<150?q==='high'?1.03:q==='itx'?1.1:1:k<250?q==='high'?1.18:q==='itx'?1.02:.88:q==='high'?1.34:q==='itx'?.85:.7}
-function direction(t,a,b,date){const d=new Date(date+'T12:00:00'),h=Math.floor((T(a.dep||a.arr)||720)/60),A=profile(a.s),B=profile(b.s);let m=1;if(d.getDay()>0&&d.getDay()<6&&h>=7&&h<10)m*=B.capital&&!A.capital?1.34:A.capital&&!B.capital?.92:1.08;if(d.getDay()>0&&d.getDay()<6&&h>=17&&h<21)m*=A.capital&&!B.capital?1.36:B.capital&&!A.capital?.96:1.1;if(d.getDay()===5&&h>=16&&A.capital&&!B.capital)m*=1.14;if(d.getDay()===0&&h>=14&&B.capital&&!A.capital)m*=1.22;if(d.getDay()===6&&h<12&&(B.leisure||1)>1.25)m*=1.2;return C(m,.78,1.48)}
-function cal(date,b){const d=new Date(date+'T12:00:00'),holiday=typeof g._simIsKoreanHoliday==='function'&&g._simIsKoreanHoliday(d);let m=NIMBI_DAY_MULTIPLIERS[d.getDay()]||1,mo=d.getMonth()+1;if(holiday)m=Math.max(m,1.1);if((mo===7||mo===8)&&(profile(b.s).leisure||1)>1.2)m*=1.12;if((mo===10||mo===11)&&(profile(b.s).leisure||1)>1.2)m*=1.08;return C(m,.7,1.65)}
-function score(t,a,b,date){const k=km(t,a,b);return profile(a.s).origin*profile(b.s).destination*C(.8+Math.log1p(k)/9,.85,1.35)*dist(t,k)*direction(t,a,b,date)*cal(date,b)*base(t)*(.91+R(`${t.no}|${date}|${a.s}|${b.s}`)*.18)}
-const cache=new Map;function build(t,date){const key=t.no+'|'+date+'|'+NIMBI_DEMAND_VERSION;if(cache.has(key))return cache.get(key).map(x=>({...x}));const ss=S(t),o=[];for(let i=0;i<ss.length-1;i++)for(let j=i+1;j<ss.length;j++)o.push({from:ss[i].s,to:ss[j].s,fromIndex:i,toIndex:j,score:score(t,ss[i],ss[j],date)});if(!o.length)return[];const cap=capacity(t).total,q=group(t.grade),gradeBase=q==='high'?1.35:q==='itx'?1:.82,routeScale=C(.75+Math.sqrt(ss.length)/5,.9,1.8),maxDemand=isKtx(t)?2.8:2.4,target=Math.round(C(cap*gradeBase*base(t)*routeScale,cap*.45,cap*maxDemand)),sum=o.reduce((a,x)=>a+x.score,0)||1;let n=0;for(const x of o){const z=target*x.score/sum;x.demand=Math.floor(z);x.frac=z-x.demand;n+=x.demand}o.sort((a,b)=>b.frac-a.frac);for(let i=0;i<target-n;i++)o[i%o.length].demand++;o.sort((a,b)=>a.fromIndex-b.fromIndex||a.toIndex-b.toIndex);cache.set(key,o);return o.map(x=>({...x}))}
-g.NIMBI_Demand={clamp:C,hash:H,random:R,toMin:T,getStops:S,getStationDemandProfile:profile,getTrainCapacity:capacity,getGamePassengerCount:game,getBaseDemandIndex:base,getDistanceGradePreference:dist,getTimeDirectionMultiplier:direction,getODDemandScore:score,buildTrainODDemand:build};g.getBaseDemandIndex=base;g.buildTrainODDemand=build;g.getStationDemandProfile=profile})(window);
+(function(g){
+  const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+  const hash=s=>{let h=2166136261;for(const c of String(s)){h^=c.charCodeAt(0);h=Math.imul(h,16777619);}return h>>>0;};
+  const random=s=>hash(s)/4294967296;
+  const toMin=v=>{if(!/^\d{1,2}:\d{2}$/.test(v||''))return null;const[a,b]=v.split(':').map(Number);return a*60+b;};
+  const stops=t=>(t?.stops||[]).filter(x=>toMin(x.arr)!==null||toMin(x.dep)!==null);
+  const seenTrains=new Map(),rawCache=new Map(),finalCache=new Map(),alternativeCache=new Map();
+  const profileCache=new Map(),capacityCache=new WeakMap(),baseCache=new WeakMap();
+  let routeIndex=null;
+
+  function allTrains(){
+    let list=[];
+    try{if(typeof ALL_TRAINS!=='undefined'&&Array.isArray(ALL_TRAINS))list=ALL_TRAINS;}catch(e){}
+    if(!list.length&&Array.isArray(g.ALL_TRAINS))list=g.ALL_TRAINS;
+    return list.length?list:[...seenTrains.values()];
+  }
+  function profile(name){
+    if(profileCache.has(name))return{...profileCache.get(name)};
+    if(g.NIMBI_STATION_DEMAND_PROFILE?.[name])return{...g.NIMBI_STATION_DEMAND_PROFILE[name]};
+    const pax=+g.STATION_PAX?.[name],weight=pax>0?clamp(.72+Math.sqrt(pax/100)*.55,.72,1.27):1;
+    const result={origin:weight,destination:weight,business:1,leisure:1,transfer:pax>=55?1.15:1,capital:false};
+    profileCache.set(name,result);return{...result};
+  }
+  function carSeats(car){
+    if(+car?.totalSeats>0)return +car.totalSeats;
+    const cols=Array.isArray(car?.cols)?car.cols.length:0,rows=+car?.rows||0;
+    return Math.max(0,rows*cols-(car?.missingSeats?.length||0));
+  }
+  function capacity(train){
+    if(capacityCache.has(train))return{...capacityCache.get(train)};
+    try{
+      if(g.getCarComposition&&g.getFormationType){
+        const cars=g.getCarComposition(g.getFormationType(train.grade,train.no))||[];
+        const result={standard:0,premium:0,standing:0,standingMode:'standing',freeCars:0};
+        const seated=[],standardCars=[];
+        for(const car of cars){
+          const count=carSeats(car);
+          if(car.type==='free'||car.type==='cafe'){result.freeCars++;continue;}
+          if(car.type==='special'||car.type==='premium')result.premium+=count;
+          else{result.standard+=count;if(count>0)standardCars.push(count);}
+          if(count>0)seated.push(count);
+        }
+        const car1=carSeats(cars.find(car=>+car.car===1))||seated[0]||0;
+        const reference=standardCars.length?standardCars:seated;
+        const typical=reference.length?Math.round(reference.reduce((a,b)=>a+b,0)/reference.length):car1;
+        result.standingMode=result.freeCars?'free':'standing';
+        result.standing=result.freeCars?Math.round(typical*result.freeCars):Math.round(car1*.5);
+        result.total=result.standard+result.premium;
+        if(result.total>0){capacityCache.set(train,result);return{...result};}
+      }
+    }catch(e){}
+    const total=/KTX$/.test(train?.grade)?999:/산천|SRT/.test(train?.grade)?453:/이음/.test(train?.grade)?416:/청춘/.test(train?.grade)?520:/새마을/.test(train?.grade)?312:/마음/.test(train?.grade)?208:360;
+    const cars=/KTX$/.test(train?.grade)?20:/산천|SRT/.test(train?.grade)?10:/이음/.test(train?.grade)?8:/청춘/.test(train?.grade)?8:/ITX/.test(train?.grade)?6:5;
+    const result={total,standard:total,premium:0,standing:Math.round(total/cars*.5),standingMode:'standing',freeCars:0};
+    capacityCache.set(train,result);return{...result};
+  }
+  function gamePassengers(train){
+    const direct=[train?.passengers,train?.pax,train?.passengerCount,train?.pax_boarded].map(Number).find(Number.isFinite);
+    if(direct>0)return direct;
+    const saved=+g.NIMBI_GAME_PAX_PER_RUN?.[String(+train?.no)];
+    return saved>0?saved:null;
+  }
+  const gradeGroup=grade=>/KTX|SRT/.test(grade)?'high':/ITX/.test(grade)?'itx':'local';
+  const exactKtx=train=>train?.grade==='KTX';
+  function inferredRouteDemandIndex(train){
+    const list=stops(train),values=list.map(s=>{
+      const p=profile(s.s);
+      return Math.sqrt(Math.max(.3,(p.origin||1)*(p.destination||1)))*(p.transfer||1);
+    });
+    const mean=values.length?values.reduce((a,b)=>a+b,0)/values.length:1;
+    const endpoint=values.length>1?(values[0]+values.at(-1))/2:mean;
+    const linePeers=allTrains().filter(x=>x!==train&&x.line===train?.line);
+    const peerIndexes=linePeers.map(x=>{
+      const p=gamePassengers(x),cap=capacity(x).total;
+      return p>0&&cap>0?clamp(.55+Math.log1p(p/cap)*.38,.45,1.55):null;
+    }).filter(Number.isFinite);
+    const peer=peerIndexes.length?peerIndexes.sort((a,b)=>a-b)[Math.floor(peerIndexes.length/2)]:1;
+    return clamp(peer*.55+mean*.25+endpoint*.20,.68,1.42);
+  }
+  function baseDemandIndex(train){
+    if(baseCache.has(train))return baseCache.get(train);
+    const pax=gamePassengers(train),cap=Math.max(1,capacity(train).total),group=gradeGroup(train.grade);
+    if(!(pax>0)){
+      const value=group==='high'?(exactKtx(train)?1.05:1):inferredRouteDemandIndex(train);
+      baseCache.set(train,value);return value;
+    }
+    if(exactKtx(train)){const value=clamp(.64+Math.log1p(pax/(cap*.42))*.68,.92,1.85);baseCache.set(train,value);return value;}
+    const raw=clamp(.55+Math.log1p(pax/cap)*.38,.45,1.55),floor=group==='high'?.82:group==='itx'?.70:.55;
+    const value=Math.max(floor,raw);baseCache.set(train,value);return value;
+  }
+  function distanceKm(train,a,b){
+    try{const value=+g.routeDistanceKm?.(train,a.s,b.s);if(value>0)return value;}catch(e){}
+    const from=toMin(a.dep||a.arr),to=toMin(b.arr||b.dep);
+    return from!=null&&to!=null?Math.max(8,(to<from?to+1440:to)-from)*1.25:30;
+  }
+  function distancePreference(train,km){
+    const group=gradeGroup(train.grade);
+    return km<50?group==='high'?.75:group==='itx'?1.12:1.1:
+      km<150?group==='high'?1.03:group==='itx'?1.1:1:
+      km<250?group==='high'?1.18:group==='itx'?1.02:.88:
+      group==='high'?1.34:group==='itx'?.85:.7;
+  }
+  function directionMultiplier(train,a,b,date){
+    const day=new Date(date+'T12:00:00'),hour=Math.floor((toMin(a.dep||a.arr)||720)/60),origin=profile(a.s),dest=profile(b.s);
+    let value=1;
+    if(day.getDay()>0&&day.getDay()<6&&hour>=7&&hour<10)value*=dest.capital&&!origin.capital?1.34:origin.capital&&!dest.capital?.92:1.08;
+    if(day.getDay()>0&&day.getDay()<6&&hour>=17&&hour<21)value*=origin.capital&&!dest.capital?1.36:dest.capital&&!origin.capital?.96:1.1;
+    if(day.getDay()===5&&hour>=16&&origin.capital&&!dest.capital)value*=1.14;
+    if(day.getDay()===0&&hour>=14&&dest.capital&&!origin.capital)value*=1.22;
+    if(day.getDay()===6&&hour<12&&(dest.leisure||1)>1.25)value*=1.2;
+    return clamp(value,.78,1.48);
+  }
+  function calendarMultiplier(date,b){
+    const day=new Date(date+'T12:00:00'),holiday=typeof g._simIsKoreanHoliday==='function'&&g._simIsKoreanHoliday(day);
+    let value=g.NIMBI_DAY_MULTIPLIERS?.[day.getDay()]||1;
+    if(holiday)value=Math.max(value,1.1);
+    const month=day.getMonth()+1;
+    if((month===7||month===8)&&(profile(b.s).leisure||1)>1.2)value*=1.12;
+    if((month===10||month===11)&&(profile(b.s).leisure||1)>1.2)value*=1.08;
+    return clamp(value,.7,1.65);
+  }
+  function odScore(train,a,b,date){
+    const km=distanceKm(train,a,b);
+    return profile(a.s).origin*profile(b.s).destination*clamp(.8+Math.log1p(km)/9,.85,1.35)*
+      distancePreference(train,km)*directionMultiplier(train,a,b,date)*calendarMultiplier(date,b)*
+      baseDemandIndex(train)*(.91+random(`${train.no}|${date}|${a.s}|${b.s}`)*.18);
+  }
+  function rawDemand(train,date){
+    seenTrains.set(String(train.no),train);
+    const key=`${train.no}|${date}|${g.NIMBI_DEMAND_VERSION}|raw`;
+    if(rawCache.has(key))return rawCache.get(key);
+    const list=stops(train),ods=[];
+    for(let i=0;i<list.length-1;i++)for(let j=i+1;j<list.length;j++){
+      if(list[i].s===list[j].s)continue;
+      ods.push({from:list[i].s,to:list[j].s,fromIndex:i,toIndex:j,score:odScore(train,list[i],list[j],date)});
+    }
+    if(!ods.length)return[];
+    const cap=capacity(train).total,group=gradeGroup(train.grade),gradeBase=group==='high'?1.35:group==='itx'?1:.82;
+    const routeScale=clamp(.75+Math.sqrt(list.length)/5,.9,1.8),maxDemand=exactKtx(train)?2.8:2.4;
+    const target=Math.round(clamp(cap*gradeBase*baseDemandIndex(train)*routeScale,cap*.45,cap*maxDemand));
+    const sum=ods.reduce((a,x)=>a+x.score,0)||1;
+    let assigned=0;
+    for(const od of ods){const exact=target*od.score/sum;od.demand=Math.floor(exact);od.frac=exact-od.demand;assigned+=od.demand;}
+    [...ods].sort((a,b)=>b.frac-a.frac).slice(0,target-assigned).forEach(od=>od.demand++);
+    ods.sort((a,b)=>a.fromIndex-b.fromIndex||a.toIndex-b.toIndex);
+    rawCache.set(key,ods);
+    return ods;
+  }
+  function odTiming(train,from,to){
+    const list=stops(train),a=list.findIndex(x=>x.s===from),b=list.findIndex((x,i)=>i>a&&x.s===to);
+    if(a<0||b<=a)return null;
+    let dep=toMin(list[a].dep||list[a].arr),arr=toMin(list[b].arr||list[b].dep);
+    if(dep==null||arr==null)return null;
+    if(arr<dep)arr+=1440;
+    return{a,b,dep,arr,duration:arr-dep};
+  }
+  function gradeSimilarity(a,b){
+    const x=gradeGroup(a.grade),y=gradeGroup(b.grade);
+    return x===y?1:(x==='local'||y==='local')?.68:.82;
+  }
+  function alternatives(train,od){
+    const cacheKey=`${train.no}|${od.from}|${od.to}|${g.NIMBI_DEMAND_VERSION}`;
+    if(alternativeCache.has(cacheKey))return alternativeCache.get(cacheKey);
+    const own=odTiming(train,od.from,od.to);if(!own)return[];
+    const result=[];
+    if(!routeIndex){
+      routeIndex=new Map();
+      for(const item of allTrains()){
+        const list=stops(item);
+        for(let i=0;i<list.length-1;i++){
+          const dep=toMin(list[i].dep||list[i].arr);if(dep==null)continue;
+          for(let j=i+1;j<list.length;j++){
+            if(list[i].s===list[j].s)continue;
+            let arr=toMin(list[j].arr||list[j].dep);if(arr==null)continue;if(arr<dep)arr+=1440;
+            const key=`${list[i].s}\u0000${list[j].s}`;
+            if(!routeIndex.has(key))routeIndex.set(key,[]);
+            routeIndex.get(key).push({train:item,timing:{a:i,b:j,dep,arr,duration:arr-dep}});
+          }
+        }
+      }
+    }
+    for(const entry of routeIndex.get(`${od.from}\u0000${od.to}`)||[]){
+      const other=entry.train;
+      if(other===train||String(other.no)===String(train.no))continue;
+      const timing=entry.timing;
+      let delta=Math.abs(timing.dep-own.dep);delta=Math.min(delta,Math.abs(delta-1440));
+      if(delta>60)continue;
+      const ratio=Math.max(timing.duration,own.duration)/Math.max(1,Math.min(timing.duration,own.duration));
+      if(ratio>1.5)continue;
+      const similarity=(1-delta/75)*clamp(1-(ratio-1)*1.4,.35,1)*gradeSimilarity(train,other);
+      if(similarity>.12)result.push({train:other,timing,similarity});
+    }
+    alternativeCache.set(cacheKey,result);
+    return result;
+  }
+  function demandForOD(train,date,from,to){
+    return rawDemand(train,date).find(x=>x.from===from&&x.to===to)?.demand||0;
+  }
+  function competitionAdjustment(train,od,date){
+    const peers=alternatives(train,od);
+    if(!peers.length)return{multiplier:1,incoming:0,competitors:0};
+    const totalScore=peers.reduce((a,x)=>a+x.similarity,0);
+    const multiplier=clamp(1/(1+totalScore*.25),.60,1);
+    let incoming=0;
+    for(const source of peers){
+      const sourceDemand=demandForOD(source.train,date,od.from,od.to),sourceCap=capacity(source.train).total;
+      const unmet=Math.max(0,sourceDemand-sourceCap);
+      if(!unmet)continue;
+      const sourceAlternatives=alternatives(source.train,{from:od.from,to:od.to});
+      const target=sourceAlternatives.find(x=>String(x.train.no)===String(train.no));if(!target)continue;
+      const forwardMinutes=(target.timing.dep-source.timing.dep+1440)%1440;
+      if(forwardMinutes<=0||forwardMinutes>60)continue;
+      const weightSum=sourceAlternatives.reduce((a,x)=>a+x.similarity,0)||1;
+      const moveRate=.20+.35*clamp(target.similarity,0,1);
+      incoming+=unmet*moveRate*target.similarity/weightSum;
+    }
+    return{multiplier,incoming,competitors:peers.length};
+  }
+  function buildDemand(train,date){
+    seenTrains.set(String(train.no),train);
+    const key=`${train.no}|${date}|${g.NIMBI_DEMAND_VERSION}|final`;
+    if(finalCache.has(key))return finalCache.get(key).map(x=>({...x}));
+    const result=rawDemand(train,date).map(od=>{
+      const adjustment=competitionAdjustment(train,od,date);
+      return{...od,demand:Math.max(0,Math.round(od.demand*adjustment.multiplier+adjustment.incoming)),
+        competitionMultiplier:adjustment.multiplier,transferredDemand:Math.round(adjustment.incoming),competitorCount:adjustment.competitors};
+    });
+    finalCache.set(key,result);
+    return result.map(x=>({...x}));
+  }
+  function clearCache(){rawCache.clear();finalCache.clear();alternativeCache.clear();profileCache.clear();routeIndex=null;}
+  g.NIMBI_Demand={clamp,hash,random,toMin,getStops:stops,getStationDemandProfile:profile,getTrainCapacity:capacity,
+    getGamePassengerCount:gamePassengers,getBaseDemandIndex:baseDemandIndex,getInferredRouteDemandIndex:inferredRouteDemandIndex,
+    getDistanceGradePreference:distancePreference,getTimeDirectionMultiplier:directionMultiplier,getODDemandScore:odScore,
+    buildRawTrainODDemand:rawDemand,buildTrainODDemand:buildDemand,getCompetitionAdjustment:competitionAdjustment,clearCache};
+  g.getBaseDemandIndex=baseDemandIndex;g.buildTrainODDemand=buildDemand;g.getStationDemandProfile=profile;
+})(window);
