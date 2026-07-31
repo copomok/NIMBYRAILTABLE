@@ -5618,11 +5618,18 @@ function doConfirmBooking(){
 // 입석 run 은 기존 입석과 동일하게 "입석 예매가 열려있는(eligible) 구간"에서만 성립.
 // 반환: [{kind:'seat'|'standing',fromStn,toStn,depTime,arrTime,seatClass,seatClassLabel,
 //          baseFarePerPerson,farePerPerson,distanceKm}] 또는 (성립 불가 시) null.
+const _mixMemo=new Map();
+function _clearMixMemo(){_mixMemo.clear();}
 function computeMixedSegments(t,fromStn,toStn,date,count,seatClass){
   if(!t||seatClass==='standing')return null;
   if(typeof getAvailableSeats!=='function'||typeof getSeatInventoryState!=='function')return null;
+  // 짧은 시간(2초) 동안 동일 조회를 메모이즈 — 예매 팝업 갱신/선택/확정 시 중복 계산 방지
+  const memoKey=`${t.no}|${fromStn}|${toStn}|${date}|${count}|${seatClass}`;
+  const cached=_mixMemo.get(memoKey);
+  if(cached&&Date.now()-cached.at<2000)return cached.v;
+  const _memo=v=>{_mixMemo.set(memoKey,{at:Date.now(),v});return v;};
   const pair=travelStopIndexes(t,fromStn,toStn);
-  if(!pair)return null;
+  if(!pair)return _memo(null);
   const S=t.stops;
   // 여정 내 실제 정차역(시각 존재) 이름을 순서대로 수집 → 홉 경계
   const names=[];
@@ -5632,7 +5639,7 @@ function computeMixedSegments(t,fromStn,toStn,date,count,seatClass){
       if(names[names.length-1]!==st.s)names.push(st.s);
     }
   }
-  if(names.length<2)return null;
+  if(names.length<2)return _memo(null);
   // 각 홉을 좌석/입석으로 분류 (좌석 우선, 불가 시 입석 열림 구간만 허용)
   const kinds=[];
   for(let k=0;k+1<names.length;k++){
@@ -5640,7 +5647,7 @@ function computeMixedSegments(t,fromStn,toStn,date,count,seatClass){
     if(getAvailableSeats(t,a,b,date,seatClass)>=count){kinds.push('seat');continue;}
     const st=getSeatInventoryState(t,a,b,date,'standing');
     if(st&&st.eligible&&st.available>=count){kinds.push('standing');continue;}
-    return null; // 좌석도 입석도 불가한 구간 존재 → 결합권 성립 불가
+    return _memo(null); // 좌석도 입석도 불가한 구간 존재 → 결합권 성립 불가
   }
   // 같은 종류의 연속 홉을 하나의 run 으로 병합
   const runs=[];
@@ -5650,16 +5657,16 @@ function computeMixedSegments(t,fromStn,toStn,date,count,seatClass){
     else runs.push({kind:kinds[k],from:names[k],to:names[k+1]});
   }
   // 좌석 run 과 입석 run 이 모두 있어야 결합권 의미가 있음
-  if(!runs.some(r=>r.kind==='seat')||!runs.some(r=>r.kind==='standing'))return null;
+  if(!runs.some(r=>r.kind==='seat')||!runs.some(r=>r.kind==='standing'))return _memo(null);
   // run 단위 재확인 + 상세 정보 구성
   const out=[];
   for(const r of runs){
     const cls=r.kind==='standing'?'standing':seatClass;
     if(r.kind==='seat'){
-      if(getAvailableSeats(t,r.from,r.to,date,seatClass)<count)return null;
+      if(getAvailableSeats(t,r.from,r.to,date,seatClass)<count)return _memo(null);
     }else{
       const st=getSeatInventoryState(t,r.from,r.to,date,'standing');
-      if(!st||!st.eligible||st.available<count)return null;
+      if(!st||!st.eligible||st.available<count)return _memo(null);
     }
     const base=calcFare(t,r.from,r.to,cls);
     const _dep=t.stops.find(x=>x.s===r.from&&hasTime(x.dep));
@@ -5670,7 +5677,7 @@ function computeMixedSegments(t,fromStn,toStn,date,count,seatClass){
       baseFarePerPerson:base,farePerPerson:applyDiscount(base,'none'),
       distanceKm:Math.round(routeDistanceKm(t,r.from,r.to))});
   }
-  return out;
+  return _memo(out);
 }
 
 // 입석+좌석 결합 승차권 확정 생성
@@ -5731,6 +5738,7 @@ function confirmMixedBooking(trainNo,fromStn,toStn,depTime,arrTime,travelDate,mi
     bookedAt:Date.now(),travelDate,status:'active',
   });
   saveTickets(tickets);
+  _clearMixMemo();
   if(typeof invalidateCongestion==='function')invalidateCongestion(trainNo,travelDate);
   closeBookingPopup();
   const seatRuns=segments.filter(s=>s.kind==='seat').map(s=>`${s.fromStn}→${s.toStn}`).join(', ');
@@ -5766,12 +5774,16 @@ function showMixedBookingDialog(t,fromStn,toStn,depTime,arrTime,travelDate,mix,c
       </div>
     </div>`;
   document.body.appendChild(wrap);
-  const close=()=>wrap.remove();
+  // 예매 버튼 탭 직후 발생하는 유령 클릭(ghost click)이 방금 열린 오버레이를
+  // 곧바로 닫아버리는 문제 방지 — open 후 짧은 시간 동안 상호작용을 무시한다.
+  const openedAt=Date.now();
+  const guarded=()=>Date.now()-openedAt<500;
+  const close=()=>{if(guarded())return;wrap.remove();};
   wrap.querySelector('.mxd-backdrop').addEventListener('click',close);
   const cancelBtn=document.getElementById('mxd-cancel');
   if(cancelBtn)addMobileTap(cancelBtn,close);
   const confirmBtn=document.getElementById('mxd-confirm');
-  if(confirmBtn)addMobileTap(confirmBtn,()=>{close();confirmMixedBooking(t.no,fromStn,toStn,depTime,arrTime,travelDate,mix,count,discount);});
+  if(confirmBtn)addMobileTap(confirmBtn,()=>{if(guarded())return;wrap.remove();confirmMixedBooking(t.no,fromStn,toStn,depTime,arrTime,travelDate,mix,count,discount);});
 }
 
 function confirmBooking(trainNo,fromStn,toStn,depTime,arrTime){
@@ -5856,6 +5868,7 @@ function confirmBooking(trainNo,fromStn,toStn,depTime,arrTime){
     status:'active', // active | used | cancelled
   });
   saveTickets(tickets);
+  _clearMixMemo();
   if(typeof invalidateCongestion==='function')invalidateCongestion(trainNo,travelDate);
 
   // 승차역/하차역 알람 자동 설정 (이미 설정되어 있으면 건너뜀, 안내 문구 없이 조용히)
@@ -13913,7 +13926,7 @@ function bulkBookTrip(tripId){
     const pe=document.getElementById('tbo-prog'), fe=document.getElementById('tbo-fill');
     if(pe)pe.textContent=`${i} / ${todo.length}`; if(fe)fe.style.width=Math.round(i/todo.length*100)+'%';
     if(i<todo.length){ setTimeout(step,0); return; }
-    saveTickets(tickets); saveTrips(trips);   // 전체 1회 저장
+    saveTickets(tickets); saveTrips(trips); _clearMixMemo();   // 전체 1회 저장
     ov.remove(); renderMyTrips();
     setTimeout(()=>{
       done.forEach(r=>{ if(typeof invalidateCongestion==='function')invalidateCongestion(r.trainNo,r.date); });
