@@ -3,8 +3,16 @@
   const hash=s=>{let h=2166136261;for(const c of String(s)){h^=c.charCodeAt(0);h=Math.imul(h,16777619);}return h>>>0;};
   const random=s=>hash(s)/4294967296;
   const toMin=v=>{if(!/^\d{1,2}:\d{2}$/.test(v||''))return null;const[a,b]=v.split(':').map(Number);return a*60+b;};
-  const stops=t=>(t?.stops||[]).filter(x=>toMin(x.arr)!==null||toMin(x.dep)!==null);
-  const seenTrains=new Map(),rawCache=new Map(),finalCache=new Map(),alternativeCache=new Map();
+  const stopCache=new WeakMap();
+  const stops=t=>{
+    if(!t)return[];
+    if(stopCache.has(t))return stopCache.get(t);
+    const result=(t.stops||[]).filter(x=>toMin(x.arr)!==null||toMin(x.dep)!==null);
+    stopCache.set(t,result);
+    return result;
+  };
+  const seenTrains=new Map(),rawCache=new Map(),rawODCache=new Map(),finalCache=new Map(),alternativeCache=new Map();
+  const timingCache=new Map(),adjustmentCache=new Map(),transferSourceCache=new Map();
   const profileCache=new Map(),capacityCache=new WeakMap(),baseCache=new WeakMap();
   let routeIndex=null;
 
@@ -147,19 +155,36 @@
     [...ods].sort((a,b)=>b.frac-a.frac).slice(0,target-assigned).forEach(od=>od.demand++);
     ods.sort((a,b)=>a.fromIndex-b.fromIndex||a.toIndex-b.toIndex);
     rawCache.set(key,ods);
+    rawODCache.set(key,new Map(ods.map(od=>[`${od.from}\u0000${od.to}`,od])));
     return ods;
   }
   function odTiming(train,from,to){
+    const key=`${train.no}|${from}\u0000${to}|${g.NIMBI_DEMAND_VERSION}`;
+    if(timingCache.has(key))return timingCache.get(key);
     const list=stops(train),a=list.findIndex(x=>x.s===from),b=list.findIndex((x,i)=>i>a&&x.s===to);
-    if(a<0||b<=a)return null;
+    if(a<0||b<=a){timingCache.set(key,null);return null;}
     let dep=toMin(list[a].dep||list[a].arr),arr=toMin(list[b].arr||list[b].dep);
-    if(dep==null||arr==null)return null;
+    if(dep==null||arr==null){timingCache.set(key,null);return null;}
     if(arr<dep)arr+=1440;
-    return{a,b,dep,arr,duration:arr-dep};
+    const result={a,b,dep,arr,duration:arr-dep};
+    timingCache.set(key,result);return result;
   }
   function gradeSimilarity(a,b){
     const x=gradeGroup(a.grade),y=gradeGroup(b.grade);
     return x===y?1:(x==='local'||y==='local')?.68:.82;
+  }
+  function lowerBoundByDeparture(entries,minute){
+    let lo=0,hi=entries.length;
+    while(lo<hi){const mid=(lo+hi)>>1;if(entries[mid].timing.dep<minute)lo=mid+1;else hi=mid;}
+    return lo;
+  }
+  function departureWindow(entries,minute){
+    const slice=(from,to)=>entries.slice(lowerBoundByDeparture(entries,from),lowerBoundByDeparture(entries,to+1));
+    const from=minute-60,to=minute+60;
+    const result=from<0?[...slice(0,to),...slice(1440+from,1439)]:
+      to>=1440?[...slice(from,1439),...slice(0,to-1440)]:slice(from,to);
+    result.sort((a,b)=>a.order-b.order);
+    return result;
   }
   function alternatives(train,od){
     const cacheKey=`${train.no}|${od.from}|${od.to}|${g.NIMBI_DEMAND_VERSION}`;
@@ -167,7 +192,9 @@
     const own=odTiming(train,od.from,od.to);if(!own)return[];
     const result=[];
     prepareCompetitionIndex();
-    for(const entry of routeIndex.get(`${od.from}\u0000${od.to}`)||[]){
+    const routeKey=`${od.from}\u0000${od.to}`;
+    const candidates=departureWindow(routeIndex.get(routeKey)||[],own.dep);
+    for(const entry of candidates){
       const other=entry.train;
       if(other===train||String(other.no)===String(train.no))continue;
       const timing=entry.timing;
@@ -193,34 +220,54 @@
           let arr=toMin(list[j].arr||list[j].dep);if(arr==null)continue;if(arr<dep)arr+=1440;
           const key=`${list[i].s}\u0000${list[j].s}`;
           if(!routeIndex.has(key))routeIndex.set(key,[]);
-          routeIndex.get(key).push({train:item,timing:{a:i,b:j,dep,arr,duration:arr-dep}});
+          const entries=routeIndex.get(key),entry={train:item,timing:{a:i,b:j,dep,arr,duration:arr-dep},order:entries.length};
+          entries.push(entry);
         }
       }
     }
+    for(const entries of routeIndex.values())entries.sort((a,b)=>a.timing.dep-b.timing.dep||a.order-b.order);
     return routeIndex;
   }
   function demandForOD(train,date,from,to){
-    return rawDemand(train,date).find(x=>x.from===from&&x.to===to)?.demand||0;
+    const key=`${train.no}|${date}|${g.NIMBI_DEMAND_VERSION}|raw`;
+    if(!rawCache.has(key))rawDemand(train,date);
+    return rawODCache.get(key)?.get(`${from}\u0000${to}`)?.demand||0;
+  }
+  function transferSourceState(train,date,from,to){
+    const key=`${train.no}|${date}|${from}\u0000${to}|${g.NIMBI_DEMAND_VERSION}`;
+    if(transferSourceCache.has(key))return transferSourceCache.get(key);
+    const unmet=Math.max(0,demandForOD(train,date,from,to)-capacity(train).total);
+    if(!unmet){
+      const empty={unmet:0,weightSum:1,targets:new Map()};
+      transferSourceCache.set(key,empty);return empty;
+    }
+    const alternativesForSource=alternatives(train,{from,to});
+    const result={unmet,weightSum:alternativesForSource.reduce((a,x)=>a+x.similarity,0)||1,
+      targets:new Map(alternativesForSource.map(x=>[String(x.train.no),x]))};
+    transferSourceCache.set(key,result);return result;
   }
   function competitionAdjustment(train,od,date){
+    const cacheKey=`${train.no}|${date}|${od.from}\u0000${od.to}|${g.NIMBI_DEMAND_VERSION}`;
+    if(adjustmentCache.has(cacheKey))return adjustmentCache.get(cacheKey);
     const peers=alternatives(train,od);
-    if(!peers.length)return{multiplier:1,incoming:0,competitors:0};
+    if(!peers.length){
+      const empty={multiplier:1,incoming:0,competitors:0};
+      adjustmentCache.set(cacheKey,empty);return empty;
+    }
     const totalScore=peers.reduce((a,x)=>a+x.similarity,0);
     const multiplier=clamp(1/(1+totalScore*.25),.60,1);
     let incoming=0;
     for(const source of peers){
-      const sourceDemand=demandForOD(source.train,date,od.from,od.to),sourceCap=capacity(source.train).total;
-      const unmet=Math.max(0,sourceDemand-sourceCap);
-      if(!unmet)continue;
-      const sourceAlternatives=alternatives(source.train,{from:od.from,to:od.to});
-      const target=sourceAlternatives.find(x=>String(x.train.no)===String(train.no));if(!target)continue;
+      const sourceState=transferSourceState(source.train,date,od.from,od.to);
+      if(!sourceState.unmet)continue;
+      const target=sourceState.targets.get(String(train.no));if(!target)continue;
       const forwardMinutes=(target.timing.dep-source.timing.dep+1440)%1440;
       if(forwardMinutes<=0||forwardMinutes>60)continue;
-      const weightSum=sourceAlternatives.reduce((a,x)=>a+x.similarity,0)||1;
       const moveRate=.20+.35*clamp(target.similarity,0,1);
-      incoming+=unmet*moveRate*target.similarity/weightSum;
+      incoming+=sourceState.unmet*moveRate*target.similarity/sourceState.weightSum;
     }
-    return{multiplier,incoming,competitors:peers.length};
+    const result={multiplier,incoming,competitors:peers.length};
+    adjustmentCache.set(cacheKey,result);return result;
   }
   function buildDemand(train,date){
     seenTrains.set(String(train.no),train);
@@ -234,7 +281,10 @@
     finalCache.set(key,result);
     return result.map(x=>({...x}));
   }
-  function clearCache(){rawCache.clear();finalCache.clear();alternativeCache.clear();profileCache.clear();routeIndex=null;}
+  function clearCache(){
+    rawCache.clear();rawODCache.clear();finalCache.clear();alternativeCache.clear();timingCache.clear();adjustmentCache.clear();transferSourceCache.clear();
+    profileCache.clear();routeIndex=null;
+  }
   g.NIMBI_Demand={clamp,hash,random,toMin,getStops:stops,getStationDemandProfile:profile,getTrainCapacity:capacity,
     getGamePassengerCount:gamePassengers,getBaseDemandIndex:baseDemandIndex,getInferredRouteDemandIndex:inferredRouteDemandIndex,
     getDistanceGradePreference:distancePreference,getTimeDirectionMultiplier:directionMultiplier,getODDemandScore:odScore,

@@ -9167,28 +9167,51 @@ function _bookSeatStatus(cong){
 }
 function _hydrateBookSeatStatuses(trains,el,dateGo,from,to){
   const base='min-width:54px;height:44px;border-radius:8px;border:1.5px solid;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;font-family:var(--sans)';
+  const generation=window._bookSeatHydrationGeneration=(window._bookSeatHydrationGeneration||0)+1;
   const entries=[...el.querySelectorAll('.book-train-row[data-train-no]:not(.book-xfer-card)')].map((row,index)=>({
     row,btn:row.querySelector('.seat-avail-btn'),result:trains[index]
   })).filter(x=>x.btn&&x.result);
-  const hydrate=entry=>{
-    if(entry.btn.dataset.seatHydrated==='1')return;
-    entry.btn.dataset.seatHydrated='1';
-    const {t,aFrom,aTo}=entry.result;
-    const run=()=>{
+  const byRow=new Map(entries.map(entry=>[entry.row,entry])),queue=[];
+  let scheduled=false;
+  const active=entry=>window._bookSeatHydrationGeneration===generation&&el.isConnected&&entry.btn.isConnected;
+  const processNext=()=>{
+    scheduled=false;
+    const entry=queue.shift();
+    if(!entry)return;
+    if(active(entry)){
+      const {t,aFrom,aTo}=entry.result;
       const cong=typeof getODCongestion==='function'?getODCongestion(t,aFrom||from,aTo||to,dateGo):null;
-      const meta=_bookSeatStatus(cong);
-      entry.btn.textContent=meta.label;
-      entry.btn.style.cssText=`${base};color:${meta.color};border-color:${meta.color};background:${meta.bg}`;
-    };
-    if(window.requestIdleCallback)window.requestIdleCallback(run,{timeout:700});
-    else window.setTimeout(run,0);
+      if(active(entry)){
+        const meta=_bookSeatStatus(cong);
+        entry.btn.textContent=meta.label;
+        entry.btn.style.cssText=`${base};color:${meta.color};border-color:${meta.color};background:${meta.bg}`;
+        entry.btn.dataset.seatHydrated='1';
+      }
+    }
+    scheduleNext();
   };
+  const scheduleNext=()=>{
+    if(scheduled||!queue.length||window._bookSeatHydrationGeneration!==generation)return;
+    scheduled=true;
+    if(window.requestIdleCallback)window.requestIdleCallback(processNext,{timeout:450});
+    else window.setTimeout(processNext,0);
+  };
+  const hydrate=entry=>{
+    if(entry.btn.dataset.seatHydrated==='1'||entry.btn.dataset.seatQueued==='1')return;
+    entry.btn.dataset.seatQueued='1';
+    queue.push(entry);
+    scheduleNext();
+  };
+  /*
+   * 한 번의 idle callback에서 여러 편성의 전체 OD 재고를 연속 계산하지 않는다.
+   * 검색을 다시 하거나 화면을 닫으면 generation이 바뀌어 이전 검색의 계산도 즉시 폐기된다.
+   */
   if('IntersectionObserver' in window){
     window._bookSeatObserver?.disconnect();
     const observer=new IntersectionObserver(items=>{
       items.forEach(item=>{
         if(!item.isIntersecting)return;
-        const entry=entries.find(x=>x.row===item.target);
+        const entry=byRow.get(item.target);
         if(entry)hydrate(entry);
         observer.unobserve(item.target);
       });
@@ -9200,7 +9223,7 @@ function _hydrateBookSeatStatuses(trains,el,dateGo,from,to){
     },120000);
   }else{
     // 구형 브라우저는 앞쪽 결과만 즉시 계산하고 나머지는 짧은 간격으로 분산한다.
-    entries.forEach((entry,index)=>window.setTimeout(()=>hydrate(entry),Math.floor(index/4)*32));
+    entries.forEach(entry=>hydrate(entry));
   }
 }
 
