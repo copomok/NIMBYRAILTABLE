@@ -20,8 +20,21 @@
     const userBookings=[],seen=new Set;
     for(const ticket of tickets()){
       if(String(ticket.trainNo)!==String(train.no)||ticket.travelDate!==date||ticket.status!=='active'||seen.has(ticket.id))continue;
-      seen.add(ticket.id);const od=find(stopNames,ticket.fromStn,ticket.toStn);if(!od)continue;
-      const count=Math.max(1,+ticket.passengerCount||ticket.seats?.length||1),isStanding=ticket.seatClass==='standing';
+      seen.add(ticket.id);
+      const count=Math.max(1,+ticket.passengerCount||ticket.seats?.length||1);
+      // 입석+좌석 결합권: 구간별로 좌석/입석 용량을 각각 차감
+      if(Array.isArray(ticket.mixed)&&ticket.mixed.length){
+        for(const seg of ticket.mixed){
+          const sod=find(stopNames,seg.fromStn,seg.toStn);if(!sod)continue;
+          const segStanding=seg.kind==='standing'||seg.seatClass==='standing';
+          const acc=segStanding?add(standingLoads,sod[0],sod[1],count,capacity.standing):add(segmentLoads,sod[0],sod[1],count,capacity.total);
+          for(let i=sod[0];i<sod[1];i++){if(!segStanding)userLoads[i]+=acc;userClassLoads[segStanding?'standing':classKey(seg.seatClass)][i]+=acc;}
+          userBookings.push({id:ticket.id,fromIndex:sod[0],toIndex:sod[1],count:acc,seatClass:seg.seatClass});
+        }
+        continue;
+      }
+      const od=find(stopNames,ticket.fromStn,ticket.toStn);if(!od)continue;
+      const isStanding=ticket.seatClass==='standing';
       const accepted=isStanding?add(standingLoads,od[0],od[1],count,capacity.standing):add(segmentLoads,od[0],od[1],count,capacity.total);
       for(let i=od[0];i<od[1];i++){if(!isStanding)userLoads[i]+=accepted;userClassLoads[classKey(ticket.seatClass)][i]+=accepted;}
       userBookings.push({id:ticket.id,fromIndex:od[0],toIndex:od[1],count:accepted,seatClass:ticket.seatClass});

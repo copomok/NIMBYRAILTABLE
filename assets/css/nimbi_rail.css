@@ -864,6 +864,15 @@ tbody td{padding:10px 14px;font-size:13px;white-space:nowrap}
 .ticket-card-info{display:flex;flex-direction:column;gap:6px;margin-bottom:10px}
 .ticket-info-row{display:flex;justify-content:space-between;font-size:12px;color:var(--text2)}
 .ticket-info-row span:last-child{color:var(--text1);font-weight:500}
+/* 입석+좌석 결합 승차권 구간 표시 */
+.ticket-mixed-box{display:flex;flex-direction:column;gap:4px;margin:2px 0}
+.ticket-mixed-seg{display:flex;align-items:center;gap:6px;font-size:11.5px;padding:5px 8px;border-radius:8px;background:var(--bg2,rgba(127,127,127,.08));border-left:3px solid var(--text3)}
+.ticket-mixed-seg.mx-seat{border-left-color:var(--accent2,#3fb950)}
+.ticket-mixed-seg.mx-stand{border-left-color:#d29922}
+.ticket-mixed-seg .mx-icon{flex:none}
+.ticket-mixed-seg .mx-route{font-weight:600;color:var(--text1)}
+.ticket-mixed-seg .mx-kind{color:var(--text2)}
+.ticket-mixed-seg .mx-seat-no{margin-left:auto;color:var(--text1);font-weight:500}
 .ticket-fare{font-size:15px!important;font-weight:700!important;color:var(--text1)!important}
 
 .ticket-card-id{font-size:11px;color:var(--text3);font-family:var(--mono);margin-bottom:10px}
