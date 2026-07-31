@@ -8007,6 +8007,15 @@ function closeMySubPanel(){
   document.getElementById('my-sub-panel').classList.remove('open');
   if(window._mySubClockTimer){clearInterval(window._mySubClockTimer);window._mySubClockTimer=null;}
 }
+// 서브패널 상단 화살표: 내 여행에서는 단계별 뒤로가기, 그 외엔 서브패널 닫기
+function myBackAction(){
+  const sec=document.getElementById('my-sub-content')?.dataset.section;
+  if(sec==='mytrip'){
+    if(window._tripAddMode){ backFromTripAdd(window._tripAddMode.tripId); return; }
+    if(window._activeTripId){ backToTripList(); return; }
+  }
+  closeMySubPanel();
+}
 
 // 동적으로 열리는 주요 팝업이 하나라도 있으면 배경 페이지의 터치·스크롤을 막는다.
 // 개별 팝업마다 잠금 코드를 복제하지 않고 body 직계 오버레이 변화를 한 번만 관찰한다.
@@ -9151,7 +9160,12 @@ function searchBookTrains(includeTransfer, includeAdj){
     row.addEventListener('click', ()=>{
       // 내 여행 '일정 추가' 모드: 예매 대신 여정 담기 창을 연다
       if(window._tripAddMode){
-        openTripLegPicker(row.dataset.trainNo, row.dataset.from||from, row.dataset.to||to, row.dataset.dep||'', row.dataset.arr||'', row.dataset.date||dateGo);
+        const m=window._tripAddMode;
+        const proceed=()=>openTripLegPicker(row.dataset.trainNo, row.dataset.from||from, row.dataset.to||to, row.dataset.dep||'', row.dataset.arr||'', row.dataset.date||dateGo);
+        const conf=(typeof _tripDayOverlap==='function')?_tripDayOverlap(m.tripId, m.day, row.dataset.dep, row.dataset.arr):null;
+        if(conf){
+          if(confirm(`⚠️ 이미 담긴 일정과 시간이 겹칩니다.\n\n${conf.trainNo}번 · ${conf.fromStn}→${conf.toStn}\n${conf.depTime}~${conf.arrTime} (${m.day}일차)\n\n그래도 이 열차를 ${m.day}일차에 추가하시겠습니까?`)) proceed();
+        } else proceed();
         return;
       }
       // 정기권 예매 흐름: 중간 요금 시트를 건너뛰고 바로 요일·등급 선택창을 연다
@@ -9164,6 +9178,15 @@ function searchBookTrains(includeTransfer, includeAdj){
       } else go();
     });
   });
+
+  // 내 여행 '일정 추가' 모드: 이미 담긴 일정과 시간이 겹치는 열차는 음영 표시
+  if(window._tripAddMode && typeof _tripDayOverlap==='function'){
+    const m=window._tripAddMode;
+    el.querySelectorAll('.book-train-row[data-train-no]:not(.book-xfer-card)').forEach(row=>{
+      const conf=_tripDayOverlap(m.tripId, m.day, row.dataset.dep, row.dataset.arr);
+      if(conf){ row.classList.add('trip-row-overlap'); row.setAttribute('title','이미 담긴 일정과 시간이 겹칩니다'); }
+    });
+  }
 
   // 조회 구간 공통 재고만 먼저 계산하고 앞쪽 결과부터 표출한다.
   // 좌석 등급별 상세 계산은 좌석 선택 시점까지 미뤄 초기 검색을 가볍게 유지한다.
@@ -13713,7 +13736,6 @@ function _tripDetailHTML(trip){
     else body+=`<div class="trip-day-empty" onclick="openTripAddSearch('${trip.id}',${day})"><span>＋ 첫 일정을 추가해보세요</span></div>`;
   }
   return `<div class="trip-wrap trip-detail">
-    <button class="trip-back" onclick="backToTripList()">‹ 전체 여행</button>
     <div class="trip-detail-head">
       <div class="trip-detail-name">🧳 ${_tesc(trip.name)}</div>
       <div class="trip-detail-actions">
@@ -13722,6 +13744,10 @@ function _tripDetailHTML(trip){
       </div>
     </div>
     <div class="trip-detail-meta">${_tripNightsLabel(trip)} · ${range} · 일정 ${trip.legs.length}개 · 예매 ${booked}/${trip.legs.length}</div>
+    <div class="trip-actions-row">
+      <button class="trip-action-btn" onclick="openTripRoute('${trip.id}')">🗺️ 여행 경로</button>
+      <button class="trip-action-btn" onclick="shareTrip('${trip.id}')">🔗 링크 공유</button>
+    </div>
     ${body}
     <div class="trip-total-bar">
       <div><span class="trip-total-label">예상 합계</span><span class="trip-total-fare">${_tripEstFare(trip).toLocaleString()}원</span></div>
@@ -13753,7 +13779,6 @@ function openTripAddSearch(tripId,day){
   window._activeTripId=tripId;
   const el=document.getElementById('result-mytrip'); if(!el)return;
   el.innerHTML=`<div class="trip-wrap">
-    <button class="trip-back" onclick="backFromTripAdd('${tripId}')">‹ ${_tesc(trip.name)}</button>
     <div class="trip-add-hd">🧳 <b>${day}일차</b> (${_dayDate(trip,day)}) 일정 추가 — 열차를 눌러 담으세요 <span style="color:var(--text3)">(예매 아님)</span></div>
     <div id="trip-add-book"></div>
   </div>`;
@@ -13812,3 +13837,100 @@ function openTripLegPicker(trainNo, from, to, dep, arr, date){
     _tripToast(`🧳 ${m.day}일차에 담았습니다 · 일정 ${tp2?tp2.legs.length:''}개`);
   });
 }
+
+// ── 시간 겹침 검사 (같은 일차 내) ──
+function _tripDayOverlap(tripId, day, depT, arrT){
+  const nd=toMin(depT), na=toMin(arrT); if(nd===null||na===null)return null;
+  const trip=loadTrips().find(t=>t.id===tripId); if(!trip)return null;
+  const aS=nd, aE=na>=nd?na:na+1440;
+  return _dayLegs(trip,day).find(l=>{
+    const ed=toMin(l.depTime),ea=toMin(l.arrTime); if(ed===null||ea===null)return false;
+    const bS=ed,bE=ea>=ed?ea:ed+1440; return aS<bE&&bS<aE;
+  })||null;
+}
+
+// ── 여행 경로 보기 (일차별 이동 경로 요약) ──
+function openTripRoute(tripId){
+  const trip=loadTrips().find(t=>t.id===tripId); if(!trip)return;
+  document.getElementById('trip-route-wrap')?.remove();
+  let body='';
+  for(let day=1; day<=trip.days; day++){
+    const legs=_dayLegs(trip,day);
+    body+=`<div class="trip-route-day"><span class="trip-day-no">${day}일차</span><span class="trip-day-date">${_dayDate(trip,day)}</span></div>`;
+    if(!legs.length){ body+=`<div class="trip-route-empty">이동 일정 없음</div>`; continue; }
+    body+='<div class="trip-route-legs">';
+    legs.forEach(l=>{
+      body+=`<div class="trip-route-leg">
+        <div class="trip-route-line"><span class="trip-route-dot"></span><span class="trip-route-stn">${_tesc(l.fromStn)}</span><span class="trip-route-t">${l.depTime||''}</span></div>
+        <div class="trip-route-mid"><span class="trip-route-train">${_tesc(l.grade||'')} ${_tesc(l.trainNo)}</span> <span class="trip-route-linechip">${_tesc((l.line||'').split('·')[0]||'')}</span></div>
+        <div class="trip-route-line"><span class="trip-route-dot end"></span><span class="trip-route-stn">${_tesc(l.toStn)}</span><span class="trip-route-t">${l.arrTime||''}</span></div>
+      </div>`;
+    });
+    body+='</div>';
+  }
+  const wrap=document.createElement('div'); wrap.id='trip-route-wrap';
+  wrap.style.cssText='position:fixed;inset:0;z-index:9600;display:flex;align-items:center;justify-content:center;padding:16px;box-sizing:border-box';
+  wrap.innerHTML=`<div style="position:absolute;inset:0;background:rgba(0,0,0,.6)"></div>
+    <div class="alarm-popup" style="position:relative;transform:none;top:auto;left:auto;max-height:86vh;overflow-y:auto;width:100%;max-width:440px">
+      <div class="alarm-popup-title">🗺️ ${_tesc(trip.name)} · 여행 경로</div>
+      <div class="alarm-popup-sub">${_tripNightsLabel(trip)} · 일정 ${trip.legs.length}개</div>
+      <div class="trip-route-body">${body}</div>
+      <button class="alarm-popup-close" id="trip-route-close">닫기</button>
+    </div>`;
+  document.body.appendChild(wrap);
+  wrap.addEventListener('click',e=>{if(e.target===wrap||e.target===wrap.firstElementChild)wrap.remove();});
+  document.getElementById('trip-route-close').addEventListener('click',()=>wrap.remove());
+}
+
+// ── 링크 공유 ──
+function _tripEncode(trip){
+  const o={n:trip.name,s:trip.startDate,d:trip.days,l:trip.legs.map(l=>({no:l.trainNo,f:l.fromStn,t:l.toStn,dp:l.depTime,ar:l.arrTime,dy:l.day,sc:l.seatClass,px:l.passengerCount,dc:l.discount||'none'}))};
+  try{return btoa(unescape(encodeURIComponent(JSON.stringify(o))));}catch(e){return '';}
+}
+function _tripDecode(str){
+  try{const o=JSON.parse(decodeURIComponent(escape(atob(str))));return (o&&Array.isArray(o.l))?o:null;}catch(e){return null;}
+}
+function shareTrip(tripId){
+  const trip=loadTrips().find(t=>t.id===tripId); if(!trip)return;
+  if(!trip.legs.length){alert('공유할 일정이 없습니다. 먼저 열차를 담아주세요.');return;}
+  const url=location.origin+location.pathname+'#trip='+_tripEncode(trip);
+  document.getElementById('trip-share-wrap')?.remove();
+  const wrap=document.createElement('div'); wrap.id='trip-share-wrap';
+  wrap.style.cssText='position:fixed;inset:0;z-index:9600;display:flex;align-items:center;justify-content:center;padding:16px;box-sizing:border-box';
+  wrap.innerHTML=`<div style="position:absolute;inset:0;background:rgba(0,0,0,.6)"></div>
+    <div class="alarm-popup" style="position:relative;transform:none;top:auto;left:auto;width:100%;max-width:440px">
+      <div class="alarm-popup-title">🔗 여행 링크 공유</div>
+      <div class="alarm-popup-sub">${_tesc(trip.name)} · 일정 ${trip.legs.length}개</div>
+      <p style="font-size:12px;color:var(--text3);margin:10px 0 6px">이 링크를 열면 상대방의 '내 여행'에 이 일정이 그대로 추가됩니다.</p>
+      <textarea id="trip-share-url" readonly class="trip-form-input" style="height:76px;resize:none;font-family:var(--mono);font-size:11.5px" onclick="this.select()">${_tesc(url)}</textarea>
+      <button class="btn btn-primary" id="trip-share-copy" style="width:100%;justify-content:center;margin-top:12px">📋 링크 복사</button>
+      ${navigator.share?'<button class="btn" id="trip-share-native" style="width:100%;justify-content:center;margin-top:8px">📤 공유하기</button>':''}
+      <button class="alarm-popup-close" id="trip-share-close">닫기</button>
+    </div>`;
+  document.body.appendChild(wrap);
+  wrap.addEventListener('click',e=>{if(e.target===wrap||e.target===wrap.firstElementChild)wrap.remove();});
+  document.getElementById('trip-share-close').addEventListener('click',()=>wrap.remove());
+  document.getElementById('trip-share-copy').addEventListener('click',()=>{
+    const ta=document.getElementById('trip-share-url'); ta.select();
+    const done=()=>_tripToast('🔗 링크를 복사했습니다');
+    if(navigator.clipboard&&navigator.clipboard.writeText) navigator.clipboard.writeText(url).then(done).catch(()=>{try{document.execCommand('copy');done();}catch(e){}});
+    else { try{document.execCommand('copy');done();}catch(e){} }
+  });
+  const nb=document.getElementById('trip-share-native');
+  if(nb) nb.addEventListener('click',()=>{ navigator.share({title:`[내 여행] ${trip.name}`,text:`${trip.name} 여행 일정을 공유합니다`,url}).catch(()=>{}); });
+}
+function _maybeImportSharedTrip(){
+  const h=location.hash||''; const m=h.match(/[#&]trip=([^&]+)/); if(!m)return;
+  const o=_tripDecode(m[1]);
+  try{history.replaceState(null,'',location.pathname+location.search);}catch(e){}
+  if(!o){ alert('공유 링크를 읽을 수 없습니다.'); return; }
+  if(!confirm(`공유된 여행 '${o.n||'여행'}'을(를) 내 여행에 추가하시겠습니까?\n\n일정 ${o.l.length}개 · ${o.d||1}일`))return;
+  const trip={id:genTripId(),name:o.n||'공유된 여행',createdAt:Date.now(),startDate:o.s||todayLocalStr(),days:Math.max(1,Math.min(30,o.d||1)),
+    legs:o.l.map(l=>{const t=getTrainByNo(l.no)||{};return {id:genTripId(),trainNo:l.no,grade:t.grade||'',line:t.line||'',fromStn:l.f,toStn:l.t,depTime:l.dp,arrTime:l.ar,day:l.dy||1,date:'',seatClass:l.sc||'general',seatClassLabel:(SEAT_CLASSES[l.sc]||{}).label||'',passengerCount:l.px||1,discount:l.dc||'none',ticketId:null};})};
+  _syncLegDates(trip);
+  const trips=loadTrips(); trips.push(trip); saveTrips(trips);
+  try{ openMyPage(); openMySection('mytrip'); openTrip(trip.id); }catch(e){}
+  _tripToast(`🧳 '${trip.name}' 여행을 추가했습니다`);
+}
+if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',()=>{try{_maybeImportSharedTrip();}catch(e){}});
+else { try{_maybeImportSharedTrip();}catch(e){} }
