@@ -970,5 +970,31 @@ const NOTICES = [
 🎟️ 매진 시 다른 좌석 자동 예매 — 선택 등급이 매진이면 예매 가능한 다른 등급으로 자동 예매<br>
 🔎 예매 변경 시 인접역 포함 — 같은 구간뿐 아니라 인접역 발착 열차도 함께 조회
 </div>`
+  },
+  {
+    date:'2026-07-31',
+    cat:'update',
+    title:'🎫 입석＋좌석 결합 승차권이 추가되었습니다',
+    body:`장거리 승객이 <strong>한 열차에서 매진 구간은 입석으로, 여석 있는 구간은 좌석으로 이어 타는</strong> <strong>입석＋좌석 결합 승차권</strong>이 추가되었습니다. 전 구간 좌석표가 없어도 열차를 이용할 수 있습니다.<br><br>
+
+<strong>■ 이런 경우에 제안됩니다</strong><br>
+<div class="n-box">
+예) 서울→부산 열차에서 <strong>서울–영동은 매진</strong>, <strong>영동–부산은 좌석 여유</strong>가 있을 때<br>
+→ 서울–영동 <span class="n-highlight">입석</span> + 영동–부산 <span class="n-highlight">좌석</span>으로 한 장에 예매
+</div><br>
+
+<strong>■ 이용 방법</strong>
+<ul>
+<li>예매 화면에서 좌석 등급이 <strong>전 구간 매진</strong>이어도, 결합권이 성립하면 해당 등급이 <span class="n-highlight">일반실 · 입석＋좌석 가능</span>으로 표시되어 선택할 수 있습니다.</li>
+<li>여정을 훑어 <strong>여석이 있으면 좌석, 매진이면 입석</strong>으로 구간을 자동으로 나눕니다. 좌석은 구간별로 자동 배정됩니다.</li>
+<li>운임은 좌석 구간·입석 구간을 <strong>합산</strong>해 계산되며, 예매 확인창에 구간별 내역이 표시됩니다.</li>
+<li>승차권 카드에도 <strong>🪑 좌석 구간 / 🚉 입석 구간</strong>이 나뉘어 표시됩니다.</li>
+</ul>
+
+<span class="n-warn" style="display:block">입석 구간은 기존 입석과 동일하게 <strong>입석 예매가 열린(좌석이 거의 매진된) 구간</strong>에서만 성립합니다. 좌석도 입석도 불가능한 구간이 있으면 결합권은 제안되지 않습니다.</span>
+
+<strong>■ 미리보기</strong><br>
+예매 제안 화면과 완성된 결합 승차권 카드를 미리 볼 수 있습니다.<br><br>
+<a href="https://claude.ai/code/artifact/f43f9173-9b1a-4b67-9c01-9a3e3e70ab34" target="_blank" rel="noopener noreferrer" style="display:inline-block;padding:10px 18px;border-radius:10px;background:var(--accent);color:#fff;font-weight:700;text-decoration:none">🔗 입석＋좌석 결합 승차권 미리보기 열기</a>`
   }
 ];

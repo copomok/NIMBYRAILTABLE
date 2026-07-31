@@ -5343,13 +5343,24 @@ function seatClassSaleMeta(train,from,to,date,seatClass){
 function refreshBookingSeatOptions(){
   const args=window._bArgs||{},train=getTrainByNo(args.trainNo),date=document.getElementById('booking-date')?.value||todayLocalStr();
   if(!train)return;
+  const count=window._bookingPassengerCount||1;
   document.querySelectorAll('#booking-popup-wrap .booking-seat-option').forEach(btn=>{
-    const meta=seatClassSaleMeta(train,args.fromStn,args.toStn,date,btn.dataset.class);
-    const disabled=!meta.eligible||meta.available<=0;
+    const cls=btn.dataset.class;
+    const meta=seatClassSaleMeta(train,args.fromStn,args.toStn,date,cls);
+    let disabled=!meta.eligible||meta.available<=0;
+    // 좌석 등급이 전 구간 매진이어도 결합권(입석+좌석)이 성립하면 선택 가능하게 유지
+    let mixable=false,mix=null;
+    if(disabled&&cls!=='standing'&&typeof computeMixedSegments==='function'){
+      mix=computeMixedSegments(train,args.fromStn,args.toStn,date,count,cls);
+      if(mix){mixable=true;disabled=false;}
+    }
     btn.disabled=disabled;btn.style.opacity=disabled?'.45':'1';btn.style.cursor=disabled?'not-allowed':'pointer';
-    btn.title=meta.reason||'';
+    btn.title=mixable?'일부 구간 매진 — 입석+좌석 결합권으로 예매 가능':(meta.reason||'');
     const label=btn.querySelector('.booking-seat-label');
-    if(label)label.textContent=meta.label+(meta.reason?`${meta.reason.startsWith('(')?' ':' · '}${meta.reason}`:'');
+    if(label)label.textContent=mixable?`${meta.label} · 입석＋좌석 가능`:meta.label+(meta.reason?`${meta.reason.startsWith('(')?' ':' · '}${meta.reason}`:'');
+    // 결합권이면 실제(구간 합산) 운임으로 표시
+    const fareEl=btn.querySelector('.booking-seat-fare');
+    if(fareEl&&mixable){const disc=window._bookingDiscount||'none';fareEl.textContent=mix.reduce((a,r)=>a+applyDiscount(r.baseFarePerPerson,disc),0).toLocaleString()+'원';}
     if(disabled&&btn.classList.contains('active')){
       btn.classList.remove('active');window._bookingSeatClass=null;
       const confirm=document.getElementById('booking-confirm-btn');
@@ -5491,7 +5502,6 @@ function openBookingPopup(trainNo, fromStn, toStn, depTime, arrTime, travelDate)
       </div>
       <div style="flex-shrink:0;padding-top:8px">
         <button class="btn btn-primary booking-confirm-btn" id="booking-confirm-btn" disabled>좌석 등급을 선택하세요</button>
-        <button class="btn booking-trip-btn" id="booking-trip-btn" disabled style="width:100%;justify-content:center;margin-top:8px;opacity:.4;cursor:not-allowed">🧳 여행에 담기</button>
         <button class="alarm-popup-close" id="booking-cancel-btn">취소</button>
       </div>
     </div>
@@ -5516,8 +5526,6 @@ function openBookingPopup(trainNo, fromStn, toStn, depTime, arrTime, travelDate)
   });
   const _confirmBtn=document.getElementById('booking-confirm-btn');
   if(_confirmBtn) addMobileTap(_confirmBtn, doConfirmBooking);
-  const _tripBtn=document.getElementById('booking-trip-btn');
-  if(_tripBtn) addMobileTap(_tripBtn, ()=>{ if(!_tripBtn.disabled) addCurrentBookingToTrip(); });
   const _cancelBtn=document.getElementById('booking-cancel-btn');
   if(_cancelBtn) addMobileTap(_cancelBtn, closeBookingPopup);
   (()=>{const cl=document.getElementById('booking-clock');if(!cl)return;
@@ -5541,6 +5549,8 @@ function selectDiscount(btn,key){
     const c=b.dataset.class; const fe=b.querySelector('.booking-seat-fare');
     if(fe) fe.textContent=applyDiscount(calcFare(t,a.fromStn,a.toStn,c),key).toLocaleString()+'원';
   });
+  // 결합권 표시 운임(구간 합산)은 별도 재계산
+  refreshBookingSeatOptions();
 }
 function closeBookingPopup(){
   const w=document.getElementById('booking-popup-wrap');
@@ -5551,24 +5561,37 @@ function selectSeatClass(btn,cls){
   document.querySelectorAll('.booking-seat-option').forEach(b=>b.classList.remove('active'));
   btn.classList.add('active');
   window._bookingSeatClass=cls;
-  const confirmBtn=document.getElementById('booking-confirm-btn');
-  if(confirmBtn){confirmBtn.disabled=false;confirmBtn.style.opacity='1';confirmBtn.textContent='🎫 예매하기';}
-  const tripBtn=document.getElementById('booking-trip-btn');
-  if(tripBtn){tripBtn.disabled=false;tripBtn.style.opacity='1';tripBtn.style.cursor='pointer';}
-  const sb=document.getElementById('booking-seat-select-btn');
-  const d=document.getElementById('booking-seat-display');
   window._preselectedSeats=null;
   const isStanding = cls==='standing';
+  // 전 구간 매진이지만 입석+좌석 결합권으로 예매 가능한 좌석 등급 판별
+  const isMixed = !isStanding && _isMixedBookingSelection(cls);
+  const confirmBtn=document.getElementById('booking-confirm-btn');
+  if(confirmBtn){confirmBtn.disabled=false;confirmBtn.style.opacity='1';confirmBtn.textContent=isMixed?'🎫 입석＋좌석 예매하기':'🎫 예매하기';}
+  const sb=document.getElementById('booking-seat-select-btn');
+  const d=document.getElementById('booking-seat-display');
   if(sb){
-    // 입석/자유석: 지정 좌석이 없으므로 좌석 선택 버튼을 막고 안내로 대체
-    sb.disabled=isStanding;
-    sb.style.opacity=isStanding?'.55':'1';
-    sb.style.cursor=isStanding?'not-allowed':'pointer';
+    // 입석/자유석·결합권: 좌석 지정 없이 자동 배정 → 좌석 선택 버튼 비활성화
+    const noSeatPick = isStanding || isMixed;
+    sb.disabled=noSeatPick;
+    sb.style.opacity=noSeatPick?'.55':'1';
+    sb.style.cursor=noSeatPick?'not-allowed':'pointer';
     sb.innerHTML=isStanding
       ? '🚉 입석·자유석 전용 칸 <span style="color:var(--text3);font-weight:400">— 좌석 지정 없음</span>'
+      : isMixed
+      ? '🎫 입석＋좌석 결합 <span style="color:var(--text3);font-weight:400">— 구간별 자동 배정</span>'
       : '🪑 직접 선택 — <span id="booking-seat-display" style="color:var(--accent2)">자동 배정</span>';
   }
-  if(!isStanding && d) d.textContent='자동 배정';
+  if(!isStanding && !isMixed && d) d.textContent='자동 배정';
+}
+// 좌석 등급이 전 구간 매진이지만 결합권(입석+좌석)으로 예매 가능한지
+function _isMixedBookingSelection(cls){
+  if(cls==='standing'||typeof computeMixedSegments!=='function'||typeof canBookOD!=='function')return false;
+  const a=window._bArgs||{},t=getTrainByNo(a.trainNo);
+  if(!t)return false;
+  const date=document.getElementById('booking-date')?.value||todayLocalStr();
+  const count=window._bookingPassengerCount||1;
+  if(canBookOD(t,a.fromStn,a.toStn,count,date,cls))return false; // 전 구간 좌석 가능 → 결합권 아님
+  return !!computeMixedSegments(t,a.fromStn,a.toStn,date,count,cls);
 }
 function changePassengerCount(delta){
   let n=(window._bookingPassengerCount||1)+delta;
@@ -5576,6 +5599,12 @@ function changePassengerCount(delta){
   window._bookingPassengerCount=n;
   const el=document.getElementById('booking-passenger-count');
   if(el)el.textContent=n;
+  // 인원 변경 시 좌석/결합권 가능 여부·표시 갱신
+  refreshBookingSeatOptions();
+  if(window._bookingSeatClass){
+    const active=document.querySelector('.booking-seat-option.active');
+    if(active&&!active.disabled)selectSeatClass(active,window._bookingSeatClass);
+  }
 }
 function doConfirmBooking(){
   if(!window._bookingSeatClass){alert('좌석 등급을 먼저 선택해주세요');return;}
