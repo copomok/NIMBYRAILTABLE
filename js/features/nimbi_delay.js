@@ -90,23 +90,41 @@ function _simDaySeed(salt,dayKey){ return _seededRand((dayKey||_simDayKey())*0.0
 
 // ── 오늘의 운행 컨텍스트(요일·날씨) — 네트워크 전체 상관 ──
 let _simCtxCache={};
+// 음력 변환은 Intl.DateTimeFormat('...-ca-chinese') 생성이 매우 비싸다.
+// 포매터 인스턴스를 1개만 만들어 재사용하고, 날짜(연-월-일) 단위로 결과를 캐시해
+// 같은 날짜에 대한 반복 호출(수요 계산에서 열차·구간마다 발생)을 제거한다. (출력 동일)
+let _lunarFmt=null;
+const _lunarPartsCache=new Map(), _holidayCache=new Map();
+function _dkey(d){ return d.getFullYear()*10000+(d.getMonth()+1)*100+d.getDate(); }
 function _simLunarParts(d){
+  const k=_dkey(d);
+  if(_lunarPartsCache.has(k))return _lunarPartsCache.get(k);
+  let res=null;
   try{
-    const parts=new Intl.DateTimeFormat('en-u-ca-chinese',{month:'numeric',day:'numeric'}).formatToParts(d);
-    return {
+    if(!_lunarFmt)_lunarFmt=new Intl.DateTimeFormat('en-u-ca-chinese',{month:'numeric',day:'numeric'});
+    const parts=_lunarFmt.formatToParts(d);
+    res={
       month:Number(parts.find(p=>p.type==='month')?.value),
       day:Number(parts.find(p=>p.type==='day')?.value)
     };
-  }catch(e){ return null; }
+  }catch(e){ res=null; }
+  _lunarPartsCache.set(k,res);
+  return res;
 }
 function _simIsKoreanHoliday(d){
-  const md=(d.getMonth()+1)*100+d.getDate();
-  if([101,301,505,606,815,1003,1009,1225].includes(md))return true;
-  const lunar=_simLunarParts(d);
-  if(lunar&&((lunar.month===1&&lunar.day<=2)||(lunar.month===4&&lunar.day===8)||(lunar.month===8&&lunar.day>=14&&lunar.day<=16)))return true;
-  const tomorrow=new Date(d); tomorrow.setDate(d.getDate()+1);
-  const nextLunar=_simLunarParts(tomorrow);
-  return !!(nextLunar&&nextLunar.month===1&&nextLunar.day===1);
+  const k=_dkey(d);
+  if(_holidayCache.has(k))return _holidayCache.get(k);
+  const res=(()=>{
+    const md=(d.getMonth()+1)*100+d.getDate();
+    if([101,301,505,606,815,1003,1009,1225].includes(md))return true;
+    const lunar=_simLunarParts(d);
+    if(lunar&&((lunar.month===1&&lunar.day<=2)||(lunar.month===4&&lunar.day===8)||(lunar.month===8&&lunar.day>=14&&lunar.day<=16)))return true;
+    const tomorrow=new Date(d); tomorrow.setDate(d.getDate()+1);
+    const nextLunar=_simLunarParts(tomorrow);
+    return !!(nextLunar&&nextLunar.month===1&&nextLunar.day===1);
+  })();
+  _holidayCache.set(k,res);
+  return res;
 }
 
 // ── 실제 시간대별 기상 예보 (Open-Meteo, 키 불필요) ──
