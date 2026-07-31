@@ -16,7 +16,9 @@
   }
   function profile(name){
     if(profileCache.has(name))return{...profileCache.get(name)};
-    if(g.NIMBI_STATION_DEMAND_PROFILE?.[name])return{...g.NIMBI_STATION_DEMAND_PROFILE[name]};
+    if(g.NIMBI_STATION_DEMAND_PROFILE?.[name]){
+      const result={...g.NIMBI_STATION_DEMAND_PROFILE[name]};profileCache.set(name,result);return{...result};
+    }
     const pax=+g.STATION_PAX?.[name],weight=pax>0?clamp(.72+Math.sqrt(pax/100)*.55,.72,1.27):1;
     const result={origin:weight,destination:weight,business:1,leisure:1,transfer:pax>=55?1.15:1,capital:false};
     profileCache.set(name,result);return{...result};
@@ -43,7 +45,8 @@
         const car1=carSeats(cars.find(car=>+car.car===1))||seated[0]||0;
         const reference=standardCars.length?standardCars:seated;
         const typical=reference.length?Math.round(reference.reduce((a,b)=>a+b,0)/reference.length):car1;
-        result.standingMode=result.freeCars?'free':'standing';
+        const alwaysStanding=train.grade==='무궁화호'||train.grade==='ITX-새마을';
+        result.standingMode=result.freeCars&&!alwaysStanding?'free':'standing';
         result.standing=result.freeCars?Math.round(typical*result.freeCars):Math.round(car1*.5);
         result.total=result.standard+result.premium;
         if(result.total>0){capacityCache.set(train,result);return{...result};}
@@ -163,22 +166,7 @@
     if(alternativeCache.has(cacheKey))return alternativeCache.get(cacheKey);
     const own=odTiming(train,od.from,od.to);if(!own)return[];
     const result=[];
-    if(!routeIndex){
-      routeIndex=new Map();
-      for(const item of allTrains()){
-        const list=stops(item);
-        for(let i=0;i<list.length-1;i++){
-          const dep=toMin(list[i].dep||list[i].arr);if(dep==null)continue;
-          for(let j=i+1;j<list.length;j++){
-            if(list[i].s===list[j].s)continue;
-            let arr=toMin(list[j].arr||list[j].dep);if(arr==null)continue;if(arr<dep)arr+=1440;
-            const key=`${list[i].s}\u0000${list[j].s}`;
-            if(!routeIndex.has(key))routeIndex.set(key,[]);
-            routeIndex.get(key).push({train:item,timing:{a:i,b:j,dep,arr,duration:arr-dep}});
-          }
-        }
-      }
-    }
+    prepareCompetitionIndex();
     for(const entry of routeIndex.get(`${od.from}\u0000${od.to}`)||[]){
       const other=entry.train;
       if(other===train||String(other.no)===String(train.no))continue;
@@ -192,6 +180,24 @@
     }
     alternativeCache.set(cacheKey,result);
     return result;
+  }
+  function prepareCompetitionIndex(){
+    if(routeIndex)return routeIndex;
+    routeIndex=new Map();
+    for(const item of allTrains()){
+      const list=stops(item);
+      for(let i=0;i<list.length-1;i++){
+        const dep=toMin(list[i].dep||list[i].arr);if(dep==null)continue;
+        for(let j=i+1;j<list.length;j++){
+          if(list[i].s===list[j].s)continue;
+          let arr=toMin(list[j].arr||list[j].dep);if(arr==null)continue;if(arr<dep)arr+=1440;
+          const key=`${list[i].s}\u0000${list[j].s}`;
+          if(!routeIndex.has(key))routeIndex.set(key,[]);
+          routeIndex.get(key).push({train:item,timing:{a:i,b:j,dep,arr,duration:arr-dep}});
+        }
+      }
+    }
+    return routeIndex;
   }
   function demandForOD(train,date,from,to){
     return rawDemand(train,date).find(x=>x.from===from&&x.to===to)?.demand||0;
@@ -232,6 +238,7 @@
   g.NIMBI_Demand={clamp,hash,random,toMin,getStops:stops,getStationDemandProfile:profile,getTrainCapacity:capacity,
     getGamePassengerCount:gamePassengers,getBaseDemandIndex:baseDemandIndex,getInferredRouteDemandIndex:inferredRouteDemandIndex,
     getDistanceGradePreference:distancePreference,getTimeDirectionMultiplier:directionMultiplier,getODDemandScore:odScore,
-    buildRawTrainODDemand:rawDemand,buildTrainODDemand:buildDemand,getCompetitionAdjustment:competitionAdjustment,clearCache};
+    buildRawTrainODDemand:rawDemand,buildTrainODDemand:buildDemand,getCompetitionAdjustment:competitionAdjustment,
+    prepareCompetitionIndex,clearCache};
   g.getBaseDemandIndex=baseDemandIndex;g.buildTrainODDemand=buildDemand;g.getStationDemandProfile=profile;
 })(window);

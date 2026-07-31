@@ -66,7 +66,7 @@
       const seatedRate=rangeMax(s.segmentLoads,od[0],od[1])/Math.max(1,s.capacity.total),threshold=standingThreshold(s.capacity),eligible=seatedRate>=threshold;
       const rawAvailable=Math.max(0,cap-booked);
       return{capacity:cap,booked,simulatedBooked:Math.max(0,booked-userBooked),userBooked,available:eligible?rawAvailable:0,
-        rawAvailable,eligible,threshold,seatedRate,mode:s.capacity.standingMode,label:s.capacity.standingMode==='free'?'자유석':'입석'};
+        rawAvailable,eligible,threshold,seatedRate,mode:s.capacity.standingMode,label:s.capacity.standingMode==='free'?'입석 / 자유석':'입석'};
     }
     const used=[],user=[];
     for(let i=od[0];i<od[1];i++){

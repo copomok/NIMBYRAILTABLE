@@ -6,8 +6,15 @@ const train={no:'1202',grade:'무궁화호',stops:[{s:'서울',dep:'08:00'},{s:'
 c.loadTickets=()=>[];const a=c.getTrainInventorySnapshot(train,date,now);c.NIMBI_Inventory.invalidate();const b=c.getTrainInventorySnapshot(train,date,now);assert.deepEqual(a.segmentLoads,b.segmentLoads,'결정적 시드');assert.equal(c.buildTrainODDemand(train,date).length,6);assert.ok(c.getBaseDemandIndex(train)>.45);
 c.loadTickets=()=>[{id:'u',trainNo:'1202',travelDate:date,status:'active',fromStn:'서울',toStn:'대전',passengerCount:100,seats:[]}];c.NIMBI_Inventory.invalidate();assert.equal(c.getAvailableSeats(train,'서울','대전',date,null,now),0);assert.ok(c.getAvailableSeats(train,'대전','부산',date,null,now)>0);assert.equal(c.getAvailableSeats(train,'서울','부산',date,null,now),0);
 assert.equal(c.getTrainCapacity(train).premium,20);assert.equal(c.getTrainCapacity(train).standing,80,'자유석 객차 1칸은 일반 객차 1칸 분량의 판매 정원을 사용');
+assert.equal(c.getTrainCapacity(train).standingMode,'standing','무궁화호의 카페객차 판매 상품은 자유석이 아니라 입석이어야 함');
 const classState=c.getSeatInventoryState(train,'대전','부산',date,'general',now);assert.equal(classState.available+classState.booked,classState.capacity,'좌석 선택과 등급별 잔여석은 동일 재고를 사용');
 assert.ok(c.getBookingProgress(24,'regional')>c.getBookingProgress(168,'regional'));
+for(const profile of ['business','leisure','regional']){
+  const dayBefore=c.getBookingProgress(24,profile,'2026-07-29'),threeHours=c.getBookingProgress(3,profile,'2026-07-29'),departure=c.getBookingProgress(0,profile,'2026-07-29');
+  assert.ok(dayBefore>=.85,'출발 1일 전에는 대부분의 예약이 완료되어야 함');
+  assert.ok(threeHours-dayBefore<=.08,'출발 3시간 전 추가 예약은 소수여야 함');
+  assert.ok(departure-threeHours<=.04,'출발 직전 추가 예약은 극소수여야 함');
+}
 assert.ok(c.getBookingProgress(168,'business','2026-07-31')>c.getBookingProgress(168,'business','2026-07-29'),'금요일은 같은 리드타임의 평일보다 선예약 비율이 높아야 함');
 assert.ok(c.getBookingProgress(168,'business','2026-08-01')>c.getBookingProgress(168,'business','2026-07-29'),'토요일은 같은 리드타임의 평일보다 선예약 비율이 높아야 함');
 assert.ok(c.getBookingProgress(168,'business','2026-08-02')>c.getBookingProgress(168,'business','2026-07-29'),'일요일은 같은 리드타임의 평일보다 선예약 비율이 높아야 함');

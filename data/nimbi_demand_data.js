@@ -1,4 +1,4 @@
-var NIMBI_DEMAND_VERSION='od-v1.4.0';
+var NIMBI_DEMAND_VERSION='od-v1.4.1';
 var NIMBI_DAY_MULTIPLIERS=[1.07,1.03,.94,.95,.99,1.12,1.10];
 var NIMBI_STATION_DEMAND_PROFILE={
 '서울':{origin:1.7,destination:1.65,business:1.5,transfer:1.45,capital:true},
@@ -15,7 +15,7 @@ var NIMBI_STATION_DEMAND_PROFILE={
 '경주':{origin:.95,destination:1.35,leisure:1.65}
 };
 var NIMBI_BOOKING_CURVES={
-business:[[720,.05],[168,.25],[72,.45],[24,.7],[3,.91],[0,.97]],
-leisure:[[720,.12],[336,.35],[168,.6],[24,.88],[0,.96]],
-regional:[[720,.01],[168,.1],[24,.38],[3,.72],[0,.9]]
+business:[[720,.08],[336,.24],[168,.46],[72,.72],[24,.91],[3,.96],[0,.98]],
+leisure:[[720,.16],[336,.42],[168,.68],[72,.84],[24,.94],[3,.975],[0,.99]],
+regional:[[720,.04],[336,.13],[168,.31],[72,.58],[24,.86],[3,.93],[0,.96]]
 };

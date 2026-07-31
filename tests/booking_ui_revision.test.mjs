@@ -12,9 +12,11 @@ assert.ok(source.includes("getODCongestion(t,aFrom||from,aTo||to,dateGo)"),'검�
 assert.ok(source.includes("if('IntersectionObserver' in window)"),'화면 밖 열차의 재고 계산을 미루는 최적화가 누락되었습니다.');
 assert.ok(source.includes('window.requestIdleCallback'),'좌석 상태 계산은 유휴 시간에 처리해야 합니다.');
 assert.ok(source.includes("label:'입석'"),'좌석 매진 뒤 입석 판매 상태가 누락되었습니다.');
-assert.ok(source.includes("standingMode==='free'?'자유석':'입석'"),'편성에 따른 자유석·입석 상품 구분이 누락되었습니다.');
+assert.ok(source.includes("standingMode==='free'?'입석 / 자유석':'입석'"),'편성에 따른 자유석·입석 상품 구분이 누락되었습니다.');
 assert.ok(source.includes('function refreshBookingSeatOptions()'),'혼잡도에 따른 좌석 상품 판매 조건 갱신이 누락되었습니다.');
 assert.ok(source.includes("if(btn.disabled)return"),'판매 조건을 충족하지 않은 입석·자유석 버튼을 선택할 수 있으면 안 됩니다.');
+assert.ok(source.includes("color:'#c084fc'"),'입석 검색 라벨은 기존 혼잡·매진 라벨과 다른 색이어야 합니다.');
+assert.ok(source.includes("`(${state.available}석)`"),'입석·자유석 잔여량은 좌석 단위 괄호 표기로 보여야 합니다.');
 
 assert.ok(source.includes('const initialPassengerCount=Math.max(1,Math.min(6,Number(window._bookingPassengerCount)||1))'),'조회 인원을 예매 팝업에 이어야 합니다.');
 assert.ok(source.includes('<span id="booking-passenger-count">${initialPassengerCount}</span>'),'예매 인원 초기 표시가 조회 인원을 사용해야 합니다.');

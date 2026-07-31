@@ -5327,7 +5327,7 @@ function availableSeatClasses(grade){
 }
 function seatClassDisplayLabel(train,seatClass){
   if(seatClass!=='standing')return SEAT_CLASSES[seatClass]?.label||seatClass;
-  try{return getTrainCapacity(train)?.standingMode==='free'?'자유석':'입석';}catch(e){return'입석';}
+  try{return getTrainCapacity(train)?.standingMode==='free'?'입석 / 자유석':'입석';}catch(e){return'입석';}
 }
 function seatClassSaleMeta(train,from,to,date,seatClass){
   try{
@@ -5335,7 +5335,7 @@ function seatClassSaleMeta(train,from,to,date,seatClass){
     if(seatClass==='standing'){
       const threshold=Math.round((state.threshold||.76)*100);
       return{...state,label:state.label||seatClassDisplayLabel(train,seatClass),
-        reason:!state.eligible?`좌석 혼잡도 ${threshold}%부터 판매`:state.available<=0?'판매 종료':`${state.available}명 가능`};
+        reason:!state.eligible?`좌석 혼잡도 ${threshold}%부터 판매`:state.available<=0?'판매 종료':`(${state.available}석)`};
     }
     return{...state,label:seatClassDisplayLabel(train,seatClass),reason:state.available<=0?'매진':`${state.available}석`};
   }catch(e){return{available:1,eligible:true,label:seatClassDisplayLabel(train,seatClass),reason:''};}
@@ -5349,7 +5349,7 @@ function refreshBookingSeatOptions(){
     btn.disabled=disabled;btn.style.opacity=disabled?'.45':'1';btn.style.cursor=disabled?'not-allowed':'pointer';
     btn.title=meta.reason||'';
     const label=btn.querySelector('.booking-seat-label');
-    if(label)label.textContent=meta.label+(meta.reason?` · ${meta.reason}`:'');
+    if(label)label.textContent=meta.label+(meta.reason?`${meta.reason.startsWith('(')?' ':' · '}${meta.reason}`:'');
     if(disabled&&btn.classList.contains('active')){
       btn.classList.remove('active');window._bookingSeatClass=null;
       const confirm=document.getElementById('booking-confirm-btn');
@@ -9158,7 +9158,7 @@ function searchBookTrains(includeTransfer, includeAdj){
 function _bookSeatStatus(cong){
   const rate=Math.max(0,Number(cong?.rate)||0),available=Math.max(0,Number(cong?.available)||0);
   if(available<=0||rate>=1){
-    if((Number(cong?.standingAvailable)||0)>0&&cong?.standingEligible)return{label:'입석',color:'var(--orange)',bg:'rgba(249,115,22,.08)'};
+    if((Number(cong?.standingAvailable)||0)>0&&cong?.standingEligible)return{label:'입석',color:'#c084fc',bg:'rgba(192,132,252,.10)'};
     return{label:'매진',color:'var(--red)',bg:'rgba(248,81,73,.08)'};
   }
   if(rate<=.55)return{label:'여유',color:'var(--green)',bg:'rgba(63,185,80,.08)'};
@@ -9478,7 +9478,7 @@ function _renderXferBody(){
       const sale=seatClassSaleMeta(t,L.from,L.to,X.date,c),disabled=!sale.eligible||sale.available<=0;
       return `<button class="booking-seat-option${L.cls===c?' active':''}" data-leg="${idx}" data-class="${c}" ${disabled?'disabled':''}
         style="${disabled?'opacity:.45;cursor:not-allowed':''}" title="${sale.reason||''}">
-        <span class="booking-seat-label">${sale.label}${sale.reason?` · ${sale.reason}`:''}</span>
+        <span class="booking-seat-label">${sale.label}${sale.reason?`${sale.reason.startsWith('(')?' ':' · '}${sale.reason}`:''}</span>
         <span class="booking-seat-fare">${fare.toLocaleString()}원</span></button>`;
     }).join('');
     const seatRow = L.cls==='standing'
