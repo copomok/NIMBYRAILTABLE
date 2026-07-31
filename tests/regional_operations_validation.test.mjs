@@ -183,10 +183,10 @@ test('강릉–부산 새마을과 의정부–대전 마음은 사진 템플릿
     const train=byNo.get(String(no));
     assert.equal(train.grade,'ITX-새마을');
     assert.equal(elapsed(firstTime(train),lastTime(train)),no%2?169:165,`#${no} 소요시간`);
-    for(const station of ['불국사','입실']){
-      const stop=train.stops.find(item=>item.s===station);
-      assert.ok(stop.arr&&stop.dep,`#${no} ${station} 정차`);
-    }
+    const bulguksa=train.stops.find(item=>item.s==='불국사');
+    const ipsil=train.stops.find(item=>item.s==='입실');
+    assert.ok(bulguksa.arr&&!bulguksa.dep,`#${no} 불국사 통과`);
+    assert.ok(ipsil.arr&&ipsil.dep,`#${no} 입실 정차`);
   }
   const services=trains.filter(train=>Number(train.no)>=1261&&Number(train.no)<=1270);
   assert.equal(services.length,10);
