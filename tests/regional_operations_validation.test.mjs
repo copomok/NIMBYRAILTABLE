@@ -28,7 +28,7 @@ const elapsed=(from,to)=>{
 };
 const regional=train=>{
   const no=Number(train.no);
-  return (no>=1201&&no<=1216)||(no>=1241&&no<=1264)||(no>=4401&&no<=4428)||
+  return (no>=1201&&no<=1216)||(no>=1241&&no<=1270)||(no>=4401&&no<=4428)||
     (no>=681&&no<=700)||(no>=801&&no<=822);
 };
 
@@ -77,8 +77,9 @@ test('확정 운용표는 최소 5분 회차하고 모든 편성이 출발지로
   const rotations=[
     ['1241','1244','1245','1248','1249','1252'],
     ['1242','1243','1246','1247','1250','1251'],
-    ['1253','1256','1257','1260','1261','1264'],
-    ['1254','1255','1258','1259','1262','1263'],
+    ['1261','1264','1265','1268'],
+    ['1262','1263','1266','1267'],
+    ['1269','1270'],
     ['1201','1206','1209','1214'],
     ['1202','1205','1210','1213'],
     ['1203','1208','1211','1216'],
@@ -187,16 +188,20 @@ test('강릉–부산 새마을과 의정부–대전 마음은 사진 템플릿
       assert.ok(stop.arr&&stop.dep,`#${no} ${station} 정차`);
     }
   }
-  const services=trains.filter(train=>Number(train.no)>=1253&&Number(train.no)<=1264);
-  assert.equal(services.length,12);
+  const services=trains.filter(train=>Number(train.no)>=1261&&Number(train.no)<=1270);
+  assert.equal(services.length,10);
   for(const direction of ['down','up']){
     const departures=services.filter(train=>train.dir===direction)
       .map(train=>minute(firstTime(train))).sort((a,b)=>a-b);
     assert.equal(departures.join(','),(direction==='down'
-      ?[326,506,686,866,1046,1226]
-      :[354,534,714,894,1074,1254]).join(','));
+      ?[326,566,746,986,1195]
+      :[354,584,754,1004,1328]).join(','));
   }
-  assert.ok(!services.some(train=>['1251','1252'].includes(train.no)));
+  assert.ok(!services.some(train=>train.stops.some(stop=>stop.s==='대전조차장')));
+  for(const train of services){
+    assert.equal(train.boundary.join('→'),train.dir==='down'?'의정부→대전':'대전→의정부');
+    assert.ok(!train.stops.some(stop=>['WP24013','WP24014'].includes(stop.s)));
+  }
 });
 
 test('신설 열차는 기존 전 편과 공유 선로에서 3분 시격을 지키고 개활 추월하지 않는다',()=>{
@@ -232,7 +237,7 @@ test('신설 열차는 기존 전 편과 공유 선로에서 3분 시격을 지�
   };
   for(const current of prepared.filter(item=>{
     const no=Number(item.train.no);
-    return regional(item.train)&&!(no>=1253&&no<=1264);
+    return regional(item.train)&&!(no>=1261&&no<=1270);
   })){
     for(const other of prepared){
       if(current===other)continue;

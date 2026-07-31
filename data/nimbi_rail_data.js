@@ -1687,34 +1687,33 @@ for(const train of ALL_TRAINS){
   }
 }
 
-// 인게임 #220001 의정부–대전 왕복 운행표를 방향별 템플릿으로 분리한다.
-// #1251·#1252는 기존 문의–상주 계통이 사용하므로 다음 빈 번호
-// #1253~1264를 사용하며, 방향별 3시간 간격으로 6왕복 운행한다.
+// 인게임 #220001 의정부→대전 운행표를 기준으로 작성한다.
+// 사진에 없는 상행은 하행 구간시각을 역산하며 #1261부터 5왕복 운행한다.
+// WP24013·WP24014는 서청주–상당 사이의 비역 웨이포인트이므로 제외한다.
 {
   const clock=value=>`${Math.floor(((value%1440)+1440)%1440/60)}:${String(((value%1440)+1440)%1440%60).padStart(2,'0')}`;
   const down=[
     ['의정부',null,0,2],['가능',2,null],['송추',6,7,2],['장흥',11,12,2],
-    ['고양',16,17,1],['관산',20,null],['주교',23,null],['능곡',26,null],
+    ['고양',16,17,1],['관산',21,null],['주교',23,null],['능곡',26,null],
     ['행신',28,29,1],['서울',38,39,3],['한강로',53,null],['수원',60,61,4],
-    ['오산',69,null],['평택',77,null],['천안',87,89,11],['목천',94,null],
+    ['오산',69,null],['평택',77,null],['천안',88,89,11],['목천',94,null],
     ['병천',97,null],['북청주',103,null],['서청주',107,108,3],
-    ['상당',112,null],['문의',116,null],['신탄진',125,null],
-    ['회덕',128,129,11],['대전조차장',136,141,7],['대전',150,null,12]
+    ['상당',111,null],['문의',116,null],['신탄진',121,null],
+    ['회덕',125,null],['대전',128,null,11]
   ];
-  const up=[
-    ['대전',null,0,12],['대전조차장',3,null],['회덕',7,null],['신탄진',12,null],
-    ['문의',16,null],['상당',17,null],['서청주',19,20,4],['북청주',25,null],
-    ['병천',30,null],['목천',34,null],['천안',38,40,12],['평택',50,null],
-    ['오산',59,null],['수원',66,67,5],['한강로',75,null],['서울',88,90,4],
-    ['행신',97,99,2],['능곡',102,103,2],['주교',107,null],['가능',107,null],
-    ['의정부',110,111,2]
-  ];
-  const departuresDown=[318,498,678,858,1038,1218];
-  const departuresUp=[350,530,710,890,1070,1250];
-  for(let index=0;index<6;index++){
+  const total=128;
+  const up=down.slice().reverse().map(([s,arr,dep,p])=>[
+    s,
+    dep==null?null:total-dep,
+    arr==null?null:total-arr,
+    p
+  ]);
+  const departuresDown=[330,540,750,960,1200];
+  const departuresUp=[330,540,750,960,1333];
+  for(let index=0;index<5;index++){
     for(const [no,dir,start,template] of [
-      [1253+index*2,'down',departuresDown[index],down],
-      [1254+index*2,'up',departuresUp[index],up]
+      [1261+index*2,'down',departuresDown[index],down],
+      [1262+index*2,'up',departuresUp[index],up]
     ]){
       const train={
         no:String(no),dest:dir==='down'?'대전':'의정부',dir,
@@ -1729,19 +1728,14 @@ for(const train of ALL_TRAINS){
       ALL_TRAINS.push(train);
     }
   }
-  const serviceOffset={
-    1253:8,1254:4,1255:8,1256:4,1257:8,1258:4,
-    1259:8,1260:4,1261:8,1262:4,1263:8,1264:4
-  };
+  // 교외선 순환열차와 단선 폐색이 겹치지 않도록 편성별 전 구간을 함께 이동한다.
+  const serviceOffset={1261:-4,1262:24,1263:26,1264:44,1265:-4,1266:4,1267:26,1268:44,1269:-5,1270:-5};
   for(const train of ALL_TRAINS){
     const delta=serviceOffset[+train.no]||0;
     if(!delta)continue;
     for(const stop of train.stops){
       for(const key of ['arr','dep']){
-        if(/^\d{1,2}:\d{2}$/.test(stop[key]||'')){
-          const [hour,min]=stop[key].split(':').map(Number);
-          stop[key]=clock(hour*60+min+delta);
-        }
+        if(/^\d{1,2}:\d{2}$/.test(stop[key]||''))stop[key]=clock(Number(stop[key].split(':')[0])*60+Number(stop[key].split(':')[1])+delta);
       }
     }
   }
