@@ -9,7 +9,11 @@ vm.runInContext(
   `${fs.readFileSync('data/nimbi_rail_data.js','utf8')};this.trains=ALL_TRAINS;`,
   context
 );
+vm.runInContext(`${fs.readFileSync('data/nimbi_realplat.js','utf8')}`,context);
+vm.runInContext(`${fs.readFileSync('data/nimbi_regional_platforms.js','utf8')}`,context);
+vm.runInContext(`${fs.readFileSync('data/nimbi_platform_db.js','utf8')};this.realPlat=REAL_PLAT;this.platDb=PLATFORM_DB;`,context);
 const trains=Array.from(context.trains);
+const realPlat=context.realPlat, platDb=context.platDb;
 const railSrc=fs.readFileSync('js/nimbi_rail.js','utf8');
 
 const CHUNGJU=['1885','1886','1887','1888'];
@@ -144,6 +148,36 @@ test('신설 편성끼리 같은 역·같은 승강장을 동시에 쓰지 않�
           const a=list[i], b=list[j];
           assert.ok(!(a.a<b.d+off&&b.a+off<a.d),`${k} #${a.no}↔#${b.no} 승강장 중복 점유`);
         }
+});
+
+test('사진에서 읽은 정차 승강장이 REAL_PLAT에 매핑된다',()=>{
+  for(const no of NEW){
+    const map=realPlat[no];
+    assert.ok(map,`#${no} REAL_PLAT 매핑 없음`);
+    for(const st of byNo(no).stops){
+      if(!st.p) continue;
+      assert.equal(map[st.s],Number(st.p),`#${no} ${st.s} 승강장 불일치`);
+    }
+  }
+});
+
+test('정차 승강장이 PLATFORM_DB에 등재되고 계통명이 붙는다',()=>{
+  for(const no of NEW){
+    const sys = Number(no)<2000 ? '충주-남대구 ITX마음' : '경북순환 ITX마음';
+    for(const st of byNo(no).stops){
+      if(!st.p) continue;
+      const e=platDb[st.s+'역']?.[st.p];
+      assert.ok(e,`${st.s} ${st.p}번 PLATFORM_DB 누락`);
+      assert.ok(e.l.includes(sys),`${st.s} ${st.p}번에 ${sys} 미등재`);
+      assert.ok(e.g.includes('ITX-마음'),`${st.s} ${st.p}번 등급 누락`);
+    }
+  }
+});
+
+test('경북선 장수역과 소백선 장수(전북)역이 분리된다',()=>{
+  assert.ok(platDb['장수(전북)역'],'장수(전북)역 PLATFORM_DB 누락');
+  assert.deepEqual(Object.keys(platDb['장수역']).sort(),['1','4']);
+  assert.ok(!platDb['장수역']['2'],'경북선 장수역에 전북 장수 승강장이 섞임');
 });
 
 test('편성당 하루 운행 횟수가 짝수다',()=>{

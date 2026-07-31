@@ -9,7 +9,9 @@
       (n>=1241&&n<=1270)||
       (n>=4401&&n<=4428)||
       (n>=681&&n<=700)||
-      (n>=801&&n<=822);
+      (n>=801&&n<=822)||
+      (n>=1885&&n<=1888)||   // 충주-남대구 ITX-마음
+      (n>=4451&&n<=4458);    // 경북순환 ITX-마음
   };
   for(const train of ALL_TRAINS){
     if(!isRegionalTrain(train.no))continue;
