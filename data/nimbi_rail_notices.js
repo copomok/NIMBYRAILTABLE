@@ -1004,5 +1004,34 @@ const NOTICES = [
 <strong>■ 미리보기</strong><br>
 예매 제안 화면과 완성된 결합 승차권 카드를 미리 볼 수 있습니다.<br><br>
 <a href="https://claude.ai/code/artifact/f43f9173-9b1a-4b67-9c01-9a3e3e70ab34" target="_blank" rel="noopener noreferrer" style="display:inline-block;padding:10px 18px;border-radius:10px;background:var(--accent);color:#fff;font-weight:700;text-decoration:none">🔗 입석＋좌석 결합 승차권 미리보기 열기</a>`
+  },
+  {
+    date:'2026-07-31',
+    cat:'timetable',
+    title:'경북순환 ITX-마음 신설 · 충주–남대구 ITX-마음 첫·막차 신설',
+    body:`대구·경북 내륙을 한 바퀴 도는 <strong>경북순환 ITX-마음</strong>이 새로 운행을 시작하고, 충주–남대구 구간에는 <strong>이른 첫차·늦은 막차</strong>가 신설됩니다.<br><br>
+
+<strong>■ 경북순환 ITX-마음 (#4451~#4460, 1일 10회)</strong><br>
+<div class="n-box">
+남대구 – 경산 – 하양 – 이화 – 의성 – 안동 – 장수 – 예천 – 용궁 – 남문경 – 상주 – 청리 – 김천 – 구미 – 남대구<br>
+한 바퀴 <strong>약 2시간 47분</strong> · <strong>중앙선·경북선·중부내륙선·경부선</strong> 경유
+</div><br>
+<ul>
+<li><strong>하행(홀수 · 남대구→의성 방면)</strong> 남대구 06:30 · 09:34 · 13:24 · 16:31 · 19:46 출발</li>
+<li><strong>상행(짝수 · 남대구→상주 방면)</strong> 남대구 06:40 · 09:32 · 13:00 · 16:21 · 19:25 출발</li>
+</ul>
+그동안 여객열차가 서지 않던 <strong>장수·용궁·남문경·예천</strong> 등 경북선 연선 역에서 대구권으로 바로 갈 수 있게 됩니다.<br><br>
+
+<strong>■ 충주–남대구 ITX-마음 (#1885~#1888, 1일 왕복 2회)</strong><br>
+<table>
+<tr><th>열차</th><th>출발</th><th>도착</th></tr>
+<tr><td>#1885</td><td>충주 05:00</td><td>남대구 06:23</td></tr>
+<tr><td>#1887</td><td>충주 05:08</td><td>남대구 06:31</td></tr>
+<tr><td>#1886</td><td>남대구 23:03</td><td>충주 00:26</td></tr>
+<tr><td>#1888</td><td>남대구 23:20</td><td>충주 00:43</td></tr>
+</table>
+중부내륙선의 <strong>느린 첫차·이른 막차</strong>를 보강하는 열차로, 북문경·문경·상주·김천·구미·호림에 정차합니다.<br><br>
+
+<span class="n-highlight" style="display:block">두 계통은 <strong>같은 2개 편성</strong>이 번갈아 맡습니다. 아침에 충주에서 남대구로 내려온 뒤 하루 종일 경북순환을 돌고, 밤에 다시 충주로 올라갑니다. 열차 정보의 <strong>🔁 편성 운용</strong>에서 하루 흐름을 확인하실 수 있습니다.</span>`
   }
 ];
