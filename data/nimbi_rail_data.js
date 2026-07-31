@@ -1625,6 +1625,29 @@ for(const train of ALL_TRAINS){
   }
 }
 
+// 강릉–영주 ITX-새마을은 구간 소요시간·정차·승강장을 보존하고 전 구간 시각만 이동한다.
+// 영동선 무추월과 기존 열차 3분 시격을 확보하며 태백선은 추월 가능 구간으로 취급한다.
+{
+  const shiftByNo={
+    1221:13,1222:-85,1223:-28,1224:-70,1225:-57,1226:-35,1227:33,1228:14,
+    1229:12,1230:53,1231:0,1232:6,1233:9,1234:46,1235:63,1236:101
+  };
+  const shiftClock=(value,delta)=>{
+    if(!/^\d{1,2}:\d{2}$/.test(value||''))return value;
+    const [hour,min]=value.split(':').map(Number);
+    const total=((hour*60+min+delta)%1440+1440)%1440;
+    return `${Math.floor(total/60)}:${String(total%60).padStart(2,'0')}`;
+  };
+  for(const train of ALL_TRAINS){
+    const delta=shiftByNo[+train.no];
+    if(delta==null||delta===0)continue;
+    for(const stop of train.stops){
+      stop.arr=shiftClock(stop.arr,delta);
+      stop.dep=shiftClock(stop.dep,delta);
+    }
+  }
+}
+
 // 동명이역은 운행 노선에 따라 구분한다. 기존 열차번호와 승차권 호환성은 유지한다.
 for(const train of ALL_TRAINS){
   const isSobaek=train.line.split('·').includes('소백선');
