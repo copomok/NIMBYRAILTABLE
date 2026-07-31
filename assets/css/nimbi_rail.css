@@ -2799,7 +2799,7 @@ body.app-modal-open{overflow:hidden;overscroll-behavior:none}
 .trip-form-input{width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:9px;color:var(--text1);font-family:var(--sans);font-size:14px;padding:11px 12px;outline:none;color-scheme:dark}
 .trip-form-input:focus{border-color:var(--accent)}
 .trip-leg{display:flex;align-items:center;gap:12px;background:var(--bg2);border:1px solid var(--border);border-left:3px solid var(--accent2);border-radius:8px;padding:11px 13px}
-.trip-leg-booked{border-left-color:var(--green);opacity:.92}
+.trip-leg-booked{border-left-color:var(--green)}
 .trip-leg-main{flex:1;min-width:0}
 .trip-leg-route{font-size:14px;color:var(--text1);margin-bottom:3px}
 .trip-leg-time{font-family:var(--mono);font-size:12px;color:var(--accent2)}

@@ -13980,37 +13980,11 @@ function openLegTrainSwap(tripId, legId){
   }
   render();
 }
-// 시간표(탑승 여정) 보기 — 읽기 전용, 승·하차 구간 강조
+// 시간표 → 앱의 실제 '탑승 여정'(실시간 운행) 화면을 그대로 사용
 function openLegTimetable(tripId, legId){
   const trips=loadTrips(); const tp=trips.find(t=>t.id===tripId); const leg=tp&&tp.legs.find(l=>l.id===legId); if(!leg)return;
-  const t=getTrainByNo(leg.trainNo); if(!t){alert('열차 정보를 찾을 수 없습니다.');return;}
-  const stops=t.stops;
-  const fi=stops.findIndex(s=>s.s===leg.fromStn), ti=stops.findIndex(s=>s.s===leg.toStn);
-  const rows=stops.map((s,i)=>{
-    const pass=isPassStop(t,s.s);
-    const tm=pass?'통과':((hasTime(s.arr)&&hasTime(s.dep)&&s.arr!==s.dep)?`${s.arr}~${s.dep}`:(hasTime(s.dep)?s.dep:hasTime(s.arr)?s.arr:''));
-    const inSeg=fi>=0&&ti>=0&&i>=fi&&i<=ti;
-    const role=i===fi?'승차':(i===ti?'하차':'');
-    return `<div class="ljt-row${inSeg?' in-seg':''}">
-      <span class="ljt-dot${i===fi?' board':''}${i===ti?' alight':''}${inSeg?' on':''}"></span>
-      <span class="ljt-stn${pass?' pass':''}">${_tesc(s.s)}</span>
-      <span class="ljt-time${pass?' pass':''}">${tm}</span>
-      ${role?`<span class="ljt-role ${i===fi?'r-board':'r-alight'}">${role}</span>`:'<span class="ljt-role-empty"></span>'}
-    </div>`;
-  }).join('');
-  document.getElementById('trip-tt-wrap')?.remove();
-  const wrap=document.createElement('div'); wrap.id='trip-tt-wrap';
-  wrap.style.cssText='position:fixed;inset:0;z-index:9600;display:flex;align-items:center;justify-content:center;padding:16px;box-sizing:border-box';
-  wrap.innerHTML=`<div style="position:absolute;inset:0;background:rgba(0,0,0,.6)"></div>
-    <div class="alarm-popup" style="position:relative;transform:none;top:auto;left:auto;max-height:86vh;overflow-y:auto;width:100%;max-width:440px">
-      <div class="alarm-popup-title">🚉 탑승 여정 · ${_tesc(t.grade)} ${_tesc(leg.trainNo)}</div>
-      <div class="alarm-popup-sub">${_tesc(leg.fromStn)} ${leg.depTime||''} → ${_tesc(leg.toStn)} ${leg.arrTime||''} · ${leg.seatClassLabel||''} ${leg.passengerCount||1}명</div>
-      <div class="ljt-list">${rows}</div>
-      <button class="alarm-popup-close" id="trip-tt-close">닫기</button>
-    </div>`;
-  document.body.appendChild(wrap);
-  wrap.addEventListener('click',e=>{if(e.target===wrap||e.target===wrap.firstElementChild)wrap.remove();});
-  document.getElementById('trip-tt-close').addEventListener('click',()=>wrap.remove());
+  if(typeof openJourney==='function') openJourney(leg.trainNo);
+  else alert('탑승 여정 화면을 열 수 없습니다.');
 }
 // 예매 취소 — 승차권은 취소 상태로 기록 보관, 일정은 미예매로 복귀
 function cancelLegBooking(tripId, legId){
