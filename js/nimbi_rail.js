@@ -5491,6 +5491,7 @@ function openBookingPopup(trainNo, fromStn, toStn, depTime, arrTime, travelDate)
       </div>
       <div style="flex-shrink:0;padding-top:8px">
         <button class="btn btn-primary booking-confirm-btn" id="booking-confirm-btn" disabled>좌석 등급을 선택하세요</button>
+        <button class="btn booking-trip-btn" id="booking-trip-btn" disabled style="width:100%;justify-content:center;margin-top:8px;opacity:.4;cursor:not-allowed">🧳 여행에 담기</button>
         <button class="alarm-popup-close" id="booking-cancel-btn">취소</button>
       </div>
     </div>
@@ -5515,6 +5516,8 @@ function openBookingPopup(trainNo, fromStn, toStn, depTime, arrTime, travelDate)
   });
   const _confirmBtn=document.getElementById('booking-confirm-btn');
   if(_confirmBtn) addMobileTap(_confirmBtn, doConfirmBooking);
+  const _tripBtn=document.getElementById('booking-trip-btn');
+  if(_tripBtn) addMobileTap(_tripBtn, ()=>{ if(!_tripBtn.disabled) addCurrentBookingToTrip(); });
   const _cancelBtn=document.getElementById('booking-cancel-btn');
   if(_cancelBtn) addMobileTap(_cancelBtn, closeBookingPopup);
   (()=>{const cl=document.getElementById('booking-clock');if(!cl)return;
@@ -5550,6 +5553,8 @@ function selectSeatClass(btn,cls){
   window._bookingSeatClass=cls;
   const confirmBtn=document.getElementById('booking-confirm-btn');
   if(confirmBtn){confirmBtn.disabled=false;confirmBtn.style.opacity='1';confirmBtn.textContent='🎫 예매하기';}
+  const tripBtn=document.getElementById('booking-trip-btn');
+  if(tripBtn){tripBtn.disabled=false;tripBtn.style.opacity='1';tripBtn.style.cursor='pointer';}
   const sb=document.getElementById('booking-seat-select-btn');
   const d=document.getElementById('booking-seat-display');
   window._preselectedSeats=null;
@@ -8291,6 +8296,7 @@ const MY_TITLES = {
   account:'👤 내 계정',
   book:'🎫 열차 예매',
   ticket:'🎟️ 승차권 조회',
+  mytrip:'🧳 내 여행',
   pass:'🎟️ 정기권 예매',
   alarm:'🔔 승하차 알람',
   fav:'⭐ 즐겨찾기',
@@ -8326,6 +8332,9 @@ function openMySection(section){
   } else if(section==='ticket'){
     contentEl.innerHTML = '<div id="result-ticket"></div>';
     renderTickets();
+  } else if(section==='mytrip'){
+    contentEl.innerHTML = '<div id="result-mytrip"></div>';
+    renderMyTrips();
   } else if(section==='alarm'){
     contentEl.innerHTML = '<div id="result-alarm"></div>';
     renderAlarms();
@@ -13468,4 +13477,278 @@ function _renderJourney(){
       sc.scrollTop=_prevTop;
     }
   }
+}
+
+// ══════════════════════════════════════════
+// 🧳 내 여행 — 여러 날 일정을 하나로 묶어 일괄 예매
+// ══════════════════════════════════════════
+const TRIP_KEY='nimbi_trips';
+function loadTrips(){try{return JSON.parse(localStorage.getItem(TRIP_KEY))||[];}catch(e){return[];}}
+function saveTrips(t){try{localStorage.setItem(TRIP_KEY,JSON.stringify(t));}catch(e){}}
+function genTripId(){return 'TR'+Date.now().toString(36)+Math.random().toString(36).slice(2,5);}
+function _tesc(s){return String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
+function _tripToast(msg){
+  const old=document.getElementById('trip-toast'); if(old)old.remove();
+  const d=document.createElement('div'); d.id='trip-toast';
+  d.style.cssText='position:fixed;left:50%;bottom:38px;transform:translateX(-50%);z-index:10050;background:var(--accent2,#2f81f7);color:#fff;padding:11px 18px;border-radius:999px;font-size:13px;font-weight:600;box-shadow:0 6px 20px rgba(0,0,0,.35);max-width:88vw;text-align:center';
+  d.textContent=msg; document.body.appendChild(d);
+  setTimeout(()=>{d.style.transition='opacity .4s';d.style.opacity='0';setTimeout(()=>d.remove(),400);},1900);
+}
+
+// ── 데이터 조작 ──
+function createTrip(name){
+  const trips=loadTrips();
+  const trip={id:genTripId(),name:(name||'내 여행').trim()||'내 여행',createdAt:Date.now(),legs:[]};
+  trips.push(trip); saveTrips(trips); return trip.id;
+}
+function deleteTrip(id){
+  if(!confirm('이 여행을 삭제하시겠습니까?\n(담긴 일정만 삭제되며, 이미 예매한 승차권은 유지됩니다.)'))return;
+  saveTrips(loadTrips().filter(t=>t.id!==id));
+  if(window._activeTripId===id)window._activeTripId=null;
+  renderMyTrips();
+}
+function renameTrip(id){
+  const trips=loadTrips(); const tp=trips.find(t=>t.id===id); if(!tp)return;
+  const nm=prompt('여행 이름',tp.name); if(nm===null)return;
+  tp.name=nm.trim()||tp.name; saveTrips(trips); renderMyTrips();
+}
+function addLegToTrip(tripId,leg){
+  const trips=loadTrips(); const tp=trips.find(t=>t.id===tripId); if(!tp)return false;
+  tp.legs.push(leg); saveTrips(trips); return true;
+}
+function removeTripLeg(tripId,legId){
+  const trips=loadTrips(); const tp=trips.find(t=>t.id===tripId); if(!tp)return;
+  tp.legs=tp.legs.filter(l=>l.id!==legId); saveTrips(trips); renderMyTrips();
+}
+function _tripLegsSorted(trip){
+  return [...trip.legs].sort((a,b)=>{
+    if(a.date!==b.date)return a.date<b.date?-1:1;
+    return (toMin(a.depTime)||0)-(toMin(b.depTime)||0);
+  });
+}
+function _tripDateRange(trip){
+  const ds=trip.legs.map(l=>l.date).filter(Boolean).sort();
+  return ds.length?[ds[0],ds[ds.length-1]]:[null,null];
+}
+function _tripNightsLabel(trip){
+  const [mn,mx]=_tripDateRange(trip);
+  if(!mn)return '일정 없음';
+  if(mn===mx)return '당일';
+  const d1=new Date(mn+'T00:00'), d2=new Date(mx+'T00:00');
+  const nights=Math.round((d2-d1)/86400000);
+  return `${nights}박 ${nights+1}일`;
+}
+function _legFare(leg){
+  const t=getTrainByNo(leg.trainNo); if(!t)return 0;
+  const base=calcFare(t,leg.fromStn,leg.toStn,leg.seatClass);
+  return applyDiscount(base,leg.discount||'none')*(leg.passengerCount||1);
+}
+function _tripEstFare(trip){return trip.legs.reduce((a,l)=>a+_legFare(l),0);}
+function _legBooked(leg){
+  if(!leg.ticketId)return false;
+  const tk=loadTickets().find(t=>t.id===leg.ticketId);
+  return !!(tk&&tk.status==='active');
+}
+
+// ── 일괄 예매 ──
+function _bookOneLeg(leg,tripName){
+  const t=getTrainByNo(leg.trainNo);
+  if(!t)return {ok:false,err:'열차 정보 없음'};
+  const date=leg.date, count=leg.passengerCount||1, cls=leg.seatClass;
+  if(typeof canBookOD==='function'&&!canBookOD(t,leg.fromStn,leg.toStn,count,date,cls)){
+    const left=typeof getAvailableSeats==='function'?getAvailableSeats(t,leg.fromStn,leg.toStn,date,cls):0;
+    return {ok:false,err:left>0?`${left}석만 남음`:'매진'};
+  }
+  if(date===todayLocalStr()){
+    const now=new Date(), nowM=now.getHours()*60+now.getMinutes(), depM=toMin(leg.depTime);
+    if(depM!==null&&depM<nowM)return {ok:false,err:'이미 출발'};
+  }
+  const nd=toMin(leg.depTime), na=toMin(leg.arrTime);
+  if(nd!==null&&na!==null){
+    const existing=loadTickets().filter(tk=>tk.status==='active'&&tk.travelDate===date);
+    const conflict=existing.find(tk=>{const ed=toMin(tk.depTime),ea=toMin(tk.arrTime);if(ed===null||ea===null)return false;const aS=nd,aE=na>=nd?na:na+1440,bS=ed,bE=ea>=ed?ea:ed+1440;return aS<bE&&bS<aE;});
+    if(conflict)return {ok:false,err:`시간 겹침(${conflict.trainNo})`};
+  }
+  const base=calcFare(t,leg.fromStn,leg.toStn,cls);
+  const fare=applyDiscount(base,leg.discount||'none');
+  const seats=Array.from({length:count},()=>randomSeat(cls,leg.trainNo));
+  const tk={
+    id:genTicketId(),trainNo:leg.trainNo,grade:t.grade,line:t.line,
+    fromStn:leg.fromStn,toStn:leg.toStn,depTime:leg.depTime,arrTime:leg.arrTime,
+    seatClass:cls,seatClassLabel:SEAT_CLASSES[cls].label,seats,passengerCount:count,
+    farePerPerson:fare,totalFare:fare*count,discount:leg.discount||'none',
+    discountLabel:DISCOUNTS[leg.discount||'none'].label,baseFarePerPerson:base,
+    distanceKm:Math.round(routeDistanceKm(t,leg.fromStn,leg.toStn)),
+    bookedAt:Date.now(),travelDate:date,status:'active',tripName:tripName||''
+  };
+  const tickets=loadTickets(); tickets.push(tk); saveTickets(tickets);
+  if(typeof invalidateCongestion==='function')invalidateCongestion(leg.trainNo,date);
+  if(typeof _autoBookAlarms==='function')_autoBookAlarms(t,leg.fromStn,leg.toStn,leg.depTime,leg.arrTime);
+  return {ok:true,ticketId:tk.id};
+}
+function bulkBookTrip(tripId){
+  const trips=loadTrips(); const trip=trips.find(t=>t.id===tripId); if(!trip)return;
+  const todo=trip.legs.filter(l=>!_legBooked(l));
+  if(!todo.length){alert('이미 모든 일정이 예매되어 있습니다.');return;}
+  const total=todo.reduce((a,l)=>a+_legFare(l),0);
+  if(!confirm(`'${trip.name}' 여행의 미예매 일정 ${todo.length}건을 일괄 예매합니다.\n예상 결제 금액: ${total.toLocaleString()}원\n\n계속하시겠습니까?`))return;
+  let ok=0; const fails=[];
+  for(const leg of todo){
+    const r=_bookOneLeg(leg,trip.name);
+    if(r.ok){leg.ticketId=r.ticketId;ok++;}
+    else fails.push(`· ${leg.trainNo} ${leg.fromStn}→${leg.toStn} (${leg.date}): ${r.err}`);
+  }
+  saveTrips(trips);
+  let msg=`🧳 일괄 예매 결과\n\n✅ 성공 ${ok}건`;
+  if(fails.length)msg+=`\n❌ 실패 ${fails.length}건\n\n`+fails.join('\n');
+  else msg+='\n모든 일정이 예매되었습니다!';
+  alert(msg);
+  renderMyTrips();
+}
+
+// ── 렌더 ──
+function openTrip(id){window._activeTripId=id;renderMyTrips();}
+function backToTripList(){window._activeTripId=null;renderMyTrips();}
+function renderMyTrips(){
+  const el=document.getElementById('result-mytrip'); if(!el)return;
+  const trips=loadTrips();
+  const active=window._activeTripId&&trips.find(t=>t.id===window._activeTripId);
+  el.innerHTML = active ? _tripDetailHTML(active) : _tripListHTML(trips);
+}
+function _tripListHTML(trips){
+  const cards = trips.length ? trips.slice().sort((a,b)=>b.createdAt-a.createdAt).map(tp=>{
+    const [mn,mx]=_tripDateRange(tp);
+    const booked=tp.legs.filter(_legBooked).length;
+    const range=mn?(mn===mx?mn:`${mn} ~ ${mx}`):'일정 없음';
+    return `<div class="trip-card" onclick="openTrip('${tp.id}')">
+      <div class="trip-card-top">
+        <span class="trip-card-name">🧳 ${_tesc(tp.name)}</span>
+        <span class="trip-card-nights">${_tripNightsLabel(tp)}</span>
+      </div>
+      <div class="trip-card-meta">${range}</div>
+      <div class="trip-card-foot">
+        <span class="trip-badge">일정 ${tp.legs.length}</span>
+        <span class="trip-badge ${booked===tp.legs.length&&tp.legs.length?'trip-badge-done':''}">예매 ${booked}/${tp.legs.length}</span>
+        <span class="trip-card-fare">${_tripEstFare(tp).toLocaleString()}원</span>
+      </div>
+    </div>`;
+  }).join('') : `<div class="trip-empty"><div class="trip-empty-ic">🧳</div><p>아직 만든 여행이 없습니다.<br>여행을 만들고 열차 일정을 담아 한 번에 예매해 보세요.</p></div>`;
+  return `<div class="trip-wrap">
+    <div class="trip-intro">1박 2일, 3박 4일 등 여러 날의 열차 일정을 하나의 여행으로 묶어 <b>일괄 예매</b>할 수 있습니다.</div>
+    <button class="btn btn-primary trip-new" onclick="createTripPrompt()">＋ 새 여행 만들기</button>
+    <div class="trip-list">${cards}</div>
+  </div>`;
+}
+function createTripPrompt(){
+  const nm=prompt('새 여행 이름을 입력하세요','내 여행');
+  if(nm===null)return;
+  const id=createTrip(nm); openTrip(id);
+}
+function _tripDetailHTML(trip){
+  const legs=_tripLegsSorted(trip);
+  const [mn,mx]=_tripDateRange(trip);
+  const range=mn?(mn===mx?mn:`${mn} ~ ${mx}`):'일정 없음';
+  const booked=legs.filter(_legBooked).length;
+  const unbooked=legs.length-booked;
+  // 날짜별 그룹
+  let body='';
+  if(!legs.length){
+    body=`<div class="trip-empty"><div class="trip-empty-ic">🗓️</div><p>담긴 일정이 없습니다.<br>아래 '일정 추가'로 열차를 조회한 뒤<br>🧳 <b>여행에 담기</b>를 눌러 담으세요.</p></div>`;
+  } else {
+    let curDate=null, dayNo=0;
+    legs.forEach(l=>{
+      if(l.date!==curDate){
+        if(curDate!==null)body+='</div>';
+        curDate=l.date; dayNo++;
+        body+=`<div class="trip-day-head"><span class="trip-day-no">DAY ${dayNo}</span><span class="trip-day-date">${l.date||'-'}</span></div><div class="trip-day-legs">`;
+      }
+      body+=_tripLegHTML(trip.id,l);
+    });
+    body+='</div>';
+  }
+  return `<div class="trip-wrap trip-detail">
+    <button class="trip-back" onclick="backToTripList()">‹ 전체 여행</button>
+    <div class="trip-detail-head">
+      <div class="trip-detail-name">🧳 ${_tesc(trip.name)}</div>
+      <div class="trip-detail-actions">
+        <button class="trip-mini-btn" onclick="renameTrip('${trip.id}')">이름 수정</button>
+        <button class="trip-mini-btn trip-mini-danger" onclick="deleteTrip('${trip.id}')">삭제</button>
+      </div>
+    </div>
+    <div class="trip-detail-meta">${_tripNightsLabel(trip)} · ${range} · 일정 ${legs.length}개 · 예매 ${booked}/${legs.length}</div>
+    ${body}
+    <div class="trip-total-bar">
+      <div><span class="trip-total-label">예상 합계</span><span class="trip-total-fare">${_tripEstFare(trip).toLocaleString()}원</span></div>
+      <div class="trip-total-btns">
+        <button class="btn trip-add-btn" onclick="openMySection('book')">＋ 일정 추가</button>
+        <button class="btn btn-primary trip-book-btn" onclick="bulkBookTrip('${trip.id}')"${unbooked?'':' disabled'}>🎫 일괄 예매${unbooked?` (${unbooked})`:' 완료'}</button>
+      </div>
+    </div>
+  </div>`;
+}
+function _tripLegHTML(tripId,leg){
+  const booked=_legBooked(leg);
+  const dur=(typeof durMin==='function')?durMin(leg.depTime,leg.arrTime):null;
+  return `<div class="trip-leg${booked?' trip-leg-booked':''}">
+    <div class="trip-leg-main">
+      <div class="trip-leg-route"><b>${_tesc(leg.fromStn)}</b> <span class="trip-leg-time">${leg.depTime||''}</span> → <b>${_tesc(leg.toStn)}</b> <span class="trip-leg-time">${leg.arrTime||''}</span></div>
+      <div class="trip-leg-sub">${_tesc(leg.grade||'')} ${_tesc(leg.trainNo)} · ${_tesc(leg.seatClassLabel||'')} · ${leg.passengerCount||1}명${leg.discount&&leg.discount!=='none'?' · '+_tesc(DISCOUNTS[leg.discount]?.label||''):''}</div>
+    </div>
+    <div class="trip-leg-side">
+      <div class="trip-leg-fare">${_legFare(leg).toLocaleString()}원</div>
+      ${booked?'<span class="trip-leg-tag">예매완료</span>':`<button class="trip-leg-del" onclick="removeTripLeg('${tripId}','${leg.id}')" title="삭제">✕</button>`}
+    </div>
+  </div>`;
+}
+
+// ── 예매 팝업에서 '여행에 담기' ──
+function addCurrentBookingToTrip(){
+  if(!window._bookingSeatClass){alert('좌석 등급을 먼저 선택해주세요.');return;}
+  const a=window._bArgs||{};
+  const dateInput=document.getElementById('booking-date');
+  const date=dateInput&&dateInput.value?dateInput.value:todayLocalStr();
+  const t=getTrainByNo(a.trainNo);
+  const leg={
+    id:genTripId(),trainNo:a.trainNo,grade:t?t.grade:'',line:t?t.line:'',
+    fromStn:a.fromStn,toStn:a.toStn,depTime:a.depTime,arrTime:a.arrTime,date,
+    seatClass:window._bookingSeatClass,seatClassLabel:SEAT_CLASSES[window._bookingSeatClass].label,
+    passengerCount:window._bookingPassengerCount||1,discount:window._bookingDiscount||'none',ticketId:null
+  };
+  openTripChooser(leg);
+}
+function openTripChooser(leg){
+  const trips=loadTrips();
+  document.getElementById('trip-chooser-wrap')?.remove();
+  const wrap=document.createElement('div'); wrap.id='trip-chooser-wrap';
+  wrap.style.cssText='position:fixed;inset:0;z-index:9600;display:flex;align-items:center;justify-content:center;padding:16px;box-sizing:border-box';
+  const list=trips.length?trips.slice().sort((a,b)=>b.createdAt-a.createdAt).map(tp=>{
+    const [mn,mx]=_tripDateRange(tp);
+    return `<button class="trip-choose-item" data-id="${tp.id}">
+      <span class="trip-choose-name">🧳 ${_tesc(tp.name)}</span>
+      <span class="trip-choose-meta">${tp.legs.length}개 일정${mn?` · ${_tripNightsLabel(tp)}`:''}</span>
+    </button>`;
+  }).join(''):'<div style="color:var(--text3);text-align:center;padding:12px 0;font-size:13px">아직 만든 여행이 없습니다</div>';
+  wrap.innerHTML=`<div style="position:absolute;inset:0;background:rgba(0,0,0,.6)"></div>
+    <div class="alarm-popup" style="position:relative;transform:none;top:auto;left:auto;max-height:80vh;overflow-y:auto;width:100%;max-width:420px">
+      <div class="alarm-popup-title">🧳 여행에 담기</div>
+      <div class="alarm-popup-sub">${_tesc(leg.fromStn)} → ${_tesc(leg.toStn)} · ${leg.date}</div>
+      <div class="trip-choose-list">${list}</div>
+      <button class="btn btn-primary" id="trip-new-btn" style="width:100%;justify-content:center;margin-top:4px">＋ 새 여행 만들기</button>
+      <button class="alarm-popup-close" id="trip-choose-cancel">취소</button>
+    </div>`;
+  document.body.appendChild(wrap);
+  wrap.addEventListener('click',e=>{if(e.target===wrap||e.target===wrap.firstElementChild)wrap.remove();});
+  wrap.querySelectorAll('.trip-choose-item').forEach(b=>b.addEventListener('click',()=>{_commitLegToTrip(b.dataset.id,leg);wrap.remove();}));
+  document.getElementById('trip-new-btn').addEventListener('click',()=>{
+    const nm=prompt('새 여행 이름을 입력하세요','내 여행'); if(nm===null)return;
+    const id=createTrip(nm); _commitLegToTrip(id,leg); wrap.remove();
+  });
+  document.getElementById('trip-choose-cancel').addEventListener('click',()=>wrap.remove());
+}
+function _commitLegToTrip(tripId,leg){
+  addLegToTrip(tripId,leg);
+  closeBookingPopup();
+  const tp=loadTrips().find(t=>t.id===tripId);
+  _tripToast(`🧳 '${tp?tp.name:'여행'}'에 일정을 담았습니다`);
+  if(document.getElementById('result-mytrip'))renderMyTrips();
 }
