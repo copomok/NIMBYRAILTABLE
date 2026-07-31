@@ -13649,6 +13649,7 @@ function renderMyTrips(){
   const trips=loadTrips();
   const active=window._activeTripId&&trips.find(t=>t.id===window._activeTripId);
   el.innerHTML = active ? _tripDetailHTML(active) : _tripListHTML(trips);
+  if(active && typeof _attachTripSwipe==='function') _attachTripSwipe();
 }
 function _tripListHTML(trips){
   const cards = trips.length ? trips.slice().sort((a,b)=>b.createdAt-a.createdAt).map(tp=>{
@@ -13759,16 +13760,104 @@ function _tripDetailHTML(trip){
 }
 function _tripLegHTML(tripId,leg){
   const booked=_legBooked(leg);
-  return `<div class="trip-leg${booked?' trip-leg-booked':''}">
-    <div class="trip-leg-main">
-      <div class="trip-leg-route"><b>${_tesc(leg.fromStn)}</b> <span class="trip-leg-time">${leg.depTime||''}</span> → <b>${_tesc(leg.toStn)}</b> <span class="trip-leg-time">${leg.arrTime||''}</span></div>
-      <div class="trip-leg-sub">${_tesc(leg.grade||'')} ${_tesc(leg.trainNo)} · ${_tesc(leg.seatClassLabel||'')} · ${leg.passengerCount||1}명${leg.discount&&leg.discount!=='none'?' · '+_tesc(DISCOUNTS[leg.discount]?.label||''):''}</div>
+  const gcv=(typeof gcCssVar==='function')?gcCssVar(leg.grade):'mgh';
+  const gradeChip=(typeof gradeHtml==='function')?gradeHtml(leg.grade):`<b>${_tesc(leg.grade||'')}</b>`;
+  return `<div class="trip-leg-swipe" data-leg="${leg.id}">
+    <div class="trip-leg-actions">
+      ${booked?'':`<button class="trip-swipe-act act-seg" onclick="tripChangeSegment('${tripId}','${leg.id}')">구간<br>변경</button><button class="trip-swipe-act act-opt" onclick="tripChangeOptions('${tripId}','${leg.id}')">예매<br>변경</button>`}
+      <button class="trip-swipe-act act-del" onclick="removeTripLeg('${tripId}','${leg.id}')">삭제</button>
     </div>
-    <div class="trip-leg-side">
-      <div class="trip-leg-fare">${_legFare(leg).toLocaleString()}원</div>
-      ${booked?'<span class="trip-leg-tag">예매완료</span>':`<button class="trip-leg-del" onclick="removeTripLeg('${tripId}','${leg.id}')" title="삭제">✕</button>`}
+    <div class="trip-leg${booked?' trip-leg-booked':''}" style="border-left-color:var(--c-${gcv})">
+      <div class="trip-leg-main">
+        <div class="trip-leg-route"><b>${_tesc(leg.fromStn)}</b> <span class="trip-leg-time">${leg.depTime||''}</span> → <b>${_tesc(leg.toStn)}</b> <span class="trip-leg-time">${leg.arrTime||''}</span></div>
+        <div class="trip-leg-sub">${gradeChip} <span style="font-family:var(--mono);color:var(--text2)">${_tesc(leg.trainNo)}</span> · ${_tesc(leg.seatClassLabel||'')} · ${leg.passengerCount||1}명${leg.discount&&leg.discount!=='none'?' · '+_tesc(DISCOUNTS[leg.discount]?.label||''):''}</div>
+      </div>
+      <div class="trip-leg-side">
+        <div class="trip-leg-fare">${_legFare(leg).toLocaleString()}원</div>
+        ${booked?'<span class="trip-leg-tag">예매완료</span>':'<span class="trip-leg-swipe-hint">‹ 밀기</span>'}
+      </div>
     </div>
   </div>`;
+}
+// 좌측 스와이프로 액션 노출
+function _attachTripSwipe(){
+  document.querySelectorAll('#result-mytrip .trip-leg-swipe').forEach(sw=>{
+    if(sw._swipeInit)return; sw._swipeInit=true;
+    const card=sw.querySelector('.trip-leg'), actions=sw.querySelector('.trip-leg-actions');
+    if(!card||!actions)return;
+    let startX=0,startY=0,cur=0,open=false,dragging=false,decided=false,horiz=false;
+    const W=()=>actions.offsetWidth||120;
+    const setX=x=>{card.style.transform=`translateX(${x}px)`;};
+    const snap=o=>{open=o;cur=o?-W():0;card.style.transition='transform .2s';setX(cur);};
+    const down=e=>{const p=e.touches?e.touches[0]:e;startX=p.clientX;startY=p.clientY;dragging=true;decided=false;horiz=false;card.style.transition='none';};
+    const move=e=>{if(!dragging)return;const p=e.touches?e.touches[0]:e;const dx=p.clientX-startX,dy=p.clientY-startY;
+      if(!decided){if(Math.abs(dx)>7||Math.abs(dy)>7){decided=true;horiz=Math.abs(dx)>Math.abs(dy);}else return;}
+      if(!horiz)return; if(e.cancelable)e.preventDefault();
+      let x=(open?-W():0)+dx; x=Math.max(-W(),Math.min(0,x)); cur=x; setX(x);};
+    const up=()=>{if(!dragging)return;dragging=false;card.style.transition='transform .2s';snap(cur<-W()/2);};
+    card.addEventListener('touchstart',down,{passive:true});
+    card.addEventListener('touchmove',move,{passive:false});
+    card.addEventListener('touchend',up); card.addEventListener('touchcancel',up);
+    card.addEventListener('mousedown',e=>{down(e);const mm=ev=>move(ev),mu=()=>{up();document.removeEventListener('mousemove',mm);document.removeEventListener('mouseup',mu);};document.addEventListener('mousemove',mm);document.addEventListener('mouseup',mu);});
+    card.addEventListener('click',e=>{if(open){e.preventDefault();e.stopPropagation();snap(false);}});
+  });
+}
+function tripChangeSegment(tripId, legId){
+  const trips=loadTrips(); const tp=trips.find(t=>t.id===tripId); if(!tp)return;
+  const leg=tp.legs.find(l=>l.id===legId); if(!leg)return;
+  if(_legBooked(leg)){alert('이미 예매 완료된 일정입니다.\n변경하려면 먼저 해당 승차권을 취소해주세요.');return;}
+  const day=leg.day, from=leg.fromStn, to=leg.toStn;
+  tp.legs=tp.legs.filter(l=>l.id!==legId); saveTrips(trips);
+  openTripAddSearch(tripId, day);
+  window._bookFrom=from; window._bookTo=to;
+  const fn=document.getElementById('book-from-name'), tn=document.getElementById('book-to-name');
+  if(fn)fn.textContent=from; if(tn)tn.textContent=to;
+  if(typeof searchBookTrains==='function') searchBookTrains(false,false);
+  _tripToast('구간을 다시 선택하세요');
+}
+function tripChangeOptions(tripId, legId){ openLegEditPicker(tripId, legId); }
+function openLegEditPicker(tripId, legId){
+  const trips=loadTrips(); const tp=trips.find(t=>t.id===tripId); if(!tp)return;
+  const leg=tp.legs.find(l=>l.id===legId); if(!leg)return;
+  if(_legBooked(leg)){alert('이미 예매 완료된 일정은 예매 옵션을 변경할 수 없습니다.\n승차권을 취소한 뒤 다시 시도해주세요.');return;}
+  const t=getTrainByNo(leg.trainNo); if(!t){alert('열차 정보를 찾을 수 없습니다.');return;}
+  document.getElementById('trip-leg-picker-wrap')?.remove();
+  const classes=availableSeatClasses(t.grade);
+  window._tlpEdit={tripId,legId,cls:leg.seatClass,pax:leg.passengerCount||1};
+  const opts=classes.map(c=>`<button class="booking-seat-option${c===leg.seatClass?' active':''}" data-class="${c}"><span class="booking-seat-label">${SEAT_CLASSES[c].label}</span><span class="booking-seat-fare">${calcFare(t,leg.fromStn,leg.toStn,c).toLocaleString()}원</span></button>`).join('');
+  const wrap=document.createElement('div'); wrap.id='trip-leg-picker-wrap';
+  wrap.style.cssText='position:fixed;inset:0;z-index:9600;display:flex;align-items:center;justify-content:center;padding:16px;box-sizing:border-box';
+  wrap.innerHTML=`<div style="position:absolute;inset:0;background:rgba(0,0,0,.6)"></div>
+    <div class="alarm-popup" style="position:relative;transform:none;top:auto;left:auto;max-height:88vh;overflow-y:auto;width:100%;max-width:420px">
+      <div class="alarm-popup-title">🎫 예매 옵션 변경</div>
+      <div class="alarm-popup-sub">${_tesc(t.grade)} ${_tesc(leg.trainNo)} · ${_tesc(leg.fromStn)} ${leg.depTime} → ${_tesc(leg.toStn)} ${leg.arrTime||''}</div>
+      <div class="booking-section-label" style="margin-top:12px">좌석 등급</div>
+      <div class="booking-seat-options">${opts}</div>
+      <div class="booking-section-label">인원</div>
+      <div class="booking-passenger-control">
+        <button class="booking-stepper-btn" id="tle-minus" type="button">−</button>
+        <span id="tle-pax">${window._tlpEdit.pax}</span>
+        <button class="booking-stepper-btn" id="tle-plus" type="button">+</button>
+      </div>
+      <button class="btn btn-primary" id="tle-save" style="width:100%;justify-content:center;margin-top:14px">변경 저장</button>
+      <button class="alarm-popup-close" id="tle-cancel">취소</button>
+    </div>`;
+  document.body.appendChild(wrap);
+  wrap.addEventListener('click',e=>{if(e.target===wrap||e.target===wrap.firstElementChild)wrap.remove();});
+  wrap.querySelectorAll('.booking-seat-option').forEach(b=>b.addEventListener('click',()=>{
+    wrap.querySelectorAll('.booking-seat-option').forEach(x=>x.classList.remove('active'));
+    b.classList.add('active'); window._tlpEdit.cls=b.dataset.class;
+  }));
+  document.getElementById('tle-minus').addEventListener('click',()=>{window._tlpEdit.pax=Math.max(1,window._tlpEdit.pax-1);document.getElementById('tle-pax').textContent=window._tlpEdit.pax;});
+  document.getElementById('tle-plus').addEventListener('click',()=>{window._tlpEdit.pax=Math.min(6,window._tlpEdit.pax+1);document.getElementById('tle-pax').textContent=window._tlpEdit.pax;});
+  document.getElementById('tle-cancel').addEventListener('click',()=>wrap.remove());
+  document.getElementById('tle-save').addEventListener('click',()=>{
+    const e=window._tlpEdit; if(!e||!e.cls)return;
+    const trips2=loadTrips(); const tp2=trips2.find(t=>t.id===e.tripId); if(!tp2){wrap.remove();return;}
+    const lg=tp2.legs.find(l=>l.id===e.legId); if(!lg){wrap.remove();return;}
+    lg.seatClass=e.cls; lg.seatClassLabel=SEAT_CLASSES[e.cls].label; lg.passengerCount=e.pax;
+    saveTrips(trips2); wrap.remove(); renderMyTrips(); _tripToast('예매 옵션을 변경했습니다');
+  });
 }
 
 // ── 일정 추가 (특정 일차에 구간 조회 → 열차 담기) ──
