@@ -1033,5 +1033,29 @@ const NOTICES = [
 중부내륙선의 <strong>느린 첫차·이른 막차</strong>를 보강하는 열차로, 북문경·문경·상주·김천·구미·호림에 정차합니다.<br><br>
 
 <span class="n-highlight" style="display:block">두 계통은 <strong>같은 2개 편성</strong>이 번갈아 맡습니다. 아침에 충주에서 남대구로 내려온 뒤 하루 종일 경북순환을 돌고, 밤에 다시 충주로 올라갑니다. 열차 정보의 <strong>🔁 편성 운용</strong>에서 하루 흐름을 확인하실 수 있습니다.</span>`
+  },
+  {
+    date:'2026-08-01',
+    cat:'timetable',
+    title:'교외선 순환 무궁화호 상·하행 정의 변경 및 시간표 개정',
+    body:`교외선 순환 무궁화호(#4401~#4428)의 <strong>상·하행 정의가 바뀌고</strong> 시간표가 인게임 운행 기록대로 개정됩니다.<br><br>
+
+<strong>■ 상·하행 정의 변경</strong><br>
+<div class="n-box">
+<strong>하행(홀수 #4401~#4427)</strong> — 서울 → 청량리 → <strong>의정부</strong> → 송추 → 고양 → 행신 → 서울 (반시계)<br>
+<strong>상행(짝수 #4402~#4428)</strong> — 서울 → <strong>행신</strong> → 고양 → 송추 → 의정부 → 청량리 → 서울 (시계)
+</div><br>
+<span class="n-warn" style="display:block">기존과 <strong>홀수·짝수에 걸린 방향이 서로 바뀝니다.</strong> 예매하신 승차권의 열차번호와 실제 방향을 다시 확인해 주세요.</span>
+
+<strong>■ 시간표 개정 (80분 간격 유지)</strong><br>
+<table>
+<tr><th>방향</th><th>서울 첫차</th><th>서울 막차</th><th>소요</th></tr>
+<tr><td>하행(의정부 방면)</td><td>05:13</td><td>22:33</td><td>65분</td></tr>
+<tr><td>상행(행신 방면)</td><td>05:10</td><td>22:30</td><td>61분</td></tr>
+</table>
+방향별 14회씩, <strong>정확히 80분 간격</strong>으로 운행합니다.<br><br>
+
+<strong>■ 송추역 교행 정차</strong><br>
+행신–청량리 구간이 <strong>단선</strong>이라, 하행 열차는 <span class="n-highlight">송추역에서 5분간 정차</span>하며 맞은편 상행 열차와 교행합니다. 하행은 2번, 상행은 1번 승강장을 사용합니다.`
   }
 ];

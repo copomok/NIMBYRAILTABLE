@@ -169,10 +169,13 @@ test('지정 열차는 첫 역부터 전 구간을 순연하고 순환열차는 
     assert.equal(seoul.length,2,`#${train.no} 서울 정차 순번`);
     assert.ok(seoul[0].dep&&!seoul[0].arr,`#${train.no} 서울 출발`);
     assert.ok(seoul[1].arr&&!seoul[1].dep,`#${train.no} 서울 종착`);
-    if(train.dir==='down'){
+    // 2026-08-01 상하행 재정의: 남금호 경유 서울 진입은 상행(서울>행신 방면)이다
+    if(train.dir==='up'){
       const namgeumho=train.stops.at(-2);
       assert.equal(namgeumho.s,'남금호',`#${train.no} 서울 진입 직전 역`);
       assert.equal(elapsed(namgeumho.dep,train.stops.at(-1).arr),4,`#${train.no} 남금호→서울`);
+    }else{
+      assert.equal(train.stops.at(-2).s,'행신',`#${train.no} 서울 진입 직전 역`);
     }
   }
   assert.ok(!trains.some(t=>Number(t.no)>=4429&&Number(t.no)<=4436));
