@@ -31,6 +31,33 @@ const selectRoute=(from,to,grade)=>TRAINS.filter(train=>
 
 const notices=[
   {
+    id:'20260627-regional-changes-full',date:'2026.06.27',
+    title:'보은 연장·강릉 계통 전체 운행계획',expected:20,
+    subtitle:'서울–보은 ITX-새마을·한강로–강릉 무궁화호',
+    groups:[
+      ['ITX-새마을 · 서울 ↔ 보은',selectNumbers(range(1891,1898))],
+      ['무궁화호 · 한강로 ↔ 강릉',selectNumbers(range(1761,1772))]
+    ]
+  },
+  {
+    id:'20260627-chungju-itx-full',date:'2026.06.27',
+    title:'한강로–충주 ITX-마음 전체 운행계획',expected:4,
+    subtitle:'중부내륙선 경유 · 하루 2왕복',
+    groups:[['ITX-마음 · 한강로 ↔ 충주',selectNumbers(range(1881,1884))]]
+  },
+  {
+    id:'20260703-suncheon-mugunghwa-full',date:'2026.07.03',
+    title:'한강로–순천 무궁화호 전체 운행계획',expected:6,
+    subtitle:'경부선·호남선·경전선 경유 · 하루 3왕복',
+    groups:[['무궁화호 · 한강로 ↔ 순천',selectNumbers(range(1491,1496))]]
+  },
+  {
+    id:'20260703-honam-ktx-full',date:'2026.07.03',
+    title:'호남고속선 KTX 전체 운행계획',expected:60,
+    subtitle:'서울–목포 급행·일반·완행 통합 시간표',
+    groups:[['KTX · 서울 ↔ 목포',selectNumbers(range(401,460))]]
+  },
+  {
     id:'20260710-major-revision',date:'2026.07.10',
     title:'시간표 대개정 전체 운행계획',expected:154,
     subtitle:'호남고속선·장항선·전라선·충북선·순천 계통',
@@ -153,10 +180,25 @@ function stopRows(trains){
       items.set(key,item);
     });
   }
-  return [...items.values()].sort((a,b)=>
-    a.positions.reduce((x,y)=>x+y,0)/a.positions.length-
-    b.positions.reduce((x,y)=>x+y,0)/b.positions.length
-  );
+  const ordered=[];
+  const seen=new Set();
+  const routeVariants=[...new Map(trains.map(train=>[
+    train.stops.map(stop=>stop.s).join('\u0001'),train
+  ])).values()].sort((a,b)=>a.stops.length-b.stops.length);
+  for(const train of routeVariants){
+    const occurrences=new Map();
+    for(const stop of train.stops){
+      const occurrence=(occurrences.get(stop.s)||0)+1;
+      occurrences.set(stop.s,occurrence);
+      const key=`${stop.s}#${occurrence}`;
+      if(!seen.has(key)&&items.has(key)){
+        seen.add(key);
+        ordered.push(items.get(key));
+      }
+    }
+  }
+  for(const item of items.values())if(!seen.has(item.key))ordered.push(item);
+  return ordered;
 }
 
 function stopMap(train){
@@ -182,11 +224,16 @@ function cellText(entry){
 }
 
 function gradeColor(grade){
-  if(/KTX|SRT/.test(grade))return'#2456a6';
-  if(/ITX-새마을/.test(grade))return'#d73a49';
-  if(/ITX-마음/.test(grade))return'#e05a33';
-  if(/남도해양/.test(grade))return'#1593b8';
-  return'#c45c27';
+  if(grade==='SRT')return'#8b1e4f';
+  if(grade==='KTX-산천')return'#6639a6';
+  if(grade==='KTX-이음')return'#274f9d';
+  if(grade==='KTX')return'#1f5cb8';
+  if(grade==='ITX-새마을')return'#d52d45';
+  if(grade==='ITX-마음')return'#e15a2b';
+  if(grade==='ITX-청춘')return'#15955f';
+  if(grade==='남도해양')return'#1688aa';
+  if(grade==='국악와인')return'#343d68';
+  return'#e16425';
 }
 
 function renderNotice(notice){
@@ -195,7 +242,7 @@ function renderNotice(notice){
   for(const [name,trains] of notice.groups)if(!trains.length)throw new Error(`${notice.id}: 빈 계통 ${name}`);
 
   const W=1440,margin=72,tableW=W-margin*2,stationW=190,colW=(tableW-stationW)/6;
-  const rowH=42,headH=58,groupGap=58,dirGap=26;
+  const rowH=46,headH=64,groupGap=64,dirGap=30;
   let y=220;
   const body=[];
   body.push(`<rect width="${W}" height="__HEIGHT__" fill="#f4f1e9"/>`);
@@ -206,27 +253,34 @@ function renderNotice(notice){
   body.push(`<text x="${W-margin}" y="142" text-anchor="end" class="date">${esc(notice.date)} 기준</text>`);
 
   for(const [groupName,all] of notice.groups){
+    const groupColor=gradeColor(all[0]?.grade||'');
     const directions=[['하행',all.filter(t=>t.dir==='down')],['상행',all.filter(t=>t.dir==='up')]]
       .filter(([,trains])=>trains.length);
-    body.push(`<rect x="${margin}" y="${y}" width="8" height="34" rx="4" fill="${gradeColor(all[0]?.grade||'')}"/>`);
-    body.push(`<text x="${margin+22}" y="${y+26}" class="group">${esc(groupName)}</text>`);
-    body.push(`<text x="${W-margin}" y="${y+25}" text-anchor="end" class="groupCount">${all.length}편 · ${esc(all[0]?.grade||'')}</text>`);
-    y+=50;
+    body.push(`<rect x="${margin}" y="${y}" width="${tableW}" height="44" rx="9" fill="${groupColor}" opacity=".11"/>`);
+    body.push(`<rect x="${margin}" y="${y}" width="10" height="44" rx="5" fill="${groupColor}"/>`);
+    body.push(`<text x="${margin+26}" y="${y+30}" class="group">${esc(groupName)}</text>`);
+    body.push(`<rect x="${W-margin-178}" y="${y+7}" width="178" height="30" rx="15" fill="${groupColor}"/>`);
+    body.push(`<text x="${W-margin-89}" y="${y+28}" text-anchor="middle" class="gradeBadge">${esc(all[0]?.grade||'')} · ${all.length}편</text>`);
+    y+=60;
 
     for(const [dir,trains] of directions){
       const rows=stopRows(trains),maps=new Map(trains.map(t=>[t,stopMap(t)]));
       for(let offset=0;offset<trains.length;offset+=6){
         const page=trains.slice(offset,offset+6),x=margin;
-        body.push(`<text x="${x}" y="${y+24}" class="direction">${dir} · ${esc(page[0].boundary?.[0]||page[0].stops[0]?.s)} → ${esc(page[0].dest)}</text>`);
-        y+=38;
+        const destinations=[...new Set(page.map(train=>train.dest))].join(' / ');
+        const pageHasPass=rows.some(row=>page.some(train=>cellText(maps.get(train).get(row.key))[1]==='pass'));
+        body.push(`<text x="${x}" y="${y+24}" class="direction">${dir} · ${esc(page[0].boundary?.[0]||page[0].stops[0]?.s)} → ${esc(destinations)}</text>`);
+        body.push(`<text x="${W-margin}" y="${y+24}" text-anchor="end" class="legend">${pageHasPass?'● 정차  ○ 통과':'● 전 역 정차'}</text>`);
+        y+=40;
         body.push(`<rect x="${x}" y="${y}" width="${tableW}" height="${headH+rows.length*rowH}" fill="#fff" stroke="#5f6368" stroke-width="1.5"/>`);
-        body.push(`<rect x="${x}" y="${y}" width="${tableW}" height="${headH}" fill="#ecebe7"/>`);
-        body.push(`<text x="${x+stationW/2}" y="${y+36}" text-anchor="middle" class="th">역명</text>`);
+        body.push(`<rect x="${x}" y="${y}" width="${stationW}" height="${headH}" fill="#2d3138"/>`);
+        body.push(`<text x="${x+stationW/2}" y="${y+40}" text-anchor="middle" class="th headerText">역명</text>`);
         page.forEach((train,index)=>{
           const cx=x+stationW+index*colW;
-          body.push(`<rect x="${cx}" y="${y}" width="${colW}" height="${headH}" fill="${gradeColor(train.grade)}" opacity=".10"/>`);
-          body.push(`<text x="${cx+colW/2}" y="${y+25}" text-anchor="middle" class="trainNo">#${esc(train.no)}</text>`);
-          body.push(`<text x="${cx+colW/2}" y="${y+45}" text-anchor="middle" class="dest">${esc(train.dest)}행</text>`);
+          const trainColor=gradeColor(train.grade);
+          body.push(`<rect x="${cx}" y="${y}" width="${colW}" height="${headH}" fill="${trainColor}"/>`);
+          body.push(`<text x="${cx+colW/2}" y="${y+27}" text-anchor="middle" class="trainNo headerText">#${esc(train.no)}</text>`);
+          body.push(`<text x="${cx+colW/2}" y="${y+49}" text-anchor="middle" class="dest headerSub">${esc(train.dest)}행</text>`);
         });
         for(let i=0;i<=page.length;i++){
           const vx=x+stationW+i*colW;
@@ -234,14 +288,20 @@ function renderNotice(notice){
         }
         rows.forEach((row,rowIndex)=>{
           const ry=y+headH+rowIndex*rowH;
-          if(rowIndex%2)body.push(`<rect x="${x}" y="${ry}" width="${tableW}" height="${rowH}" fill="#faf9f6"/>`);
+          if(!pageHasPass&&rowIndex%2)body.push(`<rect x="${x}" y="${ry}" width="${tableW}" height="${rowH}" fill="#faf9f6"/>`);
           body.push(`<line x1="${x}" y1="${ry}" x2="${x+tableW}" y2="${ry}" class="grid"/>`);
           const label=row.occurrence>1?`${row.name}(도착)`:row.name;
-          body.push(`<text x="${x+18}" y="${ry+28}" class="station">${esc(label)}</text>`);
+          const rowStates=page.map(train=>cellText(maps.get(train).get(row.key))[1]);
+          const rowHasStop=rowStates.some(state=>state==='stop'||state==='terminal');
+          if(pageHasPass)body.push(`<circle cx="${x+19}" cy="${ry+rowH/2}" r="${rowHasStop?6:4}" fill="${rowHasStop?groupColor:'#a7abb1'}" ${rowHasStop?'':'stroke="#fff" stroke-width="2"'}/>`);
+          body.push(`<text x="${x+(pageHasPass?34:18)}" y="${ry+30}" class="station ${rowHasStop?'':'passStation'}">${esc(label)}</text>`);
           page.forEach((train,index)=>{
             const [text,state]=cellText(maps.get(train).get(row.key));
-            const cx=x+stationW+index*colW+colW/2;
-            body.push(`<text x="${cx}" y="${ry+27}" text-anchor="middle" class="time ${state}">${esc(text)}</text>`);
+            const cellX=x+stationW+index*colW;
+            const cx=cellX+colW/2;
+            if(pageHasPass&&(state==='stop'||state==='terminal'))body.push(`<rect x="${cellX+2}" y="${ry+2}" width="${colW-4}" height="${rowH-4}" rx="5" fill="${gradeColor(train.grade)}" opacity=".10"/>`);
+            if(pageHasPass&&state==='pass')body.push(`<rect x="${cellX+2}" y="${ry+2}" width="${colW-4}" height="${rowH-4}" rx="5" fill="#eef0f2"/>`);
+            body.push(`<text x="${cx}" y="${ry+30}" text-anchor="middle" class="time ${state}">${esc(text)}</text>`);
           });
         });
         y+=headH+rows.length*rowH+dirGap;
@@ -252,7 +312,7 @@ function renderNotice(notice){
 
   y+=35;
   body.push(`<line x1="${margin}" y1="${y}" x2="${W-margin}" y2="${y}" stroke="#aaa59b"/>`);
-  body.push(`<text x="${margin}" y="${y+34}" class="foot">※ 출발역은 ‘출발’, 종착역은 ‘도착’으로 표시합니다. 회색 글자는 통과역입니다.</text>`);
+  body.push(`<text x="${margin}" y="${y+34}" class="foot">※ 등급색 칸은 정차, 회색 칸은 통과입니다. 모든 열차가 정차하는 표는 줄무늬로만 구분합니다.</text>`);
   body.push(`<text x="${W-margin}" y="${y+34}" text-anchor="end" class="foot">자료: NIMBYRAILTABLE ALL_TRAINS · 자동 생성</text>`);
   const H=y+86;
   const css=`
@@ -261,13 +321,14 @@ function renderNotice(notice){
     .subtitle{font:500 18px 'Apple SD Gothic Neo','Noto Sans CJK KR',sans-serif;fill:#53565a}
     .date{font:600 15px 'Apple SD Gothic Neo','Noto Sans CJK KR',sans-serif;fill:#555}
     .group{font:800 24px 'Apple SD Gothic Neo','Noto Sans CJK KR',sans-serif;fill:#171717}
-    .groupCount{font:600 15px 'Apple SD Gothic Neo','Noto Sans CJK KR',sans-serif;fill:#666}
+    .gradeBadge{font:800 14px 'Apple SD Gothic Neo','Noto Sans CJK KR',sans-serif;fill:#fff}
     .direction{font:800 18px 'Apple SD Gothic Neo','Noto Sans CJK KR',sans-serif;fill:#202124}
-    .th,.trainNo{font:800 16px 'Apple SD Gothic Neo','Noto Sans CJK KR',sans-serif;fill:#202124}
-    .dest{font:700 12px 'Apple SD Gothic Neo','Noto Sans CJK KR',sans-serif;fill:#555}
-    .station{font:700 15px 'Apple SD Gothic Neo','Noto Sans CJK KR',sans-serif;fill:#202124}
-    .time{font:600 14px 'JetBrains Mono','SFMono-Regular',monospace;fill:#202124}
-    .time.pass{fill:#9a9a9a;font-weight:500}.time.missing{fill:#c9c6bf}.time.terminal{font-weight:800}
+    .legend{font:700 13px 'Apple SD Gothic Neo','Noto Sans CJK KR',sans-serif;fill:#5f6368}
+    .th,.trainNo{font:850 17px 'Apple SD Gothic Neo','Noto Sans CJK KR',sans-serif}.headerText{fill:#fff}
+    .dest{font:750 13px 'Apple SD Gothic Neo','Noto Sans CJK KR',sans-serif}.headerSub{fill:rgba(255,255,255,.88)}
+    .station{font:750 16px 'Apple SD Gothic Neo','Noto Sans CJK KR',sans-serif;fill:#202124}.passStation{fill:#777c83;font-weight:650}
+    .time{font:650 15px 'JetBrains Mono','SFMono-Regular',monospace;fill:#202124}
+    .time.pass{fill:#747980;font-weight:650;font-style:italic}.time.missing{fill:#c9c6bf}.time.terminal{font-weight:850}
     .grid{stroke:#b8b6b0;stroke-width:1}.foot{font:500 13px 'Apple SD Gothic Neo','Noto Sans CJK KR',sans-serif;fill:#666}
   `;
   return `<?xml version="1.0" encoding="UTF-8"?>\n<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}"><style>${css}</style>${body.join('').replaceAll('__HEIGHT__',H).replaceAll('__INNER__',H-76)}</svg>`;

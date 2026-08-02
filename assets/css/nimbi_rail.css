@@ -696,12 +696,19 @@ tbody td{padding:10px 14px;font-size:13px;white-space:nowrap}
 .notice-timetable-attachment:hover{border-color:var(--accent);transform:translateY(-1px)}
 .notice-timetable-gallery{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
 .notice-timetable-gallery .notice-timetable-attachment{margin:0;min-width:0}
+.notice-timetable-pair{align-items:stretch;margin:14px 0}
+.notice-timetable-pair .notice-timetable-attachment{display:flex;flex-direction:column;border-color:color-mix(in srgb,var(--accent) 34%,var(--border));background:#fff}
+.notice-timetable-pair .notice-timetable-attachment img{flex:1;min-height:260px;height:260px;object-fit:cover;object-position:top center}
+.notice-timetable-pair .notice-timetable-attachment.summary img{min-height:260px;height:260px;max-height:none;object-fit:contain}
+.notice-timetable-pair .notice-timetable-attachment>span{min-height:48px;letter-spacing:.01em}
 .notice-popup-body .notice-timetable-attachment.compact img{height:150px}
 .notice-popup-body .notice-timetable-attachment.summary img{height:auto;max-height:420px;object-fit:contain;object-position:top center}
 .notice-timetable-attachment.compact>span{min-height:38px;font-size:11px;line-height:1.35}
 @media(max-width:640px){
   .notice-popup-body .notice-timetable-attachment img{height:220px}
   .notice-timetable-gallery{grid-template-columns:1fr}
+  .notice-timetable-pair{gap:14px}
+  .notice-timetable-pair .notice-timetable-attachment img,.notice-timetable-pair .notice-timetable-attachment.summary img{min-height:300px;height:300px;max-height:none}
   .notice-popup-body .notice-timetable-attachment.compact img{height:140px}
   .notice-popup-body .notice-timetable-attachment.summary img{height:auto;max-height:360px}
 }

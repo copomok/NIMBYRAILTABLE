@@ -192,7 +192,10 @@ const NOTICES = [
 </table>
 </div><br>
 <span class="n-warn">한강로-강릉 무궁화호는 신설 계통으로, 일부 시간대 좌석이 빠르게 마감될 수 있습니다.</span><br><br>
-<a class="notice-timetable-attachment summary" href="assets/notices/20260627-regional-changes.svg" target="_blank" rel="noopener noreferrer"><img src="assets/notices/20260627-regional-changes.svg" alt="경부선 보은선 및 한강로 강릉 운행계획 요약표" loading="lazy"><span>🖼️ 신설·개정 운행계획 요약표 크게 보기</span></a>`
+<div class="notice-timetable-gallery notice-timetable-pair">
+<a class="notice-timetable-attachment summary" href="assets/notices/20260627-regional-changes.svg" target="_blank" rel="noopener noreferrer"><img src="assets/notices/20260627-regional-changes.svg" alt="경부선 보은선 및 한강로 강릉 운행계획 요약표" loading="lazy"><span>한눈에 보는 운행계획</span></a>
+<a class="notice-timetable-attachment" href="assets/notices/20260627-regional-changes-full.svg" target="_blank" rel="noopener noreferrer"><img src="assets/notices/20260627-regional-changes-full.svg" alt="서울 보은 및 한강로 강릉 전체 시간표" loading="lazy"><span>역별 전체 시간표</span></a>
+</div>`
   },
   {
     date:'2026-06-27',
@@ -210,7 +213,10 @@ const NOTICES = [
 </table>
 </div><br>
 편도 소요시간은 약 <strong>1시간 8분</strong>입니다. 예매 탭에서 좌석을 예약하실 수 있습니다.<br><br>
-<a class="notice-timetable-attachment summary" href="assets/notices/20260627-chungju-itx.svg" target="_blank" rel="noopener noreferrer"><img src="assets/notices/20260627-chungju-itx.svg" alt="충주행 ITX 마음 운행계획 요약표" loading="lazy"><span>🖼️ 충주 ITX-마음 운행계획 크게 보기</span></a>`
+<div class="notice-timetable-gallery notice-timetable-pair">
+<a class="notice-timetable-attachment summary" href="assets/notices/20260627-chungju-itx.svg" target="_blank" rel="noopener noreferrer"><img src="assets/notices/20260627-chungju-itx.svg" alt="충주행 ITX 마음 운행계획 요약표" loading="lazy"><span>한눈에 보는 운행계획</span></a>
+<a class="notice-timetable-attachment" href="assets/notices/20260627-chungju-itx-full.svg" target="_blank" rel="noopener noreferrer"><img src="assets/notices/20260627-chungju-itx-full.svg" alt="한강로 충주 ITX 마음 전체 시간표" loading="lazy"><span>역별 전체 시간표</span></a>
+</div>`
   },
   {
     date:'2026-07-02',
@@ -273,7 +279,10 @@ const NOTICES = [
 <tr><td>무궁화 1496</td><td>한강로행</td><td>순천 18:26</td><td>한강로 23:38</td></tr>
 </table><br>
 <span class="n-highlight">이른 아침부터 심야까지 하루 3왕복으로 운행합니다. 통과·추월 검증을 거쳐 개활선 무단 추월 없이 동시 출발 간격도 확보했습니다.</span><br><br>
-<a class="notice-timetable-attachment summary" href="assets/notices/20260703-suncheon-mugunghwa.svg" target="_blank" rel="noopener noreferrer"><img src="assets/notices/20260703-suncheon-mugunghwa.svg" alt="한강로 순천 무궁화호 운행계획 요약표" loading="lazy"><span>🖼️ 한강로–순천 운행계획 크게 보기</span></a>`
+<div class="notice-timetable-gallery notice-timetable-pair">
+<a class="notice-timetable-attachment summary" href="assets/notices/20260703-suncheon-mugunghwa.svg" target="_blank" rel="noopener noreferrer"><img src="assets/notices/20260703-suncheon-mugunghwa.svg" alt="한강로 순천 무궁화호 운행계획 요약표" loading="lazy"><span>한눈에 보는 운행계획</span></a>
+<a class="notice-timetable-attachment" href="assets/notices/20260703-suncheon-mugunghwa-full.svg" target="_blank" rel="noopener noreferrer"><img src="assets/notices/20260703-suncheon-mugunghwa-full.svg" alt="한강로 순천 무궁화호 전체 시간표" loading="lazy"><span>역별 전체 시간표</span></a>
+</div>`
   },
   {
     date:'2026-07-03',
@@ -299,7 +308,10 @@ const NOTICES = [
 <span class="n-highlight" style="display:block;margin-bottom:8px">심야 막차는 급행(/1)으로 편성해 종착 도착이 0시~1시대에 들어오도록 연장했습니다. 서울~목포 상·하행 소요시간을 게임 노선 파일 기준으로 대칭화했습니다(급행 87분·일반 94분·완행 95분).</span>
 <span class="n-warn" style="display:block">각 계통의 통과역(병목안·정안·공주·정읍 및 광주~목포 기존선 나산·도림 등)과 통과 시각을 표기했습니다. 전철 전용역(월전·계림·북목포 등)은 제외했습니다. <strong>통과 시각은 역간 거리 비례로 산정한 임시값</strong>으로, 정확한 값은 추후 반영 예정입니다.</span>
 <span class="n-highlight">일반 &gt; 급행 &gt; 완행 순으로 세 계통을 통합 약 30~40분 간격으로 배치했습니다. 통과·추월 검증(경부고속·호남고속·호남선 구간)을 거쳐 개활선 무단 추월 0건, 같은 승강장 3분 미만 근접 0건으로 조정했습니다.</span><br><br>
-<a class="notice-timetable-attachment summary" href="assets/notices/20260703-honam-ktx.svg" target="_blank" rel="noopener noreferrer"><img src="assets/notices/20260703-honam-ktx.svg" alt="호남고속선 KTX 신설 운행계획 요약표" loading="lazy"><span>🖼️ 호남고속선 KTX 운행계획 크게 보기</span></a>`
+<div class="notice-timetable-gallery notice-timetable-pair">
+<a class="notice-timetable-attachment summary" href="assets/notices/20260703-honam-ktx.svg" target="_blank" rel="noopener noreferrer"><img src="assets/notices/20260703-honam-ktx.svg" alt="호남고속선 KTX 신설 운행계획 요약표" loading="lazy"><span>한눈에 보는 운행계획</span></a>
+<a class="notice-timetable-attachment" href="assets/notices/20260703-honam-ktx-full.svg" target="_blank" rel="noopener noreferrer"><img src="assets/notices/20260703-honam-ktx-full.svg" alt="호남고속선 KTX 전체 시간표" loading="lazy"><span>역별 전체 시간표</span></a>
+</div>`
   },
   {
     date:'2026-07-10',
@@ -378,7 +390,10 @@ const NOTICES = [
 <tr><td>무궁화 1487</td><td>한강로 17:58</td><td>한강로 17:50</td><td>8분 앞당김(운용)</td></tr>
 </table>
 <span class="n-warn" style="display:block;margin-top:8px">모든 변경 시각은 통과·추월 재검증(개활선 무단추월 0건)과 기존 열차와의 시격 점검을 거쳤습니다. 세부 시각은 각 열차 조회에서 확인하실 수 있습니다.</span><br><br>
-<a class="notice-timetable-attachment" href="assets/notices/20260710-major-revision.svg" target="_blank" rel="noopener noreferrer"><img src="assets/notices/20260710-major-revision.svg" alt="7월 10일 시간표 대개정 전체 운행계획 이미지" loading="lazy"><span>🖼️ 시간표 대개정 전체 운행계획 크게 보기</span></a>`
+<div class="notice-timetable-gallery notice-timetable-pair">
+<a class="notice-timetable-attachment summary" href="assets/notices/20260710-major-revision-summary.svg" target="_blank" rel="noopener noreferrer"><img src="assets/notices/20260710-major-revision-summary.svg" alt="7월 10일 시간표 대개정 요약표" loading="lazy"><span>한눈에 보는 개정 내용</span></a>
+<a class="notice-timetable-attachment" href="assets/notices/20260710-major-revision.svg" target="_blank" rel="noopener noreferrer"><img src="assets/notices/20260710-major-revision.svg" alt="7월 10일 시간표 대개정 전체 운행계획 이미지" loading="lazy"><span>역별 전체 시간표</span></a>
+</div>`
   },
   {
     date:'2026-07-10',
@@ -422,7 +437,10 @@ const NOTICES = [
 
 <strong>■ 전 계통 시각표 (참조 페이지)</strong><br>
 9개 계통 148편의 하행·상행 전 정차/통과 시각을 계통별 표로 정리했습니다.<br><br>
-<a class="notice-timetable-attachment" href="assets/notices/20260712-southern-inland.svg" target="_blank" rel="noopener noreferrer"><img src="assets/notices/20260712-southern-inland.svg" alt="남부내륙선 전체 운행계획 이미지" loading="lazy"><span>🖼️ 남부내륙선 전체 시간표 크게 보기</span></a><br><br>
+<div class="notice-timetable-gallery notice-timetable-pair">
+<a class="notice-timetable-attachment summary" href="assets/notices/20260712-southern-inland-summary.svg" target="_blank" rel="noopener noreferrer"><img src="assets/notices/20260712-southern-inland-summary.svg" alt="남부내륙선 신설 계통 요약표" loading="lazy"><span>한눈에 보는 신설 계통</span></a>
+<a class="notice-timetable-attachment" href="assets/notices/20260712-southern-inland.svg" target="_blank" rel="noopener noreferrer"><img src="assets/notices/20260712-southern-inland.svg" alt="남부내륙선 전체 운행계획 이미지" loading="lazy"><span>역별 전체 시간표</span></a>
+</div><br><br>
 <span class="n-warn" style="display:block">행=역(운행 순서)·열=열차번호이며, 통과역 시각은 흐리게 표시됩니다. 세부 착·발 시각은 앱의 각 열차 조회에서 확인하실 수 있습니다.</span>`
   },
   {
@@ -471,7 +489,10 @@ const NOTICES = [
 
 <strong>■ 전 계통 시각표 (참조 페이지)</strong><br>
 8개 계통 114편의 하행·상행 전 정차/통과 시각을 계통별 표로 정리했습니다.<br><br>
-<a class="notice-timetable-attachment" href="assets/notices/20260717-regional-expansion.svg" target="_blank" rel="noopener noreferrer"><img src="assets/notices/20260717-regional-expansion.svg" alt="7월 17일 수도권 강원 호남 개정 전체 시간표 이미지" loading="lazy"><span>🖼️ 7월 17일 개정 전체 시간표 크게 보기</span></a><br><br>
+<div class="notice-timetable-gallery notice-timetable-pair">
+<a class="notice-timetable-attachment summary" href="assets/notices/20260717-regional-expansion-summary.svg" target="_blank" rel="noopener noreferrer"><img src="assets/notices/20260717-regional-expansion-summary.svg" alt="수도권 강원 호남 신설 계통 요약표" loading="lazy"><span>한눈에 보는 신설 계통</span></a>
+<a class="notice-timetable-attachment" href="assets/notices/20260717-regional-expansion.svg" target="_blank" rel="noopener noreferrer"><img src="assets/notices/20260717-regional-expansion.svg" alt="7월 17일 수도권 강원 호남 개정 전체 시간표 이미지" loading="lazy"><span>역별 전체 시간표</span></a>
+</div><br><br>
 <span class="n-warn" style="display:block">모든 시각은 통과·추월 재검증을 거친 값입니다. 세부 착·발 시각은 앱의 각 열차 조회에서 확인하실 수 있습니다.</span>`
   },
   {
@@ -863,7 +884,10 @@ const NOTICES = [
 
 <strong>■ 전 계통 시각표 (참조 페이지)</strong><br>
 신설 4개 계통 46편의 하행·상행 전 정차/통과 시각을 계통별 표로 정리했습니다.<br><br>
-<a class="notice-timetable-attachment" href="assets/notices/20260729-mugunghwa.svg" target="_blank" rel="noopener noreferrer"><img src="assets/notices/20260729-mugunghwa.svg" alt="7월 29일 무궁화호 신설 계통 전체 시간표 이미지" loading="lazy"><span>🖼️ 7월 29일 신설 계통 전체 시간표 크게 보기</span></a><br><br>
+<div class="notice-timetable-gallery notice-timetable-pair">
+<a class="notice-timetable-attachment summary" href="assets/notices/20260729-mugunghwa-summary.svg" target="_blank" rel="noopener noreferrer"><img src="assets/notices/20260729-mugunghwa-summary.svg" alt="7월 29일 무궁화호 신설 계통 요약표" loading="lazy"><span>한눈에 보는 신설 계통</span></a>
+<a class="notice-timetable-attachment" href="assets/notices/20260729-mugunghwa.svg" target="_blank" rel="noopener noreferrer"><img src="assets/notices/20260729-mugunghwa.svg" alt="7월 29일 무궁화호 신설 계통 전체 시간표 이미지" loading="lazy"><span>역별 전체 시간표</span></a>
+</div><br><br>
 
 <span class="n-warn" style="display:block">첫 운행은 오전 5시 이후 시작하며, 막차 일부는 자정을 넘어 다음 날 오전 1시 30분 이전까지 운행합니다.</span>`
   },
@@ -951,7 +975,10 @@ const NOTICES = [
 
 <strong>■ 전 계통 시각표 (참조 페이지)</strong><br>
 개정·신설된 10개 계통 152편의 하행·상행 전 정차/통과 시각을 계통별 표로 정리했습니다. 목포–남대구/부산 계통은 <strong>한 표에 방향별 4편</strong>을 출발 순서대로 함께 표시합니다.<br><br>
-<a class="notice-timetable-attachment" href="assets/notices/20260731-regional-revision.svg" target="_blank" rel="noopener noreferrer"><img src="assets/notices/20260731-regional-revision.svg" alt="7월 31일 지역 광역열차 개정 전체 시간표 이미지" loading="lazy"><span>🖼️ 7월 31일 개정 전체 시간표 크게 보기</span></a><br><br>
+<div class="notice-timetable-gallery notice-timetable-pair">
+<a class="notice-timetable-attachment summary" href="assets/notices/20260731-regional-revision-summary.svg" target="_blank" rel="noopener noreferrer"><img src="assets/notices/20260731-regional-revision-summary.svg" alt="7월 31일 지역 광역열차 신설 개정 요약표" loading="lazy"><span>한눈에 보는 개정 내용</span></a>
+<a class="notice-timetable-attachment" href="assets/notices/20260731-regional-revision.svg" target="_blank" rel="noopener noreferrer"><img src="assets/notices/20260731-regional-revision.svg" alt="7월 31일 지역 광역열차 개정 전체 시간표 이미지" loading="lazy"><span>역별 전체 시간표</span></a>
+</div><br><br>
 
 <span class="n-warn" style="display:block">열차번호와 출발 시각이 크게 달라진 계통이 있습니다. 기존에 저장한 즐겨찾기·알람·승차권이 있다면 탑승 전에 열차 상세 시간표를 다시 확인해 주세요. 자정을 넘겨 도착하는 열차는 출발일 기준으로 조회됩니다.</span>`
   },
@@ -1044,7 +1071,10 @@ const NOTICES = [
 
 <strong>■ 전 계통 시각표 (참조 페이지)</strong><br>
 경북순환·충주–남대구 12편의 전 정차/통과 시각을 방향별 표로 정리했습니다.<br><br>
-<a class="notice-timetable-attachment" href="assets/notices/20260731-gyeongbuk-loop.svg" target="_blank" rel="noopener noreferrer"><img src="assets/notices/20260731-gyeongbuk-loop.svg" alt="경북순환 충주 남대구 전체 시간표 이미지" loading="lazy"><span>🖼️ 경북순환·충주–남대구 전체 시간표 크게 보기</span></a>`
+<div class="notice-timetable-gallery notice-timetable-pair">
+<a class="notice-timetable-attachment summary" href="assets/notices/20260731-gyeongbuk-loop-summary.svg" target="_blank" rel="noopener noreferrer"><img src="assets/notices/20260731-gyeongbuk-loop-summary.svg" alt="경북순환 충주 남대구 신설 요약표" loading="lazy"><span>한눈에 보는 신설 내용</span></a>
+<a class="notice-timetable-attachment" href="assets/notices/20260731-gyeongbuk-loop.svg" target="_blank" rel="noopener noreferrer"><img src="assets/notices/20260731-gyeongbuk-loop.svg" alt="경북순환 충주 남대구 전체 시간표 이미지" loading="lazy"><span>역별 전체 시간표</span></a>
+</div>`
   },
   {
     date:'2026-08-01',
@@ -1072,7 +1102,7 @@ const NOTICES = [
 
 <strong>■ 전 계통 시각표 (참조 페이지)</strong><br>
 개정된 상·하행 28편의 전 정차 시각을 방향별 표로 정리했습니다.<br><br>
-<a class="notice-timetable-attachment" href="assets/notices/20260801-gyooe-loop.svg" target="_blank" rel="noopener noreferrer"><img src="assets/notices/20260801-gyooe-loop.svg" alt="교외선 순환 무궁화호 전체 시간표 이미지" loading="lazy"><span>🖼️ 교외선 순환 무궁화호 전체 시간표 크게 보기</span></a>`
+<a class="notice-timetable-attachment summary" href="assets/notices/20260801-gyooe-loop-summary.svg" target="_blank" rel="noopener noreferrer"><img src="assets/notices/20260801-gyooe-loop-summary.svg" alt="교외선 순환 무궁화호 운행조정 요약표" loading="lazy"><span>🖼️ 상·하행 및 운행시각 조정표 크게 보기</span></a>`
   },
   {
     date:'2026-08-02',
@@ -1114,7 +1144,10 @@ const NOTICES = [
 
 <strong>■ 전 계통 시각표 (참조 페이지)</strong><br>
 태백선 2개 계통과 번호가 바뀐 남도해양열차의 전 정차/통과 시각을 계통별 표로 정리했습니다.<br><br>
-<a class="notice-timetable-attachment" href="assets/notices/20260802-taebaek.svg" target="_blank" rel="noopener noreferrer"><img src="assets/notices/20260802-taebaek.svg" alt="태백선 남도해양 전체 시간표 이미지" loading="lazy"><span>🖼️ 태백선·남도해양 전체 시간표 크게 보기</span></a>`
+<div class="notice-timetable-gallery notice-timetable-pair">
+<a class="notice-timetable-attachment summary" href="assets/notices/20260802-taebaek-summary.svg" target="_blank" rel="noopener noreferrer"><img src="assets/notices/20260802-taebaek-summary.svg" alt="태백선 신설 및 남도해양 번호 변경 요약표" loading="lazy"><span>한눈에 보는 신설·변경 내용</span></a>
+<a class="notice-timetable-attachment" href="assets/notices/20260802-taebaek.svg" target="_blank" rel="noopener noreferrer"><img src="assets/notices/20260802-taebaek.svg" alt="태백선 남도해양 전체 시간표 이미지" loading="lazy"><span>역별 전체 시간표</span></a>
+</div>`
   },
   {
     date:'2026-08-02',

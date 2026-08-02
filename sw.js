@@ -1,4 +1,4 @@
-const CACHE_NAME = 'nimbirail-2026080203';
+const CACHE_NAME = 'nimbirail-2026080301';
 const ASSETS = [
   '/NIMBYRAILTABLE/',
   '/NIMBYRAILTABLE/index.html',
@@ -32,21 +32,33 @@ const ASSETS = [
   '/NIMBYRAILTABLE/assets/icons/icon-512.png',
   '/NIMBYRAILTABLE/assets/notices/20260620-ktx-adjustments.svg',
   '/NIMBYRAILTABLE/assets/notices/20260627-regional-changes.svg',
+  '/NIMBYRAILTABLE/assets/notices/20260627-regional-changes-full.svg',
   '/NIMBYRAILTABLE/assets/notices/20260627-chungju-itx.svg',
+  '/NIMBYRAILTABLE/assets/notices/20260627-chungju-itx-full.svg',
   '/NIMBYRAILTABLE/assets/notices/20260703-overtake-corrections.svg',
   '/NIMBYRAILTABLE/assets/notices/20260703-suncheon-mugunghwa.svg',
+  '/NIMBYRAILTABLE/assets/notices/20260703-suncheon-mugunghwa-full.svg',
   '/NIMBYRAILTABLE/assets/notices/20260703-honam-ktx.svg',
+  '/NIMBYRAILTABLE/assets/notices/20260703-honam-ktx-full.svg',
   '/NIMBYRAILTABLE/assets/notices/20260710-major-revision.svg',
+  '/NIMBYRAILTABLE/assets/notices/20260710-major-revision-summary.svg',
   '/NIMBYRAILTABLE/assets/notices/20260712-southern-inland.svg',
+  '/NIMBYRAILTABLE/assets/notices/20260712-southern-inland-summary.svg',
   '/NIMBYRAILTABLE/assets/notices/20260717-regional-expansion.svg',
+  '/NIMBYRAILTABLE/assets/notices/20260717-regional-expansion-summary.svg',
   '/NIMBYRAILTABLE/assets/notices/20260718-taebaek-adjustments.svg',
   '/NIMBYRAILTABLE/assets/notices/20260718-mugunghwa-1360.svg',
   '/NIMBYRAILTABLE/assets/notices/20260723-conflict-corrections.svg',
   '/NIMBYRAILTABLE/assets/notices/20260729-mugunghwa.svg',
+  '/NIMBYRAILTABLE/assets/notices/20260729-mugunghwa-summary.svg',
   '/NIMBYRAILTABLE/assets/notices/20260731-regional-revision.svg',
+  '/NIMBYRAILTABLE/assets/notices/20260731-regional-revision-summary.svg',
   '/NIMBYRAILTABLE/assets/notices/20260731-gyeongbuk-loop.svg',
+  '/NIMBYRAILTABLE/assets/notices/20260731-gyeongbuk-loop-summary.svg',
   '/NIMBYRAILTABLE/assets/notices/20260801-gyooe-loop.svg',
+  '/NIMBYRAILTABLE/assets/notices/20260801-gyooe-loop-summary.svg',
   '/NIMBYRAILTABLE/assets/notices/20260802-taebaek.svg',
+  '/NIMBYRAILTABLE/assets/notices/20260802-taebaek-summary.svg',
 ];
 
 self.addEventListener('install', e => {

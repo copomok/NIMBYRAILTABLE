@@ -16,6 +16,14 @@ function loadNotices() {
   return Array.from(context.__SUMMARY_NOTICES__ || []);
 }
 
+const manualTable = (heading, headers, rows) => ({
+  heading,
+  rows: [
+    headers.map(text => ({ header: true, text })),
+    ...rows.map(row => row.map(text => ({ header: false, text })))
+  ]
+});
+
 const CONFIGS = [
   {
     id: '20260620-ktx-adjustments',
@@ -85,6 +93,71 @@ const CONFIGS = [
       '통과→정차: 수영 KTX 14편 · 추풍령 무궁화 3편 · 여산·회덕 무궁화 12편',
       '제주→부산 KTX 10편은 추자·노화 정차 추가 · #1481은 전 구간 1분 앞당김'
     ]
+  },
+  {
+    id: '20260710-major-revision-summary',
+    noticeTitle: '시간표 대개정 — 호남고속선·장항선·전라선·충북선·순천 계통',
+    title: '7월 10일 신설·개편 요약',
+    subtitle: '호남고속선·장항선·전라선·충북선·순천 계통',
+    callouts: ['신설·대개편 계통은 전체 시간표에서 역별 시각을 함께 확인할 수 있습니다.']
+  },
+  {
+    id: '20260712-southern-inland-summary',
+    noticeTitle: '남부내륙선 개통 — 약목~거제 9개 계통 운행 개시',
+    title: '남부내륙선 신설 계통 요약',
+    subtitle: 'KTX·ITX·무궁화호·남도해양 9개 계통',
+    callouts: ['수도권·대구·대전·호남에서 거제를 직결하는 148편의 전체 시간표를 함께 제공합니다.']
+  },
+  {
+    id: '20260717-regional-expansion-summary',
+    noticeTitle: '시간표 개정 — 수도권·강원·호남 8개 계통 신설·확충',
+    title: '수도권·강원·호남 신설 계통 요약',
+    subtitle: '고속·특급·일반열차 8개 계통·114편',
+    callouts: ['열차 등급과 첫차 시간대를 요약했으며, 역별 시각은 전체 시간표를 확인해 주세요.']
+  },
+  {
+    id: '20260729-mugunghwa-summary',
+    noticeTitle: '무궁화호 4개 운행 계통이 신설됩니다',
+    title: '무궁화호 신설 계통 요약',
+    subtitle: '서울·영동·목포에서 남대구·부산 방면',
+    tables: [manualTable('새로 운행하는 열차', ['계통', '열차번호', '운행 횟수', '이용 안내'], [
+      ['서울 ↔ 남대구(조치원·세종)', '#1311~#1328', '9회 왕복', '세종세천선 경유'],
+      ['영동 ↔ 밀양 ↔ 부산', '#1331~#1350', '10회 왕복', '밀양선 경유'],
+      ['목포 ↔ 남대구/부산', '#1451~#1454·#1501~#1504', '통합 4회 왕복', '약 5시간 간격 번갈아 운행']
+    ])],
+    callouts: ['목포–남대구·부산은 하나의 통합 계통으로 안내합니다.']
+  },
+  {
+    id: '20260731-regional-revision-summary',
+    noticeTitle: '지역·광역열차 시간표 전면 개정 및 신규 운행 안내',
+    title: '지역·광역열차 신설·개편 요약',
+    subtitle: 'SRT·ITX·무궁화호 10개 운행 계통',
+    callouts: ['목포–남대구/부산은 통합 계통으로 방향별 4편을 한 표에 배치합니다.']
+  },
+  {
+    id: '20260731-gyeongbuk-loop-summary',
+    noticeTitle: '경북순환 ITX-마음 신설 · 충주–남대구 ITX-마음 첫·막차 신설',
+    title: '경북순환·충주–남대구 신설 요약',
+    subtitle: 'ITX-마음 12편 운행계획',
+    tables: [manualTable('새로 운행하는 열차', ['계통', '열차번호', '운행 횟수', '운행 안내'], [
+      ['경북순환 ITX-마음', '#4451~#4458', '하루 8회', '남대구 출발 순환 운행'],
+      ['충주 ↔ 남대구 ITX-마음', '#1885~#1888', '2회 왕복', '이른 첫차·늦은 막차']
+    ])],
+    callouts: ['경북순환과 충주–남대구 열차는 같은 2개 편성이 연결 운행합니다.']
+  },
+  {
+    id: '20260801-gyooe-loop-summary',
+    noticeTitle: '교외선 순환 무궁화호 상·하행 정의 변경 및 시간표 개정',
+    title: '교외선 순환 운행조정 요약',
+    subtitle: '상·하행 정의 변경·80분 간격 유지',
+    callouts: ['신규 계통이 아닌 운행방향·시각 조정으로, 요약표 중심으로 안내합니다.']
+  },
+  {
+    id: '20260802-taebaek-summary',
+    noticeTitle: '태백선 ITX-새마을·KTX-이음 신설 및 남도해양 열차번호 변경',
+    title: '태백선 신설·남도해양 변경 요약',
+    subtitle: '강릉–대전·광주 신설 및 남도해양 번호 변경',
+    callouts: ['신설 2개 계통은 전체 시간표를 함께 제공하며, 남도해양은 번호만 변경됩니다.']
   }
 ];
 
@@ -146,8 +219,23 @@ function textBlock(x, centerY, value, maxChars, className, anchor = 'middle') {
   return `<text x="${x}" y="${startY}" text-anchor="${anchor}" class="${className}">${lines.map((line, index) => `<tspan x="${x}" dy="${index ? 20 : 0}">${esc(line)}</tspan>`).join('')}</text>`;
 }
 
+function accentForText(value) {
+  const text = String(value || '');
+  if(/SRT/.test(text)) return '#8b1e4f';
+  if(/KTX-산천/.test(text)) return '#6639a6';
+  if(/KTX-이음/.test(text)) return '#274f9d';
+  if(/KTX/.test(text)) return '#1f5cb8';
+  if(/ITX-새마을/.test(text)) return '#d52d45';
+  if(/ITX-마음/.test(text)) return '#e15a2b';
+  if(/ITX-청춘/.test(text)) return '#15955f';
+  if(/남도해양/.test(text)) return '#1688aa';
+  if(/국악와인/.test(text)) return '#343d68';
+  if(/무궁화/.test(text)) return '#e16425';
+  return '#2456a6';
+}
+
 function renderSummary(config, notice) {
-  const tables = extractTables(notice.body);
+  const tables = config.tables || extractTables(notice.body);
   if (!tables.length) throw new Error(`${config.id}: 공지에서 표를 찾지 못했습니다.`);
 
   const W = 1440;
@@ -174,22 +262,29 @@ function renderSummary(config, notice) {
     });
     const tableH = rowHeights.reduce((sum, height) => sum + height, 0);
 
-    parts.push(`<rect x="${margin}" y="${y}" width="8" height="32" rx="4" fill="#2456a6"/>`);
-    parts.push(`<text x="${margin + 22}" y="${y + 25}" class="section">${esc(table.heading)}</text>`);
-    y += 48;
+    const sectionAccent=accentForText(`${table.heading} ${table.rows.flat().map(cell=>cell.text).join(' ')}`);
+    parts.push(`<rect x="${margin}" y="${y}" width="${tableW}" height="42" rx="9" fill="${sectionAccent}" opacity=".10"/>`);
+    parts.push(`<rect x="${margin}" y="${y}" width="9" height="42" rx="5" fill="${sectionAccent}"/>`);
+    parts.push(`<text x="${margin + 24}" y="${y + 29}" class="section">${esc(table.heading)}</text>`);
+    y += 54;
     parts.push(`<rect x="${margin}" y="${y}" width="${tableW}" height="${tableH}" fill="#fff" stroke="#555" stroke-width="1.5"/>`);
 
     let rowY = y;
     table.rows.forEach((row, rowIndex) => {
       const height = rowHeights[rowIndex];
       const isHeader = rowIndex === 0 || row.every(cell => cell.header);
-      if (isHeader) parts.push(`<rect x="${margin}" y="${rowY}" width="${tableW}" height="${height}" fill="#ecebe7"/>`);
+      const rowText=row.map(cell=>cell.text).join(' ');
+      const rowAccent=accentForText(rowText);
+      if (isHeader) parts.push(`<rect x="${margin}" y="${rowY}" width="${tableW}" height="${height}" fill="#30343b"/>`);
       else if (rowIndex % 2 === 0) parts.push(`<rect x="${margin}" y="${rowY}" width="${tableW}" height="${height}" fill="#faf9f6"/>`);
+      if(!isHeader)parts.push(`<rect x="${margin}" y="${rowY}" width="6" height="${height}" fill="${rowAccent}"/>`);
 
       for (let column = 0; column < columns; column += 1) {
         const x = margin + column * colW;
         const cell = row[column]?.text || '—';
-        parts.push(textBlock(x + colW / 2, rowY + height / 2 + 5, cell, maxChars, isHeader ? 'th' : 'td'));
+        const gradeCell=!isHeader&&/KTX|SRT|ITX|무궁화|남도해양|국악와인/.test(cell);
+        if(gradeCell)parts.push(`<rect x="${x+8}" y="${rowY+8}" width="${colW-16}" height="${height-16}" rx="8" fill="${accentForText(cell)}" opacity=".13"/>`);
+        parts.push(textBlock(x + colW / 2, rowY + height / 2 + 5, cell, maxChars, isHeader ? 'th headerText' : gradeCell ? 'td gradeText' : 'td'));
         if (column) parts.push(`<line x1="${x}" y1="${rowY}" x2="${x}" y2="${rowY + height}" class="grid"/>`);
       }
       rowY += height;
@@ -216,8 +311,8 @@ function renderSummary(config, notice) {
     .subtitle{font:500 18px 'Apple SD Gothic Neo','Noto Sans CJK KR',sans-serif;fill:#53565a}
     .date{font:600 15px 'Apple SD Gothic Neo','Noto Sans CJK KR',sans-serif;fill:#555}
     .section{font:800 22px 'Apple SD Gothic Neo','Noto Sans CJK KR',sans-serif;fill:#171717}
-    .th{font:800 16px 'Apple SD Gothic Neo','Noto Sans CJK KR',sans-serif;fill:#202124}
-    .td{font:600 15px 'Apple SD Gothic Neo','Noto Sans CJK KR',sans-serif;fill:#202124}
+    .th{font:850 16px 'Apple SD Gothic Neo','Noto Sans CJK KR',sans-serif}.headerText{fill:#fff}
+    .td{font:650 16px 'Apple SD Gothic Neo','Noto Sans CJK KR',sans-serif;fill:#202124}.gradeText{font-weight:850}
     .callout{font:650 15px 'Apple SD Gothic Neo','Noto Sans CJK KR',sans-serif;fill:#24344d}
     .foot{font:500 13px 'Apple SD Gothic Neo','Noto Sans CJK KR',sans-serif;fill:#666}
     .grid{stroke:#b8b6b0;stroke-width:1}
