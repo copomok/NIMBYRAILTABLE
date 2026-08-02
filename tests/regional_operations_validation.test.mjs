@@ -29,7 +29,12 @@ const elapsed=(from,to)=>{
 const regional=train=>{
   const no=Number(train.no);
   return (no>=1201&&no<=1216)||(no>=1241&&no<=1270)||(no>=4401&&no<=4428)||
-    (no>=681&&no<=700)||(no>=801&&no<=822);
+    (no>=681&&no<=700)||(no>=801&&no<=822)||(no>=1331&&no<=1350)||
+    (no>=1451&&no<=1454)||(no>=1501&&no<=1504);
+};
+const photoRebuilt=train=>{
+  const no=Number(train.no);
+  return regional(train)||(no>=1331&&no<=1350)||(no>=1451&&no<=1454)||(no>=1501&&no<=1504);
 };
 
 test('지정 통과역과 황지역 정차가 SRT 전 편에 반영된다',()=>{
@@ -65,7 +70,7 @@ test('잠실–목포 SRT는 11왕복이며 방향별 배차가 80~120분이다'
 });
 
 test('신설 열차의 모든 영업 정차역 승강장이 REAL_PLAT에 확정 매핑된다',()=>{
-  for(const train of trains.filter(regional)){
+  for(const train of trains.filter(photoRebuilt)){
     for(const stop of train.stops){
       if(stop.p==null)continue;
       assert.equal(platforms[train.no]?.[stop.s],Number(stop.p),`#${train.no} ${stop.s}`);
@@ -91,6 +96,14 @@ test('확정 운용표는 최소 5분 회차하고 모든 편성이 출발지로
     ['801','802','805','806','809','810','813','814','817','818','821','822'],
     ['803','804','807','808','811','812','815','816'],
     ['819','820']
+    ,['1331','1336','1339','1344','1347','1350']
+    ,['1333','1340','1343','1348']
+    ,['1332','1335','1338','1341','1346','1349']
+    ,['1334','1337','1342','1345']
+    ,['1451','1454']
+    ,['1452','1453']
+    ,['1501','1504']
+    ,['1502','1503']
   ];
   const assigned=new Set;
   for(const sequence of rotations){
@@ -158,9 +171,9 @@ test('지정 열차는 첫 역부터 전 구간을 순연하고 순환열차는 
   assert.equal(stop(1761,'남횡성').dep,'8:07');
   assert.equal(stop(1761,'방림').arr,'8:15');
   assert.equal(stop(1761,'방림').dep,'8:16');
-  assert.equal(stop(691,'잠실').dep,'7:33');
+  assert.equal(stop(691,'잠실').dep,'7:29');
   assert.equal(stop(691,'남횡성').arr,'8:12');
-  assert.equal(stop(691,'방림').arr,'8:15');
+  assert.equal(stop(691,'방림').arr,'8:14');
 
   const services=trains.filter(t=>Number(t.no)>=4401&&Number(t.no)<=4428);
   assert.equal(services.length,28);
@@ -185,7 +198,9 @@ test('강릉–부산 새마을과 의정부–대전 마음은 사진 템플릿
   for(const no of Array.from({length:16},(_,index)=>1201+index)){
     const train=byNo.get(String(no));
     assert.equal(train.grade,'ITX-새마을');
-    assert.equal(elapsed(firstTime(train),lastTime(train)),no%2?169:165,`#${no} 소요시간`);
+    // 인게임 초 시각을 각각 버린 결과다. 분 단위 반올림값(169/165)을
+    // 누적하지 않는다.
+    assert.equal(elapsed(firstTime(train),lastTime(train)),167,`#${no} 소요시간`);
     const bulguksa=train.stops.find(item=>item.s==='불국사');
     const ipsil=train.stops.find(item=>item.s==='입실');
     assert.ok(bulguksa.arr&&!bulguksa.dep,`#${no} 불국사 통과`);
@@ -204,6 +219,18 @@ test('강릉–부산 새마을과 의정부–대전 마음은 사진 템플릿
   for(const train of services){
     assert.equal(train.boundary.join('→'),train.dir==='down'?'의정부→대전':'대전→의정부');
     assert.ok(!train.stops.some(stop=>['WP24013','WP24014'].includes(stop.s)));
+  }
+});
+
+test('사진 원본의 초 시각은 누적 반올림 없이 역별로 독립 버림된다',()=>{
+  const stop=(no,station)=>byNo.get(String(no)).stops.find(item=>item.s===station);
+  assert.deepEqual([stop(1331,'황간').arr,stop(1331,'황간').dep],['5:27','5:27']);
+  assert.deepEqual([stop(1451,'도림').arr,stop(1451,'도림').dep],['10:16','10:17']);
+  assert.deepEqual([stop(1501,'도림').arr,stop(1501,'도림').dep],['5:30','5:31']);
+  assert.equal(stop(1501,'부산').arr,'10:57');
+  for(const station of ['불국사','입실']){
+    const value=stop(1501,station);
+    assert.ok(value.arr&&value.dep,`#1501 ${station} 정차`);
   }
 });
 
@@ -240,7 +267,7 @@ test('신설 열차는 기존 전 편과 공유 선로에서 3분 시격을 지�
   };
   for(const current of prepared.filter(item=>{
     const no=Number(item.train.no);
-    return regional(item.train)&&!(no>=1261&&no<=1270);
+    return photoRebuilt(item.train)&&!(no>=1261&&no<=1270);
   })){
     for(const other of prepared){
       if(current===other)continue;

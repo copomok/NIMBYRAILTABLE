@@ -1478,6 +1478,187 @@ ALL_TRAINS.push(
   }
 }
 
+// 목포–부산 #1271 운행 5 원본 초 시각 재산출.
+{
+  const minute=value=>{const [h,m]=value.split(':').map(Number);return h*60+m;};
+  const second=value=>{const [h,m,s]=value.split(':').map(Number);return h*3600+m*60+s;};
+  const clock=value=>{const n=(value%1440+1440)%1440;return `${Math.floor(n/60)}:${String(n%60).padStart(2,'0')}`;};
+  const origin=second('14:48:45');
+  const raw=[
+    ['목포',null,'14:48:45',11],['도림','14:56:08','14:57:37',4],
+    ['무안','15:03:03','15:04:32',3],['함평','15:10:21','15:11:50',2],
+    ['나산','15:17:33','15:19:02',1],['광주','15:29:26','15:30:55',10],
+    ['고서','15:43:34','15:45:03',1],['옥과','15:52:33','15:54:02',1],
+    ['곡성','16:02:22','16:03:51',1],['남원','16:12:43','16:14:12',4],
+    ['보절','16:21:18','16:22:47',4],['남산서','16:27:20','16:28:49',2],
+    ['장수(전북)','16:35:18','16:36:47',4],['장계','16:44:01','16:45:30',2],
+    ['계북','16:49:31','16:51:00',2],['남무주','16:56:24','16:57:53',2],
+    ['무주','17:06:37','17:08:06',4],['황간','17:26:54','17:28:23',1],
+    ['추풍령','17:33:02','17:34:31',2],['봉산','17:38:30','17:39:59',1],
+    ['김천','17:45:43','17:47:12',1],['구미','17:58:28','17:59:57',2],
+    ['약목','18:05:55','18:07:24',1],['서왜관','18:11:10','18:12:39',1],
+    ['하빈','18:19:07','18:20:36',1],['호림','18:25:14','18:26:43',2],
+    ['남대구','18:30:44','18:32:13',9],['경산','18:42:29','18:43:58',3],
+    ['건천','19:01:44','19:03:13',1],['경주','19:11:44','19:13:13',3],
+    ['불국사','19:18:23','19:19:52',1],['입실','19:24:14','19:25:43',1],
+    ['북울산','19:31:29','19:32:58',1],['태화강','19:38:31','19:40:00',9],
+    ['울주','19:48:31','19:50:00',6],['좌천','19:56:39','19:58:08',1],
+    ['기장','20:02:53','20:04:22',3],['송정','20:08:16','20:09:45',1],
+    ['중동','20:12:04','20:13:33',5],['해운대','20:15:36','20:17:05',4],
+    ['부산','20:23:31',null,6]
+  ];
+  const down=raw.map(([s,arr,dep,p])=>[s,arr==null?null:second(arr)-origin,dep==null?null:second(dep)-origin,p]);
+  const total=second('20:23:31')-origin;
+  const up=down.slice().reverse().map(([s,arr,dep,p],index,array)=>[
+    s,index===0?null:(dep==null?total-arr:total-dep),
+    index===array.length-1?null:(index===0?0:total-arr),p
+  ]);
+  for(const train of ALL_TRAINS){
+    const no=+train.no;
+    if(no<1501||no>1504)continue;
+    const template=no%2?down:up;
+    const start=no===1504?18*60+55:minute(train.stops[0].dep);
+    train.stops=template.map(([s,arr,dep,p])=>({
+      s,arr:arr==null?null:clock(start+Math.floor(arr/60)),
+      dep:dep==null?null:clock(start+Math.floor(dep/60)),p:String(p)
+    }));
+  }
+}
+
+// 목포–남대구 #1435 원본 초 시각 재산출. 사진의 #28 남대구 도착까지만
+// 사용하고 이후 경산 방향 구간은 이 계통에 포함하지 않는다.
+{
+  const minute=value=>{const [h,m]=value.split(':').map(Number);return h*60+m;};
+  const clock=value=>{const n=(value%1440+1440)%1440;return `${Math.floor(n/60)}:${String(n%60).padStart(2,'0')}`;};
+  const down=[
+    ['목포',null,0,11],['도림',443,482,4],['무안',808,847,3],
+    ['함평',1196,1235,2],['나산',1578,1617,1],['광주',2241,2280,10],
+    ['고서',3039,3078,1],['옥과',3528,3567,1],['곡성',4067,4106,1],
+    ['남원',4638,4677,4],['보절',5103,5142,4],['남산서',5415,5454,2],
+    ['장수(전북)',5843,5882,4],['장계',6316,6355,2],['계북',6596,6635,2],
+    ['남무주',6959,6998,2],['무주',7522,7561,4],['황간',8689,8727,1],
+    ['추풍령',9006,9044,2],['봉산',9283,9321,1],['김천',9665,9703,1],
+    ['구미',10439,10477,2],['약목',10775,10813,1],['서왜관',11039,11077,1],
+    ['하빈',11465,11503,1],['호림',11781,11819,2],['남대구',12077,null,10]
+  ];
+  const total=12077;
+  const up=down.slice().reverse().map(([s,arr,dep,p],index,array)=>[
+    s,index===0?null:(dep==null?total-arr:total-dep),
+    index===array.length-1?null:(index===0?0:total-arr),p
+  ]);
+  for(const train of ALL_TRAINS){
+    const no=+train.no;
+    if(no<1451||no>1454)continue;
+    const template=no%2?down:up,start=minute(train.stops[0].dep);
+    train.stops=template.map(([s,arr,dep,p])=>({
+      s,arr:arr==null?null:clock(start+Math.floor(arr/60)),
+      dep:dep==null?null:clock(start+Math.floor(dep/60)),p:String(p)
+    }));
+  }
+}
+
+// 영동–부산 #1471 원본 초 시각 재산출. 11초 정차는 버림 뒤 같은
+// 분이 되더라도 실제 정차이므로 arr/dep를 모두 유지한다.
+{
+  const minute=value=>{const [h,m]=value.split(':').map(Number);return h*60+m;};
+  const clock=value=>{const n=(value%1440+1440)%1440;return `${Math.floor(n/60)}:${String(n%60).padStart(2,'0')}`;};
+  const down=[
+    ['영동',null,0,5],['황간',459,471,1],['추풍령',750,762,2],
+    ['봉산',1001,1013,1],['김천',1357,1369,1],['구미',2045,2057,2],
+    ['약목',2415,2426,1],['서왜관',2652,2663,1],['하빈',3051,3062,1],
+    ['호림',3340,3351,2],['남대구',3589,3600,3],['가창',3986,3997,1],
+    ['청도',4537,4548,4],['밀양',5080,5091,5],['삼랑진',5576,5587,3],
+    ['물금',6148,6159,3],['북부산',6551,6562,1],['동래',6820,6831,3],
+    ['부산',7190,null,10]
+  ];
+  const total=7190;
+  const up=down.slice().reverse().map(([s,arr,dep,p],index,array)=>[
+    s,index===0?null:(dep==null?total-arr:total-dep),
+    index===array.length-1?null:(index===0?0:total-arr),p
+  ]);
+  for(const train of ALL_TRAINS){
+    const no=+train.no;
+    if(no<1331||no>1350)continue;
+    const template=no%2?down:up,start=minute(train.stops[0].dep);
+    train.stops=template.map(([s,arr,dep,p])=>({
+      s,arr:arr==null?null:clock(start+Math.floor(arr/60)),
+      dep:dep==null?null:clock(start+Math.floor(dep/60)),p:String(p)
+    }));
+  }
+}
+
+// 교외선 순환 #1300/#1301 원본 초 시각 재산출.
+// 첫 서울은 출발, 마지막 서울은 도착으로 유지하며 각 시각을 독립 버림한다.
+{
+  const minute=value=>{const [h,m]=value.split(':').map(Number);return h*60+m;};
+  const clock=value=>{const n=(value%1440+1440)%1440;return `${Math.floor(n/60)}:${String(n%60).padStart(2,'0')}`;};
+  const clockwise=[
+    ['서울',null,0,6],['행신',502,571,2],['주교',857,925,1],
+    ['관산',1101,1169,1],['고양',1379,1447,2],['장흥',1646,1714,1],
+    ['송추',1919,1987,1],['가능',2232,2300,1],['의정부',2409,2477,1],
+    ['청량리',3139,3207,18],['남금호',3384,3452,2],['서울',3692,null,6]
+  ];
+  const counter=[
+    ['서울',null,0,5],['남금호',249,317,1],['청량리',498,566,17],
+    ['의정부',1227,1295,2],['가능',1399,1466,1],['송추',1712,2019,2],
+    ['장흥',2229,2296,2],['고양',2491,2558,1],['관산',2770,2837,1],
+    ['주교',3013,3080,1],['행신',3382,3449,1],['서울',3929,null,5]
+  ];
+  for(const train of ALL_TRAINS){
+    const no=+train.no;
+    if(no<4401||no>4428)continue;
+    // 홀수(하행)는 서울→남금호→의정부→행신→서울,
+    // 짝수(상행)는 서울→행신→의정부→남금호→서울 순환이다.
+    const template=no%2?counter:clockwise,
+      start=minute(train.stops[0].dep);
+    train.stops=template.map(([s,arr,dep,p])=>({
+      s,arr:arr==null?null:clock(start+Math.floor(arr/60)),
+      dep:dep==null?null:clock(start+Math.floor(dep/60)),p:String(p)
+    }));
+  }
+}
+
+// 문의–상주 #220000 원본 재산출.
+// 06:00:00 문의 출발 사진의 초 시각을 보존하고 각 표시 시각만 버린다.
+// 단선 교행을 위해 역별 소요시간을 늘리지 않고 양 방향 출발을 분리한다.
+{
+  const clock=value=>{
+    const normalized=(value%1440+1440)%1440;
+    return `${Math.floor(normalized/60)}:${String(normalized%60).padStart(2,'0')}`;
+  };
+  const down=[
+    ['문의',null,0,2],['회인',339,414,3],['수한',741,816,1],
+    ['보은',931,1006,1],['장안',1234,1309,1],['속리산',1578,1653,1],
+    ['화남',1823,1898,1],['화령',2080,2155,1],['낙서',2526,2601,1],
+    ['서상주',3034,3109,1],['상주',3423,null,1]
+  ];
+  const total=3423;
+  const up=down.slice().reverse().map(([s,arr,dep,p],index,array)=>[
+    s,
+    index===0?null:(dep==null?total-arr:total-dep),
+    index===array.length-1?null:(index===0?0:(dep==null?null:total-arr)),
+    p
+  ]);
+  const departuresDown=[330,510,690,870,1050,1290];
+  const departuresUp=[390,570,750,930,1110,1350];
+  for(const train of ALL_TRAINS){
+    const no=+train.no;
+    if(no<1241||no>1252)continue;
+    const index=Math.floor((no-1241)/2);
+    const template=no%2?down:up;
+    const start=(no%2?departuresDown:departuresUp)[index];
+    train.stops=template.map(([s,arr,dep,p],stopIndex)=>{
+      const stop={
+        s,
+        arr:arr==null?null:clock(start+Math.floor(arr/60)),
+        dep:dep==null?null:clock(start+Math.floor(dep/60))
+      };
+      if(p!=null&&(stopIndex===0||stopIndex===template.length-1||dep!=null))stop.p=String(p);
+      return stop;
+    });
+  }
+}
+
 // 사진 원본에서 도착·출발 시각이 같은 0초 정차는 영업 정차가 아니라
 // WP 통과 시각이다. 시각은 arr에 보존하고 dep를 비워 UI가 통과역으로
 // 판정하게 한다(수진·남횡성·방림·정안·나산 등).
@@ -1523,6 +1704,34 @@ for(const train of ALL_TRAINS){
         stop.dep=shiftClock(stop.dep,shift);
       }
     }
+  }
+}
+
+// 잠실–목포 #317 왕복 사진의 초 시각을 기준으로 #801/#802 템플릿을
+// 다시 만든다. 함평은 사진상 0초지만 통과 불가 조건을 우선해 1분 정차한다.
+{
+  const minute=value=>{const [h,m]=value.split(':').map(Number);return h*60+m;};
+  const clock=value=>{const n=(value%1440+1440)%1440;return `${Math.floor(n/60)}:${String(n%60).padStart(2,'0')}`;};
+  const down=[
+    ['잠실',null,0,4],['수진',193,null],['동탄',594,697,7],
+    ['천안',1331,1434,5],['정안',1780,null],['공주',1972,null],
+    ['전주',2640,2743,3],['정읍',3620,null],['광주',4259,4362,11],
+    ['나산',4687,null],['함평',4813,4873,3],['무안',4937,null],
+    ['도림',5068,null],['목포',5308,null,3]
+  ];
+  const total=5308;
+  const up=down.slice().reverse().map(([s,arr,dep,p],index,array)=>[
+    s,index===0?null:(dep==null?total-arr:total-dep),
+    index===array.length-1?null:(index===0?0:(dep==null?null:total-arr)),p
+  ]);
+  for(const train of ALL_TRAINS){
+    if(!['801','802'].includes(train.no))continue;
+    const start=minute(train.stops[0].dep),template=train.no==='801'?down:up;
+    train.stops=template.map(([s,arr,dep,p],index)=>{
+      const stop={s,arr:arr==null?null:clock(start+Math.floor(arr/60)),dep:dep==null?null:clock(start+Math.floor(dep/60))};
+      if(p!=null&&(index===0||index===template.length-1||dep!=null))stop.p=String(p);
+      return stop;
+    });
   }
 }
 
@@ -1576,8 +1785,8 @@ for(const train of ALL_TRAINS){
   // 96분 균등 배차를 유지하는 범위에서 기존 열차의 동일 승강장
   // 3분 시격 및 개활 추월 검증 결과를 반영한 미세 조정.
   const conflictOffset={
-    804:5,807:2,808:2,810:2,
-    815:-3,816:7,817:1,818:6
+    801:1,802:1,804:6,807:3,808:3,810:3,811:1,812:1,
+    815:-3,816:8,817:2,818:10,821:4,822:4
   };
   for(const train of ALL_TRAINS){
     const delta=conflictOffset[Number(train.no)]||0;
@@ -1592,10 +1801,43 @@ for(const train of ALL_TRAINS){
   }
 }
 
-// 개별 역 이후가 아니라 첫 역부터 종착까지 열차 전체를 동일하게 순연한다.
-// #1934: 완도 21:05 동시출발(#918) 해소, #691: 방림 08:15 정상 추월.
+// 잠실–봉화 #316 원본 재산출. 사진의 초 시각을 기준으로 각 역의
+// 도착·출발을 독립적으로 버리며, WP13310/13311은 제외하고 그 다음
+// 원주 직전 WP만 지정 통과로 치환한다.
 {
-  const wholeTrainOffset={1934:3,691:1};
+  const minute=value=>{const [h,m]=value.split(':').map(Number);return h*60+m;};
+  const clock=value=>{const n=(value%1440+1440)%1440;return `${Math.floor(n/60)}:${String(n%60).padStart(2,'0')}`;};
+  const down=[
+    ['잠실',null,0,1],['수진',452,null],['경기광주',691,767,3],
+    ['이천',1166,1242,1],['여주',1559,1635,1],['지정',2040,null],
+    ['원주',2182,2258,5],['남횡성',2584,null],['방림',2743,null],
+    ['평창',2940,null],['북평',3134,null],
+    ['정선',3226,3302,1],['화암',3549,null],['사북',3574,null],
+    ['고한',3743,null],['황지',3935,4011,3],['구문소',4292,4368,1],
+    ['석포',4564,null],['승부',4653,null],['소천',4831,null],
+    ['춘양',4988,5064,1],['법전',5189,null],['봉화',5537,null,1]
+  ];
+  const total=5537;
+  const up=down.slice().reverse().map(([s,arr,dep,p],index,array)=>[
+    s,index===0?null:(dep==null?total-arr:total-dep),
+    index===array.length-1?null:(index===0?0:(dep==null?null:total-arr)),p
+  ]);
+  for(const train of ALL_TRAINS){
+    const no=+train.no;
+    if(no<691||no>700)continue;
+    const template=no%2?down:up,start=minute(train.stops[0].dep)+(no%2===0?4:0);
+    train.stops=template.map(([s,arr,dep,p],index)=>{
+      const stop={s,arr:arr==null?null:clock(start+Math.floor(arr/60)),dep:dep==null?null:clock(start+Math.floor(dep/60))};
+      if(p!=null&&(index===0||index===template.length-1||dep!=null))stop.p=String(p);
+      return stop;
+    });
+  }
+}
+
+// 개별 역 이후가 아니라 첫 역부터 종착까지 열차 전체를 동일하게 순연한다.
+// #1934의 완도 동시출발과 SRT의 영동선 공유구간 역전을 전 구간 이동으로 해소한다.
+{
+  const wholeTrainOffset={1934:3,691:-3,699:4,700:4};
   const shiftClock=(value,delta)=>{
     if(!/^\d{1,2}:\d{2}$/.test(value||''))return value;
     const [hour,min]=value.split(':').map(Number);
@@ -1651,24 +1893,25 @@ for(const train of ALL_TRAINS){
 {
   const minute=value=>{const [h,m]=value.split(':').map(Number);return h*60+m;};
   const clock=value=>`${Math.floor(((value%1440)+1440)%1440/60)}:${String(((value%1440)+1440)%1440%60).padStart(2,'0')}`;
+  // #210030의 04:24:00 강릉 출발을 0초로 둔 원시 시각이다.
+  // 분으로 먼저 반올림하면 역마다 오차가 누적되므로 초 오프셋을 끝까지
+  // 유지하고, 실제 열차 시각으로 옮긴 뒤 각 도착·출발을 개별 버림한다.
   const down=[
-    ['강릉',null,0,21],['동강릉',5,null],['옥계',11,null],['동해',18,19,5],
-    ['북평',22,null],['삼척',26,27,2],['근덕',33,null],['원덕',43,null],
-    ['부구',48,49,1],['울진',54,55,3],['평해',68,null],['영해',79,80,1],
-    ['영덕',87,89,3],['강구',92,null],['청하',99,100,1],['포항',105,106,3],
-    ['안강',113,null],['경주',121,122,5],['불국사',126,null],['입실',130,131,1],
-    ['북울산',135,null],['태화강',140,141,7],['울주',148,null],['좌천',152,null],
-    ['기장',156,157,3],['해운대',164,null],['부산',169,null,7]
+    ['강릉',null,0,21],['동강릉',296,null],['옥계',668,null],['동해',1098,1167,5],
+    ['북평',1339,null],['삼척',1557,1626,2],['근덕',2003,null],['원덕',2602,null],
+    ['부구',2852,2921,1],['울진',3260,3323,3],['평해',4119,null],['영해',4773,4842,1],
+    ['영덕',5255,5324,3],['강구',5498,null],['청하',5953,6022,1],['포항',6537,6606,3],
+    ['안강',6825,null],['경주',7271,7340,5],['불국사',7582,null],['입실',7781,7850,1],
+    ['북울산',8105,null],['태화강',8364,8433,7],['울주',8871,null],['좌천',9148,null],
+    ['기장',9395,9464,3],['해운대',9875,null],['부산',10075,null,7]
   ];
-  const up=[
-    ['부산',null,0,7],['해운대',5,null],['기장',11,12,4],['좌천',16,null],
-    ['울주',21,null],['태화강',27,28,8],['북울산',33,null],['입실',37,38,1],
-    ['불국사',42,null],['경주',46,47,6],['안강',55,null],['포항',62,63,4],
-    ['청하',68,69,4],['강구',77,null],['영덕',80,81,4],['영해',88,89,4],
-    ['평해',98,null],['울진',113,114,4],['부구',120,121,2],['원덕',125,null],
-    ['근덕',133,null],['삼척',139,140,5],['북평',143,null],['동해',145,146,6],
-    ['옥계',152,null],['동강릉',160,null],['강릉',165,null,21]
-  ];
+  const totalSeconds=10075;
+  const up=down.slice().reverse().map(([s,arr,dep,p],index,array)=>[
+    s,
+    index===0?null:(dep==null?totalSeconds-arr:totalSeconds-dep),
+    index===array.length-1?null:(index===0?0:(dep==null?null:totalSeconds-arr)),
+    p
+  ]);
   for(const train of ALL_TRAINS){
     const no=+train.no;
     if(no<1201||no>1216)continue;
@@ -1677,7 +1920,11 @@ for(const train of ALL_TRAINS){
     train.grade='ITX-새마을';
     train.line='영동선·동해선';
     train.stops=template.map(([s,arr,dep,p],index)=>{
-      const stop={s,arr:arr==null?null:clock(start+arr),dep:dep==null?null:clock(start+dep)};
+      const stop={
+        s,
+        arr:arr==null?null:clock(start+Math.floor(arr/60)),
+        dep:dep==null?null:clock(start+Math.floor(dep/60))
+      };
       if(p!=null&&(index===0||index===template.length-1||arr!==dep))stop.p=String(p);
       return stop;
     });
@@ -1685,7 +1932,7 @@ for(const train of ALL_TRAINS){
   // 기존 열차와 3분 시격 및 금지구간 무추월을 확보하는 전 구간 보정.
   const conflictOffset={
     1201:19,1202:10,1203:-14,1204:5,1205:2,1206:5,1207:-22,1208:15,
-    1209:0,1210:-16,1211:0,1212:13,1213:2,1214:2,1215:0,1216:-23
+    1209:0,1210:-16,1211:9,1212:13,1213:2,1214:2,1215:0,1216:-23
   };
   for(const train of ALL_TRAINS){
     const delta=conflictOffset[+train.no]||0;
@@ -1747,6 +1994,55 @@ for(const train of ALL_TRAINS){
       for(const key of ['arr','dep']){
         if(/^\d{1,2}:\d{2}$/.test(stop[key]||''))stop[key]=clock(Number(stop[key].split(':')[0])*60+Number(stop[key].split(':')[1])+delta);
       }
+    }
+  }
+}
+
+// 위에서 생성된 #1261~1270 전 편에 사진의 초 단위 템플릿을 최종 적용한다.
+{
+  const minute=value=>{const [h,m]=value.split(':').map(Number);return h*60+m;};
+  const clock=value=>{const n=(value%1440+1440)%1440;return `${Math.floor(n/60)}:${String(n%60).padStart(2,'0')}`;};
+  const down=[
+    ['의정부',null,0,2],['가능',98,null],['송추',331,419,2],['장흥',639,727,2],
+    ['고양',934,1022,1],['관산',1236,null],['주교',1385,null],['능곡',1566,null],
+    ['행신',1668,1756,1],['서울',2256,2344,3],['한강로',3169,null],
+    ['수원',3602,3690,4],['오산',4129,null],['평택',4632,null],
+    ['천안',5254,5342,11],['목천',5642,null],['병천',5836,null],
+    ['북청주',6172,null],['서청주',6415,6503,3],['상당',6677,null],
+    ['문의',6954,null],['신탄진',7245,null],['회덕',7507,null],['대전',7667,null,11]
+  ];
+  const total=7667;
+  const up=down.slice().reverse().map(([s,arr,dep,p],index,array)=>[
+    s,index===0?null:(dep==null?total-arr:total-dep),
+    index===array.length-1?null:(index===0?0:(dep==null?null:total-arr)),p
+  ]);
+  for(const train of ALL_TRAINS){
+    const no=+train.no;
+    if(no<1261||no>1270)continue;
+    const start=minute(train.stops[0].dep),template=no%2?down:up;
+    train.stops=template.map(([s,arr,dep,p],index)=>{
+      const stop={s,arr:arr==null?null:clock(start+Math.floor(arr/60)),dep:dep==null?null:clock(start+Math.floor(dep/60))};
+      if(p!=null&&(index===0||index===template.length-1||dep!=null))stop.p=String(p);
+      return stop;
+    });
+  }
+}
+
+// 사진 원본 적용 후 기존 열차 전 편과 비교한 공유 선로 최소 시격 보정.
+// 문제 역만 바꾸지 않고 해당 열차를 첫 역부터 종착까지 같은 값으로 이동한다.
+{
+  const offset={1333:18,1335:-1,1337:-2,1341:9,1343:-21,1347:-2,1349:1,1451:-1,1501:18,1503:80};
+  const shiftClock=(value,delta)=>{
+    if(!/^\d{1,2}:\d{2}$/.test(value||''))return value;
+    const [h,m]=value.split(':').map(Number),n=(h*60+m+delta+1440)%1440;
+    return `${Math.floor(n/60)}:${String(n%60).padStart(2,'0')}`;
+  };
+  for(const train of ALL_TRAINS){
+    const delta=offset[+train.no]||0;
+    if(!delta)continue;
+    for(const stop of train.stops){
+      stop.arr=shiftClock(stop.arr,delta);
+      stop.dep=shiftClock(stop.dep,delta);
     }
   }
 }
