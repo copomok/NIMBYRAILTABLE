@@ -690,6 +690,19 @@ tbody td{padding:10px 14px;font-size:13px;white-space:nowrap}
 .notice-popup-body li{margin-bottom:4px}
 .notice-popup-body img{max-width:100%;border-radius:8px;margin:10px 0}
 .notice-popup-body hr{border:none;border-top:1px solid var(--border);margin:14px 0}
+.notice-timetable-attachment{position:relative;display:block;overflow:hidden;margin:12px 0;border:1px solid var(--border);border-radius:12px;background:#f4f1e9;text-decoration:none;box-shadow:0 5px 18px rgba(0,0,0,.18)}
+.notice-popup-body .notice-timetable-attachment img{display:block;width:100%;height:290px;max-width:none;margin:0;border-radius:0;object-fit:cover;object-position:top center;background:#f4f1e9}
+.notice-timetable-attachment>span{display:flex;align-items:center;justify-content:center;min-height:44px;padding:8px 12px;background:linear-gradient(135deg,var(--accent),#2456a6);color:#fff;font-size:13px;font-weight:800;text-align:center}
+.notice-timetable-attachment:hover{border-color:var(--accent);transform:translateY(-1px)}
+.notice-timetable-gallery{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.notice-timetable-gallery .notice-timetable-attachment{margin:0;min-width:0}
+.notice-popup-body .notice-timetable-attachment.compact img{height:150px}
+.notice-timetable-attachment.compact>span{min-height:38px;font-size:11px;line-height:1.35}
+@media(max-width:640px){
+  .notice-popup-body .notice-timetable-attachment img{height:220px}
+  .notice-timetable-gallery{grid-template-columns:1fr}
+  .notice-popup-body .notice-timetable-attachment.compact img{height:140px}
+}
 
 /* 공지 카테고리 뱃지 */
 .notice-cat{display:inline-flex;align-items:center;gap:3px;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:600;border:1px solid;white-space:nowrap;flex-shrink:0}
