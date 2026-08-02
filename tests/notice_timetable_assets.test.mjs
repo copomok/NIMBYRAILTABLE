@@ -37,7 +37,8 @@ const SUMMARY_NOTICE_IDS = [
   '20260731-regional-revision-summary',
   '20260731-gyeongbuk-loop-summary',
   '20260801-gyooe-loop-summary',
-  '20260802-taebaek-summary'
+  '20260802-taebaek-summary',
+  '20260803-jamsil-mokpo-srt-expansion'
 ];
 const NOTICE_IDS = [...FULL_NOTICE_IDS, ...SUMMARY_NOTICE_IDS];
 
@@ -173,7 +174,7 @@ test('공지 이미지 배포 버전이 CSS·데이터·서비스워커에 함�
   const index = read('index.html');
   const serviceWorker = read('sw.js');
 
-  assert.match(index, /nimbi_rail\.css\?v=2026080301/);
-  assert.match(index, /nimbi_rail_notices\.js\?v=2026080301/);
-  assert.match(serviceWorker, /CACHE_NAME = 'nimbirail-2026080301'/);
+  assert.match(index, /nimbi_rail\.css\?v=2026080302/);
+  assert.match(index, /nimbi_rail_notices\.js\?v=2026080302/);
+  assert.match(serviceWorker, /CACHE_NAME = 'nimbirail-2026080302'/);
 });

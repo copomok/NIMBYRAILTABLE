@@ -1426,7 +1426,7 @@ ALL_TRAINS.push(
   {no:"700",dest:"잠실",dir:"up",line:"영동선·정선선·강릉선·경강선",grade:"SRT",boundary:["봉화","잠실"],stops:[{s:"봉화",arr:null,dep:"22:37",p:"1"},{s:"법전",arr:"22:43",dep:"22:43"},{s:"춘양",arr:"22:45",dep:"22:47",p:"1"},{s:"소천",arr:"22:50",dep:"22:50"},{s:"승부",arr:"22:53",dep:"22:53"},{s:"석포",arr:"22:54",dep:"22:54"},{s:"구문소",arr:"22:57",dep:"22:58",p:"2"},{s:"태백황지",arr:"23:03",dep:"23:04",p:"4"},{s:"고한",arr:"23:08",dep:"23:08"},{s:"사북",arr:"23:09",dep:"23:09"},{s:"화암",arr:"23:12",dep:"23:12"},{s:"정선",arr:"23:15",dep:"23:17",p:"2"},{s:"북평",arr:"23:19",dep:"23:19"},{s:"남횡성",arr:"23:29",dep:"23:29"},{s:"원주",arr:"23:34",dep:"23:35",p:"6"},{s:"여주",arr:"23:44",dep:"23:45",p:"2"},{s:"이천",arr:"23:50",dep:"23:52",p:"2"},{s:"경기광주",arr:"23:58",dep:"23:59",p:"4"},{s:"수진",arr:"0:04",dep:"0:04"},{s:"잠실",arr:"0:07",dep:null,p:"1"}]}
 );
 
-// 2026-07-30 잠실-목포 SRT 신설 (경부고속·호남고속·호남선, 9왕복 2h, 복선)
+// 2026-07-30 잠실-목포 SRT 원본 템플릿 (경부고속·호남고속·호남선, 복선)
 ALL_TRAINS.push(
   {no:"801",dest:"목포",dir:"down",line:"경부고속선·호남고속선·호남선",grade:"SRT",boundary:["잠실","목포"],stops:[{s:"잠실",arr:null,dep:"5:12",p:"4"},{s:"수진",arr:"5:15",dep:"5:15"},{s:"동탄",arr:"5:22",dep:"5:24",p:"7"},{s:"천안",arr:"5:34",dep:"5:36",p:"5"},{s:"정안",arr:"5:42",dep:"5:42"},{s:"공주",arr:"5:45",dep:"5:45"},{s:"전주",arr:"6:01",dep:"6:03",p:"3"},{s:"정읍",arr:"6:12",dep:"6:12"},{s:"광주",arr:"6:23",dep:"6:25",p:"11"},{s:"나산",arr:"6:30",dep:"6:30"},{s:"함평",arr:"6:32",dep:"6:32"},{s:"무안",arr:"6:34",dep:"6:34"},{s:"도림",arr:"6:36",dep:"6:36"},{s:"목포",arr:"6:40",dep:null,p:"3"}]},
   {no:"802",dest:"잠실",dir:"up",line:"호남선·호남고속선·경부고속선",grade:"SRT",boundary:["목포","잠실"],stops:[{s:"목포",arr:null,dep:"6:42",p:"3"},{s:"도림",arr:"6:46",dep:"6:46"},{s:"무안",arr:"6:49",dep:"6:49"},{s:"함평",arr:"6:51",dep:"6:51"},{s:"나산",arr:"6:53",dep:"6:53"},{s:"광주",arr:"6:58",dep:"7:00",p:"12"},{s:"정읍",arr:"7:11",dep:"7:11"},{s:"전주",arr:"7:20",dep:"7:22",p:"4"},{s:"공주",arr:"7:38",dep:"7:38"},{s:"정안",arr:"7:41",dep:"7:41"},{s:"천안",arr:"7:47",dep:"7:48",p:"6"},{s:"동탄",arr:"7:59",dep:"8:00",p:"8"},{s:"수진",arr:"8:07",dep:"8:07"},{s:"잠실",arr:"8:10",dep:null,p:"4"}]},
@@ -1808,7 +1808,7 @@ for(const train of ALL_TRAINS){
   }
 }
 
-// 잠실–목포 SRT 증편: 9왕복(2시간 간격)에서 11왕복(96분 간격)으로 확대.
+// 잠실–목포 SRT 증편: 11왕복에서 14왕복(기본 82분 간격)으로 확대.
 // 사진의 구간 소요·정차·통과 패턴은 #801/#802를 그대로 사용한다.
 {
   const minute=value=>{
@@ -1827,7 +1827,7 @@ for(const train of ALL_TRAINS){
   const upTemplate=ALL_TRAINS.find(train=>train.no==='802');
   for(const [template,firstNo,firstDeparture] of [
     [downTemplate,801,5*60+12],
-    [upTemplate,802,6*60+45]
+    [upTemplate,802,5*60+45]
   ]){
     const templateStart=minute(template.stops[0].dep);
     const offsets=template.stops.map(stop=>{
@@ -1840,14 +1840,14 @@ for(const train of ALL_TRAINS){
       }
       return result;
     });
-    for(let index=0;index<11;index++){
+    for(let index=0;index<14;index++){
       const no=firstNo+index*2;
       let train=ALL_TRAINS.find(item=>item.no===String(no));
       if(!train){
         train=cloneTrain(template,no);
         ALL_TRAINS.push(train);
       }
-      const departure=firstDeparture+index*96;
+      const departure=firstDeparture+index*82;
       train.stops.forEach((stop,stopIndex)=>{
         for(const key of ['arr','dep']){
           if(offsets[stopIndex][key]!=null)stop[key]=clock(departure+offsets[stopIndex][key]);
@@ -1855,12 +1855,9 @@ for(const train of ALL_TRAINS){
       });
     }
   }
-  // 96분 균등 배차를 유지하는 범위에서 기존 열차의 동일 승강장
+  // 60~90분 배차를 유지하는 범위에서 기존 열차의 동일 승강장
   // 3분 시격 및 개활 추월 검증 결과를 반영한 미세 조정.
-  const conflictOffset={
-    801:1,802:1,804:6,807:3,808:3,810:3,811:1,812:1,
-    815:-3,816:8,817:2,818:10,821:4,822:4
-  };
+  const conflictOffset={801:1,809:3,817:-3};
   for(const train of ALL_TRAINS){
     const delta=conflictOffset[Number(train.no)]||0;
     if(!delta)continue;

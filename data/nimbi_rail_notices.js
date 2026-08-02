@@ -1172,5 +1172,32 @@ const NOTICES = [
 </div><br>
 
 <span class="n-highlight" style="display:block">앞으로 새로 만들어지는 시간표 개정 공지도 외부 서비스가 아닌 앱 내부 이미지로 제공하겠습니다.</span>`
+  },
+  {
+    date:'2026-08-03',
+    cat:'timetable',
+    title:'잠실–목포 SRT가 14회 왕복으로 증편됩니다',
+    body:`잠실과 호남권을 오가는 선택지를 넓히기 위해 잠실–목포 SRT를 <strong>하루 11회 왕복에서 14회 왕복으로 증편</strong>합니다.<br><br>
+
+<div class="n-box">
+기존 약 1시간 20분~2시간이던 운행 간격이 <strong>약 1시간 19분~1시간 25분</strong>으로 고르게 줄어듭니다. 새 열차는 기존과 같은 정차역·승강장 및 편도 약 1시간 28분의 운행시간을 따릅니다.
+</div><br>
+
+<strong>■ 증편 운행계획</strong>
+<table>
+<tr><th>구분</th><th>열차번호</th><th>운행 횟수</th><th>첫 출발</th><th>마지막 출발</th></tr>
+<tr><td>잠실 → 목포</td><td>홀수 #801~827</td><td>하루 14회</td><td>05:13</td><td>22:58</td></tr>
+<tr><td>목포 → 잠실</td><td>짝수 #802~828</td><td>하루 14회</td><td>05:45</td><td>23:31</td></tr>
+</table><br>
+
+<strong>■ 늦은 시간에도 이용할 수 있습니다</strong><br>
+잠실 막차는 다음 날 <strong>00:26 목포 도착</strong>, 목포 막차는 다음 날 <strong>00:59 잠실 도착</strong> 예정입니다. 자정을 넘기는 열차는 출발한 날짜를 기준으로 조회해 주세요.<br><br>
+
+<strong>■ 안전한 운행 간격을 확인했습니다</strong><br>
+경부고속선·호남고속선·호남선에서 함께 운행하는 기존 열차와 비교해 <strong>동일 승강장 3분 이상 간격</strong>을 확보했고, 역과 역 사이에서 열차 순서가 뒤바뀌는 무단 추월이 없도록 시각을 조정했습니다.<br><br>
+
+<a class="notice-timetable-attachment summary" href="assets/notices/20260803-jamsil-mokpo-srt-expansion.svg" target="_blank" rel="noopener noreferrer"><img src="assets/notices/20260803-jamsil-mokpo-srt-expansion.svg" alt="잠실 목포 SRT 증편 운행 요약표" loading="lazy"><span>한눈에 보는 증편 운행계획</span></a><br><br>
+
+<span class="n-warn" style="display:block">막차는 자정을 넘어 도착합니다. 승차권의 운행일과 탑승 날짜를 함께 확인해 주세요.</span>`
   }
 ];

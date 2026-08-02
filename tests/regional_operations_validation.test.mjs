@@ -29,7 +29,7 @@ const elapsed=(from,to)=>{
 const regional=train=>{
   const no=Number(train.no);
   return (no>=1201&&no<=1236)||(no>=1241&&no<=1270)||(no>=4401&&no<=4428)||
-    (no>=681&&no<=700)||(no>=801&&no<=822)||(no>=1331&&no<=1350)||
+    (no>=681&&no<=700)||(no>=801&&no<=828)||(no>=1331&&no<=1350)||
     (no>=1451&&no<=1454)||(no>=1501&&no<=1504);
 };
 const photoRebuilt=train=>{
@@ -54,18 +54,22 @@ test('지정 통과역과 황지역 정차가 SRT 전 편에 반영된다',()=>{
   }
 });
 
-test('잠실–목포 SRT는 11왕복이며 방향별 배차가 80~120분이다',()=>{
-  const services=trains.filter(train=>Number(train.no)>=801&&Number(train.no)<=822);
-  assert.equal(services.length,22);
+test('잠실–목포 SRT는 14왕복이며 방향별 배차가 60~90분이고 막차는 자정 이후 도착한다',()=>{
+  const services=trains.filter(train=>Number(train.no)>=801&&Number(train.no)<=828);
+  assert.equal(services.length,28);
   for(const direction of ['down','up']){
-    const departures=services.filter(train=>train.dir===direction)
+    const directional=services.filter(train=>train.dir===direction);
+    const departures=directional
       .map(train=>minute(firstTime(train)))
       .sort((a,b)=>a-b);
-    assert.equal(departures.length,11);
+    assert.equal(departures.length,14);
     for(let index=1;index<departures.length;index++){
       const gap=departures[index]-departures[index-1];
-      assert.ok(gap>=80&&gap<=120,`${direction} ${gap}분`);
+      assert.ok(gap>=60&&gap<=90,`${direction} ${gap}분`);
     }
+    const last=directional.sort((a,b)=>minute(firstTime(a))-minute(firstTime(b))).at(-1);
+    const arrival=minute(lastTime(last));
+    assert.ok(arrival>=0&&arrival<=60,`${direction} 막차 도착 ${lastTime(last)}`);
   }
 });
 
@@ -96,9 +100,10 @@ test('확정 운용표는 최소 5분 회차하고 모든 편성이 출발지로
     Array.from({length:14},(_,i)=>String(4402+i*2)),
     Array.from({length:10},(_,i)=>String(681+i)),
     Array.from({length:10},(_,i)=>String(691+i)),
-    ['801','802','805','806','809','810','813','814','817','818','821','822'],
-    ['803','804','807','808','811','812','815','816'],
-    ['819','820']
+    ['801','804'],['803','806'],['802','805'],
+    ['807','810'],['809','812'],['808','811'],
+    ['813','816'],['815','818'],['814','817'],
+    ['819','822'],['821','824'],['823','826'],['825','828'],['820','827']
     ,['1331','1336','1339','1344','1347','1350']
     ,['1333','1340','1343','1348']
     ,['1332','1335','1338','1341','1346','1349']
