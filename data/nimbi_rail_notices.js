@@ -1032,7 +1032,11 @@ const NOTICES = [
 </table>
 중부내륙선의 <strong>느린 첫차·이른 막차</strong>를 보강하는 열차로, 북문경·문경·상주·김천·구미·호림에 정차합니다.<br><br>
 
-<span class="n-highlight" style="display:block">두 계통은 <strong>같은 2개 편성</strong>이 번갈아 맡습니다. 아침에 충주에서 남대구로 내려온 뒤 하루 종일 경북순환을 돌고, 밤에 다시 충주로 올라갑니다. 열차 정보의 <strong>🔁 편성 운용</strong>에서 하루 흐름을 확인하실 수 있습니다.</span>`
+<span class="n-highlight" style="display:block">두 계통은 <strong>같은 2개 편성</strong>이 번갈아 맡습니다. 아침에 충주에서 남대구로 내려온 뒤 하루 종일 경북순환을 돌고, 밤에 다시 충주로 올라갑니다. 열차 정보의 <strong>🔁 편성 운용</strong>에서 하루 흐름을 확인하실 수 있습니다.</span>
+
+<strong>■ 전 계통 시각표 (참조 페이지)</strong><br>
+경북순환·충주–남대구 12편의 전 정차/통과 시각을 방향별 표로 정리했습니다.<br><br>
+<a href="https://claude.ai/code/artifact/5898a7ec-4f35-4ecc-bdb0-68399a134891" target="_blank" rel="noopener noreferrer" style="display:inline-block;padding:10px 18px;border-radius:10px;background:var(--accent);color:#fff;font-weight:700;text-decoration:none">🔗 경북순환·충주–남대구 전체 시각표 열기</a>`
   },
   {
     date:'2026-08-01',
@@ -1056,7 +1060,11 @@ const NOTICES = [
 방향별 14회씩, <strong>정확히 80분 간격</strong>으로 운행합니다.<br><br>
 
 <strong>■ 송추역 교행 정차</strong><br>
-행신–청량리 구간이 <strong>단선</strong>이라, 하행 열차는 <span class="n-highlight">송추역에서 5분간 정차</span>하며 맞은편 상행 열차와 교행합니다. 하행은 2번, 상행은 1번 승강장을 사용합니다.`
+행신–청량리 구간이 <strong>단선</strong>이라, 하행 열차는 <span class="n-highlight">송추역에서 5분간 정차</span>하며 맞은편 상행 열차와 교행합니다. 하행은 2번, 상행은 1번 승강장을 사용합니다.<br><br>
+
+<strong>■ 전 계통 시각표 (참조 페이지)</strong><br>
+개정된 상·하행 28편의 전 정차 시각을 방향별 표로 정리했습니다.<br><br>
+<a href="https://claude.ai/code/artifact/2fba1fcb-0323-4948-adb5-7a922a856553" target="_blank" rel="noopener noreferrer" style="display:inline-block;padding:10px 18px;border-radius:10px;background:var(--accent);color:#fff;font-weight:700;text-decoration:none">🔗 교외선 순환 무궁화호 전체 시각표 열기</a>`
   },
   {
     date:'2026-08-02',
@@ -1094,6 +1102,10 @@ const NOTICES = [
 </table><br>
 남도해양열차는 <strong>운행 시각과 정차역은 그대로 유지</strong>되며 열차번호만 바뀝니다.<br><br>
 
-<span class="n-warn" style="display:block">남도해양열차의 기존 번호로 저장한 즐겨찾기·알람·승차권은 새 번호를 다시 확인해 주세요. 자정을 넘겨 도착하는 #1918 열차는 출발일 기준으로 조회됩니다.</span>`
+<span class="n-warn" style="display:block">남도해양열차의 기존 번호로 저장한 즐겨찾기·알람·승차권은 새 번호를 다시 확인해 주세요. 자정을 넘겨 도착하는 #1918 열차는 출발일 기준으로 조회됩니다.</span>
+
+<strong>■ 전 계통 시각표 (참조 페이지)</strong><br>
+태백선 2개 계통과 번호가 바뀐 남도해양열차의 전 정차/통과 시각을 계통별 표로 정리했습니다.<br><br>
+<a href="https://claude.ai/code/artifact/e3718879-2266-4bbc-bec9-0fd252c2cbcd" target="_blank" rel="noopener noreferrer" style="display:inline-block;padding:10px 18px;border-radius:10px;background:var(--accent);color:#fff;font-weight:700;text-decoration:none">🔗 태백선·남도해양 전체 시각표 열기</a>`
   }
 ];
