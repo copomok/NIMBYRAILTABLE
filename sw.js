@@ -1,4 +1,4 @@
-const CACHE_NAME = 'nimbirail-2026080202';
+const CACHE_NAME = 'nimbirail-2026080203';
 const ASSETS = [
   '/NIMBYRAILTABLE/',
   '/NIMBYRAILTABLE/index.html',
@@ -30,9 +30,18 @@ const ASSETS = [
   '/NIMBYRAILTABLE/manifest.json',
   '/NIMBYRAILTABLE/assets/icons/icon-192.png',
   '/NIMBYRAILTABLE/assets/icons/icon-512.png',
+  '/NIMBYRAILTABLE/assets/notices/20260620-ktx-adjustments.svg',
+  '/NIMBYRAILTABLE/assets/notices/20260627-regional-changes.svg',
+  '/NIMBYRAILTABLE/assets/notices/20260627-chungju-itx.svg',
+  '/NIMBYRAILTABLE/assets/notices/20260703-overtake-corrections.svg',
+  '/NIMBYRAILTABLE/assets/notices/20260703-suncheon-mugunghwa.svg',
+  '/NIMBYRAILTABLE/assets/notices/20260703-honam-ktx.svg',
   '/NIMBYRAILTABLE/assets/notices/20260710-major-revision.svg',
   '/NIMBYRAILTABLE/assets/notices/20260712-southern-inland.svg',
   '/NIMBYRAILTABLE/assets/notices/20260717-regional-expansion.svg',
+  '/NIMBYRAILTABLE/assets/notices/20260718-taebaek-adjustments.svg',
+  '/NIMBYRAILTABLE/assets/notices/20260718-mugunghwa-1360.svg',
+  '/NIMBYRAILTABLE/assets/notices/20260723-conflict-corrections.svg',
   '/NIMBYRAILTABLE/assets/notices/20260729-mugunghwa.svg',
   '/NIMBYRAILTABLE/assets/notices/20260731-regional-revision.svg',
   '/NIMBYRAILTABLE/assets/notices/20260731-gyeongbuk-loop.svg',

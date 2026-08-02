@@ -697,11 +697,13 @@ tbody td{padding:10px 14px;font-size:13px;white-space:nowrap}
 .notice-timetable-gallery{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
 .notice-timetable-gallery .notice-timetable-attachment{margin:0;min-width:0}
 .notice-popup-body .notice-timetable-attachment.compact img{height:150px}
+.notice-popup-body .notice-timetable-attachment.summary img{height:auto;max-height:420px;object-fit:contain;object-position:top center}
 .notice-timetable-attachment.compact>span{min-height:38px;font-size:11px;line-height:1.35}
 @media(max-width:640px){
   .notice-popup-body .notice-timetable-attachment img{height:220px}
   .notice-timetable-gallery{grid-template-columns:1fr}
   .notice-popup-body .notice-timetable-attachment.compact img{height:140px}
+  .notice-popup-body .notice-timetable-attachment.summary img{height:auto;max-height:360px}
 }
 
 /* 공지 카테고리 뱃지 */

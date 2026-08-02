@@ -81,7 +81,8 @@ const NOTICES = [
 <tr><td>#258</td><td>18:20</td><td>18:19</td><td><span class="n-highlight">1분 ↑</span></td></tr>
 </table>
 <br>
-변동된 시간표는 시간표 탭에서 바로 확인하실 수 있습니다.`
+변동된 시간표는 시간표 탭에서 바로 확인하실 수 있습니다.<br><br>
+<a class="notice-timetable-attachment summary" href="assets/notices/20260620-ktx-adjustments.svg" target="_blank" rel="noopener noreferrer"><img src="assets/notices/20260620-ktx-adjustments.svg" alt="KTX 운행시간 조정 대상열차 요약표" loading="lazy"><span>🖼️ KTX 운행조정 요약표 크게 보기</span></a>`
   },
   {
     date:'2026-06-21',
@@ -190,7 +191,8 @@ const NOTICES = [
 <tr><td>#1772</td><td>강릉→한강로</td><td>17:00</td><td>19:52</td></tr>
 </table>
 </div><br>
-<span class="n-warn">한강로-강릉 무궁화호는 신설 계통으로, 일부 시간대 좌석이 빠르게 마감될 수 있습니다.</span>`
+<span class="n-warn">한강로-강릉 무궁화호는 신설 계통으로, 일부 시간대 좌석이 빠르게 마감될 수 있습니다.</span><br><br>
+<a class="notice-timetable-attachment summary" href="assets/notices/20260627-regional-changes.svg" target="_blank" rel="noopener noreferrer"><img src="assets/notices/20260627-regional-changes.svg" alt="경부선 보은선 및 한강로 강릉 운행계획 요약표" loading="lazy"><span>🖼️ 신설·개정 운행계획 요약표 크게 보기</span></a>`
   },
   {
     date:'2026-06-27',
@@ -207,7 +209,8 @@ const NOTICES = [
 <tr><td>#1883</td><td>한강로→충주</td><td>한강로 22:10</td><td>충주 23:18</td></tr>
 </table>
 </div><br>
-편도 소요시간은 약 <strong>1시간 8분</strong>입니다. 예매 탭에서 좌석을 예약하실 수 있습니다.`
+편도 소요시간은 약 <strong>1시간 8분</strong>입니다. 예매 탭에서 좌석을 예약하실 수 있습니다.<br><br>
+<a class="notice-timetable-attachment summary" href="assets/notices/20260627-chungju-itx.svg" target="_blank" rel="noopener noreferrer"><img src="assets/notices/20260627-chungju-itx.svg" alt="충주행 ITX 마음 운행계획 요약표" loading="lazy"><span>🖼️ 충주 ITX-마음 운행계획 크게 보기</span></a>`
   },
   {
     date:'2026-07-02',
@@ -247,7 +250,8 @@ const NOTICES = [
 <tr><td>SRT 312</td><td>KTX 18과 부산 동시 출발 해소</td><td>부산 발 7:40→7:43</td></tr>
 <tr><td>ITX-새마을 1891</td><td>ITX-새마을 1153과 서울 동시 출발 해소</td><td>서울 발 7:00→7:10</td></tr>
 <tr><td>ITX-새마을 1097</td><td>ITX-새마을 1085와 청량리 동시 출발 해소 · 단양 이후 무궁화 1663 후행</td><td>청량리 발 18:52→18:55 · 남대구 착 21:40</td></tr>
-</table>`
+</table><br><br>
+<a class="notice-timetable-attachment summary" href="assets/notices/20260703-overtake-corrections.svg" target="_blank" rel="noopener noreferrer"><img src="assets/notices/20260703-overtake-corrections.svg" alt="개활선 무단 추월 해소 운행조정 요약표" loading="lazy"><span>🖼️ 추월·충돌 해소 조정표 크게 보기</span></a>`
   },
   {
     date:'2026-07-03',
@@ -268,7 +272,8 @@ const NOTICES = [
 <tr><td>무궁화 1495</td><td>순천행</td><td>한강로 17:51</td><td>순천 23:04</td></tr>
 <tr><td>무궁화 1496</td><td>한강로행</td><td>순천 18:26</td><td>한강로 23:38</td></tr>
 </table><br>
-<span class="n-highlight">이른 아침부터 심야까지 하루 3왕복으로 운행합니다. 통과·추월 검증을 거쳐 개활선 무단 추월 없이 동시 출발 간격도 확보했습니다.</span>`
+<span class="n-highlight">이른 아침부터 심야까지 하루 3왕복으로 운행합니다. 통과·추월 검증을 거쳐 개활선 무단 추월 없이 동시 출발 간격도 확보했습니다.</span><br><br>
+<a class="notice-timetable-attachment summary" href="assets/notices/20260703-suncheon-mugunghwa.svg" target="_blank" rel="noopener noreferrer"><img src="assets/notices/20260703-suncheon-mugunghwa.svg" alt="한강로 순천 무궁화호 운행계획 요약표" loading="lazy"><span>🖼️ 한강로–순천 운행계획 크게 보기</span></a>`
   },
   {
     date:'2026-07-03',
@@ -293,7 +298,8 @@ const NOTICES = [
 </table><br>
 <span class="n-highlight" style="display:block;margin-bottom:8px">심야 막차는 급행(/1)으로 편성해 종착 도착이 0시~1시대에 들어오도록 연장했습니다. 서울~목포 상·하행 소요시간을 게임 노선 파일 기준으로 대칭화했습니다(급행 87분·일반 94분·완행 95분).</span>
 <span class="n-warn" style="display:block">각 계통의 통과역(병목안·정안·공주·정읍 및 광주~목포 기존선 나산·도림 등)과 통과 시각을 표기했습니다. 전철 전용역(월전·계림·북목포 등)은 제외했습니다. <strong>통과 시각은 역간 거리 비례로 산정한 임시값</strong>으로, 정확한 값은 추후 반영 예정입니다.</span>
-<span class="n-highlight">일반 &gt; 급행 &gt; 완행 순으로 세 계통을 통합 약 30~40분 간격으로 배치했습니다. 통과·추월 검증(경부고속·호남고속·호남선 구간)을 거쳐 개활선 무단 추월 0건, 같은 승강장 3분 미만 근접 0건으로 조정했습니다.</span>`
+<span class="n-highlight">일반 &gt; 급행 &gt; 완행 순으로 세 계통을 통합 약 30~40분 간격으로 배치했습니다. 통과·추월 검증(경부고속·호남고속·호남선 구간)을 거쳐 개활선 무단 추월 0건, 같은 승강장 3분 미만 근접 0건으로 조정했습니다.</span><br><br>
+<a class="notice-timetable-attachment summary" href="assets/notices/20260703-honam-ktx.svg" target="_blank" rel="noopener noreferrer"><img src="assets/notices/20260703-honam-ktx.svg" alt="호남고속선 KTX 신설 운행계획 요약표" loading="lazy"><span>🖼️ 호남고속선 KTX 운행계획 크게 보기</span></a>`
   },
   {
     date:'2026-07-10',
@@ -358,8 +364,7 @@ const NOTICES = [
 <strong>■ 인게임 실측 시각 반영 (정비)</strong>
 <table>
 <tr><th>계통</th><th>열차</th><th>구간</th><th>편수</th><th>비고</th></tr>
-<tr><td>장항선(서대전)</td><td>1461~1466</td><td>한강로 ↔ 서대전</td><td>6</td><td>정차 시각 정비</td></tr>
-<tr><td>장항선(전주)</td><td>1471~1490</td><td>한강로 ↔ 전주</td><td>20</td><td>정차 시각 정비</td></tr>
+<tr><td>장항선(통합)</td><td>1461~1466 · 1471~1490</td><td>한강로 ↔ 서대전/전주</td><td>26</td><td>한 계통으로 통합 표기·정차 시각 정비</td></tr>
 <tr><td>전라선 KTX</td><td>551~582</td><td>서울 ↔ 여수</td><td>32</td><td>통과역 이동시각 정렬</td></tr>
 <tr><td>충북선</td><td>1401~1430</td><td>대전 ↔ 영주</td><td>30</td><td>인게임 실측 반영·전 역 정차 60초 통일(소요 약 121분)</td></tr>
 <tr><td>순천 계통</td><td>1491~1496</td><td>한강로 ↔ 순천</td><td>6</td><td>35정차 대장정, 시각 정비</td></tr>
@@ -372,7 +377,8 @@ const NOTICES = [
 <tr><td>무궁화 1463</td><td>한강로 14:27</td><td>한강로 14:07</td><td>20분 앞당김</td></tr>
 <tr><td>무궁화 1487</td><td>한강로 17:58</td><td>한강로 17:50</td><td>8분 앞당김(운용)</td></tr>
 </table>
-<span class="n-warn" style="display:block;margin-top:8px">모든 변경 시각은 통과·추월 재검증(개활선 무단추월 0건)과 기존 열차와의 시격 점검을 거쳤습니다. 세부 시각은 각 열차 조회에서 확인하실 수 있습니다.</span>`
+<span class="n-warn" style="display:block;margin-top:8px">모든 변경 시각은 통과·추월 재검증(개활선 무단추월 0건)과 기존 열차와의 시격 점검을 거쳤습니다. 세부 시각은 각 열차 조회에서 확인하실 수 있습니다.</span><br><br>
+<a class="notice-timetable-attachment" href="assets/notices/20260710-major-revision.svg" target="_blank" rel="noopener noreferrer"><img src="assets/notices/20260710-major-revision.svg" alt="7월 10일 시간표 대개정 전체 운행계획 이미지" loading="lazy"><span>🖼️ 시간표 대개정 전체 운행계획 크게 보기</span></a>`
   },
   {
     date:'2026-07-10',
@@ -611,7 +617,8 @@ const NOTICES = [
 <tr><td>#1698</td><td>16:54 → <strong>16:57</strong></td><td>19:16</td></tr>
 <tr><td>#1700</td><td>20:09 출발</td><td>22:29</td></tr></table><br>
 전 정차역 시각이 3분씩 늦춰지며, 태백황지 회차 여유가 <span class="n-highlight">4분</span>으로 확보됩니다.<br><br>
-<div class="n-box">개정에 따른 통과·추월 검증 결과, 후속 KTX-이음·ITX와의 간섭을 피하기 위해 #1698(도농 대피 1분 연장)·#1700(중랑 대피 2분 연장) 및 KTX-이음 #704(원주 도착 +1분)·ITX-새마을 #1086(도농 이후 +1분)이 소폭 조정되었습니다.</div>`
+<div class="n-box">개정에 따른 통과·추월 검증 결과, 후속 KTX-이음·ITX와의 간섭을 피하기 위해 #1698(도농 대피 1분 연장)·#1700(중랑 대피 2분 연장) 및 KTX-이음 #704(원주 도착 +1분)·ITX-새마을 #1086(도농 이후 +1분)이 소폭 조정되었습니다.</div><br>
+<a class="notice-timetable-attachment summary" href="assets/notices/20260718-taebaek-adjustments.svg" target="_blank" rel="noopener noreferrer"><img src="assets/notices/20260718-taebaek-adjustments.svg" alt="청량리 태백황지 운행시간 조정 요약표" loading="lazy"><span>🖼️ 태백황지 운행조정 요약표 크게 보기</span></a>`
   },
   {
     date:'2026-07-18',
@@ -667,7 +674,8 @@ const NOTICES = [
 🔁 행신 3에 #1360, 행신 5에 #1377, 행신 9에 #1568, 전주 1에 #1595 편입<br>
 🔁 중복 기재 정정 — 행신 8 첫 열차 #1556, 전주 6 셋째 열차 #1532
 </div>
-모든 편성의 착발역 연결·회차 여유가 재검증되었습니다.`
+모든 편성의 착발역 연결·회차 여유가 재검증되었습니다.<br><br>
+<a class="notice-timetable-attachment summary" href="assets/notices/20260718-mugunghwa-1360.svg" target="_blank" rel="noopener noreferrer"><img src="assets/notices/20260718-mugunghwa-1360.svg" alt="무궁화호 1360 신설 운행계획 요약표" loading="lazy"><span>🖼️ 무궁화호 #1360 운행계획 크게 보기</span></a>`
   },
   {
     date:'2026-07-20',
@@ -761,7 +769,8 @@ const NOTICES = [
 <strong>■ 기타</strong><br>
 무궁화 1481(한강로→전주)이 <strong>시발역부터 −1분</strong> 조정되었습니다. (한강로 출발 13:11→13:10, 천안 통과 시각이 앞차와 겹치지 않도록 전 구간 이동)<br><br>
 
-<span class="n-warn" style="display:block">조정 후 전 열차를 대상으로 동일 승강장 겹침과 무단추월을 재검증했습니다. 남은 추월은 모두 정차역에서 이뤄지는 정상 추월이거나 별개 선로(고속선)입니다.</span>`
+<span class="n-warn" style="display:block">조정 후 전 열차를 대상으로 동일 승강장 겹침과 무단추월을 재검증했습니다. 남은 추월은 모두 정차역에서 이뤄지는 정상 추월이거나 별개 선로(고속선)입니다.</span><br><br>
+<a class="notice-timetable-attachment summary" href="assets/notices/20260723-conflict-corrections.svg" target="_blank" rel="noopener noreferrer"><img src="assets/notices/20260723-conflict-corrections.svg" alt="충돌 무단추월 해소 운행조정 요약표" loading="lazy"><span>🖼️ 충돌·무단추월 해소 조정표 크게 보기</span></a>`
   },
   {
     date:'2026-07-27',
@@ -920,8 +929,7 @@ const NOTICES = [
 <table>
 <tr><th>운행 구간</th><th>열차번호</th><th>운행 안내</th></tr>
 <tr><td>영동 ↔ 부산</td><td>#1331~1350</td><td>10회 왕복 · 밀양 경유</td></tr>
-<tr><td>목포 ↔ 남대구</td><td>#1451~1454</td><td>2회 왕복</td></tr>
-<tr><td>목포 ↔ 부산</td><td>#1501~1504</td><td>2회 왕복</td></tr>
+<tr><td>목포 ↔ 남대구/부산</td><td>#1451~1454 · #1501~1504</td><td>통합 4회 왕복</td></tr>
 </table><br>
 
 목포–남대구·부산 열차는 인게임 자료의 구간 소요시간·정차시간·승강장을 기준으로 다시 작성했습니다. 두 행선지가 번갈아 출발하도록 배치해 목포에서는 <strong>05:05 부산행 → 10:10 남대구행 → 15:21 부산행 → 20:20 남대구행</strong> 순으로 이용할 수 있습니다.<br><br>
@@ -942,7 +950,7 @@ const NOTICES = [
 사진 자료에서 정차시간이 0초이거나 통과 시각으로 표시된 역은 앱에서도 <strong>통과역</strong>으로 구분했습니다. 방림·정안·나산 등 시간표상 웨이포인트로 표시됐던 역도 실제 역 순서에 맞춰 통과 시각을 반영했으며, 영업 정차역의 승강장 번호를 인게임 정보에 맞춰 보완했습니다.<br><br>
 
 <strong>■ 전 계통 시각표 (참조 페이지)</strong><br>
-개정·신설된 11개 계통 152편의 하행·상행 전 정차/통과 시각을 계통별 표로 정리했습니다.<br><br>
+개정·신설된 10개 계통 152편의 하행·상행 전 정차/통과 시각을 계통별 표로 정리했습니다. 목포–남대구/부산 계통은 <strong>한 표에 방향별 4편</strong>을 출발 순서대로 함께 표시합니다.<br><br>
 <a class="notice-timetable-attachment" href="assets/notices/20260731-regional-revision.svg" target="_blank" rel="noopener noreferrer"><img src="assets/notices/20260731-regional-revision.svg" alt="7월 31일 지역 광역열차 개정 전체 시간표 이미지" loading="lazy"><span>🖼️ 7월 31일 개정 전체 시간표 크게 보기</span></a><br><br>
 
 <span class="n-warn" style="display:block">열차번호와 출발 시각이 크게 달라진 계통이 있습니다. 기존에 저장한 즐겨찾기·알람·승차권이 있다면 탑승 전에 열차 상세 시간표를 다시 확인해 주세요. 자정을 넘겨 도착하는 열차는 출발일 기준으로 조회됩니다.</span>`

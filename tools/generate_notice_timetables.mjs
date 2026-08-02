@@ -19,6 +19,12 @@ const byNo=new Map(TRAINS.map(train=>[String(train.no),train]));
 const range=(from,to)=>Array.from({length:to-from+1},(_,i)=>String(from+i));
 const numbers=(...parts)=>parts.flatMap(part=>Array.isArray(part)?part:[String(part)]);
 const selectNumbers=(list)=>list.map(no=>byNo.get(String(no))).filter(Boolean);
+const startMinute=train=>{
+  const value=train?.stops?.[0]?.dep;
+  const match=String(value||'').match(/^(\d{1,2}):(\d{2})$/);
+  return match?Number(match[1])*60+Number(match[2]):Number.MAX_SAFE_INTEGER;
+};
+const selectChronological=(list)=>selectNumbers(list).sort((a,b)=>startMinute(a)-startMinute(b));
 const selectRoute=(from,to,grade)=>TRAINS.filter(train=>
   train.grade===grade&&train.boundary?.includes(from)&&train.boundary?.includes(to)
 );
@@ -31,8 +37,10 @@ const notices=[
     groups:[
       ['호남고속선 KTX · 마포 ↔ 목포',selectNumbers(range(401,460))],
       ['충북선 막차 · 대전 ↔ 영주',selectNumbers(['1429','1430'])],
-      ['장항선 · 한강로 ↔ 서대전',selectNumbers(range(1461,1466))],
-      ['장항선 · 한강로 ↔ 전주',selectNumbers(range(1471,1490))],
+      ['장항선 · 한강로 ↔ 서대전/전주',selectChronological([
+        ...range(1461,1466),
+        ...range(1471,1490)
+      ])],
       ['전라선 KTX · 서울 ↔ 여수',selectNumbers(range(551,582))],
       ['충북선 · 대전 ↔ 영주',selectNumbers(range(1401,1428))],
       ['순천 계통 · 한강로 ↔ 순천',selectNumbers(range(1491,1496))]
@@ -83,7 +91,7 @@ const notices=[
   {
     id:'20260731-regional-revision',date:'2026.07.31',
     title:'지역·광역열차 전면 개정 시간표',expected:152,
-    subtitle:'SRT·ITX·무궁화호 11개 운행 계통',
+    subtitle:'SRT·ITX·무궁화호 10개 운행 계통',
     groups:[
       ['SRT · 잠실 ↔ 목포',selectNumbers(range(801,822))],
       ['SRT · 잠실 ↔ 간성',selectNumbers(range(681,690))],
@@ -94,8 +102,10 @@ const notices=[
       ['ITX-새마을 · 강릉 ↔ 영주',selectNumbers(range(1221,1236))],
       ['교외선 순환 무궁화호',selectNumbers(range(4401,4428))],
       ['무궁화호 · 영동 ↔ 부산',selectNumbers(range(1331,1350))],
-      ['무궁화호 · 목포 ↔ 남대구',selectNumbers(range(1451,1454))],
-      ['무궁화호 · 목포 ↔ 부산',selectNumbers(range(1501,1504))]
+      ['무궁화호 · 목포 ↔ 남대구/부산',selectChronological([
+        ...range(1451,1454),
+        ...range(1501,1504)
+      ])]
     ]
   },
   {
