@@ -1478,6 +1478,53 @@ ALL_TRAINS.push(
   }
 }
 
+// 출발 시각만 조정된 기존 열차는 같은 계통·방향의 정상 편성 템플릿으로
+// 전 구간 시각과 정차시간을 다시 투영한다. 시발역 출발 시각은 유지한다.
+{
+  const minute=value=>{
+    if(!/^\d{1,2}:\d{2}$/.test(value||''))return null;
+    const [hour,min]=value.split(':').map(Number);
+    return hour*60+min;
+  };
+  const clock=value=>{
+    const normalized=(value%1440+1440)%1440;
+    return `${Math.floor(normalized/60)}:${String(normalized%60).padStart(2,'0')}`;
+  };
+  const rebuildFromTemplate=(targetNo,templateNo)=>{
+    const target=ALL_TRAINS.find(train=>train.no===String(targetNo));
+    const template=ALL_TRAINS.find(train=>train.no===String(templateNo));
+    if(!target||!template||target.stops.length!==template.stops.length)return;
+    if(target.stops.some((stop,index)=>stop.s!==template.stops[index].s))return;
+    const targetStart=minute(target.stops[0].dep);
+    const templateStart=minute(template.stops[0].dep);
+    if(targetStart==null||templateStart==null)return;
+    let previous=templateStart;
+    for(let index=0;index<target.stops.length;index++){
+      for(const key of ['arr','dep']){
+        const source=template.stops[index][key];
+        if(source==='통과'){
+          target.stops[index][key]='통과';
+          continue;
+        }
+        let value=minute(source);
+        if(value==null){
+          target.stops[index][key]=null;
+          continue;
+        }
+        while(value<previous)value+=1440;
+        previous=value;
+        target.stops[index][key]=clock(targetStart+(value-templateStart));
+      }
+    }
+  };
+  for(const no of [1692,1694,1696,1698])rebuildFromTemplate(no,1700);
+  rebuildFromTemplate(1276,1274);
+  rebuildFromTemplate(1539,1541);
+  rebuildFromTemplate(312,310);
+  rebuildFromTemplate(1891,1893);
+  rebuildFromTemplate(1097,1095);
+}
+
 // 태백선 신설 계통 — 인게임 왕복 템플릿의 초 단위 시각을 분 단위로 버림 적용.
 // 대전·강릉 새마을은 남도해양열차 번호 이관으로 확보한 1901~1918을 사용한다.
 // 강릉·광주 KTX-이음은 621부터 사용한다. 동강릉↔강릉은 반대편 실측을 역산했다.
