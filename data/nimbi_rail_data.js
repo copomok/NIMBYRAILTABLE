@@ -1643,6 +1643,19 @@ ALL_TRAINS.push(
     s,index===0?null:(dep==null?total-arr:total-dep),
     index===array.length-1?null:(index===0?0:total-arr),p
   ]);
+  // 사진 #1271 왕복 후반부(부산→목포)의 방향별 승강장.
+  const upPlatforms={
+    '부산':9,'해운대':1,'중동':4,'송정':2,'기장':4,'좌천':6,
+    '울주':3,'태화강':10,'북울산':6,'입실':2,'불국사':2,'경주':4,
+    '건천':2,'경산':4,'남대구':10,'호림':4,'하빈':2,'서왜관':4,
+    '약목':4,'구미':7,'김천':2,'봉산':2,'추풍령':3,'황간':2,
+    '무주':1,'남무주':1,'계북':1,'장계':1,'장수(전북)':1,
+    '남산서':1,'보절':1,'남원':1,'곡성':2,'옥과':2,'고서':4,
+    '광주':9,'나산':2,'함평':1,'무안':2,'도림':1,'목포':11
+  };
+  for(const stop of up){
+    if(upPlatforms[stop[0]]!=null)stop[3]=upPlatforms[stop[0]];
+  }
   for(const train of ALL_TRAINS){
     const no=+train.no;
     if(no<1501||no>1504)continue;
@@ -1676,6 +1689,17 @@ ALL_TRAINS.push(
     s,index===0?null:(dep==null?total-arr:total-dep),
     index===array.length-1?null:(index===0?0:total-arr),p
   ]);
+  // 남대구→목포는 #1271 상행의 동일 공유구간 승강장 템플릿을 사용한다.
+  const upPlatforms={
+    '남대구':10,'호림':4,'하빈':2,'서왜관':4,'약목':4,'구미':7,
+    '김천':2,'봉산':2,'추풍령':3,'황간':2,'무주':1,'남무주':1,
+    '계북':1,'장계':1,'장수(전북)':1,'남산서':1,'보절':1,'남원':1,
+    '곡성':2,'옥과':2,'고서':4,'광주':9,'나산':2,'함평':1,
+    '무안':2,'도림':1,'목포':11
+  };
+  for(const stop of up){
+    if(upPlatforms[stop[0]]!=null)stop[3]=upPlatforms[stop[0]];
+  }
   for(const train of ALL_TRAINS){
     const no=+train.no;
     if(no<1451||no>1454)continue;
