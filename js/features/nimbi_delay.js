@@ -226,13 +226,13 @@ _scheduleSimBoundary();
 function _wxConfig(weather){
   return ({
     '맑음':{weather:'맑음',probMult:1,magMult:1,bigCap:15,recW:1,sagGate:0,sagLabel:null,wxBig:false},
-    '안개':{weather:'안개',probMult:1.1,magMult:1.05,bigCap:13,recW:.9,sagGate:.26,sagLabel:'안개 서행',wxBig:false},
-    '강풍':{weather:'강풍',probMult:1.22,magMult:1.25,bigCap:22,recW:.76,sagGate:.38,sagLabel:'강풍 서행',wxBig:true},
-    '폭염':{weather:'폭염',probMult:1.1,magMult:1.1,bigCap:15,recW:.88,sagGate:.24,sagLabel:'폭염 레일온도 서행',wxBig:false},
-    '비':{weather:'비',probMult:1.16,magMult:1.18,bigCap:20,recW:.78,sagGate:.34,sagLabel:'우천 서행',wxBig:true},
-    '폭우':{weather:'폭우',probMult:1.55,magMult:1.65,bigCap:34,recW:.5,sagGate:.68,sagLabel:'폭우 서행',wxBig:true},
-    '폭설':{weather:'폭설',probMult:1.35,magMult:1.4,bigCap:30,recW:.55,sagGate:.55,sagLabel:'폭설 제설 지연',wxBig:true},
-    '태풍':{weather:'태풍',probMult:1.7,magMult:1.9,bigCap:42,recW:.4,sagGate:.78,sagLabel:'태풍 서행',wxBig:true}
+    '안개':{weather:'안개',probMult:1.2,magMult:1.15,bigCap:18,recW:.82,sagGate:.36,sagLabel:'안개 서행',wxBig:false},
+    '강풍':{weather:'강풍',probMult:1.45,magMult:1.5,bigCap:32,recW:.62,sagGate:.55,sagLabel:'강풍 서행',wxBig:true},
+    '폭염':{weather:'폭염',probMult:1.22,magMult:1.25,bigCap:22,recW:.78,sagGate:.36,sagLabel:'폭염 레일온도 서행',wxBig:false},
+    '비':{weather:'비',probMult:1.35,magMult:1.4,bigCap:28,recW:.65,sagGate:.5,sagLabel:'우천 서행',wxBig:true},
+    '폭우':{weather:'폭우',probMult:1.9,magMult:2.1,bigCap:50,recW:.35,sagGate:.82,sagLabel:'폭우 서행',wxBig:true},
+    '폭설':{weather:'폭설',probMult:1.7,magMult:1.8,bigCap:45,recW:.4,sagGate:.72,sagLabel:'폭설 제설 지연',wxBig:true},
+    '태풍':{weather:'태풍',probMult:2.1,magMult:2.4,bigCap:60,recW:.25,sagGate:.9,sagLabel:'태풍 서행',wxBig:true}
   })[weather]||null;
 }
 function _wxClassify(v){
@@ -431,12 +431,12 @@ function _simDayContext(t){
            : [0.50,0.60,0.72,0.72,0.80,1.0];
   let wx;
   if(w<CUT[0])      wx={weather:'맑음', probMult:1.0, magMult:1.0, bigCap:15, recW:1.0, sagGate:0,    sagLabel:null,               wxBig:false};
-  else if(w<CUT[1]) wx={weather:'안개', probMult:1.1, magMult:1.05,bigCap:13, recW:0.9, sagGate:0.26, sagLabel:'안개 서행',        wxBig:false};
-  else if(w<CUT[2]) wx={weather:'강풍', probMult:1.18,magMult:1.2, bigCap:20, recW:0.8, sagGate:0.34, sagLabel:'강풍 서행',        wxBig:true};
-  else if(w<CUT[3]) wx={weather:'폭염', probMult:1.1, magMult:1.1, bigCap:15, recW:0.88,sagGate:0.24, sagLabel:'폭염 레일온도 서행', wxBig:false};
-  else if(w<CUT[4]) wx={weather:'비',   probMult:1.15,magMult:1.15,bigCap:20, recW:0.8, sagGate:0.32, sagLabel:'우천 서행',        wxBig:true};
-  else if(w<CUT[5]) wx={weather:'폭설', probMult:1.35,magMult:1.4, bigCap:30, recW:0.55,sagGate:0.55, sagLabel:'폭설 제설 지연',    wxBig:true};
-  else              wx={weather:'태풍', probMult:1.7, magMult:1.9, bigCap:42, recW:0.4, sagGate:0.78, sagLabel:'태풍 서행',        wxBig:true};
+  else if(w<CUT[1]) wx=_wxConfig('안개');
+  else if(w<CUT[2]) wx=_wxConfig('강풍');
+  else if(w<CUT[3]) wx=_wxConfig('폭염');
+  else if(w<CUT[4]) wx=_wxConfig('비');
+  else if(w<CUT[5]) wx=_wxConfig('폭설');
+  else              wx=_wxConfig('태풍');
   const rushMult=weekend?1.12:1.5;
   return (_simCtxCache[cacheKey]=Object.assign({day,dow,weekend,holiday,rushMult,weatherSource:'시뮬레이션'},wx));
 }
@@ -718,7 +718,13 @@ function _computeProfile(t){
   const causeFactor=0.6+0.9*(0.5*metroFrac+0.5*congNorm);
   const runMin=Math.max(1,m[m.length-1]-m[0]);
   const lenFactor=Math.min(1, runMin/180);
-  const effProb=Math.min(96, f.prob*causeFactor*(0.4+0.6*lenFactor)*ctx.probMult*(ctx.weekend?0.9:1));
+  // 악천후는 개별 열차의 기본 지연 확률만 곱하는 데 그치지 않고 같은 권역의
+  // 여러 열차에 공통으로 영향을 준다. 기상 가산 확률을 더해 실제 추이처럼
+  // 영향 편수를 넓히되 맑은 날(probMult=1)은 기존 분포를 그대로 유지한다.
+  const weatherProbBoost=Math.max(0,ctx.probMult-1)*22;
+  const effProb=Math.min(98,
+    f.prob*causeFactor*(0.4+0.6*lenFactor)*ctx.probMult*(ctx.weekend?0.9:1)+weatherProbBoost
+  );
   const seed=_simSeed(t.no,_simDayKey(t));
   const r1=_seededRand(seed+0.137), r4=_seededRand(seed+11.2), rSev=_seededRand(seed+2.23);
   const flagged=r1*100<effProb, surprise=!flagged&&r4<0.07*lenFactor*ctx.probMult;
@@ -744,7 +750,7 @@ function _computeProfile(t){
     return (a!=null&&d!=null)?((d-a+1440)%1440):0;});
 
   if(flagged||surprise||inherited>0){
-    const bigUnit=(flagged?Math.max(0.6,(f.max||6)/11):0.6)*(0.6+0.4*lenFactor)*severity*ctx.magMult;
+    const bigUnit=(flagged?Math.max(ctx.wxBig?1.1:0.6,(f.max||6)/11):0.6)*(0.6+0.4*lenFactor)*severity*ctx.magMult;
     const smallUnit=0.45+0.5*severity;
     const evBase=(flagged?Math.min(0.34,effProb/100*0.45+0.06):0.05)*(0.6+0.5*severity)*prioMult;
     let cur=inherited, recTotal=0;
@@ -766,7 +772,8 @@ function _computeProfile(t){
       const localMag=localWx?Math.max(.75,Math.min(1.8,localWx.magMult/Math.max(1,ctx.magMult))):1;
       const exposure=Math.min(1, 0.4*(metroPar?1:0)+0.5*cong+(rush?0.2:0)+(singleTrack?0.3:0));
       const ra=_seededRand(seed+i*2.7+0.5), rb=_seededRand(seed+i*2.7+1.9), rc=_seededRand(seed+i*2.7+3.3), rd=_seededRand(seed+i*2.7+5.1);
-      const pInc=evBase*(0.35+exposure*1.3)*localProb;
+      const weatherEventBoost=Math.max(0,secCtx.probMult-1)*0.08;
+      const pInc=Math.min(.92,evBase*(0.35+exposure*1.3)*localProb+weatherEventBoost);
       let inc=0, cause=null;
       if(ra<pInc){
         cause=_sectionCause(rush, metroPar, congHi, secCtx, rd, singleTrack, go.prio);
