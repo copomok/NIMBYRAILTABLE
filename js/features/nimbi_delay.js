@@ -138,6 +138,7 @@ const _REAL_WX_REGIONS=[
 const _REAL_WX_CACHE_KEY='nimbi_real_weather_v1';
 let _realWx=null,_realWxPromise=null,_realWxVersion=0,_realWxTimer=null;
 const _SIM_RECORD_KEY='nimbi_delay_records_v1';
+const _SIM_RECORD_MODEL=2;
 let _simRecordSaveTimer=null,_simBoundaryTimer=null;
 let _simRecords=(()=>{
   try{
@@ -182,7 +183,10 @@ function _simRecordFor(t,create){
   const day=String(_simDayKey(t));
   if(!_simRecords[day]&&create)_simRecords[day]={};
   if(!_simRecords[day])return null;
-  if(!_simRecords[day][t.no]&&create)_simRecords[day][t.no]={values:[],confirmed:-1,done:false};
+  const old=_simRecords[day][t.no];
+  // 과거 엔진이 저장한 급격한 증감 기록은 새 계산과 섞지 않는다.
+  if(old&&old.model!==_SIM_RECORD_MODEL){delete _simRecords[day][t.no];_simSaveRecords();}
+  if(!_simRecords[day][t.no]&&create)_simRecords[day][t.no]={values:[],confirmed:-1,done:false,model:_SIM_RECORD_MODEL};
   return _simRecords[day][t.no]||null;
 }
 function _simConfirmActual(t,pr,actual,nm){
@@ -515,7 +519,10 @@ function _metroParSections(timed){
   }
   return par;
 }
-const _SIM_CONG_REF=280, _SIM_REC_RATE=0.12, _SIM_REC_CAP=1.5, _SIM_REC_HARD=1.2;
+// 한 구간에서 실제 지연이 줄어드는 양은 최대 1분이다. 확률과 회복량을
+// 분리해, 회복 운전이 선택되더라도 큰 지연이 한 역에서 사라지지 않게 한다.
+const _SIM_CONG_REF=280, _SIM_REC_RATE=0.12, _SIM_REC_CAP=1.0, _SIM_REC_HARD=1.0;
+const _SIM_DISPATCH_CAP=15;
 
 // ── 편성 회차 선행열차 맵(같은 날 연쇄 지연) ──
 let _simRotPredCache=null,_simRotSuccCache=null;
@@ -757,6 +764,7 @@ function _computeProfile(t){
     let mpN=0, mpLast=-999, mpSp=false;
     let rushN=0, rushLast=-999;
     let recoveryMissStreak=0;   // 회복 실패 연속 횟수(다음 구간 시도 확률↑)
+    let recoveryCooldown=0;     // 연속 구간에서 회복이 기계적으로 반복되는 현상 방지
     for(let i=0;i<secN;i++){
       const dt=Math.max(1,m[i+1]-m[i]);
       const tod=((m[i]%1440)+1440)%1440;
@@ -808,19 +816,14 @@ function _computeProfile(t){
                    *getSectionRecoveryMultiplier(runMin)*weatherProbabilityMultiplier
                  +getRecoveryMissBonus(recoveryMissStreak)+getRecoveryUrgencyBonus(arrivalDelay);
         prob=Math.max(0.05,Math.min(getRecoveryMaxProbability(arrivalDelay),prob));
-        let runRec=0, recHard=_SIM_REC_HARD;
-        if(rc<prob){
-          // ─ 고속선 회복 강화 ─
-          const inHS=_isHighSpeedSection(t.line)&&(/KTX|SRT/.test(t.grade));
-          if(inHS){
-            if(cur>=6&&cur<10)  recHard=2.0;
-            else if(cur>=10)    recHard=3.0;
-          }
-          runRec=Math.min(0.16*dt*recFrac, 0.8)*(0.5+0.5*rc)*secCtx.recW;
+        let runRec=0;
+        if(recoveryCooldown<=0&&rc<prob){
+          runRec=Math.min(0.12*dt*recFrac,0.65)*(0.5+0.5*rc)*secCtx.recW;
         }
-        rec=Math.min(arrivalDelay,runRec+dcut,Math.max(recHard,dcut));
+        rec=Math.min(arrivalDelay,runRec+dcut,_SIM_REC_HARD);
         // 실패 누적: 실제 회복량 기준(1분+ 성공→0, 부분 성공→-1, 미미→+1)
-        if(rec>=1.0)recoveryMissStreak=0; else if(rec>=0.3)recoveryMissStreak=Math.max(0,recoveryMissStreak-1); else recoveryMissStreak++;
+        if(runRec>=0.5){recoveryCooldown=1;recoveryMissStreak=0;}
+        else {recoveryCooldown=Math.max(0,recoveryCooldown-1);if(rec>=0.3)recoveryMissStreak=Math.max(0,recoveryMissStreak-1);else recoveryMissStreak++;}
       } else {
         rec=dcut;   // 신규 지연 구간: 회복 기회 없음(streak 유지)
       }
@@ -862,8 +865,9 @@ function _platIndex(){
     const timed=u.stops.filter(s=>hasTime(s.arr)||hasTime(s.dep));
     timed.forEach((s,i)=>{
       const p=rp[s.s]; if(p==null)return;
-      const dep=toMin(hasTime(s.dep)?s.dep:s.arr); if(dep==null)return;
-      (idx[s.s+':'+p]=idx[s.s+':'+p]||[]).push({no:u.no,idx:i,dep:_svMin(dep)});
+      const arr=toMin(hasTime(s.arr)?s.arr:s.dep);
+      const dep=toMin(hasTime(s.dep)?s.dep:s.arr); if(arr==null||dep==null)return;
+      (idx[s.s+':'+p]=idx[s.s+':'+p]||[]).push({no:u.no,idx:i,arr:_svMin(arr),dep:_svMin(dep)});
     });
   });
   Object.values(idx).forEach(a=>a.sort((x,y)=>x.dep-y.dep));
@@ -947,10 +951,16 @@ function _minimumFollowHeadway(leaderDelay,followerDelay,stationName){
   if(_paxScore(stationName)>.6||_NO_PASS_TRACK.has(stationName))minutes=Math.max(minutes,2);
   return minutes;
 }
-function _headwayHold(leaderDeparture,leaderDelay,followerDeparture,followerDelay,minimumHeadway){
-  const leaderClear=leaderDeparture+Math.max(0,leaderDelay||0);
-  const followerReady=followerDeparture+Math.max(0,followerDelay||0);
-  return Math.min(15,Math.max(0,Math.ceil(leaderClear+minimumHeadway-followerReady)));
+function _headwayHoldForNextStation(leaderStart,leaderEnd,leaderStartDelay,leaderEndDelay,
+  followerStart,followerEnd,followerStartDelay,followerEndDelay,minimumHeadway){
+  const leaderActualStart=leaderStart+Math.max(0,leaderStartDelay||0);
+  const followerActualStart=followerStart+Math.max(0,followerStartDelay||0);
+  // 선행 예정 열차가 과도하게 늦어 아직 구간에 들어오지 않았다면 후속 열차를 붙잡지 않는다.
+  if(leaderActualStart>followerActualStart)return 0;
+  const leaderActualEnd=leaderEnd+Math.max(0,leaderEndDelay||leaderStartDelay||0);
+  const followerActualEnd=followerEnd+Math.max(0,followerEndDelay||followerStartDelay||0);
+  // 다음 역에 닿기 전에 실제로 순서가 뒤집힐 때 부족한 시격만 보충한다.
+  return Math.min(10,Math.max(0,Math.ceil(leaderActualEnd+minimumHeadway-followerActualEnd)));
 }
 
 let _dispCache={};
@@ -973,8 +983,10 @@ function _dispatchInfo(t){
       if(_isPassStop(t,timed[i].s))continue;
       const p=rp[timed[i].s]; if(p==null)continue;
       const arrRaw=toMin(hasTime(timed[i].arr)?timed[i].arr:timed[i].dep); if(arrRaw==null)continue;
+      const depRaw=toMin(hasTime(timed[i].dep)?timed[i].dep:timed[i].arr); if(depRaw==null)continue;
       // 앞 구간에서 이미 받은 연쇄 지연까지 포함한 실제 도착 예정 시각으로 비교한다.
       const myArr=_svMin(arrRaw)+(pr.cd[i]||0)+(adj?.[i]||0);
+      const myDep=_svMin(depRaw)+(pr.cd[i]||0)+(adj?.[i]||0);
       const list=idx[timed[i].s+':'+p]; if(!list)continue;
       for(const u of list){
         if(u.no===t.no)continue;
@@ -985,11 +997,17 @@ function _dispatchInfo(t){
         // 통과 열차와 정차 열차의 추월 관계는 아래 역간 순서 계층에서만 처리한다.
         if(isPassStopU)continue;
         const ucd=_simActualArr(ut); const ud=ucd[u.idx]||0; if(ud<=0)continue;
-        const overlap=(u.dep+ud)-myArr;
+        const sourceArr=u.arr+ud,sourceDep=u.dep+ud;
+        // 상대 열차가 아직 오지 않았거나 이미 떠났다면 먼저 도착한 열차를 기다리게 하지 않는다.
+        if(sourceArr>myArr||sourceDep<myArr||sourceArr>myDep)continue;
+        const overlap=sourceDep-myArr;
         if(overlap<0)continue;
-        const w=Math.min(10,Math.ceil(overlap)+1);
+        let w=Math.min(10,Math.ceil(overlap)+1);
         if(!adj)adj=new Array(pr.cd.length).fill(0);
-        for(let j=i;j<pr.cd.length;j++)adj[j]+=Math.max(0,w-(j-i));
+        w=Math.min(w,Math.max(0,_SIM_DISPATCH_CAP-(adj[i]||0)));
+        if(w<=0)continue;
+        // 대기 지연은 실제 회복 이벤트 전까지 유지한다. 역마다 자동으로 1분씩 사라지지 않는다.
+        for(let j=i;j<pr.cd.length;j++)adj[j]+=w;
         const cause='선행 열차 연쇄 지연';
         out.events.push({
           m:pr.m[i]||0,idx:i,delta:w,cause,sourceNo:ut.no,holdAtStop:true,dwellDelay:true,
@@ -1028,59 +1046,26 @@ function _dispatchInfo(t){
       if(_ovk>=0&&_ovk<=i)continue;
       const currentDelay=(pr.cd[i]||0)+(adj?.[i]||0);
       const currentEndDelay=(pr.cd[i+1]||0)+(adj?.[i+1]||0);
-      const sourceBase=_simProfile(ut).cd;
       const sourceActual=_simActualArr(ut);
-
-      if(plannedLead<=0&&plannedLead>-45){
-        // 예정상 앞선(같은 시각 포함) 빠른 현재 열차가 지연되어 완행 뒤로 밀리면,
-        // 다음 대피 가능역까지 선행 완행과 최소 1분 간격을 유지한다.
-        const faster=_gradeOps(t.grade).prio>_gradeOps(ut.grade).prio||
-          (myEnd-myStart)<u.duration;
-        const otherStartDelay=sourceBase[u.idx]||0;
-        const myActualStart=myStart+currentDelay;
-        const otherActualStart=u.start+otherStartDelay;
-        if(faster&&myActualStart>otherActualStart){
-          const otherActualEnd=u.end+(sourceBase[u.idx+1]||otherStartDelay);
-          const myActualEnd=myEnd+currentEndDelay;
-          const followDelay=Math.min(15,Math.max(0,Math.ceil(otherActualEnd+1-myActualEnd)));
-          if(followDelay>0){
-            if(!adj)adj=new Array(pr.cd.length).fill(0);
-            for(let j=i+1;j<pr.cd.length;j++)adj[j]+=followDelay;
-            out.events.push({
-              m:pr.m[i+1]||0,idx:i+1,delta:followDelay,cause:'선행 열차 연쇄 지연',
-              sourceNo:ut.no,followGap:true,
-              txt:`${from.s}–${to.s} 간격 유지 · 선행 ${ut.grade} ${ut.no} +${followDelay}분`
-            });
-            segmentHits++;
-            break;
-          }
-        }
-      }
-
-      if(plannedLead>=0&&plannedLead<45){
-        // 예정상 먼저 진입하고, 더 빠르거나 우선등급인 열차만 선행 열차로 본다.
-        if(u.duration>myEnd-myStart&&_gradeOps(ut.grade).prio<=_gradeOps(t.grade).prio)continue;
-        if(plannedLead===0&&u.duration>=myEnd-myStart&&
-          _gradeOps(ut.grade).prio<=_gradeOps(t.grade).prio)continue;
-        const sourceDelay=sourceActual[u.idx]||0;
-        if(sourceDelay<=0)continue;
-        // 단순 복선 추종은 다음 역 도착/블록 완전 이탈을 기다리지 않는다.
-        // 현재 역에서 선행 열차가 출발·통과한 뒤 필요한 최소 시격의 부족분만 더한다.
-        const minimumHeadway=_minimumFollowHeadway(sourceDelay,currentDelay,from.s);
-        const hold=_headwayHold(u.start,sourceDelay,myStart,currentDelay,minimumHeadway);
-        if(hold<=0)continue;
-        const holdIdx=_priorRealStopIndex(t,timed,i);
-        if(holdIdx<0)continue;
-        if(!adj)adj=new Array(pr.cd.length).fill(0);
-        for(let j=holdIdx;j<pr.cd.length;j++)adj[j]+=hold;
-        out.events.push({
-          m:pr.m[holdIdx]||0,idx:holdIdx,delta:hold,cause:'선행 열차 연쇄 지연',
-          sourceNo:ut.no,holdAtStop:true,followGap:true,conflictAt:from.s,
-          txt:`${timed[holdIdx].s} 선행 열차 최소 시격 확보 · 선행 ${ut.grade} ${ut.no} +${hold}분`
-        });
-        segmentHits++;
-        break;
-      }
+      const sourceStartDelay=sourceActual[u.idx]||0;
+      const sourceEndDelay=sourceActual[u.idx+1]||sourceStartDelay;
+      const minimumHeadway=_minimumFollowHeadway(sourceStartDelay,currentDelay,from.s);
+      let hold=_headwayHoldForNextStation(u.start,u.end,sourceStartDelay,sourceEndDelay,
+        myStart,myEnd,currentDelay,currentEndDelay,minimumHeadway);
+      if(hold<=0)continue;
+      const holdIdx=_priorRealStopIndex(t,timed,i);
+      if(holdIdx<0)continue;
+      if(!adj)adj=new Array(pr.cd.length).fill(0);
+      hold=Math.min(hold,Math.max(0,_SIM_DISPATCH_CAP-(adj[holdIdx]||0)));
+      if(hold<=0)continue;
+      for(let j=holdIdx;j<pr.cd.length;j++)adj[j]+=hold;
+      out.events.push({
+        m:pr.m[holdIdx]||0,idx:holdIdx,delta:hold,cause:'선행 열차 연쇄 지연',
+        sourceNo:ut.no,holdAtStop:true,followGap:true,conflictAt:from.s,
+        txt:`${timed[holdIdx].s} 다음 구간 추월 방지 대기 · 선행 ${ut.grade} ${ut.no} +${hold}분`
+      });
+      segmentHits++;
+      break;
     }
   }
   // 승강장 정차 지연과 같은 역에 잡힌 정차시간 단축은 취소한다.
@@ -1123,8 +1108,9 @@ function _getVehicleFaultOfDay(day){
   }
   if(result){
     if(typeof ALL_TRAINS!=='undefined'&&ALL_TRAINS.length){
-      for(const fault of result){
-        const idx=Math.floor(_seededRand(seed+Math.random())*ALL_TRAINS.length);
+      for(let faultIndex=0;faultIndex<result.length;faultIndex++){
+        const fault=result[faultIndex];
+        const idx=Math.floor(_seededRand(seed+faultIndex*97.31+0.417)*ALL_TRAINS.length);
         const candTrain=ALL_TRAINS[idx];
         fault.trainNo=candTrain.no;
         fault.section=1+Math.floor(_seededRand(seed+fault.trainNo)*Math.max(1,candTrain.stops.filter(s=>hasTime(s.arr)||hasTime(s.dep)).length-2));
@@ -1159,11 +1145,20 @@ function _simVeh(t){
   return _simVehCache[key]=v;
 }
 
+function _limitRecoverySeries(values){
+  let prev=null;
+  return values.map(value=>{
+    let next=Math.max(0,Math.round(value||0));
+    if(prev!=null)next=Math.max(next,prev-_SIM_REC_HARD);
+    prev=next;
+    return next;
+  });
+}
+
 // Sched(계획 예측)
 function _simSchedArr(t){
   const pr=_simProfile(t); const dis=_dispatchInfo(t);
-  if(!dis.adj) return pr.cd;
-  return pr.cd.map((v,i)=>v+(dis.adj[i]||0));
+  return _limitRecoverySeries(pr.cd.map((v,i)=>v+(dis.adj?.[i]||0)));
 }
 
 // Actual(실제)
@@ -1171,7 +1166,8 @@ function _simActualArr(t){
   const sched=_simSchedArr(t); const veh=_simVeh(t);
   if(!veh) return sched;
   const cap=_simDayContext(t).bigCap+veh.amt;
-  return sched.map((v,i)=> i>=veh.sec ? Math.round(Math.min(cap, v+Math.max(0, veh.amt-(i-veh.sec)))) : v);
+  // 차량 장애 지연은 별도의 회복 이벤트 없이 역마다 자동 소멸하지 않는다.
+  return _limitRecoverySeries(sched.map((v,i)=>i>=veh.sec?Math.min(cap,v+veh.amt):v));
 }
 
 // 표시 배열 갱신 기준:
@@ -1236,6 +1232,7 @@ function _simViewArr(t){
       const hasNewDelay=eventAllowed||(vehOn&&veh&&veh.sec===i)||dispatchInc;
       if(prev!=null&&!hasNewDelay)out[i]=Math.min(out[i],prev);
     }
+    if(prev!=null)out[i]=Math.max(out[i],prev-_SIM_REC_HARD);
     prev=out[i];
   }
   return _simViewCache[key]=out;
@@ -1327,45 +1324,48 @@ function _simCauseSummary(t){
 function _simEventLog(t,includeFuture){
   if(!_simDelayOn||_simExpired(t))return [];
   const pr=_simProfile(t); if(!pr.cd.length)return [];
-  // 타임라인과 같은 표시 배열을 사용한다. 지난 역은 확정값, 남은 역은 현재 갱신본이다.
   const view=_simViewArr(t);
   const timed=t.stops.filter(s=>hasTime(s.arr)||hasTime(s.dep));
   const fmt=mm=>{const v=(((mm%1440)+1440)%1440);return String(Math.floor(v/60)).padStart(2,"0")+":"+String(Math.round(v%60)).padStart(2,"0");};
-  const cumulative=idx=>Math.max(0,Math.round(view[idx]||0));
-  const eventClock=idx=>fmt((pr.m[idx]||0)+cumulative(idx));
   const dis=_dispatchInfo(t);
-  const dwellBlocked=new Set(dis.events.filter(e=>e.dwellDelay).map(e=>e.idx));
-  const profileEvents=(pr.events||[]).filter(e=>!(e.delta<0&&e.cause==='정차시간 단축'&&dwellBlocked.has(e.idx)));
-  const lines=profileEvents.map(e=>({m:pr.m[e.idx]||0,s:(()=>{
-    const st=timed[e.idx]?timed[e.idx].s:"";
-    const amount=Math.max(1,Math.abs(Math.round(e.delta||0)));
-    if(e.delta>0)return _isDwellDelayCause(e.cause)
-      ?`[${eventClock(e.idx)}] ${st} · ${e.cause} · 정차시간 +${amount}분`
-      :`[${eventClock(e.idx)}] ${st} · ${e.cause} +${amount}분`;
-    return `[${eventClock(e.idx)}] ${st} · ${e.cause||"운전 정리"} −${amount}분`;
-  })()}));
-  const covered=new Set(profileEvents.filter(e=>e.delta<0).map(e=>e.idx));
-  for(let i=1;i<view.length;i++){
-    const drop=(view[i-1]||0)-(view[i]||0);
-    if(drop>0&&!covered.has(i)&&!dwellBlocked.has(i))
-      lines.push({m:pr.m[i]||0,s:`[${eventClock(i)}] ${timed[i]?timed[i].s:""} · 회복 운전 −${drop}분`});
-  }
   const nmL=_simNowFor(pr);
-  dis.events.forEach(e=>{
-    if(!includeFuture&&nmL<e.m)return;
-    const baseTxt=(e.txt||e.cause||"운행 순서 조정").replace(/\s[+−]\d+(?:\.\d+)?분$/u,"");
-    const amount=Math.max(1,Math.abs(Math.round(e.delta||0)));
-    const change=e.delta<0?`−${amount}분`:(e.dwellDelay?`· 정차시간 +${amount}분`:`+${amount}분`);
-    lines.push({m:e.m,s:`[${eventClock(e.idx)}] ${baseTxt} ${change}`});
-  });
-  const peak=Math.max.apply(null,view),peakIdx=view.indexOf(peak);
-  if(peak>=8){const f=lines.find(x=>x.s.includes("회복 운전")&&x.m>(pr.m[peakIdx]||0));
-    if(f)f.s=f.s.replace("회복 운전","관제 우선권 부여 · 회복 운전");}
   const veh=_simVeh(t);
-  if(veh&&pr.m[veh.sec]!=null&&(includeFuture||nmL>=pr.m[veh.sec]))
-    lines.push({m:pr.m[veh.sec],s:`[${eventClock(veh.sec)}] ${timed[veh.sec]?timed[veh.sec].s:""} · 차량 ${veh.type} +${veh.amt}분`});
-  lines.sort((a,b)=>a.m-b.m);
-  return lines.map(x=>x.s);
+  const rawEvents=(pr.events||[]).concat(dis.events||[]);
+  const peak=Math.max.apply(null,view),peakIdx=view.indexOf(peak);
+  let priorityLogged=false;
+  const lines=[];
+  const eventClock=idx=>fmt((pr.m[idx]||0)+Math.max(0,Math.round(view[idx]||0)));
+  for(let i=0;i<view.length;i++){
+    if(!includeFuture&&nmL<(pr.m[i]||0))continue;
+    const before=i?Math.max(0,Math.round(view[i-1]||0)):0;
+    const after=Math.max(0,Math.round(view[i]||0));
+    const delta=after-before;
+    if(delta===0)continue;
+    const station=timed[i]?timed[i].s:"";
+    const candidates=rawEvents.filter(e=>e.idx===i&&Math.sign(e.delta||0)===Math.sign(delta));
+    if(delta>0){
+      const dispatchEvent=candidates.find(e=>e.txt);
+      let detail;
+      if(veh&&veh.sec===i)detail=`${station} · 차량 ${veh.type}`;
+      else if(dispatchEvent)detail=(dispatchEvent.txt||dispatchEvent.cause||'운행 순서 조정')
+        .replace(/\s[+−]\d+(?:\.\d+)?분$/u,'');
+      else{
+        const cause=(candidates[0]&&candidates[0].cause)||'운행 상황 반영';
+        detail=_isDwellDelayCause(cause)?`${station} · ${cause} · 정차시간`:`${station} · ${cause}`;
+      }
+      lines.push(`[${eventClock(i)}] ${detail} +${delta}분`);
+    }else{
+      const amount=Math.abs(delta);
+      const dwell=candidates.find(e=>e.cause==='정차시간 단축');
+      let cause=dwell?'정차시간 단축':'회복 운전';
+      if(!dwell&&!priorityLogged&&peak>=8&&i>peakIdx){
+        cause='관제 우선권 부여 · 회복 운전';
+        priorityLogged=true;
+      }
+      lines.push(`[${eventClock(i)}] ${station} · ${cause} −${amount}분`);
+    }
+  }
+  return lines;
 }
 function _simDelayReport(t){
   if(!_simDelayOn||_simExpired(t))return null;
