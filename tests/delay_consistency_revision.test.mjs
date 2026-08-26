@@ -28,8 +28,13 @@ test('과도하게 늦은 선행 예정 열차가 구간에 들어오기 전이�
 });
 
 test('다음 역 전에 실제 추월이 생기는 경우에만 부족한 최소 시격을 대기한다',()=>{
-  assert.equal(context.headway(100,130,0,0,110,125,0,0,1),6);
+  assert.equal(context.headway(100,130,0,0,110,125,0,0,1),5);
   assert.equal(context.headway(100,120,2,2,110,130,0,0,1),0);
+});
+
+test('정상 시간표에 원래 허용된 짧은 시격을 임의로 늘리지 않는다',()=>{
+  assert.equal(context.headway(100,120,0,0,110,121,0,0,3),0);
+  assert.equal(context.headway(100,120,2,2,110,121,0,0,3),2);
 });
 
 test('한 역에서 줄어드는 지연은 최대 1분으로 제한한다',()=>{
@@ -43,6 +48,10 @@ test('자동 소멸과 원본 사건량 기반 로그가 제거되고 최종 타
   assert.match(source,/const delta=after-before/);
   assert.match(source,/if\(delta===0\)continue/);
   assert.match(source,/sourceArr>myArr/);
+  assert.match(source,/const protectedGap=/);
+  assert.match(source,/let nearestLeader=null/);
+  assert.match(source,/heldSourceNos\.has/);
+  assert.doesNotMatch(source,/다음 구간 추월 방지 대기/);
   assert.match(source,/_SIM_RECORD_MODEL=2/);
   assert.doesNotMatch(source,/_seededRand\(seed\+Math\.random\(\)\)/);
 });

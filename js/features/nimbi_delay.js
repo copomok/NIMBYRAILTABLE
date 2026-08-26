@@ -959,8 +959,14 @@ function _headwayHoldForNextStation(leaderStart,leaderEnd,leaderStartDelay,leade
   if(leaderActualStart>followerActualStart)return 0;
   const leaderActualEnd=leaderEnd+Math.max(0,leaderEndDelay||leaderStartDelay||0);
   const followerActualEnd=followerEnd+Math.max(0,followerEndDelay||followerStartDelay||0);
-  // 다음 역에 닿기 전에 실제로 순서가 뒤집힐 때 부족한 시격만 보충한다.
-  return Math.min(10,Math.max(0,Math.ceil(leaderActualEnd+minimumHeadway-followerActualEnd)));
+  const plannedEndGap=followerEnd-leaderEnd;
+  const actualEndGap=followerActualEnd-leaderActualEnd;
+  // 정상 시간표에 원래 짜인 간격보다 더 넓은 시격을 새로 강요하지 않는다.
+  // 지연으로 다음 역 도착 순서가 뒤집히거나, 원래 확보된 최소 시격이 줄어든 경우에만
+  // 그 부족분을 보충한다. 계획 간격이 1분이면 3분으로 늘리지 않고 1분만 보전한다.
+  const protectedGap=Math.min(Math.max(0,minimumHeadway||0),Math.max(0,plannedEndGap));
+  if(actualEndGap>=protectedGap)return 0;
+  return Math.min(10,Math.max(0,Math.ceil(protectedGap-actualEndGap)));
 }
 
 let _dispCache={};
@@ -1024,6 +1030,7 @@ function _dispatchInfo(t){
   // 다음 역에서 나란히 도착해 정상적으로 추월할 수 있으면 연쇄 지연을 만들지 않는다.
   const segIdx=_segmentIndex();
   let segmentHits=0;
+  const heldSourceNos=new Set();
   for(let i=0;i<timed.length-1&&segmentHits<3;i++){
     if(i===timed.length-2)continue;
     const from=timed[i],to=timed[i+1];
@@ -1033,6 +1040,13 @@ function _dispatchInfo(t){
     let myStart=_svMin(startRaw),myEnd=_svMin(endRaw);
     if(myEnd<myStart)myEnd+=1440;
     const list=segIdx[from.s+'>'+to.s]||[];
+    const currentDelay=(pr.cd[i]||0)+(adj?.[i]||0);
+    const currentEndDelay=(pr.cd[i+1]||0)+(adj?.[i+1]||0);
+    const myActualStart=myStart+Math.max(0,currentDelay);
+    // 실제로 바로 앞에서 같은 구간에 진입한 열차 한 대만 비교한다.
+    // 먼 선행 열차가 중복으로 후속을 붙잡거나 같은 원인 열차가 여러 구간에서
+    // 대기를 반복시키는 현상을 막는다.
+    let nearestLeader=null;
     for(const u of list){
       if(u.no===t.no)continue;
       const plannedLead=myStart-u.start;
@@ -1044,29 +1058,34 @@ function _dispatchInfo(t){
       // 소폭 지연으로 t가 잠시 뒤처져도 붙잡지 않고 예정대로 추월한다.
       const _ovk=_overtakePassStation(t,ut);
       if(_ovk>=0&&_ovk<=i)continue;
-      const currentDelay=(pr.cd[i]||0)+(adj?.[i]||0);
-      const currentEndDelay=(pr.cd[i+1]||0)+(adj?.[i+1]||0);
       const sourceActual=_simActualArr(ut);
       const sourceStartDelay=sourceActual[u.idx]||0;
       const sourceEndDelay=sourceActual[u.idx+1]||sourceStartDelay;
-      const minimumHeadway=_minimumFollowHeadway(sourceStartDelay,currentDelay,from.s);
-      let hold=_headwayHoldForNextStation(u.start,u.end,sourceStartDelay,sourceEndDelay,
-        myStart,myEnd,currentDelay,currentEndDelay,minimumHeadway);
-      if(hold<=0)continue;
-      const holdIdx=_priorRealStopIndex(t,timed,i);
-      if(holdIdx<0)continue;
-      if(!adj)adj=new Array(pr.cd.length).fill(0);
-      hold=Math.min(hold,Math.max(0,_SIM_DISPATCH_CAP-(adj[holdIdx]||0)));
-      if(hold<=0)continue;
-      for(let j=holdIdx;j<pr.cd.length;j++)adj[j]+=hold;
-      out.events.push({
-        m:pr.m[holdIdx]||0,idx:holdIdx,delta:hold,cause:'선행 열차 연쇄 지연',
-        sourceNo:ut.no,holdAtStop:true,followGap:true,conflictAt:from.s,
-        txt:`${timed[holdIdx].s} 다음 구간 추월 방지 대기 · 선행 ${ut.grade} ${ut.no} +${hold}분`
-      });
-      segmentHits++;
-      break;
+      const sourceActualStart=u.start+Math.max(0,sourceStartDelay);
+      if(sourceActualStart>myActualStart)continue;
+      if(!nearestLeader||sourceActualStart>nearestLeader.actualStart){
+        nearestLeader={u,ut,sourceStartDelay,sourceEndDelay,actualStart:sourceActualStart};
+      }
     }
+    if(!nearestLeader||heldSourceNos.has(nearestLeader.ut.no))continue;
+    const {u,ut,sourceStartDelay,sourceEndDelay}=nearestLeader;
+    const minimumHeadway=_minimumFollowHeadway(sourceStartDelay,currentDelay,from.s);
+    let hold=_headwayHoldForNextStation(u.start,u.end,sourceStartDelay,sourceEndDelay,
+      myStart,myEnd,currentDelay,currentEndDelay,minimumHeadway);
+    if(hold<=0)continue;
+    const holdIdx=_priorRealStopIndex(t,timed,i);
+    if(holdIdx<0)continue;
+    if(!adj)adj=new Array(pr.cd.length).fill(0);
+    hold=Math.min(hold,Math.max(0,_SIM_DISPATCH_CAP-(adj[holdIdx]||0)));
+    if(hold<=0)continue;
+    for(let j=holdIdx;j<pr.cd.length;j++)adj[j]+=hold;
+    out.events.push({
+      m:pr.m[holdIdx]||0,idx:holdIdx,delta:hold,cause:'선행 열차 연쇄 지연',
+      sourceNo:ut.no,holdAtStop:true,followGap:true,conflictAt:from.s,
+      txt:`${timed[holdIdx].s} 선행 열차 시격 확보 대기 · 선행 ${ut.grade} ${ut.no} +${hold}분`
+    });
+    heldSourceNos.add(ut.no);
+    segmentHits++;
   }
   // 승강장 정차 지연과 같은 역에 잡힌 정차시간 단축은 취소한다.
   if(adj){
