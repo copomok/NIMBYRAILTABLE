@@ -5,7 +5,7 @@
   if(typeof REAL_PLAT==='undefined'||typeof ALL_TRAINS==='undefined')return;
   const isRegionalTrain=no=>{
     const n=Number(no);
-    return (n>=621&&n<=630)||
+    return (n>=621&&n<=632)||
       (n>=1201&&n<=1236)||
       (n>=1241&&n<=1270)||
       (n>=4401&&n<=4428)||
@@ -100,5 +100,89 @@
         mapped[stop.s]=Number(stop.p);
       }
     }
+  }
+
+  // 전 편 승강장 감사(2026-08-31): 인게임 추출값과 동일 계통의 물리
+  // 진행 방향을 함께 대조해 확인한 오매핑만 명시적으로 바로잡는다.
+  // 시종착 승강장은 회차·주박에 따라 달라질 수 있으므로 건드리지 않는다.
+  const verifiedCorrections={
+    // 청량리 → 태백황지: 같은 방향의 정상 편성(#1691/#1697/#1699) 기준.
+    1693:{중랑:3,도농:2,양수:1,원주:3,신림:1,제천:3},
+    1695:{중랑:3,도농:2,양수:1,원주:3,신림:1,제천:3,사북:1,고한:1},
+    // 태백황지 → 청량리: 정상 편성 #1700 기준.
+    1694:{제천:4,신림:2,원주:4,양평:4,양수:2,덕소:4,도농:1,중랑:4},
+    1696:{양평:4},
+    // 광주 → 강릉 KTX-이음: 같은 방향 #622~#630 기준.
+    632:{태백황지:2,삼척:5,동해:6}
+  };
+  for(const [no,stations] of Object.entries(verifiedCorrections)){
+    const train=ALL_TRAINS.find(item=>String(item.no)===no);
+    if(!train)continue;
+    const mapped=REAL_PLAT[no]||(REAL_PLAT[no]={});
+    for(const [station,platform] of Object.entries(stations)){
+      mapped[station]=platform;
+      const stop=train.stops.find(item=>item.s===station);
+      if(stop&&stop.p!=null)stop.p=String(platform);
+    }
+  }
+
+  // 복선 구간인데 한 방향 사진값이 반대편 전 편에 복제된 계통을 인게임
+  // PLATFORM_DB의 노선·등급별 승강장 쌍으로 분리한다. 교외선·보은선의
+  // 단선 구간과 진행 방향이 바뀌는 중간 종착역은 이 목록에 넣지 않는다.
+  const directionalRules=[
+    {from:231,to:248,station:'남대구',down:3,up:4},       // 한강로-포항 KTX
+    {from:251,to:260,station:'남대구',down:1,up:2},       // 한강로-창녕 KTX
+    {from:551,to:582,station:'북순천',down:1,up:2},       // 서울-여수 KTX
+    {from:1001,to:1020,station:'천안',down:11,up:12},     // 한강로-부산 ITX
+    {from:1021,to:1030,station:'천안',down:11,up:12},     // 서울-진주 ITX
+    {from:1201,to:1216,station:'청하',down:2,up:3},       // 강릉-부산 ITX
+    {from:1201,to:1216,station:'포항',down:3,up:4},
+    {from:1301,to:1306,station:'천안',down:11,up:12},     // 서울-부산 무궁화
+    {from:1331,to:1350,station:'황간',down:1,up:2},       // 영동-부산 무궁화
+    {from:1331,to:1350,station:'가창',down:1,up:2},
+    {from:1331,to:1350,station:'청도',down:4,up:8},
+    {from:1331,to:1350,station:'밀양',down:5,up:6},
+    {from:1331,to:1350,station:'삼랑진',down:3,up:4},
+    {from:1331,to:1350,station:'물금',down:3,up:4},
+    {from:1891,to:1898,station:'상당',down:1,up:2}        // 서울-보은 ITX
+  ];
+  for(const rule of directionalRules){
+    for(const train of ALL_TRAINS){
+      const no=Number(train.no);
+      if(no<rule.from||no>rule.to)continue;
+      const stop=train.stops.find(item=>item.s===rule.station);
+      if(!stop)continue;
+      const platform=train.dir==='up'?rule.up:rule.down;
+      const mapped=REAL_PLAT[train.no]||(REAL_PLAT[train.no]={});
+      mapped[rule.station]=platform;
+      if(stop.p!=null)stop.p=String(platform);
+    }
+  }
+
+  // 열차번호 재사용·노선 개정 뒤 REAL_PLAT에 남은 과거 계통의 역은 제거한다.
+  // 현재 정차역 집합만 남겨 예매/역 상세의 폴백 조회도 오염되지 않게 한다.
+  for(const train of ALL_TRAINS){
+    const mapped=REAL_PLAT[train.no];
+    if(!mapped)continue;
+    const currentStations=new Set(train.stops.map(stop=>stop.s));
+    for(const station of Object.keys(mapped)){
+      if(!currentStations.has(station))delete mapped[station];
+    }
+  }
+
+  // 인게임 시간표에는 존재하지만 기존 PLATFORM_DB에 빠져 있던 승강장.
+  // 지평 3·4번은 태백선 계통, 옥계 5번은 대전→강릉 ITX-새마을이 사용한다.
+  if(typeof PLATFORM_DB!=='undefined'){
+    const addPlatform=(station,platform,grades,lines)=>{
+      const key=PLATFORM_DB[station]?station:(PLATFORM_DB[`${station}역`]?`${station}역`:null);
+      if(!key)return;
+      const entry=PLATFORM_DB[key][platform]||(PLATFORM_DB[key][platform]={g:[],l:[]});
+      for(const grade of grades)if(!entry.g.includes(grade))entry.g.push(grade);
+      for(const line of lines)if(!entry.l.includes(line))entry.l.push(line);
+    };
+    addPlatform('지평',3,['무궁화호'],['청량리-태백황지 무궁화호']);
+    addPlatform('지평',4,['무궁화호'],['청량리-태백황지 무궁화호']);
+    addPlatform('옥계',2,['ITX-새마을'],['대전-강릉 ITX새마을']);
+    addPlatform('옥계',5,['ITX-새마을'],['대전-강릉 ITX새마을']);
   }
 })();
