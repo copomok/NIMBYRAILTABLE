@@ -171,7 +171,7 @@
   }
 
   // 인게임 시간표에는 존재하지만 기존 PLATFORM_DB에 빠져 있던 승강장.
-  // 지평 3·4번은 태백선 계통, 옥계 5번은 대전→강릉 ITX-새마을이 사용한다.
+  // 지정 3·4번은 태백선 계통, 옥계 5번은 대전→강릉 ITX-새마을이 사용한다.
   if(typeof PLATFORM_DB!=='undefined'){
     const addPlatform=(station,platform,grades,lines)=>{
       const key=PLATFORM_DB[station]?station:(PLATFORM_DB[`${station}역`]?`${station}역`:null);
@@ -180,9 +180,70 @@
       for(const grade of grades)if(!entry.g.includes(grade))entry.g.push(grade);
       for(const line of lines)if(!entry.l.includes(line))entry.l.push(line);
     };
-    addPlatform('지평',3,['무궁화호'],['청량리-태백황지 무궁화호']);
-    addPlatform('지평',4,['무궁화호'],['청량리-태백황지 무궁화호']);
+    addPlatform('지정',3,['무궁화호'],['청량리-태백황지 무궁화호']);
+    addPlatform('지정',4,['무궁화호'],['청량리-태백황지 무궁화호']);
     addPlatform('옥계',2,['ITX-새마을'],['대전-강릉 ITX새마을']);
     addPlatform('옥계',5,['ITX-새마을'],['대전-강릉 ITX새마을']);
+  }
+
+  // 2026-08-31 노선·역명 개정.
+  // 청량리-태백황지 계통에 잘못 들어간 지평은 인게임 역명인 지정으로 통일한다.
+  for(const train of ALL_TRAINS){
+    for(const stop of train.stops){
+      if(stop.s==='지평')stop.s='지정';
+      const no=Number(train.no);
+      if(no>=1691&&no<=1700&&stop.s==='신동')stop.s='신동(태백)';
+    }
+    const mapped=REAL_PLAT[train.no];
+    if(mapped&&Object.prototype.hasOwnProperty.call(mapped,'지평')){
+      if(!Object.prototype.hasOwnProperty.call(mapped,'지정'))mapped['지정']=mapped['지평'];
+      delete mapped['지평'];
+    }
+    const no=Number(train.no);
+    if(no>=1691&&no<=1700&&mapped&&Object.prototype.hasOwnProperty.call(mapped,'신동')){
+      if(!Object.prototype.hasOwnProperty.call(mapped,'신동(태백)'))mapped['신동(태백)']=mapped['신동'];
+      delete mapped['신동'];
+    }
+  }
+
+  // 경산-건천을 연속 운행하는 전 열차는 대구선을 이용한다.
+  // 한강로-포항 KTX-산천은 기존 시각을 유지하고 무시각 통과역만 보강한다.
+  const appendLine=(train,line)=>{
+    const lines=String(train.line||'').split('·').filter(Boolean);
+    if(!lines.includes(line))lines.push(line);
+    train.line=lines.join('·');
+  };
+  for(const train of ALL_TRAINS){
+    const names=train.stops.map(stop=>stop.s);
+    const usesDaeguLine=names.some((name,index)=>
+      (name==='경산'&&names[index+1]==='건천')||(name==='건천'&&names[index+1]==='경산'));
+    if(usesDaeguLine)appendLine(train,'대구선');
+
+    const no=Number(train.no);
+    if(no<231||no>248)continue;
+    const southbound=train.dir==='down';
+    const start=names.indexOf(southbound?'남대구':'포항');
+    const end=names.indexOf(southbound?'포항':'남대구');
+    if(start<0||end<0||start>=end)continue;
+    const passNames=southbound?['경산','건천','안강']:['안강','건천','경산'];
+    train.stops.splice(start+1,end-start-1,...passNames.map(s=>({s,arr:'통과',dep:null})));
+    appendLine(train,'대구선');
+    const mapped=REAL_PLAT[train.no];
+    if(mapped){
+      delete mapped['경산'];
+      delete mapped['건천'];
+      delete mapped['안강'];
+    }
+  }
+
+  if(typeof STATION_DB!=='undefined'){
+    for(const station of ['경산','건천','안강']){
+      const entry=STATION_DB[`${station}역`]||STATION_DB[station];
+      if(entry&&!entry.lines.includes('대구선'))entry.lines.push('대구선');
+    }
+    const sindong=STATION_DB['신동(태백)역'];
+    if(sindong&&!sindong.lines.includes('청량리-태백황지 무궁화호')){
+      sindong.lines.push('청량리-태백황지 무궁화호');
+    }
   }
 })();

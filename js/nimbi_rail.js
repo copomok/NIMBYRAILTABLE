@@ -2912,7 +2912,7 @@ function trackTrainOnMap(trainNo){
     '경부선':'gyeongbu','경부고속선':'gyeongbuhs','호남고속선':'honamhs','호남선':'honam',
     '전라선':'jeolla','중앙선':'jungang','동해선':'donghae','영동선':'yeongdong',
     '강릉선':'gangreung','중부내륙선':'jungnaelyuk','경전선':'gyeongjeon','제주선':'jeju','충북선':'chungbuk','장항선':'janghang','남부내륙선':'nambunaelyuk',
-    '서산선':'seosan','태안선':'taean','경강선':'seogang','소백선':'sobaek','경북선':'gyeongbuk','태백선':'taebaek','정선선':'jeongseon'
+    '서산선':'seosan','태안선':'taean','경강선':'seogang','소백선':'sobaek','경북선':'gyeongbuk','태백선':'taebaek','정선선':'jeongseon','대구선':'daegu'
   };
 
   // 현재 위치 기준으로 실제 운행 중인 노선 판단
@@ -3226,7 +3226,7 @@ const GRADE_COLORS = {
 };
 
 // 노선명 → MAP_LINES 키, 노선별 인접역 쌍 캐시 (구간 소속 판별용)
-const _lineNameToKey={'경부선':'gyeongbu','경부고속선':'gyeongbuhs','호남고속선':'honamhs','호남선':'honam','전라선':'jeolla','중앙선':'jungang','동해선':'donghae','영동선':'yeongdong','강릉선':'gangreung','중부내륙선':'jungnaelyuk','경전선':'gyeongjeon','제주선':'jeju','충북선':'chungbuk','장항선':'janghang','남부내륙선':'nambunaelyuk','서산선':'seosan','태안선':'taean','경강선':'seogang','소백선':'sobaek','경북선':'gyeongbuk','태백선':'taebaek','정선선':'jeongseon','밀양선':'miryang','세종세천선':'sejongsecheon','교외선':'gyooe','보은선':'boeun'};
+const _lineNameToKey={'경부선':'gyeongbu','경부고속선':'gyeongbuhs','호남고속선':'honamhs','호남선':'honam','전라선':'jeolla','중앙선':'jungang','동해선':'donghae','영동선':'yeongdong','강릉선':'gangreung','중부내륙선':'jungnaelyuk','경전선':'gyeongjeon','제주선':'jeju','충북선':'chungbuk','장항선':'janghang','남부내륙선':'nambunaelyuk','서산선':'seosan','태안선':'taean','경강선':'seogang','소백선':'sobaek','경북선':'gyeongbuk','태백선':'taebaek','정선선':'jeongseon','밀양선':'miryang','세종세천선':'sejongsecheon','교외선':'gyooe','보은선':'boeun','대구선':'daegu'};
 const _mapEdgeCache={};
 function _mapLineEdgeSet(key){
   if(_mapEdgeCache[key])return _mapEdgeCache[key];
@@ -3540,6 +3540,17 @@ gyeongbu:{
   ]
 },
 
+daegu:{
+  name:'대구선', color:'#d97706',
+  routes:[
+    {color:'#d97706', stations:[
+    {n:'경산',x:616,y:636},
+    {n:'건천',x:701,y:622},
+    {n:'안강',x:731,y:582}
+    ]}
+  ]
+},
+
 gyeongbuhs:{
   name:'경부고속선', color:'#388bfd',
   routes:[
@@ -3571,10 +3582,6 @@ gyeongbuhs:{
     {n:'안산',x:154,y:190},
     {n:'원평',x:187,y:214},
     {n:'천안',x:239,y:342}
-    ]},
-    {color:'#388bfd', dash:true, stations:[
-    {n:'남대구',x:567,y:635},
-    {n:'포항',x:757,y:547}
     ]},
     {color:'#388bfd', stations:[
     {n:'청도',x:615,y:683},
