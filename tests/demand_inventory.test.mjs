@@ -34,6 +34,22 @@ assert.ok(shared.competitorCount===1&&shared.competitionMultiplier<1,'비슷한 
 assert.ok(later.transferredDemand>0,'매진 예상 열차의 좌석 초과 수요 일부가 다음 열차로 이동해야 함');
 assert.ok(shared.demand!==rawShared.demand,'경쟁·초과 수요 보정이 잠재 수요에 실제 반영되어야 함');
 c.ALL_TRAINS=[];
+const passTrain={no:'pass',grade:'무궁화호',stops:[
+  {s:'기점',dep:'08:00'},
+  {s:'시간형 통과',arr:'08:20',dep:null},
+  {s:'중간 정차',arr:'08:40',dep:'08:41'},
+  {s:'문자형 통과',arr:'통과',dep:null},
+  {s:'종점',arr:'09:10'}
+]};
+const serviceStops=c.NIMBI_Demand.getStops(passTrain).map(x=>x.s);
+assert.deepEqual(serviceStops,['기점','중간 정차','종점'],'수요와 혼잡도 구간은 실제 정차역만 사용해야 함');
+const passDemand=c.buildTrainODDemand(passTrain,date);
+assert.equal(passDemand.length,3,'통과역을 제외한 정차역 3곳은 OD 3개만 생성해야 함');
+assert.ok(passDemand.every(od=>!od.from.includes('통과')&&!od.to.includes('통과')),'통과역에서 승하차 수요가 생기면 안 됨');
+c.NIMBI_Inventory.invalidate();
+const passInventory=c.getTrainInventorySnapshot(passTrain,date,now);
+assert.deepEqual(passInventory.stops,['기점','중간 정차','종점'],'재고 구간 경계도 정차역과 일치해야 함');
+assert.equal(passInventory.segmentLoads.length,2,'통과역을 지나도 승객 수는 다음 정차역까지 유지되어야 함');
 c.loadTickets=()=>[{id:'standing-gate',trainNo:'gate',travelDate:'2026-08-28',status:'active',fromStn:'서울',toStn:'부산',passengerCount:100,seatClass:'general',seats:[]}];
 const gate={no:'gate',grade:'ITX-마음',stops:[{s:'서울',dep:'08:00'},{s:'부산',arr:'11:00'}]};
 c.NIMBI_Inventory.invalidate();const gateState=c.getSeatInventoryState(gate,'서울','부산','2026-08-28','standing',new Date('2026-07-28T08:00:00'));

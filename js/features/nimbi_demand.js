@@ -7,7 +7,16 @@
   const stops=t=>{
     if(!t)return[];
     if(stopCache.has(t))return stopCache.get(t);
-    const result=(t.stops||[]).filter(x=>toMin(x.arr)!==null||toMin(x.dep)!==null);
+    const timed=(t.stops||[]).filter(x=>toMin(x.arr)!==null||toMin(x.dep)!==null);
+    // 승객 수요·예약 재고·혼잡도는 실제 영업 정차역에서만 변한다.
+    // 기점·종점은 한쪽 시각만 있어도 정차역이며, 중간역은 도착·출발 시각이
+    // 모두 있을 때만 정차로 본다. 한쪽 시각만 있거나 '통과' 표기인 역은
+    // 열차 위치 표시에는 남지만 OD와 재고 구간의 경계에서는 제외한다.
+    const result=timed.filter((x,i)=>{
+      if(i===0||i===timed.length-1)return true;
+      if(x.arr==='통과'||x.dep==='통과')return false;
+      return toMin(x.arr)!==null&&toMin(x.dep)!==null;
+    });
     stopCache.set(t,result);
     return result;
   };
