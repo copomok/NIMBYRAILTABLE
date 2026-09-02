@@ -3327,8 +3327,9 @@ function updateMapTrains(){
   } else displayTrains=running;
 
   // 열차 레이어를 SVG 문자열로 생성
-  const r=Math.max(6, _mapSvgSize.w*0.018);
-  const fs=Math.max(9, _mapSvgSize.w*0.016);
+  // 지도 자체가 먼저 읽히도록 기본 마커를 작게 유지한다. 선택·추적 시에만 확대한다.
+  const r=Math.max(3.5,Math.min(6,_mapSvgSize.w*0.008));
+  const fs=Math.max(8,Math.min(11,_mapSvgSize.w*0.012));
   let layerHtml='<g id="train-layer">';
   displayTrains.forEach(({t,px,py,status,stnA,stnB,posA,posB})=>{
     const gradeColor=GRADE_COLORS[t.grade]||'#888';
@@ -3351,8 +3352,8 @@ function updateMapTrains(){
           transform="rotate(${ang.toFixed(0)},${px.toFixed(1)},${py.toFixed(1)})">▶</text>`;
       }
       // 현재 위치 텍스트 (가장 위)
-      const posLabel=status.atStn?`📍 ${status.atStn} 정차`
-        :(status.prevStn&&status.nextStn?`📍 ${status.prevStn}→${status.nextStn}`:'📍 운행 중');
+      const posLabel=status.atStn?`${status.atStn} 정차`
+        :(status.prevStn&&status.nextStn?`${status.prevStn}→${status.nextStn}`:'운행 중');
       layerHtml+=`<text x="${px.toFixed(1)}" y="${(py-cr-fs*1.5-4).toFixed(1)}"
         text-anchor="middle" font-size="${(fs*0.95).toFixed(1)}" fill="#fff"
         font-family="Noto Sans KR,sans-serif" font-weight="500"
@@ -3362,7 +3363,7 @@ function updateMapTrains(){
     layerHtml+=`<circle cx="${px.toFixed(1)}" cy="${py.toFixed(1)}" r="${cr.toFixed(1)}"
       fill="${color}" stroke="${isTracked?'#fff':'#0d1117'}" stroke-width="${isTracked?3:2}" ${isOncoming?'opacity="0.55"':''}
       style="cursor:pointer" class="train-dot${isTracked?' tracked-train':''}" data-no="${t.no}"/>`;
-    layerHtml+=`<text x="${px.toFixed(1)}" y="${(py-cr-3).toFixed(1)}"
+    layerHtml+=`<text class="train-label${isTracked?' tracked-train-label':''}" x="${px.toFixed(1)}" y="${(py-cr-3).toFixed(1)}"
       text-anchor="middle" font-size="${isTracked?(fs*1.15).toFixed(1):(isOncoming?(fs*0.85).toFixed(1):fs)}" fill="${color}" ${isOncoming?'opacity="0.6"':''}
       font-family="Noto Sans KR,sans-serif" font-weight="${isTracked?'800':'600'}"
       pointer-events="none" paint-order="stroke" stroke="${isTracked?'#0d1117':'none'}" stroke-width="2">${isOncoming?'⇄ ':''}${t.no}</text>`;
@@ -3402,7 +3403,7 @@ function updateMapTrains(){
   const countEl=document.getElementById('map-train-count');
   if(countEl){
     countEl.textContent = _mapTrackedTrain
-      ? `📍 ${_mapTrackedTrain} 추적 중`
+      ? `${_mapTrackedTrain} 추적 중`
       : `운행 중 ${running.length}편`;
   }
 }
@@ -3427,11 +3428,11 @@ function openMapTrainPopup(t, status){
   document.getElementById('map-popup-trains').innerHTML=
     `<div>현재위치: <b>${posText}</b></div>
      <div style="margin-top:4px">${t.line} · ${t.dest}행</div>
-     <button class="btn" style="width:100%;margin-top:10px;font-size:12px" onclick="event.stopPropagation();closeMapPopup();jumpToTrain('${t.no}')">🔢 열차 조회로 이동</button>`;
+     <button class="btn" style="width:100%;margin-top:10px;font-size:12px" onclick="event.stopPropagation();closeMapPopup();jumpToTrain('${t.no}')">열차 조회로 이동</button>`;
   // 주 버튼 = 탑승 여정
   const popupBtn=document.querySelector('#map-popup .btn.btn-primary');
   if(popupBtn){
-    popupBtn.textContent='🚆 탑승 여정';
+    popupBtn.textContent='탑승 여정';
     popupBtn.onclick=(e)=>{e.preventDefault();closeMapPopup();openJourney(t.no);};
   }
   document.getElementById('map-popup').style.display='block';
@@ -3450,7 +3451,7 @@ function openMapPopup(stn, lineName){
     // 전철 노선도: 환승 전철 노선 + 기차 환승 안내
     const xf=_metroXferLines(stn, _metroMapId);
     const chips=xf.map(l=>`<span onclick="closeMapPopup();showMetroMap('${l.id}')" style="cursor:pointer;display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:9px;background:var(--bg3);border:1px solid ${l.color};font-size:11px;font-weight:700;color:var(--text1)"><span style="width:8px;height:8px;border-radius:50%;background:${l.color};flex-shrink:0"></span>${l.name}</span>`).join('');
-    const trainNote=trains.length?`<div style="margin-top:6px">🚆 기차 환승 · ${gradeStr}</div>`:'';
+    const trainNote=trains.length?`<div style="margin-top:6px">기차 환승 · ${gradeStr}</div>`:'';
     document.getElementById('map-popup-sub').textContent=(lineName?lineName+' · ':'')+(xf.length?`환승 ${xf.length}개 노선`:'환승 노선 없음');
     document.getElementById('map-popup-trains').innerHTML=
       (xf.length?`<div style="display:flex;flex-wrap:wrap;gap:4px">${chips}</div>`:'')+trainNote;
@@ -3461,7 +3462,7 @@ function openMapPopup(stn, lineName){
        <div style="margin-top:4px">${gradeStr}</div>`;
   }
   const popupBtn=document.querySelector('#map-popup .btn.btn-primary');
-  if(popupBtn){ popupBtn.textContent='🚉 역 정보 보기'; popupBtn.onclick=(e)=>{if(e)e.preventDefault();goToMapStation();}; }
+  if(popupBtn){ popupBtn.textContent='역 정보 보기'; popupBtn.onclick=(e)=>{if(e)e.preventDefault();goToMapStation();}; }
   document.getElementById('map-popup').style.display='block';
   document.getElementById('map-backdrop').style.display='block';
 }
@@ -3479,7 +3480,7 @@ function closeMapPopup(){
   // 버튼 원래대로 복구 (역 시간표 보기)
   const popupBtn=document.querySelector('#map-popup .btn.btn-primary');
   if(popupBtn){
-    popupBtn.textContent='🏢 시간표 보기';
+    popupBtn.textContent='시간표 보기';
     popupBtn.onclick=()=>goToMapStation();
   }
   _mapCurrentStn=null;
@@ -4610,9 +4611,10 @@ function showMapLine(lineKey, btn){
   // viewBox는 원본 좌표 그대로, width는 컨테이너에 맞게 100%
   parts.push(`<svg viewBox="0 0 ${svgW} ${svgH}" width="100%" data-svgw="${svgW}" data-metro="${line.isMetro?1:0}" style="min-width:${line.isMetro?svgW:Math.min(svgW,400)}px;display:block;overflow:hidden" xmlns="http://www.w3.org/2000/svg">`);
   parts.push(`<rect width="${svgW}" height="${svgH}" fill="var(--bg1)"/>`);
-  // 격자
-  for(let x=0;x<svgW;x+=50)parts.push(`<line x1="${x}" y1="0" x2="${x}" y2="${svgH}" stroke="#21262d" stroke-width="1"/>`);
-  for(let y=0;y<svgH;y+=50)parts.push(`<line x1="0" y1="${y}" x2="${svgW}" y2="${y}" stroke="#21262d" stroke-width="1"/>`);
+  // 좌표 판독을 돕는 보조 격자. 노선보다 먼저 보이지 않도록 테마 토큰과
+  // 낮은 불투명도를 사용한다.
+  for(let x=0;x<svgW;x+=50)parts.push(`<line class="map-coordinate-grid" x1="${x}" y1="0" x2="${x}" y2="${svgH}"/>`);
+  for(let y=0;y<svgH;y+=50)parts.push(`<line class="map-coordinate-grid" x1="0" y1="${y}" x2="${svgW}" y2="${y}"/>`);
 
   // 역 좌표 수집 (첫 등장 기준)
   const stnPos={};
@@ -4700,7 +4702,7 @@ function showMapLine(lineKey, btn){
       // 히트 영역
       parts.push(`<circle cx="${x}" cy="${y}" r="${r2+8}" fill="transparent" style="cursor:pointer" onclick="openMapPopup('${s.n}','${line.name}')"/>`);
       // 역 점
-      parts.push(`<circle cx="${x}" cy="${y}" r="${r2}" fill="#161b22" stroke="${r.color}" stroke-width="${sw}" ${faded?'opacity="0.35"':''} pointer-events="none"/>`);
+      parts.push(`<circle cx="${x}" cy="${y}" r="${r2}" fill="var(--bg2)" stroke="${r.color}" stroke-width="${sw}" ${faded?'opacity="0.35"':''} pointer-events="none"/>`);
       // 역명
       // 인접 역 방향 기반 텍스트 위치 결정
       // 이전/다음 역의 x 평균으로 텍스트를 반대쪽에 배치
@@ -4737,7 +4739,7 @@ function showMapLine(lineKey, btn){
         ty=y+manualOffset[s.n][1]+4;
         anchor=manualOffset[s.n][0]<0?'end':manualOffset[s.n][0]>0?'start':'middle';
       }
-      if(!isMinor) parts.push(`<text x="${tx}" y="${ty}" fill="#e6edf3" font-size="${faded?9.5:(isEnd?12:11)}" font-weight="${isEnd?700:400}" ${faded?'opacity="0.4"':''} text-anchor="${anchor}" pointer-events="none" font-family="Noto Sans KR,sans-serif">${s.n}</text>`);
+      if(!isMinor) parts.push(`<text x="${tx}" y="${ty}" fill="var(--text1)" font-size="${faded?9.5:(isEnd?12:11)}" font-weight="${isEnd?700:400}" ${faded?'opacity="0.4"':''} text-anchor="${anchor}" pointer-events="none" font-family="Noto Sans KR,sans-serif">${s.n}</text>`);
       // 전철 노선도: 환승 노선 색 점 (역명 옆) + 기차 환승 표시
       if(line.isMetro&&!isMinor&&!faded){
         const xf=(_xferMap&&_xferMap[s.n])||[];
@@ -4749,10 +4751,10 @@ function showMapLine(lineKey, btn){
           else if(anchor==='end')dx0=tx-tw-5-(xf.length-1)*8-(hasTrain?11:0);
           else dx0=tx+tw/2+5;
           xf.slice(0,5).forEach((l2,k)=>{
-            parts.push(`<circle cx="${dx0+k*8}" cy="${dy0}" r="3.1" fill="${l2.color}" stroke="#161b22" stroke-width="1" pointer-events="none"><title>${l2.name} 환승</title></circle>`);
+            parts.push(`<circle cx="${dx0+k*8}" cy="${dy0}" r="3.1" fill="${l2.color}" stroke="var(--bg2)" stroke-width="1" pointer-events="none"><title>${l2.name} 환승</title></circle>`);
           });
           if(xf.length>5)parts.push(`<text x="${dx0+5*8}" y="${dy0+3}" fill="#8b949e" font-size="8" pointer-events="none" font-family="Noto Sans KR,sans-serif">+${xf.length-5}</text>`);
-          if(hasTrain)parts.push(`<text x="${dx0+Math.min(xf.length,5)*8+(xf.length?2:0)}" y="${dy0+3.5}" font-size="9" pointer-events="none">🚆</text>`);
+          if(hasTrain){const ix=dx0+Math.min(xf.length,5)*8+(xf.length?3:0);parts.push(`<rect x="${ix}" y="${dy0-3.5}" width="7" height="7" rx="1.5" fill="none" stroke="var(--text2)" stroke-width="1" pointer-events="none"><title>일반철도 환승</title></rect>`);}
         }
       }
     });
@@ -8758,6 +8760,7 @@ function renderSettingsSection(el){
   ];
   const sd=getStationDefaults();
   const rd=getRouteDefaults();
+  let themePref='system';try{themePref=localStorage.getItem('nimbi_theme')||'system';}catch(e){}
   const prefButtons=[
     ['window','🪟 창측'],['aisle','🚶 복도측'],['power','⚡ 콘센트'],
     ['front','⬆ 앞쪽'],['rear','⬇ 뒤쪽'],['fwd','▲ 순방향'],['rev','▽ 역방향']
@@ -8774,6 +8777,12 @@ function renderSettingsSection(el){
     <div style="font-size:11px;color:var(--text3);margin-top:10px;line-height:1.6">
       모드는 이 기기에만 저장됩니다. 워치 모드는 최소 화면으로 전환되며, 화면의 📱 버튼으로 언제든 돌아올 수 있습니다.
     </div>
+    <div class="settings-divider"></div>
+    <div class="settings-title">화면 테마</div>
+    <div class="settings-chip-row" role="group" aria-label="화면 테마 선택">
+      ${[['light','라이트'],['dark','다크'],['system','시스템']].map(([value,label])=>`<button class="seat-auto-chip${themePref===value?' on':''}" onclick="setNimbiTheme('${value}');renderSettingsSection(document.getElementById('my-sub-content'))">${label}</button>`).join('')}
+    </div>
+    <div class="settings-help">시스템은 기기의 밝은 화면·어두운 화면 설정을 자동으로 따릅니다.</div>
     <div class="settings-divider"></div>
     <div class="settings-title">지연 시뮬레이션</div>
     <div class="sim-toggle-card">
