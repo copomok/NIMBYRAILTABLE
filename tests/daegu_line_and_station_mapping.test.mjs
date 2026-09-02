@@ -25,6 +25,23 @@ test('청량리-태백황지 무궁화호 역명을 지정·신동(태백)으로
   }
 });
 
+test('청량리-태백황지 무궁화호 전 편에 무릉 정차 시각이 있다',()=>{
+  const expected={
+    1691:['7:36','7:37'],1692:['8:13','8:14'],1693:['10:31','10:32'],
+    1694:['11:08','11:09'],1695:['13:31','13:32'],1696:['14:08','14:09'],
+    1697:['16:36','16:37'],1698:['17:13','17:14'],1699:['19:48','19:49'],
+    1700:['20:25','20:26']
+  };
+  for(const [no,times] of Object.entries(expected)){
+    const train=trains.find(item=>item.no===no);
+    const index=train.stops.findIndex(stop=>stop.s==='무릉');
+    assert.ok(index>0,`#${no} 무릉 누락`);
+    assert.deepEqual([train.stops[index].arr,train.stops[index].dep],times,`#${no} 무릉 시각`);
+    const neighbors=[train.stops[index-1].s,train.stops[index+1].s];
+    assert.deepEqual(Array.from(neighbors),train.dir==='down'?['신동(태백)','사북']:['사북','신동(태백)'],`#${no} 무릉 순서`);
+  }
+});
+
 test('경산-건천 구간 운행 열차는 모두 대구선 노선 정보를 가진다',()=>{
   const users=trains.filter(train=>train.stops.some((stop,index)=>{
     const next=train.stops[index+1]?.s;

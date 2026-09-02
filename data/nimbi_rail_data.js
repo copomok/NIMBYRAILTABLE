@@ -1518,6 +1518,22 @@ ALL_TRAINS.push(
     }
   };
   for(const no of [1692,1694,1696,1698])rebuildFromTemplate(no,1700);
+
+  // 청량리-태백황지 무궁화호: 인게임 태백선 템플릿에서 누락된 무릉 정차만 복원한다.
+  // 기존 열차별 출발·도착 시각은 유지하고 신동(태백)-사북 사이의 실측 간격을 적용한다.
+  const mureungTimes={
+    1691:['7:36','7:37'],1692:['8:13','8:14'],1693:['10:31','10:32'],
+    1694:['11:08','11:09'],1695:['13:31','13:32'],1696:['14:08','14:09'],
+    1697:['16:36','16:37'],1698:['17:13','17:14'],1699:['19:48','19:49'],
+    1700:['20:25','20:26']
+  };
+  for(const [no,times] of Object.entries(mureungTimes)){
+    const train=ALL_TRAINS.find(item=>item.no===no);
+    if(!train||train.stops.some(stop=>stop.s==='무릉'))continue;
+    const anchor=train.stops.findIndex(stop=>stop.s===(train.dir==='down'?'사북':'신동'));
+    if(anchor<0)continue;
+    train.stops.splice(anchor,0,{s:'무릉',arr:times[0],dep:times[1]});
+  }
   rebuildFromTemplate(1276,1274);
   rebuildFromTemplate(1539,1541);
   rebuildFromTemplate(312,310);
