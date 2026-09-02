@@ -1,13 +1,13 @@
 {
   "name": "님비레일 시간표",
   "short_name": "님비레일",
-  "description": "님비레일 열차 시간표 조회 앱",
+  "description": "NIMBY Rail 철도 네트워크·열차 운행 정보 플랫폼",
   "start_url": "/NIMBYRAILTABLE/",
   "scope": "/NIMBYRAILTABLE/",
   "display": "standalone",
-  "orientation": "portrait",
-  "background_color": "#0d1117",
-  "theme_color": "#161b22",
+  "orientation": "any",
+  "background_color": "#f3f5f7",
+  "theme_color": "#f3f5f7",
   "lang": "ko",
   "icons": [
     {

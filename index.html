@@ -4,12 +4,11 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>님비레일 시간표</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="assets/css/nimbi_rail.css?v=2026080302">
+  <link rel="stylesheet" href="assets/css/nimbi_redesign.css?v=2026090201">
 <!-- PWA -->
 <link rel="manifest" href="manifest.json">
-<meta name="theme-color" content="#161b22">
+<meta name="theme-color" content="#f3f5f7">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black">
@@ -17,16 +16,79 @@
 <link rel="apple-touch-icon" href="assets/icons/icon-192.png">
 </head>
 <body>
-<header>
-  <button class="logo" type="button" onclick="switchTab('home')" aria-label="홈으로 이동"><span class="logo-icon">🚆</span>님비레일 시간표</button>
+<a class="skip-link" href="#main-content">본문으로 건너뛰기</a>
+<svg class="nr-symbols" aria-hidden="true">
+  <symbol id="i-rail" viewBox="0 0 24 24"><path d="M7 3h10a3 3 0 0 1 3 3v8a3 3 0 0 1-3 3H7a3 3 0 0 1-3-3V6a3 3 0 0 1 3-3Zm0 3v6h10V6H7Zm1 14 2-3m6 3-2-3M8 9h8"/></symbol>
+  <symbol id="i-home" viewBox="0 0 24 24"><path d="m3 11 9-8 9 8v9h-6v-6H9v6H3v-9Z"/></symbol>
+  <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m16 16 5 5"/></symbol>
+  <symbol id="i-train" viewBox="0 0 24 24"><path d="M6 3h12a2 2 0 0 1 2 2v11a3 3 0 0 1-3 3H7a3 3 0 0 1-3-3V5a2 2 0 0 1 2-2Zm-2 8h16M8 7h3m2 0h3M8 22l2-3m6 3-2-3"/></symbol>
+  <symbol id="i-station" viewBox="0 0 24 24"><path d="M5 21V5l7-3 7 3v16M2 21h20M9 8h6m-6 4h6m-6 4h6"/></symbol>
+  <symbol id="i-route" viewBox="0 0 24 24"><circle cx="6" cy="18" r="3"/><circle cx="18" cy="6" r="3"/><path d="M8 16 16 8"/></symbol>
+  <symbol id="i-map" viewBox="0 0 24 24"><path d="m3 6 6-3 6 3 6-3v15l-6 3-6-3-6 3V6Zm6-3v15m6-12v15"/></symbol>
+  <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v6l4 2"/></symbol>
+  <symbol id="i-chart" viewBox="0 0 24 24"><path d="M4 20V10m6 10V4m6 16v-7m4 7H2"/></symbol>
+  <symbol id="i-notice" viewBox="0 0 24 24"><path d="M4 13V9l14-5v14L4 13Zm0 0 2 7h4l-2-6"/></symbol>
+  <symbol id="i-user" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></symbol>
+  <symbol id="i-refresh" viewBox="0 0 24 24"><path d="M20 7V3l-3 3a8 8 0 1 0 2 9M20 3h-5"/></symbol>
+  <symbol id="i-more" viewBox="0 0 24 24"><circle cx="5" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/></symbol>
+  <symbol id="i-close" viewBox="0 0 24 24"><path d="m5 5 14 14M19 5 5 19"/></symbol>
+</svg>
+
+<aside class="app-sidebar" aria-label="주요 메뉴">
+  <button class="sidebar-brand" type="button" onclick="nimbiNavigate('home')" aria-label="NIMBY Rail 홈">
+    <span class="sidebar-brand-mark"><svg><use href="#i-rail"/></svg></span>
+    <span><strong>NIMBY Rail</strong><small>Railway Information</small></span>
+  </button>
+  <div class="sidebar-mode" role="group" aria-label="서비스 모드">
+    <button type="button" data-mode-switch="train" onclick="setAppMode('train')">기차</button>
+    <button type="button" data-mode-switch="metro" onclick="setAppMode('metro')">전철</button>
+  </div>
+  <nav class="sidebar-nav">
+    <button type="button" data-shell-tab="home" onclick="nimbiNavigate('home')"><svg><use href="#i-home"/></svg><span>홈</span></button>
+    <div class="sidebar-group" data-nav-mode="train">
+      <p>기차 정보</p>
+      <button type="button" data-shell-tab="train" onclick="nimbiNavigate('train')"><svg><use href="#i-train"/></svg><span>열차</span></button>
+      <button type="button" data-shell-tab="station" onclick="nimbiNavigate('station')"><svg><use href="#i-station"/></svg><span>역 시간표</span></button>
+      <button type="button" data-shell-tab="route" onclick="nimbiNavigate('route')"><svg><use href="#i-route"/></svg><span>출도착 검색</span></button>
+      <button type="button" data-shell-tab="ops" onclick="nimbiNavigate('ops')"><svg><use href="#i-clock"/></svg><span>열차 운용</span></button>
+      <button type="button" data-shell-tab="delay" onclick="nimbiNavigate('delay')"><svg><use href="#i-clock"/></svg><span>운행 지연</span></button>
+    </div>
+    <div class="sidebar-group" data-nav-mode="metro">
+      <p>전철 정보</p>
+      <button type="button" data-shell-tab="metrolines" onclick="nimbiNavigate('metrolines')"><svg><use href="#i-route"/></svg><span>노선</span></button>
+      <button type="button" data-shell-tab="metroroute" onclick="nimbiNavigate('metroroute')"><svg><use href="#i-search"/></svg><span>경로 검색</span></button>
+      <button type="button" data-shell-tab="stationinfo" onclick="nimbiNavigate('stationinfo')"><svg><use href="#i-station"/></svg><span>역 정보</span></button>
+    </div>
+    <div class="sidebar-group">
+      <p>네트워크</p>
+      <button type="button" data-shell-tab="map" onclick="nimbiNavigate('map')"><svg><use href="#i-map"/></svg><span>노선도</span></button>
+      <button type="button" data-shell-tab="stats" onclick="nimbiNavigate('stats')"><svg><use href="#i-chart"/></svg><span>운행 통계</span></button>
+      <button type="button" data-shell-tab="notice" onclick="nimbiNavigate('notice')"><svg><use href="#i-notice"/></svg><span>공지사항</span></button>
+    </div>
+  </nav>
+  <button class="sidebar-account" type="button" onclick="openMyPage()"><svg><use href="#i-user"/></svg><span><strong>마이페이지</strong><small>승차권 · 여행 · 설정</small></span></button>
+</aside>
+
+<header class="top-command-bar">
+  <button class="logo mobile-brand" type="button" onclick="nimbiNavigate('home')" aria-label="홈으로 이동"><span class="logo-icon"><svg><use href="#i-rail"/></svg></span><span>NIMBY Rail</span></button>
+  <div class="page-context"><span id="shell-section-label">Railway Overview</span><strong id="shell-page-title">홈</strong></div>
+  <button class="global-search-trigger" type="button" onclick="openGlobalSearch()"><svg><use href="#i-search"/></svg><span>역, 열차번호, 노선 검색</span><kbd>⌘ K</kbd></button>
   <span id="header-clock" style="font-family:var(--mono);font-size:14px;font-weight:600;color:var(--text1);letter-spacing:1px"></span>
-  <button class="hdr-refresh-btn" id="hdr-refresh" onclick="refreshCurrentTab()" title="현재 탭 새로고침">🔄</button>
-  <button class="my-btn" onclick="openMyPage()" title="마이페이지">
-    <span class="my-btn-line"></span>
-    <span class="my-btn-line"></span>
-    <span class="my-btn-line"></span>
+  <button class="hdr-refresh-btn" id="hdr-refresh" onclick="refreshCurrentTab()" title="현재 화면 새로고침" aria-label="현재 화면 새로고침"><svg><use href="#i-refresh"/></svg></button>
+  <button class="my-btn" onclick="openMyPage()" title="마이페이지" aria-label="마이페이지 열기">
+    <svg><use href="#i-user"/></svg>
   </button>
 </header>
+
+<div class="global-search" id="global-search" hidden>
+  <div class="global-search-backdrop" onclick="closeGlobalSearch()"></div>
+  <section class="global-search-dialog" role="dialog" aria-modal="true" aria-labelledby="global-search-title">
+    <header><svg><use href="#i-search"/></svg><label id="global-search-title" for="global-search-input">통합 검색</label><button type="button" onclick="closeGlobalSearch()" aria-label="검색 닫기"><svg><use href="#i-close"/></svg></button></header>
+    <input id="global-search-input" type="search" placeholder="역, 열차번호, 행선지, 노선을 입력하세요" autocomplete="off" aria-controls="global-search-results">
+    <div id="global-search-results" class="global-search-results" role="listbox"></div>
+    <footer><span><kbd>↑</kbd><kbd>↓</kbd> 이동</span><span><kbd>Enter</kbd> 열기</span><span><kbd>Esc</kbd> 닫기</span></footer>
+  </section>
+</div>
 
 <!-- 마이페이지 오버레이 -->
 <div class="my-backdrop" id="my-backdrop" onclick="closeMyPage()"></div>
@@ -119,19 +181,19 @@
   </div>
   <div id="my-sub-content"></div>
 </div>
-<div class="container">
+<main class="container" id="main-content" tabindex="-1">
   <div class="tabs">
-    <button class="tab" onclick="switchTab('train')" id="tab-train">🔢 열차</button>
-    <button class="tab" onclick="switchTab('station')" id="tab-station">🏢 시간표</button>
-    <button class="tab" onclick="switchTab('route')" id="tab-route">🔍 출도착</button>
-    <button class="tab" onclick="switchTab('ops')" id="tab-ops">🔁 운용</button>
-    <button class="tab" onclick="switchTab('metrolines')" id="tab-metrolines" style="display:none">🚇 노선</button>
-    <button class="tab" onclick="switchTab('metroroute')" id="tab-metroroute" style="display:none">🔍 경로</button>
-    <button class="tab" onclick="switchTab('map')" id="tab-map">🗺️ 노선도</button>
-    <button class="tab" onclick="switchTab('stats')" id="tab-stats">📊 통계</button>
-    <button class="tab" onclick="switchTab('notice')" id="tab-notice">📢 공지</button>
-    <button class="tab" onclick="switchTab('stationinfo')" id="tab-stationinfo">🚉 역 정보</button>
-    <button class="tab" onclick="switchTab('delay')" id="tab-delay">⏱️ 지연</button>
+    <button class="tab" onclick="switchTab('train')" id="tab-train">열차</button>
+    <button class="tab" onclick="switchTab('station')" id="tab-station">시간표</button>
+    <button class="tab" onclick="switchTab('route')" id="tab-route">출도착</button>
+    <button class="tab" onclick="switchTab('ops')" id="tab-ops">운용</button>
+    <button class="tab" onclick="switchTab('metrolines')" id="tab-metrolines" style="display:none">노선</button>
+    <button class="tab" onclick="switchTab('metroroute')" id="tab-metroroute" style="display:none">경로</button>
+    <button class="tab" onclick="switchTab('map')" id="tab-map">노선도</button>
+    <button class="tab" onclick="switchTab('stats')" id="tab-stats">통계</button>
+    <button class="tab" onclick="switchTab('notice')" id="tab-notice">공지</button>
+    <button class="tab" onclick="switchTab('stationinfo')" id="tab-stationinfo">역 정보</button>
+    <button class="tab" onclick="switchTab('delay')" id="tab-delay">지연</button>
     <button class="tab" id="tab-book" style="display:none" onclick="switchTab('book')">🎫 열차 예매</button>
     <!-- 알람·즐겨찾기·승차권은 마이페이지로 이동 -->
     <button class="tab" id="tab-alarm" style="display:none" onclick="switchTab('alarm')">🔔 알람</button>
@@ -141,6 +203,7 @@
   </div>
 
   <div class="panel active" id="panel-home">
+    <div id="home-network-overview"></div>
     <div id="home-trip-widget"></div>
     <div id="daily-discovery"></div>
   </div>
@@ -476,7 +539,15 @@
   <div class="panel" id="panel-book">
     <div id="result-book"></div>
   </div>
-</div>
+</main>
+
+<nav class="mobile-bottom-nav" aria-label="모바일 주요 메뉴">
+  <button type="button" data-mobile-tab="home" onclick="nimbiNavigate('home')"><svg><use href="#i-home"/></svg><span>홈</span></button>
+  <button type="button" data-mobile-tab="map" onclick="nimbiNavigate('map')"><svg><use href="#i-map"/></svg><span>노선도</span></button>
+  <button type="button" data-mobile-tab="station" onclick="nimbiMobileStation()"><svg><use href="#i-station"/></svg><span>역</span></button>
+  <button type="button" data-mobile-tab="train" onclick="nimbiMobileTrain()"><svg><use href="#i-train"/></svg><span>열차</span></button>
+  <button type="button" onclick="openMyPage()"><svg><use href="#i-more"/></svg><span>더보기</span></button>
+</nav>
 
 <div class="map-popup-backdrop" id="map-backdrop" style="display:none" onclick="closeMapPopup()"></div>
 <div class="map-popup" id="map-popup" style="display:none">
@@ -510,6 +581,7 @@
 <script src="js/nimbi_rail.js?v=2026083102"></script>
   <script src="js/features/nimbi_congestion.js?v=2026073110"></script>
   <script src="js/features/nimbi_engagement.js?v=2026073110"></script>
+  <script src="js/features/nimbi_shell.js?v=2026090201"></script>
   <script>
   if('serviceWorker' in navigator){
     window.addEventListener('load', ()=>{
