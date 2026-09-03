@@ -152,16 +152,14 @@
   function trainDelay(train){return typeof simDelayAt==='function'?Math.max(0,Number(simDelayAt(train))||0):0;}
   function renderNetworkPreview(appMode){
     const routes=appMode==='metro'&&typeof METRO_LINES!=='undefined'
-      ?METRO_LINES.slice(0,6).map(line=>({name:line.name,color:line.color||'var(--accent)'}))
-      :typeof MAP_LINES!=='undefined'?Object.values(MAP_LINES).slice(0,6).map(line=>({name:line.name,color:line.color||'var(--accent)'})):[];
-    return `<div class="network-preview" role="img" aria-label="네트워크 노선 미리보기"><div class="network-preview-lines">${routes.map((route,index)=>`<button type="button" style="--route-color:${esc(route.color)};--route-offset:${index}" onclick="nimbiNavigate('${appMode==='metro'?'metrolines':'map'}')"><i></i><span>${esc(route.name)}</span></button>`).join('')}</div><button class="network-preview-open" type="button" onclick="nimbiNavigate('map')">${svg('i-map')} 전체 네트워크 열기</button></div>`;
+      ?METRO_LINES.slice(0,6).map(line=>({key:`metro:${line.id}`,name:line.name,color:line.color||'var(--accent)'}))
+      :typeof MAP_LINES!=='undefined'?Object.entries(MAP_LINES).slice(0,6).map(([key,line])=>({key,name:line.name,color:line.color||'var(--accent)'})):[];
+    return `<div class="network-preview" role="img" aria-label="네트워크 노선 미리보기"><div class="network-preview-lines">${routes.map((route,index)=>`<button type="button" style="--route-color:${esc(route.color)};--route-offset:${index}" onclick="nimbiOpenNetwork('${esc(route.key)}')"><i></i><span>${esc(route.name)}</span></button>`).join('')}</div><button class="network-preview-open" type="button" onclick="nimbiOpenNetwork('all')">${svg('i-map')} 전체 네트워크 열기</button></div>`;
   }
   function renderOverview(){
     const host=document.getElementById('home-network-overview');if(!host||typeof ALL_TRAINS==='undefined')return;
     const appMode=mode();
-    const stationCount=appMode==='metro'&&typeof METRO_LINES!=='undefined'
-      ?new Set(METRO_LINES.flatMap(line=>(line.routes||[{stations:line.stations||[]}]).flatMap(route=>route.stations||[]))).size
-      :new Set(ALL_TRAINS.flatMap(train=>(train.stops||[]).map(stop=>stop.s))).size;
+    const stationCount=directoryStations().length;
     const routeCount=appMode==='metro'&&typeof METRO_LINES!=='undefined'?METRO_LINES.length:(typeof MAP_LINES!=='undefined'?Object.keys(MAP_LINES).length:new Set(ALL_TRAINS.map(train=>train.line)).size);
     let running=[];
     if(typeof getCurrentStatus==='function')running=ALL_TRAINS.filter(train=>getCurrentStatus(train)?.status==='running');
@@ -194,13 +192,29 @@
     if(found&&typeof openStationDetail==='function')openStationDetail(found);else{openGlobalSearch();const input=document.getElementById('global-search-input');if(input){input.value=q;renderSearch(q);}}
   };
 
+  window.nimbiOpenNetwork=function(key){
+    window.nimbiNavigate('map');
+    requestAnimationFrame(()=>{
+      if(mode()==='metro'&&typeof showMetroMap==='function')showMetroMap(key==='all'?'__all__':String(key).replace(/^metro:/,''));
+      else if(typeof showMapLine==='function'){
+        const target=key==='all'?'all':key;
+        const button=[...document.querySelectorAll('.map-line-tab')].find(el=>(el.getAttribute('onclick')||'').includes(`'${target}'`));
+        showMapLine(target,button||null);
+      }
+    });
+  };
+
   function directoryStations(){
-    if(typeof STATION_DB==='undefined')return [];
     const isMetro=mode()==='metro';
     const lineMap={},counts={};
-    if(isMetro&&typeof METRO_LINES!=='undefined')METRO_LINES.forEach(line=>(line.routes||[{stations:line.stations||[]}]).forEach(route=>(route.stations||[]).forEach(name=>{(lineMap[name]=lineMap[name]||new Set()).add(line.name);})));
-    if(!isMetro&&typeof ALL_TRAINS!=='undefined')ALL_TRAINS.forEach(train=>(train.stops||[]).forEach(stop=>{counts[stop.s]=(counts[stop.s]||0)+1;(lineMap[stop.s]=lineMap[stop.s]||new Set()).add(train.line);}));
-    return Object.entries(STATION_DB).map(([key,data])=>{const name=key.replace(/역$/,'');return{key,name,lines:[...(lineMap[name]||[])],platform:(data.platforms||[]).join(' · ')||'—',count:counts[name]||0};}).filter(item=>lineMap[item.name]?.size);
+    const add=(raw,line)=>{const name=typeof raw==='string'?raw:(raw?.n||raw?.name);if(name)(lineMap[name]=lineMap[name]||new Set()).add(line);};
+    if(isMetro&&typeof METRO_LINES!=='undefined')METRO_LINES.forEach(line=>(line.routes||[{stations:line.stations||[]}]).forEach(route=>(route.stations||[]).forEach(station=>add(station,line.name))));
+    if(!isMetro&&typeof MAP_LINES!=='undefined')Object.values(MAP_LINES).forEach(line=>(line.routes||[]).forEach(route=>(route.stations||[]).forEach(station=>add(station,line.name))));
+    if(!isMetro&&typeof ALL_TRAINS!=='undefined')ALL_TRAINS.forEach(train=>(train.stops||[]).forEach(stop=>{counts[stop.s]=(counts[stop.s]||0)+1;}));
+    return Object.keys(lineMap).map(name=>{
+      const db=typeof STATION_DB!=='undefined'?(STATION_DB[name]||STATION_DB[name+'역']||{}):{};
+      return{key:name,name,lines:[...lineMap[name]],platform:(db.platforms||[]).join(' · ')||'—',count:counts[name]||0};
+    });
   }
   function renderStationDirectory(){
     const host=document.getElementById('station-directory-shell');if(!host)return;
@@ -209,7 +223,7 @@
     const perPage=60,pages=Math.max(1,Math.ceil(filtered.length/perPage));stationDirectoryPage=Math.min(stationDirectoryPage,pages-1);const rows=filtered.slice(stationDirectoryPage*perPage,(stationDirectoryPage+1)*perPage);
     host.innerHTML=`<section class="station-directory" aria-labelledby="station-directory-title"><header class="directory-header"><div><span>STATIONS</span><h1 id="station-directory-title">역</h1><p>${mode()==='metro'?'전철':'기차'} 운행 데이터에 등록된 역을 찾습니다.</p></div><button type="button" onclick="nimbiShowNearbyStations()">${svg('i-map')} 가까운 역</button></header><div class="directory-toolbar"><label>${svg('i-search')}<input type="search" value="${esc(stationDirectoryQuery)}" placeholder="역 검색 (초성 지원)" oninput="nimbiFilterStations(this.value)"></label><select onchange="nimbiFilterStationLine(this.value)" aria-label="노선 필터"><option value="all">전체 노선</option>${lineOptions.map(line=>`<option value="${esc(line)}"${line===stationDirectoryLine?' selected':''}>${esc(line)}</option>`).join('')}</select><span>${filtered.length.toLocaleString()}개 역</span></div><div class="station-table"><div class="station-table-head"><span>역</span><span>노선</span><span>운행 열차</span><span>승강장</span><span></span></div>${rows.map(item=>`<button type="button" onclick="nimbiOpenStation('${esc(item.key)}')"><span><strong>${esc(item.name)}</strong><small>${esc(item.key.toUpperCase())}</small></span><span class="station-lines">${item.lines.slice(0,3).map((line,index)=>`<i style="--line-index:${index}">${esc(line)}</i>`).join('')}${item.lines.length>3?`<small>외 ${item.lines.length-3}개</small>`:''}</span><b>${item.count?item.count.toLocaleString():'—'}</b><span>${esc(item.platform)}</span>${svg('i-chevron')}</button>`).join('')||'<div class="rail-empty">조건에 맞는 역이 없습니다.</div>'}</div>${pages>1?`<nav class="directory-pages" aria-label="역 목록 페이지"><button ${stationDirectoryPage===0?'disabled':''} onclick="nimbiStationPage(-1)">이전</button><span>${stationDirectoryPage+1} / ${pages}</span><button ${stationDirectoryPage===pages-1?'disabled':''} onclick="nimbiStationPage(1)">다음</button></nav>`:''}</section>`;
   }
-  window.nimbiOpenStationDirectory=function(){document.body.classList.remove('station-detail-open');document.body.classList.add('station-directory-open');window.nimbiNavigate('stationinfo');renderStationDirectory();};
+  window.nimbiOpenStationDirectory=function(){document.body.classList.remove('station-detail-open');document.body.classList.add('station-directory-open');window.nimbiNavigate('stationinfo');window.scrollTo({top:0,behavior:'auto'});renderStationDirectory();};
   window.nimbiOpenStation=function(name){document.body.classList.remove('station-directory-open');document.body.classList.add('station-detail-open');if(typeof openStationDetail==='function')openStationDetail(name);};
   window.nimbiShowNearbyStations=function(){document.body.classList.remove('station-directory-open');document.body.classList.add('station-detail-open');window.nimbiNavigate('stationinfo');if(typeof renderStationInfo==='function')renderStationInfo();};
   window.nimbiFilterStations=function(value){stationDirectoryQuery=value;stationDirectoryPage=0;renderStationDirectory();};

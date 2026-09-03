@@ -857,9 +857,9 @@ function renderDetail(t){
           <div class="detail-meta">${first?.s||''} ${depT} 발 → ${last?.s||''} ${arrT} 착</div>
           <div class="detail-meta" style="margin-top:2px">정차역 ${totalStops}개 &nbsp;·&nbsp; 소요시간 ${fmtDurKor(durMin(depT,arrT))}</div>
         </div>
-        <div style="display:flex;gap:4px;flex-shrink:0">
-          <button class="share-btn" style="position:static" onclick="trackTrainOnMap('${t.no}')">🗺️</button>
-          <button class="share-btn" style="position:static" onclick="shareTrainLink('${t.no}')">🔗</button>
+        <div class="detail-head-actions">
+          <button class="share-btn" onclick="trackTrainOnMap('${t.no}')" title="지도로 보기 · 추적 모드" aria-label="${t.no}번 열차 지도로 보기">🗺️</button>
+          <button class="share-btn" onclick="shareTrainLink('${t.no}')" title="열차 링크 공유" aria-label="${t.no}번 열차 링크 공유">🔗</button>
         </div>
       </div>
     </div>
@@ -3065,7 +3065,7 @@ function toggleMapFilterPanel(){
 function toggleMapLayer(){
   _mapLayerMode = _mapLayerMode==='station'?'train':'station';
   const btn=document.getElementById('map-layer-btn');
-  if(btn) btn.textContent=_mapLayerMode==='station'?'🚉 역 우선':'🚆 열차 우선';
+  if(btn) btn.textContent=_mapLayerMode==='station'?'역 우선':'열차 우선';
   if(_mapCurrentLine) updateMapTrains();
 }
 
@@ -3370,14 +3370,14 @@ function updateMapTrains(){
   });
   layerHtml+='</g>';
 
-  // 열차 레이어를 역 히트 영역보다 아래에 삽입
-  // (역 클릭이 열차 클릭보다 우선되도록)
+  // 기본 삽입 위치는 역 히트 영역 아래. 최종 우선순위는 아래에서 명시적으로
+  // 재배치하고 pointer-events도 함께 전환한다.
   const tempDiv=document.createElement('div');
   tempDiv.innerHTML=`<svg>${layerHtml}</svg>`;
   const newLayer=tempDiv.querySelector('g');
   if(newLayer){
     // 첫 번째 circle(역 히트 영역) 앞에 삽입
-    const firstHit=svgEl.querySelector('circle[fill="transparent"]');
+    const firstHit=svgEl.querySelector('.map-station-hit');
     if(firstHit) svgEl.insertBefore(newLayer, firstHit);
     else svgEl.appendChild(newLayer);
   }
@@ -3391,12 +3391,13 @@ function updateMapTrains(){
   // 레이어 모드에 따라 역/열차 우선순위 결정
   if(_mapLayerMode==='station'){
     // 역 우선: 역 히트 영역을 맨 위로
-    const hitCircles=[...svgEl.querySelectorAll('circle[fill="transparent"]')];
-    hitCircles.forEach(c=>svgEl.appendChild(c));
+    const hitCircles=[...svgEl.querySelectorAll('.map-station-hit')];
+    hitCircles.forEach(c=>{c.style.pointerEvents='all';svgEl.appendChild(c);});
   } else {
     // 열차 우선: 열차 레이어를 맨 위로
+    svgEl.querySelectorAll('.map-station-hit').forEach(c=>{c.style.pointerEvents='none';});
     const trainLayer=svgEl.querySelector('#train-layer');
-    if(trainLayer) svgEl.appendChild(trainLayer);
+    if(trainLayer){trainLayer.style.pointerEvents='all';svgEl.appendChild(trainLayer);}
   }
 
   // 운행 열차 수 / 추적 상태 업데이트
@@ -4700,9 +4701,9 @@ function showMapLine(lineKey, btn){
       const r2=isMinor?2.2:(faded?3.5:(isEnd?7:5));
       const sw=isMinor?1.2:(faded?1.5:(isEnd?3:2));
       // 히트 영역
-      parts.push(`<circle cx="${x}" cy="${y}" r="${r2+8}" fill="transparent" style="cursor:pointer" onclick="openMapPopup('${s.n}','${line.name}')"/>`);
+      parts.push(`<circle class="map-station-hit" cx="${x}" cy="${y}" r="${r2+8}" fill="transparent" style="cursor:pointer" onclick="openMapPopup('${s.n}','${line.name}')"/>`);
       // 역 점
-      parts.push(`<circle cx="${x}" cy="${y}" r="${r2}" fill="var(--bg2)" stroke="${r.color}" stroke-width="${sw}" ${faded?'opacity="0.35"':''} pointer-events="none"/>`);
+      parts.push(`<circle class="map-station-node" cx="${x}" cy="${y}" r="${r2}" fill="var(--bg2)" stroke="${r.color}" stroke-width="${sw}" ${faded?'opacity="0.35"':''} pointer-events="none"/>`);
       // 역명
       // 인접 역 방향 기반 텍스트 위치 결정
       // 이전/다음 역의 x 평균으로 텍스트를 반대쪽에 배치
@@ -12663,7 +12664,7 @@ function _allAsMapLine(){
   if(_allMapLineCache)return _allMapLineCache;
   const routes=[];
   for(const ml of Object.values(MAP_LINES)) for(const r of ml.routes) routes.push(r);
-  return _allMapLineCache={name:'전국 관제',color:'#8b949e',routes};
+  return _allMapLineCache={name:'전체 네트워크',color:'#8b949e',routes};
 }
 
 // ── 공용: 주요역 목록(정차 편수 상위) ──
