@@ -246,4 +246,29 @@
       sindong.lines.push('청량리-태백황지 무궁화호');
     }
   }
+
+  // 전수 승강장 재매핑은 철회한다. 아래 세 역만 인게임 계통에서 확인한
+  // 주 승강장 예외를 유지하며, 나머지는 기존 REAL_PLAT 값을 그대로 쓴다.
+  const setPlatform=(no,station,platform)=>{
+    const mapped=REAL_PLAT[String(no)]||(REAL_PLAT[String(no)]={});
+    mapped[station]=platform;
+    const train=ALL_TRAINS.find(item=>String(item.no)===String(no));
+    const stop=train&&train.stops.find(item=>item.s===station);
+    if(stop&&stop.p!=null)stop.p=String(platform);
+  };
+  for(let no=681;no<=700;no++)setPlatform(no,'여주',no%2===1?1:2);
+  for(let no=1761;no<=1776;no++)setPlatform(no,'여주',no%2===1?3:4);
+
+  // 잠실-봉화 SRT는 춘양·봉화 모두 1번 승강장을 사용한다.
+  for(let no=691;no<=700;no++){
+    setPlatform(no,'춘양',1);
+    setPlatform(no,'봉화',1);
+  }
+  // 영동선 일반열차는 홀수편(영주 방면)이 3번, 짝수편이 2번을 사용한다.
+  for(const [first,last] of [[1221,1236],[1621,1636],[1641,1644]]){
+    for(let no=first;no<=last;no++){
+      setPlatform(no,'춘양',no%2===1?3:2);
+      setPlatform(no,'봉화',no%2===1?3:2);
+    }
+  }
 })();
