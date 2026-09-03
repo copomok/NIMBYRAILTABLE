@@ -108,6 +108,16 @@ test('열차 상세와 검색 화면은 타임라인 및 compact workspace 규�
   assert.match(css,/#panel-train:has\(#result-train \.detail-card\)>\.search-card\{display:block\}/);
 });
 
+test('전철 경로 검색은 검색 패널·요약·운행 타임라인·결과 동작으로 구분된다',()=>{
+  assert.match(app,/class="mr-page-header"/);
+  assert.match(app,/class="search-card mr-search-panel"/);
+  assert.match(app,/class="mr-result-header"/);
+  assert.match(app,/class="mr-result-actions"/);
+  assert.match(app,/function _mrShareRoute\(\)/);
+  assert.match(css,/#result-metroroute\{width:min\(900px,100%\)/);
+  assert.match(css,/#mr-result \.rt-node\{grid-template-columns:58px 28px minmax\(0,1fr\)/);
+});
+
 test('새 UI 자산은 서비스워커 캐시에 포함된다',()=>{
   assert.match(sw,/assets\/css\/nimbi_redesign\.css/);
   assert.match(sw,/js\/features\/nimbi_shell\.js/);

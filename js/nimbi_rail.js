@@ -13446,6 +13446,15 @@ function _mrSwap(){
   if(a&&b){const t=a.value;a.value=b.value;b.value=t;_mrFrom=a.value.trim();_mrTo=b.value.trim();}
   if(_mrFrom&&_mrTo)searchMetroRoute();
 }
+function _mrFocusSearch(){
+  const input=document.getElementById('mr-from');
+  if(input){input.focus();input.select();input.scrollIntoView({block:'center',behavior:'smooth'});}
+}
+function _mrShareRoute(){
+  const text=`NIMBY Rail 전철 경로: ${_mrFrom} → ${_mrTo}`;
+  if(navigator.share){navigator.share({title:'NIMBY Rail 전철 경로',text}).catch(()=>{});return;}
+  if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(text).then(()=>alert('경로 정보가 복사됐습니다.')).catch(()=>{});}
+}
 // 상태=(역,실제 단방향 운행 패턴) 다익스트라.
 // 노선명이 같아도 편성이 이어지지 않으면 패턴을 갈아타므로 환승으로 처리한다.
 function _metroFindRoute(from,to,mode){
@@ -13497,7 +13506,11 @@ function renderMetroRouteTab(){
   const el=document.getElementById('result-metroroute'); if(!el)return;
   if(typeof METRO_LINES==='undefined'){el.innerHTML='<div class="empty"><div class="empty-icon">🚇</div><p>전철 노선 데이터가 없습니다.</p></div>';return;}
   el.innerHTML=`
-    <div class="search-card">
+    <header class="mr-page-header">
+      <div><span>METRO JOURNEY PLANNER</span><h1>전철 경로</h1></div>
+      <button type="button" class="mr-guide" onclick="alert('출발역과 도착역을 입력한 뒤 최소 환승 또는 최소 시간을 선택하세요.')" aria-label="경로 검색 이용 안내">ⓘ 이용 안내</button>
+    </header>
+    <div class="search-card mr-search-panel">
       <div class="mr-io">
         <div class="mr-field"><label>출발역</label>
           <div class="autocomplete-wrap" style="min-width:0">
@@ -13508,7 +13521,7 @@ function renderMetroRouteTab(){
             <div class="ac-dropdown" id="mr-from-ac"></div>
           </div>
         </div>
-        <button class="mr-swap" onclick="_mrSwap()" title="출발·도착 바꾸기">⇅</button>
+        <button class="mr-swap" onclick="_mrSwap()" title="출발·도착 바꾸기" aria-label="출발역과 도착역 바꾸기">↔</button>
         <div class="mr-field"><label>도착역</label>
           <div class="autocomplete-wrap" style="min-width:0">
             <input type="text" id="mr-to" class="term-sel" style="margin-bottom:0" value="${_mrTo||''}" placeholder="도착 전철역 (초성 가능)" autocomplete="off"
@@ -13519,10 +13532,10 @@ function renderMetroRouteTab(){
           </div>
         </div>
       </div>
-      <button class="btn btn-primary" style="width:100%;justify-content:center;margin-top:4px" onclick="_mrFrom=document.getElementById('mr-from').value.trim();_mrTo=document.getElementById('mr-to').value.trim();searchMetroRoute()">🔍 경로 검색</button>
+      <button class="btn btn-primary mr-search-button" onclick="_mrFrom=document.getElementById('mr-from').value.trim();_mrTo=document.getElementById('mr-to').value.trim();searchMetroRoute()">경로 검색</button>
       <div class="mr-modes">
-        <button class="mr-mode-chip${_mrMode==='transfer'?' on':''}" data-mode="transfer" onclick="setMrMode('transfer')">🔄 최소 환승</button>
-        <button class="mr-mode-chip${_mrMode==='time'?' on':''}" data-mode="time" onclick="setMrMode('time')">⏱️ 최소 시간</button>
+        <button class="mr-mode-chip${_mrMode==='transfer'?' on':''}" data-mode="transfer" onclick="setMrMode('transfer')"><b>↻</b><span><strong>최소 환승</strong><small>환승 횟수를 최소화</small></span></button>
+        <button class="mr-mode-chip${_mrMode==='time'?' on':''}" data-mode="time" onclick="setMrMode('time')"><b>◷</b><span><strong>최소 시간</strong><small>소요 시간을 최소화</small></span></button>
       </div>
     </div>
     <div id="mr-result"></div>`;
@@ -13583,7 +13596,7 @@ function searchMetroRoute(){
       const segMin=lg.as-lg.ds;
       const exp=lg.cls===2?'<span class="mtb-exp mtb-exp--t">특급</span>':lg.cls===1?'<span class="mtb-exp">급행</span>':'';
       rail+=`<div class="rt-node" style="--lc:${lg.l.color}">
-        <div class="rt-time">${fmt(lg.dep)}</div>
+        <div class="rt-time"><b>${fmt(lg.dep)}</b><small>출발</small></div>
         <div class="rt-rail"><span class="rt-dot rt-board rt-mdot"></span><span class="rt-seg"></span></div>
         <div class="rt-info">
           <div class="rt-stn">${_opsEsc(lg.board)}<span class="rt-chev">›</span></div>
@@ -13592,11 +13605,11 @@ function searchMetroRoute(){
           ${lg.via.length?`<div class="rt-via">${lg.via.map(_opsEsc).join(' · ')}</div>`:''}
         </div></div>`;
       if(i<legs.length-1){ const wait=legs[i+1].ds-lg.as;
-        rail+=`<div class="rt-node rt-walk"><div class="rt-time"></div><div class="rt-rail"><span class="rt-seg rt-dash"></span><span class="rt-walk-ic">🚶</span></div><div class="rt-info"><div class="rt-sub rt-xfer">${_opsEsc(lg.alight)} 환승 · 대기 ${wait}분</div></div></div>`;
+        rail+=`<div class="rt-node rt-walk"><div class="rt-time"><small>환승</small></div><div class="rt-rail"><span class="rt-seg rt-dash"></span><span class="rt-walk-ic">↔</span></div><div class="rt-info"><div class="rt-sub rt-xfer">${_opsEsc(lg.alight)}역 환승 · 대기 ${wait}분</div></div></div>`;
       }
     });
     const last=legs[legs.length-1];
-    rail+=`<div class="rt-node rt-last" style="--lc:${last.l.color}"><div class="rt-time">${fmt(last.arr)}</div><div class="rt-rail"><span class="rt-dot rt-alight">하차</span></div><div class="rt-info"><div class="rt-stn">${_opsEsc(to)}<span class="rt-chev">›</span></div></div></div>`;
+    rail+=`<div class="rt-node rt-last" style="--lc:${last.l.color}"><div class="rt-time"><b>${fmt(last.arr)}</b><small>도착</small></div><div class="rt-rail"><span class="rt-dot rt-alight"></span></div><div class="rt-info"><div class="rt-stn">${_opsEsc(to)}</div></div></div>`;
     const total=last.as-legs[0].ds;
     headDur=durFmt(total);
     headMeta=`${r.transfers>0?`환승 ${r.transfers}회`:'직통'} · <span class="rt-mono">${fmt(legs[0].dep)}→${fmt(last.arr)}</span>`;
@@ -13606,15 +13619,14 @@ function searchMetroRoute(){
     return;
   }
   out.innerHTML=`
-    <div class="result-header" style="margin-top:16px">
-      <div class="result-title">🚇 ${_opsEsc(from)} → ${_opsEsc(to)}</div>
-      <span class="badge blue">${_mrMode==='time'?'최소 시간':'최소 환승'}</span>
-    </div>
+    <section class="mr-route-result">
+      <header class="mr-result-header"><div><strong>${_opsEsc(from)} → ${_opsEsc(to)}</strong><span class="badge blue">${_mrMode==='time'?'최소 시간':'최소 환승'}</span></div><div><b>총 ${headDur}</b><small>${headMeta}</small></div></header>
     <div class="rt-list"><div class="rt-card">
-      <div class="rt-sum"><div class="rt-dur">${headDur}</div><div class="rt-sum-meta">${headMeta}</div></div>
       <div class="rt-tl">${rail}</div>
     </div></div>
-    <p class="ops-hint">${foot}</p>`;
+    <p class="ops-hint">${foot}</p>
+    <footer class="mr-result-actions"><button type="button" onclick="_mrShareRoute()">공유하기</button><button type="button" class="primary" onclick="_mrFocusSearch()">다른 경로 보기 <span>→</span></button></footer>
+    </section>`;
 }
 
 // ══════════════════════════════════════════
