@@ -3,7 +3,7 @@ import vm from 'node:vm';
 
 const context={console};
 vm.createContext(context);
-for(const file of ['data/nimbi_rail_data.js','data/nimbi_realplat.js','data/nimbi_platform_db.js','data/nimbi_regional_platforms.js']){
+for(const file of ['data/nimbi_rail_data.js','data/nimbi_station_data.js','data/nimbi_realplat.js','data/nimbi_platform_db.js','data/nimbi_homonyms.js','data/nimbi_regional_platforms.js','data/nimbi_ingame_platforms.js']){
   vm.runInContext(fs.readFileSync(file,'utf8'),context,{filename:file});
 }
 vm.runInContext('globalThis.__trains=ALL_TRAINS;globalThis.__real=REAL_PLAT;globalThis.__db=PLATFORM_DB',context);
