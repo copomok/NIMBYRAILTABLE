@@ -42,3 +42,18 @@ test('인게임 방향 문자는 제거되고 승강장 번호만 저장된다',
     for (const platform of Object.values(map)) assert.equal(typeof platform, 'number');
   }
 });
+
+test('춘양·봉화는 일반 영동선과 잠실–봉화 SRT의 인게임 계통값을 구분한다', () => {
+  for (const no of ['691', '692', '693', '694', '695', '696', '697', '698', '699', '700']) {
+    assert.equal(context.__platforms[no]?.['춘양'], 1, `#${no} 춘양`);
+    assert.equal(context.__platforms[no]?.['봉화'], 1, `#${no} 봉화`);
+  }
+  for (const no of ['1621', '1623', '1625', '1627', '1629', '1631', '1633', '1635']) {
+    assert.equal(context.__platforms[no]?.['춘양'], 3, `#${no} 춘양`);
+    assert.equal(context.__platforms[no]?.['봉화'], 1, `#${no} 봉화`);
+  }
+  for (const no of ['1622', '1624', '1626', '1628', '1630', '1632', '1634', '1636']) {
+    assert.equal(context.__platforms[no]?.['춘양'], 2, `#${no} 춘양`);
+    assert.equal(context.__platforms[no]?.['봉화'], 2, `#${no} 봉화`);
+  }
+});

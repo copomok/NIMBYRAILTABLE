@@ -39,6 +39,23 @@ const sourceLines = Object.entries(linesObject).map(([name, line]) => ({
   }))
 })).filter(line => line.stops.length);
 
+const compact = value => cleanStation(value).replace(/[\s·()\-_/]/g, '');
+const gradeAliases = grade => {
+  const value = String(grade || '').replace(/-/g, '');
+  return value === 'ITX새마을' ? ['ITX새마을', '새마을'] : [value];
+};
+function serviceAffinity(train, line) {
+  const name = compact(line.name);
+  const origin = compact(train.stops[0]?.s);
+  const destination = compact(train.stops.at(-1)?.s);
+  let score = 0;
+  if (origin && name.includes(origin)) score += 18;
+  if (destination && name.includes(destination)) score += 18;
+  if (origin && destination && name.includes(origin) && name.includes(destination)) score += 12;
+  if (gradeAliases(train.grade).some(grade => grade && name.includes(grade))) score += 10;
+  return score;
+}
+
 const occurrencesByStation = new Map();
 for (const line of sourceLines) line.stops.forEach((stop, index) => {
   const list = occurrencesByStation.get(stop.station) || [];
@@ -65,7 +82,7 @@ function alignTrain(train) {
       const gaps = indices.at(-1) - indices[0] + 1 - wanted.length;
       const endpointPenalty = (indices[0] === 0 ? 0 : 1) + (indices.at(-1) === line.stops.length - 1 ? 0 : 1);
       const nameHint = String(train.line || '').split('·').some(part => line.name.includes(part)) ? 0 : 1;
-      candidates.push({ line, indices, score: gaps * 10 + endpointPenalty * 2 + nameHint });
+      candidates.push({ line, indices, score: gaps * 10 + endpointPenalty * 2 + nameHint - serviceAffinity(train, line) });
     }
   }
   candidates.sort((a, b) => a.score - b.score || a.line.stops.length - b.line.stops.length || a.line.name.localeCompare(b.line.name, 'ko'));
@@ -86,6 +103,7 @@ function localPlatform(train, index, current) {
     if (!previous && occurrence.index === 0) score += 8;
     if (!next && occurrence.index === source.length - 1) score += 8;
     if (lineParts.some(part => occurrence.line.name.includes(part))) score += 4;
+    score += serviceAffinity(train, occurrence.line);
     return { ...occurrence, score };
   }).filter(candidate => candidate.stop.platforms.length);
   if (!candidates.length) return null;
@@ -101,8 +119,7 @@ function localPlatform(train, index, current) {
   }
   const best = candidates.filter(candidate => candidate.score === bestScore);
   const allowed = [...new Set(best.flatMap(candidate => candidate.stop.platforms))];
-  const chosen = allowed.includes(old) ? old : allowed[0];
-  return { allowed, chosen, source: best[0].line.name };
+  return { allowed, source: best[0].line.name };
 }
 
 const remapped = {};
@@ -131,7 +148,11 @@ for (const train of context.__trains) {
       return;
     }
     const old = Number(current[stop.s]);
-    const chosen = resolved.chosen ?? (allowed.includes(old) ? old : allowed[0]);
+    const terminal = index === 0 || index === train.stops.length - 1;
+    const fallbackIndex = terminal && allowed.length > 1 && /^\d+$/.test(String(train.no))
+      ? Math.floor(Number(train.no) / 2) % allowed.length
+      : 0;
+    const chosen = resolved.chosen ?? (allowed.includes(old) ? old : allowed[fallbackIndex]);
     map[stop.s] = chosen;
     mappedStops++;
     trainMapped++;
