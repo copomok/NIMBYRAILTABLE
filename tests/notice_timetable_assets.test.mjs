@@ -175,6 +175,14 @@ test('공지 이미지 배포 버전이 CSS·데이터·서비스워커에 함�
   const serviceWorker = read('sw.js');
 
   assert.match(index, /nimbi_rail\.css\?v=2026080302/);
-  assert.match(index, /nimbi_rail_notices\.js\?v=2026080302/);
-  assert.match(serviceWorker, /CACHE_NAME = 'nimbirail-2026090313'/);
+  assert.match(index, /nimbi_rail_notices\.js\?v=2026090301/);
+  assert.match(serviceWorker, /CACHE_NAME = 'nimbirail-2026090314'/);
+});
+
+test('UI 전면 개편 안내 공지가 승객 관점의 주요 변경점을 설명한다', () => {
+  const notices = read('data/nimbi_rail_notices.js');
+  assert.match(notices, /님비레일 화면이 철도 정보 중심으로 새로워졌습니다/);
+  for (const keyword of ['사이드바', '통합 검색', '모바일', '타임라인', '라이트·다크·시스템 테마']) {
+    assert.ok(notices.includes(keyword), `${keyword} 안내가 필요합니다`);
+  }
 });
