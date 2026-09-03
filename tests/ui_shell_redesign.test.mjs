@@ -78,8 +78,13 @@ test('지도는 노선 우선 표현과 저대비 보조 격자를 사용한다'
 });
 
 test('역 검색은 입력 포커스와 한글 조합 상태를 유지한다',()=>{
-  assert.match(shell,/oncompositionstart="this\.dataset\.composing='1'"/);
-  assert.match(shell,/input\.setSelectionRange\(input\.value\.length,input\.value\.length\)/);
+  assert.match(shell,/nimbiStationCompositionStart/);
+  assert.match(shell,/nimbiStationCompositionEnd/);
+  assert.match(shell,/stationDirectorySearchTimer/);
+  assert.match(shell,/setTimeout\(\(\)=>\{/);
+  assert.match(shell,/input\.focus\(\)/);
+  assert.match(shell,/class="station-lines\$\{isMetro\?'':' station-grades'\}"/);
+  assert.match(shell,/isMetro\?'노선':'정차 등급'/);
 });
 
 test('보조 화면은 테마 토큰과 하단 시트 구조를 공유한다',()=>{
@@ -89,6 +94,9 @@ test('보조 화면은 테마 토큰과 하단 시트 구조를 공유한다',()
   assert.match(css,/\.si-board-popup\{--bg:#0d1117/);
   assert.match(css,/\.filter-row\.open,#map-filter-panel,.map-popup\{position:fixed!important/);
   assert.match(css,/@keyframes nimbi-sheet-up/);
+  assert.match(css,/border-top-color: var\(--tk\) !important/);
+  assert.match(app,/ticket-action-timetable/);
+  assert.match(app,/ticket-action-delete/);
 });
 
 test('열차 상세와 검색 화면은 타임라인 및 compact workspace 규칙을 따른다',()=>{
@@ -97,6 +105,7 @@ test('열차 상세와 검색 화면은 타임라인 및 compact workspace 규�
   assert.match(css,/\.detail-head-actions\{position:absolute/);
   assert.match(css,/#panel-station>\.search-card,#panel-route>\.search-card,#panel-metroroute>\.search-card/);
   assert.match(css,/#map-train-count,#map-layer-btn\{height:36px/);
+  assert.match(css,/#panel-train:has\(#result-train \.detail-card\)>\.search-card\{display:block\}/);
 });
 
 test('새 UI 자산은 서비스워커 캐시에 포함된다',()=>{

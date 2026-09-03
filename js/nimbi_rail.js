@@ -6161,7 +6161,7 @@ function openQRPopup(ticketId){
   const tkDistKm = tk.distanceKm || (_qtrain?Math.round(routeDistanceKm(_qtrain,tk.fromStn,tk.toStn)):0);
 
   const qrText = `NIMBIRAIL:${tk.id}:${tk.trainNo}:${tk.fromStn}:${tk.toStn}:${tk.travelDate}:${tk.depTime}`;
-  const gradeC = `var(--c-${gcCssVar(tk.grade)})`;
+  const gradeC = (typeof GRADE_COLORS!=='undefined' && GRADE_COLORS[tk.grade]) || '#388bfd';
   const discBadge = (tk.discount && tk.discount!=='none') ? `<span class="rt-badge" style="margin-left:0">${tk.discountLabel}</span>` : '';
   const boardBadge = bs==='active' ? `<span class="rt-board-badge rt-board-active">● 탑승 중</span>`
     : bs==='done' ? `<span class="rt-board-badge rt-board-done">탑승 완료</span>`
@@ -8123,14 +8123,14 @@ function _ticketEndpointDelayHTML(tk){
 }
 // 승차권 카드 HTML (목록·캘린더 공용)
 function _ticketCardHTML(tk){
-    const c=gc(tk.grade);
+    const gradeColor=(typeof GRADE_COLORS!=='undefined'&&GRADE_COLORS[tk.grade])||'#388bfd';
     const cancelledCls=tk.status==='cancelled'?' ticket-cancelled':'';
     const seatList=seatSummary(tk.seats);
     const _tkt=getTrainByNo(tk.trainNo);
     const tkDistKm=tk.distanceKm||(_tkt?Math.round(routeDistanceKm(_tkt,tk.fromStn,tk.toStn)):0);
-    return `<div class="ticket-card${cancelledCls}" onclick="openQRPopup('${tk.id}')">
-      <div class="ticket-card-top" style="border-color:var(--c-${gcCssVar(tk.grade)})">
-        <span class="ticket-grade" style="color:var(--c-${gcCssVar(tk.grade)})">${tk.grade}</span>
+    return `<div class="ticket-card${cancelledCls}" style="--ticket-grade:${gradeColor}" onclick="openQRPopup('${tk.id}')">
+      <div class="ticket-card-top" style="border-color:${gradeColor}">
+        <span class="ticket-grade" style="color:${gradeColor}">${tk.grade}</span>
         <span class="ticket-no">${tk.trainNo}</span>
         ${tk.xferGroup?`<span class="ticket-xfer-badge" title="${tk.xferOrigin}→${tk.xferVia}→${tk.xferDest} 환승">🔄 환승 ${tk.xferSeq}/${tk.xferTotal}</span>`:''}
         ${tk.status==='cancelled'?'<span class="ticket-status-badge">취소됨</span>'
@@ -8160,12 +8160,12 @@ function _ticketCardHTML(tk){
       </div>
       <div class="ticket-card-id" style="display:flex;align-items:center;justify-content:space-between">
         <span>예매번호 ${tk.id}</span>
-        <button class="btn qr-btn" onclick="event.stopPropagation();openQRPopup('${tk.id}')" title="QR·좌석 보기">🔲 QR</button>
+        <button class="btn qr-btn ticket-action-qr" onclick="event.stopPropagation();openQRPopup('${tk.id}')" title="QR·좌석 보기">🔲 QR</button>
       </div>
       <div class="ticket-card-actions">
-        <button class="btn" style="font-size:12px;padding:6px 12px" onclick="event.stopPropagation();openJourney('${tk.trainNo}')">🚆 시간표</button>
-        ${tk.status==='active'&&_ticketFilterTab==='upcoming'?`<button class="btn" style="font-size:12px;padding:6px 12px" onclick="event.stopPropagation();cancelTicket('${tk.id}')">예매 취소</button>`
-          :`<button class="btn" style="font-size:12px;padding:6px 12px" onclick="event.stopPropagation();deleteTicket('${tk.id}')">기록 삭제</button>`}
+        <button class="btn ticket-action-timetable" style="font-size:12px;padding:6px 12px" onclick="event.stopPropagation();openJourney('${tk.trainNo}')">🚆 시간표</button>
+        ${tk.status==='active'&&_ticketFilterTab==='upcoming'?`<button class="btn ticket-action-cancel" style="font-size:12px;padding:6px 12px" onclick="event.stopPropagation();cancelTicket('${tk.id}')">예매 취소</button>`
+          :`<button class="btn ticket-action-delete" style="font-size:12px;padding:6px 12px" onclick="event.stopPropagation();deleteTicket('${tk.id}')">기록 삭제</button>`}
       </div>
     </div>`;
 }
