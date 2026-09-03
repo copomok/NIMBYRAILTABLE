@@ -228,6 +228,49 @@
   if (typeof STATION_DB !== 'undefined') for (const [oldName, newName] of Object.entries(regionalNames)) renameObjectKey(STATION_DB, `${oldName}역`, `${newName}역`);
   if (typeof PLATFORM_DB !== 'undefined') for (const [oldName, newName] of Object.entries(regionalNames)) renameObjectKey(PLATFORM_DB, `${oldName}역`, `${newName}역`);
 
+  // 시간표에는 있으나 지도 경로에서 빠진 동명이역을 인접역 사이의 실제 거리 비율로 복원한다.
+  // 인게임 노선도의 기존 좌표계를 유지하므로 지도와 노선도 양쪽에서 같은 위치를 사용한다.
+  if (typeof METRO_LINES !== 'undefined' && typeof METRO_SCHED !== 'undefined') {
+    const baseName = name => String(name).replace(/\([^)]*\)$/,'');
+    const coord = name => typeof STATION_DB === 'undefined' ? null : (STATION_DB[`${name}역`] || STATION_DB[name]);
+    const distance = (a,b) => {
+      const ca=coord(a), cb=coord(b); if(!ca||!cb)return null;
+      const dy=(cb.lat-ca.lat)*111, dx=(cb.lon-ca.lon)*88;
+      return Math.hypot(dx,dy);
+    };
+    for (const line of METRO_LINES) {
+      const sequence=METRO_SCHED[line.name]?.s;
+      if (!Array.isArray(sequence)) continue;
+      const routes=line.routes || [];
+      for (let si=0;si<sequence.length;si++) {
+        const station=sequence[si];
+        if (!oldNames.has(baseName(station)) || routes.some(route=>(route.stations||[]).includes(station))) continue;
+        let before=null, after=null;
+        for(let i=si-1;i>=0;i--)if(routes.some(route=>(route.stations||[]).includes(sequence[i]))){before=sequence[i];break;}
+        for(let i=si+1;i<sequence.length;i++)if(routes.some(route=>(route.stations||[]).includes(sequence[i]))){after=sequence[i];break;}
+        let route=routes.find(r=>before&&after&&(r.stations||[]).includes(before)&&(r.stations||[]).includes(after));
+        if(!route)route=routes.find(r=>(before&&(r.stations||[]).includes(before))||(after&&(r.stations||[]).includes(after)));
+        if(!route)continue;
+        const stations=route.stations||[], xy=route.xy||[];
+        const bi=before?stations.indexOf(before):-1, ai=after?stations.indexOf(after):-1;
+        let insertAt, point;
+        if(bi>=0&&ai>=0&&xy[bi]&&xy[ai]){
+          const d1=distance(before,station),d2=distance(station,after),ratio=d1!=null&&d2!=null&&d1+d2>0?d1/(d1+d2):0.5;
+          point=[xy[bi][0]+(xy[ai][0]-xy[bi][0])*ratio,xy[bi][1]+(xy[ai][1]-xy[bi][1])*ratio];
+          insertAt=bi<ai?bi+1:ai+1;
+        }else{
+          const anchor=bi>=0?bi:ai, neighbor=anchor===0?1:anchor-1;
+          if(!xy[anchor])continue;
+          const nx=xy[neighbor]||xy[anchor], direction=bi>=0?1:-1;
+          point=[xy[anchor][0]+(xy[anchor][0]-nx[0])*0.35*direction,xy[anchor][1]+(xy[anchor][1]-nx[1])*0.35*direction];
+          insertAt=bi>=0?bi+1:Math.max(0,ai);
+        }
+        stations.splice(insertAt,0,station); xy.splice(insertAt,0,point);
+      }
+      line.stations=[...new Set(routes.flatMap(route=>route.stations||[]))];
+    }
+  }
+
   // 최초 인덱스는 분리 전 역명으로 만들어졌으므로 정규화된 시간표에서 다시 생성한다.
   if (typeof TRAINS_BY_STATION !== 'undefined') {
     TRAINS_BY_STATION.clear();

@@ -52,13 +52,27 @@ test('노선 문맥에 맞는 동명이역으로 연결된다', () => {
 
 test('분리된 기차역은 노선에 맞는 운행 정보 인덱스를 가진다', () => {
   const expected = new Map([
-    ['장흥',60], ['장흥(양주)',38], ['송정(부산)',4],
+    ['장흥',60], ['장흥(양주)',38], ['고성(경남)',106], ['송정(부산)',4],
     ['춘양',46], ['춘양(전남)',22], ['장성',80],
     ['장수(전북)',28], ['북평(정선)',20]
   ]);
   for (const [station, count] of expected) {
     assert.equal(context.result.byStation.get(station)?.length || 0, count, station);
   }
+});
+
+test('분리된 전철역은 시간표와 노선도 양쪽에 같은 이름으로 존재한다', () => {
+  for (const [lineName, schedule] of Object.entries(context.result.schedules)) {
+    const line=context.result.lines.find(item=>item.name===lineName);
+    if(!line)continue;
+    const mapped=new Set((line.routes||[]).flatMap(route=>route.stations||[]));
+    for(const station of schedule.s||[]) {
+      const base=station.replace(/\([^)]*\)$/,'');
+      if(ambiguous.includes(base))assert.ok(mapped.has(station), `${lineName}: ${station}`);
+    }
+  }
+  const gangseo=context.result.lines.find(line=>line.name==='강서선');
+  assert.ok(gangseo.routes.some(route=>route.stations.includes('월곶(김포)')));
 });
 
 test('통합 검색은 분리된 역 DB 키를 각각 별도 결과로 만든다', () => {
