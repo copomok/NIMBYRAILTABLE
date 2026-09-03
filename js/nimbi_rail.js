@@ -3487,20 +3487,79 @@ function closeMapPopup(){
   _mapCurrentStn=null;
 }
 
-// 현재 지도에 선택된 노선의 역만 역 목록에서 바로 확인한다.
-// 전체보기·겹쳐보기에서는 해당 모드의 전체 역 목록으로 이동한다.
-function openCurrentLineStationList(){
-  let lineName='all';
-  if(_appMode==='metro'){
-    if(_metroMapId&&_metroMapId!=='__all__'&&_metroMapId!=='__pick__'){
-      lineName=METRO_LINES.find(line=>line.id===_metroMapId)?.name||'all';
-    }
-  }else if(_mapCurrentLine&&_mapCurrentLine!=='all'){
-    lineName=MAP_LINES[_mapCurrentLine]?.name||'all';
+let _mapStationListState={query:'',route:'all',dir:'forward',page:0};
+let _mapStationListKeyHandler=null;
+
+function _mapStationListSource(){
+  if(_appMode==='metro'&&typeof METRO_LINES!=='undefined'){
+    let lines=[];
+    if(_metroMapId==='__pick__')lines=METRO_LINES.filter(line=>_metroPickSet.has(line.id));
+    else if(_metroMapId==='__all__')lines=METRO_LINES.filter(line=>line.region===_metroMapRegion);
+    else lines=METRO_LINES.filter(line=>line.id===_metroMapId);
+    return{title:lines.length===1?lines[0].name:`${_metroMapRegion||'전철'} 권역`,color:lines[0]?.color||'#388bfd',lines:lines.map(line=>({key:line.id,name:line.name,color:line.color,routes:(line.routes||[{stations:line.stations||[]}]).map(route=>({stations:route.stations||[]}))}))};
   }
-  if(typeof window.nimbiOpenStationLineDirectory==='function')window.nimbiOpenStationLineDirectory(lineName);
-  else if(typeof window.nimbiOpenStationDirectory==='function')window.nimbiOpenStationDirectory();
+  const entries=_mapCurrentLine&&_mapCurrentLine!=='all'&&MAP_LINES[_mapCurrentLine]
+    ?[[_mapCurrentLine,MAP_LINES[_mapCurrentLine]]]:Object.entries(MAP_LINES||{});
+  return{title:entries.length===1?entries[0][1].name:'전체 네트워크',color:entries[0]?.[1]?.color||'#388bfd',lines:entries.map(([key,line])=>({key,name:line.name,color:line.color,routes:(line.routes||[]).map(route=>({stations:(route.stations||[]).map(station=>typeof station==='string'?station:station.n)}))}))};
 }
+
+function _mapStationGeo(name){return (typeof STATION_DB!=='undefined'&&(STATION_DB[name]||STATION_DB[name+'역']))||null;}
+function _mapStationDistance(a,b){
+  const A=_mapStationGeo(a),B=_mapStationGeo(b);if(!A||!B||!Number.isFinite(A.lat)||!Number.isFinite(A.lon)||!Number.isFinite(B.lat)||!Number.isFinite(B.lon))return 0;
+  const rad=v=>v*Math.PI/180,dLat=rad(B.lat-A.lat),dLon=rad(B.lon-A.lon),x=Math.sin(dLat/2)**2+Math.cos(rad(A.lat))*Math.cos(rad(B.lat))*Math.sin(dLon/2)**2;
+  return 6371*2*Math.atan2(Math.sqrt(x),Math.sqrt(1-x));
+}
+function _mapStationAffiliations(name){
+  const lines=_appMode==='metro'&&typeof METRO_LINES!=='undefined'
+    ?METRO_LINES.map(line=>({name:line.name,color:line.color,routes:line.routes||[{stations:line.stations||[]}]}))
+    :Object.values(MAP_LINES||{});
+  return lines.filter(line=>(line.routes||[]).some(route=>(route.stations||[]).some(station=>(typeof station==='string'?station:station.n)===name))).map(line=>({name:line.name,color:line.color||'#388bfd'}));
+}
+function _mapStationListModel(){
+  const source=_mapStationListSource(),routeOptions=[];let rows=[];
+  source.lines.forEach((line,lineIndex)=>(line.routes||[]).forEach((route,routeIndex)=>{
+    const token=`${lineIndex}:${routeIndex}`,label=source.lines.length===1?(routeIndex===0?'본선':`지선 ${routeIndex}`):`${line.name}${routeIndex?` · 지선 ${routeIndex}`:''}`;
+    routeOptions.push({token,label});
+    if(_mapStationListState.route!=='all'&&_mapStationListState.route!==token)return;
+    let cumulative=0,previous=null;
+    (route.stations||[]).forEach(name=>{if(previous)cumulative+=_mapStationDistance(previous,name);rows.push({name,lineName:line.name,lineColor:line.color,routeToken:token,distance:cumulative});previous=name;});
+  }));
+  const seen=new Set();rows=rows.filter(row=>{if(seen.has(row.name))return false;seen.add(row.name);return true;});
+  if(_mapStationListState.dir==='reverse')rows.reverse();
+  const query=_mapStationListState.query.trim();if(query)rows=rows.filter(row=>typeof matchesQuery==='function'?matchesQuery(row.name,query):row.name.includes(query));
+  rows=rows.map((row,index)=>{const db=_mapStationGeo(row.name);return{...row,index:index+1,next:rows[index+1]?.name||null,platforms:(db?.platforms||[]).join(' · ')||'—',lines:_mapStationAffiliations(row.name)};});
+  return{source,routeOptions,rows};
+}
+function _mapStationEsc(value){return String(value??'').replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));}
+function _renderMapStationList(){
+  const host=document.getElementById('map-station-list-wrap');if(!host)return;
+  const {source,routeOptions,rows}=_mapStationListModel(),perPage=10,pages=Math.max(1,Math.ceil(rows.length/perPage));
+  _mapStationListState.page=Math.min(_mapStationListState.page,pages-1);const start=_mapStationListState.page*perPage,visible=rows.slice(start,start+perPage);
+  host.innerHTML=`<div class="map-station-list-backdrop" onclick="closeCurrentLineStationList()"></div><section class="map-station-list" role="dialog" aria-modal="true" aria-labelledby="map-station-list-title" style="--map-list-color:${source.color}">
+    <header><span class="map-station-list-icon"><svg aria-hidden="true"><use href="#i-station"/></svg></span><div><div><h2 id="map-station-list-title">역 목록</h2><span class="map-station-list-line">${_mapStationEsc(source.title)}</span></div><p>총 ${rows.length.toLocaleString()}개 역</p></div><button class="map-station-list-close" onclick="closeCurrentLineStationList()" aria-label="역 목록 닫기">×</button></header>
+    <div class="map-station-list-tools"><label><svg aria-hidden="true"><use href="#i-search"/></svg><input type="search" value="${_mapStationEsc(_mapStationListState.query)}" placeholder="역명 검색 (초성 검색 지원)" oninput="setMapStationListQuery(this.value)"></label><select aria-label="구간 선택" onchange="setMapStationListRoute(this.value)"><option value="all">전체 역</option>${routeOptions.map(option=>`<option value="${option.token}"${_mapStationListState.route===option.token?' selected':''}>${_mapStationEsc(option.label)}</option>`).join('')}</select><select aria-label="방향 선택" onchange="setMapStationListDirection(this.value)"><option value="forward"${_mapStationListState.dir==='forward'?' selected':''}>하행 기준</option><option value="reverse"${_mapStationListState.dir==='reverse'?' selected':''}>상행 기준</option></select></div>
+    <div class="map-station-list-table"><div class="map-station-list-head"><span></span><span>역명</span><span>승강장</span><span>구간</span><span>노선</span><span>거리 (km)</span><span></span></div>${visible.map(row=>`<button class="map-station-list-row" data-station="${_mapStationEsc(row.name)}" onclick="focusMapStationFromList(this.dataset.station)"><span class="map-station-order"><b>${String(row.index).padStart(2,'0')}</b><i></i></span><strong>${_mapStationEsc(row.name)}</strong><code>${_mapStationEsc(row.platforms)}</code><span>${_mapStationEsc(row.next?`${row.name} – ${row.next}`:'종점')}</span><span class="map-station-list-badges">${row.lines.slice(0,3).map(line=>`<i style="--badge-color:${line.color}">${_mapStationEsc(line.name.replace(/선$/,''))}</i>`).join('')}${row.lines.length>3?`<small>+${row.lines.length-3}</small>`:''}</span><b>${row.distance.toFixed(1)}</b><span aria-hidden="true">›</span></button>`).join('')||'<div class="map-station-list-empty">검색 조건에 맞는 역이 없습니다.</div>'}</div>
+    <div class="map-station-list-pages"><span>총 ${rows.length.toLocaleString()}개 역 중 ${rows.length?start+1:0}–${Math.min(start+perPage,rows.length)} 표시</span><nav><button onclick="setMapStationListPage(0)" ${_mapStationListState.page===0?'disabled':''}>|‹</button><button onclick="setMapStationListPage(${_mapStationListState.page-1})" ${_mapStationListState.page===0?'disabled':''}>‹</button>${Array.from({length:Math.min(5,pages)},(_,i)=>{const base=Math.max(0,Math.min(pages-5,_mapStationListState.page-2)),p=base+i;return`<button class="${p===_mapStationListState.page?'active':''}" onclick="setMapStationListPage(${p})">${p+1}</button>`;}).join('')}<button onclick="setMapStationListPage(${_mapStationListState.page+1})" ${_mapStationListState.page===pages-1?'disabled':''}>›</button><button onclick="setMapStationListPage(${pages-1})" ${_mapStationListState.page===pages-1?'disabled':''}>›|</button></nav></div>
+    <footer><button onclick="downloadCurrentLineStationList()"><svg aria-hidden="true"><use href="#i-download"/></svg> 목록 다운로드 (CSV)</button><button class="primary" onclick="centerCurrentMapFromStationList()"><svg aria-hidden="true"><use href="#i-target"/></svg> 지도의 중심으로 이동</button></footer>
+  </section>`;
+}
+function openCurrentLineStationList(){
+  _mapStationListState={query:'',route:'all',dir:'forward',page:0};
+  const filterPanel=document.getElementById('map-filter-panel');if(filterPanel)filterPanel.style.display='none';
+  document.getElementById('map-filter-toggle-btn')?.classList.remove('map-filter-toggle-active');const arrow=document.getElementById('map-filter-arrow');if(arrow)arrow.textContent='▾';
+  let host=document.getElementById('map-station-list-wrap');if(!host){host=document.createElement('div');host.id='map-station-list-wrap';document.body.appendChild(host);}
+  _renderMapStationList();document.body.classList.add('map-station-list-open');
+  if(_mapStationListKeyHandler)document.removeEventListener('keydown',_mapStationListKeyHandler);_mapStationListKeyHandler=event=>{if(event.key==='Escape')closeCurrentLineStationList();};document.addEventListener('keydown',_mapStationListKeyHandler);
+  requestAnimationFrame(()=>document.querySelector('.map-station-list-close')?.focus());
+}
+function closeCurrentLineStationList(){document.getElementById('map-station-list-wrap')?.remove();document.body.classList.remove('map-station-list-open');if(_mapStationListKeyHandler)document.removeEventListener('keydown',_mapStationListKeyHandler);_mapStationListKeyHandler=null;}
+function setMapStationListQuery(value){_mapStationListState.query=value;_mapStationListState.page=0;_renderMapStationList();const input=document.querySelector('.map-station-list-tools input');if(input){input.focus();input.setSelectionRange(input.value.length,input.value.length);}}
+function setMapStationListRoute(value){_mapStationListState.route=value;_mapStationListState.page=0;_renderMapStationList();}
+function setMapStationListDirection(value){_mapStationListState.dir=value;_mapStationListState.page=0;_renderMapStationList();}
+function setMapStationListPage(page){_mapStationListState.page=Math.max(0,page);_renderMapStationList();document.querySelector('.map-station-list-table')?.scrollTo({top:0});}
+function focusMapStationFromList(name){const wrap=document.getElementById('map-svg-wrap'),pos=_mapStnPos[name];closeCurrentLineStationList();if(wrap&&pos){const {ox,oy}=_mapSvgSize;wrap.scrollTo({left:pos.x-ox-wrap.clientWidth/2,top:pos.y-oy-wrap.clientHeight/2,behavior:'smooth'});}}
+function centerCurrentMapFromStationList(){closeCurrentLineStationList();mapZoomReset();const wrap=document.getElementById('map-svg-wrap');if(wrap)wrap.scrollTo({left:Math.max(0,(wrap.scrollWidth-wrap.clientWidth)/2),top:Math.max(0,(wrap.scrollHeight-wrap.clientHeight)/2),behavior:'smooth'});}
+function downloadCurrentLineStationList(){const {source,rows}=_mapStationListModel(),csv=['순번,역명,승강장,다음 구간,노선,누적 거리(km)',...rows.map(row=>[row.index,row.name,row.platforms,row.next?`${row.name}-${row.next}`:'종점',row.lines.map(line=>line.name).join(' / '),row.distance.toFixed(1)].map(value=>`"${String(value).replace(/"/g,'""')}"`).join(','))].join('\n');const blob=new Blob(['\ufeff'+csv],{type:'text/csv;charset=utf-8'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=`${source.title}-역목록.csv`;a.click();setTimeout(()=>URL.revokeObjectURL(url),0);}
 
 // 60초마다 열차 위치 갱신
 setInterval(()=>{

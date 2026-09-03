@@ -176,5 +176,5 @@ test('공지 이미지 배포 버전이 CSS·데이터·서비스워커에 함�
 
   assert.match(index, /nimbi_rail\.css\?v=2026080302/);
   assert.match(index, /nimbi_rail_notices\.js\?v=2026080302/);
-  assert.match(serviceWorker, /CACHE_NAME = 'nimbirail-2026090303'/);
+  assert.match(serviceWorker, /CACHE_NAME = 'nimbirail-2026090304'/);
 });

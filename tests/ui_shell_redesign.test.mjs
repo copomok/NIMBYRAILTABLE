@@ -66,8 +66,12 @@ test('지도는 노선 우선 표현과 저대비 보조 격자를 사용한다'
   assert.match(app,/pointerEvents='none'/);
   assert.match(app,/appendChild\(trainLayer\)/);
   assert.match(app,/function openCurrentLineStationList\(\)/);
-  assert.match(app,/nimbiOpenStationLineDirectory\(lineName\)/);
+  assert.match(app,/_mapStationListModel/);
+  assert.match(app,/downloadCurrentLineStationList/);
+  assert.match(app,/focusMapStationFromList/);
   assert.match(app,/onclick="openCurrentLineStationList\(\)">역 목록/);
+  assert.match(css,/\.map-station-list-table/);
+  assert.match(css,/\.map-station-list-row/);
 });
 
 test('보조 화면은 테마 토큰과 하단 시트 구조를 공유한다',()=>{
