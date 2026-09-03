@@ -51,6 +51,9 @@ test('홈과 역 화면은 카드 갤러리 대신 고밀도 표 컴포넌트를
   assert.match(shell,/nimbiOpenStationDirectory/);
   assert.match(shell,/Object\.entries\(MAP_LINES\)/);
   assert.match(shell,/Object\.values\(MAP_LINES\)/);
+  assert.match(shell,/directoryWasOpen/);
+  assert.match(shell,/stationDirectoryLine='all';stationDirectoryPage=0;renderStationDirectory/);
+  assert.match(shell,/nimbiOpenStationLineDirectory/);
 });
 
 test('지도는 노선 우선 표현과 저대비 보조 격자를 사용한다',()=>{
@@ -62,6 +65,9 @@ test('지도는 노선 우선 표현과 저대비 보조 격자를 사용한다'
   assert.match(app,/map-station-hit/);
   assert.match(app,/pointerEvents='none'/);
   assert.match(app,/appendChild\(trainLayer\)/);
+  assert.match(app,/function openCurrentLineStationList\(\)/);
+  assert.match(app,/nimbiOpenStationLineDirectory\(lineName\)/);
+  assert.match(app,/onclick="openCurrentLineStationList\(\)">역 목록/);
 });
 
 test('보조 화면은 테마 토큰과 하단 시트 구조를 공유한다',()=>{

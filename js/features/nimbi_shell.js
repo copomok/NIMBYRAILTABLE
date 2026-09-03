@@ -224,6 +224,12 @@
     host.innerHTML=`<section class="station-directory" aria-labelledby="station-directory-title"><header class="directory-header"><div><span>STATIONS</span><h1 id="station-directory-title">역</h1><p>${mode()==='metro'?'전철':'기차'} 운행 데이터에 등록된 역을 찾습니다.</p></div><button type="button" onclick="nimbiShowNearbyStations()">${svg('i-map')} 가까운 역</button></header><div class="directory-toolbar"><label>${svg('i-search')}<input type="search" value="${esc(stationDirectoryQuery)}" placeholder="역 검색 (초성 지원)" oninput="nimbiFilterStations(this.value)"></label><select onchange="nimbiFilterStationLine(this.value)" aria-label="노선 필터"><option value="all">전체 노선</option>${lineOptions.map(line=>`<option value="${esc(line)}"${line===stationDirectoryLine?' selected':''}>${esc(line)}</option>`).join('')}</select><span>${filtered.length.toLocaleString()}개 역</span></div><div class="station-table"><div class="station-table-head"><span>역</span><span>노선</span><span>운행 열차</span><span>승강장</span><span></span></div>${rows.map(item=>`<button type="button" onclick="nimbiOpenStation('${esc(item.key)}')"><span><strong>${esc(item.name)}</strong><small>${esc(item.key.toUpperCase())}</small></span><span class="station-lines">${item.lines.slice(0,3).map((line,index)=>`<i style="--line-index:${index}">${esc(line)}</i>`).join('')}${item.lines.length>3?`<small>외 ${item.lines.length-3}개</small>`:''}</span><b>${item.count?item.count.toLocaleString():'—'}</b><span>${esc(item.platform)}</span>${svg('i-chevron')}</button>`).join('')||'<div class="rail-empty">조건에 맞는 역이 없습니다.</div>'}</div>${pages>1?`<nav class="directory-pages" aria-label="역 목록 페이지"><button ${stationDirectoryPage===0?'disabled':''} onclick="nimbiStationPage(-1)">이전</button><span>${stationDirectoryPage+1} / ${pages}</span><button ${stationDirectoryPage===pages-1?'disabled':''} onclick="nimbiStationPage(1)">다음</button></nav>`:''}</section>`;
   }
   window.nimbiOpenStationDirectory=function(){document.body.classList.remove('station-detail-open');document.body.classList.add('station-directory-open');window.nimbiNavigate('stationinfo');window.scrollTo({top:0,behavior:'auto'});renderStationDirectory();};
+  window.nimbiOpenStationLineDirectory=function(lineName){
+    stationDirectoryQuery='';stationDirectoryPage=0;
+    const available=new Set(directoryStations().flatMap(item=>item.lines));
+    stationDirectoryLine=lineName&&available.has(lineName)?lineName:'all';
+    window.nimbiOpenStationDirectory();
+  };
   window.nimbiOpenStation=function(name){document.body.classList.remove('station-directory-open');document.body.classList.add('station-detail-open');if(typeof openStationDetail==='function')openStationDetail(name);};
   window.nimbiShowNearbyStations=function(){document.body.classList.remove('station-directory-open');document.body.classList.add('station-detail-open');window.nimbiNavigate('stationinfo');if(typeof renderStationInfo==='function')renderStationInfo();};
   window.nimbiFilterStations=function(value){stationDirectoryQuery=value;stationDirectoryPage=0;renderStationDirectory();};
@@ -257,8 +263,12 @@
     if(typeof originalStationDetail==='function')window.openStationDetail=function(name){document.body.classList.remove('station-directory-open');document.body.classList.add('station-detail-open');return originalStationDetail(name);};
     const originalModeSwitch=window.setAppMode;
     if(typeof originalModeSwitch==='function')window.setAppMode=function(nextMode){
+      const directoryWasOpen=currentTab()==='stationinfo'&&document.body.classList.contains('station-directory-open');
       const result=originalModeSwitch(nextMode);
-      setTimeout(()=>{syncShell();renderOverview();searchItems=null;},0);
+      setTimeout(()=>{
+        syncShell();renderOverview();searchItems=null;
+        if(directoryWasOpen){stationDirectoryQuery='';stationDirectoryLine='all';stationDirectoryPage=0;renderStationDirectory();}
+      },0);
       return result;
     };
     syncThemeControls();syncShell();renderOverview();renderStationDirectory();enhanceLegacyIcons(document);

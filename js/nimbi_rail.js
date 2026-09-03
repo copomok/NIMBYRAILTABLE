@@ -3487,6 +3487,21 @@ function closeMapPopup(){
   _mapCurrentStn=null;
 }
 
+// 현재 지도에 선택된 노선의 역만 역 목록에서 바로 확인한다.
+// 전체보기·겹쳐보기에서는 해당 모드의 전체 역 목록으로 이동한다.
+function openCurrentLineStationList(){
+  let lineName='all';
+  if(_appMode==='metro'){
+    if(_metroMapId&&_metroMapId!=='__all__'&&_metroMapId!=='__pick__'){
+      lineName=METRO_LINES.find(line=>line.id===_metroMapId)?.name||'all';
+    }
+  }else if(_mapCurrentLine&&_mapCurrentLine!=='all'){
+    lineName=MAP_LINES[_mapCurrentLine]?.name||'all';
+  }
+  if(typeof window.nimbiOpenStationLineDirectory==='function')window.nimbiOpenStationLineDirectory(lineName);
+  else if(typeof window.nimbiOpenStationDirectory==='function')window.nimbiOpenStationDirectory();
+}
+
 // 60초마다 열차 위치 갱신
 setInterval(()=>{
   if(_mapCurrentLine&&document.getElementById('panel-map').classList.contains('active')){
@@ -4384,6 +4399,7 @@ function _renderMetroBar(bar){
     <div style="display:flex;gap:6px;overflow-x:auto;-webkit-overflow-scrolling:touch;padding-bottom:6px">
       <button class="metro-line-chip metro-all-chip${isAll?' on':''}" onclick="showMetroMap('__all__')">🗺️ 권역 전체</button>
       <button class="metro-line-chip metro-pick-chip" onclick="toggleMetroPickMode()">🔀 겹쳐보기${_metroPickSet.size?` <b>${_metroPickSet.size}</b>`:''}</button>
+      <button class="metro-line-chip" onclick="openCurrentLineStationList()">역 목록</button>
       ${lines.map(l=>`<button class="metro-line-chip${l.id===_metroMapId?' on':''}" style="--mc:${l.color}" onclick="showMetroMap('${l.id}')">${l.name}</button>`).join('')}
     </div>
     ${isAll?`<div class="metro-map-info">
