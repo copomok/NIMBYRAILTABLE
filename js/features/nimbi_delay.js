@@ -552,10 +552,10 @@ function _turnaroundBuffer(pt, t){
 }
 
 // ── 단선 구간(인게임 상 유일): 영동선 영주~소천 ──
-const _SIM_SINGLE_TRACK=new Set(['영주','봉화','법전','춘양(영동선)','소천']);
+const _SIM_SINGLE_TRACK=new Set(['영주','봉화','법전','춘양','소천']);
 const _MP_SPARSE=new Set(['옥천','이원','심천','영동','황간','추풍령']);
 // 통과선 미보유 역 (무정차 통과도 승강장 점유 가능)
-const _NO_PASS_TRACK=new Set(['사천','추풍령','석포','승부','소천','법전','홍성','율촌','춘양(영동선)','춘양(경전선)','남악','일로','시종','영암','작천','장흥(경전선)','별량','입실','불국사']);
+const _NO_PASS_TRACK=new Set(['사천','추풍령','석포','승부','소천','법전','홍성','율촌','춘양','춘양(경전선)','남악','일로','시종','영암','작천','장흥','별량','입실','불국사']);
 function _isSingleTrack(a,b){ return _SIM_SINGLE_TRACK.has(a)&&_SIM_SINGLE_TRACK.has(b); }
 
 // ── 지연 원인 태그 ──

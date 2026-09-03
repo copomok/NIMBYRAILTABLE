@@ -179,4 +179,32 @@
       station.lines = [...new Set(platformRows.flatMap(([, detail]) => detail.l || []))];
     }
   }
+
+  // 동명이역마다 가장 널리 쓰이는 한 곳은 기존 역명을 유지한다.
+  // 나머지 역만 괄호 지역/노선명을 사용해 검색 결과가 과도하게 장황해지지 않게 한다.
+  const primaryNames = {
+    '고성(강원)':'고성', '금천(서울)':'금천', '내곡(서울)':'내곡', '내덕(청주)':'내덕',
+    '덕양(고양)':'덕양', '반송(부산)':'반송', '북평(동해)':'북평',
+    '비산(안산안양선)':'비산', '삼산(인천)':'삼산', '상도(강서선)':'상도',
+    '선암(울산)':'선암', '성내(서울)':'성내', '송정(서울)':'송정',
+    '신동(태백)':'신동', '신정(서울)':'신정', '신천(대구)':'신천',
+    '안정(통영)':'안정', '연희(서울)':'연희', '월곶(시흥)':'월곶',
+    '일곡(광주2호선)':'일곡', '장곡(시흥)':'장곡', '장성(호남선)':'장성',
+    '장수(경북)':'장수', '장안(서울)':'장안', '장흥(경전선)':'장흥',
+    '춘양(영동선)':'춘양', '태전(대구)':'태전', '화정(고양)':'화정', '흥덕(용인)':'흥덕'
+  };
+  const shorten = name => primaryNames[name] || name;
+  if (typeof ALL_TRAINS !== 'undefined') for (const train of ALL_TRAINS) {
+    for (const stop of train.stops || []) stop.s = shorten(stop.s);
+    if (Array.isArray(train.boundary)) train.boundary = train.boundary.map(shorten);
+    train.dest = shorten(train.dest);
+    if (typeof REAL_PLAT !== 'undefined' && REAL_PLAT[train.no]) for (const [longName, shortName] of Object.entries(primaryNames)) renameObjectKey(REAL_PLAT[train.no], longName, shortName);
+  }
+  if (typeof METRO_LINES !== 'undefined') for (const line of METRO_LINES) {
+    if (Array.isArray(line.stations)) line.stations = line.stations.map(shorten);
+    for (const route of line.routes || []) route.stations = (route.stations || []).map(shorten);
+  }
+  if (typeof METRO_SCHED !== 'undefined') for (const schedule of Object.values(METRO_SCHED)) if (Array.isArray(schedule.s)) schedule.s = schedule.s.map(shorten);
+  if (typeof STATION_DB !== 'undefined') for (const [longName, shortName] of Object.entries(primaryNames)) renameObjectKey(STATION_DB, `${longName}역`, `${shortName}역`);
+  if (typeof PLATFORM_DB !== 'undefined') for (const [longName, shortName] of Object.entries(primaryNames)) renameObjectKey(PLATFORM_DB, `${longName}역`, `${shortName}역`);
 })();
