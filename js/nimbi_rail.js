@@ -3235,6 +3235,37 @@ function _mapLineEdgeSet(key){
   return _mapEdgeCache[key]=e;
 }
 
+function _updateMetroMapTrains(svgEl){
+  if(typeof METRO_LINES==='undefined'||typeof _metroLineLiveTrains!=='function')return;
+  let lines=[];
+  if(_mapCurrentLine.startsWith('metro:')){
+    const id=_mapCurrentLine.slice(6);lines=METRO_LINES.filter(line=>line.id===id);
+  }else if(_mapCurrentLine.startsWith('metroall:')){
+    const region=_mapCurrentLine.slice(9);lines=METRO_LINES.filter(line=>line.region===region);
+  }else if(_mapCurrentLine.startsWith('metropick:')){
+    lines=METRO_LINES.filter(line=>_metroPickSet.has(line.id));
+  }
+  const markers=[];
+  lines.forEach(line=>_metroLineLiveTrains(line.name).forEach(train=>{
+    const from=_mapStnPos[train.fromStn],to=_mapStnPos[train.toStn]||from;if(!from||!to)return;
+    const frac=train.atStation?0:Math.min(1,Math.max(0,train.frac||0));
+    markers.push({line,train,x:from.x+(to.x-from.x)*frac,y:from.y+(to.y-from.y)*frac,angle:Math.atan2(to.y-from.y,to.x-from.x)*180/Math.PI});
+  }));
+  const occupied=new Map();markers.forEach(marker=>{
+    const key=`${Math.round(marker.x/4)},${Math.round(marker.y/4)}`,nth=occupied.get(key)||0;occupied.set(key,nth+1);
+    if(nth){const rad=7*Math.ceil(nth/2),sign=nth%2?1:-1,a=(marker.angle+90)*Math.PI/180;marker.x+=Math.cos(a)*rad*sign;marker.y+=Math.sin(a)*rad*sign;}
+  });
+  let html='<g id="train-layer" class="metro-map-train-layer">';
+  markers.forEach(({line,train,x,y,angle})=>{
+    const color=train.cls>0?'#ef4444':line.color,label=_metroLiveTrainLabel(train.dest,train.cls);
+    html+=`<g class="metro-map-train" data-line="${_mapStationEsc(line.name)}" data-svc="${train.svcIdx}" role="button" tabindex="0" aria-label="${_mapStationEsc(label)} 시간표 보기" style="cursor:pointer"><circle class="train-dot metro-train-dot" cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="6" fill="${color}" stroke="var(--surface)" stroke-width="2"><title>${_mapStationEsc(label)}</title></circle><path d="M -2.8 -3 L 3.2 0 L -2.8 3 Z" transform="translate(${x.toFixed(1)} ${y.toFixed(1)}) rotate(${angle.toFixed(1)})" fill="#fff" pointer-events="none"/><text class="train-label metro-train-label" x="${x.toFixed(1)}" y="${(y-10).toFixed(1)}" text-anchor="middle" fill="${color}" font-size="10" font-weight="800" pointer-events="none" paint-order="stroke" stroke="var(--surface)" stroke-width="3">${_mapStationEsc(label)}</text></g>`;
+  });
+  html+='</g>';
+  const temp=document.createElement('div');temp.innerHTML=`<svg>${html}</svg>`;const layer=temp.querySelector('g');if(layer)svgEl.appendChild(layer);
+  svgEl.querySelectorAll('.metro-map-train').forEach(node=>{const line=node.dataset.line,svc=Number(node.dataset.svc),entry=markers.find(item=>item.line.name===line&&item.train.svcIdx===svc);if(entry){const open=event=>{event.stopPropagation();openMetroTrain(line,svc,entry.train.clickClock);};node.addEventListener('click',open);node.addEventListener('keydown',event=>{if(event.key==='Enter'||event.key===' '){event.preventDefault();open(event);}});}});
+  const countEl=document.getElementById('map-train-count');if(countEl)countEl.textContent=`운행 중 ${markers.length}편`;
+}
+
 function updateMapTrains(){
   if(!_mapCurrentLine)return;
   const svgEl=document.querySelector('#map-svg-wrap svg');
@@ -3243,6 +3274,11 @@ function updateMapTrains(){
   // 기존 열차 레이어 제거
   const old=svgEl.querySelector('#train-layer');
   if(old)old.remove();
+
+  if(typeof _mapCurrentLine==='string'&&(_mapCurrentLine.startsWith('metro:')||_mapCurrentLine.startsWith('metroall:')||_mapCurrentLine.startsWith('metropick:'))){
+    _updateMetroMapTrains(svgEl);
+    return;
+  }
 
   const now=new Date();
   // 034: 초 단위까지 반영해 위치를 부드럽게 보간
@@ -3533,13 +3569,12 @@ function _mapStationListModel(){
 function _mapStationEsc(value){return String(value??'').replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));}
 function _renderMapStationList(){
   const host=document.getElementById('map-station-list-wrap');if(!host)return;
-  const {source,routeOptions,rows}=_mapStationListModel(),perPage=10,pages=Math.max(1,Math.ceil(rows.length/perPage));
-  _mapStationListState.page=Math.min(_mapStationListState.page,pages-1);const start=_mapStationListState.page*perPage,visible=rows.slice(start,start+perPage);
+  const {source,routeOptions,rows}=_mapStationListModel(),visible=rows;
   host.innerHTML=`<div class="map-station-list-backdrop" onclick="closeCurrentLineStationList()"></div><section class="map-station-list" role="dialog" aria-modal="true" aria-labelledby="map-station-list-title" style="--map-list-color:${source.color}">
     <header><span class="map-station-list-icon"><svg aria-hidden="true"><use href="#i-station"/></svg></span><div><div><h2 id="map-station-list-title">역 목록</h2><span class="map-station-list-line">${_mapStationEsc(source.title)}</span></div><p>총 ${rows.length.toLocaleString()}개 역</p></div><button class="map-station-list-close" onclick="closeCurrentLineStationList()" aria-label="역 목록 닫기">×</button></header>
     <div class="map-station-list-tools"><label><svg aria-hidden="true"><use href="#i-search"/></svg><input type="search" value="${_mapStationEsc(_mapStationListState.query)}" placeholder="역명 검색 (초성 검색 지원)" oninput="setMapStationListQuery(this.value)"></label><select aria-label="구간 선택" onchange="setMapStationListRoute(this.value)"><option value="all">전체 역</option>${routeOptions.map(option=>`<option value="${option.token}"${_mapStationListState.route===option.token?' selected':''}>${_mapStationEsc(option.label)}</option>`).join('')}</select><select aria-label="방향 선택" onchange="setMapStationListDirection(this.value)"><option value="forward"${_mapStationListState.dir==='forward'?' selected':''}>하행 기준</option><option value="reverse"${_mapStationListState.dir==='reverse'?' selected':''}>상행 기준</option></select></div>
     <div class="map-station-list-table"><div class="map-station-list-head"><span></span><span>역명</span><span>승강장</span><span>구간</span><span>노선</span><span>거리 (km)</span><span></span></div>${visible.map(row=>`<button class="map-station-list-row" data-station="${_mapStationEsc(row.name)}" onclick="focusMapStationFromList(this.dataset.station)"><span class="map-station-order"><b>${String(row.index).padStart(2,'0')}</b><i></i></span><strong>${_mapStationEsc(row.name)}</strong><code>${_mapStationEsc(row.platforms)}</code><span>${_mapStationEsc(row.next?`${row.name} – ${row.next}`:'종점')}</span><span class="map-station-list-badges">${row.lines.slice(0,3).map(line=>`<i style="--badge-color:${line.color}">${_mapStationEsc(line.name.replace(/선$/,''))}</i>`).join('')}${row.lines.length>3?`<small>+${row.lines.length-3}</small>`:''}</span><b>${row.distance.toFixed(1)}</b><span aria-hidden="true">›</span></button>`).join('')||'<div class="map-station-list-empty">검색 조건에 맞는 역이 없습니다.</div>'}</div>
-    <div class="map-station-list-pages"><span>총 ${rows.length.toLocaleString()}개 역 중 ${rows.length?start+1:0}–${Math.min(start+perPage,rows.length)} 표시</span><nav><button onclick="setMapStationListPage(0)" ${_mapStationListState.page===0?'disabled':''}>|‹</button><button onclick="setMapStationListPage(${_mapStationListState.page-1})" ${_mapStationListState.page===0?'disabled':''}>‹</button>${Array.from({length:Math.min(5,pages)},(_,i)=>{const base=Math.max(0,Math.min(pages-5,_mapStationListState.page-2)),p=base+i;return`<button class="${p===_mapStationListState.page?'active':''}" onclick="setMapStationListPage(${p})">${p+1}</button>`;}).join('')}<button onclick="setMapStationListPage(${_mapStationListState.page+1})" ${_mapStationListState.page===pages-1?'disabled':''}>›</button><button onclick="setMapStationListPage(${pages-1})" ${_mapStationListState.page===pages-1?'disabled':''}>›|</button></nav></div>
+    <div class="map-station-list-summary">총 ${rows.length.toLocaleString()}개 역 전체 표시</div>
     <footer><button onclick="downloadCurrentLineStationList()"><svg aria-hidden="true"><use href="#i-download"/></svg> 목록 다운로드 (CSV)</button><button class="primary" onclick="centerCurrentMapFromStationList()"><svg aria-hidden="true"><use href="#i-target"/></svg> 지도의 중심으로 이동</button></footer>
   </section>`;
 }
@@ -10819,7 +10854,7 @@ function _metroTrainLivePos(line, svcIdx){
   const flat=[]; for(let i=0;i<n;i++){ flat.push(srv(f[3*i]), srv(f[3*i+1])); }
   let off=0; const mono=[]; for(let i=0;i<flat.length;i++){ let v=flat[i]+off; if(i>0&&v<mono[i-1]){off+=1440;v+=1440;} mono.push(v); }
   const absA=[],absD=[]; for(let i=0;i<n;i++){absA.push(mono[2*i]);absD.push(mono[2*i+1]);}
-  const nowc=new Date(); let now=srv(nowc.getHours()*60+nowc.getMinutes());
+  const nowc=new Date(); let now=srv(nowc.getHours()*60+nowc.getMinutes()+nowc.getSeconds()/60);
   while(now<absA[0]-720)now+=1440; while(now>absD[n-1]+720)now-=1440;
   if(now<absA[0]||now>=absD[n-1]) return null;
   let curIdx=-1, toIdx=-1, frac=0, atStation=false;
