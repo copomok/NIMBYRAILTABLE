@@ -3029,6 +3029,7 @@ let _mapStnPos = {};
 let _mapSvgSize = {w:0,h:0,ox:0,oy:0};
 let _mapTrainInterval = null;
 let _mapLayerMode = 'station'; // 'station': 역 우선, 'train': 열차 우선
+let _mapShowTrains = localStorage.getItem('nimbi_map_show_trains')!=='0';
 let _mapDirFilter = 'both'; // 'both': 전체, 'down': 하행만, 'up': 상행만
 let _mapGradeFilter = null; // null=전체, 'KTX', 'SRT', 'ITX', '무궁화'
 let _mapTrackedTrain = null; // 현재 추적 중인 열차 번호
@@ -3068,6 +3069,20 @@ function toggleMapLayer(){
   const btn=document.getElementById('map-layer-btn');
   if(btn) btn.textContent=_mapLayerMode==='station'?'역 우선':'열차 우선';
   if(_mapCurrentLine) updateMapTrains();
+}
+
+function _syncMapTrainVisibilityButton(){
+  const btn=document.getElementById('map-train-visibility-btn');
+  if(!btn)return;
+  btn.textContent=_mapShowTrains?'열차 위치 켬':'열차 위치 끔';
+  btn.classList.toggle('active',_mapShowTrains);
+  btn.setAttribute('aria-pressed',String(_mapShowTrains));
+}
+function toggleMapTrainVisibility(){
+  _mapShowTrains=!_mapShowTrains;
+  localStorage.setItem('nimbi_map_show_trains',_mapShowTrains?'1':'0');
+  _syncMapTrainVisibilityButton();
+  if(_mapCurrentLine)updateMapTrains();
 }
 
 function setMapDir(dir){
@@ -3238,6 +3253,11 @@ function _mapLineEdgeSet(key){
 
 function _updateMetroMapTrains(svgEl){
   if(typeof METRO_LINES==='undefined'||typeof _metroLineLiveTrains!=='function')return;
+  if(!_mapShowTrains){
+    const countEl=document.getElementById('map-train-count');
+    if(countEl)countEl.textContent='열차 위치 숨김';
+    return;
+  }
   let lines=[];
   if(_mapCurrentLine.startsWith('metro:')){
     const id=_mapCurrentLine.slice(6);lines=METRO_LINES.filter(line=>line.id===id);
@@ -3262,7 +3282,12 @@ function _updateMetroMapTrains(svgEl){
     html+=`<g class="metro-map-train" data-line="${_mapStationEsc(line.name)}" data-svc="${train.svcIdx}" role="button" tabindex="0" aria-label="${_mapStationEsc(label)} 시간표 보기" style="cursor:pointer"><circle class="train-dot metro-train-dot" cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="6" fill="${color}" stroke="var(--surface)" stroke-width="2"><title>${_mapStationEsc(label)}</title></circle><path d="M -2.8 -3 L 3.2 0 L -2.8 3 Z" transform="translate(${x.toFixed(1)} ${y.toFixed(1)}) rotate(${angle.toFixed(1)})" fill="#fff" pointer-events="none"/><text class="train-label metro-train-label" x="${x.toFixed(1)}" y="${(y-10).toFixed(1)}" text-anchor="middle" fill="${color}" font-size="10" font-weight="800" pointer-events="none" paint-order="stroke" stroke="var(--surface)" stroke-width="3">${_mapStationEsc(label)}</text></g>`;
   });
   html+='</g>';
-  const temp=document.createElement('div');temp.innerHTML=`<svg>${html}</svg>`;const layer=temp.querySelector('g');if(layer)svgEl.appendChild(layer);
+  const temp=document.createElement('div');temp.innerHTML=`<svg>${html}</svg>`;const layer=temp.querySelector('g');
+  if(layer){
+    const firstHit=svgEl.querySelector('.map-station-hit');
+    if(_mapLayerMode==='station'&&firstHit)svgEl.insertBefore(layer,firstHit);
+    else svgEl.appendChild(layer);
+  }
   svgEl.querySelectorAll('.metro-map-train').forEach(node=>{const line=node.dataset.line,svc=Number(node.dataset.svc),entry=markers.find(item=>item.line.name===line&&item.train.svcIdx===svc);if(entry){const open=event=>{event.stopPropagation();openMetroTrain(line,svc,entry.train.clickClock);};node.addEventListener('click',open);node.addEventListener('keydown',event=>{if(event.key==='Enter'||event.key===' '){event.preventDefault();open(event);}});}});
   const countEl=document.getElementById('map-train-count');if(countEl)countEl.textContent=`운행 중 ${markers.length}편`;
 }
@@ -3275,6 +3300,13 @@ function updateMapTrains(){
   // 기존 열차 레이어 제거
   const old=svgEl.querySelector('#train-layer');
   if(old)old.remove();
+
+  _syncMapTrainVisibilityButton();
+  if(!_mapShowTrains){
+    const countEl=document.getElementById('map-train-count');
+    if(countEl)countEl.textContent='열차 위치 숨김';
+    return;
+  }
 
   if(typeof _mapCurrentLine==='string'&&(_mapCurrentLine.startsWith('metro:')||_mapCurrentLine.startsWith('metroall:')||_mapCurrentLine.startsWith('metropick:'))){
     _updateMetroMapTrains(svgEl);
@@ -3431,8 +3463,9 @@ function updateMapTrains(){
     const hitCircles=[...svgEl.querySelectorAll('.map-station-hit')];
     hitCircles.forEach(c=>{c.style.pointerEvents='all';svgEl.appendChild(c);});
   } else {
-    // 열차 우선: 열차 레이어를 맨 위로
-    svgEl.querySelectorAll('.map-station-hit').forEach(c=>{c.style.pointerEvents='none';});
+    // 열차 우선: 열차 레이어만 맨 위로 옮긴다. 역 클릭 영역은 유지하여
+    // 열차와 겹치지 않은 역은 어느 모드에서도 계속 선택할 수 있게 한다.
+    svgEl.querySelectorAll('.map-station-hit').forEach(c=>{c.style.pointerEvents='all';});
     const trainLayer=svgEl.querySelector('#train-layer');
     if(trainLayer){trainLayer.style.pointerEvents='all';svgEl.appendChild(trainLayer);}
   }
@@ -3892,10 +3925,6 @@ donghae:{
     {n:'해운대',x:711,y:824},
     {n:'부산',x:687,y:837}
     ]},
-    {color:'#3fb994', dash:true, stations:[
-    {n:'포항',x:757,y:547},
-    {n:'장성(포항)',x:769,y:535}
-    ]}
   ]
 },
 

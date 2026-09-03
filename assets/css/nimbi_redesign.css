@@ -111,7 +111,7 @@ tbody td{padding:9px 12px;background:#fff;font-size:12.5px}tbody tr{border-botto
 .map-legend{background:#fff;border-radius:6px;padding:8px 11px}.map-popup{background:#fff;border-radius:8px;box-shadow:0 12px 32px rgba(16,29,41,.18)}
 .train-label{opacity:0;transition:opacity .12s}.train-dot:hover+.train-label,.train-label.tracked-train-label{opacity:1}.train-dot{transition:r .12s,filter .12s}.train-dot:hover{filter:brightness(1.18)}
 .map-coordinate-grid{stroke:var(--border);stroke-width:1;opacity:.14;pointer-events:none}[data-theme="dark"] .map-coordinate-grid{opacity:.08}
-#map-controls-bar{position:relative;z-index:3;min-height:42px;background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:5px 7px!important;margin-bottom:8px}#map-train-count,#map-layer-btn{height:36px;min-height:36px;display:inline-flex;align-items:center;justify-content:center;padding:0 12px;line-height:1;border-radius:6px}#map-filter-panel{z-index:1200;padding:16px;background:var(--surface-elevated);border:1px solid var(--border);box-shadow:0 -12px 34px rgba(0,0,0,.2)}
+#map-controls-bar{position:relative;z-index:3;min-height:42px;background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:5px 7px!important;margin-bottom:8px}#map-train-count,#map-layer-btn,#map-train-visibility-btn{height:36px;min-height:36px;display:inline-flex;align-items:center;justify-content:center;padding:0 12px;line-height:1;border-radius:6px}#map-filter-panel{z-index:1200;padding:16px;background:var(--surface-elevated);border:1px solid var(--border);box-shadow:0 -12px 34px rgba(0,0,0,.2)}
 .metro-map-train:hover .metro-train-label,.metro-map-train:focus-within .metro-train-label{opacity:1}
 
 /* Home railway overview */

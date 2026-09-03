@@ -18,8 +18,16 @@ test('동해선 본선은 간성에서 강릉을 거쳐 부산까지 연속된�
   }
 });
 
-test('남강릉 명칭과 안강-건천 동해선 지선이 제거된다',()=>{
+test('남강릉 명칭과 동해선 지선들이 제거된다',()=>{
   assert.doesNotMatch(app,/남강릉/);
   assert.doesNotMatch(donghae,/\{n:'안강'[^}]*\}[\s\S]{0,80}\{n:'건천'/);
   assert.doesNotMatch(donghae,/\{n:'건천'[^}]*\}[\s\S]{0,80}\{n:'안강'/);
+  assert.doesNotMatch(donghae,/장성\(포항\)/);
+});
+
+test('지도 우선순위는 다른 종류의 클릭을 차단하지 않고 열차 표시를 끌 수 있다',()=>{
+  assert.doesNotMatch(app,/map-station-hit'\)\.forEach\(c=>\{c\.style\.pointerEvents='none'/);
+  assert.match(app,/function toggleMapTrainVisibility\(\)/);
+  assert.match(app,/nimbi_map_show_trains/);
+  assert.match(app,/if\(!_mapShowTrains\)/);
 });

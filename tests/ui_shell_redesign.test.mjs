@@ -63,8 +63,9 @@ test('지도는 노선 우선 표현과 저대비 보조 격자를 사용한다'
   assert.match(html,/>전체보기<\/button>/);
   assert.match(shell,/nimbiOpenNetwork/);
   assert.match(app,/map-station-hit/);
-  assert.match(app,/pointerEvents='none'/);
+  assert.match(app,/map-station-hit'\)\.forEach\(c=>\{c\.style\.pointerEvents='all'/);
   assert.match(app,/appendChild\(trainLayer\)/);
+  assert.match(html,/id="map-train-visibility-btn"/);
   assert.match(app,/function openCurrentLineStationList\(\)/);
   assert.match(app,/_mapStationListModel/);
   assert.match(app,/downloadCurrentLineStationList/);
@@ -120,7 +121,7 @@ test('열차 상세와 검색 화면은 타임라인 및 compact workspace 규�
   assert.match(css,/\.train-status-banner\.done\{[^}]*justify-content:center/);
   assert.match(css,/\.detail-head-actions\{position:absolute/);
   assert.match(css,/#panel-station>\.search-card,#panel-route>\.search-card,#panel-metroroute>\.search-card/);
-  assert.match(css,/#map-train-count,#map-layer-btn\{height:36px/);
+  assert.match(css,/#map-train-count,#map-layer-btn,#map-train-visibility-btn\{height:36px/);
   assert.match(css,/#panel-train:has\(#result-train \.detail-card\)>\.search-card\{display:block\}/);
 });
 
