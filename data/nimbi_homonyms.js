@@ -207,4 +207,38 @@
   if (typeof METRO_SCHED !== 'undefined') for (const schedule of Object.values(METRO_SCHED)) if (Array.isArray(schedule.s)) schedule.s = schedule.s.map(shorten);
   if (typeof STATION_DB !== 'undefined') for (const [longName, shortName] of Object.entries(primaryNames)) renameObjectKey(STATION_DB, `${longName}역`, `${shortName}역`);
   if (typeof PLATFORM_DB !== 'undefined') for (const [longName, shortName] of Object.entries(primaryNames)) renameObjectKey(PLATFORM_DB, `${longName}역`, `${shortName}역`);
+
+  const regionalNames = {
+    '장흥(교외선)':'장흥(양주)', '춘양(경전선)':'춘양(전남)',
+    '비산(광명성남선)':'비산(만안)', '상도(안산안양선)':'상도(노량진)',
+    '일곡(광주1호선)':'일곡(광주북부)'
+  };
+  const regionalize = name => regionalNames[name] || name;
+  if (typeof ALL_TRAINS !== 'undefined') for (const train of ALL_TRAINS) {
+    for (const stop of train.stops || []) stop.s = regionalize(stop.s);
+    if (Array.isArray(train.boundary)) train.boundary = train.boundary.map(regionalize);
+    train.dest = regionalize(train.dest);
+    if (typeof REAL_PLAT !== 'undefined' && REAL_PLAT[train.no]) for (const [oldName, newName] of Object.entries(regionalNames)) renameObjectKey(REAL_PLAT[train.no], oldName, newName);
+  }
+  if (typeof METRO_LINES !== 'undefined') for (const line of METRO_LINES) {
+    if (Array.isArray(line.stations)) line.stations = line.stations.map(regionalize);
+    for (const route of line.routes || []) route.stations = (route.stations || []).map(regionalize);
+  }
+  if (typeof METRO_SCHED !== 'undefined') for (const schedule of Object.values(METRO_SCHED)) if (Array.isArray(schedule.s)) schedule.s = schedule.s.map(regionalize);
+  if (typeof STATION_DB !== 'undefined') for (const [oldName, newName] of Object.entries(regionalNames)) renameObjectKey(STATION_DB, `${oldName}역`, `${newName}역`);
+  if (typeof PLATFORM_DB !== 'undefined') for (const [oldName, newName] of Object.entries(regionalNames)) renameObjectKey(PLATFORM_DB, `${oldName}역`, `${newName}역`);
+
+  // 최초 인덱스는 분리 전 역명으로 만들어졌으므로 정규화된 시간표에서 다시 생성한다.
+  if (typeof TRAINS_BY_STATION !== 'undefined') {
+    TRAINS_BY_STATION.clear();
+    for (const train of ALL_TRAINS) {
+      const seen = new Set();
+      for (const stop of train.stops || []) {
+        if (seen.has(stop.s)) continue;
+        seen.add(stop.s);
+        if (!TRAINS_BY_STATION.has(stop.s)) TRAINS_BY_STATION.set(stop.s, []);
+        TRAINS_BY_STATION.get(stop.s).push(train);
+      }
+    }
+  }
 })();
