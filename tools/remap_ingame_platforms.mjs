@@ -122,7 +122,7 @@ function alignTrain(train) {
   return candidates[0] || null;
 }
 
-function localPlatform(train, index, current, onlyLine = null) {
+function localPlatform(train, index, onlyLine = null) {
   const wanted = train.stops.map(stop => cleanStation(stop.s));
   const station = wanted[index];
   const previous = wanted[index - 1];
@@ -142,17 +142,10 @@ function localPlatform(train, index, current, onlyLine = null) {
   }).filter(candidate => candidate.stop.platforms.length);
   if (!candidates.length) return null;
   candidates.sort((a, b) => b.score - a.score || a.line.stops.length - b.line.stops.length || a.line.name.localeCompare(b.line.name, 'ko'));
-  const bestScore = candidates[0].score;
-  // 방향 단서가 없는 경우에도 현재 값이 원본의 허용 승강장 중 하나라면
-  // 그 값을 보존한다. 동명이역을 임의의 다른 지역 승강장으로 바꾸지 않는다.
-  const old = Number(current);
-  if (bestScore < 4) {
-    const preserving = candidates.find(candidate => candidate.stop.platforms.includes(old));
-    if (preserving) return { allowed: preserving.stop.platforms, chosen: old, source: preserving.line.name };
-  }
-  const best = candidates.filter(candidate => candidate.score === bestScore);
-  const allowed = [...new Set(best.flatMap(candidate => candidate.stop.platforms))];
-  return { allowed, source: best[0].line.name };
+  const best = candidates[0];
+  // 점수가 같은 다른 계통의 승강장을 합치지 않고, 실제로 선택된 인게임
+  // 노선·방향의 해당 stop에 기입된 plat 배열만 사용한다.
+  return { allowed: best.stop.platforms, source: best.line.name };
 }
 
 const remapped = {};
@@ -173,11 +166,11 @@ for (const train of context.__trains) {
   train.stops.forEach((stop, index) => {
     if (!isBusinessStop(stop, index, train.stops.length)) return;
     businessStops++;
-    let resolved = preferred ? localPlatform(train, index, current[stop.s], preferred) : null;
+    let resolved = preferred ? localPlatform(train, index, preferred) : null;
     if (!resolved) resolved = match
       ? { allowed: match.line.stops[match.indices[index]].platforms, source: match.line.name }
-      : localPlatform(train, index, current[stop.s]);
-    if (!resolved?.allowed?.length) resolved = localPlatform(train, index, current[stop.s]);
+      : localPlatform(train, index);
+    if (!resolved?.allowed?.length) resolved = localPlatform(train, index);
     const allowed = resolved?.allowed || [];
     if (!allowed.length) {
       unmappedStops.push({ no: train.no, station: stop.s, line: train.line });
@@ -185,13 +178,9 @@ for (const train of context.__trains) {
     }
     const old = Number(current[stop.s]);
     if (allowed.length > 1) multiPlatformStops++;
-    // 인게임 원본이 복수 승강장을 허용하면서 편별 고정값은 제공하지 않는
-    // 경우, 같은 계통의 열차가 첫 번호에 몰리지 않도록 열차번호 순으로
-    // 허용 목록 안에서 안정적으로 분산한다.
-    const fallbackIndex = allowed.length > 1 && /^\d+$/.test(String(train.no))
-      ? Math.floor(Number(train.no) / 2) % allowed.length
-      : 0;
-    const chosen = resolved.chosen ?? allowed[fallbackIndex];
+    // 선택된 인게임 노선 stop에 복수 plat가 있으면 앞의 보조 승강장은
+    // 제외하고, 해당 stop에 기록된 주 승강장(마지막 값) 하나만 사용한다.
+    const chosen = allowed.at(-1);
     map[stop.s] = chosen;
     mappedStops++;
     trainMapped++;

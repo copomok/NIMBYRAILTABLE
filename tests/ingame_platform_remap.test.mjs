@@ -51,9 +51,8 @@ test('춘양·봉화는 일반 영동선과 잠실–봉화 SRT의 인게임 계
   const yeongdongDown = ['1621', '1623', '1625', '1627', '1629', '1631', '1633', '1635'];
   for (const no of yeongdongDown) {
     assert.equal(context.__platforms[no]?.['춘양'], 3, `#${no} 춘양`);
-    assert.ok([1, 3].includes(context.__platforms[no]?.['봉화']), `#${no} 봉화`);
+    assert.equal(context.__platforms[no]?.['봉화'], 3, `#${no} 봉화`);
   }
-  assert.deepEqual([...new Set(yeongdongDown.map(no => context.__platforms[no]?.['봉화']))].sort(), [1, 3]);
   for (const no of ['1622', '1624', '1626', '1628', '1630', '1632', '1634', '1636']) {
     assert.equal(context.__platforms[no]?.['춘양'], 2, `#${no} 춘양`);
     assert.equal(context.__platforms[no]?.['봉화'], 2, `#${no} 봉화`);
@@ -63,15 +62,19 @@ test('춘양·봉화는 일반 영동선과 잠실–봉화 SRT의 인게임 계
 test('같은 서울–부산 구간도 무궁화호와 ITX-청춘의 전용 승강장을 구분한다', () => {
   for (const no of ['1301', '1302', '1303', '1304', '1305', '1306']) {
     assert.equal(context.__platforms[no]?.['서울'], 5, `#${no} 서울`);
-    assert.ok([7, 8].includes(context.__platforms[no]?.['부산']), `#${no} 부산`);
+    assert.equal(context.__platforms[no]?.['부산'], 8, `#${no} 부산`);
   }
-  for (const no of ['2001', '2002', '2003', '2004', '2005', '2006']) {
-    assert.ok([15, 16].includes(context.__platforms[no]?.['서울']), `#${no} 서울`);
+  for (const no of ['2001', '2003', '2005']) {
+    assert.equal(context.__platforms[no]?.['서울'], 16, `#${no} 서울 하행`);
+    assert.equal(context.__platforms[no]?.['부산'], 5, `#${no} 부산`);
+  }
+  for (const no of ['2002', '2004', '2006']) {
+    assert.equal(context.__platforms[no]?.['서울'], 15, `#${no} 서울 상행`);
     assert.equal(context.__platforms[no]?.['부산'], 5, `#${no} 부산`);
   }
 });
 
-test('여주는 계통·방향별 인게임 승강장을 사용하고 복수 허용값을 분산한다', () => {
+test('여주는 계통·방향별 인게임 주 승강장 하나만 사용한다', () => {
   for (const no of ['681', '683', '685', '687', '689', '691', '693', '695', '697', '699']) {
     assert.equal(context.__platforms[no]?.['여주'], 1, `#${no} 여주 SRT 하행`);
   }
@@ -81,7 +84,23 @@ test('여주는 계통·방향별 인게임 승강장을 사용하고 복수 허
   for (const no of ['1761', '1763', '1765', '1767', '1769', '1771', '1773', '1775']) {
     assert.equal(context.__platforms[no]?.['여주'], 3, `#${no} 여주 무궁화 하행`);
   }
-  const upPlatforms = ['1762', '1764', '1766', '1768', '1770', '1772', '1774', '1776']
-    .map(no => context.__platforms[no]?.['여주']);
-  assert.deepEqual([...new Set(upPlatforms)].sort(), [2, 4]);
+  for (const no of ['1762', '1764', '1766', '1768', '1770', '1772', '1774', '1776']) {
+    assert.equal(context.__platforms[no]?.['여주'], 4, `#${no} 여주 무궁화 상행`);
+  }
+});
+
+test('복수 승강장 원본은 보조 승강장을 제외하고 주 승강장 하나로 고정한다', () => {
+  const groups = new Map();
+  for (const train of context.__trains) {
+    const signature = [train.grade, train.line, train.stops[0]?.s, train.stops.at(-1)?.s, train.dir].join('|');
+    train.stops.forEach((stop, index) => {
+      if (!isBusinessStop(stop, index, train.stops.length)) return;
+      const key = `${signature}|${stop.s}`;
+      const values = groups.get(key) || new Set();
+      values.add(context.__platforms[train.no]?.[stop.s]);
+      groups.set(key, values);
+    });
+  }
+  const mixed = [...groups.entries()].filter(([, values]) => values.size > 1).map(([key, values]) => `${key}: ${[...values]}`);
+  assert.deepEqual(mixed, []);
 });
