@@ -87,6 +87,22 @@ test('역 검색은 입력 포커스와 한글 조합 상태를 유지한다',()
   assert.match(shell,/isMetro\?'노선':'정차 등급'/);
 });
 
+test('역 기능은 네 개의 하위 탭으로 통합되고 독립 시간표 메뉴는 제거된다',()=>{
+  for(const label of ['역 검색','가까운 역','역 상세','역 시간표'])assert.match(html,new RegExp(`>${label}<`));
+  assert.doesNotMatch(html,/data-shell-tab="station"/);
+  assert.doesNotMatch(html,/id="tab-station"/);
+  assert.match(shell,/nimbiOpenStationTimetable/);
+  assert.match(shell,/installStationWorkspace/);
+});
+
+test('모바일 하단 메뉴는 더보기와 마이페이지를 구분한다',()=>{
+  assert.match(html,/data-mobile-tab="more"[^>]*onclick="nimbiOpenMore\(\)"/);
+  assert.match(html,/data-mobile-tab="mypage"[^>]*onclick="openMyPage\(\)"/);
+  assert.match(html,/<span>마이페이지<\/span>/);
+  assert.match(shell,/const moreItems=/);
+  assert.match(css,/\.mobile-more-sheet/);
+});
+
 test('보조 화면은 테마 토큰과 하단 시트 구조를 공유한다',()=>{
   assert.match(css,/\.ticket-card,.tcard-back,.trip-widget,.journey-sheet/);
   assert.match(css,/\.global-search-dialog,.global-search-dialog>header/);

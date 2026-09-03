@@ -351,3 +351,16 @@ body.map-station-list-open{overflow:hidden}
 .ui-watch .app-sidebar,.ui-watch .top-command-bar,.ui-watch .mobile-bottom-nav,.ui-watch .global-search{display:none!important}
 
 @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}.panel.active{animation:none}*{transition-duration:.01ms!important;animation-duration:.01ms!important;animation-iteration-count:1!important}}
+
+/* Station workspace: 검색·가까운 역·상세·시간표를 하나의 정보 구조로 묶는다. */
+.station-workspace-tabs{position:sticky;z-index:20;top:var(--topbar-h);display:flex;gap:20px;margin:0 0 18px;border-bottom:1px solid var(--border);background:var(--bg)}
+.station-workspace-tabs button{display:flex;align-items:center;gap:7px;min-height:44px;padding:7px 2px;border:0;border-bottom:2px solid transparent;background:transparent;color:var(--text2);font-size:13px;font-weight:750;cursor:pointer}
+.station-workspace-tabs button svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.station-workspace-tabs button:hover{color:var(--text1)}.station-workspace-tabs button.active{border-bottom-color:var(--accent);color:var(--accent)}
+#station-timetable-shell>.search-card{width:min(880px,100%)}
+
+.mobile-more-sheet[hidden]{display:none}.mobile-more-sheet{position:fixed;z-index:1200;inset:0;display:none}.mobile-more-backdrop{position:absolute;inset:0;width:100%;border:0;background:rgba(4,10,18,.58)}
+.mobile-more-sheet>section{position:absolute;right:0;bottom:0;left:0;padding:18px 16px calc(18px + env(safe-area-inset-bottom,0px));border:1px solid var(--border);border-bottom:0;border-radius:14px 14px 0 0;background:var(--surface);transform:translateY(100%);transition:transform .18s ease}
+.mobile-more-sheet>section.open{transform:translateY(0)}.mobile-more-sheet header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}.mobile-more-sheet header span{color:var(--accent);font-size:9px;font-weight:800;letter-spacing:.13em}.mobile-more-sheet h2{margin:2px 0 0;font-size:20px}.mobile-more-sheet header>button{width:44px;height:44px;border:0;background:transparent;color:var(--text2);font-size:25px}
+.mobile-more-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}.mobile-more-grid>button{display:grid;grid-template-columns:20px 1fr 16px;align-items:center;gap:10px;min-height:52px;padding:8px 12px;border:1px solid var(--border);border-radius:8px;background:var(--surface-secondary);color:var(--text1);font-weight:700;text-align:left}.mobile-more-grid svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.8}.mobile-more-grid svg:last-child{width:14px;color:var(--text3)}
+@media(max-width:767px){.station-workspace-tabs{top:var(--topbar-h);gap:0;margin:0 -16px 14px;padding:0 10px;overflow-x:auto;scrollbar-width:none}.station-workspace-tabs::-webkit-scrollbar{display:none}.station-workspace-tabs button{flex:0 0 auto;min-width:88px;min-height:46px;justify-content:center;font-size:11px}.mobile-more-sheet{display:block}body.mobile-more-open{overflow:hidden}}

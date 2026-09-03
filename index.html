@@ -13,7 +13,7 @@
   }catch(_){document.documentElement.dataset.theme='light';}})();
 </script>
   <link rel="stylesheet" href="assets/css/nimbi_rail.css?v=2026080302">
-  <link rel="stylesheet" href="assets/css/nimbi_redesign.css?v=2026090307">
+  <link rel="stylesheet" href="assets/css/nimbi_redesign.css?v=2026090308">
 <!-- PWA -->
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#f3f5f7">
@@ -70,7 +70,6 @@
       <p>기차 정보</p>
       <button type="button" data-shell-tab="stationinfo" onclick="nimbiOpenStationDirectory()"><svg><use href="#i-station"/></svg><span>역</span></button>
       <button type="button" data-shell-tab="train" onclick="nimbiNavigate('train')"><svg><use href="#i-train"/></svg><span>열차</span></button>
-      <button type="button" data-shell-tab="station" onclick="nimbiNavigate('station')"><svg><use href="#i-clock"/></svg><span>시간표</span></button>
       <button type="button" data-shell-tab="route" onclick="nimbiNavigate('route')"><svg><use href="#i-route"/></svg><span>출도착 검색</span></button>
       <button type="button" data-shell-tab="ops" onclick="nimbiNavigate('ops')"><svg><use href="#i-clock"/></svg><span>열차 운용</span></button>
       <button type="button" data-shell-tab="delay" onclick="nimbiNavigate('delay')"><svg><use href="#i-clock"/></svg><span>운행 지연</span></button>
@@ -216,7 +215,6 @@
 <main class="container" id="main-content" tabindex="-1">
   <div class="tabs">
     <button class="tab" onclick="switchTab('train')" id="tab-train">열차</button>
-    <button class="tab" onclick="switchTab('station')" id="tab-station">시간표</button>
     <button class="tab" onclick="switchTab('route')" id="tab-route">출도착</button>
     <button class="tab" onclick="switchTab('ops')" id="tab-ops">운용</button>
     <button class="tab" onclick="switchTab('metrolines')" id="tab-metrolines" style="display:none">노선</button>
@@ -554,8 +552,15 @@
     <div id="result-metroroute"></div>
   </div>
   <div class="panel" id="panel-stationinfo">
+    <nav class="station-workspace-tabs" aria-label="역 기능">
+      <button type="button" data-station-workspace="search" onclick="nimbiStationWorkspaceTab('search')"><svg><use href="#i-search"/></svg><span>역 검색</span></button>
+      <button type="button" data-station-workspace="near" onclick="nimbiStationWorkspaceTab('near')"><svg><use href="#i-target"/></svg><span>가까운 역</span></button>
+      <button type="button" data-station-workspace="detail" onclick="nimbiStationWorkspaceTab('detail')"><svg><use href="#i-station"/></svg><span>역 상세</span></button>
+      <button type="button" data-station-workspace="timetable" onclick="nimbiStationWorkspaceTab('timetable')"><svg><use href="#i-clock"/></svg><span>역 시간표</span></button>
+    </nav>
     <div id="station-directory-shell"></div>
     <div id="result-stationinfo"></div>
+    <div id="station-timetable-shell"></div>
   </div>
   <div class="panel" id="panel-delay">
     <div id="result-delay"></div>
@@ -579,9 +584,17 @@
   <button type="button" data-mobile-tab="map" onclick="nimbiNavigate('map')"><svg><use href="#i-map"/></svg><span>지도</span></button>
   <button type="button" data-mobile-tab="station" onclick="nimbiMobileStation()"><svg><use href="#i-station"/></svg><span>역</span></button>
   <button type="button" data-mobile-tab="train" onclick="nimbiMobileTrain()"><svg><use href="#i-train"/></svg><span>열차</span></button>
-  <button type="button" data-mobile-tab="timetable" onclick="nimbiMobileTimetable()"><svg><use href="#i-clock"/></svg><span>시간표</span></button>
-  <button type="button" onclick="openMyPage()"><svg><use href="#i-more"/></svg><span>더보기</span></button>
+  <button type="button" data-mobile-tab="more" onclick="nimbiOpenMore()"><svg><use href="#i-more"/></svg><span>더보기</span></button>
+  <button type="button" data-mobile-tab="mypage" onclick="openMyPage()"><svg><use href="#i-user"/></svg><span>마이페이지</span></button>
 </nav>
+
+<div class="mobile-more-sheet" id="mobile-more-sheet" hidden>
+  <button class="mobile-more-backdrop" type="button" onclick="nimbiCloseMore()" aria-label="더보기 닫기"></button>
+  <section role="dialog" aria-modal="true" aria-labelledby="mobile-more-title">
+    <header><div><span>MORE</span><h2 id="mobile-more-title">더보기</h2></div><button type="button" onclick="nimbiCloseMore()" aria-label="닫기">×</button></header>
+    <div class="mobile-more-grid"></div>
+  </section>
+</div>
 
 <div class="map-popup-backdrop" id="map-backdrop" style="display:none" onclick="closeMapPopup()"></div>
 <div class="map-popup" id="map-popup" style="display:none">
@@ -613,10 +626,10 @@
   <script src="js/features/nimbi_booking_dynamics.js?v=2026072802"></script>
   <script src="js/features/nimbi_inventory.js?v=2026073124"></script>
 <script src="js/features/nimbi_delay.js?v=2026090302"></script>
-<script src="js/nimbi_rail.js?v=2026090310"></script>
+<script src="js/nimbi_rail.js?v=2026090311"></script>
   <script src="js/features/nimbi_congestion.js?v=2026073110"></script>
   <script src="js/features/nimbi_engagement.js?v=2026073110"></script>
-  <script src="js/features/nimbi_shell.js?v=2026090307"></script>
+  <script src="js/features/nimbi_shell.js?v=2026090308"></script>
   <script>
   if('serviceWorker' in navigator){
     window.addEventListener('load', ()=>{

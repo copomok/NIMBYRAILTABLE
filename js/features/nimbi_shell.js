@@ -36,7 +36,7 @@
     document.title=`${meta[1]} · NIMBY Rail`;
     document.querySelectorAll('[data-shell-tab],[data-mobile-tab]').forEach(button=>{
       const mobile=button.dataset.mobileTab;
-      const active=button.dataset.shellTab===tab||mobile===tab||(mobile==='station'&&tab==='stationinfo')||(mobile==='timetable'&&tab==='station');
+      const active=button.dataset.shellTab===tab||mobile===tab||(mobile==='station'&&tab==='stationinfo');
       button.classList.toggle('active',active);
       if(active)button.setAttribute('aria-current','page');else button.removeAttribute('aria-current');
     });
@@ -47,10 +47,8 @@
     });
     const stationButton=document.querySelector('[data-mobile-tab="station"] span');
     const trainButton=document.querySelector('[data-mobile-tab="train"] span');
-    const timetableButton=document.querySelector('[data-mobile-tab="timetable"] span');
     if(stationButton)stationButton.textContent='역';
     if(trainButton)trainButton.textContent='열차';
-    if(timetableButton)timetableButton.textContent='시간표';
   }
 
   window.nimbiNavigate=function(tab){
@@ -60,7 +58,54 @@
   };
   window.nimbiMobileStation=function(){window.nimbiOpenStationDirectory();};
   window.nimbiMobileTrain=function(){window.nimbiNavigate(mode()==='metro'?'metrolines':'train');};
-  window.nimbiMobileTimetable=function(){window.nimbiNavigate(mode()==='metro'?'stationinfo':'station');};
+
+  let stationWorkspaceTab='search';
+  function installStationWorkspace(){
+    const source=document.getElementById('panel-station');
+    const target=document.getElementById('station-timetable-shell');
+    if(source&&target&&!target.childNodes.length)while(source.firstChild)target.appendChild(source.firstChild);
+  }
+  function syncStationWorkspace(){
+    installStationWorkspace();
+    const directory=document.getElementById('station-directory-shell');
+    const detail=document.getElementById('result-stationinfo');
+    const timetable=document.getElementById('station-timetable-shell');
+    if(directory)directory.hidden=stationWorkspaceTab!=='search';
+    if(detail)detail.hidden=stationWorkspaceTab!=='near'&&stationWorkspaceTab!=='detail';
+    if(timetable)timetable.hidden=stationWorkspaceTab!=='timetable';
+    document.querySelectorAll('[data-station-workspace]').forEach(button=>{
+      const active=button.dataset.stationWorkspace===stationWorkspaceTab;
+      button.classList.toggle('active',active);button.setAttribute('aria-selected',String(active));
+    });
+  }
+  window.nimbiStationWorkspaceTab=function(tab){
+    if(!['search','near','detail','timetable'].includes(tab))tab='search';
+    stationWorkspaceTab=tab;window.nimbiNavigate('stationinfo');
+    if(tab==='search'){
+      document.body.classList.add('station-directory-open');document.body.classList.remove('station-detail-open');renderStationDirectory();
+    }else if(tab==='near'||tab==='detail'){
+      document.body.classList.remove('station-directory-open');document.body.classList.add('station-detail-open');
+      if(typeof window.renderStationInfo==='function')window.renderStationInfo();
+      if(typeof window.setSITab==='function')window.setSITab(tab);
+    }else{
+      document.body.classList.remove('station-directory-open');document.body.classList.remove('station-detail-open');
+    }
+    syncStationWorkspace();window.scrollTo({top:0,behavior:'auto'});
+  };
+  window.nimbiOpenStationTimetable=function(){window.nimbiStationWorkspaceTab('timetable');};
+
+  const moreItems=()=>mode()==='metro'
+    ?[['metrolines','i-route','노선'],['metroroute','i-search','경로 검색'],['notice','i-notice','공지사항'],['stats','i-chart','운행 통계']]
+    :[['route','i-route','출도착 검색'],['ops','i-clock','열차 운용'],['delay','i-clock','운행 지연'],['stats','i-chart','운행 통계'],['notice','i-notice','공지사항']];
+  window.nimbiOpenMore=function(){
+    const shell=document.getElementById('mobile-more-sheet'),grid=shell?.querySelector('.mobile-more-grid');if(!shell||!grid)return;
+    grid.innerHTML=moreItems().map(([tab,icon,label])=>`<button type="button" onclick="nimbiCloseMore();nimbiNavigate('${tab}')">${svg(icon)}<span>${label}</span>${svg('i-chevron')}</button>`).join('');
+    shell.hidden=false;document.body.classList.add('mobile-more-open');requestAnimationFrame(()=>shell.querySelector('section')?.classList.add('open'));
+  };
+  window.nimbiCloseMore=function(){
+    const shell=document.getElementById('mobile-more-sheet');if(!shell)return;
+    shell.querySelector('section')?.classList.remove('open');document.body.classList.remove('mobile-more-open');setTimeout(()=>{shell.hidden=true;},180);
+  };
 
   function resolvedTheme(preference){
     return preference==='dark'||(preference==='system'&&matchMedia('(prefers-color-scheme: dark)').matches)?'dark':'light';
@@ -224,15 +269,15 @@
     const isMetro=mode()==='metro';
     host.innerHTML=`<section class="station-directory" aria-labelledby="station-directory-title"><header class="directory-header"><div><span>STATIONS</span><h1 id="station-directory-title">역</h1><p>${isMetro?'전철':'기차'} 운행 데이터에 등록된 역을 찾습니다.</p></div><button type="button" onclick="nimbiShowNearbyStations()">${svg('i-map')} 가까운 역</button></header><div class="directory-toolbar"><label>${svg('i-search')}<input type="search" value="${esc(stationDirectoryQuery)}" placeholder="역 검색 (초성 지원)" oncompositionstart="nimbiStationCompositionStart(this)" oncompositionend="nimbiStationCompositionEnd(this)" oninput="nimbiStationSearchInput(this)"></label><select onchange="nimbiFilterStationLine(this.value)" aria-label="노선 필터"><option value="all">전체 노선</option>${lineOptions.map(line=>`<option value="${esc(line)}"${line===stationDirectoryLine?' selected':''}>${esc(line)}</option>`).join('')}</select><span>${filtered.length.toLocaleString()}개 역</span></div><div class="station-table"><div class="station-table-head"><span>역</span><span>${isMetro?'노선':'정차 등급'}</span><span>운행 열차</span><span>승강장</span><span></span></div>${rows.map(item=>{const badges=isMetro?item.lines:item.grades;return`<button type="button" onclick="nimbiOpenStation('${esc(item.key)}')"><span><strong>${esc(item.name)}</strong><small>${esc(item.key.toUpperCase())}</small></span><span class="station-lines${isMetro?'':' station-grades'}">${badges.slice(0,4).map((badge,index)=>`<i style="--line-index:${index};${isMetro?'':`--grade-color:${(typeof GRADE_COLORS!=='undefined'&&GRADE_COLORS[badge])||'#388bfd'}`}">${esc(badge)}</i>`).join('')}${badges.length>4?`<small>외 ${badges.length-4}개</small>`:''}</span><b>${item.count?item.count.toLocaleString():'—'}</b><span>${esc(item.platform)}</span>${svg('i-chevron')}</button>`;}).join('')||'<div class="rail-empty">조건에 맞는 역이 없습니다.</div>'}</div>${pages>1?`<nav class="directory-pages" aria-label="역 목록 페이지"><button ${stationDirectoryPage===0?'disabled':''} onclick="nimbiStationPage(-1)">이전</button><span>${stationDirectoryPage+1} / ${pages}</span><button ${stationDirectoryPage===pages-1?'disabled':''} onclick="nimbiStationPage(1)">다음</button></nav>`:''}</section>`;
   }
-  window.nimbiOpenStationDirectory=function(){document.body.classList.remove('station-detail-open');document.body.classList.add('station-directory-open');window.nimbiNavigate('stationinfo');window.scrollTo({top:0,behavior:'auto'});renderStationDirectory();};
+  window.nimbiOpenStationDirectory=function(){stationWorkspaceTab='search';document.body.classList.remove('station-detail-open');document.body.classList.add('station-directory-open');window.nimbiNavigate('stationinfo');window.scrollTo({top:0,behavior:'auto'});renderStationDirectory();syncStationWorkspace();};
   window.nimbiOpenStationLineDirectory=function(lineName){
     stationDirectoryQuery='';stationDirectoryPage=0;
     const available=new Set(directoryStations().flatMap(item=>item.lines));
     stationDirectoryLine=lineName&&available.has(lineName)?lineName:'all';
     window.nimbiOpenStationDirectory();
   };
-  window.nimbiOpenStation=function(name){document.body.classList.remove('station-directory-open');document.body.classList.add('station-detail-open');if(typeof openStationDetail==='function')openStationDetail(name);};
-  window.nimbiShowNearbyStations=function(){document.body.classList.remove('station-directory-open');document.body.classList.add('station-detail-open');window.nimbiNavigate('stationinfo');if(typeof renderStationInfo==='function')renderStationInfo();};
+  window.nimbiOpenStation=function(name){stationWorkspaceTab='detail';document.body.classList.remove('station-directory-open');document.body.classList.add('station-detail-open');window.nimbiNavigate('stationinfo');if(typeof openStationDetail==='function')openStationDetail(name);syncStationWorkspace();};
+  window.nimbiShowNearbyStations=function(){window.nimbiStationWorkspaceTab('near');};
   function queueStationDirectorySearch(value){stationDirectoryQuery=value;stationDirectoryPage=0;clearTimeout(stationDirectorySearchTimer);stationDirectorySearchTimer=setTimeout(()=>{const current=document.querySelector('#station-directory-shell .directory-toolbar input');if(current?.dataset.composing==='1')return;renderStationDirectory();const input=document.querySelector('#station-directory-shell .directory-toolbar input');if(input){input.focus();input.setSelectionRange(input.value.length,input.value.length);}},320);}
   window.nimbiStationCompositionStart=function(input){clearTimeout(stationDirectorySearchTimer);input.dataset.composing='1';};
   window.nimbiStationCompositionEnd=function(input){input.dataset.composing='';queueStationDirectorySearch(input.value);};
@@ -265,7 +310,7 @@
 
   function initialise(){
     const originalStationDetail=window.openStationDetail;
-    if(typeof originalStationDetail==='function')window.openStationDetail=function(name){document.body.classList.remove('station-directory-open');document.body.classList.add('station-detail-open');return originalStationDetail(name);};
+    if(typeof originalStationDetail==='function')window.openStationDetail=function(name){stationWorkspaceTab='detail';document.body.classList.remove('station-directory-open');document.body.classList.add('station-detail-open');const result=originalStationDetail(name);syncStationWorkspace();return result;};
     const originalModeSwitch=window.setAppMode;
     if(typeof originalModeSwitch==='function')window.setAppMode=function(nextMode){
       const directoryWasOpen=currentTab()==='stationinfo'&&document.body.classList.contains('station-directory-open');
@@ -276,7 +321,7 @@
       },0);
       return result;
     };
-    syncThemeControls();syncShell();renderOverview();renderStationDirectory();enhanceLegacyIcons(document);
+    installStationWorkspace();syncThemeControls();syncShell();renderOverview();renderStationDirectory();syncStationWorkspace();enhanceLegacyIcons(document);
     const scheme=matchMedia('(prefers-color-scheme: dark)');scheme.addEventListener?.('change',()=>{if((localStorage.getItem('nimbi_theme')||'system')==='system')syncThemeControls();});
     const input=document.getElementById('global-search-input');
     input?.addEventListener('input',event=>renderSearch(event.target.value));

@@ -415,7 +415,7 @@ function updateMinimap(){
 // ── 🚆/🚇 이용 모드 (기차/전철) ──
 let _appMode=(()=>{try{return localStorage.getItem('nimbi_mode')||'train';}catch(e){return 'train';}})();
 const METRO_MODE_TABS=['metrolines','metroroute','map','stationinfo','notice']; // 전철 모드에서 보이는 메인 탭
-const TRAIN_MODE_TABS=['train','station','route','ops','map','stats','notice','stationinfo','delay']; // 기차 모드 상단바 탭
+const TRAIN_MODE_TABS=['train','route','ops','map','stats','notice','stationinfo','delay']; // 기차 모드 상단바 탭
 // 그 외 탭(book/alarm/fav/ticket 등)은 마이페이지 전용 — 항상 숨김 유지
 function _applyModeTabs(){
   const visible=_appMode==='metro'?METRO_MODE_TABS:TRAIN_MODE_TABS;
@@ -2267,7 +2267,8 @@ function runFav(fav){
     switchTab('train'); searchByTrain();
   } else if(fav.type==='station'){
     document.getElementById('input-station').value=fav.data.stn;
-    switchTab('station'); searchByStation();
+    if(typeof nimbiOpenStationTimetable==='function')nimbiOpenStationTimetable();else switchTab('station');
+    searchByStation();
   } else if(fav.type==='route'){
     document.getElementById('input-from').value=fav.data.from;
     document.getElementById('input-to').value=fav.data.to;
@@ -10103,14 +10104,7 @@ function _srvMin(m){ return ((m-240)%1440+1440)%1440; }
 function renderStationInfo(){
   const el=document.getElementById('result-stationinfo');
   if(!el)return;
-  el.innerHTML=`
-    <div style="position:sticky;top:0;background:var(--bg);z-index:5;padding:8px 0 4px">
-      <div style="display:flex;gap:4px;background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:4px">
-        <button class="si-tab${_siSubTab==='near'?' active':''}" onclick="setSITab('near')">📍 가까운 ${_appMode==='metro'?'전철역':'역'}</button>
-        <button class="si-tab${_siSubTab==='detail'?' active':''}" onclick="setSITab('detail')">🏢 역 상세</button>
-      </div>
-    </div>
-    <div id="si-content" style="padding:0 0 24px"></div>`;
+  el.innerHTML='<div id="si-content" style="padding:0 0 24px"></div>';
   renderSIContent();
 }
 
@@ -11399,7 +11393,7 @@ function toggleSIUpcoming(name){
 function searchStation(name){
   const trainName=name.endsWith('역')?name.slice(0,-1):name;
   document.getElementById('input-station').value=trainName;
-  switchTab('station');
+  if(typeof nimbiOpenStationTimetable==='function')nimbiOpenStationTimetable();else switchTab('station');
   searchByStation();
 }
 
