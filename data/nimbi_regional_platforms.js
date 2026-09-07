@@ -273,12 +273,12 @@
   }
 })();
 
-// #501~524 마포-남대구 KTX-이음 정차역 승강장 확정값.
+// #501~526 마포-남대구 KTX-이음 정차역 승강장 확정값.
 (()=>{
   if(typeof REAL_PLAT==='undefined'||typeof ALL_TRAINS==='undefined')return;
   for(const train of ALL_TRAINS){
     const no=Number(train.no);
-    if(no<501||no>524)continue;
+    if(no<501||no>526)continue;
     const mapped=REAL_PLAT[train.no]||(REAL_PLAT[train.no]={});
     for(const stop of train.stops){
       if(stop.p!=null)mapped[stop.s]=Number(stop.p);
