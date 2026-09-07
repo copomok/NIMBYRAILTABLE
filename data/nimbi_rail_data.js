@@ -1483,21 +1483,24 @@ ALL_TRAINS.push(
 // WP8097은 구미-김천 사이의 비역 웨이포인트이므로 시간표에서 제외한다.
 {
   const clock=value=>{const n=(value%1440+1440)%1440;return `${Math.floor(n/60)}:${String(n%60).padStart(2,'0')}`;};
-  const down=[
-    ['마포',null,0,11],['서울',4,6,7],['병목안',13,15,1],['수영',20,21,5],
-    ['죽산',39,null],['일죽',46,null],['장호원',51,null],['돈산',57,null],
-    ['충주',67,69,3],['수안보',76,null],['북문경',83,null],['문경',90,92,3],
-    ['상주',102,104,4],['구미',129,131,3],['약목',136,null],['서왜관',140,null],
-    ['하빈',146,null],['호림',150,null],['남대구',154,null,13]
+  // db2_lines의 원본 초 시각을 각 역별로 독립 버림한다. 원본에 생략된 중간
+  // 통과역은 동일 선로의 거리 비율로 보간했으며, 정차/통과 목록은 확정안을 유지한다.
+  const downSeconds=[
+    ['마포',null,0,11],['서울',235,295,7],['병목안',752,812,1],['수영',1127,1187,5],
+    ['죽산',1771,null],['일죽',1858,null],['장호원',2082,null],['돈산',2310,null],
+    ['충주',2803,2863,3],['수안보',3183,null],['북문경',3470,null],['문경',3767,3827,3],
+    ['상주',4188,4248,4],['구미',4954,5014,3],['약목',5221,null],['서왜관',5329,null],
+    ['하빈',5506,null],['호림',5693,null],['남대구',5847,null,13]
   ];
-  const total=154;
-  const up=down.slice().reverse().map(([s,arr,dep,p],index,array)=>[
-    s,
-    index===0?null:(dep==null?total-arr:total-dep),
-    index===array.length-1?null:(index===0?0:(dep==null?null:total-arr)),
-    p
-  ]);
-  const upPlatform={남대구:13,서왜관:3,약목:3,구미:6,상주:5,문경:4,충주:4,수영:6,병목안:3,서울:8,마포:12};
+  const upSeconds=[
+    ['남대구',null,0,13],['호림',131,null],['하빈',290,null],['서왜관',467,null],
+    ['약목',582,null],['구미',817,877,6],['상주',1569,1629,5],['문경',1891,1951,4],
+    ['북문경',2247,null],['수안보',2530,null],['충주',2849,2909,4],['돈산',3248,null],
+    ['장호원',3479,null],['일죽',3707,null],['죽산',3795,null],['수영',4549,4609,6],
+    ['병목안',4917,4977,3],['서울',5438,5498,8],['마포',5733,null,12]
+  ];
+  const toMinutes=template=>template.map(([s,arr,dep,p])=>[s,arr==null?null:Math.floor(arr/60),dep==null?null:Math.floor(dep/60),p]);
+  const down=toMinutes(downSeconds),up=toMinutes(upSeconds);
   for(let i=ALL_TRAINS.length-1;i>=0;i--){
     const no=+ALL_TRAINS[i].no;
     if(no>=501&&no<=529)ALL_TRAINS.splice(i,1);
@@ -1512,8 +1515,7 @@ ALL_TRAINS.push(
         boundary:dir==='down'?['마포','남대구']:['남대구','마포'],
         stops:template.map(([s,arr,dep,p],stopIndex)=>{
           const stop={s,arr:arr==null?null:clock(start+arr),dep:dep==null?null:clock(start+dep)};
-          const platform=dir==='up'?upPlatform[s]:p;
-          if(platform!=null&&(stopIndex===0||stopIndex===template.length-1||dep!=null))stop.p=String(platform);
+          if(p!=null&&(stopIndex===0||stopIndex===template.length-1||dep!=null))stop.p=String(p);
           return stop;
         })
       };

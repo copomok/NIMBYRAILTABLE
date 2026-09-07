@@ -45,14 +45,14 @@ test('통과역·정차역·승강장과 전 구간 시각이 완결되어 있�
   }
 });
 
-test('양방향 80분 간격·첫막차 조건과 154분 소요시간을 지킨다',()=>{
+test('양방향 80분 간격과 인게임 원본 방향별 소요시간을 지킨다',()=>{
   for(const dir of ['down','up']){
     const list=trains.filter(t=>t.dir===dir).sort((a,b)=>Number(a.no)-Number(b.no));
     assert.equal(list.length,13);
     for(let i=1;i<list.length;i++)assert.equal(elapsed(list[i-1].stops[0].dep,list[i].stops[0].dep),80);
     assert.equal(list[0].stops[0].dep,'5:35');
-    assert.equal(list.at(-1).stops.at(-1).arr,'0:09');
-    for(const train of list)assert.equal(elapsed(train.stops[0].dep,train.stops.at(-1).arr),154);
+    assert.equal(list.at(-1).stops.at(-1).arr,dir==='down'?'23:12':'23:10');
+    for(const train of list)assert.equal(elapsed(train.stops[0].dep,train.stops.at(-1).arr),dir==='down'?97:95);
   }
 });
 
