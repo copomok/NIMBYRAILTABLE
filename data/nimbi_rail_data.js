@@ -1478,6 +1478,51 @@ ALL_TRAINS.push(
   }
 }
 
+// 마포-남대구 KTX-이음: 인게임의 "마포-충주-남대구 KTX" 노선·승강장 구조를
+// 기준으로 기존의 불완전한 #501~529 데이터를 #501~524(12왕복)로 전면 대치한다.
+// WP8097은 구미-김천 사이의 비역 웨이포인트이므로 시간표에서 제외한다.
+{
+  const clock=value=>{const n=(value%1440+1440)%1440;return `${Math.floor(n/60)}:${String(n%60).padStart(2,'0')}`;};
+  const down=[
+    ['마포',null,0,11],['서울',4,6,7],['병목안',13,15,1],['수영',20,21,5],
+    ['오산',31,null],['죽산',39,null],['일죽',46,null],['장호원',51,null],['돈산',57,null],
+    ['충주',67,69,3],['수안보',76,null],['북문경',83,null],['문경',90,92,3],
+    ['상주',102,104,4],['청리',109,null],['옥산',112,null],['김천',120,null],
+    ['구미',129,131,3],['약목',136,137,2],['서왜관',140,141,2],
+    ['하빈',146,null],['호림',150,null],['남대구',154,null,13]
+  ];
+  const total=154;
+  const up=down.slice().reverse().map(([s,arr,dep,p],index,array)=>[
+    s,
+    index===0?null:(dep==null?total-arr:total-dep),
+    index===array.length-1?null:(index===0?0:(dep==null?null:total-arr)),
+    p
+  ]);
+  const upPlatform={남대구:13,서왜관:3,약목:3,구미:6,상주:5,문경:4,충주:4,수영:6,병목안:3,서울:8,마포:12};
+  for(let i=ALL_TRAINS.length-1;i>=0;i--){
+    const no=+ALL_TRAINS[i].no;
+    if(no>=501&&no<=529)ALL_TRAINS.splice(i,1);
+  }
+  const first=335; // 05:35, 기존 경부고속선/경부선 열차 사이의 유효 시격에 배치
+  for(let index=0;index<12;index++){
+    const start=first+index*80;
+    for(const [no,dir,template] of [[501+index*2,'down',down],[502+index*2,'up',up]]){
+      const train={
+        no:String(no),dest:dir==='down'?'남대구':'마포',dir,
+        line:'경부고속선·중부내륙선·경부선',grade:'KTX-이음',
+        boundary:dir==='down'?['마포','남대구']:['남대구','마포'],
+        stops:template.map(([s,arr,dep,p],stopIndex)=>{
+          const stop={s,arr:arr==null?null:clock(start+arr),dep:dep==null?null:clock(start+dep)};
+          const platform=dir==='up'?upPlatform[s]:p;
+          if(platform!=null&&(stopIndex===0||stopIndex===template.length-1||dep!=null))stop.p=String(platform);
+          return stop;
+        })
+      };
+      ALL_TRAINS.push(train);
+    }
+  }
+}
+
 // 출발 시각만 조정된 기존 열차는 같은 계통·방향의 정상 편성 템플릿으로
 // 전 구간 시각과 정차시간을 다시 투영한다. 시발역 출발 시각은 유지한다.
 {
