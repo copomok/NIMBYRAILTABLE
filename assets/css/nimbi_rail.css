@@ -1298,6 +1298,28 @@ tbody td{padding:10px 14px;font-size:13px;white-space:nowrap}
 .book-detail-fare-row{display:flex;justify-content:space-between;align-items:center;font-size:14px;color:var(--text2);padding:4px 0;border-bottom:1px solid var(--border)}
 .book-detail-fare-row:last-child{border-bottom:none}
 
+/* 예매 열차 운행 정보 — 선택한 승·하차 구간 중심 정차역 타임라인 */
+#book-route-detail-wrap{position:fixed;inset:0;z-index:10040;display:flex;align-items:flex-end;justify-content:center;--brd-grade:var(--accent)}
+.book-route-detail-backdrop{position:absolute;inset:0;background:rgba(0,0,0,.68);backdrop-filter:blur(3px)}
+.book-route-detail-sheet{position:relative;width:min(620px,100%);height:min(88dvh,820px);display:flex;flex-direction:column;overflow:hidden;background:var(--bg1);color:var(--text1);border:1px solid var(--border);border-bottom:0;border-radius:18px 18px 0 0;box-shadow:0 -14px 45px rgba(0,0,0,.42);transform:translateY(100%);transition:transform .22s ease}
+.book-route-detail-sheet.open{transform:translateY(0)}
+.brd-header{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:18px 20px 12px;background:var(--bg1);flex-shrink:0}
+.brd-header small{display:block;color:var(--text3);font-size:11px;font-weight:800;letter-spacing:.12em;margin-bottom:5px}
+.brd-header h2{margin:0;color:var(--brd-grade);font-size:19px}.brd-header h2 b{color:var(--text1);font-family:var(--mono);font-size:21px;margin-left:5px}
+.brd-head-actions{display:flex;gap:8px}.brd-head-actions button{width:42px;height:42px;border:1px solid var(--border);border-radius:9px;background:var(--bg2);color:var(--text1);font-size:20px;cursor:pointer}.brd-head-actions button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.brd-summary{margin:0 20px 14px;padding:15px 16px;border:1px solid var(--border);border-top:3px solid var(--brd-grade);border-radius:10px;background:var(--bg2);text-align:center;flex-shrink:0}
+.brd-summary>time{display:block;color:var(--text3);font:12px var(--mono);margin-bottom:7px}.brd-summary>strong{display:block;font-size:16px}.brd-summary>strong span{color:var(--text2);font-family:var(--mono);font-weight:500}.brd-summary>strong i{font-style:normal;color:var(--text3);margin:0 7px}.brd-summary>small{display:block;margin-top:7px;color:var(--text3);font-size:11px}
+.brd-columns,.brd-stop{display:grid;grid-template-columns:minmax(160px,1fr) 62px 16px 62px;align-items:center}.brd-columns{padding:9px 20px 9px 76px;background:var(--bg2);border-top:1px solid var(--border);border-bottom:1px solid var(--border);color:var(--text3);font-size:11px;font-weight:700;flex-shrink:0}.brd-columns span:nth-child(n+2){text-align:right}.brd-columns span:last-child{grid-column:4}
+.brd-stop-list{overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;flex:1;min-height:0;padding-bottom:calc(22px + env(safe-area-inset-bottom,0px))}
+.brd-stop{position:relative;min-height:74px;padding:10px 20px 10px 76px;border-bottom:1px solid var(--border);font-variant-numeric:tabular-nums}
+.brd-rail{position:absolute;left:45px;top:0;bottom:0;width:14px;display:flex;justify-content:center}.brd-rail:before{content:"";position:absolute;top:0;bottom:0;width:4px;background:var(--border)}.brd-stop.ride .brd-rail:before{background:var(--brd-grade)}.brd-stop:first-child .brd-rail:before{top:50%}.brd-stop:last-child .brd-rail:before{bottom:50%}
+.brd-rail i{position:absolute;top:50%;width:9px;height:9px;border-radius:50%;background:var(--bg1);border:2px solid var(--text3);transform:translateY(-50%);z-index:1}.brd-stop.ride .brd-rail i{border-color:var(--brd-grade);background:var(--bg1)}.brd-stop.board .brd-rail i,.brd-stop.alight .brd-rail i{width:22px;height:22px;border-width:5px;box-shadow:0 0 0 4px color-mix(in srgb,var(--brd-grade) 16%,transparent)}
+.brd-station{min-width:0;display:flex;align-items:center;gap:7px;flex-wrap:wrap}.brd-station strong{font-size:15px}.brd-station>span:not(.brd-stop-badge){width:100%;font-size:10px;color:var(--text3)}
+.brd-stop-badge{font-size:10px;font-weight:800;padding:2px 6px;border-radius:4px;color:#fff;background:var(--brd-grade)}.brd-stop-badge.alight{background:var(--text2)}
+.brd-stop time{font-family:var(--mono);font-size:13px;color:var(--text2);text-align:right}.brd-stop .brd-arrow{color:var(--text3);text-align:center}.brd-stop.before,.brd-stop.after{opacity:.48}.brd-stop.ride{background:color-mix(in srgb,var(--brd-grade) 5%,transparent)}.brd-stop.board,.brd-stop.alight{opacity:1}
+@media(min-width:768px){#book-route-detail-wrap{align-items:center;padding:24px}.book-route-detail-sheet{border-bottom:1px solid var(--border);border-radius:14px;height:min(82vh,820px)}}
+@media(max-width:520px){.book-route-detail-sheet{height:calc(100dvh - var(--safe-top) - 10px)}.brd-header{padding:14px 16px 10px}.brd-summary{margin:0 16px 12px}.brd-columns,.brd-stop{grid-template-columns:minmax(118px,1fr) 56px 14px 56px}.brd-columns{padding-left:62px;padding-right:14px}.brd-stop{padding-left:62px;padding-right:14px;min-height:70px}.brd-rail{left:34px}.brd-station strong{font-size:14px}.brd-stop time{font-size:12px}}
+
 @media(max-width:640px){
   .book-stn-name{font-size:17px}
   .book-detail-stn-name{font-size:18px}

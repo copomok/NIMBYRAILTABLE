@@ -9733,7 +9733,7 @@ function openBookTrainDetail(trainNo, from, to, depT, arrT, travelDate){
         <div class="book-detail-fares">${fareSpec}</div>
       </div>
       <div style="flex-shrink:0;padding:8px 20px 32px;display:flex;gap:8px">
-        <button class="btn" id="bdd-detail-btn" style="flex:1;justify-content:center;font-size:13px">🔍 열차 상세</button>
+        <button class="btn" id="bdd-detail-btn" style="flex:1;justify-content:center;font-size:13px">열차 상세</button>
         ${soldOut
           ? `<button class="btn" id="bdd-watch-btn" style="flex:2;justify-content:center;font-size:14px;color:var(--red);border-color:var(--red)">🔔 여석 알림 (매진)</button>`
           : `<button class="btn btn-primary" id="bdd-book-btn" style="flex:2;justify-content:center;font-size:14px">🎫 예매하기</button>`}
@@ -9742,13 +9742,55 @@ function openBookTrainDetail(trainNo, from, to, depT, arrT, travelDate){
   document.body.appendChild(wrap);
   wrap.querySelector('.book-detail-backdrop').addEventListener('click', closeBookTrainDetail);
   addMobileTap(document.getElementById('bdd-close-x'), closeBookTrainDetail);
-  addMobileTap(document.getElementById('bdd-detail-btn'), ()=>{ closeBookTrainDetail(); jumpToTrain(trainNo); });
+  addMobileTap(document.getElementById('bdd-detail-btn'), ()=>{ closeBookTrainDetail(); openBookRouteDetail(trainNo,from,to,travelDate); });
   if(soldOut){
     addMobileTap(document.getElementById('bdd-watch-btn'), ()=>{ closeBookTrainDetail(); openSeatWatchPopup(trainNo,from,to,travelDate); });
   }else{
     addMobileTap(document.getElementById('bdd-book-btn'), ()=>{ closeBookTrainDetail(); _bookDetailConfirm(trainNo,from,to,depT,arrT||'',travelDate); });
   }
   setTimeout(()=>wrap.querySelector('.book-detail-panel').classList.add('open'), 10);
+}
+
+// 예매 구간 기준 운행 정보 — 전체 정차역 중 승차·하차 구간을 강조한다.
+function openBookRouteDetail(trainNo,from,to,travelDate){
+  const t=getTrainByNo(trainNo);if(!t)return;
+  closeBookRouteDetail();
+  const allStops=(t.stops||[]).filter(s=>(hasTime(s.arr)||hasTime(s.dep))&&!isPassStop(t,s.s));
+  const fromIdx=allStops.findIndex(s=>s.s===from);
+  const toIdx=allStops.findIndex((s,i)=>i>fromIdx&&s.s===to);
+  if(fromIdx<0||toIdx<0){jumpToTrain(trainNo);return;}
+  const esc=typeof _opsEsc==='function'?_opsEsc:s=>String(s??'').replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+  const gradeColor=(typeof GRADE_COLORS!=='undefined'&&GRADE_COLORS[t.grade])||`var(--c-${gcCssVar(t.grade)})`;
+  const dateLabel=(()=>{const m=String(travelDate||'').match(/^(\d{4})-(\d{2})-(\d{2})$/);if(!m)return esc(travelDate||todayLocalStr());const d=new Date(+m[1],+m[2]-1,+m[3]);return `${m[1]}.${m[2]}.${m[3]} (${['일','월','화','수','목','금','토'][d.getDay()]})`;})();
+  const rows=allStops.map((s,i)=>{
+    const inRide=i>=fromIdx&&i<=toIdx,before=i<fromIdx,after=i>toIdx;
+    const plat=typeof _realPlatform==='function'?_realPlatform(t.no,s.s):null;
+    const badge=i===fromIdx?'<span class="brd-stop-badge board">승차</span>':i===toIdx?'<span class="brd-stop-badge alight">하차</span>':'';
+    const arr=hasTime(s.arr)?s.arr:'',dep=hasTime(s.dep)?s.dep:'';
+    return `<div class="brd-stop${inRide?' ride':''}${before?' before':''}${after?' after':''}${i===fromIdx?' board':''}${i===toIdx?' alight':''}">
+      <div class="brd-rail"><i></i></div>
+      <div class="brd-station">${badge}<strong>${esc(s.s)}</strong>${plat!=null?`<span>${esc(plat)}번 승강장</span>`:''}</div>
+      <time class="brd-arr">${arr||'—'}</time><span class="brd-arrow">→</span><time class="brd-dep">${dep||'—'}</time>
+    </div>`;
+  }).join('');
+  const wrap=document.createElement('div');wrap.id='book-route-detail-wrap';wrap.style.setProperty('--brd-grade',gradeColor);
+  wrap.innerHTML=`<div class="book-route-detail-backdrop"></div><section class="book-route-detail-sheet" role="dialog" aria-modal="true" aria-label="${esc(t.grade)} ${esc(t.no)} 운행 정보">
+    <header class="brd-header"><div><small>운행 정보</small><h2>${esc(t.grade)} <b>${esc(t.no)}</b></h2></div><div class="brd-head-actions"><button type="button" class="brd-refresh" aria-label="새로고침">↻</button><button type="button" class="brd-close" aria-label="닫기">✕</button></div></header>
+    <div class="brd-summary"><time>${dateLabel}</time><strong>${esc(from)} <span>${esc(allStops[fromIdx].dep||allStops[fromIdx].arr||'—')}</span><i>→</i> ${esc(to)} <span>${esc(allStops[toIdx].arr||allStops[toIdx].dep||'—')}</span></strong><small>전체 ${allStops.length}개 정차역 · 선택 구간 ${toIdx-fromIdx+1}개 역</small></div>
+    <div class="brd-columns"><span>역명</span><span>도착</span><span>출발</span></div>
+    <div class="brd-stop-list">${rows}</div>
+  </section>`;
+  document.body.appendChild(wrap);document.body.classList.add('app-modal-open');
+  wrap.querySelector('.book-route-detail-backdrop').addEventListener('click',closeBookRouteDetail);
+  addMobileTap(wrap.querySelector('.brd-close'),closeBookRouteDetail);
+  addMobileTap(wrap.querySelector('.brd-refresh'),()=>openBookRouteDetail(trainNo,from,to,travelDate));
+  requestAnimationFrame(()=>wrap.querySelector('.book-route-detail-sheet')?.classList.add('open'));
+  requestAnimationFrame(()=>wrap.querySelector('.brd-stop.board')?.scrollIntoView({block:'center'}));
+}
+function closeBookRouteDetail(){
+  const wrap=document.getElementById('book-route-detail-wrap');if(!wrap)return;
+  wrap.querySelector('.book-route-detail-sheet')?.classList.remove('open');
+  document.body.classList.remove('app-modal-open');setTimeout(()=>wrap.remove(),220);
 }
 
 
