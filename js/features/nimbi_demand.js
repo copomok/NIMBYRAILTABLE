@@ -145,6 +145,25 @@
       distancePreference(train,km)*directionMultiplier(train,a,b,date)*calendarMultiplier(date,b)*
       baseDemandIndex(train)*(.91+random(`${train.no}|${date}|${a.s}|${b.s}`)*.18);
   }
+  // 정차역이 많은 장거리 계통은 여러 OD가 중앙 구간에 동시에 겹친다.
+  // 승객 회전은 유지하되, 그 중첩만으로 핵심 구간의 잠재 수요가
+  // 지나치게 커지지 않도록 장거리 열차의 최대 구간 수요를 정규화한다.
+  function normalizePeakDemand(train,ods,stopCount,cap){
+    if(stopCount<8||!ods.length||!(cap>0))return ods;
+    const loads=Array(Math.max(0,stopCount-1)).fill(0);
+    for(const od of ods)for(let i=od.fromIndex;i<od.toIndex;i++)loads[i]+=od.demand;
+    const peak=Math.max(0,...loads),group=gradeGroup(train.grade),base=baseDemandIndex(train);
+    const ceilingRate=group==='local'?clamp(.88+base*.22,1.02,1.18):group==='itx'?1.24:1.42;
+    const ceiling=Math.round(cap*ceilingRate);
+    if(peak<=ceiling)return ods;
+    const scale=ceiling/peak;
+    for(const od of ods){
+      od.prePeakDemand=od.demand;
+      od.demand=Math.floor(od.demand*scale);
+      od.peakNormalization=scale;
+    }
+    return ods;
+  }
   function rawDemand(train,date){
     seenTrains.set(String(train.no),train);
     const key=`${train.no}|${date}|${g.NIMBI_DEMAND_VERSION}|raw`;
@@ -156,12 +175,14 @@
     }
     if(!ods.length)return[];
     const cap=capacity(train).total,group=gradeGroup(train.grade),gradeBase=group==='high'?1.35:group==='itx'?1:.82;
-    const routeScale=clamp(.75+Math.sqrt(list.length)/5,.9,1.8),maxDemand=exactKtx(train)?2.8:2.4;
+    // 역 수 증가에 따라 수요가 과도하게 커지던 제곱근 배율을 로그형으로 완화한다.
+    const routeScale=clamp(.82+Math.log2(Math.max(2,list.length))*.13,.92,1.42),maxDemand=exactKtx(train)?2.8:2.4;
     const target=Math.round(clamp(cap*gradeBase*baseDemandIndex(train)*routeScale,cap*.45,cap*maxDemand));
     const sum=ods.reduce((a,x)=>a+x.score,0)||1;
     let assigned=0;
     for(const od of ods){const exact=target*od.score/sum;od.demand=Math.floor(exact);od.frac=exact-od.demand;assigned+=od.demand;}
     [...ods].sort((a,b)=>b.frac-a.frac).slice(0,target-assigned).forEach(od=>od.demand++);
+    normalizePeakDemand(train,ods,list.length,cap);
     ods.sort((a,b)=>a.fromIndex-b.fromIndex||a.toIndex-b.toIndex);
     rawCache.set(key,ods);
     rawODCache.set(key,new Map(ods.map(od=>[`${od.from}\u0000${od.to}`,od])));
@@ -297,6 +318,7 @@
   g.NIMBI_Demand={clamp,hash,random,toMin,getStops:stops,getStationDemandProfile:profile,getTrainCapacity:capacity,
     getGamePassengerCount:gamePassengers,getBaseDemandIndex:baseDemandIndex,getInferredRouteDemandIndex:inferredRouteDemandIndex,
     getDistanceGradePreference:distancePreference,getTimeDirectionMultiplier:directionMultiplier,getODDemandScore:odScore,
+    normalizePeakDemand,
     buildRawTrainODDemand:rawDemand,buildTrainODDemand:buildDemand,getCompetitionAdjustment:competitionAdjustment,
     prepareCompetitionIndex,clearCache};
   g.getBaseDemandIndex=baseDemandIndex;g.buildTrainODDemand=buildDemand;g.getStationDemandProfile=profile;

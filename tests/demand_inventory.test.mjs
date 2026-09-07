@@ -34,6 +34,13 @@ assert.ok(shared.competitorCount===1&&shared.competitionMultiplier<1,'비슷한 
 assert.ok(later.transferredDemand>0,'매진 예상 열차의 좌석 초과 수요 일부가 다음 열차로 이동해야 함');
 assert.ok(shared.demand!==rawShared.demand,'경쟁·초과 수요 보정이 잠재 수요에 실제 반영되어야 함');
 c.ALL_TRAINS=[];
+const longLocal={no:'long-local',grade:'무궁화호',passengers:900,line:'장거리시험선',stops:Array.from({length:12},(_,i)=>({s:`장거리${i}`,arr:i?`${8+i}:00`:null,dep:i<11?`${8+i}:01`:null}))};
+longLocal.stops[0].dep='8:00';longLocal.stops[11].arr='19:00';
+const crowdedODs=[{fromIndex:0,toIndex:8,demand:90},{fromIndex:2,toIndex:10,demand:80},{fromIndex:4,toIndex:11,demand:70}];
+c.NIMBI_Demand.normalizePeakDemand(longLocal,crowdedODs,12,100);
+const longLoads=Array(11).fill(0);for(const od of crowdedODs)for(let i=od.fromIndex;i<od.toIndex;i++)longLoads[i]+=od.demand;
+assert.ok(Math.max(...longLoads)<=118,'장거리 일반열차의 OD 중첩이 핵심 구간 수요를 과도하게 부풀리면 안 됨');
+assert.ok(crowdedODs.every(od=>od.peakNormalization<1),'장거리 다정차 열차에 최대 구간 수요 정규화가 적용되어야 함');
 const passTrain={no:'pass',grade:'무궁화호',stops:[
   {s:'기점',dep:'08:00'},
   {s:'시간형 통과',arr:'08:20',dep:null},
