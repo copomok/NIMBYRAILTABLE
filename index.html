@@ -14,6 +14,7 @@
 </script>
   <link rel="stylesheet" href="assets/css/nimbi_rail.css?v=2026080302">
   <link rel="stylesheet" href="assets/css/nimbi_redesign.css?v=2026090402">
+  <link rel="stylesheet" href="assets/css/nimbi_operations_hub.css?v=2026090702">
 <!-- PWA -->
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#f3f5f7">
@@ -84,6 +85,7 @@
       <p>네트워크</p>
       <button type="button" data-shell-tab="stats" onclick="nimbiNavigate('stats')"><svg><use href="#i-chart"/></svg><span>운행 통계</span></button>
       <button type="button" data-shell-tab="notice" onclick="nimbiNavigate('notice')"><svg><use href="#i-notice"/></svg><span>공지사항</span></button>
+      <button type="button" data-shell-tab="control" onclick="nimbiNavigate('control')"><svg><use href="#i-chart"/></svg><span>운행 센터</span></button>
     </div>
   </nav>
   <div class="sidebar-footer">
@@ -224,6 +226,7 @@
     <button class="tab" onclick="switchTab('notice')" id="tab-notice">공지</button>
     <button class="tab" onclick="switchTab('stationinfo')" id="tab-stationinfo">역 정보</button>
     <button class="tab" onclick="switchTab('delay')" id="tab-delay">지연</button>
+    <button class="tab" onclick="switchTab('control')" id="tab-control">운행 센터</button>
     <button class="tab" id="tab-book" style="display:none" onclick="switchTab('book')">열차 예매</button>
     <!-- 알람·즐겨찾기·승차권은 마이페이지로 이동 -->
     <button class="tab" id="tab-alarm" style="display:none" onclick="switchTab('alarm')">알람</button>
@@ -566,6 +569,9 @@
   <div class="panel" id="panel-delay">
     <div id="result-delay"></div>
   </div>
+  <div class="panel" id="panel-control">
+    <div id="result-control"></div>
+  </div>
   <div class="panel" id="panel-stats">
     <div id="result-stats"></div>
   </div>
@@ -627,10 +633,11 @@
   <script src="js/features/nimbi_booking_dynamics.js?v=2026072802"></script>
   <script src="js/features/nimbi_inventory.js?v=2026073124"></script>
 <script src="js/features/nimbi_delay.js?v=2026090302"></script>
-<script src="js/nimbi_rail.js?v=2026090402"></script>
+<script src="js/nimbi_rail.js?v=2026090702"></script>
   <script src="js/features/nimbi_congestion.js?v=2026073110"></script>
   <script src="js/features/nimbi_engagement.js?v=2026073110"></script>
-  <script src="js/features/nimbi_shell.js?v=2026090308"></script>
+  <script src="js/features/nimbi_operations_hub.js?v=2026090702"></script>
+  <script src="js/features/nimbi_shell.js?v=2026090702"></script>
   <script>
   if('serviceWorker' in navigator){
     window.addEventListener('load', ()=>{

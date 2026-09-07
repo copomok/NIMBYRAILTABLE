@@ -9,7 +9,7 @@
     route:['Journey Planner','출도착 검색'],ops:['Operations','열차 운용'],metrolines:['Metro Network','전철 노선'],
     metroroute:['Metro Journey Planner','전철 경로'],map:['Network Map','지도'],stats:['Network Analytics','운행 통계'],
     notice:['Service Updates','공지사항'],stationinfo:['Station Directory','역'],delay:['Service Status','운행 지연'],
-    book:['Ticketing','열차 예매'],ticket:['My Tickets','승차권']
+    book:['Ticketing','열차 예매'],ticket:['My Tickets','승차권'],control:['Operations Center','운행 센터']
   };
   const svg=id=>`<svg aria-hidden="true"><use href="#${id}"/></svg>`;
   const esc=value=>String(value??'').replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
@@ -95,8 +95,8 @@
   window.nimbiOpenStationTimetable=function(){window.nimbiStationWorkspaceTab('timetable');};
 
   const moreItems=()=>mode()==='metro'
-    ?[['metrolines','i-route','노선'],['metroroute','i-search','경로 검색'],['notice','i-notice','공지사항'],['stats','i-chart','운행 통계']]
-    :[['route','i-route','출도착 검색'],['ops','i-clock','열차 운용'],['delay','i-clock','운행 지연'],['stats','i-chart','운행 통계'],['notice','i-notice','공지사항']];
+    ?[['metrolines','i-route','노선'],['metroroute','i-search','경로 검색'],['control','i-chart','운행 센터'],['notice','i-notice','공지사항'],['stats','i-chart','운행 통계']]
+    :[['route','i-route','출도착 검색'],['ops','i-clock','열차 운용'],['delay','i-clock','운행 지연'],['control','i-chart','운행 센터'],['stats','i-chart','운행 통계'],['notice','i-notice','공지사항']];
   window.nimbiOpenMore=function(){
     const shell=document.getElementById('mobile-more-sheet'),grid=shell?.querySelector('.mobile-more-grid');if(!shell||!grid)return;
     grid.innerHTML=moreItems().map(([tab,icon,label])=>`<button type="button" onclick="nimbiCloseMore();nimbiNavigate('${tab}')">${svg(icon)}<span>${label}</span>${svg('i-chevron')}</button>`).join('');

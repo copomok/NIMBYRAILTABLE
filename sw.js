@@ -1,9 +1,10 @@
-const CACHE_NAME = 'nimbirail-2026090701';
+const CACHE_NAME = 'nimbirail-2026090702';
 const ASSETS = [
   '/NIMBYRAILTABLE/',
   '/NIMBYRAILTABLE/index.html',
   '/NIMBYRAILTABLE/assets/css/nimbi_rail.css',
   '/NIMBYRAILTABLE/assets/css/nimbi_redesign.css',
+  '/NIMBYRAILTABLE/assets/css/nimbi_operations_hub.css',
   '/NIMBYRAILTABLE/js/nimbi_rail.js',
   '/NIMBYRAILTABLE/data/nimbi_rail_data.js',
   '/NIMBYRAILTABLE/js/core/nimbi_rail_index.js',
@@ -29,6 +30,7 @@ const ASSETS = [
   '/NIMBYRAILTABLE/data/nimbi_metro_geo.js',
   '/NIMBYRAILTABLE/js/features/nimbi_congestion.js',
   '/NIMBYRAILTABLE/js/features/nimbi_engagement.js',
+  '/NIMBYRAILTABLE/js/features/nimbi_operations_hub.js',
   '/NIMBYRAILTABLE/js/features/nimbi_shell.js',
   '/NIMBYRAILTABLE/manifest.json',
   '/NIMBYRAILTABLE/assets/icons/icon-192.png',

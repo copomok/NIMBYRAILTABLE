@@ -1,0 +1,5 @@
+import test from 'node:test';import assert from 'node:assert/strict';import fs from 'node:fs';
+const app=fs.readFileSync(new URL('../js/features/nimbi_operations_hub.js',import.meta.url),'utf8'),html=fs.readFileSync(new URL('../index.html',import.meta.url),'utf8'),css=fs.readFileSync(new URL('../assets/css/nimbi_operations_hub.css',import.meta.url),'utf8'),sw=fs.readFileSync(new URL('../sw.js',import.meta.url),'utf8');
+test('운행 센터는 요청한 아홉 기능을 독립 탭으로 제공한다',()=>{for(const name of ['운행 상황판','지연 전파 지도','운행 이력','승강장 상황판','여행 보드','즐겨찾기 센터','알림 센터','운행 변경 비교','서비스 패턴 비교'])assert.match(app,new RegExp(name));assert.match(html,/id="panel-control"/);assert.match(html,/data-shell-tab="control"/)});
+test('운행 센터는 기존 데이터와 상세 화면을 재사용한다',()=>{for(const api of ['_simEventLog','_simDelayReport','_platformForTrain','loadTrips','loadFavs','loadAlarms','loadSeatWatches','getODCongestion'])assert.match(app,new RegExp(api));assert.match(app,/nimbi_schedule_snapshot/);assert.match(app,/openJourney/)});
+test('운행 센터는 반응형 자산으로 캐시된다',()=>{assert.match(css,/@media\(max-width:767px\)/);assert.match(sw,/nimbi_operations_hub\.js/);assert.match(sw,/nimbi_operations_hub\.css/)});

@@ -414,8 +414,8 @@ function updateMinimap(){
 
 // ── 🚆/🚇 이용 모드 (기차/전철) ──
 let _appMode=(()=>{try{return localStorage.getItem('nimbi_mode')||'train';}catch(e){return 'train';}})();
-const METRO_MODE_TABS=['metrolines','metroroute','map','stationinfo','notice']; // 전철 모드에서 보이는 메인 탭
-const TRAIN_MODE_TABS=['train','route','ops','map','stats','notice','stationinfo','delay']; // 기차 모드 상단바 탭
+const METRO_MODE_TABS=['metrolines','metroroute','map','stationinfo','notice','control']; // 전철 모드에서 보이는 메인 탭
+const TRAIN_MODE_TABS=['train','route','ops','map','stats','notice','stationinfo','delay','control']; // 기차 모드 상단바 탭
 // 그 외 탭(book/alarm/fav/ticket 등)은 마이페이지 전용 — 항상 숨김 유지
 function _applyModeTabs(){
   const visible=_appMode==='metro'?METRO_MODE_TABS:TRAIN_MODE_TABS;
@@ -522,6 +522,7 @@ function switchTab(n){
   if(n==='metrolines') renderMetroLinesTab();
   if(n==='metroroute') renderMetroRouteTab();
   if(n==='ops') renderOpsTab();
+  if(n==='control'&&typeof renderOperationsHub==='function')renderOperationsHub();
 
 }
 
