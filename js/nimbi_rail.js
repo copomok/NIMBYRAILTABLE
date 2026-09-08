@@ -9780,7 +9780,7 @@ function openBookRouteDetail(trainNo,from,to,travelDate){
     const plat=typeof _realPlatform==='function'?_realPlatform(t.no,s.s):null;
     const badge=i===fromIdx?'<span class="brd-stop-badge board">승차</span>':i===toIdx?'<span class="brd-stop-badge alight">하차</span>':'';
     const arr=hasTime(s.arr)?s.arr:'',dep=hasTime(s.dep)?s.dep:'';
-    const liveMarker=i===liveStopIdx?`<span class="brd-live-marker${liveBetween?' between':''}" title="${esc(liveLabel)}" aria-label="현재 위치: ${esc(liveLabel)}"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="3" width="14" height="17" rx="4"/><path d="M8 7h8v5H8zM8 17h.01M16 17h.01M8 21l-2 2M16 21l2 2"/></svg><b>운행 중</b></span>`:'';
+    const liveMarker=i===liveStopIdx?`<span class="brd-live-marker${liveBetween?' between':''}" title="${esc(liveLabel)}" aria-label="현재 위치: ${esc(liveLabel)}"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="3" width="14" height="17" rx="4"/><path d="M8 7h8v5H8zM8 17h.01M16 17h.01M8 21l-2 2M16 21l2 2"/></svg></span>`:'';
     return `<div class="brd-stop${inRide?' ride':''}${before?' before':''}${after?' after':''}${i===fromIdx?' board':''}${i===toIdx?' alight':''}${i===liveStopIdx?' live':''}">
       <div class="brd-rail"><i></i>${liveMarker}</div>
       <div class="brd-station">${badge}<strong>${esc(s.s)}</strong>${plat!=null?`<span>${esc(plat)}번 승강장</span>`:''}</div>

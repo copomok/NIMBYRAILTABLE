@@ -28,9 +28,9 @@ test('운행 정보창은 반응형 시트이며 새 캐시로 배포된다',()=
   assert.match(css,/#book-route-detail-wrap/);
   assert.match(css,/@media\(min-width:768px\)/);
   assert.match(css,/@media\(max-width:520px\)/);
-  assert.match(html,/nimbi_rail\.css\?v=2026090802/);
-  assert.match(html,/nimbi_rail\.js\?v=2026090802/);
-  assert.match(sw,/nimbirail-2026090802/);
+  assert.match(html,/nimbi_rail\.css\?v=2026090803/);
+  assert.match(html,/nimbi_rail\.js\?v=2026090803/);
+  assert.match(sw,/nimbirail-2026090803/);
 });
 
 test('운행 정보는 도착·출발 사이 화살표 없이 현재 위치를 표시한다',()=>{
@@ -38,5 +38,6 @@ test('운행 정보는 도착·출발 사이 화살표 없이 현재 위치를 �
   assert.match(app,/getCurrentStatus\(t,now\.getHours\(\)\*60\+now\.getMinutes\(\)-liveDelay\)/);
   assert.match(app,/brd-live-marker/);
   assert.match(app,/현재 위치:/);
+  assert.doesNotMatch(app,/brd-live-marker[^`]*<b>운행 중<\/b>/);
   assert.match(css,/\.brd-live-marker/);
 });
