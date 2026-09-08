@@ -9911,7 +9911,7 @@ function openBookTrainDetail(trainNo, from, to, depT, arrT, travelDate){
   setTimeout(()=>wrap.querySelector('.book-detail-panel').classList.add('open'), 10);
 }
 
-function _bookRouteMapHTML(t,from,to,gradeColor,travelDate){
+function _bookRouteMapHTML(t,from,to,gradeColor,travelDate,projectMinutes=0){
   const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   // 무시각 통과역까지 좌표점으로 유지해야 실제 노선 선형이 끊기거나 직선화되지 않는다.
   // 통과역의 점·역명은 아래 노드 단계에서 그리지 않고 선분 계산에만 사용한다.
@@ -9943,7 +9943,7 @@ function _bookRouteMapHTML(t,from,to,gradeColor,travelDate){
   let liveMarker='';
   if((travelDate||todayLocalStr())===todayLocalStr()){
     const now=new Date(),delay=typeof _liveDelayOf==='function'?_liveDelayOf(t):0;
-    const serviceNow=now.getHours()*60+now.getMinutes()+now.getSeconds()/60-delay;
+    const serviceNow=now.getHours()*60+now.getMinutes()+now.getSeconds()/60-delay+projectMinutes;
     const live=getCurrentStatus(t,serviceNow);
     if(live?.status==='running'){
       let x=null,y=null,label='현재 열차 위치';
@@ -9976,7 +9976,7 @@ function _bookRouteMapHTML(t,from,to,gradeColor,travelDate){
           }
         }
       }
-      if(x!=null&&y!=null)liveMarker=`<g class="brd-map-live-train" transform="translate(${x.toFixed(1)} ${y.toFixed(1)})" role="img" aria-label="${esc(label)}"><circle r="12"/><path d="M-5-7h10a3 3 0 0 1 3 3v8a3 3 0 0 1-3 3H-5a3 3 0 0 1-3-3v-8a3 3 0 0 1 3-3Zm0 3v5h10v-5Zm1 8h.1M4 4h.1M-5 10l2-3M5 10 3 7"/><title>${esc(label)}</title></g>`;
+      if(x!=null&&y!=null)liveMarker=`<g class="brd-map-live-train" style="transform:translate(${x.toFixed(1)}px,${y.toFixed(1)}px)" role="img" aria-label="${esc(label)}"><circle r="12"/><path d="M-5-7h10a3 3 0 0 1 3 3v8a3 3 0 0 1-3 3H-5a3 3 0 0 1-3-3v-8a3 3 0 0 1 3-3Zm0 3v5h10v-5Zm1 8h.1M4 4h.1M-5 10l2-3M5 10 3 7"/><title>${esc(label)}</title></g>`;
     }
   }
   return `<div class="brd-route-map" style="--route-grade:${gradeColor}"><div class="brd-map-key"><span><i class="selected"></i>승차 구간</span><span><i></i>그 외 운행 구간</span>${liveMarker?'<span><i class="live"></i>현재 위치</span>':''}</div><div class="brd-map-canvas"><svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(t.grade)} ${esc(t.no)} 전체 운행 구간 노선도">${lines}${nodes}${liveMarker}</svg></div><p>${esc(t.stops[0]?.s)} → ${esc(t.stops[t.stops.length-1]?.s)} 전체 운행 구간</p></div>`;
@@ -9989,17 +9989,38 @@ function setBookRouteDetailTab(mode){
 }
 
 let _bookRouteDetailTimer=null;
-function _bookRouteTimelinePosition(t,rowStations,live){
-  if(!live||live.status!=='running')return {idx:-1,between:false,station:''};
+function _bookRouteTimelinePosition(t,rowStations,live,serviceNow){
+  if(!live||live.status!=='running')return {idx:-1,markerIdx:-1,top:50,between:false,station:''};
   if(live.atStn){
     const exact=rowStations.indexOf(live.atStn);
-    if(exact>=0)return {idx:exact,between:false,station:live.atStn};
-  }
-  if(live.nextStn){
-    const exact=rowStations.indexOf(live.nextStn);
-    if(exact>=0)return {idx:exact,between:true,station:live.nextStn};
+    if(exact>=0)return {idx:exact,markerIdx:exact,top:50,between:false,station:live.atStn};
   }
   const route=t.stops||[];
+  let cursor=-1,offset=0,previousRaw=-1;
+  const timed=rowStations.map(station=>{
+    const routeIdx=route.findIndex((s,i)=>i>cursor&&s.s===station&&(hasTime(s.arr)||hasTime(s.dep))&&!isPassStop(t,s.s));
+    if(routeIdx<0)return null;
+    cursor=routeIdx;const stop=route[routeIdx],rawArr=toMin(stop.arr),rawDep=toMin(stop.dep),raw=rawArr??rawDep;
+    if(previousRaw>=0&&raw<previousRaw-60)offset+=1440;
+    previousRaw=raw;
+    return {station,arr:rawArr!=null?rawArr+offset:null,dep:rawDep!=null?rawDep+offset:null};
+  }).filter(Boolean);
+  if(timed.length>=2&&Number.isFinite(serviceNow)){
+    let current=serviceNow;
+    const first=timed[0].dep??timed[0].arr,last=timed[timed.length-1].arr??timed[timed.length-1].dep;
+    if(last>=1440&&current<first)current+=1440;
+    let prev=-1,next=-1;
+    for(let i=0;i<timed.length;i++){
+      const leave=timed[i].dep??timed[i].arr,arrive=timed[i].arr??timed[i].dep;
+      if(leave!=null&&leave<=current)prev=i;
+      if(next<0&&arrive!=null&&arrive>current)next=i;
+    }
+    if(prev>=0&&next>prev){
+      const depart=timed[prev].dep??timed[prev].arr,arrive=timed[next].arr??timed[next].dep;
+      const fraction=Math.max(0,Math.min(1,(current-depart)/Math.max(1,arrive-depart)));
+      return {idx:next,markerIdx:prev,top:50+fraction*100,between:true,station:timed[next].station};
+    }
+  }
   let prevRoute=-1,nextRoute=-1;
   if(live.prevStn)prevRoute=route.findIndex(s=>s.s===live.prevStn);
   if(live.nextStn)nextRoute=route.findIndex((s,i)=>i>prevRoute&&s.s===live.nextStn);
@@ -10009,10 +10030,10 @@ function _bookRouteTimelinePosition(t,rowStations,live){
     const stop=route[i];
     if((hasTime(stop.arr)||hasTime(stop.dep))&&!isPassStop(t,stop.s)){
       const idx=rowStations.indexOf(stop.s);
-      if(idx>=0)return {idx,between:true,station:stop.s};
+      if(idx>=0)return {idx,markerIdx:Math.max(0,idx-1),top:100,between:true,station:stop.s};
     }
   }
-  return {idx:-1,between:false,station:''};
+  return {idx:-1,markerIdx:-1,top:50,between:false,station:''};
 }
 function _scheduleBookRouteDetailTick(){
   if(_bookRouteDetailTimer)clearTimeout(_bookRouteDetailTimer);
@@ -10029,10 +10050,11 @@ function updateBookRouteLive(trainNo,from,to,travelDate){
   if(!wrap||!t||wrap.dataset.train!==String(trainNo))return;
   const esc=typeof _opsEsc==='function'?_opsEsc:s=>String(s??'').replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
   const today=todayLocalStr(),serviceDate=travelDate||today;
-  let live=null,liveStopIdx=-1,liveBetween=false,liveLabel='',main='',sub='';
+  let live=null,liveStopIdx=-1,liveMarkerIdx=-1,liveTop=50,liveBetween=false,liveLabel='',main='',sub='';
   if(serviceDate===today){
     const now=new Date(),delay=typeof _liveDelayOf==='function'?_liveDelayOf(t):0;
-    live=getCurrentStatus(t,now.getHours()*60+now.getMinutes()+now.getSeconds()/60-delay);
+    const serviceNow=now.getHours()*60+now.getMinutes()+now.getSeconds()/60-delay;
+    live=getCurrentStatus(t,serviceNow);
     if(live?.status==='running'){
       if(live.passStn)main=`${live.passStn}역을 통과 중입니다`;
       else if(live.atStn)main=`${live.atStn}역에 정차 중입니다`;
@@ -10040,8 +10062,9 @@ function updateBookRouteLive(trainNo,from,to,travelDate){
       else main='운행 중입니다';
       const eta=getNextStopEta(t,live);if(eta)sub=eta.min===0?'곧 도착 예정':`약 ${eta.min}분 뒤 도착 예정`;
       const rows=[...wrap.querySelectorAll('.brd-stop')];
-      const position=_bookRouteTimelinePosition(t,rows.map(row=>row.dataset.station),live);
-      liveStopIdx=position.idx;liveBetween=position.between;
+      const projectedNow=serviceNow+1,projectedLive=getCurrentStatus(t,projectedNow);
+      const position=_bookRouteTimelinePosition(t,rows.map(row=>row.dataset.station),projectedLive,projectedNow);
+      liveStopIdx=position.idx;liveMarkerIdx=position.markerIdx;liveTop=position.top;liveBetween=position.between;
       liveLabel=position.station?(position.between?`${position.station} 방면 이동 중`:`${position.station} 정차 중`):'운행 중';
     }else if(live?.status==='before'){
       main='운행을 준비중인 열차입니다';if(live.etaMin!=null)sub=fmtEtaKor(live.etaMin);
@@ -10051,11 +10074,18 @@ function updateBookRouteLive(trainNo,from,to,travelDate){
   const state=wrap.querySelector('.brd-operation-state');
   if(state)state.innerHTML=`<b>${esc(main)}</b>${sub?`<span>${esc(sub)}</span>`:''}`;
   const rows=[...wrap.querySelectorAll('.brd-stop')];
+  const oldMarker=wrap.querySelector('.brd-live-marker');
   rows.forEach((row,i)=>{
     row.classList.toggle('live',i===liveStopIdx);
-    row.querySelector('.brd-live-marker')?.remove();
-    if(i===liveStopIdx){
-      row.querySelector('.brd-rail')?.insertAdjacentHTML('beforeend',`<span class="brd-live-marker${liveBetween?' between':''}" title="${esc(liveLabel)}" aria-label="현재 위치: ${esc(liveLabel)}"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="3" width="14" height="17" rx="4"/><path d="M8 7h8v5H8zM8 17h.01M16 17h.01M8 21l-2 2M16 21l2 2"/></svg></span>`);
+    if(i===liveMarkerIdx){
+      const rail=row.querySelector('.brd-rail');
+      if(oldMarker&&oldMarker.parentElement===rail){
+        oldMarker.classList.toggle('between',liveBetween);oldMarker.style.setProperty('--brd-live-top',`${liveTop}%`);
+        oldMarker.title=liveLabel;oldMarker.setAttribute('aria-label',`현재 위치: ${liveLabel}`);
+      }else{
+        oldMarker?.remove();
+        rail?.insertAdjacentHTML('beforeend',`<span class="brd-live-marker${liveBetween?' between':''}" style="--brd-live-top:${liveTop}%" title="${esc(liveLabel)}" aria-label="현재 위치: ${esc(liveLabel)}"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="3" width="14" height="17" rx="4"/><path d="M8 7h8v5H8zM8 17h.01M16 17h.01M8 21l-2 2M16 21l2 2"/></svg></span>`);
+      }
     }
     const delayIdx=Number(row.dataset.delayIndex);
     const pair=serviceDate===today&&delayIdx>=0&&typeof _simDelayPairAtStop==='function'?_simDelayPairAtStop(t,delayIdx):{arr:0,dep:0};
@@ -10065,8 +10095,16 @@ function updateBookRouteLive(trainNo,from,to,travelDate){
       cell.innerHTML=scheduled?`<span>${esc(scheduled)}</span>${actual?`<small>(${esc(actual)})</small>`:''}`:'—';
     });
   });
+  if(liveMarkerIdx<0)oldMarker?.remove();
   const map=wrap.querySelector('.brd-map-view');
-  if(map){const color=(typeof GRADE_COLORS!=='undefined'&&GRADE_COLORS[t.grade])||`var(--c-${gcCssVar(t.grade)})`;map.innerHTML=_bookRouteMapHTML(t,from,to,color,travelDate);}
+  if(map){
+    const color=(typeof GRADE_COLORS!=='undefined'&&GRADE_COLORS[t.grade])||`var(--c-${gcCssVar(t.grade)})`;
+    const probe=document.createElement('div');probe.innerHTML=_bookRouteMapHTML(t,from,to,color,travelDate,1);
+    const currentMarker=map.querySelector('.brd-map-live-train'),targetMarker=probe.querySelector('.brd-map-live-train');
+    if(currentMarker&&targetMarker){currentMarker.style.transform=targetMarker.style.transform;currentMarker.setAttribute('aria-label',targetMarker.getAttribute('aria-label')||'현재 열차 위치');}
+    else if(!currentMarker&&targetMarker)map.innerHTML=probe.innerHTML;
+    else if(currentMarker&&!targetMarker)currentMarker.remove();
+  }
 }
 
 // 예매 구간 기준 운행 정보 — 전체 정차역 중 승차·하차 구간을 강조한다.
@@ -10081,11 +10119,12 @@ function openBookRouteDetail(trainNo,from,to,travelDate){
   const esc=typeof _opsEsc==='function'?_opsEsc:s=>String(s??'').replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
   const gradeColor=(typeof GRADE_COLORS!=='undefined'&&GRADE_COLORS[t.grade])||`var(--c-${gcCssVar(t.grade)})`;
   const dateLabel=(()=>{const m=String(travelDate||'').match(/^(\d{4})-(\d{2})-(\d{2})$/);if(!m)return esc(travelDate||todayLocalStr());const d=new Date(+m[1],+m[2]-1,+m[3]);return `${m[1]}.${m[2]}.${m[3]} (${['일','월','화','수','목','금','토'][d.getDay()]})`;})();
-  let liveStopIdx=-1,liveBetween=false,liveLabel='',operationMain='',operationSub='';
+  let liveStopIdx=-1,liveMarkerIdx=-1,liveTop=50,liveBetween=false,liveLabel='',operationMain='',operationSub='';
   const serviceDate=travelDate||todayLocalStr(),today=todayLocalStr();
   if(serviceDate===today){
     const now=new Date(),liveDelay=typeof _liveDelayOf==='function'?_liveDelayOf(t):0;
-    const live=getCurrentStatus(t,now.getHours()*60+now.getMinutes()-liveDelay);
+    const serviceNow=now.getHours()*60+now.getMinutes()+now.getSeconds()/60-liveDelay;
+    const live=getCurrentStatus(t,serviceNow);
     if(live?.status==='running'){
       if(live.passStn)operationMain=`${live.passStn}역을 통과 중입니다`;
       else if(live.atStn)operationMain=`${live.atStn}역에 정차 중입니다`;
@@ -10093,8 +10132,8 @@ function openBookRouteDetail(trainNo,from,to,travelDate){
       else operationMain='운행 중입니다';
       const eta=getNextStopEta(t,live);
       if(eta)operationSub=eta.min===0?'곧 도착 예정':`약 ${eta.min}분 뒤 도착 예정`;
-      const position=_bookRouteTimelinePosition(t,allStops.map(s=>s.s),live);
-      liveStopIdx=position.idx;liveBetween=position.between;
+      const position=_bookRouteTimelinePosition(t,allStops.map(s=>s.s),live,serviceNow);
+      liveStopIdx=position.idx;liveMarkerIdx=position.markerIdx;liveTop=position.top;liveBetween=position.between;
       liveLabel=position.station?(position.between?`${position.station} 방면 이동 중`:`${position.station} 정차 중`):'운행 중';
     }else if(live?.status==='before'){
       operationMain='운행을 준비중인 열차입니다';
@@ -10121,7 +10160,7 @@ function openBookRouteDetail(trainNo,from,to,travelDate){
     const timeCell=(scheduled,actual)=>scheduled
       ?`<span>${esc(scheduled)}</span>${actual?`<small>(${esc(actual)})</small>`:''}`
       :'—';
-    const liveMarker=i===liveStopIdx?`<span class="brd-live-marker${liveBetween?' between':''}" title="${esc(liveLabel)}" aria-label="현재 위치: ${esc(liveLabel)}"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="3" width="14" height="17" rx="4"/><path d="M8 7h8v5H8zM8 17h.01M16 17h.01M8 21l-2 2M16 21l2 2"/></svg></span>`:'';
+    const liveMarker=i===liveMarkerIdx?`<span class="brd-live-marker${liveBetween?' between':''}" style="--brd-live-top:${liveTop}%" title="${esc(liveLabel)}" aria-label="현재 위치: ${esc(liveLabel)}"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="3" width="14" height="17" rx="4"/><path d="M8 7h8v5H8zM8 17h.01M16 17h.01M8 21l-2 2M16 21l2 2"/></svg></span>`:'';
     return `<div class="brd-stop${inRide?' ride':''}${before?' before':''}${after?' after':''}${i===fromIdx?' board':''}${i===toIdx?' alight':''}${i===liveStopIdx?' live':''}" data-station="${esc(s.s)}" data-delay-index="${delayIdx}" data-arr="${esc(arr)}" data-dep="${esc(dep)}">
       <div class="brd-rail"><i></i>${liveMarker}</div>
       <div class="brd-station">${badge}<strong>${esc(s.s)}</strong>${plat!=null?`<span>${esc(plat)}번 승강장</span>`:''}</div>
@@ -10147,6 +10186,7 @@ function openBookRouteDetail(trainNo,from,to,travelDate){
   addMobileTap(wrap.querySelector('.brd-close'),closeBookRouteDetail);
   requestAnimationFrame(()=>wrap.querySelector('.book-route-detail-sheet')?.classList.add('open'));
   requestAnimationFrame(()=>wrap.querySelector('.brd-stop.board')?.scrollIntoView({block:'center'}));
+  requestAnimationFrame(()=>updateBookRouteLive(trainNo,from,to,travelDate));
   _scheduleBookRouteDetailTick();
 }
 function closeBookRouteDetail(){

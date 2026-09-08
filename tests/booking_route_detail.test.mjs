@@ -42,16 +42,16 @@ test('운행 정보창은 반응형 시트이며 새 캐시로 배포된다',()=
   assert.match(css,/#book-route-detail-wrap/);
   assert.match(css,/@media\(min-width:768px\)/);
   assert.match(css,/@media\(max-width:520px\)/);
-  assert.match(html,/nimbi_rail\.css\?v=2026090817/);
-  assert.match(html,/nimbi_rail\.js\?v=2026090819/);
-  assert.match(sw,/nimbirail-2026090819/);
+  assert.match(html,/nimbi_rail\.css\?v=2026090901/);
+  assert.match(html,/nimbi_rail\.js\?v=2026090901/);
+  assert.match(sw,/nimbirail-2026090901/);
 });
 
 test('운행 정보는 시간표·지도 탭과 선택 구간 노선도를 제공한다',()=>{
   assert.match(app,/function setBookRouteDetailTab\(mode\)/);
   assert.match(app,/data-view="schedule"/);
   assert.match(app,/data-view="map"/);
-  assert.match(app,/function _bookRouteMapHTML\(t,from,to,gradeColor,travelDate\)/);
+  assert.match(app,/function _bookRouteMapHTML\(t,from,to,gradeColor,travelDate,projectMinutes=0\)/);
   assert.match(app,/class="\$\{active\?'selected':'muted'\}"/);
   assert.doesNotMatch(app,/>승차<\/text>/);
   assert.doesNotMatch(app,/>하차<\/text>/);
@@ -64,8 +64,8 @@ test('운행 정보는 시간표·지도 탭과 선택 구간 노선도를 제�
 });
 
 test('당일 운행 중인 열차는 지도 선형 위에 현재 위치 아이콘을 표시한다',()=>{
-  assert.match(app,/function _bookRouteMapHTML\(t,from,to,gradeColor,travelDate\)/);
-  assert.match(app,/const serviceNow=now\.getHours\(\)\*60\+now\.getMinutes\(\)\+now\.getSeconds\(\)\/60-delay/);
+  assert.match(app,/function _bookRouteMapHTML\(t,from,to,gradeColor,travelDate,projectMinutes=0\)/);
+  assert.match(app,/const serviceNow=now\.getHours\(\)\*60\+now\.getMinutes\(\)\+now\.getSeconds\(\)\/60-delay\+projectMinutes/);
   assert.match(app,/const fraction=Math\.max\(0,Math\.min\(1,/);
   assert.match(app,/class="brd-map-live-train"/);
   assert.match(app,/\$\{lines\}\$\{nodes\}\$\{liveMarker\}/);
@@ -99,7 +99,7 @@ test('운행 정보 시간표는 예정 시각 아래에 지연 반영 시각을
 
 test('운행 정보는 도착·출발 사이 화살표 없이 현재 위치를 표시한다',()=>{
   assert.doesNotMatch(app,/class="brd-arrow"/);
-  assert.match(app,/getCurrentStatus\(t,now\.getHours\(\)\*60\+now\.getMinutes\(\)-liveDelay\)/);
+  assert.match(app,/const live=getCurrentStatus\(t,serviceNow\)/);
   assert.match(app,/brd-live-marker/);
   assert.match(app,/현재 위치:/);
   assert.doesNotMatch(app,/brd-live-marker[^`]*<b>운행 중<\/b>/);
@@ -107,8 +107,7 @@ test('운행 정보는 도착·출발 사이 화살표 없이 현재 위치를 �
 });
 
 test('접근 중 열차 아이콘과 대상 역 노드를 함께 표시한다',()=>{
-  assert.match(css,/\.brd-live-marker\{[^}]*left:50%;top:24%[^}]*translate\(-50%,-50%\)/);
-  assert.match(css,/\.brd-live-marker\.between\{top:12%\}/);
+  assert.match(css,/\.brd-live-marker\{[^}]*left:50%;top:var\(--brd-live-top,50%\)[^}]*translate\(-50%,-50%\)/);
   assert.doesNotMatch(css,/\.brd-stop\.live \.brd-rail>i\{visibility:hidden\}/);
 });
 
@@ -122,16 +121,25 @@ test('운행 정보는 매분 0초에 위치 정보만 자동 갱신한다',()=>
   assert.match(app,/const wait=60000-\(Date\.now\(\)%60000\)\+30/);
   assert.match(app,/function updateBookRouteLive\(trainNo,from,to,travelDate\)/);
   assert.match(app,/row\.classList\.toggle\('live',i===liveStopIdx\)/);
-  assert.match(app,/map\.innerHTML=_bookRouteMapHTML/);
+  assert.match(app,/probe\.innerHTML=_bookRouteMapHTML/);
   assert.doesNotMatch(app,/class="brd-refresh"/);
   assert.match(app,/clearTimeout\(_bookRouteDetailTimer\)/);
 });
 
 test('매분 갱신 시 시간표의 현재 위치 행도 다음 실제 정차역으로 이동한다',()=>{
-  assert.match(app,/function _bookRouteTimelinePosition\(t,rowStations,live\)/);
+  assert.match(app,/function _bookRouteTimelinePosition\(t,rowStations,live,serviceNow\)/);
   assert.match(app,/!isPassStop\(t,stop\.s\)/);
-  assert.match(app,/const position=_bookRouteTimelinePosition\(t,rows\.map\(row=>row\.dataset\.station\),live\)/);
-  assert.match(app,/liveStopIdx=position\.idx;liveBetween=position\.between/);
+  assert.match(app,/const position=_bookRouteTimelinePosition\(t,rows\.map\(row=>row\.dataset\.station\),projectedLive,projectedNow\)/);
+  assert.match(app,/liveStopIdx=position\.idx;liveMarkerIdx=position\.markerIdx;liveTop=position\.top/);
+});
+
+test('정차 중 아이콘은 역 노드 중앙에 포개지고 이동 중에는 1분간 부드럽게 움직인다',()=>{
+  assert.match(app,/return \{idx:exact,markerIdx:exact,top:50,between:false/);
+  assert.match(app,/top:50\+fraction\*100/);
+  assert.match(app,/style="--brd-live-top:\$\{liveTop\}%"/);
+  assert.match(css,/transition:top 59s linear/);
+  assert.match(css,/\.brd-map-live-train\{[^}]*transition:transform 59s linear/);
+  assert.match(app,/_bookRouteMapHTML\(t,from,to,color,travelDate,1\)/);
 });
 
 test('설치형 모바일 앱은 세로 방향을 유지한다',()=>{
