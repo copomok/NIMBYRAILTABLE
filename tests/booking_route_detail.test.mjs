@@ -7,9 +7,10 @@ const css=fs.readFileSync(new URL('../assets/css/nimbi_rail.css',import.meta.url
 const redesignCss=fs.readFileSync(new URL('../assets/css/nimbi_redesign.css',import.meta.url),'utf8');
 const html=fs.readFileSync(new URL('../index.html',import.meta.url),'utf8');
 const sw=fs.readFileSync(new URL('../sw.js',import.meta.url),'utf8');
+const manifest=fs.readFileSync(new URL('../manifest.json',import.meta.url),'utf8');
 
 test('예매 열차 상세 버튼은 선택 구간 운행 정보창을 연다',()=>{
-  assert.match(app,/function openBookRouteDetail\(trainNo,from,to,travelDate\)/);
+  assert.match(app,/function openBookRouteDetail\(trainNo,from,to,travelDate,options=\{\}\)/);
   assert.match(app,/openBookRouteDetail\(trainNo,from,to,travelDate\)/);
   assert.doesNotMatch(app,/bdd-detail-btn'\), \(\)=>\{ closeBookTrainDetail\(\); jumpToTrain/);
 });
@@ -41,9 +42,9 @@ test('운행 정보창은 반응형 시트이며 새 캐시로 배포된다',()=
   assert.match(css,/#book-route-detail-wrap/);
   assert.match(css,/@media\(min-width:768px\)/);
   assert.match(css,/@media\(max-width:520px\)/);
-  assert.match(html,/nimbi_rail\.css\?v=2026090816/);
-  assert.match(html,/nimbi_rail\.js\?v=2026090815/);
-  assert.match(sw,/nimbirail-2026090816/);
+  assert.match(html,/nimbi_rail\.css\?v=2026090817/);
+  assert.match(html,/nimbi_rail\.js\?v=2026090817/);
+  assert.match(sw,/nimbirail-2026090817/);
 });
 
 test('운행 정보는 시간표·지도 탭과 선택 구간 노선도를 제공한다',()=>{
@@ -106,6 +107,19 @@ test('운행 정보는 도착·출발 사이 화살표 없이 현재 위치를 �
 });
 
 test('접근 중 열차 아이콘과 대상 역 노드를 함께 표시한다',()=>{
-  assert.match(css,/\.brd-live-marker\{[^}]*translate\(calc\(-50% - 17px\),-50%\)/);
+  assert.match(css,/\.brd-live-marker\{[^}]*left:50%;top:24%[^}]*translate\(-50%,-50%\)/);
+  assert.match(css,/\.brd-live-marker\.between\{top:12%\}/);
   assert.doesNotMatch(css,/\.brd-stop\.live \.brd-rail>i\{visibility:hidden\}/);
+});
+
+test('모바일 운행 정보창은 후속 터치로 닫히지 않고 제자리에서 새로고침된다',()=>{
+  assert.match(app,/performance\.now\(\)-openedAt>400/);
+  assert.match(app,/openBookRouteDetail\(trainNo,from,to,travelDate,\{refresh:true\}\)/);
+  assert.match(app,/previous\.replaceWith\(wrap\)/);
+  assert.match(app,/list\.scrollTop=previousScroll/);
+  assert.match(css,/@media\(max-width:380px\)/);
+});
+
+test('설치형 모바일 앱은 세로 방향을 유지한다',()=>{
+  assert.equal(JSON.parse(manifest).orientation,'portrait-primary');
 });

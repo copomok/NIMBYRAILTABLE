@@ -9902,7 +9902,7 @@ function openBookTrainDetail(trainNo, from, to, depT, arrT, travelDate){
   document.body.appendChild(wrap);
   wrap.querySelector('.book-detail-backdrop').addEventListener('click', closeBookTrainDetail);
   addMobileTap(document.getElementById('bdd-close-x'), closeBookTrainDetail);
-  addMobileTap(document.getElementById('bdd-detail-btn'), ()=>{ closeBookTrainDetail(); openBookRouteDetail(trainNo,from,to,travelDate); });
+  addMobileTap(document.getElementById('bdd-detail-btn'), e=>{ e?.preventDefault();e?.stopPropagation();closeBookTrainDetail();openBookRouteDetail(trainNo,from,to,travelDate); });
   if(soldOut){
     addMobileTap(document.getElementById('bdd-watch-btn'), ()=>{ closeBookTrainDetail(); openSeatWatchPopup(trainNo,from,to,travelDate); });
   }else{
@@ -9989,9 +9989,13 @@ function setBookRouteDetailTab(mode){
 }
 
 // 예매 구간 기준 운행 정보 — 전체 정차역 중 승차·하차 구간을 강조한다.
-function openBookRouteDetail(trainNo,from,to,travelDate){
+function openBookRouteDetail(trainNo,from,to,travelDate,options={}){
   const t=getTrainByNo(trainNo);if(!t)return;
-  closeBookRouteDetail();
+  const previous=document.getElementById('book-route-detail-wrap');
+  const refreshInPlace=!!(options.refresh&&previous);
+  const previousView=refreshInPlace?(previous.querySelector('.brd-view-tab.active')?.dataset.view||'schedule'):'schedule';
+  const previousScroll=refreshInPlace?(previous.querySelector('.brd-stop-list')?.scrollTop||0):0;
+  if(previous&&!refreshInPlace){previous.remove();document.body.classList.remove('app-modal-open');}
   const allStops=(t.stops||[]).filter(s=>(hasTime(s.arr)||hasTime(s.dep))&&!isPassStop(t,s.s));
   const fromIdx=allStops.findIndex(s=>s.s===from);
   const toIdx=allStops.findIndex((s,i)=>i>fromIdx&&s.s===to);
@@ -10058,12 +10062,22 @@ function openBookRouteDetail(trainNo,from,to,travelDate){
     <div class="brd-view brd-schedule-view active"><div class="brd-columns"><span>역명</span><span>도착</span><span>출발</span></div><div class="brd-stop-list">${rows}</div></div>
     <div class="brd-view brd-map-view">${routeMap}</div>
   </section>`;
-  document.body.appendChild(wrap);document.body.classList.add('app-modal-open');
-  wrap.querySelector('.book-route-detail-backdrop').addEventListener('click',closeBookRouteDetail);
+  if(refreshInPlace)previous.replaceWith(wrap);else document.body.appendChild(wrap);
+  document.body.classList.add('app-modal-open');
+  const openedAt=performance.now();
+  wrap.querySelector('.book-route-detail-backdrop').addEventListener('click',e=>{
+    if(e.target===e.currentTarget&&performance.now()-openedAt>400)closeBookRouteDetail();
+  });
   addMobileTap(wrap.querySelector('.brd-close'),closeBookRouteDetail);
-  addMobileTap(wrap.querySelector('.brd-refresh'),()=>openBookRouteDetail(trainNo,from,to,travelDate));
-  requestAnimationFrame(()=>wrap.querySelector('.book-route-detail-sheet')?.classList.add('open'));
-  requestAnimationFrame(()=>wrap.querySelector('.brd-stop.board')?.scrollIntoView({block:'center'}));
+  addMobileTap(wrap.querySelector('.brd-refresh'),e=>{e?.preventDefault();e?.stopPropagation();openBookRouteDetail(trainNo,from,to,travelDate,{refresh:true});});
+  if(refreshInPlace){
+    wrap.querySelector('.book-route-detail-sheet')?.classList.add('open');
+    setBookRouteDetailTab(previousView);
+    const list=wrap.querySelector('.brd-stop-list');if(list)list.scrollTop=previousScroll;
+  }else{
+    requestAnimationFrame(()=>wrap.querySelector('.book-route-detail-sheet')?.classList.add('open'));
+    requestAnimationFrame(()=>wrap.querySelector('.brd-stop.board')?.scrollIntoView({block:'center'}));
+  }
 }
 function closeBookRouteDetail(){
   const wrap=document.getElementById('book-route-detail-wrap');if(!wrap)return;
