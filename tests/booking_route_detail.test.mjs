@@ -10,7 +10,7 @@ const sw=fs.readFileSync(new URL('../sw.js',import.meta.url),'utf8');
 const manifest=fs.readFileSync(new URL('../manifest.json',import.meta.url),'utf8');
 
 test('예매 열차 상세 버튼은 선택 구간 운행 정보창을 연다',()=>{
-  assert.match(app,/function openBookRouteDetail\(trainNo,from,to,travelDate,options=\{\}\)/);
+  assert.match(app,/function openBookRouteDetail\(trainNo,from,to,travelDate\)/);
   assert.match(app,/openBookRouteDetail\(trainNo,from,to,travelDate\)/);
   assert.doesNotMatch(app,/bdd-detail-btn'\), \(\)=>\{ closeBookTrainDetail\(\); jumpToTrain/);
 });
@@ -43,8 +43,8 @@ test('운행 정보창은 반응형 시트이며 새 캐시로 배포된다',()=
   assert.match(css,/@media\(min-width:768px\)/);
   assert.match(css,/@media\(max-width:520px\)/);
   assert.match(html,/nimbi_rail\.css\?v=2026090817/);
-  assert.match(html,/nimbi_rail\.js\?v=2026090817/);
-  assert.match(sw,/nimbirail-2026090817/);
+  assert.match(html,/nimbi_rail\.js\?v=2026090818/);
+  assert.match(sw,/nimbirail-2026090818/);
 });
 
 test('운행 정보는 시간표·지도 탭과 선택 구간 노선도를 제공한다',()=>{
@@ -112,12 +112,19 @@ test('접근 중 열차 아이콘과 대상 역 노드를 함께 표시한다',(
   assert.doesNotMatch(css,/\.brd-stop\.live \.brd-rail>i\{visibility:hidden\}/);
 });
 
-test('모바일 운행 정보창은 후속 터치로 닫히지 않고 제자리에서 새로고침된다',()=>{
+test('모바일 운행 정보창은 후속 터치로 닫히지 않는다',()=>{
   assert.match(app,/performance\.now\(\)-openedAt>400/);
-  assert.match(app,/openBookRouteDetail\(trainNo,from,to,travelDate,\{refresh:true\}\)/);
-  assert.match(app,/previous\.replaceWith\(wrap\)/);
-  assert.match(app,/list\.scrollTop=previousScroll/);
   assert.match(css,/@media\(max-width:380px\)/);
+});
+
+test('운행 정보는 매분 0초에 위치 정보만 자동 갱신한다',()=>{
+  assert.match(app,/function _scheduleBookRouteDetailTick\(\)/);
+  assert.match(app,/const wait=60000-\(Date\.now\(\)%60000\)\+30/);
+  assert.match(app,/function updateBookRouteLive\(trainNo,from,to,travelDate\)/);
+  assert.match(app,/row\.classList\.toggle\('live',i===liveStopIdx\)/);
+  assert.match(app,/map\.innerHTML=_bookRouteMapHTML/);
+  assert.doesNotMatch(app,/class="brd-refresh"/);
+  assert.match(app,/clearTimeout\(_bookRouteDetailTimer\)/);
 });
 
 test('설치형 모바일 앱은 세로 방향을 유지한다',()=>{

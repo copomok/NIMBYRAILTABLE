@@ -9988,14 +9988,70 @@ function setBookRouteDetailTab(mode){
   wrap.querySelector('.brd-map-view')?.classList.toggle('active',mode==='map');
 }
 
+let _bookRouteDetailTimer=null;
+function _scheduleBookRouteDetailTick(){
+  if(_bookRouteDetailTimer)clearTimeout(_bookRouteDetailTimer);
+  const wait=60000-(Date.now()%60000)+30;
+  _bookRouteDetailTimer=setTimeout(()=>{
+    const wrap=document.getElementById('book-route-detail-wrap');
+    if(!wrap){_bookRouteDetailTimer=null;return;}
+    updateBookRouteLive(wrap.dataset.train,wrap.dataset.from,wrap.dataset.to,wrap.dataset.date);
+    _scheduleBookRouteDetailTick();
+  },wait);
+}
+function updateBookRouteLive(trainNo,from,to,travelDate){
+  const wrap=document.getElementById('book-route-detail-wrap'),t=getTrainByNo(trainNo);
+  if(!wrap||!t||wrap.dataset.train!==String(trainNo))return;
+  const esc=typeof _opsEsc==='function'?_opsEsc:s=>String(s??'').replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+  const today=todayLocalStr(),serviceDate=travelDate||today;
+  let live=null,liveStopIdx=-1,liveBetween=false,liveLabel='',main='',sub='';
+  if(serviceDate===today){
+    const now=new Date(),delay=typeof _liveDelayOf==='function'?_liveDelayOf(t):0;
+    live=getCurrentStatus(t,now.getHours()*60+now.getMinutes()+now.getSeconds()/60-delay);
+    if(live?.status==='running'){
+      if(live.passStn)main=`${live.passStn}역을 통과 중입니다`;
+      else if(live.atStn)main=`${live.atStn}역에 정차 중입니다`;
+      else if(live.nextStn)main=`${live.nextStn}역으로 이동 중입니다`;
+      else main='운행 중입니다';
+      const eta=getNextStopEta(t,live);if(eta)sub=eta.min===0?'곧 도착 예정':`약 ${eta.min}분 뒤 도착 예정`;
+      const rows=[...wrap.querySelectorAll('.brd-stop')];
+      if(live.atStn){liveStopIdx=rows.findIndex(row=>row.dataset.station===live.atStn);liveLabel=`${live.atStn} 정차 중`;}
+      else{
+        liveStopIdx=rows.findIndex(row=>row.dataset.station===live.nextStn);
+        if(liveStopIdx<0){const prev=rows.findIndex(row=>row.dataset.station===live.prevStn);liveStopIdx=prev>=0?Math.min(prev+1,rows.length-1):-1;}
+        liveBetween=liveStopIdx>=0;liveLabel=live.nextStn?`${live.nextStn} 방면 이동 중`:'운행 중';
+      }
+    }else if(live?.status==='before'){
+      main='운행을 준비중인 열차입니다';if(live.etaMin!=null)sub=fmtEtaKor(live.etaMin);
+    }else main='운행이 종료된 열차입니다';
+  }else if(serviceDate>today)main='운행을 준비중인 열차입니다';
+  else main='운행이 종료된 열차입니다';
+  const state=wrap.querySelector('.brd-operation-state');
+  if(state)state.innerHTML=`<b>${esc(main)}</b>${sub?`<span>${esc(sub)}</span>`:''}`;
+  const rows=[...wrap.querySelectorAll('.brd-stop')];
+  rows.forEach((row,i)=>{
+    row.classList.toggle('live',i===liveStopIdx);
+    row.querySelector('.brd-live-marker')?.remove();
+    if(i===liveStopIdx){
+      row.querySelector('.brd-rail')?.insertAdjacentHTML('beforeend',`<span class="brd-live-marker${liveBetween?' between':''}" title="${esc(liveLabel)}" aria-label="현재 위치: ${esc(liveLabel)}"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="3" width="14" height="17" rx="4"/><path d="M8 7h8v5H8zM8 17h.01M16 17h.01M8 21l-2 2M16 21l2 2"/></svg></span>`);
+    }
+    const delayIdx=Number(row.dataset.delayIndex);
+    const pair=serviceDate===today&&delayIdx>=0&&typeof _simDelayPairAtStop==='function'?_simDelayPairAtStop(t,delayIdx):{arr:0,dep:0};
+    [['arr',pair.arr||0],['dep',pair.dep||0]].forEach(([kind,delay])=>{
+      const cell=row.querySelector(`.brd-${kind}`),scheduled=row.dataset[kind]||'';if(!cell)return;
+      const actual=scheduled&&delay>0?addMinToClock(scheduled,delay):'';
+      cell.innerHTML=scheduled?`<span>${esc(scheduled)}</span>${actual?`<small>(${esc(actual)})</small>`:''}`:'—';
+    });
+  });
+  const map=wrap.querySelector('.brd-map-view');
+  if(map){const color=(typeof GRADE_COLORS!=='undefined'&&GRADE_COLORS[t.grade])||`var(--c-${gcCssVar(t.grade)})`;map.innerHTML=_bookRouteMapHTML(t,from,to,color,travelDate);}
+}
+
 // 예매 구간 기준 운행 정보 — 전체 정차역 중 승차·하차 구간을 강조한다.
-function openBookRouteDetail(trainNo,from,to,travelDate,options={}){
+function openBookRouteDetail(trainNo,from,to,travelDate){
   const t=getTrainByNo(trainNo);if(!t)return;
   const previous=document.getElementById('book-route-detail-wrap');
-  const refreshInPlace=!!(options.refresh&&previous);
-  const previousView=refreshInPlace?(previous.querySelector('.brd-view-tab.active')?.dataset.view||'schedule'):'schedule';
-  const previousScroll=refreshInPlace?(previous.querySelector('.brd-stop-list')?.scrollTop||0):0;
-  if(previous&&!refreshInPlace){previous.remove();document.body.classList.remove('app-modal-open');}
+  if(previous){previous.remove();document.body.classList.remove('app-modal-open');}
   const allStops=(t.stops||[]).filter(s=>(hasTime(s.arr)||hasTime(s.dep))&&!isPassStop(t,s.s));
   const fromIdx=allStops.findIndex(s=>s.s===from);
   const toIdx=allStops.findIndex((s,i)=>i>fromIdx&&s.s===to);
@@ -10047,7 +10103,7 @@ function openBookRouteDetail(trainNo,from,to,travelDate,options={}){
       ?`<span>${esc(scheduled)}</span>${actual?`<small>(${esc(actual)})</small>`:''}`
       :'—';
     const liveMarker=i===liveStopIdx?`<span class="brd-live-marker${liveBetween?' between':''}" title="${esc(liveLabel)}" aria-label="현재 위치: ${esc(liveLabel)}"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="3" width="14" height="17" rx="4"/><path d="M8 7h8v5H8zM8 17h.01M16 17h.01M8 21l-2 2M16 21l2 2"/></svg></span>`:'';
-    return `<div class="brd-stop${inRide?' ride':''}${before?' before':''}${after?' after':''}${i===fromIdx?' board':''}${i===toIdx?' alight':''}${i===liveStopIdx?' live':''}">
+    return `<div class="brd-stop${inRide?' ride':''}${before?' before':''}${after?' after':''}${i===fromIdx?' board':''}${i===toIdx?' alight':''}${i===liveStopIdx?' live':''}" data-station="${esc(s.s)}" data-delay-index="${delayIdx}" data-arr="${esc(arr)}" data-dep="${esc(dep)}">
       <div class="brd-rail"><i></i>${liveMarker}</div>
       <div class="brd-station">${badge}<strong>${esc(s.s)}</strong>${plat!=null?`<span>${esc(plat)}번 승강장</span>`:''}</div>
       <time class="brd-arr">${timeCell(arr,actualArr)}</time><time class="brd-dep">${timeCell(dep,actualDep)}</time>
@@ -10056,31 +10112,27 @@ function openBookRouteDetail(trainNo,from,to,travelDate,options={}){
   const routeMap=_bookRouteMapHTML(t,from,to,gradeColor,travelDate);
   const wrap=document.createElement('div');wrap.id='book-route-detail-wrap';wrap.style.setProperty('--brd-grade',gradeColor);
   wrap.innerHTML=`<div class="book-route-detail-backdrop"></div><section class="book-route-detail-sheet" role="dialog" aria-modal="true" aria-label="${esc(t.grade)} ${esc(t.no)} 운행 정보">
-    <header class="brd-header"><div><small>운행 정보</small><h2>${esc(t.grade)} <b>${esc(t.no)}</b></h2></div><div class="brd-head-actions"><button type="button" class="brd-refresh" aria-label="새로고침">↻</button><button type="button" class="brd-close" aria-label="닫기">✕</button></div></header>
+    <header class="brd-header"><div><small>운행 정보</small><h2>${esc(t.grade)} <b>${esc(t.no)}</b></h2></div><div class="brd-head-actions"><button type="button" class="brd-close" aria-label="닫기">✕</button></div></header>
     <div class="brd-summary"><time>${dateLabel}</time><strong>${esc(from)} <span>${esc(allStops[fromIdx].dep||allStops[fromIdx].arr||'—')}</span><i>→</i> ${esc(to)} <span>${esc(allStops[toIdx].arr||allStops[toIdx].dep||'—')}</span></strong><small class="brd-operation-state"><b>${esc(operationMain)}</b>${operationSub?`<span>${esc(operationSub)}</span>`:''}</small></div>
     <div class="brd-view-tabs" role="tablist"><button type="button" class="brd-view-tab active" data-view="schedule" role="tab" aria-selected="true" onclick="setBookRouteDetailTab('schedule')">시간표</button><button type="button" class="brd-view-tab" data-view="map" role="tab" aria-selected="false" onclick="setBookRouteDetailTab('map')">지도</button></div>
     <div class="brd-view brd-schedule-view active"><div class="brd-columns"><span>역명</span><span>도착</span><span>출발</span></div><div class="brd-stop-list">${rows}</div></div>
     <div class="brd-view brd-map-view">${routeMap}</div>
   </section>`;
-  if(refreshInPlace)previous.replaceWith(wrap);else document.body.appendChild(wrap);
+  wrap.dataset.train=String(trainNo);wrap.dataset.from=from;wrap.dataset.to=to;wrap.dataset.date=travelDate||todayLocalStr();
+  document.body.appendChild(wrap);
   document.body.classList.add('app-modal-open');
   const openedAt=performance.now();
   wrap.querySelector('.book-route-detail-backdrop').addEventListener('click',e=>{
     if(e.target===e.currentTarget&&performance.now()-openedAt>400)closeBookRouteDetail();
   });
   addMobileTap(wrap.querySelector('.brd-close'),closeBookRouteDetail);
-  addMobileTap(wrap.querySelector('.brd-refresh'),e=>{e?.preventDefault();e?.stopPropagation();openBookRouteDetail(trainNo,from,to,travelDate,{refresh:true});});
-  if(refreshInPlace){
-    wrap.querySelector('.book-route-detail-sheet')?.classList.add('open');
-    setBookRouteDetailTab(previousView);
-    const list=wrap.querySelector('.brd-stop-list');if(list)list.scrollTop=previousScroll;
-  }else{
-    requestAnimationFrame(()=>wrap.querySelector('.book-route-detail-sheet')?.classList.add('open'));
-    requestAnimationFrame(()=>wrap.querySelector('.brd-stop.board')?.scrollIntoView({block:'center'}));
-  }
+  requestAnimationFrame(()=>wrap.querySelector('.book-route-detail-sheet')?.classList.add('open'));
+  requestAnimationFrame(()=>wrap.querySelector('.brd-stop.board')?.scrollIntoView({block:'center'}));
+  _scheduleBookRouteDetailTick();
 }
 function closeBookRouteDetail(){
   const wrap=document.getElementById('book-route-detail-wrap');if(!wrap)return;
+  if(_bookRouteDetailTimer){clearTimeout(_bookRouteDetailTimer);_bookRouteDetailTimer=null;}
   wrap.querySelector('.book-route-detail-sheet')?.classList.remove('open');
   document.body.classList.remove('app-modal-open');setTimeout(()=>wrap.remove(),220);
 }
