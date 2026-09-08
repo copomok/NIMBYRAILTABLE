@@ -13,7 +13,7 @@ const trains=context.__trains.filter(train=>Number(train.no)>=501&&Number(train.
 const platforms=context.__platforms;
 const minute=value=>{const [h,m]=value.split(':').map(Number);return h*60+m;};
 const elapsed=(a,b)=>{let n=minute(b)-minute(a);if(n<0)n+=1440;return n;};
-const down=['마포','서울','병목안','수영','죽산','일죽','장호원','돈산','충주','수안보','북문경','문경','상주','구미','약목','서왜관','하빈','호림','남대구'];
+const down=['마포','서울','병목안','수영','장호원','돈산','충주','수안보','북문경','문경','상주','구미','약목','서왜관','하빈','호림','남대구'];
 const commercial=new Set(['마포','서울','병목안','수영','충주','문경','상주','구미','남대구']);
 
 test('501~526은 13왕복 KTX-이음이며 기존 불완전 527~529는 대치된다',()=>{
@@ -42,6 +42,18 @@ test('통과역·정차역·승강장과 전 구간 시각이 완결되어 있�
         assert.ok(stop.arr&&!stop.dep,`#${train.no} ${stop.s} 통과`);
       }
     }
+  }
+});
+
+test('수영-장호원 직결 지선을 이용하고 죽산·일죽은 경유하지 않는다',()=>{
+  for(const train of trains){
+    const names=Array.from(train.stops,stop=>stop.s);
+    assert.ok(!names.includes('죽산'),`#${train.no} 죽산 제외`);
+    assert.ok(!names.includes('일죽'),`#${train.no} 일죽 제외`);
+    const suyeong=names.indexOf('수영'),janghowon=names.indexOf('장호원');
+    assert.equal(Math.abs(suyeong-janghowon),1,`#${train.no} 수영-장호원 직결`);
+    const stop=train.stops[janghowon];
+    assert.ok(stop.arr&&!stop.dep,`#${train.no} 장호원 통과`);
   }
 });
 
