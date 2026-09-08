@@ -4902,6 +4902,42 @@ function showMapLine(lineKey, btn){
     });
   }
 
+  // 직통역이 많은 대형역에서는 모든 역명을 동시에 쓰면 노선과 역점이 가려진다.
+  // 역점과 실제 운행 경로는 모두 유지하되, 출발역·허브·노선 끝점을 먼저 표시하고
+  // 남은 역명은 노선 순서 전체에 고르게 배분한다. 각 역은 클릭/호버로 계속 확인 가능하다.
+  const reachLabelKeys=new Set();
+  const reachLabelThreshold=32;
+  const reachLabelLimit=28;
+  if(reachView){
+    const candidates=[];
+    const seenCandidates=new Set();
+    routes.forEach(r=>r.stations.forEach((s,i)=>{
+      if(!reachView.stations.has(s.n))return;
+      const key=s.n+'@'+Math.round(s.x)+','+Math.round(s.y);
+      if(seenCandidates.has(key))return;
+      seenCandidates.add(key);
+      candidates.push({
+        key,
+        origin:s.n===reachView.origin,
+        important:i===0||i===r.stations.length-1||!!(_hubSet&&_hubSet.has(key))
+      });
+    }));
+    if(candidates.length<=reachLabelThreshold){
+      candidates.forEach(item=>reachLabelKeys.add(item.key));
+    }else{
+      candidates.filter(item=>item.origin).forEach(item=>reachLabelKeys.add(item.key));
+      candidates.filter(item=>item.important&&!item.origin).forEach(item=>{
+        if(reachLabelKeys.size<reachLabelLimit)reachLabelKeys.add(item.key);
+      });
+      const remaining=candidates.filter(item=>!reachLabelKeys.has(item.key));
+      const slots=Math.max(0,reachLabelLimit-reachLabelKeys.size);
+      for(let i=0;i<slots&&remaining.length;i++){
+        const index=Math.min(remaining.length-1,Math.floor((i+.5)*remaining.length/slots));
+        reachLabelKeys.add(remaining[index].key);
+      }
+    }
+  }
+
   // 역 점 + 이름 (중복 없이)
   const rendered=new Set();
   // 전철: 역별 환승 표시 맵 (선로 공유 구간은 양끝만)
@@ -4917,7 +4953,8 @@ function showMapLine(lineKey, btn){
       // 관제 뷰: 허브역 외에는 아주 작은 점 + 라벨 생략 (좌표 기반 키로 동명이역 구분)
       const isReachable=!!(reachView&&reachView.stations.has(s.n));
       const isReachOrigin=!!(reachView&&reachView.origin===s.n);
-      const isMinor=!!(_hubSet&&!_hubSet.has(rkey)&&!isReachable);
+      const showReachLabel=!reachView||reachLabelKeys.has(rkey);
+      const isMinor=!!(_hubSet&&!_hubSet.has(rkey)&&!(isReachable&&showReachLabel));
       // 추적 뷰: 미정차(통과)역은 작고 옅게
       const faded=!!(_trkStopSet&&!_trkStopSet.has(s.n));
       const r2=isReachOrigin?10:isReachable?6:isMinor?2.2:(faded?3.5:(isEnd?7:5));
@@ -4925,7 +4962,7 @@ function showMapLine(lineKey, btn){
       const nodeColor=isReachable?'var(--accent)':r.color;
       const nodeOpacity=reachView&&!isReachable?'0.14':(faded?'0.35':'1');
       // 히트 영역
-      parts.push(`<circle class="map-station-hit" cx="${x}" cy="${y}" r="${r2+8}" fill="transparent" style="cursor:pointer" onclick="openMapPopup('${s.n}','${line.name}')"/>`);
+      parts.push(`<circle class="map-station-hit" cx="${x}" cy="${y}" r="${r2+8}" fill="transparent" style="cursor:pointer" onclick="openMapPopup('${s.n}','${line.name}')"><title>${s.n}</title></circle>`);
       // 역 점
       if(isReachOrigin)parts.push(`<circle cx="${x}" cy="${y}" r="15" fill="none" stroke="var(--accent)" stroke-width="2" opacity=".35" pointer-events="none"/>`);
       parts.push(`<circle class="map-station-node${isReachable?' map-station-reachable':''}${isReachOrigin?' origin':''}" cx="${x}" cy="${y}" r="${r2}" fill="var(--bg2)" stroke="${nodeColor}" stroke-width="${sw}" opacity="${nodeOpacity}" pointer-events="none"/>`);
@@ -4965,7 +5002,7 @@ function showMapLine(lineKey, btn){
         ty=y+manualOffset[s.n][1]+4;
         anchor=manualOffset[s.n][0]<0?'end':manualOffset[s.n][0]>0?'start':'middle';
       }
-      if(!isMinor) parts.push(`<text x="${tx}" y="${ty}" fill="${isReachable?'var(--text1)':'var(--text2)'}" font-size="${isReachOrigin?13:(faded?9.5:(isEnd?12:11))}" font-weight="${isReachable?800:(isEnd?700:400)}" opacity="${reachView&&!isReachable?0.12:(faded?0.4:1)}" text-anchor="${anchor}" pointer-events="none" font-family="Noto Sans KR,sans-serif">${s.n}</text>`);
+      if(!isMinor&&showReachLabel) parts.push(`<text x="${tx}" y="${ty}" fill="${isReachable?'var(--text1)':'var(--text2)'}" font-size="${isReachOrigin?13:(faded?9.5:(isEnd?12:11))}" font-weight="${isReachable?800:(isEnd?700:400)}" opacity="${reachView&&!isReachable?0.12:(faded?0.4:1)}" text-anchor="${anchor}" pointer-events="none" font-family="Noto Sans KR,sans-serif">${s.n}</text>`);
       // 전철 노선도: 환승 노선 색 점 (역명 옆) + 기차 환승 표시
       if(line.isMetro&&!isMinor&&!faded){
         const xf=(_xferMap&&_xferMap[s.n])||[];

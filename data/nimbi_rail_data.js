@@ -2165,7 +2165,7 @@ for(const train of ALL_TRAINS){
   const down=[
     ['의정부',null,0,2],['가능',2,null],['송추',6,7,2],['장흥',11,12,2],
     ['고양',16,17,1],['관산',21,null],['주교',23,null],['능곡',26,null],
-    ['행신',28,29,1],['서울',38,39,3],['한강로',53,null],['수원',60,61,4],
+    ['행신',28,29,1],['서울',38,39,3],['한강로','통과',null],['남안양',53,null],['수원',60,61,4],
     ['오산',69,null],['평택',77,null],['천안',88,89,11],['목천',94,null],
     ['병천',97,null],['북청주',103,null],['서청주',107,108,3],
     ['상당',111,null],['문의',116,null],['신탄진',121,null],
@@ -2174,8 +2174,8 @@ for(const train of ALL_TRAINS){
   const total=128;
   const up=down.slice().reverse().map(([s,arr,dep,p])=>[
     s,
-    dep==null?null:total-dep,
-    arr==null?null:total-arr,
+    arr==='통과'?'통과':(dep==null?null:total-dep),
+    arr==='통과'?null:(arr==null?null:total-arr),
     p
   ]);
   const departuresDown=[330,540,750,960,1200];
@@ -2190,7 +2190,7 @@ for(const train of ALL_TRAINS){
         line:'교외선·경의선·경부선',grade:'ITX-마음',
         boundary:dir==='down'?['의정부','대전']:['대전','의정부'],
         stops:template.map(([s,arr,dep,p],stopIndex)=>{
-          const stop={s,arr:arr==null?null:clock(start+arr),dep:dep==null?null:clock(start+dep)};
+          const stop={s,arr:arr==='통과'?'통과':(arr==null?null:clock(start+arr)),dep:dep==null?null:clock(start+dep)};
           if(p!=null&&(stopIndex===0||stopIndex===template.length-1||arr!==dep))stop.p=String(p);
           return stop;
         })
@@ -2218,7 +2218,7 @@ for(const train of ALL_TRAINS){
   const down=[
     ['의정부',null,0,2],['가능',98,null],['송추',331,419,2],['장흥',639,727,2],
     ['고양',934,1022,1],['관산',1236,null],['주교',1385,null],['능곡',1566,null],
-    ['행신',1668,1756,1],['서울',2256,2344,3],['한강로',3169,null],
+    ['행신',1668,1756,1],['서울',2256,2344,3],['한강로','통과',null],['남안양',3169,null],
     ['수원',3602,3690,4],['오산',4129,null],['평택',4632,null],
     ['천안',5254,5342,11],['목천',5642,null],['병천',5836,null],
     ['북청주',6172,null],['서청주',6415,6503,3],['상당',6677,null],
@@ -2226,7 +2226,7 @@ for(const train of ALL_TRAINS){
   ];
   const total=7667;
   const up=down.slice().reverse().map(([s,arr,dep,p],index,array)=>[
-    s,index===0?null:(dep==null?total-arr:total-dep),
+    s,index===0?null:(arr==='통과'?'통과':(dep==null?total-arr:total-dep)),
     index===array.length-1?null:(index===0?0:(dep==null?null:total-arr)),p
   ]);
   for(const train of ALL_TRAINS){
@@ -2234,7 +2234,7 @@ for(const train of ALL_TRAINS){
     if(no<1261||no>1270)continue;
     const start=minute(train.stops[0].dep),template=no%2?down:up;
     train.stops=template.map(([s,arr,dep,p],index)=>{
-      const stop={s,arr:arr==null?null:clock(start+Math.floor(arr/60)),dep:dep==null?null:clock(start+Math.floor(dep/60))};
+      const stop={s,arr:arr==='통과'?'통과':(arr==null?null:clock(start+Math.floor(arr/60))),dep:dep==null?null:clock(start+Math.floor(dep/60))};
       if(p!=null&&(index===0||index===template.length-1||dep!=null))stop.p=String(p);
       return stop;
     });

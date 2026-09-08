@@ -33,3 +33,11 @@ test('직통 편성의 실제 연속 운행 경로도 노선색으로 강조한�
   assert.match(app,/reachView\.edges\.has\(_mapReachEdgeKey\(a\.n,b\.n\)\)/);
   assert.match(app,/class="map-reachable-route"/);
 });
+
+test('직통역이 많은 지도는 역점과 경로를 유지하면서 역명만 제한한다',()=>{
+  assert.match(app,/const reachLabelThreshold=32/);
+  assert.match(app,/const reachLabelLimit=28/);
+  assert.match(app,/item\.important&&!item\.origin/);
+  assert.match(app,/const showReachLabel=!reachView\|\|reachLabelKeys\.has\(rkey\)/);
+  assert.match(app,/<title>\$\{s\.n\}<\/title>/);
+});
