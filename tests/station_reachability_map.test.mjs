@@ -49,6 +49,10 @@ test('태백선 노선도는 인게임 좌표의 신동 태백역을 사용한�
   const taebaek=app.slice(app.indexOf('taebaek:{'),app.indexOf('jeongseon:{'));
   assert.match(taebaek,/\{n:'신동\(태백\)',x:587,y:226\}/);
   assert.doesNotMatch(taebaek,/\{n:'신동',/);
+  const railData=fs.readFileSync(new URL('../data/nimbi_rail_data.js',import.meta.url),'utf8');
+  const stationData=fs.readFileSync(new URL('../data/nimbi_station_data.js',import.meta.url),'utf8');
+  assert.match(railData,/if\(stop\.s==='신동'\)stop\.s='신동\(태백\)'/);
+  assert.match(stationData,/"신동\(태백\)역":\{lon:128\.639945,lat:37\.207512/);
 });
 
 test('중부내륙선 노선도에 수영-장호원·상주-구미 지선을 표시한다',()=>{

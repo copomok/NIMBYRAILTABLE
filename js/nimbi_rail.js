@@ -8320,7 +8320,8 @@ function _ticketCardHTML(tk){
     const seatList=seatSummary(tk.seats);
     const _tkt=getTrainByNo(tk.trainNo);
     const tkDistKm=tk.distanceKm||(_tkt?Math.round(routeDistanceKm(_tkt,tk.fromStn,tk.toStn)):0);
-    return `<div class="ticket-card${cancelledCls}" style="--ticket-grade:${gradeColor}" onclick="openQRPopup('${tk.id}')">
+  const isTravelToday=tk.travelDate===todayLocalStr();
+  return `<div class="ticket-card${cancelledCls}" style="--ticket-grade:${gradeColor}" onclick="openQRPopup('${tk.id}')">
       <div class="ticket-card-top" style="border-color:${gradeColor}">
         <span class="ticket-grade" style="color:${gradeColor}">${tk.grade}</span>
         <span class="ticket-no">${tk.trainNo}</span>
@@ -8356,7 +8357,7 @@ function _ticketCardHTML(tk){
       </div>
       <div class="ticket-card-actions">
         <button class="btn ticket-action-timetable" style="font-size:12px;padding:6px 12px" onclick="event.stopPropagation();openJourney('${tk.trainNo}')">🚆 시간표</button>
-        <button class="btn ticket-action-route" style="font-size:12px;padding:6px 12px" onclick="event.stopPropagation();openBookRouteDetail('${tk.trainNo}','${tk.fromStn}','${tk.toStn}','${tk.travelDate}')">운행 정보</button>
+        ${isTravelToday?`<button class="btn ticket-action-route" style="font-size:12px;padding:6px 12px" onclick="event.stopPropagation();openBookRouteDetail('${tk.trainNo}','${tk.fromStn}','${tk.toStn}','${tk.travelDate}')">운행 정보</button>`:''}
         ${tk.status==='active'&&_ticketFilterTab==='upcoming'?`<button class="btn ticket-action-cancel" style="font-size:12px;padding:6px 12px" onclick="event.stopPropagation();cancelTicket('${tk.id}')">예매 취소</button>`
           :`<button class="btn ticket-action-delete" style="font-size:12px;padding:6px 12px" onclick="event.stopPropagation();deleteTicket('${tk.id}')">기록 삭제</button>`}
       </div>

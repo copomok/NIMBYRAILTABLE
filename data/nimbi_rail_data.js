@@ -1580,6 +1580,13 @@ ALL_TRAINS.push(
     if(anchor<0)continue;
     train.stops.splice(anchor,0,{s:'무릉',arr:times[0],dep:times[1]});
   }
+  // 태백선 동명이역은 후속 오버레이에 의존하지 않고 원 시간표 단계에서부터
+  // 지역명이 붙은 고유 키를 사용한다. 노선도·검색·운행 위치가 같은 역을 가리킨다.
+  for(const train of ALL_TRAINS){
+    const no=Number(train.no);
+    if(no<1691||no>1700)continue;
+    for(const stop of train.stops)if(stop.s==='신동')stop.s='신동(태백)';
+  }
   rebuildFromTemplate(1276,1274);
   rebuildFromTemplate(1539,1541);
   rebuildFromTemplate(312,310);

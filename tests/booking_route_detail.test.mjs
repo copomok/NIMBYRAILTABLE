@@ -21,6 +21,8 @@ test('예매한 승차권 카드는 시간표·운행 정보·취소 순으로 �
   const cancel=card.indexOf('ticket-action-cancel');
   assert.ok(timetable>=0&&route>timetable&&cancel>route);
   assert.match(card,/openBookRouteDetail\('\$\{tk\.trainNo\}','\$\{tk\.fromStn\}','\$\{tk\.toStn\}','\$\{tk\.travelDate\}'\)/);
+  assert.match(card,/const isTravelToday=tk\.travelDate===todayLocalStr\(\)/);
+  assert.match(card,/\$\{isTravelToday\?`<button class="btn ticket-action-route"/);
   assert.match(redesignCss,/\.ticket-card \.ticket-action-route/);
 });
 
@@ -40,8 +42,8 @@ test('운행 정보창은 반응형 시트이며 새 캐시로 배포된다',()=
   assert.match(css,/@media\(min-width:768px\)/);
   assert.match(css,/@media\(max-width:520px\)/);
   assert.match(html,/nimbi_rail\.css\?v=2026090809/);
-  assert.match(html,/nimbi_rail\.js\?v=2026090809/);
-  assert.match(sw,/nimbirail-2026090810/);
+  assert.match(html,/nimbi_rail\.js\?v=2026090811/);
+  assert.match(sw,/nimbirail-2026090811/);
 });
 
 test('운행 정보는 시간표·지도 탭과 선택 구간 노선도를 제공한다',()=>{
