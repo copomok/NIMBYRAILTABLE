@@ -3039,6 +3039,7 @@ let _mapShowTrains = localStorage.getItem('nimbi_map_show_trains')!=='0';
 let _mapDirFilter = 'both'; // 'both': 전체, 'down': 하행만, 'up': 상행만
 let _mapGradeFilter = null; // null=전체, 'KTX', 'SRT', 'ITX', '무궁화'
 let _mapTrackedTrain = null; // 현재 추적 중인 열차 번호
+let _mapReachability = null; // {origin, stations:Set, mode} — 역에서 환승 없이 갈 수 있는 역
 let _mapStatusColor = false;  // 038: 혼잡도에 따른 열차 상태색 표시 on/off
 function toggleMapStatusColor(){
   _mapStatusColor=!_mapStatusColor;
@@ -3075,6 +3076,47 @@ function toggleMapLayer(){
   const btn=document.getElementById('map-layer-btn');
   if(btn) btn.textContent=_mapLayerMode==='station'?'역 우선':'열차 우선';
   if(_mapCurrentLine) updateMapTrains();
+}
+
+function _directReachableStations(stn,mode){
+  const out=new Set([stn]);
+  if(mode==='metro'&&typeof METRO_SCHED!=='undefined'){
+    Object.values(METRO_SCHED).forEach(ent=>(ent.t||[]).forEach(service=>{
+      const names=[];
+      for(let i=2;i<service.length;i+=3){const name=ent.s?.[service[i]];if(name)names.push(name);}
+      if(names.includes(stn))names.forEach(name=>out.add(name));
+    }));
+  }else if(typeof ALL_TRAINS!=='undefined'){
+    ALL_TRAINS.forEach(t=>{
+      const stops=(t.stops||[]).filter(s=>(hasTime(s.arr)||hasTime(s.dep))&&!isPassStop(t,s.s));
+      if(stops.some(s=>s.s===stn))stops.forEach(s=>out.add(s.s));
+    });
+  }
+  return out;
+}
+function openStationReachabilityMap(stn){
+  const mode=_appMode==='metro'?'metro':'train';
+  let stations=_directReachableStations(stn,mode);
+  const mapped=mode==='metro'&&typeof METRO_LINES!=='undefined'
+    ?new Set(METRO_LINES.flatMap(l=>(l.routes||[{stations:l.stations||[]}]).flatMap(r=>r.stations||[])))
+    :new Set(Object.values(MAP_LINES).flatMap(l=>(l.routes||[]).flatMap(r=>r.stations.map(s=>s.n))));
+  stations=new Set([...stations].filter(name=>mapped.has(name)));
+  if(mapped.has(stn))stations.add(stn);
+  _mapTrackedTrain=null;
+  _mapReachability={origin:stn,stations,mode};
+  if(mode==='metro'&&typeof METRO_LINES!=='undefined'){
+    const line=METRO_LINES.find(l=>(l.routes||[{stations:l.stations||[]}]).some(r=>(r.stations||[]).includes(stn)));
+    if(line)_metroMapRegion=line.region;
+    _metroMapId='__all__';
+  }
+  switchTab('map');
+  const key=mode==='metro'?`metroall:${_metroMapRegion}`:'all';
+  const btn=mode==='train'?document.querySelector('.map-line-tab[onclick*="\'all\'"]'):null;
+  showMapLine(key,btn);
+}
+function clearStationReachabilityMap(){
+  _mapReachability=null;
+  renderMapTabForMode();
 }
 
 function _syncMapTrainVisibilityButton(){
@@ -3306,6 +3348,16 @@ function updateMapTrains(){
   // 기존 열차 레이어 제거
   const old=svgEl.querySelector('#train-layer');
   if(old)old.remove();
+
+  const reachActive=_mapReachability&&(
+    (_mapReachability.mode==='train'&&_mapCurrentLine==='all')||
+    (_mapReachability.mode==='metro'&&_mapCurrentLine.startsWith('metroall:'))
+  );
+  if(reachActive){
+    const countEl=document.getElementById('map-train-count');
+    if(countEl)countEl.textContent=`직통 ${Math.max(0,_mapReachability.stations.size-1)}개 역`;
+    return;
+  }
 
   _syncMapTrainVisibilityButton();
   if(!_mapShowTrains){
@@ -4724,6 +4776,10 @@ function showMapLine(lineKey, btn){
     :(typeof lineKey==='string'&&lineKey.startsWith('metro:'))?_metroAsMapLine(lineKey.slice(6))
     :(lineKey==='all'?_allAsMapLine():MAP_LINES[lineKey]);
   if(!line){ const wrap=document.getElementById('map-svg-wrap'); if(wrap&&typeof lineKey==='string'&&lineKey.startsWith('metropick:'))wrap.innerHTML='<div style="padding:40px 16px;text-align:center;color:var(--text2)">겹쳐 볼 노선을 칩에서 선택하세요</div>'; return; }
+  const reachView=_mapReachability&&(
+    (_mapReachability.mode==='train'&&lineKey==='all')||
+    (_mapReachability.mode==='metro'&&typeof lineKey==='string'&&lineKey.startsWith('metroall:'))
+  )?_mapReachability:null;
 
   // 추적 중이면: 열차가 실제 운행하는 구간만, 열차 등급 색으로 통일해 렌더
   const _trk=_mapTrackedTrain?getTrainByNo(_mapTrackedTrain):null;
@@ -4823,7 +4879,7 @@ function showMapLine(lineKey, btn){
   routes.forEach(r=>{
     const isBranch=r.dash||false;   // 지선/경유: 본선과 같은 색, 점선
     const d=smoothPath(r.stations, ox, oy);
-    parts.push(`<path d="${d}" fill="none" stroke="${r.color}" stroke-width="${isAllView?2.5:(isBranch?4:5)}" stroke-linecap="round" stroke-linejoin="round" ${isBranch?'stroke-dasharray="9,9"':''} opacity="${isAllView?0.75:(isBranch?0.85:1)}"/>`);
+    parts.push(`<path d="${d}" fill="none" stroke="${reachView?'var(--text3)':r.color}" stroke-width="${isAllView?2.5:(isBranch?4:5)}" stroke-linecap="round" stroke-linejoin="round" ${isBranch?'stroke-dasharray="9,9"':''} opacity="${reachView?0.2:(isAllView?0.75:(isBranch?0.85:1))}"/>`);
   });
 
   // 역 점 + 이름 (중복 없이)
@@ -4839,15 +4895,20 @@ function showMapLine(lineKey, btn){
       const x=s.x+ox, y=s.y+oy;
       const isEnd=i===0||i===r.stations.length-1;
       // 관제 뷰: 허브역 외에는 아주 작은 점 + 라벨 생략 (좌표 기반 키로 동명이역 구분)
-      const isMinor=!!(_hubSet&&!_hubSet.has(rkey));
+      const isReachable=!!(reachView&&reachView.stations.has(s.n));
+      const isReachOrigin=!!(reachView&&reachView.origin===s.n);
+      const isMinor=!!(_hubSet&&!_hubSet.has(rkey)&&!isReachable);
       // 추적 뷰: 미정차(통과)역은 작고 옅게
       const faded=!!(_trkStopSet&&!_trkStopSet.has(s.n));
-      const r2=isMinor?2.2:(faded?3.5:(isEnd?7:5));
-      const sw=isMinor?1.2:(faded?1.5:(isEnd?3:2));
+      const r2=isReachOrigin?10:isReachable?6:isMinor?2.2:(faded?3.5:(isEnd?7:5));
+      const sw=isReachOrigin?4:isReachable?3:isMinor?1.2:(faded?1.5:(isEnd?3:2));
+      const nodeColor=isReachable?'var(--accent)':r.color;
+      const nodeOpacity=reachView&&!isReachable?'0.14':(faded?'0.35':'1');
       // 히트 영역
       parts.push(`<circle class="map-station-hit" cx="${x}" cy="${y}" r="${r2+8}" fill="transparent" style="cursor:pointer" onclick="openMapPopup('${s.n}','${line.name}')"/>`);
       // 역 점
-      parts.push(`<circle class="map-station-node" cx="${x}" cy="${y}" r="${r2}" fill="var(--bg2)" stroke="${r.color}" stroke-width="${sw}" ${faded?'opacity="0.35"':''} pointer-events="none"/>`);
+      if(isReachOrigin)parts.push(`<circle cx="${x}" cy="${y}" r="15" fill="none" stroke="var(--accent)" stroke-width="2" opacity=".35" pointer-events="none"/>`);
+      parts.push(`<circle class="map-station-node${isReachable?' map-station-reachable':''}${isReachOrigin?' origin':''}" cx="${x}" cy="${y}" r="${r2}" fill="var(--bg2)" stroke="${nodeColor}" stroke-width="${sw}" opacity="${nodeOpacity}" pointer-events="none"/>`);
       // 역명
       // 인접 역 방향 기반 텍스트 위치 결정
       // 이전/다음 역의 x 평균으로 텍스트를 반대쪽에 배치
@@ -4884,7 +4945,7 @@ function showMapLine(lineKey, btn){
         ty=y+manualOffset[s.n][1]+4;
         anchor=manualOffset[s.n][0]<0?'end':manualOffset[s.n][0]>0?'start':'middle';
       }
-      if(!isMinor) parts.push(`<text x="${tx}" y="${ty}" fill="var(--text1)" font-size="${faded?9.5:(isEnd?12:11)}" font-weight="${isEnd?700:400}" ${faded?'opacity="0.4"':''} text-anchor="${anchor}" pointer-events="none" font-family="Noto Sans KR,sans-serif">${s.n}</text>`);
+      if(!isMinor) parts.push(`<text x="${tx}" y="${ty}" fill="${isReachable?'var(--text1)':'var(--text2)'}" font-size="${isReachOrigin?13:(faded?9.5:(isEnd?12:11))}" font-weight="${isReachable?800:(isEnd?700:400)}" opacity="${reachView&&!isReachable?0.12:(faded?0.4:1)}" text-anchor="${anchor}" pointer-events="none" font-family="Noto Sans KR,sans-serif">${s.n}</text>`);
       // 전철 노선도: 환승 노선 색 점 (역명 옆) + 기차 환승 표시
       if(line.isMetro&&!isMinor&&!faded){
         const xf=(_xferMap&&_xferMap[s.n])||[];
@@ -4905,7 +4966,7 @@ function showMapLine(lineKey, btn){
     });
   });
 
-  parts.push(`<text x="14" y="22" fill="${trackedView?_trkColor:line.color}" font-size="14" font-weight="700" font-family="Noto Sans KR,sans-serif">${trackedView?`${_trk.grade} ${_trk.no} · ${_trk.stops[0].s}→${_trk.stops[_trk.stops.length-1].s} 운행 구간`:line.name}</text>`);
+  parts.push(`<text x="14" y="22" fill="${reachView?'var(--accent)':trackedView?_trkColor:line.color}" font-size="14" font-weight="700" font-family="Noto Sans KR,sans-serif">${reachView?`${reachView.origin}에서 환승 없이 갈 수 있는 역`:trackedView?`${_trk.grade} ${_trk.no} · ${_trk.stops[0].s}→${_trk.stops[_trk.stops.length-1].s} 운행 구간`:line.name}</text>`);
   parts.push('</svg>');
 
   // 줌 컨트롤 (좌상단 고정, 접기 가능) — 렌더마다 리셋되지 않도록 현재 배율 유지
@@ -4915,7 +4976,9 @@ function showMapLine(lineKey, btn){
   _mapBindPinch();
 
   // 범례
-  document.getElementById('map-legend').innerHTML=trackedView?`
+  document.getElementById('map-legend').innerHTML=reachView?`
+    <div class="map-reach-summary"><strong>${reachView.origin}</strong><span>환승 없이 갈 수 있는 역 ${Math.max(0,reachView.stations.size-1).toLocaleString()}곳</span><button type="button" onclick="clearStationReachabilityMap()">전체보기로 돌아가기</button></div>
+  `:trackedView?`
     <div class="map-legend-item"><div class="map-legend-line" style="background:${_trkColor}"></div><span>${_trk.grade} ${_trk.no} 운행 구간</span></div>
     <div class="map-legend-item" style="gap:8px"><svg width="12" height="12"><circle cx="6" cy="6" r="5" fill="#161b22" stroke="${_trkColor}" stroke-width="2"/></svg><span>정차역</span></div>
     <div class="map-legend-item" style="gap:8px"><svg width="12" height="12"><circle cx="6" cy="6" r="3.5" fill="#161b22" stroke="${_trkColor}" stroke-width="1.5" opacity="0.35"/></svg><span>통과역</span></div>
@@ -4936,6 +4999,10 @@ function showMapLine(lineKey, btn){
   _mapStnPos = stnPos;
   _mapSvgSize = {w:svgW, h:svgH, ox, oy};
   updateMapTrains();
+  if(reachView&&stnPos[reachView.origin])setTimeout(()=>{
+    const host=document.getElementById('map-svg-wrap'),p=stnPos[reachView.origin];
+    if(host&&p){host.scrollLeft=p.x-host.clientWidth/2;host.scrollTop=p.y-host.clientHeight/2;}
+  },80);
   // 미니맵 초기화
   setTimeout(updateMinimap, 100);
   const wrap=document.getElementById('map-svg-wrap');
@@ -9751,6 +9818,40 @@ function openBookTrainDetail(trainNo, from, to, depT, arrT, travelDate){
   setTimeout(()=>wrap.querySelector('.book-detail-panel').classList.add('open'), 10);
 }
 
+function _bookRouteMapHTML(t,from,to,gradeColor){
+  const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const points=(t.stops||[]).filter(s=>hasTime(s.arr)||hasTime(s.dep)).map(s=>({s,coord:_stnCoord(s.s)})).filter(x=>x.coord);
+  let fromIdx=points.findIndex(x=>x.s.s===from),toIdx=points.findIndex((x,i)=>i>fromIdx&&x.s.s===to);
+  if(points.length<2||fromIdx<0||toIdx<0)return '<div class="brd-map-empty">표시할 수 있는 노선 좌표가 없습니다.</div>';
+  const W=620,H=380,P=48;
+  const lons=points.map(x=>x.coord.lon),lats=points.map(x=>x.coord.lat);
+  const minLon=Math.min(...lons),maxLon=Math.max(...lons),minLat=Math.min(...lats),maxLat=Math.max(...lats);
+  const dx=Math.max(.01,maxLon-minLon),dy=Math.max(.01,maxLat-minLat);
+  const scale=Math.min((W-P*2)/dx,(H-P*2)/dy);
+  const usedW=dx*scale,usedH=dy*scale,ox=(W-usedW)/2,oy=(H-usedH)/2;
+  points.forEach(p=>{p.x=ox+(p.coord.lon-minLon)*scale;p.y=oy+(maxLat-p.coord.lat)*scale;});
+  let lines='';
+  for(let i=0;i<points.length-1;i++){
+    const active=i>=fromIdx&&i<toIdx;
+    lines+=`<line x1="${points[i].x.toFixed(1)}" y1="${points[i].y.toFixed(1)}" x2="${points[i+1].x.toFixed(1)}" y2="${points[i+1].y.toFixed(1)}" class="${active?'selected':'muted'}"/>`;
+  }
+  const labelStep=Math.max(1,Math.ceil(points.length/12));
+  const nodes=points.map((p,i)=>{
+    const selected=i===fromIdx||i===toIdx,active=i>=fromIdx&&i<=toIdx;
+    const showLabel=selected||i===0||i===points.length-1||i%labelStep===0;
+    const anchor=p.x>W*.67?'end':p.x<W*.33?'start':'middle';
+    const tx=p.x+(anchor==='start'?8:anchor==='end'?-8:0),ty=p.y+(anchor==='middle'?-10:4);
+    return `<g class="${active?'selected':'muted'}${selected?' endpoint':''}"><circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="${selected?7:3.5}"><title>${esc(p.s.s)}</title></circle>${showLabel?`<text x="${tx.toFixed(1)}" y="${ty.toFixed(1)}" text-anchor="${anchor}">${esc(p.s.s)}</text>`:''}${i===fromIdx?`<text class="route-tag" x="${p.x.toFixed(1)}" y="${(p.y+21).toFixed(1)}" text-anchor="middle">승차</text>`:i===toIdx?`<text class="route-tag" x="${p.x.toFixed(1)}" y="${(p.y+21).toFixed(1)}" text-anchor="middle">하차</text>`:''}</g>`;
+  }).join('');
+  return `<div class="brd-route-map" style="--route-grade:${gradeColor}"><div class="brd-map-key"><span><i class="selected"></i>승차 구간</span><span><i></i>그 외 운행 구간</span></div><div class="brd-map-canvas"><svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(t.grade)} ${esc(t.no)} 전체 운행 구간 노선도">${lines}${nodes}</svg></div><p>${esc(t.stops[0]?.s)} → ${esc(t.stops[t.stops.length-1]?.s)} 전체 운행 구간</p></div>`;
+}
+function setBookRouteDetailTab(mode){
+  const wrap=document.getElementById('book-route-detail-wrap');if(!wrap)return;
+  wrap.querySelectorAll('.brd-view-tab').forEach(btn=>{const on=btn.dataset.view===mode;btn.classList.toggle('active',on);btn.setAttribute('aria-selected',String(on));});
+  wrap.querySelector('.brd-schedule-view')?.classList.toggle('active',mode==='schedule');
+  wrap.querySelector('.brd-map-view')?.classList.toggle('active',mode==='map');
+}
+
 // 예매 구간 기준 운행 정보 — 전체 정차역 중 승차·하차 구간을 강조한다.
 function openBookRouteDetail(trainNo,from,to,travelDate){
   const t=getTrainByNo(trainNo);if(!t)return;
@@ -9787,12 +9888,14 @@ function openBookRouteDetail(trainNo,from,to,travelDate){
       <time class="brd-arr">${arr||'—'}</time><time class="brd-dep">${dep||'—'}</time>
     </div>`;
   }).join('');
+  const routeMap=_bookRouteMapHTML(t,from,to,gradeColor);
   const wrap=document.createElement('div');wrap.id='book-route-detail-wrap';wrap.style.setProperty('--brd-grade',gradeColor);
   wrap.innerHTML=`<div class="book-route-detail-backdrop"></div><section class="book-route-detail-sheet" role="dialog" aria-modal="true" aria-label="${esc(t.grade)} ${esc(t.no)} 운행 정보">
     <header class="brd-header"><div><small>운행 정보</small><h2>${esc(t.grade)} <b>${esc(t.no)}</b></h2></div><div class="brd-head-actions"><button type="button" class="brd-refresh" aria-label="새로고침">↻</button><button type="button" class="brd-close" aria-label="닫기">✕</button></div></header>
     <div class="brd-summary"><time>${dateLabel}</time><strong>${esc(from)} <span>${esc(allStops[fromIdx].dep||allStops[fromIdx].arr||'—')}</span><i>→</i> ${esc(to)} <span>${esc(allStops[toIdx].arr||allStops[toIdx].dep||'—')}</span></strong><small>전체 ${allStops.length}개 정차역 · 선택 구간 ${toIdx-fromIdx+1}개 역</small></div>
-    <div class="brd-columns"><span>역명</span><span>도착</span><span>출발</span></div>
-    <div class="brd-stop-list">${rows}</div>
+    <div class="brd-view-tabs" role="tablist"><button type="button" class="brd-view-tab active" data-view="schedule" role="tab" aria-selected="true" onclick="setBookRouteDetailTab('schedule')">시간표</button><button type="button" class="brd-view-tab" data-view="map" role="tab" aria-selected="false" onclick="setBookRouteDetailTab('map')">지도</button></div>
+    <div class="brd-view brd-schedule-view active"><div class="brd-columns"><span>역명</span><span>도착</span><span>출발</span></div><div class="brd-stop-list">${rows}</div></div>
+    <div class="brd-view brd-map-view">${routeMap}</div>
   </section>`;
   document.body.appendChild(wrap);document.body.classList.add('app-modal-open');
   wrap.querySelector('.book-route-detail-backdrop').addEventListener('click',closeBookRouteDetail);
@@ -11387,28 +11490,9 @@ function renderSICard(name){
       ${_appMode!=='metro'&&metroLines.length?`<div style="padding:0 16px 12px">
         <button class="si-board-btn" onclick="switchModeStation('metro','${nameEsc}')">🚇 전철 ${trainName}역으로 전환</button>
       </div>`:''}
-      ${d&&d.lat&&d.lon?`
-      <div style="border-top:1px solid var(--border)">
-        <button onclick="toggleStationMap()" style="width:100%;padding:11px 16px;background:transparent;border:none;color:var(--text2);font-size:12px;font-weight:600;cursor:pointer;font-family:var(--sans);display:flex;align-items:center;justify-content:space-between">
-          <span>🗺️ 역 주변 지도</span><span id="si-map-arrow">▼</span>
-        </button>
-        <div id="si-map-section" style="display:none;padding:0 16px 14px">
-          <iframe
-            src="https://www.openstreetmap.org/export/embed.html?bbox=${(d.lon-0.01).toFixed(5)},${(d.lat-0.008).toFixed(5)},${(d.lon+0.01).toFixed(5)},${(d.lat+0.008).toFixed(5)}&layer=mapnik&marker=${d.lat.toFixed(5)},${d.lon.toFixed(5)}"
-            style="width:100%;height:220px;border:1px solid var(--border);border-radius:8px;display:block"
-            loading="lazy" title="${name} 주변 지도"></iframe>
-          <div style="display:flex;gap:8px;margin-top:8px">
-            <a href="https://map.kakao.com/link/map/${encodeURIComponent(name)},${d.lat},${d.lon}" target="_blank" rel="noopener noreferrer"
-              style="flex:1;display:block;text-align:center;padding:8px;background:var(--bg3);border:1px solid var(--border);border-radius:8px;font-size:12px;color:var(--text1);text-decoration:none;font-weight:600">
-              카카오지도 ↗
-            </a>
-            <a href="https://map.naver.com/?lng=${d.lon}&lat=${d.lat}&zoom=15" target="_blank" rel="noopener noreferrer"
-              style="flex:1;display:block;text-align:center;padding:8px;background:var(--bg3);border:1px solid var(--border);border-radius:8px;font-size:12px;color:var(--text1);text-decoration:none;font-weight:600">
-              네이버지도 ↗
-            </a>
-          </div>
-        </div>
-      </div>`:''}
+      <div class="si-network-map-action">
+        <button type="button" onclick="openStationReachabilityMap('${trainName.replace(/\\/g,'\\\\').replace(/'/g,"\\'")}')"><svg aria-hidden="true"><use href="#i-map"/></svg><span><strong>지도에서 직통역 보기</strong><small>${trainName}역에서 환승 없이 갈 수 있는 역을 표시합니다</small></span><i aria-hidden="true">›</i></button>
+      </div>
     </div>`;
   if(d) siLoadAddress(name, d.lat, d.lon);
 }
@@ -11433,16 +11517,6 @@ async function siLoadAddress(name, lat, lon){
     if(cur && String(cur.dataset.lat)===String(lat)) cur.innerHTML='📍 '+coordStr;
   }
 }
-
-function toggleStationMap(){
-  const sec=document.getElementById('si-map-section');
-  const arr=document.getElementById('si-map-arrow');
-  if(!sec)return;
-  const open=sec.style.display==='none'||sec.style.display==='';
-  sec.style.display=open?'block':'none';
-  if(arr)arr.textContent=open?'▲':'▼';
-}
-
 
 function selectSICardPlatform(name, p){
   _siCardPlatform=p;
