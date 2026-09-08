@@ -9762,15 +9762,29 @@ function openBookRouteDetail(trainNo,from,to,travelDate){
   const esc=typeof _opsEsc==='function'?_opsEsc:s=>String(s??'').replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
   const gradeColor=(typeof GRADE_COLORS!=='undefined'&&GRADE_COLORS[t.grade])||`var(--c-${gcCssVar(t.grade)})`;
   const dateLabel=(()=>{const m=String(travelDate||'').match(/^(\d{4})-(\d{2})-(\d{2})$/);if(!m)return esc(travelDate||todayLocalStr());const d=new Date(+m[1],+m[2]-1,+m[3]);return `${m[1]}.${m[2]}.${m[3]} (${['일','월','화','수','목','금','토'][d.getDay()]})`;})();
+  let liveStopIdx=-1,liveBetween=false,liveLabel='';
+  if((travelDate||todayLocalStr())===todayLocalStr()){
+    const now=new Date(),liveDelay=typeof _liveDelayOf==='function'?_liveDelayOf(t):0;
+    const live=getCurrentStatus(t,now.getHours()*60+now.getMinutes()-liveDelay);
+    if(live?.status==='running'){
+      if(live.atStn){liveStopIdx=allStops.findIndex(s=>s.s===live.atStn);liveLabel=`${live.atStn} 정차 중`;}
+      else{
+        liveStopIdx=allStops.findIndex(s=>s.s===live.nextStn);
+        if(liveStopIdx<0){const prev=allStops.findIndex(s=>s.s===live.prevStn);liveStopIdx=prev>=0?Math.min(prev+1,allStops.length-1):-1;}
+        liveBetween=liveStopIdx>=0;liveLabel=live.nextStn?`${live.nextStn} 방면 이동 중`:'운행 중';
+      }
+    }
+  }
   const rows=allStops.map((s,i)=>{
     const inRide=i>=fromIdx&&i<=toIdx,before=i<fromIdx,after=i>toIdx;
     const plat=typeof _realPlatform==='function'?_realPlatform(t.no,s.s):null;
     const badge=i===fromIdx?'<span class="brd-stop-badge board">승차</span>':i===toIdx?'<span class="brd-stop-badge alight">하차</span>':'';
     const arr=hasTime(s.arr)?s.arr:'',dep=hasTime(s.dep)?s.dep:'';
-    return `<div class="brd-stop${inRide?' ride':''}${before?' before':''}${after?' after':''}${i===fromIdx?' board':''}${i===toIdx?' alight':''}">
-      <div class="brd-rail"><i></i></div>
+    const liveMarker=i===liveStopIdx?`<span class="brd-live-marker${liveBetween?' between':''}" title="${esc(liveLabel)}" aria-label="현재 위치: ${esc(liveLabel)}"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="3" width="14" height="17" rx="4"/><path d="M8 7h8v5H8zM8 17h.01M16 17h.01M8 21l-2 2M16 21l2 2"/></svg><b>운행 중</b></span>`:'';
+    return `<div class="brd-stop${inRide?' ride':''}${before?' before':''}${after?' after':''}${i===fromIdx?' board':''}${i===toIdx?' alight':''}${i===liveStopIdx?' live':''}">
+      <div class="brd-rail"><i></i>${liveMarker}</div>
       <div class="brd-station">${badge}<strong>${esc(s.s)}</strong>${plat!=null?`<span>${esc(plat)}번 승강장</span>`:''}</div>
-      <time class="brd-arr">${arr||'—'}</time><span class="brd-arrow">→</span><time class="brd-dep">${dep||'—'}</time>
+      <time class="brd-arr">${arr||'—'}</time><time class="brd-dep">${dep||'—'}</time>
     </div>`;
   }).join('');
   const wrap=document.createElement('div');wrap.id='book-route-detail-wrap';wrap.style.setProperty('--brd-grade',gradeColor);
