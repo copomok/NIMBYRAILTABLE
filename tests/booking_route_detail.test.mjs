@@ -42,8 +42,8 @@ test('운행 정보창은 반응형 시트이며 새 캐시로 배포된다',()=
   assert.match(css,/@media\(min-width:768px\)/);
   assert.match(css,/@media\(max-width:520px\)/);
   assert.match(html,/nimbi_rail\.css\?v=2026090812/);
-  assert.match(html,/nimbi_rail\.js\?v=2026090812/);
-  assert.match(sw,/nimbirail-2026090812/);
+  assert.match(html,/nimbi_rail\.js\?v=2026090813/);
+  assert.match(sw,/nimbirail-2026090813/);
 });
 
 test('운행 정보는 시간표·지도 탭과 선택 구간 노선도를 제공한다',()=>{
@@ -69,6 +69,13 @@ test('당일 운행 중인 열차는 지도 선형 위에 현재 위치 아이�
   assert.match(app,/class="brd-map-live-train"/);
   assert.match(app,/\$\{lines\}\$\{nodes\}\$\{liveMarker\}/);
   assert.match(css,/\.brd-map-live-train circle/);
+});
+
+test('현재 위치는 무시각 통과역을 포함한 실제 지도 선형을 따라 이동한다',()=>{
+  assert.match(app,/map\(\(s,idx\)=>\(\{s,idx,coord:_stnCoord\(s\.s\)\}\)\)/);
+  assert.match(app,/const path=points\.slice\(aPos,bPos\+1\),segments=\[\]/);
+  assert.match(app,/Math\.hypot\(path\[i\+1\]\.x-path\[i\]\.x,path\[i\+1\]\.y-path\[i\]\.y\)/);
+  assert.match(app,/const local=segments\[segment\]>0\?target\/segments\[segment\]:0/);
 });
 
 test('운행 정보는 도착·출발 사이 화살표 없이 현재 위치를 표시한다',()=>{

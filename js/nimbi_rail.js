@@ -9915,7 +9915,7 @@ function _bookRouteMapHTML(t,from,to,gradeColor,travelDate){
   const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   // 무시각 통과역까지 좌표점으로 유지해야 실제 노선 선형이 끊기거나 직선화되지 않는다.
   // 통과역의 점·역명은 아래 노드 단계에서 그리지 않고 선분 계산에만 사용한다.
-  const points=(t.stops||[]).map(s=>({s,coord:_stnCoord(s.s)})).filter(x=>x.coord);
+  const points=(t.stops||[]).map((s,idx)=>({s,idx,coord:_stnCoord(s.s)})).filter(x=>x.coord);
   let fromIdx=points.findIndex(x=>x.s.s===from),toIdx=points.findIndex((x,i)=>i>fromIdx&&x.s.s===to);
   if(points.length<2||fromIdx<0||toIdx<0)return '<div class="brd-map-empty">표시할 수 있는 노선 좌표가 없습니다.</div>';
   const W=620,H=380,P=48;
@@ -9951,14 +9951,27 @@ function _bookRouteMapHTML(t,from,to,gradeColor,travelDate){
         const point=points.find(p=>p.s.s===live.atStn);
         if(point){x=point.x;y=point.y;label=`현재 위치: ${live.atStn}`;}
       }else if(live.prevStn&&live.nextStn){
-        const a=points.find(p=>p.s.s===live.prevStn),b=points.find(p=>p.s.s===live.nextStn);
+        const aPos=points.findIndex(p=>p.s.s===live.prevStn);
+        const bPos=points.findIndex((p,i)=>i>aPos&&p.s.s===live.nextStn);
+        const a=aPos>=0?points[aPos]:null,b=bPos>=0?points[bPos]:null;
         if(a&&b){
           let depart=toMin(a.s.dep||a.s.arr),arrive=toMin(b.s.arr||b.s.dep),current=serviceNow;
           if(depart!=null&&arrive!=null){
             if(arrive<depart)arrive+=1440;
             if(current<depart&&arrive>=1440)current+=1440;
             const fraction=Math.max(0,Math.min(1,(current-depart)/Math.max(1,arrive-depart)));
-            x=a.x+(b.x-a.x)*fraction;y=a.y+(b.y-a.y)*fraction;
+            // 무시각 통과역도 실제 선형의 꼭짓점으로 포함해 위치를 보간한다.
+            const path=points.slice(aPos,bPos+1),segments=[];
+            let total=0;
+            for(let i=0;i<path.length-1;i++){
+              const length=Math.hypot(path[i+1].x-path[i].x,path[i+1].y-path[i].y);
+              segments.push(length);total+=length;
+            }
+            let target=total*fraction,segment=0;
+            while(segment<segments.length-1&&target>segments[segment])target-=segments[segment++];
+            const start=path[segment],end=path[Math.min(segment+1,path.length-1)];
+            const local=segments[segment]>0?target/segments[segment]:0;
+            x=start.x+(end.x-start.x)*local;y=start.y+(end.y-start.y)*local;
             label=`현재 위치: ${live.prevStn}–${live.nextStn}`;
           }
         }
