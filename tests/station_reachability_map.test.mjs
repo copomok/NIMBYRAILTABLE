@@ -26,3 +26,10 @@ test('전체 네트워크에서 출발역과 직통역을 구분해 표시한다
   assert.match(app,/환승 없이 갈 수 있는 역/);
   assert.match(css,/\.map-reach-summary/);
 });
+
+test('직통 편성의 실제 연속 운행 경로도 노선색으로 강조한다',()=>{
+  assert.match(app,/function _mapReachEdgeKey\(a,b\)/);
+  assert.match(app,/edges\.add\(_mapReachEdgeKey/);
+  assert.match(app,/reachView\.edges\.has\(_mapReachEdgeKey\(a\.n,b\.n\)\)/);
+  assert.match(app,/class="map-reachable-route"/);
+});

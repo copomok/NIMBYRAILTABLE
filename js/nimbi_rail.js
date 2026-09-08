@@ -3078,32 +3078,42 @@ function toggleMapLayer(){
   if(_mapCurrentLine) updateMapTrains();
 }
 
+function _mapReachEdgeKey(a,b){return a<b?`${a}|${b}`:`${b}|${a}`;}
 function _directReachableStations(stn,mode){
   const out=new Set([stn]);
+  const edges=new Set();
   if(mode==='metro'&&typeof METRO_SCHED!=='undefined'){
     Object.values(METRO_SCHED).forEach(ent=>(ent.t||[]).forEach(service=>{
       const names=[];
       for(let i=2;i<service.length;i+=3){const name=ent.s?.[service[i]];if(name)names.push(name);}
-      if(names.includes(stn))names.forEach(name=>out.add(name));
+      if(names.includes(stn)){
+        names.forEach(name=>out.add(name));
+        for(let i=0;i<names.length-1;i++)edges.add(_mapReachEdgeKey(names[i],names[i+1]));
+      }
     }));
   }else if(typeof ALL_TRAINS!=='undefined'){
     ALL_TRAINS.forEach(t=>{
       const stops=(t.stops||[]).filter(s=>(hasTime(s.arr)||hasTime(s.dep))&&!isPassStop(t,s.s));
-      if(stops.some(s=>s.s===stn))stops.forEach(s=>out.add(s.s));
+      if(stops.some(s=>s.s===stn)){
+        stops.forEach(s=>out.add(s.s));
+        const routeStops=(t.stops||[]).filter(s=>hasTime(s.arr)||hasTime(s.dep));
+        for(let i=0;i<routeStops.length-1;i++)edges.add(_mapReachEdgeKey(routeStops[i].s,routeStops[i+1].s));
+      }
     });
   }
-  return out;
+  return {stations:out,edges};
 }
 function openStationReachabilityMap(stn){
   const mode=_appMode==='metro'?'metro':'train';
-  let stations=_directReachableStations(stn,mode);
+  const direct=_directReachableStations(stn,mode);
+  let stations=direct.stations;
   const mapped=mode==='metro'&&typeof METRO_LINES!=='undefined'
     ?new Set(METRO_LINES.flatMap(l=>(l.routes||[{stations:l.stations||[]}]).flatMap(r=>r.stations||[])))
     :new Set(Object.values(MAP_LINES).flatMap(l=>(l.routes||[]).flatMap(r=>r.stations.map(s=>s.n))));
   stations=new Set([...stations].filter(name=>mapped.has(name)));
   if(mapped.has(stn))stations.add(stn);
   _mapTrackedTrain=null;
-  _mapReachability={origin:stn,stations,mode};
+  _mapReachability={origin:stn,stations,edges:direct.edges,mode};
   if(mode==='metro'&&typeof METRO_LINES!=='undefined'){
     const line=METRO_LINES.find(l=>(l.routes||[{stations:l.stations||[]}]).some(r=>(r.stations||[]).includes(stn)));
     if(line)_metroMapRegion=line.region;
@@ -4881,6 +4891,16 @@ function showMapLine(lineKey, btn){
     const d=smoothPath(r.stations, ox, oy);
     parts.push(`<path d="${d}" fill="none" stroke="${reachView?'var(--text3)':r.color}" stroke-width="${isAllView?2.5:(isBranch?4:5)}" stroke-linecap="round" stroke-linejoin="round" ${isBranch?'stroke-dasharray="9,9"':''} opacity="${reachView?0.2:(isAllView?0.75:(isBranch?0.85:1))}"/>`);
   });
+  if(reachView&&reachView.edges){
+    routes.forEach(r=>{
+      for(let i=0;i<r.stations.length-1;i++){
+        const a=r.stations[i],b=r.stations[i+1];
+        if(!reachView.edges.has(_mapReachEdgeKey(a.n,b.n)))continue;
+        const d=smoothPath([a,b],ox,oy);
+        parts.push(`<path class="map-reachable-route" d="${d}" fill="none" stroke="${r.color}" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" opacity=".95" pointer-events="none"/>`);
+      }
+    });
+  }
 
   // 역 점 + 이름 (중복 없이)
   const rendered=new Set();
@@ -9838,10 +9858,11 @@ function _bookRouteMapHTML(t,from,to,gradeColor){
   const labelStep=Math.max(1,Math.ceil(points.length/12));
   const nodes=points.map((p,i)=>{
     const selected=i===fromIdx||i===toIdx,active=i>=fromIdx&&i<=toIdx;
-    const showLabel=selected||i===0||i===points.length-1||i%labelStep===0;
+    const stopping=!isPassStop(t,p.s.s);
+    const showLabel=stopping&&(selected||i===0||i===points.length-1||i%labelStep===0);
     const anchor=p.x>W*.67?'end':p.x<W*.33?'start':'middle';
     const tx=p.x+(anchor==='start'?8:anchor==='end'?-8:0),ty=p.y+(anchor==='middle'?-10:4);
-    return `<g class="${active?'selected':'muted'}${selected?' endpoint':''}"><circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="${selected?7:3.5}"><title>${esc(p.s.s)}</title></circle>${showLabel?`<text x="${tx.toFixed(1)}" y="${ty.toFixed(1)}" text-anchor="${anchor}">${esc(p.s.s)}</text>`:''}${i===fromIdx?`<text class="route-tag" x="${p.x.toFixed(1)}" y="${(p.y+21).toFixed(1)}" text-anchor="middle">승차</text>`:i===toIdx?`<text class="route-tag" x="${p.x.toFixed(1)}" y="${(p.y+21).toFixed(1)}" text-anchor="middle">하차</text>`:''}</g>`;
+    return `<g class="${active?'selected':'muted'}${selected?' endpoint':''}${stopping?' stop':' pass'}"><circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="${selected?7:stopping?3.5:2.2}"><title>${esc(p.s.s)}${stopping?'':' (통과)'}</title></circle>${showLabel?`<text x="${tx.toFixed(1)}" y="${ty.toFixed(1)}" text-anchor="${anchor}">${esc(p.s.s)}</text>`:''}</g>`;
   }).join('');
   return `<div class="brd-route-map" style="--route-grade:${gradeColor}"><div class="brd-map-key"><span><i class="selected"></i>승차 구간</span><span><i></i>그 외 운행 구간</span></div><div class="brd-map-canvas"><svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(t.grade)} ${esc(t.no)} 전체 운행 구간 노선도">${lines}${nodes}</svg></div><p>${esc(t.stops[0]?.s)} → ${esc(t.stops[t.stops.length-1]?.s)} 전체 운행 구간</p></div>`;
 }

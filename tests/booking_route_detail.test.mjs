@@ -28,9 +28,9 @@ test('운행 정보창은 반응형 시트이며 새 캐시로 배포된다',()=
   assert.match(css,/#book-route-detail-wrap/);
   assert.match(css,/@media\(min-width:768px\)/);
   assert.match(css,/@media\(max-width:520px\)/);
-  assert.match(html,/nimbi_rail\.css\?v=2026090804/);
-  assert.match(html,/nimbi_rail\.js\?v=2026090804/);
-  assert.match(sw,/nimbirail-2026090804/);
+  assert.match(html,/nimbi_rail\.css\?v=2026090805/);
+  assert.match(html,/nimbi_rail\.js\?v=2026090805/);
+  assert.match(sw,/nimbirail-2026090805/);
 });
 
 test('운행 정보는 시간표·지도 탭과 선택 구간 노선도를 제공한다',()=>{
@@ -39,8 +39,10 @@ test('운행 정보는 시간표·지도 탭과 선택 구간 노선도를 제�
   assert.match(app,/data-view="map"/);
   assert.match(app,/function _bookRouteMapHTML\(t,from,to,gradeColor\)/);
   assert.match(app,/class="\$\{active\?'selected':'muted'\}"/);
-  assert.match(app,/>승차<\/text>/);
-  assert.match(app,/>하차<\/text>/);
+  assert.doesNotMatch(app,/>승차<\/text>/);
+  assert.doesNotMatch(app,/>하차<\/text>/);
+  assert.match(app,/const stopping=!isPassStop\(t,p\.s\.s\)/);
+  assert.match(app,/const showLabel=stopping&&/);
   assert.match(css,/\.brd-map-canvas line\.selected/);
   assert.match(css,/\.brd-map-canvas line\.muted/);
 });
