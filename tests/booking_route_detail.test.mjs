@@ -41,9 +41,9 @@ test('운행 정보창은 반응형 시트이며 새 캐시로 배포된다',()=
   assert.match(css,/#book-route-detail-wrap/);
   assert.match(css,/@media\(min-width:768px\)/);
   assert.match(css,/@media\(max-width:520px\)/);
-  assert.match(html,/nimbi_rail\.css\?v=2026090812/);
-  assert.match(html,/nimbi_rail\.js\?v=2026090813/);
-  assert.match(sw,/nimbirail-2026090813/);
+  assert.match(html,/nimbi_rail\.css\?v=2026090814/);
+  assert.match(html,/nimbi_rail\.js\?v=2026090814/);
+  assert.match(sw,/nimbirail-2026090814/);
 });
 
 test('운행 정보는 시간표·지도 탭과 선택 구간 노선도를 제공한다',()=>{
@@ -76,6 +76,15 @@ test('현재 위치는 무시각 통과역을 포함한 실제 지도 선형을 
   assert.match(app,/const path=points\.slice\(aPos,bPos\+1\),segments=\[\]/);
   assert.match(app,/Math\.hypot\(path\[i\+1\]\.x-path\[i\]\.x,path\[i\+1\]\.y-path\[i\]\.y\)/);
   assert.match(app,/const local=segments\[segment\]>0\?target\/segments\[segment\]:0/);
+});
+
+test('운행 정보 요약은 역 개수 대신 열차 시간표와 같은 현재 운행 문구를 표시한다',()=>{
+  assert.doesNotMatch(app,/전체 \$\{allStops\.length\}개 정차역/);
+  assert.match(app,/operationMain=`\$\{live\.nextStn\}역으로 이동 중입니다`/);
+  assert.match(app,/operationMain=`\$\{live\.atStn\}역에 정차 중입니다`/);
+  assert.match(app,/operationMain='운행을 준비중인 열차입니다'/);
+  assert.match(app,/operationMain='운행이 종료된 열차입니다'/);
+  assert.match(app,/class="brd-operation-state"/);
 });
 
 test('운행 정보는 도착·출발 사이 화살표 없이 현재 위치를 표시한다',()=>{

@@ -9999,18 +9999,34 @@ function openBookRouteDetail(trainNo,from,to,travelDate){
   const esc=typeof _opsEsc==='function'?_opsEsc:s=>String(s??'').replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
   const gradeColor=(typeof GRADE_COLORS!=='undefined'&&GRADE_COLORS[t.grade])||`var(--c-${gcCssVar(t.grade)})`;
   const dateLabel=(()=>{const m=String(travelDate||'').match(/^(\d{4})-(\d{2})-(\d{2})$/);if(!m)return esc(travelDate||todayLocalStr());const d=new Date(+m[1],+m[2]-1,+m[3]);return `${m[1]}.${m[2]}.${m[3]} (${['일','월','화','수','목','금','토'][d.getDay()]})`;})();
-  let liveStopIdx=-1,liveBetween=false,liveLabel='';
-  if((travelDate||todayLocalStr())===todayLocalStr()){
+  let liveStopIdx=-1,liveBetween=false,liveLabel='',operationMain='',operationSub='';
+  const serviceDate=travelDate||todayLocalStr(),today=todayLocalStr();
+  if(serviceDate===today){
     const now=new Date(),liveDelay=typeof _liveDelayOf==='function'?_liveDelayOf(t):0;
     const live=getCurrentStatus(t,now.getHours()*60+now.getMinutes()-liveDelay);
     if(live?.status==='running'){
+      if(live.passStn)operationMain=`${live.passStn}역을 통과 중입니다`;
+      else if(live.atStn)operationMain=`${live.atStn}역에 정차 중입니다`;
+      else if(live.nextStn)operationMain=`${live.nextStn}역으로 이동 중입니다`;
+      else operationMain='운행 중입니다';
+      const eta=getNextStopEta(t,live);
+      if(eta)operationSub=eta.min===0?'곧 도착 예정':`약 ${eta.min}분 뒤 도착 예정`;
       if(live.atStn){liveStopIdx=allStops.findIndex(s=>s.s===live.atStn);liveLabel=`${live.atStn} 정차 중`;}
       else{
         liveStopIdx=allStops.findIndex(s=>s.s===live.nextStn);
         if(liveStopIdx<0){const prev=allStops.findIndex(s=>s.s===live.prevStn);liveStopIdx=prev>=0?Math.min(prev+1,allStops.length-1):-1;}
         liveBetween=liveStopIdx>=0;liveLabel=live.nextStn?`${live.nextStn} 방면 이동 중`:'운행 중';
       }
+    }else if(live?.status==='before'){
+      operationMain='운행을 준비중인 열차입니다';
+      if(live.etaMin!=null)operationSub=fmtEtaKor(live.etaMin);
+    }else{
+      operationMain='운행이 종료된 열차입니다';
     }
+  }else if(serviceDate>today){
+    operationMain='운행을 준비중인 열차입니다';
+  }else{
+    operationMain='운행이 종료된 열차입니다';
   }
   const rows=allStops.map((s,i)=>{
     const inRide=i>=fromIdx&&i<=toIdx,before=i<fromIdx,after=i>toIdx;
@@ -10028,7 +10044,7 @@ function openBookRouteDetail(trainNo,from,to,travelDate){
   const wrap=document.createElement('div');wrap.id='book-route-detail-wrap';wrap.style.setProperty('--brd-grade',gradeColor);
   wrap.innerHTML=`<div class="book-route-detail-backdrop"></div><section class="book-route-detail-sheet" role="dialog" aria-modal="true" aria-label="${esc(t.grade)} ${esc(t.no)} 운행 정보">
     <header class="brd-header"><div><small>운행 정보</small><h2>${esc(t.grade)} <b>${esc(t.no)}</b></h2></div><div class="brd-head-actions"><button type="button" class="brd-refresh" aria-label="새로고침">↻</button><button type="button" class="brd-close" aria-label="닫기">✕</button></div></header>
-    <div class="brd-summary"><time>${dateLabel}</time><strong>${esc(from)} <span>${esc(allStops[fromIdx].dep||allStops[fromIdx].arr||'—')}</span><i>→</i> ${esc(to)} <span>${esc(allStops[toIdx].arr||allStops[toIdx].dep||'—')}</span></strong><small>전체 ${allStops.length}개 정차역 · 선택 구간 ${toIdx-fromIdx+1}개 역</small></div>
+    <div class="brd-summary"><time>${dateLabel}</time><strong>${esc(from)} <span>${esc(allStops[fromIdx].dep||allStops[fromIdx].arr||'—')}</span><i>→</i> ${esc(to)} <span>${esc(allStops[toIdx].arr||allStops[toIdx].dep||'—')}</span></strong><small class="brd-operation-state"><b>${esc(operationMain)}</b>${operationSub?`<span>${esc(operationSub)}</span>`:''}</small></div>
     <div class="brd-view-tabs" role="tablist"><button type="button" class="brd-view-tab active" data-view="schedule" role="tab" aria-selected="true" onclick="setBookRouteDetailTab('schedule')">시간표</button><button type="button" class="brd-view-tab" data-view="map" role="tab" aria-selected="false" onclick="setBookRouteDetailTab('map')">지도</button></div>
     <div class="brd-view brd-schedule-view active"><div class="brd-columns"><span>역명</span><span>도착</span><span>출발</span></div><div class="brd-stop-list">${rows}</div></div>
     <div class="brd-view brd-map-view">${routeMap}</div>
