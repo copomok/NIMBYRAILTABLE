@@ -51,6 +51,19 @@ test('태백선 노선도는 인게임 좌표의 신동 태백역을 사용한�
   assert.doesNotMatch(taebaek,/\{n:'신동',/);
 });
 
+test('중부내륙선 노선도에 수영-장호원·상주-구미 지선을 표시한다',()=>{
+  const line=app.slice(app.indexOf('jungnaelyuk:{'),app.indexOf('nambunaelyuk:{'));
+  assert.match(line,/dash:true, stations:\[\s*\{n:'수영',x:194,y:217\},\s*\{n:'장호원',x:354,y:253\}/);
+  assert.match(line,/dash:true, stations:\[\s*\{n:'상주',x:482,y:457\},\s*\{n:'구미',x:522,y:542\}/);
+});
+
+test('경전선 본선의 내서와 조성 접속 지선 순서를 유지한다',()=>{
+  const line=app.slice(app.indexOf('gyeongjeon:{'),app.indexOf('jeju:{'));
+  assert.match(line,/\{n:'창원',x:599,y:809\},\s*\{n:'내서',x:564,y:797\},\s*\{n:'함안',x:538,y:792\}/);
+  assert.match(line,/dash:true, stations:\[\s*\{n:'조성',x:262,y:928\},\s*\{n:'춘양\(전남\)',x:197,y:903\},\s*\{n:'빛가람',x:153,y:866\},\s*\{n:'광주',x:155,y:831\}/);
+  assert.doesNotMatch(line,/\{n:'춘양\(전남\)',x:197,y:903\},\s*\{n:'보성'/);
+});
+
 test('직통역이 많은 지도는 역점과 경로를 유지하면서 역명만 제한한다',()=>{
   assert.match(app,/const reachLabelThreshold=32/);
   assert.match(app,/const reachLabelLimit=28/);
