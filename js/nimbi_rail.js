@@ -9989,6 +9989,31 @@ function setBookRouteDetailTab(mode){
 }
 
 let _bookRouteDetailTimer=null;
+function _bookRouteTimelinePosition(t,rowStations,live){
+  if(!live||live.status!=='running')return {idx:-1,between:false,station:''};
+  if(live.atStn){
+    const exact=rowStations.indexOf(live.atStn);
+    if(exact>=0)return {idx:exact,between:false,station:live.atStn};
+  }
+  if(live.nextStn){
+    const exact=rowStations.indexOf(live.nextStn);
+    if(exact>=0)return {idx:exact,between:true,station:live.nextStn};
+  }
+  const route=t.stops||[];
+  let prevRoute=-1,nextRoute=-1;
+  if(live.prevStn)prevRoute=route.findIndex(s=>s.s===live.prevStn);
+  if(live.nextStn)nextRoute=route.findIndex((s,i)=>i>prevRoute&&s.s===live.nextStn);
+  if(nextRoute<0&&live.atStn)nextRoute=route.findIndex(s=>s.s===live.atStn);
+  const start=Math.max(0,nextRoute>=0?nextRoute:prevRoute+1);
+  for(let i=start;i<route.length;i++){
+    const stop=route[i];
+    if((hasTime(stop.arr)||hasTime(stop.dep))&&!isPassStop(t,stop.s)){
+      const idx=rowStations.indexOf(stop.s);
+      if(idx>=0)return {idx,between:true,station:stop.s};
+    }
+  }
+  return {idx:-1,between:false,station:''};
+}
 function _scheduleBookRouteDetailTick(){
   if(_bookRouteDetailTimer)clearTimeout(_bookRouteDetailTimer);
   const wait=60000-(Date.now()%60000)+30;
@@ -10015,12 +10040,9 @@ function updateBookRouteLive(trainNo,from,to,travelDate){
       else main='운행 중입니다';
       const eta=getNextStopEta(t,live);if(eta)sub=eta.min===0?'곧 도착 예정':`약 ${eta.min}분 뒤 도착 예정`;
       const rows=[...wrap.querySelectorAll('.brd-stop')];
-      if(live.atStn){liveStopIdx=rows.findIndex(row=>row.dataset.station===live.atStn);liveLabel=`${live.atStn} 정차 중`;}
-      else{
-        liveStopIdx=rows.findIndex(row=>row.dataset.station===live.nextStn);
-        if(liveStopIdx<0){const prev=rows.findIndex(row=>row.dataset.station===live.prevStn);liveStopIdx=prev>=0?Math.min(prev+1,rows.length-1):-1;}
-        liveBetween=liveStopIdx>=0;liveLabel=live.nextStn?`${live.nextStn} 방면 이동 중`:'운행 중';
-      }
+      const position=_bookRouteTimelinePosition(t,rows.map(row=>row.dataset.station),live);
+      liveStopIdx=position.idx;liveBetween=position.between;
+      liveLabel=position.station?(position.between?`${position.station} 방면 이동 중`:`${position.station} 정차 중`):'운행 중';
     }else if(live?.status==='before'){
       main='운행을 준비중인 열차입니다';if(live.etaMin!=null)sub=fmtEtaKor(live.etaMin);
     }else main='운행이 종료된 열차입니다';
@@ -10071,12 +10093,9 @@ function openBookRouteDetail(trainNo,from,to,travelDate){
       else operationMain='운행 중입니다';
       const eta=getNextStopEta(t,live);
       if(eta)operationSub=eta.min===0?'곧 도착 예정':`약 ${eta.min}분 뒤 도착 예정`;
-      if(live.atStn){liveStopIdx=allStops.findIndex(s=>s.s===live.atStn);liveLabel=`${live.atStn} 정차 중`;}
-      else{
-        liveStopIdx=allStops.findIndex(s=>s.s===live.nextStn);
-        if(liveStopIdx<0){const prev=allStops.findIndex(s=>s.s===live.prevStn);liveStopIdx=prev>=0?Math.min(prev+1,allStops.length-1):-1;}
-        liveBetween=liveStopIdx>=0;liveLabel=live.nextStn?`${live.nextStn} 방면 이동 중`:'운행 중';
-      }
+      const position=_bookRouteTimelinePosition(t,allStops.map(s=>s.s),live);
+      liveStopIdx=position.idx;liveBetween=position.between;
+      liveLabel=position.station?(position.between?`${position.station} 방면 이동 중`:`${position.station} 정차 중`):'운행 중';
     }else if(live?.status==='before'){
       operationMain='운행을 준비중인 열차입니다';
       if(live.etaMin!=null)operationSub=fmtEtaKor(live.etaMin);

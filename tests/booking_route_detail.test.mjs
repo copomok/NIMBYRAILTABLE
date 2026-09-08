@@ -43,8 +43,8 @@ test('운행 정보창은 반응형 시트이며 새 캐시로 배포된다',()=
   assert.match(css,/@media\(min-width:768px\)/);
   assert.match(css,/@media\(max-width:520px\)/);
   assert.match(html,/nimbi_rail\.css\?v=2026090817/);
-  assert.match(html,/nimbi_rail\.js\?v=2026090818/);
-  assert.match(sw,/nimbirail-2026090818/);
+  assert.match(html,/nimbi_rail\.js\?v=2026090819/);
+  assert.match(sw,/nimbirail-2026090819/);
 });
 
 test('운행 정보는 시간표·지도 탭과 선택 구간 노선도를 제공한다',()=>{
@@ -125,6 +125,13 @@ test('운행 정보는 매분 0초에 위치 정보만 자동 갱신한다',()=>
   assert.match(app,/map\.innerHTML=_bookRouteMapHTML/);
   assert.doesNotMatch(app,/class="brd-refresh"/);
   assert.match(app,/clearTimeout\(_bookRouteDetailTimer\)/);
+});
+
+test('매분 갱신 시 시간표의 현재 위치 행도 다음 실제 정차역으로 이동한다',()=>{
+  assert.match(app,/function _bookRouteTimelinePosition\(t,rowStations,live\)/);
+  assert.match(app,/!isPassStop\(t,stop\.s\)/);
+  assert.match(app,/const position=_bookRouteTimelinePosition\(t,rows\.map\(row=>row\.dataset\.station\),live\)/);
+  assert.match(app,/liveStopIdx=position\.idx;liveBetween=position\.between/);
 });
 
 test('설치형 모바일 앱은 세로 방향을 유지한다',()=>{
