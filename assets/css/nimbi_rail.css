@@ -1321,6 +1321,8 @@ tbody td{padding:10px 14px;font-size:13px;white-space:nowrap}
 .brd-stop-badge{font-size:10px;font-weight:800;padding:2px 6px;border-radius:4px;color:#fff;background:var(--brd-grade)}.brd-stop-badge.alight{background:var(--text2)}
 .brd-stop time{font-family:var(--mono);font-size:13px;color:var(--text2);text-align:right}.brd-stop.before,.brd-stop.after{opacity:.48}.brd-stop.ride{background:color-mix(in srgb,var(--brd-grade) 5%,transparent)}.brd-stop.board,.brd-stop.alight{opacity:1}
 .brd-map-canvas g.pass circle{opacity:.38}
+.brd-map-key i.live{width:9px;height:9px;border-radius:50%;background:var(--route-grade);opacity:1;box-shadow:0 0 0 3px color-mix(in srgb,var(--route-grade) 24%,transparent)}
+.brd-map-live-train circle{fill:var(--route-grade);stroke:var(--bg1);stroke-width:3;filter:drop-shadow(0 2px 4px rgba(0,0,0,.38))}.brd-map-live-train path{fill:none;stroke:#fff;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round;pointer-events:none}
 @media(min-width:768px){#book-route-detail-wrap{align-items:center;padding:24px}.book-route-detail-sheet{border-bottom:1px solid var(--border);border-radius:14px;height:min(82vh,820px)}}
 @media(max-width:520px){.book-route-detail-sheet{height:calc(100dvh - var(--safe-top) - 10px)}.brd-header{padding:14px 16px 10px}.brd-summary{margin:0 16px 12px}.brd-view-tabs{margin:0 16px}.brd-map-view{padding:14px 16px 24px}.brd-columns,.brd-stop{grid-template-columns:minmax(118px,1fr) 52px 52px;column-gap:10px}.brd-columns{padding-left:62px;padding-right:14px}.brd-stop{padding-left:62px;padding-right:14px;min-height:70px}.brd-rail{left:34px}.brd-station strong{font-size:14px}.brd-stop time{font-size:12px}}
 

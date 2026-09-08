@@ -9911,7 +9911,7 @@ function openBookTrainDetail(trainNo, from, to, depT, arrT, travelDate){
   setTimeout(()=>wrap.querySelector('.book-detail-panel').classList.add('open'), 10);
 }
 
-function _bookRouteMapHTML(t,from,to,gradeColor){
+function _bookRouteMapHTML(t,from,to,gradeColor,travelDate){
   const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   // 무시각 통과역까지 좌표점으로 유지해야 실제 노선 선형이 끊기거나 직선화되지 않는다.
   // 통과역의 점·역명은 아래 노드 단계에서 그리지 않고 선분 계산에만 사용한다.
@@ -9940,7 +9940,33 @@ function _bookRouteMapHTML(t,from,to,gradeColor){
     const tx=p.x+(anchor==='start'?8:anchor==='end'?-8:0),ty=p.y+(anchor==='middle'?-10:4);
     return `<g class="${active?'selected':'muted'}${selected?' endpoint':''}${stopping?' stop':' pass'}"><circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="${selected?7:stopping?3.5:2.2}"><title>${esc(p.s.s)}${stopping?'':' (통과)'}</title></circle>${showLabel?`<text x="${tx.toFixed(1)}" y="${ty.toFixed(1)}" text-anchor="${anchor}">${esc(p.s.s)}</text>`:''}</g>`;
   }).join('');
-  return `<div class="brd-route-map" style="--route-grade:${gradeColor}"><div class="brd-map-key"><span><i class="selected"></i>승차 구간</span><span><i></i>그 외 운행 구간</span></div><div class="brd-map-canvas"><svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(t.grade)} ${esc(t.no)} 전체 운행 구간 노선도">${lines}${nodes}</svg></div><p>${esc(t.stops[0]?.s)} → ${esc(t.stops[t.stops.length-1]?.s)} 전체 운행 구간</p></div>`;
+  let liveMarker='';
+  if((travelDate||todayLocalStr())===todayLocalStr()){
+    const now=new Date(),delay=typeof _liveDelayOf==='function'?_liveDelayOf(t):0;
+    const serviceNow=now.getHours()*60+now.getMinutes()+now.getSeconds()/60-delay;
+    const live=getCurrentStatus(t,serviceNow);
+    if(live?.status==='running'){
+      let x=null,y=null,label='현재 열차 위치';
+      if(live.atStn){
+        const point=points.find(p=>p.s.s===live.atStn);
+        if(point){x=point.x;y=point.y;label=`현재 위치: ${live.atStn}`;}
+      }else if(live.prevStn&&live.nextStn){
+        const a=points.find(p=>p.s.s===live.prevStn),b=points.find(p=>p.s.s===live.nextStn);
+        if(a&&b){
+          let depart=toMin(a.s.dep||a.s.arr),arrive=toMin(b.s.arr||b.s.dep),current=serviceNow;
+          if(depart!=null&&arrive!=null){
+            if(arrive<depart)arrive+=1440;
+            if(current<depart&&arrive>=1440)current+=1440;
+            const fraction=Math.max(0,Math.min(1,(current-depart)/Math.max(1,arrive-depart)));
+            x=a.x+(b.x-a.x)*fraction;y=a.y+(b.y-a.y)*fraction;
+            label=`현재 위치: ${live.prevStn}–${live.nextStn}`;
+          }
+        }
+      }
+      if(x!=null&&y!=null)liveMarker=`<g class="brd-map-live-train" transform="translate(${x.toFixed(1)} ${y.toFixed(1)})" role="img" aria-label="${esc(label)}"><circle r="12"/><path d="M-5-7h10a3 3 0 0 1 3 3v8a3 3 0 0 1-3 3H-5a3 3 0 0 1-3-3v-8a3 3 0 0 1 3-3Zm0 3v5h10v-5Zm1 8h.1M4 4h.1M-5 10l2-3M5 10 3 7"/><title>${esc(label)}</title></g>`;
+    }
+  }
+  return `<div class="brd-route-map" style="--route-grade:${gradeColor}"><div class="brd-map-key"><span><i class="selected"></i>승차 구간</span><span><i></i>그 외 운행 구간</span>${liveMarker?'<span><i class="live"></i>현재 위치</span>':''}</div><div class="brd-map-canvas"><svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(t.grade)} ${esc(t.no)} 전체 운행 구간 노선도">${lines}${nodes}${liveMarker}</svg></div><p>${esc(t.stops[0]?.s)} → ${esc(t.stops[t.stops.length-1]?.s)} 전체 운행 구간</p></div>`;
 }
 function setBookRouteDetailTab(mode){
   const wrap=document.getElementById('book-route-detail-wrap');if(!wrap)return;
@@ -9985,7 +10011,7 @@ function openBookRouteDetail(trainNo,from,to,travelDate){
       <time class="brd-arr">${arr||'—'}</time><time class="brd-dep">${dep||'—'}</time>
     </div>`;
   }).join('');
-  const routeMap=_bookRouteMapHTML(t,from,to,gradeColor);
+  const routeMap=_bookRouteMapHTML(t,from,to,gradeColor,travelDate);
   const wrap=document.createElement('div');wrap.id='book-route-detail-wrap';wrap.style.setProperty('--brd-grade',gradeColor);
   wrap.innerHTML=`<div class="book-route-detail-backdrop"></div><section class="book-route-detail-sheet" role="dialog" aria-modal="true" aria-label="${esc(t.grade)} ${esc(t.no)} 운행 정보">
     <header class="brd-header"><div><small>운행 정보</small><h2>${esc(t.grade)} <b>${esc(t.no)}</b></h2></div><div class="brd-head-actions"><button type="button" class="brd-refresh" aria-label="새로고침">↻</button><button type="button" class="brd-close" aria-label="닫기">✕</button></div></header>
