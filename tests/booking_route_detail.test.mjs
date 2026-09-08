@@ -4,6 +4,7 @@ import fs from 'node:fs';
 
 const app=fs.readFileSync(new URL('../js/nimbi_rail.js',import.meta.url),'utf8');
 const css=fs.readFileSync(new URL('../assets/css/nimbi_rail.css',import.meta.url),'utf8');
+const redesignCss=fs.readFileSync(new URL('../assets/css/nimbi_redesign.css',import.meta.url),'utf8');
 const html=fs.readFileSync(new URL('../index.html',import.meta.url),'utf8');
 const sw=fs.readFileSync(new URL('../sw.js',import.meta.url),'utf8');
 
@@ -11,6 +12,16 @@ test('예매 열차 상세 버튼은 선택 구간 운행 정보창을 연다',(
   assert.match(app,/function openBookRouteDetail\(trainNo,from,to,travelDate\)/);
   assert.match(app,/openBookRouteDetail\(trainNo,from,to,travelDate\)/);
   assert.doesNotMatch(app,/bdd-detail-btn'\), \(\)=>\{ closeBookTrainDetail\(\); jumpToTrain/);
+});
+
+test('예매한 승차권 카드는 시간표·운행 정보·취소 순으로 동작한다',()=>{
+  const card=app.slice(app.indexOf('function _ticketCardHTML'),app.indexOf('// 🔄 환승 승차권 카드'));
+  const timetable=card.indexOf('ticket-action-timetable');
+  const route=card.indexOf('ticket-action-route');
+  const cancel=card.indexOf('ticket-action-cancel');
+  assert.ok(timetable>=0&&route>timetable&&cancel>route);
+  assert.match(card,/openBookRouteDetail\('\$\{tk\.trainNo\}','\$\{tk\.fromStn\}','\$\{tk\.toStn\}','\$\{tk\.travelDate\}'\)/);
+  assert.match(redesignCss,/\.ticket-card \.ticket-action-route/);
 });
 
 test('운행 정보창은 정차역과 승차·하차 구간을 구분한다',()=>{
@@ -28,9 +39,9 @@ test('운행 정보창은 반응형 시트이며 새 캐시로 배포된다',()=
   assert.match(css,/#book-route-detail-wrap/);
   assert.match(css,/@media\(min-width:768px\)/);
   assert.match(css,/@media\(max-width:520px\)/);
-  assert.match(html,/nimbi_rail\.css\?v=2026090808/);
-  assert.match(html,/nimbi_rail\.js\?v=2026090808/);
-  assert.match(sw,/nimbirail-2026090808/);
+  assert.match(html,/nimbi_rail\.css\?v=2026090809/);
+  assert.match(html,/nimbi_rail\.js\?v=2026090809/);
+  assert.match(sw,/nimbirail-2026090809/);
 });
 
 test('운행 정보는 시간표·지도 탭과 선택 구간 노선도를 제공한다',()=>{
@@ -43,6 +54,8 @@ test('운행 정보는 시간표·지도 탭과 선택 구간 노선도를 제�
   assert.doesNotMatch(app,/>하차<\/text>/);
   assert.match(app,/const stopping=!isPassStop\(t,p\.s\.s\)/);
   assert.match(app,/const showLabel=stopping&&/);
+  assert.match(app,/const points=\(t\.stops\|\|\[\]\)\.map/);
+  assert.match(app,/if\(!stopping\)return ''/);
   assert.match(css,/\.brd-map-canvas line\.selected/);
   assert.match(css,/\.brd-map-canvas line\.muted/);
 });

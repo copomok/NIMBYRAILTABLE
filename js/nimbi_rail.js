@@ -8356,6 +8356,7 @@ function _ticketCardHTML(tk){
       </div>
       <div class="ticket-card-actions">
         <button class="btn ticket-action-timetable" style="font-size:12px;padding:6px 12px" onclick="event.stopPropagation();openJourney('${tk.trainNo}')">🚆 시간표</button>
+        <button class="btn ticket-action-route" style="font-size:12px;padding:6px 12px" onclick="event.stopPropagation();openBookRouteDetail('${tk.trainNo}','${tk.fromStn}','${tk.toStn}','${tk.travelDate}')">운행 정보</button>
         ${tk.status==='active'&&_ticketFilterTab==='upcoming'?`<button class="btn ticket-action-cancel" style="font-size:12px;padding:6px 12px" onclick="event.stopPropagation();cancelTicket('${tk.id}')">예매 취소</button>`
           :`<button class="btn ticket-action-delete" style="font-size:12px;padding:6px 12px" onclick="event.stopPropagation();deleteTicket('${tk.id}')">기록 삭제</button>`}
       </div>
@@ -9911,7 +9912,9 @@ function openBookTrainDetail(trainNo, from, to, depT, arrT, travelDate){
 
 function _bookRouteMapHTML(t,from,to,gradeColor){
   const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-  const points=(t.stops||[]).filter(s=>hasTime(s.arr)||hasTime(s.dep)).map(s=>({s,coord:_stnCoord(s.s)})).filter(x=>x.coord);
+  // 무시각 통과역까지 좌표점으로 유지해야 실제 노선 선형이 끊기거나 직선화되지 않는다.
+  // 통과역의 점·역명은 아래 노드 단계에서 그리지 않고 선분 계산에만 사용한다.
+  const points=(t.stops||[]).map(s=>({s,coord:_stnCoord(s.s)})).filter(x=>x.coord);
   let fromIdx=points.findIndex(x=>x.s.s===from),toIdx=points.findIndex((x,i)=>i>fromIdx&&x.s.s===to);
   if(points.length<2||fromIdx<0||toIdx<0)return '<div class="brd-map-empty">표시할 수 있는 노선 좌표가 없습니다.</div>';
   const W=620,H=380,P=48;
@@ -9930,6 +9933,7 @@ function _bookRouteMapHTML(t,from,to,gradeColor){
   const nodes=points.map((p,i)=>{
     const selected=i===fromIdx||i===toIdx,active=i>=fromIdx&&i<=toIdx;
     const stopping=!isPassStop(t,p.s.s);
+    if(!stopping)return '';
     const showLabel=stopping&&(selected||i===0||i===points.length-1||i%labelStep===0);
     const anchor=p.x>W*.67?'end':p.x<W*.33?'start':'middle';
     const tx=p.x+(anchor==='start'?8:anchor==='end'?-8:0),ty=p.y+(anchor==='middle'?-10:4);

@@ -197,6 +197,7 @@ body.global-search-open{overflow:hidden}
 }
 
 .ticket-card .ticket-action-timetable,
+.ticket-card .ticket-action-route,
 .ticket-card .ticket-action-qr {
   color: var(--ticket-grade) !important;
   border-color: color-mix(in srgb, var(--ticket-grade) 48%, var(--border)) !important;
