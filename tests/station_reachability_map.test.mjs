@@ -27,11 +27,28 @@ test('전체 네트워크에서 출발역과 직통역을 구분해 표시한다
   assert.match(css,/\.map-reach-summary/);
 });
 
-test('직통 편성의 실제 연속 운행 경로도 노선색으로 강조한다',()=>{
+test('직통 편성의 실제 연속 운행 경로를 강조한다',()=>{
   assert.match(app,/function _mapReachEdgeKey\(a,b\)/);
   assert.match(app,/edges\.add\(_mapReachEdgeKey/);
   assert.match(app,/reachView\.edges\.has\(_mapReachEdgeKey\(a\.n,b\.n\)\)/);
   assert.match(app,/class="map-reachable-route"/);
+});
+
+test('시각 없는 중간역도 실제 노선도 순서로 펼쳐 직통 경로가 끊기지 않는다',()=>{
+  assert.match(app,/function _addMapReachPathEdges\(edges,a,b,mode\)/);
+  assert.match(app,/const _mapReachPathCache=\{train:null,metro:null\}/);
+  assert.match(app,/for\(let index=best\.from;index!==best\.to;index\+=step\)/);
+  assert.match(app,/_addMapReachPathEdges\(edges,routeStops\[i\]\.s,routeStops\[i\+1\]\.s,mode\)/);
+});
+
+test('직통 경로 강조선은 역 아이콘과 같은 파란색을 사용한다',()=>{
+  assert.match(app,/class="map-reachable-route"[^>]+stroke="var\(--accent\)"/);
+});
+
+test('태백선 노선도는 인게임 좌표의 신동 태백역을 사용한다',()=>{
+  const taebaek=app.slice(app.indexOf('taebaek:{'),app.indexOf('jeongseon:{'));
+  assert.match(taebaek,/\{n:'신동\(태백\)',x:587,y:226\}/);
+  assert.doesNotMatch(taebaek,/\{n:'신동',/);
 });
 
 test('직통역이 많은 지도는 역점과 경로를 유지하면서 역명만 제한한다',()=>{

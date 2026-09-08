@@ -3079,6 +3079,31 @@ function toggleMapLayer(){
 }
 
 function _mapReachEdgeKey(a,b){return a<b?`${a}|${b}`:`${b}|${a}`;}
+const _mapReachPathCache={train:null,metro:null};
+function _mapReachPaths(mode){
+  const cacheKey=mode==='metro'?'metro':'train';
+  if(_mapReachPathCache[cacheKey])return _mapReachPathCache[cacheKey];
+  const paths=cacheKey==='metro'&&typeof METRO_LINES!=='undefined'
+    ?METRO_LINES.flatMap(line=>(line.routes||[{stations:line.stations||[]}]).map(route=>route.stations||[]))
+    :(typeof MAP_LINES!=='undefined'?Object.values(MAP_LINES).flatMap(line=>(line.routes||[]).map(route=>route.stations.map(station=>station.n))):[]);
+  _mapReachPathCache[cacheKey]=paths;
+  return paths;
+}
+function _addMapReachPathEdges(edges,a,b,mode){
+  const paths=_mapReachPaths(mode);
+  let best=null;
+  paths.forEach(names=>{
+    const from=names.indexOf(a),to=names.indexOf(b);
+    if(from<0||to<0||from===to)return;
+    const distance=Math.abs(to-from);
+    if(!best||distance<best.distance)best={names,from,to,distance};
+  });
+  if(!best){edges.add(_mapReachEdgeKey(a,b));return;}
+  const step=best.to>best.from?1:-1;
+  for(let index=best.from;index!==best.to;index+=step){
+    edges.add(_mapReachEdgeKey(best.names[index],best.names[index+step]));
+  }
+}
 function _directReachableStations(stn,mode){
   const out=new Set([stn]);
   const edges=new Set();
@@ -3088,7 +3113,7 @@ function _directReachableStations(stn,mode){
       for(let i=2;i<service.length;i+=3){const name=ent.s?.[service[i]];if(name)names.push(name);}
       if(names.includes(stn)){
         names.forEach(name=>out.add(name));
-        for(let i=0;i<names.length-1;i++)edges.add(_mapReachEdgeKey(names[i],names[i+1]));
+        for(let i=0;i<names.length-1;i++)_addMapReachPathEdges(edges,names[i],names[i+1],mode);
       }
     }));
   }else if(typeof ALL_TRAINS!=='undefined'){
@@ -3097,7 +3122,7 @@ function _directReachableStations(stn,mode){
       if(stops.some(s=>s.s===stn)){
         stops.forEach(s=>out.add(s.s));
         const routeStops=(t.stops||[]).filter(s=>hasTime(s.arr)||hasTime(s.dep));
-        for(let i=0;i<routeStops.length-1;i++)edges.add(_mapReachEdgeKey(routeStops[i].s,routeStops[i+1].s));
+        for(let i=0;i<routeStops.length-1;i++)_addMapReachPathEdges(edges,routeStops[i].s,routeStops[i+1].s,mode);
       }
     });
   }
@@ -4244,7 +4269,7 @@ taebaek:{
     {n:'제천',x:488,y:249},
     {n:'어상천',x:524,y:258},
     {n:'영월',x:554,y:234},
-    {n:'신동',x:587,y:226},
+    {n:'신동(태백)',x:587,y:226},
     {n:'무릉',x:624,y:216},
     {n:'사북',x:635,y:221},
     {n:'고한',x:642,y:228},
@@ -4897,7 +4922,7 @@ function showMapLine(lineKey, btn){
         const a=r.stations[i],b=r.stations[i+1];
         if(!reachView.edges.has(_mapReachEdgeKey(a.n,b.n)))continue;
         const d=smoothPath([a,b],ox,oy);
-        parts.push(`<path class="map-reachable-route" d="${d}" fill="none" stroke="${r.color}" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" opacity=".95" pointer-events="none"/>`);
+        parts.push(`<path class="map-reachable-route" d="${d}" fill="none" stroke="var(--accent)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" opacity=".95" pointer-events="none"/>`);
       }
     });
   }
