@@ -1227,15 +1227,15 @@ const NOTICES = [
   },
   {
     date:'2026-09-09',
-    cat:'service',
-    title:'북한 지역 철도 임시 운행 시간표 안내',
+    cat:'route',
+    title:'북한 지역 철도 시범 운행 시간표 안내',
     body:`북한 지역을 운행하는 일반열차와 고속열차의 시간표가 앱에 등록되었습니다.<br><br>
 
-<span class="n-warn" style="display:block"><strong>현재 제공되는 시간표는 정식 운행 시간표가 아닌 임시 운행 시간표입니다.</strong></span><br>
+<span class="n-warn" style="display:block"><strong>현재 제공되는 시간표는 정식 운행 시간표가 아닌 시범 운행 시간표입니다.</strong></span><br>
 
 현재 시각표는 인게임 노선과 운행 스케줄에 기록된 역간 소요시간을 바탕으로 편성했으며, 원본에서 일부 구간이 끊긴 방향은 반대 방향 운행시간을 역산해 보완했습니다. 통과역·정차역·승강장과 열차 운용도 현재 확인할 수 있는 인게임 자료를 기준으로 구성되어 있습니다.<br><br>
 
-<strong>■ 임시 시간표 적용 계통</strong><br>
+<strong>■ 시범 운행 시간표 적용 계통</strong><br>
 <ul>
 <li>평양 ↔ 원산, 서울 ↔ 양구 ↔ 원산 무궁화호</li>
 <li>평양 ↔ 샘물동, 평양 ↔ 개성(해주 경유) KTX-이음</li>
@@ -1244,8 +1244,13 @@ const NOTICES = [
 <li>경흥 ↔ 남대구·목포 KTX-산천</li>
 </ul>
 
-<div class="n-box">향후 정식 운행 시간표가 확정되면 열차 운행 시각, 운행 횟수, 정차·통과역, 열차번호, 승강장 및 차량 운용 계획이 현재 임시 시간표와 달라질 수 있습니다.</div><br>
+<div class="n-box">향후 정식 운행 시간표가 확정되면 열차 운행 시각, 운행 횟수, 정차·통과역, 열차번호, 승강장 및 차량 운용 계획이 현재 시범 운행 시간표와 달라질 수 있습니다.</div><br>
 
-정식 시간표 적용 시에는 별도의 시간표 개정 공지를 통해 변경 내용을 안내하겠습니다. 이용 전 앱에 표시된 최신 열차 시간표와 공지사항을 확인해 주세요.`
+정식 시간표 적용 시에는 별도의 시간표 개정 공지를 통해 변경 내용을 안내하겠습니다. 이용 전 앱에 표시된 최신 열차 시간표와 공지사항을 확인해 주세요.<br><br>
+
+<div class="notice-timetable-gallery notice-timetable-pair">
+<a class="notice-timetable-attachment summary" href="assets/notices/20260909-north-trial-summary.svg" target="_blank" rel="noopener noreferrer"><img src="assets/notices/20260909-north-trial-summary.svg" alt="북한 지역 철도 시범 운행 요약표" loading="lazy"><span>한눈에 보는 시범 운행계획</span></a>
+<a class="notice-timetable-attachment" href="assets/notices/20260909-north-trial.svg" target="_blank" rel="noopener noreferrer"><img src="assets/notices/20260909-north-trial.svg" alt="북한 지역 철도 시범 운행 전체 시간표" loading="lazy"><span>역별 전체 시간표</span></a>
+</div>`
   }
 ];

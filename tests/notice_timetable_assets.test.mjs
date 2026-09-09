@@ -18,7 +18,8 @@ const FULL_NOTICE_IDS = [
   '20260731-regional-revision',
   '20260731-gyeongbuk-loop',
   '20260801-gyooe-loop',
-  '20260802-taebaek'
+  '20260802-taebaek',
+  '20260909-north-trial'
 ];
 const SUMMARY_NOTICE_IDS = [
   '20260620-ktx-adjustments',
@@ -38,7 +39,8 @@ const SUMMARY_NOTICE_IDS = [
   '20260731-gyeongbuk-loop-summary',
   '20260801-gyooe-loop-summary',
   '20260802-taebaek-summary',
-  '20260803-jamsil-mokpo-srt-expansion'
+  '20260803-jamsil-mokpo-srt-expansion',
+  '20260909-north-trial-summary'
 ];
 const NOTICE_IDS = [...FULL_NOTICE_IDS, ...SUMMARY_NOTICE_IDS];
 
@@ -175,8 +177,8 @@ test('공지 이미지 배포 버전이 CSS·데이터·서비스워커에 함�
   const serviceWorker = read('sw.js');
 
   assert.match(index, /nimbi_rail\.css\?v=2026090905/);
-  assert.match(index, /nimbi_rail_notices\.js\?v=2026090301/);
-  assert.match(serviceWorker, /CACHE_NAME = 'nimbirail-2026090908'/);
+  assert.match(index, /nimbi_rail_notices\.js\?v=2026090902/);
+  assert.match(serviceWorker, /CACHE_NAME = 'nimbirail-2026090913'/);
 });
 
 test('UI 전면 개편 안내 공지가 승객 관점의 주요 변경점을 설명한다', () => {
@@ -187,10 +189,13 @@ test('UI 전면 개편 안내 공지가 승객 관점의 주요 변경점을 설
   }
 });
 
-test('북한 지역 철도 공지는 현재 시간표가 임시이며 정식 시간표와 달라질 수 있음을 안내한다', () => {
+test('북한 지역 철도 공지는 노선 정보에서 시범 운행과 정식 시간표 변경 가능성을 안내한다', () => {
   const notices = read('data/nimbi_rail_notices.js');
-  assert.match(notices, /북한 지역 철도 임시 운행 시간표 안내/);
-  assert.match(notices, /정식 운행 시간표가 아닌 임시 운행 시간표/);
+  assert.match(notices, /cat:'route',[\s\S]*title:'북한 지역 철도 시범 운행 시간표 안내'/);
+  assert.match(notices, /정식 운행 시간표가 아닌 시범 운행 시간표/);
+  assert.doesNotMatch(notices, /북한 지역 철도 임시 운행 시간표/);
+  assert.match(notices, /20260909-north-trial-summary\.svg/);
+  assert.match(notices, /20260909-north-trial\.svg/);
   for (const keyword of ['운행 시각', '운행 횟수', '정차·통과역', '열차번호', '승강장', '차량 운용 계획']) {
     assert.ok(notices.includes(keyword), `${keyword} 변경 가능성 안내가 필요합니다`);
   }

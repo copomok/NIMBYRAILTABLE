@@ -160,6 +160,25 @@ const notices=[
       ['남도해양 · 목포 ↔ 여수',selectNumbers(range(2501,2514))],
       ['남도해양 · 목포 ↔ 고현',selectNumbers(range(2521,2534))]
     ]
+  },
+  {
+    id:'20260909-north-trial',date:'2026.09.09',
+    title:'북한 지역 철도 시범 운행 전체 시간표',expected:246,
+    subtitle:'인게임 운행자료 기반 시범 운행 · 12개 계통',
+    groups:[
+      ['무궁화호 · 평양 ↔ 원산',selectNumbers(range(3001,3024))],
+      ['무궁화호 · 서울 ↔ 양구 ↔ 원산',selectNumbers(range(3501,3528))],
+      ['KTX-산천 · 서울 ↔ 블라디보스토크',selectNumbers(range(8001,8012))],
+      ['KTX-산천 · 신의주 ↔ 서울',selectNumbers(range(9001,9036))],
+      ['KTX-이음 · 평양 ↔ 개성(해주 경유)',selectNumbers(range(9051,9078))],
+      ['KTX-이음 · 샘물동 ↔ 평양',selectNumbers(range(9101,9114))],
+      ['KTX-이음 · 원산 ↔ 부산',selectNumbers(range(9521,9540))],
+      ['KTX-이음 · 원산 ↔ 마포',selectNumbers(range(9551,9576))],
+      ['KTX-이음 · 혜산 ↔ 원산',selectNumbers(range(9581,9594))],
+      ['KTX-이음 · 무산 ↔ 원산',selectNumbers(range(9601,9614))],
+      ['KTX-산천 · 경흥 ↔ 남대구',selectNumbers(range(9701,9716))],
+      ['KTX-산천 · 경흥 ↔ 목포',selectNumbers(range(9751,9764))]
+    ]
   }
 ];
 
