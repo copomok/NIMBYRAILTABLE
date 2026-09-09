@@ -186,3 +186,12 @@ test('UI 전면 개편 안내 공지가 승객 관점의 주요 변경점을 설
     assert.ok(notices.includes(keyword), `${keyword} 안내가 필요합니다`);
   }
 });
+
+test('북한 지역 철도 공지는 현재 시간표가 임시이며 정식 시간표와 달라질 수 있음을 안내한다', () => {
+  const notices = read('data/nimbi_rail_notices.js');
+  assert.match(notices, /북한 지역 철도 임시 운행 시간표 안내/);
+  assert.match(notices, /정식 운행 시간표가 아닌 임시 운행 시간표/);
+  for (const keyword of ['운행 시각', '운행 횟수', '정차·통과역', '열차번호', '승강장', '차량 운용 계획']) {
+    assert.ok(notices.includes(keyword), `${keyword} 변경 가능성 안내가 필요합니다`);
+  }
+});
