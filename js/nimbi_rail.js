@@ -272,7 +272,7 @@ function acShow(iid,did){
   const isBookField=['book-stn-input','pass-from','pass-to'].includes(iid);
   const pool=isBookField?getBookableStations():ALL_STATIONS;
   // 초성 검색 포함 · 기차 탭 검색이므로 전철 전용역(무정차)은 제외
-  const hits=pool.filter(s=>matchesQuery(s,q)&&!_isMetroOnly(s)).slice(0,12);
+  const hits=pool.filter(s=>matchesQuery(s,q)&&!_isMetroOnly(s)&&(typeof isRailStationInRegion!=='function'||isRailStationInRegion(s))).slice(0,12);
   if(!hits.length){drop.className='ac-dropdown';drop.style.display='none';return;}
   // 하이라이트
   drop.innerHTML=hits.map(s=>{
@@ -546,10 +546,12 @@ function isPassStop(t, stn){
 // 열차 탭 노선 드롭다운을 노선도(MAP_LINES)와 동일하게 자동 생성 — 하드코딩 누락·중복 방지
 function _populateTrainLineSelect(){
   const sel=document.getElementById('sel-line-train');
-  if(!sel||typeof MAP_LINES==='undefined')return;
+  if(!sel||typeof ALL_TRAINS==='undefined')return;
   const cur=sel.value;
-  // 노선도 전용 권역도는 시간표 등록 전 열차 조회에 빈 노선으로 노출하지 않는다.
-  const names=Object.values(MAP_LINES).filter(l=>!l.mapOnly).map(l=>l.name);
+  const names=[...new Set(ALL_TRAINS
+    .filter(t=>typeof isRailTrainInRegion!=='function'||isRailTrainInRegion(t))
+    .flatMap(t=>String(t.line||'').split('·').map(n=>n.trim()).filter(Boolean)))]
+    .sort((a,b)=>a.localeCompare(b,'ko'));
   sel.innerHTML='<option value="">노선 선택</option>'+names.map(n=>`<option value="${n}">${n}</option>`).join('');
   if(cur&&names.includes(cur))sel.value=cur;
 }
@@ -559,7 +561,7 @@ function selectTrainLine(){
   const detailEl=document.getElementById('result-train');
   detailEl.innerHTML='';
   if(!line){listEl.innerHTML='';return;}
-  const trains=ALL_TRAINS.filter(t=>t.line.includes(line));
+  const trains=ALL_TRAINS.filter(t=>t.line.includes(line)&&(typeof isRailTrainInRegion!=='function'||isRailTrainInRegion(t)));
   if(!trains.length){listEl.innerHTML='<div class="empty"><div class="empty-icon">🚫</div><p>해당 노선 열차가 없습니다</p></div>';return;}
   const sorted=[...trains].sort((a,b)=>parseInt(a.no)-parseInt(b.no));
   const rows=sorted.map(t=>{
@@ -889,7 +891,8 @@ function renderDetail(t){
 function searchByStation(){
   // 드롭다운 닫기
   acHide('ac-station');
-  const stn=document.getElementById('input-station').value.trim();
+  const enteredStn=document.getElementById('input-station').value.trim();
+  const stn=typeof railStationDataName==='function'?railStationDataName(enteredStn):enteredStn;
   if(stn)saveHistory('station',stn);
   const dir=document.getElementById('sel-dir-station').value;
   const lineF=document.getElementById('sel-line-station').value;
@@ -902,7 +905,7 @@ function searchByStation(){
   const el=document.getElementById('result-station');
   if(!stn){el.innerHTML='<div class="empty"><div class="empty-icon">🏢</div><p>역 이름을 입력하세요</p></div>';return;}
   let results=[];
-  getTrainsByStation(stn).forEach(t=>{
+  getRailTrainsByStation(stn).forEach(t=>{
     if(dir!=='all'&&t.dir!==dir)return;
     if(lineF!=='all'&&!t.line.includes(lineF))return;
     if(!gradeMatch(t.grade,gradeF))return;
@@ -3435,7 +3438,7 @@ function updateMapTrains(){
   const now=new Date();
   // 034: 초 단위까지 반영해 위치를 부드럽게 보간
   const nowMin = _mapTimelineMin !== null ? _mapTimelineMin : now.getHours()*60+now.getMinutes()+now.getSeconds()/60;
-  const isAll=_mapCurrentLine==='all'; // 🛰️ 관제 모드: 전 노선·전 열차
+  const isAll=_mapCurrentLine==='all'||_mapCurrentLine==='allregions'; // 🛰️ 남한·남북 전체보기: 전 노선·전 열차
   const line=isAll?{name:'__all__'}:MAP_LINES[_mapCurrentLine];
   if(!line)return;
 
@@ -3632,7 +3635,8 @@ function openMapTrainPopup(t, status){
 // 역 클릭 팝업 (역 정보로 넘어가기 전 먼저 표시)
 function openMapPopup(stn, lineName){
   _mapCurrentStn=stn;
-  const trains=getTrainsByStation(stn).filter(t=>t.stops.some(s=>s.s===stn&&(s.dep||s.arr)));
+  const dataStn=railStationDataName(stn);
+  const trains=getRailTrainsByStation(dataStn).filter(t=>t.stops.some(s=>railStationDataName(s.s)===dataStn&&(s.dep||s.arr)));
   const lineSet=[...new Set(trains.flatMap(t=>t.line.split('·')))];
   const gcc={}; trains.forEach(t=>{gcc[t.grade]=(gcc[t.grade]||0)+1;});
   const gradeStr=Object.entries(gcc).sort((a,b)=>b[1]-a[1]).map(([g,n])=>`${g} ${n}편`).join(' · ')||'경유 열차 없음';
@@ -4412,7 +4416,7 @@ north:{
       {n:'원산',x:307,y:-353},{n:'안변읍',x:328,y:-315},{n:'고산읍',x:304,y:-260},
       {n:'세포읍',x:289,y:-197},{n:'평강',x:273,y:-130},{n:'철원',x:244,y:-85}
     ]},
-    {name:'동해선',color:'#0ea5e9',stations:[
+    {name:'동해선',color:'#3fb994',stations:[
       {n:'경흥',x:992,y:-1340},{n:'라선',x:983,y:-1262},{n:'청진',x:861,y:-1126},
       {n:'명간',x:794,y:-969},{n:'단천',x:655,y:-724},{n:'북청',x:516,y:-670},
       {n:'광복1동',x:484,y:-609},{n:'함흥',x:333,y:-570},{n:'함주',x:308,y:-553},
@@ -4446,10 +4450,10 @@ north:{
       {n:'해주',x:-98,y:-19},{n:'청단읍',x:-46,y:0},{n:'연안읍',x:7,y:18},
       {n:'금곡리',x:57,y:13},{n:'개성',x:101,y:2}
     ]},
-    {name:'동해선',color:'#0ea5e9',dash:true,stations:[
+    {name:'동해선',color:'#3fb994',dash:true,stations:[
       {n:'단천',x:655,y:-724},{n:'북단천',x:631,y:-868},{n:'혜산',x:482,y:-1010}
     ]},
-    {name:'동해선',color:'#0ea5e9',dash:true,stations:[
+    {name:'동해선',color:'#3fb994',dash:true,stations:[
       {n:'청진',x:861,y:-1126},{n:'무산',x:728,y:-1253}
     ]}
   ]
@@ -4484,6 +4488,17 @@ Object.entries(NORTH_MAP_LINE_KEYS).forEach(([name,key])=>{
   const routes=MAP_LINES.north.routes.filter(route=>route.name===name);
   MAP_LINES[key]={name,color:routes[0]?.color||'#64748b',noSpread:true,northOnly:true,mapOnly:true,routes};
 });
+{
+  const south=MAP_LINES.donghae.routes,north=MAP_LINES.north.routes.filter(route=>route.name==='동해선');
+  const northMain=north.find(route=>!route.dash),southMain=south.find(route=>!route.dash);
+  MAP_LINES.donghae_all={
+    name:'동해선',color:MAP_LINES.donghae.color,noSpread:true,mapOnly:true,combinedOnly:true,
+    routes:[
+      {name:'동해선',color:MAP_LINES.donghae.color,stations:[...northMain.stations,...southMain.stations.slice(1)]},
+      ...north.filter(route=>route.dash),...south.filter(route=>route.dash)
+    ]
+  };
+}
 
 // 인접 역이 너무 가까워 아이콘/텍스트가 겹치는 것 방지: 경로 방향 유지하며 최소 간격 확보
 function spreadMapRoutes(routes){
@@ -4694,6 +4709,7 @@ function setRailRegion(region){
   _railRegion=region;try{localStorage.setItem('nimbi_region',region);}catch(e){}
   _syncRailRegionControls();
   const menu=document.getElementById('region-menu');if(menu)menu.hidden=true;
+  _populateTrainLineSelect();
   if(_appMode==='train')renderMapTabForMode();
   document.dispatchEvent(new CustomEvent('nimbi-region-change',{detail:{region}}));
 }
@@ -4702,13 +4718,37 @@ function toggleRegionMenu(anchor){
   menu.hidden=!menu.hidden;_syncRailRegionControls();
   if(!menu.hidden&&anchor){const r=anchor.getBoundingClientRect();menu.style.top=`${Math.min(innerHeight-180,r.bottom+7)}px`;menu.style.left=`${Math.max(12,Math.min(innerWidth-170,r.right-158))}px`;menu.querySelector('.active')?.focus();}
 }
-function isRailStationInRegion(raw){
+const NORTH_STATION_DATA_ALIASES={'은산':'은산읍','강계':'강계학생소년궁전','정평':'정평읍','함주':'함주읍'};
+function railStationDataName(raw){
   const name=String(raw||'').replace(/역$/,'');
-  const northNames=new Set((MAP_LINES.north?.routes||[]).flatMap(route=>route.stations.map(station=>station.n)));
+  return NORTH_STATION_DATA_ALIASES[name]||name;
+}
+function railStationDisplayName(raw){
+  const name=String(raw||'').replace(/역$/,'');
+  return Object.keys(NORTH_STATION_DATA_ALIASES).find(key=>NORTH_STATION_DATA_ALIASES[key]===name)||name;
+}
+function _northRailStationNames(){
+  return new Set((MAP_LINES.north?.routes||[]).flatMap(route=>route.stations.map(station=>railStationDataName(station.n))));
+}
+function getRailTrainsByStation(raw){
+  const dataName=railStationDataName(raw),names=new Set([dataName,railStationDisplayName(dataName)]),found=[];
+  names.forEach(name=>getTrainsByStation(name).forEach(t=>{if(!found.includes(t))found.push(t);}));
+  return found;
+}
+function isRailStationInRegion(raw){
+  const name=railStationDataName(raw);
+  const northNames=_northRailStationNames();
   const shared=new Set(['문산','철원','간성']);
   if(_railRegion==='all')return true;
   if(shared.has(name))return true;
   return _railRegion==='north'?northNames.has(name):!northNames.has(name);
+}
+function isRailTrainInRegion(train){
+  if(_railRegion==='all')return true;
+  const northNames=_northRailStationNames();
+  ['문산','철원','간성'].forEach(name=>northNames.delete(name));
+  const flags=(train?.stops||[]).filter(s=>s.arr||s.dep).map(s=>northNames.has(railStationDataName(s.s)));
+  return _railRegion==='north'?flags.some(Boolean):flags.some(flag=>!flag);
 }
 function renderMapTabForMode(){
   const tabs=document.getElementById('map-line-tabs');
@@ -4759,11 +4799,12 @@ function renderMapTabForMode(){
       allBar.style.display='';
       const south=[...tabs.querySelectorAll('.map-line-tab:not(.ctrl)')].map(button=>{
         const key=button.getAttribute('onclick')?.match(/['"]([\w]+)['"]/)?.[1];
-        return key?`<button class="map-line-tab" onclick="showRegionAllMapLine('${key}',this)">${button.textContent}</button>`:'';
+        const combinedKey=key==='donghae'?'donghae_all':key;
+        return key?`<button class="map-line-tab" onclick="showRegionAllMapLine('${combinedKey}',this)">${button.textContent}</button>`:'';
       }).join('');
-      const north=Object.entries(NORTH_MAP_LINE_KEYS).map(([name,key])=>`<button class="map-line-tab" onclick="showRegionAllMapLine('${key}',this)">북한 ${name}</button>`).join('');
+      const north=Object.entries(NORTH_MAP_LINE_KEYS).filter(([name])=>name!=='동해선').map(([name,key])=>`<button class="map-line-tab" onclick="showRegionAllMapLine('${key}',this)">북한 ${name}</button>`).join('');
       allBar.innerHTML=`<button class="map-line-tab ctrl" onclick="showRegionAllMapLine('allregions',this)">전체보기</button>${south}${north}`;
-      const valid=['allregions',...Object.keys(MAP_LINES).filter(key=>!MAP_LINES[key].northOnly),...Object.values(NORTH_MAP_LINE_KEYS)];
+      const valid=['allregions',...Object.keys(MAP_LINES).filter(key=>!MAP_LINES[key].northOnly),...Object.values(NORTH_MAP_LINE_KEYS).filter(key=>key!=='north_donghae')];
       const currentKey=valid.includes(_mapCurrentLine)?_mapCurrentLine:'allregions';
       const active=[...allBar.querySelectorAll('.map-line-tab')].find(button=>button.getAttribute('onclick')?.includes(`'${currentKey}'`))||allBar.querySelector('.map-line-tab');
       showRegionAllMapLine(currentKey,active);
@@ -11131,7 +11172,7 @@ function renderSINearList(){
 }
 
 function openStationDetail(name){
-  _siCurrent=name; _siSubTab='detail'; _siCardPlatform=null;
+  _siCurrent=railStationDataName(name); _siSubTab='detail'; _siCardPlatform=null;
   switchTab('stationinfo');
   setTimeout(()=>renderStationInfo(),50);
 }
@@ -11158,7 +11199,10 @@ function siSearch(q){
   q=(q||'').trim();
   if(!q||typeof STATION_DB==='undefined'){el.style.display='none';el.innerHTML='';return;}
   const qBase=q.endsWith('역')?q.slice(0,-1):q;
-  const all=Object.keys(STATION_DB).filter(n=>{
+  const stationNames=new Set(Object.keys(STATION_DB));
+  if(typeof ALL_TRAINS!=='undefined')ALL_TRAINS.forEach(t=>(t.stops||[]).forEach(s=>{if(s.s&&(s.arr||s.dep))stationNames.add(s.s);}));
+  Object.keys(NORTH_STATION_DATA_ALIASES).forEach(n=>stationNames.add(n));
+  const all=[...stationNames].filter(n=>isRailStationInRegion(n)).filter(n=>{
     const ns=n.endsWith('역')?n.slice(0,-1):n;
     return matchesQuery(n,q)||matchesQuery(ns,q)||matchesQuery(ns,qBase);
   });
@@ -11207,6 +11251,7 @@ function siSearchKey(e){
 }
 
 function siSelect(name){
+  name=railStationDataName(name);
   _siCurrent=name; _siCardPlatform=null;
   const inp=document.getElementById('si-inp');
   if(inp)inp.value=name.endsWith('역')?name.slice(0,-1):name;   // 검색창은 맨 이름(○○)
@@ -11280,9 +11325,10 @@ function _platformForTrain(name, trainName, trains, t){
 }
 // 이 역에 실제 정차(통과 제외)하는 열차 목록
 function _stationStoppingTrains(trainName){
-  return getTrainsByStation(trainName).filter(t=>{
-    const s=t.stops.find(x=>x.s===trainName);
-    return s&&(hasTime(s.dep)||hasTime(s.arr))&&!isPassStop(t,trainName);
+  trainName=railStationDataName(trainName);
+  return getRailTrainsByStation(trainName).filter(t=>{
+    const s=t.stops.find(x=>railStationDataName(x.s)===trainName);
+    return s&&(hasTime(s.dep)||hasTime(s.arr))&&!isPassStop(t,s.s);
   });
 }
 // 조회역이 이 열차의 종착역인가 (당역종착)
@@ -11860,6 +11906,7 @@ function _metroStationBoardHTML(stn,displayBoard=false){
 function renderSICard(name){
   const el=document.getElementById('si-card');
   if(!el)return;
+  name=railStationDataName(name);
   // 지도 클릭은 '서울'(맨 이름), 검색은 '서울역'(DB 키) → DB 키로 정규화
   if(typeof STATION_DB!=='undefined' && !STATION_DB[name] && STATION_DB[name+'역']) name=name+'역';
   const d=typeof STATION_DB!=='undefined'?STATION_DB[name]:null;
@@ -13431,7 +13478,7 @@ function _allAsMapLine(){
   if(_allMapLineCache)return _allMapLineCache;
   const routes=[];
   // 남한 전체보기와 북한 권역도는 지역 선택처럼 분리한다.
-  for(const ml of Object.values(MAP_LINES)) if(!ml.northOnly) for(const r of ml.routes) routes.push(r);
+  for(const ml of Object.values(MAP_LINES)) if(!ml.northOnly&&!ml.combinedOnly) for(const r of ml.routes) routes.push(r);
   return _allMapLineCache={name:'전체 네트워크',color:'#8b949e',routes};
 }
 let _allRegionsMapLineCache=null;

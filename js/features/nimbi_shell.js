@@ -137,16 +137,19 @@
   function buildSearchItems(){
     const out=[];
     const seen=new Set();
-    if(typeof STATION_DB!=='undefined')Object.keys(STATION_DB).forEach(name=>{
+    const stationNames=new Set(typeof STATION_DB!=='undefined'?Object.keys(STATION_DB):[]);
+    if(typeof ALL_TRAINS!=='undefined')ALL_TRAINS.forEach(train=>(train.stops||[]).forEach(stop=>{if(stop.s&&(stop.arr||stop.dep))stationNames.add(stop.s);}));
+    if(typeof NORTH_STATION_DATA_ALIASES!=='undefined')Object.keys(NORTH_STATION_DATA_ALIASES).forEach(name=>stationNames.add(name));
+    stationNames.forEach(name=>{
       if(mode()==='train'&&typeof isRailStationInRegion==='function'&&!isRailStationInRegion(name))return;
       const key=`station:${name}`;if(seen.has(key))return;seen.add(key);
-      const info=STATION_DB[name]||{};
+      const info=(typeof STATION_DB!=='undefined'&&STATION_DB[name])||{};
       out.push({type:'STATION',title:name,meta:info.lines?.join(' · ')||'역 정보',action:()=>{closeGlobalSearch();window.nimbiOpenStation(name);}});
     });
-    if(typeof ALL_TRAINS!=='undefined')ALL_TRAINS.forEach(train=>{
+    if(typeof ALL_TRAINS!=='undefined')ALL_TRAINS.filter(train=>typeof isRailTrainInRegion!=='function'||isRailTrainInRegion(train)).forEach(train=>{
       out.push({type:'TRAIN',title:`${train.grade} ${train.no}`,meta:`${train.stops?.[0]?.s||''} → ${train.dest||''} · ${train.line||''}`,search:`${train.no} ${train.dest} ${train.grade} ${train.line}`,action:()=>{closeGlobalSearch();if(typeof jumpToTrain==='function')jumpToTrain(String(train.no));}});
     });
-    if(typeof MAP_LINES!=='undefined')Object.values(MAP_LINES).filter(line=>typeof _railRegion==='undefined'||(_railRegion==='north'?line.northOnly:!line.northOnly)).forEach(line=>{
+    if(typeof MAP_LINES!=='undefined')Object.values(MAP_LINES).filter(line=>!line.combinedOnly&&line.name!=='전체 노선'&&(typeof _railRegion==='undefined'||_railRegion==='all'||(_railRegion==='north'?line.northOnly:!line.northOnly))).forEach(line=>{
       const key=`route:${line.name}`;if(seen.has(key))return;seen.add(key);
       out.push({type:'ROUTE',title:line.name,meta:'기차 노선도',action:()=>{closeGlobalSearch();window.nimbiNavigate('map');setTimeout(()=>{const b=[...document.querySelectorAll('.map-line-tab')].find(x=>x.textContent.trim()===line.name);if(b)b.click();},0);}});
     });
@@ -253,10 +256,10 @@
   function directoryStations(){
     const isMetro=mode()==='metro';
     const lineMap={},counts={},gradeMap={};
-    const add=(raw,line)=>{const name=typeof raw==='string'?raw:(raw?.n||raw?.name);if(name)(lineMap[name]=lineMap[name]||new Set()).add(line);};
+    const add=(raw,line)=>{let name=typeof raw==='string'?raw:(raw?.n||raw?.name);if(!isMetro&&typeof railStationDataName==='function')name=railStationDataName(name);if(name)(lineMap[name]=lineMap[name]||new Set()).add(line);};
     if(isMetro&&typeof METRO_LINES!=='undefined')METRO_LINES.forEach(line=>(line.routes||[{stations:line.stations||[]}]).forEach(route=>(route.stations||[]).forEach(station=>add(station,line.name))));
-    if(!isMetro&&typeof MAP_LINES!=='undefined')Object.values(MAP_LINES).filter(line=>typeof _railRegion==='undefined'||(_railRegion==='north'?line.northOnly:!line.northOnly)).forEach(line=>(line.routes||[]).forEach(route=>(route.stations||[]).forEach(station=>add(station,line.name))));
-    if(!isMetro&&typeof ALL_TRAINS!=='undefined')ALL_TRAINS.forEach(train=>(train.stops||[]).forEach(stop=>{if(!stop.s||(!stop.arr&&!stop.dep))return;counts[stop.s]=(counts[stop.s]||0)+1;if(typeof isPassStop!=='function'||!isPassStop(train,stop.s))(gradeMap[stop.s]=gradeMap[stop.s]||new Set()).add(train.grade);}));
+    if(!isMetro&&typeof MAP_LINES!=='undefined')Object.values(MAP_LINES).filter(line=>!line.combinedOnly&&line.name!=='전체 노선').forEach(line=>(line.routes||[]).forEach(route=>(route.stations||[]).forEach(station=>{const raw=typeof station==='string'?station:(station?.n||station?.name);if(typeof isRailStationInRegion!=='function'||isRailStationInRegion(raw))add(raw,line.name);})));
+    if(!isMetro&&typeof ALL_TRAINS!=='undefined')ALL_TRAINS.forEach(train=>(train.stops||[]).forEach(stop=>{if(!stop.s||(!stop.arr&&!stop.dep)||(typeof isRailStationInRegion==='function'&&!isRailStationInRegion(stop.s)))return;const name=typeof railStationDataName==='function'?railStationDataName(stop.s):stop.s;add(name,String(train.line||'').split('·')[0]||'운행 노선');counts[name]=(counts[name]||0)+1;if(typeof isPassStop!=='function'||!isPassStop(train,stop.s))(gradeMap[name]=gradeMap[name]||new Set()).add(train.grade);}));
     return Object.keys(lineMap).map(name=>{
       const db=typeof STATION_DB!=='undefined'?(STATION_DB[name]||STATION_DB[name+'역']||{}):{};
       return{key:name,name,lines:[...lineMap[name]],grades:[...(gradeMap[name]||[])],platform:(db.platforms||[]).join(' · ')||'—',count:counts[name]||0};
