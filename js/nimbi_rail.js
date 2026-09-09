@@ -4401,6 +4401,31 @@ north:{
       {n:'수안',x:52,y:-236},{n:'신계읍',x:95,y:-157},{n:'이천읍',x:178,y:-152},
       {n:'평강',x:273,y:-130},{n:'화천',x:371,y:-37},{n:'해안',x:474,y:-92},
       {n:'북현내',x:504,y:-184}
+    ]},
+    {name:'순천선',color:'#14b8a6',stations:[
+      {n:'평원',x:-125,y:-392},{n:'숙천',x:-119,y:-424},{n:'순천비행장',x:-46,y:-429},
+      {n:'성천',x:28,y:-405},{n:'신양',x:76,y:-385},{n:'양덕',x:121,y:-367},{n:'원산',x:307,y:-353}
+    ]},
+    {name:'녕원선',color:'#84cc16',stations:[
+      {n:'평양',x:-95,y:-308},{n:'은산',x:-27,y:-419},{n:'녕원',x:98,y:-545}
+    ]},
+    {name:'만포선',color:'#ec4899',stations:[
+      {n:'샘물동',x:38,y:-937},{n:'강계',x:108,y:-882},{n:'성간읍',x:101,y:-831},
+      {n:'전천읍',x:78,y:-779},{n:'희천제사공장',x:32,y:-648},{n:'향산읍',x:9,y:-609},
+      {n:'순천비행장',x:-46,y:-429},{n:'은산',x:-27,y:-419}
+    ]},
+    {name:'평성선',color:'#f43f5e',stations:[
+      {n:'평양',x:-95,y:-308},{n:'강선',x:-128,y:-284},{n:'강서',x:-144,y:-278},
+      {n:'남포',x:-178,y:-223},{n:'은율',x:-221,y:-159},{n:'송화',x:-235,y:-114},
+      {n:'장연',x:-243,y:-82},{n:'태탄',x:-195,y:-34},{n:'벽성',x:-136,y:-23},
+      {n:'해주',x:-98,y:-19},{n:'청단읍',x:-46,y:0},{n:'연안읍',x:7,y:18},
+      {n:'금곡리',x:57,y:13},{n:'개성',x:101,y:2}
+    ]},
+    {name:'동해선',color:'#0ea5e9',dash:true,stations:[
+      {n:'단천',x:655,y:-724},{n:'북단천',x:631,y:-868},{n:'혜산',x:482,y:-1010}
+    ]},
+    {name:'동해선',color:'#0ea5e9',dash:true,stations:[
+      {n:'청진',x:861,y:-1126},{n:'무산',x:728,y:-1253}
     ]}
   ]
 },
@@ -4425,6 +4450,15 @@ boeun:{
 },
 
 };
+
+const NORTH_MAP_LINE_KEYS={
+  '경의선':'north_gyeongui','경원선':'north_gyeongwon','동해선':'north_donghae','평원선':'north_pyeongwon',
+  '순천선':'north_suncheon','녕원선':'north_nyeongwon','만포선':'north_manpo','평성선':'north_pyeongseong'
+};
+Object.entries(NORTH_MAP_LINE_KEYS).forEach(([name,key])=>{
+  const routes=MAP_LINES.north.routes.filter(route=>route.name===name);
+  MAP_LINES[key]={name,color:routes[0]?.color||'#64748b',noSpread:true,northOnly:true,mapOnly:true,routes};
+});
 
 // 인접 역이 너무 가까워 아이콘/텍스트가 겹치는 것 방지: 경로 방향 유지하며 최소 간격 확보
 function spreadMapRoutes(routes){
@@ -4655,6 +4689,7 @@ function renderMapTabForMode(){
   const controls=document.getElementById('map-controls-bar');
   const filterPanel=document.getElementById('map-filter-panel');
   let bar=document.getElementById('metro-line-bar');
+  let northBar=document.getElementById('north-line-bar');
   if(_appMode==='metro'&&typeof METRO_LINES!=='undefined'){
     if(tabs)tabs.style.display='none';
     if(controls)controls.style.display='none';
@@ -4663,6 +4698,7 @@ function renderMapTabForMode(){
       bar=document.createElement('div'); bar.id='metro-line-bar';
       tabs.parentNode.insertBefore(bar,tabs.nextSibling);
     }
+    if(northBar)northBar.style.display='none';
     bar.style.display='';
     const regions=[...new Set(METRO_LINES.map(l=>l.region))];
     if(!_metroMapRegion)_metroMapRegion=regions[0];
@@ -4674,13 +4710,28 @@ function renderMapTabForMode(){
     if(tabs)tabs.style.display=_railRegion==='north'?'none':'';
     if(controls)controls.style.display='flex'; // 원래 inline display:flex 복원 (버튼 줄바꿈 방지)
     if(bar)bar.style.display='none';
-    if(_railRegion==='north')showMapLine('north',null);
+    if(_railRegion==='north'){
+      if(!northBar){
+        northBar=document.createElement('div');northBar.id='north-line-bar';northBar.className='map-line-tabs north-line-tabs';
+        tabs.parentNode.insertBefore(northBar,tabs.nextSibling);
+      }
+      northBar.style.display='';
+      northBar.innerHTML=`<button class="map-line-tab ctrl" onclick="showNorthMapLine('north',this)">전체보기</button>${Object.entries(NORTH_MAP_LINE_KEYS).map(([name,key])=>`<button class="map-line-tab" onclick="showNorthMapLine('${key}',this)">${name}</button>`).join('')}`;
+      const currentKey=(_mapCurrentLine==='north'||Object.values(NORTH_MAP_LINE_KEYS).includes(_mapCurrentLine))?_mapCurrentLine:'north';
+      const active=[...northBar.querySelectorAll('.map-line-tab')].find(button=>button.getAttribute('onclick')?.includes(`'${currentKey}'`))||northBar.querySelector('.map-line-tab');
+      showNorthMapLine(currentKey,active);
+    }
     else{
+      if(northBar)northBar.style.display='none';
       const activeMapTab=document.querySelector('.map-line-tab.active')||document.querySelector('.map-line-tab');
       const lineKey=(activeMapTab&&activeMapTab.getAttribute('onclick').match(/['"]([\w]+)['"]/)?.[1])||'gyeongbu';
       showMapLine(lineKey,activeMapTab);
     }
   }
+}
+function showNorthMapLine(lineKey,button){
+  document.querySelectorAll('#north-line-bar .map-line-tab').forEach(item=>item.classList.toggle('active',item===button));
+  showMapLine(lineKey,null);
 }
 // 배차 표시 — hwPeak/hwOff 누락 노선은 'undefined분' 대신 있는 값만 표기
 function _metroHeadway(o){
