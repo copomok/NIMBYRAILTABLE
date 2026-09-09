@@ -2274,3 +2274,31 @@ for(const train of ALL_TRAINS){
     train.line='교외선·경의선';
   }
 }
+
+// 호남고속선 마포-목포 KTX 상행 정안 정차 오매핑 보정.
+// 하행 정차 패턴과 인게임 노선(/3=정차, /2=통과)을 대조한 결과 아래 5편만
+// 정안 정차를 유지한다. 그 외 편성은 공주-천안 574초(분 표기 10분)를 복구한다.
+{
+  const jeonganStops=new Set([408,420,432,444,456]);
+  const minute=value=>{const [h,m]=value.split(':').map(Number);return h*60+m;};
+  const clock=value=>{const n=(value%1440+1440)%1440;return `${Math.floor(n/60)}:${String(n%60).padStart(2,'0')}`;};
+  for(const train of ALL_TRAINS){
+    const no=Number(train.no);
+    if(no<402||no>460||no%2||train.dir!=='up'||jeonganStops.has(no))continue;
+    const gongju=train.stops.findIndex(stop=>stop.s==='공주');
+    const jeongan=train.stops.findIndex(stop=>stop.s==='정안');
+    const cheonan=train.stops.findIndex(stop=>stop.s==='천안');
+    if(gongju<0||jeongan<0||cheonan<0||!(gongju<jeongan&&jeongan<cheonan))continue;
+    const base=minute(train.stops[gongju].dep||train.stops[gongju].arr);
+    const oldArrival=minute(train.stops[cheonan].arr||train.stops[cheonan].dep);
+    const newArrival=base+10;
+    const delta=newArrival-oldArrival;
+    train.stops[jeongan].arr=clock(base+4);
+    train.stops[jeongan].dep=null;
+    for(let index=cheonan;index<train.stops.length;index++){
+      const stop=train.stops[index];
+      if(/^\d{1,2}:\d{2}$/.test(stop.arr||''))stop.arr=clock(minute(stop.arr)+delta);
+      if(/^\d{1,2}:\d{2}$/.test(stop.dep||''))stop.dep=clock(minute(stop.dep)+delta);
+    }
+  }
+}

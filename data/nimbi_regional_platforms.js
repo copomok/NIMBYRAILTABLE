@@ -273,6 +273,18 @@
   }
 })();
 
+// 마포-목포 KTX 상행 정안 통과편에는 승강장 정보를 남기지 않는다.
+// 하행 운행 패턴상 정안 정차 대상인 5편만 2번 승강장 매핑을 유지한다.
+(()=>{
+  if(typeof REAL_PLAT==='undefined')return;
+  const stopping=new Set([408,420,432,444,456]);
+  for(let no=402;no<=460;no+=2){
+    const mapped=REAL_PLAT[String(no)]||(REAL_PLAT[String(no)]={});
+    if(stopping.has(no))mapped['정안']=2;
+    else delete mapped['정안'];
+  }
+})();
+
 // #501~526 마포-남대구 KTX-이음 정차역 승강장 확정값.
 (()=>{
   if(typeof REAL_PLAT==='undefined'||typeof ALL_TRAINS==='undefined')return;
