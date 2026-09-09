@@ -10,7 +10,7 @@ vm.runInContext(`${fs.readFileSync('data/nimbi_realplat.js','utf8')}`,context);
 vm.runInContext(`${fs.readFileSync('data/nimbi_regional_platforms.js','utf8')};this.realPlat=REAL_PLAT;`,context);
 const trains=Array.from(context.trains);
 const realPlat=context.realPlat;
-const gyooe=trains.filter(t=>t.line==='교외선').sort((a,b)=>Number(a.no)-Number(b.no));
+const gyooe=trains.filter(t=>Number(t.no)>=4401&&Number(t.no)<=4428).sort((a,b)=>Number(a.no)-Number(b.no));
 const M=s=>{const [h,m]=s.split(':').map(Number);return h*60+m;};
 const span=t=>{
   let base=0,prev=-1;

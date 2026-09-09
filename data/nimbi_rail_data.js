@@ -2266,3 +2266,11 @@ for(const train of ALL_TRAINS){
     }
   }
 }
+
+// 행신~서울은 경의선 선로를 사용하는 교외선 순환 계통이다.
+// 시간표·열차번호는 유지하고 운행 노선 메타데이터만 실제 계통에 맞춘다.
+for(const train of ALL_TRAINS){
+  if(train.line==='교외선'&&train.stops.some(stop=>stop.s==='행신')&&train.stops.some(stop=>stop.s==='서울')){
+    train.line='교외선·경의선';
+  }
+}

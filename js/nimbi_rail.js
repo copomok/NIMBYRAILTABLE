@@ -548,7 +548,8 @@ function _populateTrainLineSelect(){
   const sel=document.getElementById('sel-line-train');
   if(!sel||typeof MAP_LINES==='undefined')return;
   const cur=sel.value;
-  const names=Object.values(MAP_LINES).map(l=>l.name);
+  // 노선도 전용 권역도는 시간표 등록 전 열차 조회에 빈 노선으로 노출하지 않는다.
+  const names=Object.values(MAP_LINES).filter(l=>!l.mapOnly).map(l=>l.name);
   sel.innerHTML='<option value="">노선 선택</option>'+names.map(n=>`<option value="${n}">${n}</option>`).join('');
   if(cur&&names.includes(cur))sel.value=cur;
 }
@@ -3325,7 +3326,7 @@ const GRADE_COLORS = {
 };
 
 // 노선명 → MAP_LINES 키, 노선별 인접역 쌍 캐시 (구간 소속 판별용)
-const _lineNameToKey={'경부선':'gyeongbu','경부고속선':'gyeongbuhs','호남고속선':'honamhs','호남선':'honam','전라선':'jeolla','중앙선':'jungang','동해선':'donghae','영동선':'yeongdong','강릉선':'gangreung','중부내륙선':'jungnaelyuk','경전선':'gyeongjeon','제주선':'jeju','충북선':'chungbuk','장항선':'janghang','남부내륙선':'nambunaelyuk','서산선':'seosan','태안선':'taean','경강선':'seogang','소백선':'sobaek','경북선':'gyeongbuk','태백선':'taebaek','정선선':'jeongseon','밀양선':'miryang','세종세천선':'sejongsecheon','교외선':'gyooe','보은선':'boeun','대구선':'daegu'};
+const _lineNameToKey={'경부선':'gyeongbu','경부고속선':'gyeongbuhs','호남고속선':'honamhs','호남선':'honam','전라선':'jeolla','중앙선':'jungang','동해선':'donghae','영동선':'yeongdong','강릉선':'gangreung','중부내륙선':'jungnaelyuk','경전선':'gyeongjeon','제주선':'jeju','충북선':'chungbuk','장항선':'janghang','남부내륙선':'nambunaelyuk','서산선':'seosan','태안선':'taean','경강선':'seogang','소백선':'sobaek','경북선':'gyeongbuk','태백선':'taebaek','정선선':'jeongseon','밀양선':'miryang','세종세천선':'sejongsecheon','교외선':'gyooe','경의선':'gyeongui','보은선':'boeun','대구선':'daegu'};
 const _mapEdgeCache={};
 function _mapLineEdgeSet(key){
   if(_mapEdgeCache[key])return _mapEdgeCache[key];
@@ -4347,6 +4348,49 @@ gyooe:{
     {n:'주교',x:167,y:93},
     {n:'능곡',x:162,y:105},
     {n:'행신',x:167,y:107}
+    ]}
+  ]
+},
+
+gyeongui:{
+  name:'경의선', color:'#2563eb', noSpread:true,
+  routes:[{color:'#2563eb',stations:[
+    {n:'서울',x:198,y:124},{n:'행신',x:167,y:107},
+    {n:'일산',x:151,y:86},{n:'문산',x:153,y:35}
+  ]}]
+},
+
+// 인게임 역 좌표를 기존 남한 노선도 투영식으로 배치한 북한 권역도.
+// 문산·철원·간성을 연결점으로 포함하되 남한 구간은 중복하지 않는다.
+north:{
+  name:'북한 철도망', color:'#64748b', noSpread:true, northOnly:true, mapOnly:true,
+  routes:[
+    {name:'경의선',color:'#2563eb',stations:[
+      {n:'신의주',x:-405,y:-628},{n:'용천',x:-392,y:-594},{n:'염주인광',x:-359,y:-567},
+      {n:'동림',x:-335,y:-557},{n:'선천',x:-286,y:-539},{n:'정주',x:-216,y:-507},
+      {n:'박천',x:-130,y:-516},{n:'안주역전',x:-124,y:-478},{n:'평원',x:-125,y:-392},
+      {n:'평양',x:-95,y:-308},{n:'송림',x:-112,y:-228},{n:'서흥',x:24,y:-131},
+      {n:'평산',x:63,y:-106},{n:'금천(황해)',x:81,y:-55},{n:'개성',x:101,y:2},
+      {n:'남개성',x:116,y:11},{n:'문산',x:153,y:35}
+    ]},
+    {name:'경원선',color:'#f59e0b',stations:[
+      {n:'원산',x:307,y:-353},{n:'안변읍',x:328,y:-315},{n:'고산읍',x:304,y:-260},
+      {n:'세포읍',x:289,y:-197},{n:'평강',x:273,y:-130},{n:'철원',x:244,y:-85}
+    ]},
+    {name:'동해선',color:'#0ea5e9',stations:[
+      {n:'경흥',x:992,y:-1340},{n:'라선',x:983,y:-1262},{n:'청진',x:861,y:-1126},
+      {n:'명간',x:794,y:-969},{n:'단천',x:655,y:-724},{n:'북청',x:516,y:-670},
+      {n:'광복1동',x:484,y:-609},{n:'함흥',x:333,y:-570},{n:'함주',x:308,y:-553},
+      {n:'정평',x:297,y:-537},{n:'금야읍',x:259,y:-465},{n:'고원읍',x:261,y:-433},
+      {n:'천내',x:256,y:-411},{n:'원산',x:307,y:-353},{n:'통천읍',x:415,y:-288},
+      {n:'조선반도;한반도',x:440,y:-262},{n:'고성(강원)',x:483,y:-226},
+      {n:'서구읍',x:489,y:-210},{n:'북현내',x:504,y:-184},{n:'간성',x:552,y:-119}
+    ]},
+    {name:'평원선',color:'#8b5cf6',stations:[
+      {n:'평양',x:-95,y:-308},{n:'승호',x:-37,y:-300},{n:'연산',x:30,y:-266},
+      {n:'수안',x:52,y:-236},{n:'신계읍',x:95,y:-157},{n:'이천읍',x:178,y:-152},
+      {n:'평강',x:273,y:-130},{n:'화천',x:371,y:-37},{n:'해안',x:474,y:-92},
+      {n:'북현내',x:504,y:-184}
     ]}
   ]
 },
@@ -13216,7 +13260,8 @@ let _allMapLineCache=null;
 function _allAsMapLine(){
   if(_allMapLineCache)return _allMapLineCache;
   const routes=[];
-  for(const ml of Object.values(MAP_LINES)) for(const r of ml.routes) routes.push(r);
+  // 남한 전체보기와 북한 권역도는 지역 선택처럼 분리한다.
+  for(const ml of Object.values(MAP_LINES)) if(!ml.northOnly) for(const r of ml.routes) routes.push(r);
   return _allMapLineCache={name:'전체 네트워크',color:'#8b949e',routes};
 }
 
