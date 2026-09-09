@@ -11868,10 +11868,29 @@ function renderSICard(name){
         <button class="si-board-btn" onclick="switchModeStation('metro','${nameEsc}')">🚇 전철 ${trainName}역으로 전환</button>
       </div>`:''}
       <div class="si-network-map-action">
+        ${d&&d.lat&&d.lon?`<button type="button" aria-expanded="false" aria-controls="si-nearby-map-section" onclick="toggleStationNearbyMap(this)"><svg aria-hidden="true"><use href="#i-map"/></svg><span><strong>역 주변 지도 보기</strong><small>${trainName}역 주변의 실제 지도를 확인합니다</small></span><i class="si-map-chevron" aria-hidden="true">⌄</i></button>
+        <div id="si-nearby-map-section" class="si-nearby-map-section" hidden>
+          <iframe src="https://www.openstreetmap.org/export/embed.html?bbox=${(d.lon-0.01).toFixed(5)},${(d.lat-0.008).toFixed(5)},${(d.lon+0.01).toFixed(5)},${(d.lat+0.008).toFixed(5)}&amp;layer=mapnik&amp;marker=${d.lat.toFixed(5)},${d.lon.toFixed(5)}" loading="lazy" title="${nameEsc} 주변 지도"></iframe>
+          <div class="si-nearby-map-links">
+            <a href="https://map.kakao.com/link/map/${encodeURIComponent(name)},${d.lat},${d.lon}" target="_blank" rel="noopener noreferrer">카카오지도에서 열기</a>
+            <a href="https://map.naver.com/?lng=${d.lon}&amp;lat=${d.lat}&amp;zoom=15" target="_blank" rel="noopener noreferrer">네이버지도에서 열기</a>
+          </div>
+        </div>`:''}
         <button type="button" onclick="openStationReachabilityMap('${trainName.replace(/\\/g,'\\\\').replace(/'/g,"\\'")}')"><svg aria-hidden="true"><use href="#i-map"/></svg><span><strong>지도에서 직통역 보기</strong><small>${trainName}역에서 환승 없이 갈 수 있는 역을 표시합니다</small></span><i aria-hidden="true">›</i></button>
       </div>
     </div>`;
   if(d) siLoadAddress(name, d.lat, d.lon);
+}
+
+function toggleStationNearbyMap(button){
+  const section=document.getElementById('si-nearby-map-section');
+  if(!section)return;
+  const willOpen=section.hidden;
+  section.hidden=!willOpen;
+  if(button){
+    button.setAttribute('aria-expanded',String(willOpen));
+    button.classList.toggle('is-open',willOpen);
+  }
 }
 
 // 좌표 → 주소 (사용자 브라우저에서 역지오코딩, localStorage 캐시, 실패 시 좌표 표시)

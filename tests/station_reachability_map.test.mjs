@@ -12,6 +12,17 @@ test('역 상세 카드는 전체 지도 직통역 보기로 연결된다',()=>{
   assert.match(css,/\.si-network-map-action/);
 });
 
+test('역 상세에서 주변 지도와 직통역 지도를 독립적으로 제공한다',()=>{
+  assert.match(app,/역 주변 지도 보기/);
+  assert.match(app,/id="si-nearby-map-section"/);
+  assert.match(app,/function toggleStationNearbyMap\(button\)/);
+  assert.match(app,/openstreetmap\.org\/export\/embed\.html/);
+  assert.match(app,/map\.kakao\.com\/link\/map/);
+  assert.match(app,/map\.naver\.com/);
+  assert.match(css,/\.si-nearby-map-section/);
+  assert.match(css,/\.si-nearby-map-links/);
+});
+
 test('직통역은 실제 정차 편성과 전철 운행 편성에서 계산한다',()=>{
   assert.match(app,/function _directReachableStations\(stn,mode\)/);
   assert.match(app,/!isPassStop\(t,s\.s\)/);
