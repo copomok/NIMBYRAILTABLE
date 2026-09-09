@@ -4656,16 +4656,16 @@ function _trackedRouteRuns(t){
 }
 // ── 노선도 탭 모드별 렌더 (기차: 기존 노선 탭 / 전철: 전철 노선 선택 바) ──
 let _metroMapRegion=null, _metroMapId=null;
-let _railRegion=(()=>{try{return localStorage.getItem('nimbi_region')==='north'?'north':'south';}catch(e){return 'south';}})();
+let _railRegion=(()=>{try{const value=localStorage.getItem('nimbi_region');return ['south','north','all'].includes(value)?value:'south';}catch(e){return 'south';}})();
 function _syncRailRegionControls(){
   document.querySelectorAll('[data-region-choice]').forEach(button=>{
     const active=button.dataset.regionChoice===_railRegion;
     button.classList.toggle('active',active);button.setAttribute('aria-checked',String(active));
   });
-  const label=document.getElementById('sidebar-region-label');if(label)label.textContent=_railRegion==='north'?'북한':'남한';
+  const label=document.getElementById('sidebar-region-label');if(label)label.textContent={south:'남한',north:'북한',all:'전체'}[_railRegion];
 }
 function setRailRegion(region){
-  if(!['south','north'].includes(region))return;
+  if(!['south','north','all'].includes(region))return;
   _railRegion=region;try{localStorage.setItem('nimbi_region',region);}catch(e){}
   _syncRailRegionControls();
   const menu=document.getElementById('region-menu');if(menu)menu.hidden=true;
@@ -4675,12 +4675,13 @@ function setRailRegion(region){
 function toggleRegionMenu(anchor){
   const menu=document.getElementById('region-menu');if(!menu)return;
   menu.hidden=!menu.hidden;_syncRailRegionControls();
-  if(!menu.hidden&&anchor){const r=anchor.getBoundingClientRect();menu.style.top=`${Math.min(innerHeight-130,r.bottom+7)}px`;menu.style.left=`${Math.max(12,Math.min(innerWidth-170,r.right-158))}px`;menu.querySelector('.active')?.focus();}
+  if(!menu.hidden&&anchor){const r=anchor.getBoundingClientRect();menu.style.top=`${Math.min(innerHeight-180,r.bottom+7)}px`;menu.style.left=`${Math.max(12,Math.min(innerWidth-170,r.right-158))}px`;menu.querySelector('.active')?.focus();}
 }
 function isRailStationInRegion(raw){
   const name=String(raw||'').replace(/역$/,'');
   const northNames=new Set((MAP_LINES.north?.routes||[]).flatMap(route=>route.stations.map(station=>station.n)));
   const shared=new Set(['문산','철원','간성']);
+  if(_railRegion==='all')return true;
   if(shared.has(name))return true;
   return _railRegion==='north'?northNames.has(name):!northNames.has(name);
 }
@@ -4690,6 +4691,7 @@ function renderMapTabForMode(){
   const filterPanel=document.getElementById('map-filter-panel');
   let bar=document.getElementById('metro-line-bar');
   let northBar=document.getElementById('north-line-bar');
+  let allBar=document.getElementById('all-region-line-bar');
   if(_appMode==='metro'&&typeof METRO_LINES!=='undefined'){
     if(tabs)tabs.style.display='none';
     if(controls)controls.style.display='none';
@@ -4699,6 +4701,7 @@ function renderMapTabForMode(){
       tabs.parentNode.insertBefore(bar,tabs.nextSibling);
     }
     if(northBar)northBar.style.display='none';
+    if(allBar)allBar.style.display='none';
     bar.style.display='';
     const regions=[...new Set(METRO_LINES.map(l=>l.region))];
     if(!_metroMapRegion)_metroMapRegion=regions[0];
@@ -4707,10 +4710,11 @@ function renderMapTabForMode(){
     _renderMetroBar(bar);
     showMapLine(_metroMapId==='__all__'?'metroall:'+_metroMapRegion:_metroMapId==='__pick__'?'metropick:':'metro:'+_metroMapId,null);
   } else {
-    if(tabs)tabs.style.display=_railRegion==='north'?'none':'';
+    if(tabs)tabs.style.display=_railRegion==='south'?'':'none';
     if(controls)controls.style.display='flex'; // 원래 inline display:flex 복원 (버튼 줄바꿈 방지)
     if(bar)bar.style.display='none';
     if(_railRegion==='north'){
+      if(allBar)allBar.style.display='none';
       if(!northBar){
         northBar=document.createElement('div');northBar.id='north-line-bar';northBar.className='map-line-tabs north-line-tabs';
         tabs.parentNode.insertBefore(northBar,tabs.nextSibling);
@@ -4721,8 +4725,27 @@ function renderMapTabForMode(){
       const active=[...northBar.querySelectorAll('.map-line-tab')].find(button=>button.getAttribute('onclick')?.includes(`'${currentKey}'`))||northBar.querySelector('.map-line-tab');
       showNorthMapLine(currentKey,active);
     }
+    else if(_railRegion==='all'){
+      if(northBar)northBar.style.display='none';
+      if(!allBar){
+        allBar=document.createElement('div');allBar.id='all-region-line-bar';allBar.className='map-line-tabs all-region-line-tabs';
+        tabs.parentNode.insertBefore(allBar,tabs.nextSibling);
+      }
+      allBar.style.display='';
+      const south=[...tabs.querySelectorAll('.map-line-tab:not(.ctrl)')].map(button=>{
+        const key=button.getAttribute('onclick')?.match(/['"]([\w]+)['"]/)?.[1];
+        return key?`<button class="map-line-tab" onclick="showRegionAllMapLine('${key}',this)">${button.textContent}</button>`:'';
+      }).join('');
+      const north=Object.entries(NORTH_MAP_LINE_KEYS).map(([name,key])=>`<button class="map-line-tab" onclick="showRegionAllMapLine('${key}',this)">북한 ${name}</button>`).join('');
+      allBar.innerHTML=`<button class="map-line-tab ctrl" onclick="showRegionAllMapLine('allregions',this)">전체보기</button>${south}${north}`;
+      const valid=['allregions',...Object.keys(MAP_LINES).filter(key=>!MAP_LINES[key].northOnly),...Object.values(NORTH_MAP_LINE_KEYS)];
+      const currentKey=valid.includes(_mapCurrentLine)?_mapCurrentLine:'allregions';
+      const active=[...allBar.querySelectorAll('.map-line-tab')].find(button=>button.getAttribute('onclick')?.includes(`'${currentKey}'`))||allBar.querySelector('.map-line-tab');
+      showRegionAllMapLine(currentKey,active);
+    }
     else{
       if(northBar)northBar.style.display='none';
+      if(allBar)allBar.style.display='none';
       const activeMapTab=document.querySelector('.map-line-tab.active')||document.querySelector('.map-line-tab');
       const lineKey=(activeMapTab&&activeMapTab.getAttribute('onclick').match(/['"]([\w]+)['"]/)?.[1])||'gyeongbu';
       showMapLine(lineKey,activeMapTab);
@@ -4730,8 +4753,12 @@ function renderMapTabForMode(){
   }
 }
 function showNorthMapLine(lineKey,button){
-  document.querySelectorAll('#north-line-bar .map-line-tab').forEach(item=>item.classList.toggle('active',item===button));
   showMapLine(lineKey,null);
+  document.querySelectorAll('#north-line-bar .map-line-tab').forEach(item=>item.classList.toggle('active',item===button));
+}
+function showRegionAllMapLine(lineKey,button){
+  showMapLine(lineKey,null);
+  document.querySelectorAll('#all-region-line-bar .map-line-tab').forEach(item=>item.classList.toggle('active',item===button));
 }
 // 배차 표시 — hwPeak/hwOff 누락 노선은 'undefined분' 대신 있는 값만 표기
 function _metroHeadway(o){
@@ -4951,7 +4978,8 @@ function _metroXferMap(l){
 function showMapLine(lineKey, btn){
   document.querySelectorAll('.map-line-tab').forEach(t=>t.classList.remove('active'));
   if(btn)btn.classList.add('active');
-  const line=(typeof lineKey==='string'&&lineKey.startsWith('metroall:'))?_metroRegionAsMapLine(lineKey.slice(9))
+  const line=lineKey==='allregions'?_allRegionsAsMapLine()
+    :(typeof lineKey==='string'&&lineKey.startsWith('metroall:'))?_metroRegionAsMapLine(lineKey.slice(9))
     :(typeof lineKey==='string'&&lineKey.startsWith('metropick:'))?_metroPickAsMapLine()
     :(typeof lineKey==='string'&&lineKey.startsWith('metro:'))?_metroAsMapLine(lineKey.slice(6))
     :(lineKey==='all'?_allAsMapLine():MAP_LINES[lineKey]);
@@ -9227,7 +9255,7 @@ function renderSettingsSection(el){
     <div class="settings-divider"></div>
     <div class="settings-title">철도 지역</div>
     <div class="settings-chip-row" role="group" aria-label="철도 지역 선택">
-      ${[['south','남한'],['north','북한']].map(([value,label])=>`<button class="seat-auto-chip${_railRegion===value?' on':''}" onclick="setRailRegion('${value}');renderSettingsSection(document.getElementById('my-sub-content'))">${label}</button>`).join('')}
+      ${[['south','남한'],['north','북한'],['all','전체']].map(([value,label])=>`<button class="seat-auto-chip${_railRegion===value?' on':''}" onclick="setRailRegion('${value}');renderSettingsSection(document.getElementById('my-sub-content'))">${label}</button>`).join('')}
     </div>
     <div class="settings-help">선택한 지역의 노선도·역·통합 검색 정보만 표시하며 이 기기에 저장됩니다.</div>
     <div class="settings-divider"></div>
@@ -13380,6 +13408,11 @@ function _allAsMapLine(){
   // 남한 전체보기와 북한 권역도는 지역 선택처럼 분리한다.
   for(const ml of Object.values(MAP_LINES)) if(!ml.northOnly) for(const r of ml.routes) routes.push(r);
   return _allMapLineCache={name:'전체 네트워크',color:'#8b949e',routes};
+}
+let _allRegionsMapLineCache=null;
+function _allRegionsAsMapLine(){
+  if(_allRegionsMapLineCache)return _allRegionsMapLineCache;
+  return _allRegionsMapLineCache={name:'남북 전체 네트워크',color:'#8b949e',noSpread:true,allView:true,routes:[..._allAsMapLine().routes,...MAP_LINES.north.routes]};
 }
 
 // ── 공용: 주요역 목록(정차 편수 상위) ──

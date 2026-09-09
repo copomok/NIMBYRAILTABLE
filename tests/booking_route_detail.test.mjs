@@ -43,8 +43,8 @@ test('운행 정보창은 반응형 시트이며 새 캐시로 배포된다',()=
   assert.match(css,/@media\(min-width:768px\)/);
   assert.match(css,/@media\(max-width:520px\)/);
   assert.match(html,/nimbi_rail\.css\?v=2026090905/);
-  assert.match(html,/nimbi_rail\.js\?v=2026090905/);
-  assert.match(sw,/nimbirail-2026090905/);
+  assert.match(html,/nimbi_rail\.js\?v=2026090906/);
+  assert.match(sw,/nimbirail-2026090906/);
 });
 
 test('운행 정보는 시간표·지도 탭과 선택 구간 노선도를 제공한다',()=>{

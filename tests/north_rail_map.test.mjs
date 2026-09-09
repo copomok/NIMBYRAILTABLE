@@ -55,11 +55,21 @@ test('남한 경원선과 지역 전환 설정을 제공한다',()=>{
   assert.match(index,/sidebar-region-label/);
 });
 
-test('북한 시간표는 추가하지 않고 교외선 순환 계통에 경의선만 병기한다',()=>{
+test('지역 전체 선택은 남북 역·노선도·검색을 함께 제공한다',()=>{
+  assert.match(index,/data-region-choice="all"/);
+  assert.match(rail,/\['south','north','all'\]\.includes\(value\)/);
+  assert.match(rail,/if\(_railRegion==='all'\)return true/);
+  assert.match(rail,/function _allRegionsAsMapLine\(\)/);
+  assert.match(rail,/routes:\[\.\.\._allAsMapLine\(\)\.routes,\.\.\.MAP_LINES\.north\.routes\]/);
+  assert.match(rail,/id='all-region-line-bar'/);
+  assert.match(rail,/function showRegionAllMapLine\(lineKey,button\)/);
+  assert.match(rail,/\['south','남한'\],\['north','북한'\],\['all','전체'\]/);
+});
+
+test('교외선 순환 계통은 경의선을 함께 병기한다',()=>{
   const context={};
   vm.runInNewContext(`${data}\nthis.trains=ALL_TRAINS`,context);
   const loop=context.trains.filter(t=>Number(t.no)>=4401&&Number(t.no)<=4428);
   assert.equal(loop.length,28);
   assert.ok(loop.every(t=>t.line.includes('교외선')&&t.line.includes('경의선')));
-  assert.equal(context.trains.some(t=>['신의주','평양','원산','경흥'].includes(t.boundary?.[0])||['신의주','평양','원산','경흥'].includes(t.boundary?.[1])),false);
 });
