@@ -2764,6 +2764,10 @@ const CONFIRMED_ROTATION = (()=>{
   addNorthCycles('원산-마포 KTX-이음',9551,13,1);
   addNorthCycles('원산-혜산 KTX-이음',9581,7,1);
   addNorthCycles('원산-무산 KTX-이음',9601,7,1);
+  addNorthCycles('신의주-서울 KTX-산천',9001,18,3);
+  addNorthCycles('원산-부산 KTX-이음',9521,10,2);
+  addNorthCycles('경흥-남대구 KTX-산천',9701,8,3);
+  addNorthCycles('경흥-목포 KTX-산천',9751,7,3);
   const m={};
   sets.forEach(s=>s.seq.forEach((no,i)=>{ m[no]={id:s.id, seq:s.seq, idx:i}; }));
   return m;

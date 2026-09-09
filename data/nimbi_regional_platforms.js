@@ -277,7 +277,8 @@
 (()=>{
   if(typeof REAL_PLAT==='undefined'||typeof ALL_TRAINS==='undefined')return;
   const included=no=>(no>=3001&&no<=3024)||(no>=3501&&no<=3528)||(no>=8001&&no<=8012)||
-    (no>=9051&&no<=9114)||(no>=9551&&no<=9614);
+    (no>=9001&&no<=9036)||(no>=9051&&no<=9114)||(no>=9521&&no<=9614)||
+    (no>=9701&&no<=9716)||(no>=9751&&no<=9766);
   for(const train of ALL_TRAINS){
     if(!included(Number(train.no)))continue;
     const mapped=REAL_PLAT[train.no]||(REAL_PLAT[train.no]={});

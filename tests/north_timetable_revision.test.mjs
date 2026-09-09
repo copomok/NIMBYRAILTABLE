@@ -16,14 +16,18 @@ const groups=[
   [3001,3024,12,80,100,'평원선','무궁화호'],
   [3501,3528,14,60,90,'경원선','무궁화호'],
   [8001,8012,6,175,185,'경원선·동해선','KTX-산천'],
+  [9001,9036,18,55,65,'경의선','KTX-산천'],
   [9051,9078,14,70,90,'평성선','KTX-이음'],
   [9101,9114,7,120,180,'평원선','KTX-이음'],
+  [9521,9540,10,90,120,'동해선','KTX-이음'],
   [9551,9576,13,70,90,'경원선·경부고속선','KTX-이음'],
   [9581,9594,7,130,180,'동해선','KTX-이음'],
-  [9601,9614,7,130,180,'동해선','KTX-이음']
+  [9601,9614,7,130,180,'동해선','KTX-이음'],
+  [9701,9716,8,110,130,'대구선·동해선','KTX-산천'],
+  [9751,9764,7,110,130,'호남고속선·경부고속선·경원선·동해선','KTX-산천']
 ];
 
-test('북한 8개 계통은 지정 번호·등급·노선과 동일한 양방향 편수를 쓴다',()=>{
+test('북한 12개 계통은 지정 번호·등급·노선과 동일한 양방향 편수를 쓴다',()=>{
   for(const [first,last,count,, ,line,grade] of groups){
     const selected=trains.filter(train=>Number(train.no)>=first&&Number(train.no)<=last);
     assert.equal(selected.length,count*2,`${first}번대 총 편수`);
@@ -31,6 +35,41 @@ test('북한 8개 계통은 지정 번호·등급·노선과 동일한 양방향
     assert.equal(selected.filter(train=>train.dir==='up').length,count,`${first}번대 상행`);
     assert.ok(selected.every(train=>train.line===line&&train.grade===grade),`${first}번대 노선·등급`);
     assert.ok(selected.every(train=>Number(train.no)%2===(train.dir==='down'?1:0)),`${first}번대 홀짝 방향`);
+  }
+});
+
+test('사용자가 지정한 북한 계통의 하행 방향은 홀수편에 적용된다',()=>{
+  const expected=new Map([
+    [9001,['신의주','서울']],[9101,['샘물동','평양']],[9521,['원산','부산']],
+    [9551,['원산','마포']],[9581,['혜산','원산']],[9601,['무산','원산']],
+    [9701,['경흥','남대구']],[9751,['경흥','목포']]
+  ]);
+  for(const [no,[from,to]] of expected){
+    const train=trains.find(item=>Number(item.no)===no);
+    assert.equal(train.dir,'down',`#${no} 하행`);
+    assert.deepEqual(Array.from(train.boundary),[from,to],`#${no} 운행 방향`);
+    assert.equal(train.stops[0].s,from,`#${no} 기점`);
+    assert.equal(train.stops.at(-1).s,to,`#${no} 종점`);
+  }
+});
+
+test('경흥발 남대구·목포 KTX-산천은 합산 약 1시간 간격으로 교차 운행한다',()=>{
+  const departures=trains.filter(train=>train.dir==='down'&&((Number(train.no)>=9701&&Number(train.no)<=9716)||(Number(train.no)>=9751&&Number(train.no)<=9764)))
+    .map(train=>minute(train.stops[0].dep)).sort((a,b)=>a-b);
+  for(let index=1;index<departures.length;index++){
+    const gap=departures[index]-departures[index-1];
+    assert.ok(gap>=50&&gap<=70,`경흥발 합산 배차 ${gap}분`);
+  }
+});
+
+test('남대구-경흥은 대구선의 경산·건천·안강을 시간 있는 통과역으로 지난다',()=>{
+  for(const train of trains.filter(item=>Number(item.no)>=9701&&Number(item.no)<=9716)){
+    for(const station of ['경산','건천','안강']){
+      const stop=train.stops.find(item=>item.s===station);
+      assert.ok(stop?.arr,`#${train.no} ${station} 통과 시각`);
+      assert.equal(stop.dep,null,`#${train.no} ${station} 통과`);
+      assert.equal(stop.p,undefined,`#${train.no} ${station} 승강장 제외`);
+    }
   }
 });
 
