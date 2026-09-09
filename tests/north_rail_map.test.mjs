@@ -66,6 +66,19 @@ test('지역 전체 선택은 남북 역·노선도·검색을 함께 제공한�
   assert.match(rail,/\['south','남한'\],\['north','북한'\],\['all','전체'\]/);
 });
 
+test('남북 동해선은 전체 지역에서 하나의 연속 노선으로 표시된다',()=>{
+  assert.match(rail,/MAP_LINES\.donghae_all=/);
+  assert.match(rail,/stations:\[\.\.\.northMain\.stations,\.\.\.southMain\.stations\.slice\(1\)\]/);
+  assert.match(rail,/combinedKey=key==='donghae'\?'donghae_all':key/);
+  assert.match(rail,/filter\(\(\[name\]\)=>name!=='동해선'\)/);
+  assert.match(rail,/\{name:'동해선',color:'#3fb994',stations:/);
+});
+
+test('남북 전체 노선도는 전 노선 열차 위치를 수집한다',()=>{
+  assert.match(rail,/const isAll=_mapCurrentLine==='all'\|\|_mapCurrentLine==='allregions'/);
+  assert.match(rail,/const line=isAll\?\{name:'__all__'\}:MAP_LINES\[_mapCurrentLine\]/);
+});
+
 test('교외선 순환 계통은 경의선을 함께 병기한다',()=>{
   const context={};
   vm.runInNewContext(`${data}\nthis.trains=ALL_TRAINS`,context);
