@@ -96,11 +96,35 @@ test('상행은 하행 구간시각을 역산하고 시종착역을 완전히 �
     const down=selected.find(train=>train.dir==='down'),up=selected.find(train=>train.dir==='up');
     assert.equal(down.stops[0].s,up.stops.at(-1).s,`#${first} 원 기점 복원`);
     assert.equal(down.stops.at(-1).s,up.stops[0].s,`#${first} 반대 기점 복원`);
-    const downSegments=down.stops.slice(1).map((stop,index)=>elapsed(down.stops[index].dep||down.stops[index].arr,stop.arr||stop.dep));
-    const upSegments=up.stops.slice(1).map((stop,index)=>elapsed(up.stops[index].dep||up.stops[index].arr,stop.arr||stop.dep));
+    const timed=stops=>stops.filter(stop=>/^\d{1,2}:\d{2}$/.test(stop.arr||'')||/^\d{1,2}:\d{2}$/.test(stop.dep||''));
+    const downTimed=timed(down.stops),upTimed=timed(up.stops);
+    const downSegments=downTimed.slice(1).map((stop,index)=>elapsed(downTimed[index].dep||downTimed[index].arr,stop.arr||stop.dep));
+    const upSegments=upTimed.slice(1).map((stop,index)=>elapsed(upTimed[index].dep||upTimed[index].arr,stop.arr||stop.dep));
     const reversed=downSegments.toReversed();
     assert.equal(upSegments.length,reversed.length,`#${first} 역산 구간 수`);
     upSegments.forEach((duration,index)=>assert.ok(Math.abs(duration-reversed[index])<=1,`#${first} 역산 ${index+1}구간`));
+  }
+});
+
+test('정차역 사이의 노선상 중간역은 무시각 통과역으로 양방향에 포함된다',()=>{
+  const expected=new Map([
+    [3001,['숙천','성천']],[8001,['남금호','철원','안변읍','천내','고원읍','광복1동','북청','단천','명간']],
+    [9001,['행신']],[9521,['조선반도;한반도','북현내','동강릉','삼척','불국사','입실','해운대']],
+    [9551,['남금호']],[9581,['고원읍','함주읍']],[9601,['천내']],
+    [9701,['조선반도;한반도','북현내','동강릉','울진','함주읍']],
+    [9751,['도림','함평','정읍','공주','정안','천안','철원','안변읍','함주읍']]
+  ]);
+  for(const [no,stations] of expected){
+    const down=trains.find(train=>Number(train.no)===no),up=trains.find(train=>Number(train.no)===no+1);
+    for(const station of stations){
+      for(const train of [down,up]){
+        const stop=train.stops.find(item=>item.s===station);
+        assert.equal(stop?.arr,'통과',`#${train.no} ${station} 무시각 통과`);
+        assert.equal(stop.dep,null,`#${train.no} ${station} 비정차`);
+        assert.equal(stop.p,undefined,`#${train.no} ${station} 승강장 제외`);
+      }
+    }
+    assert.deepEqual(down.stops.map(stop=>stop.s),up.stops.map(stop=>stop.s).toReversed(),`#${no} 양방향 역순`);
   }
 });
 

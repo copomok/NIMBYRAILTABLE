@@ -354,7 +354,9 @@ function renderNotice(notice){
 }
 
 fs.mkdirSync(OUT,{recursive:true});
+const selectedIds=new Set(process.argv.slice(2));
 for(const notice of notices){
+  if(selectedIds.size&&!selectedIds.has(notice.id))continue;
   const svg=renderNotice(notice);
   const target=path.join(OUT,`${notice.id}.svg`);
   fs.writeFileSync(target,svg);

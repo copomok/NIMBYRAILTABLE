@@ -359,8 +359,10 @@ function renderSummary(config, notice) {
 
 const notices = loadNotices();
 fs.mkdirSync(OUT, { recursive: true });
+const selectedIds = new Set(process.argv.slice(2));
 
 for (const config of CONFIGS) {
+  if (selectedIds.size && !selectedIds.has(config.id)) continue;
   const notice = notices.find(item => item.title === config.noticeTitle);
   if (!notice) throw new Error(`${config.id}: 공지를 찾지 못했습니다: ${config.noticeTitle}`);
   const svg = renderSummary(config, notice);
