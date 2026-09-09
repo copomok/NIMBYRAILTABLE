@@ -3326,7 +3326,7 @@ const GRADE_COLORS = {
 };
 
 // 노선명 → MAP_LINES 키, 노선별 인접역 쌍 캐시 (구간 소속 판별용)
-const _lineNameToKey={'경부선':'gyeongbu','경부고속선':'gyeongbuhs','호남고속선':'honamhs','호남선':'honam','전라선':'jeolla','중앙선':'jungang','동해선':'donghae','영동선':'yeongdong','강릉선':'gangreung','중부내륙선':'jungnaelyuk','경전선':'gyeongjeon','제주선':'jeju','충북선':'chungbuk','장항선':'janghang','남부내륙선':'nambunaelyuk','서산선':'seosan','태안선':'taean','경강선':'seogang','소백선':'sobaek','경북선':'gyeongbuk','태백선':'taebaek','정선선':'jeongseon','밀양선':'miryang','세종세천선':'sejongsecheon','교외선':'gyooe','경의선':'gyeongui','보은선':'boeun','대구선':'daegu'};
+const _lineNameToKey={'경부선':'gyeongbu','경부고속선':'gyeongbuhs','호남고속선':'honamhs','호남선':'honam','전라선':'jeolla','중앙선':'jungang','동해선':'donghae','영동선':'yeongdong','강릉선':'gangreung','중부내륙선':'jungnaelyuk','경전선':'gyeongjeon','제주선':'jeju','충북선':'chungbuk','장항선':'janghang','남부내륙선':'nambunaelyuk','서산선':'seosan','태안선':'taean','경강선':'seogang','소백선':'sobaek','경북선':'gyeongbuk','태백선':'taebaek','정선선':'jeongseon','밀양선':'miryang','세종세천선':'sejongsecheon','교외선':'gyooe','경의선':'gyeongui','경원선':'gyeongwon','보은선':'boeun','대구선':'daegu'};
 const _mapEdgeCache={};
 function _mapLineEdgeSet(key){
   if(_mapEdgeCache[key])return _mapEdgeCache[key];
@@ -4339,15 +4339,16 @@ gyooe:{
   name:'교외선', color:'#65a30d', noSpread:true,
   routes:[
     {color:'#65a30d', stations:[
-    {n:'의정부',x:216,y:69},
-    {n:'가능',x:213,y:67},
-    {n:'송추',x:200,y:76},
-    {n:'장흥(양주)',x:192,y:76},
-    {n:'고양',x:183,y:80},
-    {n:'관산',x:174,y:86},
-    {n:'주교',x:167,y:93},
-    {n:'능곡',x:162,y:105},
-    {n:'행신',x:167,y:107}
+    {n:'의정부',x:216,y:68},
+    {n:'가능',x:212,y:67},
+    {n:'송추',x:200,y:75},
+    {n:'장흥(양주)',x:191,y:76},
+    {n:'고양',x:182,y:80},
+    {n:'관산',x:173,y:85},
+    {n:'주교',x:167,y:92},
+    {n:'능곡',x:162,y:104},
+    {n:'행신',x:167,y:107},
+    {n:'서울',x:198,y:124}
     ]}
   ]
 },
@@ -4357,6 +4358,15 @@ gyeongui:{
   routes:[{color:'#2563eb',stations:[
     {n:'서울',x:198,y:124},{n:'행신',x:167,y:107},
     {n:'일산',x:151,y:86},{n:'문산',x:153,y:35}
+  ]}]
+},
+
+gyeongwon:{
+  name:'경원선', color:'#f59e0b', noSpread:true,
+  routes:[{color:'#f59e0b',stations:[
+    {n:'서울',x:198,y:124},{n:'남금호',x:209,y:126},{n:'청량리',x:216,y:117},
+    {n:'의정부',x:216,y:68},{n:'양주',x:216,y:56},{n:'동두천',x:218,y:23},
+    {n:'연천',x:222,y:-37},{n:'철원',x:244,y:-85}
   ]}]
 },
 
@@ -4612,6 +4622,34 @@ function _trackedRouteRuns(t){
 }
 // ── 노선도 탭 모드별 렌더 (기차: 기존 노선 탭 / 전철: 전철 노선 선택 바) ──
 let _metroMapRegion=null, _metroMapId=null;
+let _railRegion=(()=>{try{return localStorage.getItem('nimbi_region')==='north'?'north':'south';}catch(e){return 'south';}})();
+function _syncRailRegionControls(){
+  document.querySelectorAll('[data-region-choice]').forEach(button=>{
+    const active=button.dataset.regionChoice===_railRegion;
+    button.classList.toggle('active',active);button.setAttribute('aria-checked',String(active));
+  });
+  const label=document.getElementById('sidebar-region-label');if(label)label.textContent=_railRegion==='north'?'북한':'남한';
+}
+function setRailRegion(region){
+  if(!['south','north'].includes(region))return;
+  _railRegion=region;try{localStorage.setItem('nimbi_region',region);}catch(e){}
+  _syncRailRegionControls();
+  const menu=document.getElementById('region-menu');if(menu)menu.hidden=true;
+  if(_appMode==='train')renderMapTabForMode();
+  document.dispatchEvent(new CustomEvent('nimbi-region-change',{detail:{region}}));
+}
+function toggleRegionMenu(anchor){
+  const menu=document.getElementById('region-menu');if(!menu)return;
+  menu.hidden=!menu.hidden;_syncRailRegionControls();
+  if(!menu.hidden&&anchor){const r=anchor.getBoundingClientRect();menu.style.top=`${Math.min(innerHeight-130,r.bottom+7)}px`;menu.style.left=`${Math.max(12,Math.min(innerWidth-170,r.right-158))}px`;menu.querySelector('.active')?.focus();}
+}
+function isRailStationInRegion(raw){
+  const name=String(raw||'').replace(/역$/,'');
+  const northNames=new Set((MAP_LINES.north?.routes||[]).flatMap(route=>route.stations.map(station=>station.n)));
+  const shared=new Set(['문산','철원','간성']);
+  if(shared.has(name))return true;
+  return _railRegion==='north'?northNames.has(name):!northNames.has(name);
+}
 function renderMapTabForMode(){
   const tabs=document.getElementById('map-line-tabs');
   const controls=document.getElementById('map-controls-bar');
@@ -4633,12 +4671,15 @@ function renderMapTabForMode(){
     _renderMetroBar(bar);
     showMapLine(_metroMapId==='__all__'?'metroall:'+_metroMapRegion:_metroMapId==='__pick__'?'metropick:':'metro:'+_metroMapId,null);
   } else {
-    if(tabs)tabs.style.display='';
+    if(tabs)tabs.style.display=_railRegion==='north'?'none':'';
     if(controls)controls.style.display='flex'; // 원래 inline display:flex 복원 (버튼 줄바꿈 방지)
     if(bar)bar.style.display='none';
-    const activeMapTab=document.querySelector('.map-line-tab.active')||document.querySelector('.map-line-tab');
-    const lineKey=(activeMapTab&&activeMapTab.getAttribute('onclick').match(/['"]([\w]+)['"]/)?.[1])||'gyeongbu';
-    showMapLine(lineKey, activeMapTab);
+    if(_railRegion==='north')showMapLine('north',null);
+    else{
+      const activeMapTab=document.querySelector('.map-line-tab.active')||document.querySelector('.map-line-tab');
+      const lineKey=(activeMapTab&&activeMapTab.getAttribute('onclick').match(/['"]([\w]+)['"]/)?.[1])||'gyeongbu';
+      showMapLine(lineKey,activeMapTab);
+    }
   }
 }
 // 배차 표시 — hwPeak/hwOff 누락 노선은 'undefined분' 대신 있는 값만 표기
@@ -9132,6 +9173,12 @@ function renderSettingsSection(el){
       ${[['light','라이트'],['dark','다크'],['system','시스템']].map(([value,label])=>`<button class="seat-auto-chip${themePref===value?' on':''}" onclick="setNimbiTheme('${value}');renderSettingsSection(document.getElementById('my-sub-content'))">${label}</button>`).join('')}
     </div>
     <div class="settings-help">시스템은 기기의 밝은 화면·어두운 화면 설정을 자동으로 따릅니다.</div>
+    <div class="settings-divider"></div>
+    <div class="settings-title">철도 지역</div>
+    <div class="settings-chip-row" role="group" aria-label="철도 지역 선택">
+      ${[['south','남한'],['north','북한']].map(([value,label])=>`<button class="seat-auto-chip${_railRegion===value?' on':''}" onclick="setRailRegion('${value}');renderSettingsSection(document.getElementById('my-sub-content'))">${label}</button>`).join('')}
+    </div>
+    <div class="settings-help">선택한 지역의 노선도·역·통합 검색 정보만 표시하며 이 기기에 저장됩니다.</div>
     <div class="settings-divider"></div>
     <div class="settings-title">지연 시뮬레이션</div>
     <div class="sim-toggle-card">

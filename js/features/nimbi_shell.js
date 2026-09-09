@@ -138,6 +138,7 @@
     const out=[];
     const seen=new Set();
     if(typeof STATION_DB!=='undefined')Object.keys(STATION_DB).forEach(name=>{
+      if(mode()==='train'&&typeof isRailStationInRegion==='function'&&!isRailStationInRegion(name))return;
       const key=`station:${name}`;if(seen.has(key))return;seen.add(key);
       const info=STATION_DB[name]||{};
       out.push({type:'STATION',title:name,meta:info.lines?.join(' · ')||'역 정보',action:()=>{closeGlobalSearch();window.nimbiOpenStation(name);}});
@@ -145,7 +146,7 @@
     if(typeof ALL_TRAINS!=='undefined')ALL_TRAINS.forEach(train=>{
       out.push({type:'TRAIN',title:`${train.grade} ${train.no}`,meta:`${train.stops?.[0]?.s||''} → ${train.dest||''} · ${train.line||''}`,search:`${train.no} ${train.dest} ${train.grade} ${train.line}`,action:()=>{closeGlobalSearch();if(typeof jumpToTrain==='function')jumpToTrain(String(train.no));}});
     });
-    if(typeof MAP_LINES!=='undefined')Object.values(MAP_LINES).forEach(line=>{
+    if(typeof MAP_LINES!=='undefined')Object.values(MAP_LINES).filter(line=>typeof _railRegion==='undefined'||(_railRegion==='north'?line.northOnly:!line.northOnly)).forEach(line=>{
       const key=`route:${line.name}`;if(seen.has(key))return;seen.add(key);
       out.push({type:'ROUTE',title:line.name,meta:'기차 노선도',action:()=>{closeGlobalSearch();window.nimbiNavigate('map');setTimeout(()=>{const b=[...document.querySelectorAll('.map-line-tab')].find(x=>x.textContent.trim()===line.name);if(b)b.click();},0);}});
     });
@@ -254,7 +255,7 @@
     const lineMap={},counts={},gradeMap={};
     const add=(raw,line)=>{const name=typeof raw==='string'?raw:(raw?.n||raw?.name);if(name)(lineMap[name]=lineMap[name]||new Set()).add(line);};
     if(isMetro&&typeof METRO_LINES!=='undefined')METRO_LINES.forEach(line=>(line.routes||[{stations:line.stations||[]}]).forEach(route=>(route.stations||[]).forEach(station=>add(station,line.name))));
-    if(!isMetro&&typeof MAP_LINES!=='undefined')Object.values(MAP_LINES).forEach(line=>(line.routes||[]).forEach(route=>(route.stations||[]).forEach(station=>add(station,line.name))));
+    if(!isMetro&&typeof MAP_LINES!=='undefined')Object.values(MAP_LINES).filter(line=>typeof _railRegion==='undefined'||(_railRegion==='north'?line.northOnly:!line.northOnly)).forEach(line=>(line.routes||[]).forEach(route=>(route.stations||[]).forEach(station=>add(station,line.name))));
     if(!isMetro&&typeof ALL_TRAINS!=='undefined')ALL_TRAINS.forEach(train=>(train.stops||[]).forEach(stop=>{if(!stop.s||(!stop.arr&&!stop.dep))return;counts[stop.s]=(counts[stop.s]||0)+1;if(typeof isPassStop!=='function'||!isPassStop(train,stop.s))(gradeMap[stop.s]=gradeMap[stop.s]||new Set()).add(train.grade);}));
     return Object.keys(lineMap).map(name=>{
       const db=typeof STATION_DB!=='undefined'?(STATION_DB[name]||STATION_DB[name+'역']||{}):{};
@@ -338,7 +339,12 @@
         event.preventDefault();document.getElementById('global-search')?.hidden?openGlobalSearch():closeGlobalSearch();
       }else if(event.key==='Escape'&&!document.getElementById('global-search')?.hidden)closeGlobalSearch();
     });
-    document.addEventListener('click',event=>{const menu=document.getElementById('theme-menu');if(menu&&!menu.hidden&&!event.target.closest('#theme-menu')&&!event.target.closest('[onclick^="toggleThemeMenu"]'))menu.hidden=true;});
+    document.addEventListener('click',event=>{
+      const menu=document.getElementById('theme-menu');if(menu&&!menu.hidden&&!event.target.closest('#theme-menu')&&!event.target.closest('[onclick^="toggleThemeMenu"]'))menu.hidden=true;
+      const region=document.getElementById('region-menu');if(region&&!region.hidden&&!event.target.closest('#region-menu')&&!event.target.closest('[onclick^="toggleRegionMenu"]'))region.hidden=true;
+    });
+    document.addEventListener('nimbi-region-change',()=>{searchItems=null;if(currentTab()==='stationinfo')renderStationDirectory();if(currentTab()==='home')renderOverview();});
+    if(typeof _syncRailRegionControls==='function')_syncRailRegionControls();
     const uiObserver=new MutationObserver(records=>records.forEach(record=>record.addedNodes.forEach(node=>{if(node.nodeType===1)enhanceLegacyIcons(node);})));uiObserver.observe(document.body,{childList:true,subtree:true});
     const panels=[...document.querySelectorAll('.panel')];
     const observer=new MutationObserver(records=>{if(records.some(record=>record.target.classList.contains('active'))){syncShell();if(currentTab()==='home')renderOverview();}});

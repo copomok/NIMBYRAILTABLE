@@ -26,7 +26,15 @@ test('북한 철도망은 네 노선과 남한 경계역을 포함한다',()=>{
   assert.ok(routes.평원선.includes('북현내'));
   assert.ok(routes.경의선.includes('금천(황해)'));
   assert.ok(routes.동해선.includes('고성(강원)'));
-  assert.match(index,/showMapLine\('north'/);
+  assert.doesNotMatch(index,/class="map-line-tab" onclick="showMapLine\('north'/);
+  assert.match(index,/data-region-choice="north"/);
+});
+
+test('남한 경원선과 지역 전환 설정을 제공한다',()=>{
+  assert.equal(MAP_LINES.gyeongwon.routes[0].stations.map(s=>s.n).join(','),'서울,남금호,청량리,의정부,양주,동두천,연천,철원');
+  assert.match(rail,/localStorage\.getItem\('nimbi_region'\)/);
+  assert.match(rail,/철도 지역/);
+  assert.match(index,/sidebar-region-label/);
 });
 
 test('북한 시간표는 추가하지 않고 교외선 순환 계통에 경의선만 병기한다',()=>{

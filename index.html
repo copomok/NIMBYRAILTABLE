@@ -90,6 +90,7 @@
   </nav>
   <div class="sidebar-footer">
     <button type="button" onclick="openMyPage();openMySection('settings')"><svg><use href="#i-settings"/></svg><span>설정</span></button>
+    <button type="button" onclick="toggleRegionMenu(this)"><svg><use href="#i-map"/></svg><span>지역</span><small id="sidebar-region-label">남한</small></button>
     <button type="button" onclick="toggleThemeMenu(this)"><svg><use href="#i-moon"/></svg><span>테마</span><small id="sidebar-theme-label">시스템</small></button>
   </div>
   <button class="sidebar-account" type="button" onclick="openMyPage()"><svg><use href="#i-user"/></svg><span><strong>마이페이지</strong><small>승차권 · 여행 · 설정</small></span></button>
@@ -111,6 +112,10 @@
   <button type="button" role="menuitemradio" data-theme-choice="light" onclick="setNimbiTheme('light')"><svg><use href="#i-sun"/></svg><span>라이트</span></button>
   <button type="button" role="menuitemradio" data-theme-choice="dark" onclick="setNimbiTheme('dark')"><svg><use href="#i-moon"/></svg><span>다크</span></button>
   <button type="button" role="menuitemradio" data-theme-choice="system" onclick="setNimbiTheme('system')"><svg><use href="#i-monitor"/></svg><span>시스템</span></button>
+</div>
+<div class="theme-menu" id="region-menu" hidden role="menu" aria-label="철도 지역">
+  <button type="button" role="menuitemradio" data-region-choice="south" onclick="setRailRegion('south')"><svg><use href="#i-map"/></svg><span>남한</span></button>
+  <button type="button" role="menuitemradio" data-region-choice="north" onclick="setRailRegion('north')"><svg><use href="#i-map"/></svg><span>북한</span></button>
 </div>
 
 <div class="global-search" id="global-search" hidden>
@@ -475,8 +480,8 @@
       <button class="map-line-tab" onclick="showMapLine('sejongsecheon',this)">세종세천선</button>
       <button class="map-line-tab" onclick="showMapLine('gyooe',this)">교외선</button>
       <button class="map-line-tab" onclick="showMapLine('gyeongui',this)">경의선</button>
+      <button class="map-line-tab" onclick="showMapLine('gyeongwon',this)">경원선</button>
       <button class="map-line-tab" onclick="showMapLine('boeun',this)">보은선</button>
-      <button class="map-line-tab" onclick="showMapLine('north',this)">북한 철도망</button>
     </div>
     <!-- 컨트롤 바 (항상 표시: 열차수 + 방향 + 필터 토글) -->
     <div id="map-controls-bar" style="display:flex;align-items:center;gap:6px;padding:6px 0 4px;flex-wrap:wrap">
@@ -635,11 +640,11 @@
   <script src="js/features/nimbi_booking_dynamics.js?v=2026072802"></script>
   <script src="js/features/nimbi_inventory.js?v=2026073124"></script>
 <script src="js/features/nimbi_delay.js?v=2026090302"></script>
-<script src="js/nimbi_rail.js?v=2026090902"></script>
+<script src="js/nimbi_rail.js?v=2026090903"></script>
   <script src="js/features/nimbi_congestion.js?v=2026073110"></script>
   <script src="js/features/nimbi_engagement.js?v=2026073110"></script>
   <script src="js/features/nimbi_operations_hub.js?v=2026090702"></script>
-  <script src="js/features/nimbi_shell.js?v=2026090702"></script>
+  <script src="js/features/nimbi_shell.js?v=2026090903"></script>
   <script>
   if('serviceWorker' in navigator){
     window.addEventListener('load', ()=>{
