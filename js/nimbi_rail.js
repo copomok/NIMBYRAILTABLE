@@ -2736,6 +2736,31 @@ const CONFIRMED_ROTATION = (()=>{
     {id:"전주 8(여수주박)", seq:["1538","1541"]},
     {id:"전주 9(목포 격일주박)", seq:["1589","1588"]},
   ];
+  // 북한 신설 계통은 종착 5분 이후 가장 이른 반대편 열차로 연결한 순환 운용이다.
+  // 하루 경계를 넘는 순환도 각 열차번호를 한 번씩만 포함하며 최초 출발지로 복귀한다.
+  const addNorthCycles=(label,first,count,step)=>{
+    const seen=new Set();
+    const key=(dir,index)=>`${dir}:${index}`;
+    const number=(dir,index)=>String(first+index*2+(dir==='up'?1:0));
+    for(const initialDir of ['down','up'])for(let initialIndex=0;initialIndex<count;initialIndex++){
+      if(seen.has(key(initialDir,initialIndex)))continue;
+      const seq=[];
+      let dir=initialDir,index=initialIndex;
+      while(!seen.has(key(dir,index))){
+        seen.add(key(dir,index));seq.push(number(dir,index));
+        dir=dir==='down'?'up':'down';index=(index+step)%count;
+      }
+      sets.push({id:`${label} ${sets.filter(set=>set.id.startsWith(label+' ')).length+1}(순환)`,seq});
+    }
+  };
+  addNorthCycles('평양-원산 무궁화',3001,12,2);
+  addNorthCycles('서울-양구-원산 무궁화',3501,14,3);
+  addNorthCycles('서울-블라디보스토크 KTX-산천',8001,6,2);
+  addNorthCycles('평양-개성 KTX-이음',9051,14,2);
+  addNorthCycles('평양-만포 KTX-이음',9101,7,1);
+  addNorthCycles('원산-마포 KTX-이음',9551,13,1);
+  addNorthCycles('원산-혜산 KTX-이음',9581,7,1);
+  addNorthCycles('원산-무산 KTX-이음',9601,7,1);
   const m={};
   sets.forEach(s=>s.seq.forEach((no,i)=>{ m[no]={id:s.id, seq:s.seq, idx:i}; }));
   return m;

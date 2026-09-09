@@ -1478,6 +1478,83 @@ ALL_TRAINS.push(
   }
 }
 
+// 북한 철도 8개 계통. 인게임 노선의 초 단위 구간시각을 분 단위로 옮기며,
+// 원본에서 회차 직전 첫 역이 잘린 상행은 하행 구간시각을 역산해 복원한다.
+{
+  const clock=value=>{const n=(value%1440+1440)%1440;return `${Math.floor(n/60)}:${String(n%60).padStart(2,'0')}`;};
+  const minute=value=>{const [h,m]=value.split(':').map(Number);return h*60+m;};
+  const departures=(start,gap,count)=>Array.from({length:count},(_,i)=>start+i*gap);
+  const services=[
+    {first:3001,line:'평원선',grade:'무궁화호',from:'평양',to:'원산',dep:departures(325,90,12),
+      stops:[['평양',0,93,2,2],['평원',1224,1317,2,1],['순천비행장',2614,2707,1,2],['신양',4194,4287,1,2],['양덕',4864,4957,1,2],['원산',7202,7295,4,4]]},
+    {first:3501,line:'경원선',grade:'무궁화호',from:'서울',to:'원산',dep:departures(310,75,14),
+      stops:[['서울',0,11,1,4],['남금호',270,281,1,2],['청량리',462,473,17,18],['중랑',636,647,3,4],['도농',904,915,2,1],['평동초등학교',1223,1234,1,2],['가평',2236,2247,3,4],['춘천',2881,2892,3,4],['양구',4014,4025,2,1],['해안',4819,4830,1,2],['북현내',6156,6167,2,1],['서구읍',6551,6562,2,1],['고성',6789,6800,2,1],['조선반도;한반도',7478,7489,2,1],['통천읍',7937,7948,2,1],['원산',9457,9468,3,3]]},
+    {first:9101,line:'평원선',grade:'KTX-이음',from:'평양',to:'만포',dep:departures(335,165,7),
+      stops:[['평양',0,45,6,6],['은산읍',984,1028,2,1],['순천비행장',1215,1259,2,1],['향산읍',2608,2652,2,1],['희천제사공장',2979,3023,2,1],['전천읍',3924,3968,2,1],['성간읍',4369,4413,2,1],['강계학생소년궁전',4786,4830,2,1],['샘물동',5403,5447,1,1]]},
+    {first:9051,line:'평성선',grade:'KTX-이음',from:'평양',to:'개성',dep:departures(305,80,14),
+      stops:[['평양',0,24,1,1],['강선',377,401,2,1],['강서',560,584,2,1],['남포',1025,1049,1,2],['은율',1561,1585,1,2],['송화',1917,1941,1,2],['장연',2196,2220,1,2],['태탄',2694,2718,1,2],['벽성',3195,3219,1,2],['해주',3495,3519,1,2],['청단읍',3902,3926,1,2],['연안읍',4328,4352,1,2],['금곡리',4703,4727,1,2],['개성',5051,5075,2,2]]},
+    {first:8001,line:'경원선·동해선',grade:'KTX-산천',from:'서울',to:'블라디보스토크',dep:departures(310,180,6),
+      stops:[['서울',0,61,2,2],['청량리',402,463,29,30],['의정부',879,940,2,1],['원산',3318,3379,6,5],['함흥',4727,4788,1,2],['청진',8868,8929,1,2],['라선',9893,9954,1,2],['Жилой комплекс "Морион"',12420,12481,2,1],['Владивосток (블라디보스토크역)',12697,12758,1,1]]},
+    {first:9551,line:'경원선·경부고속선',grade:'KTX-이음',from:'원산',to:'마포',dep:departures(325,85,13),
+      stops:[['원산',0,39,3,3],['안변읍',384,423,1,2],['고산읍',833,872,1,2],['세포읍',1312,1351,1,2],['평강',1838,1877,1,2],['철원',2379,2418,2,3],['연천',2786,2825,3,4],['전곡',2986,2986,null,null],['동두천',3236,3275,3,4],['양주',3539,3578,3,4],['의정부',3707,3746,1,2],['청량리',4155,4194,28,27],['서울',4481,4520,18,17],['마포',4728,4766,12,12]]},
+    {first:9581,line:'동해선',grade:'KTX-이음',from:'원산',to:'혜산',dep:departures(320,165,7),
+      stops:[['원산',0,36,4,4],['천내',547,583,2,1],['금야읍',960,995,2,1],['정평읍',1557,1592,2,1],['함흥',1935,1970,1,2],['광복1동',2941,2976,1,2],['북청',3473,3508,1,2],['단천',4417,4452,2,1],['북단천',5437,5472,2,1],['혜산',6726,6761,1,1]]},
+    {first:9601,line:'동해선',grade:'KTX-이음',from:'원산',to:'무산',dep:departures(305,155,7),
+      stops:[['원산',0,20,4,4],['고원읍',654,674,2,1],['금야읍',918,938,2,1],['정평읍',1501,1521,2,1],['함주읍',1698,1718,1,2],['함흥',1944,1964,1,2],['광복1동',2953,2973,1,2],['북청',3470,3490,1,2],['단천',4399,4419,2,1],['명간',6246,6266,2,1],['청진',7363,7383,1,2],['무산',8702,8722,1,1]]}
+  ];
+  const makeStops=(service,start,up)=>{
+    const source=up?service.stops.slice().reverse():service.stops;
+    const originDep=service.stops[0][2];
+    const total=service.stops.at(-1)[1]-originDep;
+    return source.map((entry,index)=>{
+      const [s,arrSec,depSec,downP,upP]=entry;
+      const pass=arrSec===depSec;
+      let arrOffset,depOffset;
+      if(up){arrOffset=total-(depSec-originDep);depOffset=total-(arrSec-originDep);}
+      else{arrOffset=arrSec-originDep;depOffset=depSec-originDep;}
+      const first=index===0,last=index===source.length-1;
+      const stop={s,arr:first?null:clock(start+Math.floor(arrOffset/60)),dep:last||pass?null:clock(start+Math.floor(depOffset/60))};
+      if(pass)stop.arr=clock(start+Math.floor(arrOffset/60));
+      const platform=up?upP:downP;
+      if(platform!=null&&!pass)stop.p=String(platform);
+      return stop;
+    });
+  };
+  for(const service of services){
+    service.dep.forEach((start,index)=>{
+      const downNo=service.first+index*2,upNo=downNo+1;
+      ALL_TRAINS.push({no:String(downNo),dest:service.to,dir:'down',line:service.line,grade:service.grade,boundary:[service.from,service.to],stops:makeStops(service,start,false)});
+      ALL_TRAINS.push({no:String(upNo),dest:service.from,dir:'up',line:service.line,grade:service.grade,boundary:[service.to,service.from],stops:makeStops(service,start,true)});
+    });
+  }
+  // 기존 열차와 동일 승강장·동일 분 점유를 피하는 전 구간 미세 조정.
+  const offset={3012:3,3508:3,3509:3,3511:3,3513:3,3516:-3,3517:3,3521:8,3523:3,
+    8005:3,8009:3,8011:3,8012:3,9586:3};
+  for(const train of ALL_TRAINS){
+    const delta=offset[Number(train.no)];
+    if(!delta)continue;
+    for(const stop of train.stops){
+      if(/^\d{1,2}:\d{2}$/.test(stop.arr||''))stop.arr=clock(minute(stop.arr)+delta);
+      if(/^\d{1,2}:\d{2}$/.test(stop.dep||''))stop.dep=clock(minute(stop.dep)+delta);
+    }
+  }
+  // 미세 조정 뒤 기존 편성과 같은 분에 겹치는 역은 인게임에서 해당 계통에
+  // 허용된 맞은편 승강장으로 분리한다.
+  const platformOverride={
+    3508:{고성:2},3513:{원산:4},8005:{청량리:30},
+    9559:{청량리:27},9562:{마포:11},9563:{청량리:27,서울:17},
+    9569:{의정부:2},9570:{서울:18,청량리:28}
+  };
+  for(const [no,stations] of Object.entries(platformOverride)){
+    const train=ALL_TRAINS.find(item=>item.no===no);
+    if(!train)continue;
+    for(const [station,platform] of Object.entries(stations)){
+      const stop=train.stops.find(item=>item.s===station);
+      if(stop)stop.p=String(platform);
+    }
+  }
+}
+
 // 마포-남대구 KTX-이음: 인게임의 "마포-충주-남대구 KTX" 노선·승강장 구조를
 // 기준으로 기존의 불완전한 #501~529 데이터를 #501~526(13왕복)로 전면 대치한다.
 // WP8097은 구미-김천 사이의 비역 웨이포인트이므로 시간표에서 제외한다.

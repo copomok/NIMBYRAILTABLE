@@ -273,6 +273,20 @@
   }
 })();
 
+// 북한 신설 8개 계통의 인게임 방향별 승강장 확정값.
+(()=>{
+  if(typeof REAL_PLAT==='undefined'||typeof ALL_TRAINS==='undefined')return;
+  const included=no=>(no>=3001&&no<=3024)||(no>=3501&&no<=3528)||(no>=8001&&no<=8012)||
+    (no>=9051&&no<=9114)||(no>=9551&&no<=9614);
+  for(const train of ALL_TRAINS){
+    if(!included(Number(train.no)))continue;
+    const mapped=REAL_PLAT[train.no]||(REAL_PLAT[train.no]={});
+    for(const stop of train.stops){
+      if(stop.p!=null)mapped[stop.s]=Number(stop.p);
+    }
+  }
+})();
+
 // 마포-목포 KTX 상행 정안 통과편에는 승강장 정보를 남기지 않는다.
 // 하행 운행 패턴상 정안 정차 대상인 5편만 2번 승강장 매핑을 유지한다.
 (()=>{
