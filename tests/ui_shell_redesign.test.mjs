@@ -96,6 +96,13 @@ test('역 기능은 네 개의 하위 탭으로 통합되고 독립 시간표 �
   assert.match(shell,/installStationWorkspace/);
 });
 
+test('역 검색은 모바일 한글 조합 중 재렌더하지 않고 조합 완료 후 검색한다',()=>{
+  assert.match(shell,/oninput="nimbiStationSearchInput\(this,event\)"/);
+  assert.match(shell,/!event\?\.isComposing/);
+  assert.match(shell,/nimbiStationCompositionStart/);
+  assert.match(shell,/nimbiStationCompositionEnd/);
+});
+
 test('모바일 하단 메뉴는 더보기와 마이페이지를 구분한다',()=>{
   assert.match(html,/data-mobile-tab="more"[^>]*onclick="nimbiOpenMore\(\)"/);
   assert.match(html,/data-mobile-tab="mypage"[^>]*onclick="openMyPage\(\)"/);

@@ -22,9 +22,19 @@ test('예매한 승차권 카드는 시간표·운행 정보·취소 순으로 �
   const cancel=card.indexOf('ticket-action-cancel');
   assert.ok(timetable>=0&&route>timetable&&cancel>route);
   assert.match(card,/openBookRouteDetail\('\$\{tk\.trainNo\}','\$\{tk\.fromStn\}','\$\{tk\.toStn\}','\$\{tk\.travelDate\}'\)/);
-  assert.match(card,/const isTravelToday=tk\.travelDate===todayLocalStr\(\)/);
+  assert.match(card,/const isTravelToday=_tkt\?_bookRouteIsLiveServiceDate\(_tkt,tk\.travelDate\)/);
   assert.match(card,/\$\{isTravelToday\?`<button class="btn ticket-action-route"/);
   assert.match(redesignCss,/\.ticket-card \.ticket-action-route/);
+});
+
+test('환승 예매와 환승 승차권은 선행·후행 시간표와 운행 정보를 각각 연다',()=>{
+  const card=app.slice(app.indexOf('function _xferTicketCardHTML'),app.indexOf('function cancelXferGroup'));
+  assert.match(card,/선행':'후행'\} 시간표/);
+  assert.match(card,/선행':'후행'\} 운행 정보/);
+  assert.match(card,/openBookRouteDetail\('\$\{tk\.trainNo\}','\$\{tk\.fromStn\}','\$\{tk\.toStn\}','\$\{tk\.travelDate\}'\)/);
+  const booking=app.slice(app.indexOf('function _renderXferBody'),app.indexOf('function updateXferConfirm'));
+  assert.match(booking,/openJourney\('\$\{L\.no\}'\)/);
+  assert.match(booking,/openBookRouteDetail\('\$\{L\.no\}','\$\{L\.from\}','\$\{L\.to\}','\$\{X\.date\}'\)/);
 });
 
 test('운행 정보창은 정차역과 승차·하차 구간을 구분한다',()=>{
@@ -42,9 +52,9 @@ test('운행 정보창은 반응형 시트이며 새 캐시로 배포된다',()=
   assert.match(css,/#book-route-detail-wrap/);
   assert.match(css,/@media\(min-width:768px\)/);
   assert.match(css,/@media\(max-width:520px\)/);
-  assert.match(html,/nimbi_rail\.css\?v=2026091002/);
-  assert.match(html,/nimbi_rail\.js\?v=2026091002/);
-  assert.match(sw,/nimbirail-2026091002/);
+  assert.match(html,/nimbi_rail\.css\?v=2026091003/);
+  assert.match(html,/nimbi_rail\.js\?v=2026091003/);
+  assert.match(sw,/nimbirail-2026091003/);
 });
 
 test('운행 정보는 시간표·지도 탭과 선택 구간 노선도를 제공한다',()=>{

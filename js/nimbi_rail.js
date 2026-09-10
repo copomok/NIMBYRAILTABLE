@@ -8580,7 +8580,7 @@ function _ticketCardHTML(tk){
     const seatList=seatSummary(tk.seats);
     const _tkt=getTrainByNo(tk.trainNo);
     const tkDistKm=tk.distanceKm||(_tkt?Math.round(routeDistanceKm(_tkt,tk.fromStn,tk.toStn)):0);
-  const isTravelToday=tk.travelDate===todayLocalStr();
+  const isTravelToday=_tkt?_bookRouteIsLiveServiceDate(_tkt,tk.travelDate):tk.travelDate===todayLocalStr();
   return `<div class="ticket-card${cancelledCls}" style="--ticket-grade:${gradeColor}" onclick="openQRPopup('${tk.id}')">
       <div class="ticket-card-top" style="border-color:${gradeColor}">
         <span class="ticket-grade" style="color:${gradeColor}">${tk.grade}</span>
@@ -8631,6 +8631,7 @@ function _xferTicketCardHTML(legs){
   const lead=legs[0], follow=legs[legs.length-1], g=lead;
   const allCancelled=legs.every(t=>t.status==='cancelled');
   const totalFare=legs.reduce((a,t)=>a+(t.totalFare||0),0);
+  const isTravelToday=legs.some(tk=>{const train=getTrainByNo(tk.trainNo);return train&&_bookRouteIsLiveServiceDate(train,tk.travelDate);});
   const cancelledCls=allCancelled?' ticket-cancelled':'';
   const origin=lead.fromStn, via=lead.toStn, dest=follow.toStn;
   const oDep=lead.depTime||'-', vArr=lead.arrTime||'-', vDep=follow.depTime||'-', dArr=follow.arrTime||'-';
@@ -8677,8 +8678,9 @@ function _xferTicketCardHTML(legs){
       <div class="ticket-info-row"><span>인원</span><span>${g.passengerCount}명</span></div>
       <div class="ticket-info-row"><span>총 운임</span><span class="ticket-fare">${totalFare.toLocaleString()}원</span></div>
     </div>
-    <div class="ticket-card-actions">
-      <button class="btn" style="font-size:12px;padding:6px 12px" onclick="event.stopPropagation();openJourney('${g.trainNo}')">🚆 시간표</button>
+    <div class="ticket-card-actions xfer-ticket-actions">
+      ${legs.map(tk=>`<button class="btn ticket-action-timetable" style="font-size:12px;padding:6px 12px" onclick="event.stopPropagation();openJourney('${tk.trainNo}')">${tk.xferSeq===1?'선행':'후행'} 시간표</button>`).join('')}
+      ${isTravelToday?legs.map(tk=>`<button class="btn ticket-action-route" style="font-size:12px;padding:6px 12px" onclick="event.stopPropagation();openBookRouteDetail('${tk.trainNo}','${tk.fromStn}','${tk.toStn}','${tk.travelDate}')">${tk.xferSeq===1?'선행':'후행'} 운행 정보</button>`).join(''):''}
       ${!allCancelled&&_ticketFilterTab==='upcoming'?`<button class="btn" style="font-size:12px;padding:6px 12px" onclick="event.stopPropagation();cancelXferGroup('${g.xferGroup}')">환승 전체 취소</button>`
         :`<button class="btn" style="font-size:12px;padding:6px 12px" onclick="event.stopPropagation();deleteXferGroup('${g.xferGroup}')">기록 삭제</button>`}
     </div>
@@ -10677,6 +10679,7 @@ function _renderXferBody(){
         <span style="margin-left:auto;font-family:var(--mono);font-size:12.5px">${L.depT} → ${L.arrT}</span>
       </div>
       <div class="xfer-leg-route">${L.from} → ${L.to}${dur!=null?` · ${fmtDurKor(dur)}`:''}</div>
+      <div class="xfer-leg-actions"><button type="button" class="btn" onclick="event.stopPropagation();openJourney('${L.no}')">시간표</button><button type="button" class="btn ticket-action-route" onclick="event.stopPropagation();openBookRouteDetail('${L.no}','${L.from}','${L.to}','${X.date}')">운행 정보</button></div>
       <div class="booking-section-label" style="margin-top:6px">좌석 등급 · 운임</div>
       <div class="booking-seat-options">${opts}</div>
       ${seatRow}
@@ -11234,7 +11237,9 @@ function siSearch(q){
   const stationNames=new Set(Object.keys(STATION_DB));
   if(typeof ALL_TRAINS!=='undefined')ALL_TRAINS.forEach(t=>(t.stops||[]).forEach(s=>{if(s.s&&(s.arr||s.dep))stationNames.add(s.s);}));
   Object.keys(NORTH_STATION_DATA_ALIASES).forEach(n=>stationNames.add(n));
-  const all=[...stationNames].filter(n=>isRailStationInRegion(n)).filter(n=>{
+  const uniqueNames=new Map();
+  stationNames.forEach(n=>{const base=n.endsWith('역')?n.slice(0,-1):n;if(!uniqueNames.has(base)||!n.endsWith('역'))uniqueNames.set(base,n);});
+  const all=[...uniqueNames.values()].filter(n=>isRailStationInRegion(n)).filter(n=>{
     const ns=n.endsWith('역')?n.slice(0,-1):n;
     return matchesQuery(n,q)||matchesQuery(ns,q)||matchesQuery(ns,qBase);
   });
