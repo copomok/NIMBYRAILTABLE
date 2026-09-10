@@ -61,18 +61,24 @@ test('지역 전체 선택은 남북 역·노선도·검색을 함께 제공한�
   assert.match(rail,/\['south','north','all'\]\.includes\(value\)/);
   assert.match(rail,/if\(_railRegion==='all'\)return true/);
   assert.match(rail,/function _allRegionsAsMapLine\(\)/);
-  assert.match(rail,/routes:\[\.\.\._allAsMapLine\(\)\.routes,\.\.\.MAP_LINES\.north\.routes\]/);
+  assert.match(rail,/const shared=\['gyeongui_all','gyeongwon_all','donghae_all'\]/);
   assert.match(rail,/id='all-region-line-bar'/);
   assert.match(rail,/function showRegionAllMapLine\(lineKey,button\)/);
   assert.match(rail,/\['south','남한'\],\['north','북한'\],\['all','전체'\]/);
 });
 
 test('남북 동해선은 전체 지역에서 하나의 연속 노선으로 표시된다',()=>{
-  assert.match(rail,/MAP_LINES\.donghae_all=/);
-  assert.match(rail,/stations:\[\.\.\.northMain\.stations,\.\.\.southMain\.stations\.slice\(1\)\]/);
-  assert.match(rail,/combinedKey=key==='donghae'\?'donghae_all':key/);
-  assert.match(rail,/filter\(\(\[name\]\)=>name!=='동해선'\)/);
+  assert.match(rail,/joinRegionalMain\('donghae'\)/);
+  assert.match(rail,/joinRegionalMain\('donghae'\)/);
+  assert.match(rail,/const tail=southStations\[0\]\?\.n===junction\?southStations\.slice\(1\):southStations/);
   assert.match(rail,/\{name:'동해선',color:'#3fb994',stations:/);
+});
+
+test('전체 지역의 경의선·경원선은 북한 접두어 없이 남북 구간을 한 노선으로 잇는다',()=>{
+  assert.match(rail,/joinRegionalMain\('gyeongui',\{reverseSouth:true\}\)/);
+  assert.match(rail,/joinRegionalMain\('gyeongwon',\{reverseSouth:true\}\)/);
+  assert.doesNotMatch(rail,/>북한 \$\{name\}</);
+  assert.match(rail,/!\['경의선','경원선','동해선'\]\.includes\(name\)/);
 });
 
 test('남북 전체 노선도는 전 노선 열차 위치를 수집한다',()=>{

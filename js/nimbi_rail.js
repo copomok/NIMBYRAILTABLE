@@ -4510,15 +4510,23 @@ Object.entries(NORTH_MAP_LINE_KEYS).forEach(([name,key])=>{
   MAP_LINES[key]={name,color:routes[0]?.color||'#64748b',noSpread:true,northOnly:true,mapOnly:true,routes};
 });
 {
-  const south=MAP_LINES.donghae.routes,north=MAP_LINES.north.routes.filter(route=>route.name==='동해선');
-  const northMain=north.find(route=>!route.dash),southMain=south.find(route=>!route.dash);
-  MAP_LINES.donghae_all={
-    name:'동해선',color:MAP_LINES.donghae.color,noSpread:true,mapOnly:true,combinedOnly:true,
-    routes:[
-      {name:'동해선',color:MAP_LINES.donghae.color,stations:[...northMain.stations,...southMain.stations.slice(1)]},
-      ...north.filter(route=>route.dash),...south.filter(route=>route.dash)
-    ]
+  const joinRegionalMain=(key,{reverseSouth=false}={})=>{
+    const south=MAP_LINES[key].routes,north=MAP_LINES.north.routes.filter(route=>route.name===MAP_LINES[key].name);
+    const northMain=north.find(route=>!route.dash),southMain=south.find(route=>!route.dash);
+    const southStations=reverseSouth?[...southMain.stations].reverse():southMain.stations;
+    const junction=northMain.stations.at(-1)?.n;
+    const tail=southStations[0]?.n===junction?southStations.slice(1):southStations;
+    MAP_LINES[`${key}_all`]={
+      name:MAP_LINES[key].name,color:MAP_LINES[key].color,noSpread:true,mapOnly:true,combinedOnly:true,
+      routes:[
+        {name:MAP_LINES[key].name,color:MAP_LINES[key].color,stations:[...northMain.stations,...tail]},
+        ...north.filter(route=>route.dash),...south.filter(route=>route.dash)
+      ]
+    };
   };
+  joinRegionalMain('gyeongui',{reverseSouth:true});
+  joinRegionalMain('gyeongwon',{reverseSouth:true});
+  joinRegionalMain('donghae');
 }
 
 // 인접 역이 너무 가까워 아이콘/텍스트가 겹치는 것 방지: 경로 방향 유지하며 최소 간격 확보
@@ -4818,12 +4826,13 @@ function renderMapTabForMode(){
         tabs.parentNode.insertBefore(allBar,tabs.nextSibling);
       }
       allBar.style.display='';
+      const sharedLines=new Set(['gyeongui','gyeongwon','donghae']);
       const south=[...tabs.querySelectorAll('.map-line-tab:not(.ctrl)')].map(button=>{
         const key=button.getAttribute('onclick')?.match(/['"]([\w]+)['"]/)?.[1];
-        const combinedKey=key==='donghae'?'donghae_all':key;
+        const combinedKey=sharedLines.has(key)?`${key}_all`:key;
         return key?`<button class="map-line-tab" onclick="showRegionAllMapLine('${combinedKey}',this)">${button.textContent}</button>`:'';
       }).join('');
-      const north=Object.entries(NORTH_MAP_LINE_KEYS).filter(([name])=>name!=='동해선').map(([name,key])=>`<button class="map-line-tab" onclick="showRegionAllMapLine('${key}',this)">북한 ${name}</button>`).join('');
+      const north=Object.entries(NORTH_MAP_LINE_KEYS).filter(([name])=>!['경의선','경원선','동해선'].includes(name)).map(([name,key])=>`<button class="map-line-tab" onclick="showRegionAllMapLine('${key}',this)">${name}</button>`).join('');
       allBar.innerHTML=`<button class="map-line-tab ctrl" onclick="showRegionAllMapLine('allregions',this)">전체보기</button>${south}${north}`;
       const valid=['allregions',...Object.keys(MAP_LINES).filter(key=>!MAP_LINES[key].northOnly),...Object.values(NORTH_MAP_LINE_KEYS).filter(key=>key!=='north_donghae')];
       const currentKey=valid.includes(_mapCurrentLine)?_mapCurrentLine:'allregions';
@@ -13507,7 +13516,12 @@ function _allAsMapLine(){
 let _allRegionsMapLineCache=null;
 function _allRegionsAsMapLine(){
   if(_allRegionsMapLineCache)return _allRegionsMapLineCache;
-  return _allRegionsMapLineCache={name:'남북 전체 네트워크',color:'#8b949e',noSpread:true,allView:true,routes:[..._allAsMapLine().routes,...MAP_LINES.north.routes]};
+  const sharedNames=new Set(['경의선','경원선','동해선']);
+  const south=[];
+  for(const ml of Object.values(MAP_LINES)) if(!ml.northOnly&&!ml.combinedOnly&&!sharedNames.has(ml.name)) south.push(...ml.routes);
+  const north=MAP_LINES.north.routes.filter(route=>!sharedNames.has(route.name));
+  const shared=['gyeongui_all','gyeongwon_all','donghae_all'].flatMap(key=>MAP_LINES[key].routes);
+  return _allRegionsMapLineCache={name:'남북 전체 네트워크',color:'#8b949e',noSpread:true,allView:true,routes:[...south,...north,...shared]};
 }
 
 // ── 공용: 주요역 목록(정차 편수 상위) ──
