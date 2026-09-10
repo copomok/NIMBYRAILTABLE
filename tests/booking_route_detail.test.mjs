@@ -42,9 +42,9 @@ test('운행 정보창은 반응형 시트이며 새 캐시로 배포된다',()=
   assert.match(css,/#book-route-detail-wrap/);
   assert.match(css,/@media\(min-width:768px\)/);
   assert.match(css,/@media\(max-width:520px\)/);
-  assert.match(html,/nimbi_rail\.css\?v=2026090905/);
-  assert.match(html,/nimbi_rail\.js\?v=2026090906/);
-  assert.match(sw,/nimbirail-2026090906/);
+  assert.match(html,/nimbi_rail\.css\?v=2026091001/);
+  assert.match(html,/nimbi_rail\.js\?v=2026091001/);
+  assert.match(sw,/nimbirail-2026091001/);
 });
 
 test('운행 정보는 시간표·지도 탭과 선택 구간 노선도를 제공한다',()=>{
@@ -109,6 +109,19 @@ test('운행 정보는 도착·출발 사이 화살표 없이 현재 위치를 �
 test('접근 중 열차 아이콘과 대상 역 노드를 함께 표시한다',()=>{
   assert.match(css,/\.brd-live-marker\{[^}]*left:50%;top:var\(--brd-live-top,50%\)[^}]*translate\(-50%,-50%\)/);
   assert.doesNotMatch(css,/\.brd-stop\.live \.brd-rail>i\{visibility:hidden\}/);
+});
+
+test('익일 자정 이후에는 전날 출발한 막차를 현재 운행으로 판정한다',()=>{
+  assert.match(app,/function _trainRunsPastMidnight\(t\)/);
+  assert.match(app,/function _bookRouteIsLiveServiceDate\(t,serviceDate,now=new Date\(\)\)/);
+  assert.match(app,/serviceDate===todayLocalStr\(yesterday\)&&now\.getHours\(\)<4&&_trainRunsPastMidnight\(t\)/);
+  assert.match(app,/const liveServiceDate=_bookRouteIsLiveServiceDate\(t,serviceDate\)/);
+});
+
+test('모바일에서도 열차 아이콘은 타임라인 선과 역 노드 위에 표시된다',()=>{
+  assert.match(css,/\.brd-rail\{[^}]*isolation:isolate;z-index:2/);
+  assert.match(css,/\.brd-rail:before\{[^}]*z-index:0/);
+  assert.match(css,/\.brd-live-marker\{[^}]*z-index:6/);
 });
 
 test('모바일 운행 정보창은 후속 터치로 닫히지 않는다',()=>{

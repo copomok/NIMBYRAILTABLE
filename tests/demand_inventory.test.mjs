@@ -26,6 +26,11 @@ const ktxRatio=ktxDemand/c.getTrainCapacity(ktx).total,ktxEumRatio=ktxEumDemand/
 assert.ok(ktxRatio>ktxEumRatio&&ktxRatio<=2.8,'일반 KTX는 인게임 수요만 제한적으로 추가 반영해야 함');
 assert.equal(c.getBaseDemandIndex(ktxEum),1,'KTX-이음은 기존 기본 수요 지수를 사용해야 함');
 assert.equal(c.getBaseDemandIndex({...train,no:'missing',grade:'KTX-산천'}),1,'KTX-산천은 기존 기본 수요 지수를 사용해야 함');
+const northRoute={no:'3001',grade:'무궁화호',line:'평원선',boundary:['평양','원산'],stops:[{s:'평양',dep:'05:25'},{s:'원산',arr:'07:25'}]};
+assert.equal(c.NIMBI_Demand.getGameRoutePassengerCount(northRoute),136.6,'북한 신설 번호가 다른 기존 열차 통계를 가져오지 않고 평양-원산 인게임 계통 수요를 사용해야 함');
+assert.equal(c.NIMBI_Demand.getGamePassengerCount(northRoute),136.6,'열차번호보다 실제 운행 계통 수요를 우선해야 함');
+const boeunRoute={no:'new-boeun',grade:'ITX-새마을',line:'보은선',boundary:['서울','보은'],stops:[{s:'서울',dep:'08:00'},{s:'보은',arr:'10:00'}]};
+assert.equal(c.NIMBI_Demand.getGameRoutePassengerCount(boeunRoute),94.9,'기존 추산 계통도 인게임 노선별 수요와 연결해야 함');
 const rivalA={no:'r1',grade:'무궁화호',passengers:900,line:'시험선',stops:[{s:'서울',dep:'08:00'},{s:'부산',arr:'11:00'}]};
 const rivalB={no:'r2',grade:'무궁화호',passengers:900,line:'시험선',stops:[{s:'서울',dep:'08:30'},{s:'부산',arr:'11:25'}]};
 c.ALL_TRAINS=[rivalA,rivalB];c.NIMBI_Demand.clearCache();

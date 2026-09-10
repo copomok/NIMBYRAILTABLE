@@ -23,6 +23,7 @@
   const seenTrains=new Map(),rawCache=new Map(),rawODCache=new Map(),finalCache=new Map(),alternativeCache=new Map();
   const timingCache=new Map(),adjustmentCache=new Map(),transferSourceCache=new Map();
   const profileCache=new Map(),capacityCache=new WeakMap(),baseCache=new WeakMap();
+  const routePassengerCache=new WeakMap();
   let routeIndex=null;
 
   function allTrains(){
@@ -74,9 +75,32 @@
     const result={total,standard:total,premium:0,standing:Math.round(total/cars*.5),standingMode:'standing',freeCars:0};
     capacityCache.set(train,result);return{...result};
   }
+  function routePassengers(train){
+    if(routePassengerCache.has(train))return routePassengerCache.get(train);
+    if(!String(train?.line||'').trim()){routePassengerCache.set(train,null);return null;}
+    const source=g.NIMBI_GAME_ROUTE_PAX_PER_RUN||{},valid=stops(train);
+    const endpoint=raw=>{const name=String(raw||'').replace(/역$/,'');if(name.includes('블라디보스토크'))return'블라디보스토크';if(name==='샘물동')return'만포';return name;};
+    const from=endpoint(train?.boundary?.[0]||valid[0]?.s),to=endpoint(train?.boundary?.[1]||valid.at(-1)?.s);
+    const routeParts=String(train?.line||'').split('·').map(x=>x.trim()).filter(Boolean);
+    const gradeToken=/무궁화/.test(train?.grade)?'무궁화':/ITX-새마을/.test(train?.grade)?'ITX새마을':/ITX-마음/.test(train?.grade)?'ITX마음':/ITX-청춘/.test(train?.grade)?'ITX청춘':/SRT/.test(train?.grade)?'SRT':/KTX/.test(train?.grade)?'KTX':'';
+    let best=null,bestScore=-1;
+    for(const [label,value] of Object.entries(source)){
+      if(!(value>0))continue;
+      const compact=label.replace(/\s+/g,''),hasEndpoints=from&&to&&compact.includes(from)&&compact.includes(to);
+      const routeHits=routeParts.filter(part=>compact.includes(part.replace(/\s+/g,''))).length;
+      const gradeHit=!gradeToken||compact.includes(gradeToken);
+      if(!gradeHit||(!hasEndpoints&&!routeHits))continue;
+      const score=(hasEndpoints?10:0)+routeHits*3+(gradeHit?2:0);
+      if(score>bestScore){bestScore=score;best=+value;}
+    }
+    const result=bestScore>=5&&best>0?best:null;
+    routePassengerCache.set(train,result);return result;
+  }
   function gamePassengers(train){
     const direct=[train?.passengers,train?.pax,train?.passengerCount,train?.pax_boarded].map(Number).find(Number.isFinite);
     if(direct>0)return direct;
+    const route=routePassengers(train);
+    if(route>0)return route;
     const saved=+g.NIMBI_GAME_PAX_PER_RUN?.[String(+train?.no)];
     return saved>0?saved:null;
   }
@@ -316,7 +340,7 @@
     profileCache.clear();routeIndex=null;
   }
   g.NIMBI_Demand={clamp,hash,random,toMin,getStops:stops,getStationDemandProfile:profile,getTrainCapacity:capacity,
-    getGamePassengerCount:gamePassengers,getBaseDemandIndex:baseDemandIndex,getInferredRouteDemandIndex:inferredRouteDemandIndex,
+    getGamePassengerCount:gamePassengers,getGameRoutePassengerCount:routePassengers,getBaseDemandIndex:baseDemandIndex,getInferredRouteDemandIndex:inferredRouteDemandIndex,
     getDistanceGradePreference:distancePreference,getTimeDirectionMultiplier:directionMultiplier,getODDemandScore:odScore,
     normalizePeakDemand,
     buildRawTrainODDemand:rawDemand,buildTrainODDemand:buildDemand,getCompetitionAdjustment:competitionAdjustment,

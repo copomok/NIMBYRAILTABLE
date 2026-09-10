@@ -32,6 +32,7 @@ test('북한 철도망은 기존 노선과 추가 노선·동해선 지선을 �
   assert.equal(north.routes.find(r=>r.name==='녕원선').stations.map(s=>s.n).join(','),'평양,은산,녕원');
   assert.equal(north.routes.find(r=>r.name==='만포선').stations.map(s=>s.n).join(','),'샘물동,강계,성간읍,전천읍,희천제사공장,향산읍,순천비행장,은산');
   assert.equal(north.routes.find(r=>r.name==='평성선').stations.map(s=>s.n).join(','),'평양,강선,강서,남포,은율,송화,장연,태탄,벽성,해주,청단읍,연안읍,금곡리,개성');
+  assert.equal(north.routes.find(r=>r.name==='평성선'&&r.dash).stations.map(s=>s.n).join(','),'장연,룡연');
   const donghaeBranches=north.routes.filter(r=>r.name==='동해선'&&r.dash);
   assert.equal(JSON.stringify(donghaeBranches.map(r=>r.stations.map(s=>s.n))),JSON.stringify([['단천','북단천','혜산'],['청진','무산']]));
   assert.doesNotMatch(index,/class="map-line-tab" onclick="showMapLine\('north'/);

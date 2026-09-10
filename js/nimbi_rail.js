@@ -736,6 +736,20 @@ function getCurrentStatus(t, atMin){
   }
   return{status:'done',nowMin};
 }
+function _trainRunsPastMidnight(t){
+  let previous=null,offset=0,last=null;
+  for(const stop of t?.stops||[]){
+    const raw=toMin(hasTime(stop.arr)?stop.arr:hasTime(stop.dep)?stop.dep:null);if(raw==null)continue;
+    if(previous!=null&&raw<previous-60)offset+=1440;
+    last=raw+offset;previous=raw;
+  }
+  return last!=null&&last>=1440;
+}
+function _bookRouteIsLiveServiceDate(t,serviceDate,now=new Date()){
+  const today=todayLocalStr(now);if(serviceDate===today)return true;
+  const yesterday=new Date(now);yesterday.setDate(yesterday.getDate()-1);
+  return serviceDate===todayLocalStr(yesterday)&&now.getHours()<4&&_trainRunsPastMidnight(t);
+}
 
 function renderDetail(t){
   const valid=t.stops.filter(s=>s.arr||s.dep);
@@ -4454,6 +4468,9 @@ north:{
       {n:'해주',x:-98,y:-19},{n:'청단읍',x:-46,y:0},{n:'연안읍',x:7,y:18},
       {n:'금곡리',x:57,y:13},{n:'개성',x:101,y:2}
     ]},
+    {name:'평성선',color:'#f43f5e',dash:true,stations:[
+      {n:'장연',x:-243,y:-82},{n:'룡연',x:-296,y:-50}
+    ]},
     {name:'동해선',color:'#3fb994',dash:true,stations:[
       {n:'단천',x:655,y:-724},{n:'북단천',x:631,y:-868},{n:'혜산',x:482,y:-1010}
     ]},
@@ -4722,7 +4739,7 @@ function toggleRegionMenu(anchor){
   menu.hidden=!menu.hidden;_syncRailRegionControls();
   if(!menu.hidden&&anchor){const r=anchor.getBoundingClientRect();menu.style.top=`${Math.min(innerHeight-180,r.bottom+7)}px`;menu.style.left=`${Math.max(12,Math.min(innerWidth-170,r.right-158))}px`;menu.querySelector('.active')?.focus();}
 }
-const NORTH_STATION_DATA_ALIASES={'은산':'은산읍','강계':'강계학생소년궁전','정평':'정평읍','함주':'함주읍'};
+const NORTH_STATION_DATA_ALIASES={'은산':'은산읍','강계':'강계학생소년궁전','정평':'정평읍','함주':'함주읍','룡연':'룡연읍'};
 function railStationDataName(raw){
   const name=String(raw||'').replace(/역$/,'');
   return NORTH_STATION_DATA_ALIASES[name]||name;
@@ -10181,7 +10198,7 @@ function _bookRouteMapHTML(t,from,to,gradeColor,travelDate,projectMinutes=0){
     return `<g class="${active?'selected':'muted'}${selected?' endpoint':''}${stopping?' stop':' pass'}"><circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="${selected?7:stopping?3.5:2.2}"><title>${esc(p.s.s)}${stopping?'':' (통과)'}</title></circle>${showLabel?`<text x="${tx.toFixed(1)}" y="${ty.toFixed(1)}" text-anchor="${anchor}">${esc(p.s.s)}</text>`:''}</g>`;
   }).join('');
   let liveMarker='';
-  if((travelDate||todayLocalStr())===todayLocalStr()){
+  if(_bookRouteIsLiveServiceDate(t,travelDate||todayLocalStr())){
     const now=new Date(),delay=typeof _liveDelayOf==='function'?_liveDelayOf(t):0;
     const serviceNow=now.getHours()*60+now.getMinutes()+now.getSeconds()/60-delay+projectMinutes;
     const live=getCurrentStatus(t,serviceNow);
@@ -10290,8 +10307,9 @@ function updateBookRouteLive(trainNo,from,to,travelDate){
   if(!wrap||!t||wrap.dataset.train!==String(trainNo))return;
   const esc=typeof _opsEsc==='function'?_opsEsc:s=>String(s??'').replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
   const today=todayLocalStr(),serviceDate=travelDate||today;
+  const liveServiceDate=_bookRouteIsLiveServiceDate(t,serviceDate);
   let live=null,liveStopIdx=-1,liveMarkerIdx=-1,liveTop=50,liveBetween=false,liveLabel='',main='',sub='';
-  if(serviceDate===today){
+  if(liveServiceDate){
     const now=new Date(),delay=typeof _liveDelayOf==='function'?_liveDelayOf(t):0;
     const serviceNow=now.getHours()*60+now.getMinutes()+now.getSeconds()/60-delay;
     live=getCurrentStatus(t,serviceNow);
@@ -10328,7 +10346,7 @@ function updateBookRouteLive(trainNo,from,to,travelDate){
       }
     }
     const delayIdx=Number(row.dataset.delayIndex);
-    const pair=serviceDate===today&&delayIdx>=0&&typeof _simDelayPairAtStop==='function'?_simDelayPairAtStop(t,delayIdx):{arr:0,dep:0};
+    const pair=liveServiceDate&&delayIdx>=0&&typeof _simDelayPairAtStop==='function'?_simDelayPairAtStop(t,delayIdx):{arr:0,dep:0};
     [['arr',pair.arr||0],['dep',pair.dep||0]].forEach(([kind,delay])=>{
       const cell=row.querySelector(`.brd-${kind}`),scheduled=row.dataset[kind]||'';if(!cell)return;
       const actual=scheduled&&delay>0?addMinToClock(scheduled,delay):'';
@@ -10361,7 +10379,8 @@ function openBookRouteDetail(trainNo,from,to,travelDate){
   const dateLabel=(()=>{const m=String(travelDate||'').match(/^(\d{4})-(\d{2})-(\d{2})$/);if(!m)return esc(travelDate||todayLocalStr());const d=new Date(+m[1],+m[2]-1,+m[3]);return `${m[1]}.${m[2]}.${m[3]} (${['일','월','화','수','목','금','토'][d.getDay()]})`;})();
   let liveStopIdx=-1,liveMarkerIdx=-1,liveTop=50,liveBetween=false,liveLabel='',operationMain='',operationSub='';
   const serviceDate=travelDate||todayLocalStr(),today=todayLocalStr();
-  if(serviceDate===today){
+  const liveServiceDate=_bookRouteIsLiveServiceDate(t,serviceDate);
+  if(liveServiceDate){
     const now=new Date(),liveDelay=typeof _liveDelayOf==='function'?_liveDelayOf(t):0;
     const serviceNow=now.getHours()*60+now.getMinutes()+now.getSeconds()/60-liveDelay;
     const live=getCurrentStatus(t,serviceNow);
@@ -10387,7 +10406,7 @@ function openBookRouteDetail(trainNo,from,to,travelDate){
     operationMain='운행이 종료된 열차입니다';
   }
   const timedStops=(t.stops||[]).filter(s=>hasTime(s.arr)||hasTime(s.dep));
-  const showDelayTimes=serviceDate===today&&typeof _simDelayPairAtStop==='function';
+  const showDelayTimes=liveServiceDate&&typeof _simDelayPairAtStop==='function';
   const rows=allStops.map((s,i)=>{
     const inRide=i>=fromIdx&&i<=toIdx,before=i<fromIdx,after=i>toIdx;
     const plat=typeof _realPlatform==='function'?_realPlatform(t.no,s.s):null;
