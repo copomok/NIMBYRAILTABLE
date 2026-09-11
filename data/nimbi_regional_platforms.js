@@ -273,12 +273,14 @@
   }
 })();
 
-// 북한 신설 8개 계통의 인게임 방향별 승강장 확정값.
+// 북한 정식 개편 21개 계통의 인게임 방향별 승강장 확정값.
 (()=>{
   if(typeof REAL_PLAT==='undefined'||typeof ALL_TRAINS==='undefined')return;
-  const included=no=>(no>=3001&&no<=3024)||(no>=3501&&no<=3528)||(no>=8001&&no<=8012)||
-    (no>=9001&&no<=9036)||(no>=9051&&no<=9114)||(no>=9521&&no<=9614)||
-    (no>=9701&&no<=9716)||(no>=9751&&no<=9766);
+  const included=no=>Array.isArray(globalThis.NIMBI_NORTH_FORMAL_RANGES)
+    ?globalThis.NIMBI_NORTH_FORMAL_RANGES.some(range=>no>=range.first&&no<=range.last)
+    :(no>=3001&&no<=3024)||(no>=3501&&no<=3528)||(no>=8001&&no<=8012)||
+      (no>=9001&&no<=9036)||(no>=9051&&no<=9114)||(no>=9521&&no<=9614)||
+      (no>=9701&&no<=9716)||(no>=9751&&no<=9766);
   for(const train of ALL_TRAINS){
     if(!included(Number(train.no)))continue;
     const mapped=REAL_PLAT[train.no]||(REAL_PLAT[train.no]={});

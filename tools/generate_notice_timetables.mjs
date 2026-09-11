@@ -7,7 +7,8 @@ const ROOT=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'..');
 const OUT=path.join(ROOT,'assets','notices');
 
 function loadTrains(){
-  const source=fs.readFileSync(path.join(ROOT,'data','nimbi_rail_data.js'),'utf8');
+  const source=['nimbi_rail_data.js','nimbi_north_ingame_routes.js','nimbi_station_data.js','nimbi_north_station_revision.js','nimbi_north_rail_revision.js']
+    .map(file=>fs.readFileSync(path.join(ROOT,'data',file),'utf8')).join('\n');
   const context={};
   vm.createContext(context);
   vm.runInContext(`${source}\n;globalThis.__NOTICE_TRAINS__=ALL_TRAINS;`,context,{filename:'nimbi_rail_data.js'});
@@ -162,20 +163,29 @@ const notices=[
     ]
   },
   {
-    id:'20260909-north-trial',date:'2026.09.09',
-    title:'북한 지역 철도 시범 운행 전체 시간표',expected:246,
-    subtitle:'인게임 운행자료 기반 시범 운행 · 12개 계통',
+    id:'20260911-north-formal',date:'2026.09.11',
+    title:'북한 지역 철도 정식 운행 전체 시간표',expected:356,
+    subtitle:'새 인게임·첨부 운행자료 기반 · 21개 계통',
     groups:[
-      ['무궁화호 · 평양 ↔ 원산',selectNumbers(range(3001,3024))],
-      ['무궁화호 · 서울 ↔ 양구 ↔ 원산',selectNumbers(range(3501,3528))],
+      ['ITX-새마을 · 원산 ↔ 청량리',selectNumbers(range(5001,5026))],
+      ['ITX-새마을 · 원산 ↔ 양구 ↔ 청량리',selectNumbers(range(5031,5058))],
+      ['ITX-새마을 · 신의주 ↔ 서울',selectNumbers(range(5061,5078))],
+      ['ITX-새마을 · 신의주 ↔ 부산',selectNumbers(range(5081,5084))],
+      ['ITX-새마을 · 평양 ↔ 원산',selectNumbers(range(5101,5124))],
+      ['ITX-새마을 · 평양 ↔ 해주 ↔ 서울',selectNumbers(range(5131,5158))],
+      ['ITX-마음 · 샘물동 ↔ 평양',selectNumbers(range(5161,5174))],
+      ['ITX-마음 · 녕원 ↔ 평양',selectNumbers(range(5181,5200))],
+      ['ITX-마음 · 혜산 ↔ 원산',selectNumbers(range(5201,5214))],
+      ['ITX-마음 · 무산 ↔ 원산',selectNumbers(range(5221,5234))],
+      ['ITX-마음 · 경흥 ↔ 원산',selectNumbers(range(5241,5258))],
+      ['ITX-마음 · 평양 ↔ 룡연',selectNumbers(range(5261,5278))],
+      ['ITX-마음 · 녕원 ↔ 서울',selectNumbers(range(5281,5290))],
+      ['ITX-새마을 · 신의주 ↔ 원산',selectNumbers(range(5301,5312))],
+      ['ITX-새마을 · 샘물동 ↔ 서울',selectNumbers(range(5351,5362))],
       ['KTX-산천 · 서울 ↔ 블라디보스토크',selectNumbers(range(8001,8012))],
-      ['KTX-산천 · 신의주 ↔ 서울',selectNumbers(range(9001,9036))],
-      ['KTX-이음 · 평양 ↔ 개성(해주 경유)',selectNumbers(range(9051,9078))],
-      ['KTX-이음 · 샘물동 ↔ 평양',selectNumbers(range(9101,9114))],
+      ['KTX-산천 · 신의주 ↔ 부산',selectNumbers(range(8021,8036))],
+      ['KTX-산천 · 신의주 ↔ 서울',selectNumbers(range(9001,9018))],
       ['KTX-이음 · 원산 ↔ 부산',selectNumbers(range(9521,9540))],
-      ['KTX-이음 · 원산 ↔ 마포',selectNumbers(range(9551,9576))],
-      ['KTX-이음 · 혜산 ↔ 원산',selectNumbers(range(9581,9594))],
-      ['KTX-이음 · 무산 ↔ 원산',selectNumbers(range(9601,9614))],
       ['KTX-산천 · 경흥 ↔ 남대구',selectNumbers(range(9701,9716))],
       ['KTX-산천 · 경흥 ↔ 목포',selectNumbers(range(9751,9764))]
     ]

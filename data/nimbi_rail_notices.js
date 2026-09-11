@@ -1226,31 +1226,26 @@ const NOTICES = [
 새 화면에서 표시가 어긋나거나 이용하기 불편한 부분이 있다면 알려주세요. 실제 이용 흐름을 기준으로 계속 보완하겠습니다.`
   },
   {
-    date:'2026-09-09',
+    date:'2026-09-11',
     cat:'route',
-    title:'북한 지역 철도 시범 운행 시간표 안내',
-    body:`북한 지역을 운행하는 일반열차와 고속열차의 시간표가 앱에 등록되었습니다.<br><br>
+    title:'북한 지역 철도 정식 운행 시간표 개편',
+    body:`북한 지역 철도 개편에 따라 <strong>정식 운행 시간표</strong>를 적용합니다. 새 인게임 노선의 신설·이설역과 실제 역 순서를 다시 반영하고, 첨부 운행자료의 역간 운전시분을 기준으로 전 편을 재작성했습니다.<br><br>
 
-<span class="n-warn" style="display:block"><strong>현재 제공되는 시간표는 정식 운행 시간표가 아닌 시범 운행 시간표입니다.</strong></span><br>
-
-현재 시각표는 인게임 노선과 운행 스케줄에 기록된 역간 소요시간을 바탕으로 편성했으며, 원본에서 일부 구간이 끊긴 방향은 반대 방향 운행시간을 역산해 보완했습니다. 통과역·정차역·승강장과 열차 운용도 현재 확인할 수 있는 인게임 자료를 기준으로 구성되어 있습니다.<br><br>
-
-<strong>■ 시범 운행 시간표 적용 계통</strong><br>
+<strong>■ 정식 운행 시간표 적용 계통</strong><br>
 <ul>
-<li>평양 ↔ 원산, 서울 ↔ 양구 ↔ 원산 무궁화호</li>
-<li>평양 ↔ 샘물동, 평양 ↔ 개성(해주 경유) KTX-이음</li>
-<li>신의주 ↔ 서울, 서울 ↔ 블라디보스토크 KTX-산천</li>
-<li>원산 ↔ 마포·혜산·무산·부산 KTX-이음</li>
-<li>경흥 ↔ 남대구·목포 KTX-산천</li>
+<li>ITX-새마을: 원산–청량리(직통·양구 경유), 신의주–서울·부산·원산, 평양–원산·해주 경유 서울, 샘물동–서울</li>
+<li>ITX-마음: 샘물동·녕원–평양, 혜산·무산·경흥–원산, 평양–룡연, 녕원–서울</li>
+<li>KTX-산천: 서울–블라디보스토크, 신의주–서울·부산, 경흥–남대구·목포</li>
+<li>KTX-이음: 원산–부산</li>
 </ul>
 
-<div class="n-box">향후 정식 운행 시간표가 확정되면 열차 운행 시각, 운행 횟수, 정차·통과역, 열차번호, 승강장 및 차량 운용 계획이 현재 시범 운행 시간표와 달라질 수 있습니다.</div><br>
+<div class="n-box">ITX-마음과 ITX-새마을은 전 역에 정차합니다. KTX 통과역은 실제 노선 순서대로 표시하며, 통과 불가역은 정차로 반영했습니다. 기존 열차와 승강장 점유가 겹치는 편은 원본 운전시분을 유지한 채 전 구간을 최대 10분 이내 평행 조정했습니다.</div><br>
 
-정식 시간표 적용 시에는 별도의 시간표 개정 공지를 통해 변경 내용을 안내하겠습니다. 이용 전 앱에 표시된 최신 열차 시간표와 공지사항을 확인해 주세요.<br><br>
+신의주–부산·서울–블라디보스토크·경흥–남대구/목포 종단 KTX와 신의주–부산 ITX-새마을은 별도 심야 도착 기준을 적용합니다. 이용 전 앱의 최신 열차 상세 시간표를 확인해 주세요.<br><br>
 
 <div class="notice-timetable-gallery notice-timetable-pair">
-<a class="notice-timetable-attachment summary" href="assets/notices/20260909-north-trial-summary.svg" target="_blank" rel="noopener noreferrer"><img src="assets/notices/20260909-north-trial-summary.svg" alt="북한 지역 철도 시범 운행 요약표" loading="lazy"><span>한눈에 보는 시범 운행계획</span></a>
-<a class="notice-timetable-attachment" href="assets/notices/20260909-north-trial.svg" target="_blank" rel="noopener noreferrer"><img src="assets/notices/20260909-north-trial.svg" alt="북한 지역 철도 시범 운행 전체 시간표" loading="lazy"><span>역별 전체 시간표</span></a>
+<a class="notice-timetable-attachment summary" href="assets/notices/20260911-north-formal-summary.svg" target="_blank" rel="noopener noreferrer"><img src="assets/notices/20260911-north-formal-summary.svg" alt="북한 지역 철도 정식 운행 요약표" loading="lazy"><span>한눈에 보는 정식 운행계획</span></a>
+<a class="notice-timetable-attachment" href="assets/notices/20260911-north-formal.svg" target="_blank" rel="noopener noreferrer"><img src="assets/notices/20260911-north-formal.svg" alt="북한 지역 철도 정식 운행 전체 시간표" loading="lazy"><span>역별 전체 시간표</span></a>
 </div>`
   }
 ];

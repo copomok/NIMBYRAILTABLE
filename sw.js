@@ -7,8 +7,11 @@ const ASSETS = [
   '/NIMBYRAILTABLE/assets/css/nimbi_operations_hub.css',
   '/NIMBYRAILTABLE/js/nimbi_rail.js',
   '/NIMBYRAILTABLE/data/nimbi_rail_data.js',
+  '/NIMBYRAILTABLE/data/nimbi_north_ingame_routes.js',
+  '/NIMBYRAILTABLE/data/nimbi_north_rail_revision.js',
   '/NIMBYRAILTABLE/js/core/nimbi_rail_index.js',
   '/NIMBYRAILTABLE/data/nimbi_station_data.js',
+  '/NIMBYRAILTABLE/data/nimbi_north_station_revision.js',
   '/NIMBYRAILTABLE/data/nimbi_platform_db.js',
   '/NIMBYRAILTABLE/data/nimbi_realplat.js',
   '/NIMBYRAILTABLE/data/nimbi_homonyms.js',
@@ -65,8 +68,8 @@ const ASSETS = [
   '/NIMBYRAILTABLE/assets/notices/20260802-taebaek.svg',
   '/NIMBYRAILTABLE/assets/notices/20260802-taebaek-summary.svg',
   '/NIMBYRAILTABLE/assets/notices/20260803-jamsil-mokpo-srt-expansion.svg',
-  '/NIMBYRAILTABLE/assets/notices/20260909-north-trial-summary.svg',
-  '/NIMBYRAILTABLE/assets/notices/20260909-north-trial.svg',
+  '/NIMBYRAILTABLE/assets/notices/20260911-north-formal-summary.svg',
+  '/NIMBYRAILTABLE/assets/notices/20260911-north-formal.svg',
 ];
 
 self.addEventListener('install', e => {

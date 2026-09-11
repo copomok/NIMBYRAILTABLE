@@ -19,7 +19,7 @@ const FULL_NOTICE_IDS = [
   '20260731-gyeongbuk-loop',
   '20260801-gyooe-loop',
   '20260802-taebaek',
-  '20260909-north-trial'
+  '20260911-north-formal'
 ];
 const SUMMARY_NOTICE_IDS = [
   '20260620-ktx-adjustments',
@@ -40,7 +40,7 @@ const SUMMARY_NOTICE_IDS = [
   '20260801-gyooe-loop-summary',
   '20260802-taebaek-summary',
   '20260803-jamsil-mokpo-srt-expansion',
-  '20260909-north-trial-summary'
+  '20260911-north-formal-summary'
 ];
 const NOTICE_IDS = [...FULL_NOTICE_IDS, ...SUMMARY_NOTICE_IDS];
 
@@ -165,7 +165,8 @@ test('신설 계통 공지는 요약표와 전체 시간표를 함께 제공한�
     ['20260703-honam-ktx.svg', '20260703-honam-ktx-full.svg'],
     ['20260710-major-revision-summary.svg', '20260710-major-revision.svg'],
     ['20260729-mugunghwa-summary.svg', '20260729-mugunghwa.svg'],
-    ['20260802-taebaek-summary.svg', '20260802-taebaek.svg']
+    ['20260802-taebaek-summary.svg', '20260802-taebaek.svg'],
+    ['20260911-north-formal-summary.svg', '20260911-north-formal.svg']
   ]) {
     assert.ok(notices.includes(summary), `${summary} 연결이 필요합니다`);
     assert.ok(notices.includes(full), `${full} 연결이 필요합니다`);
@@ -189,14 +190,11 @@ test('UI 전면 개편 안내 공지가 승객 관점의 주요 변경점을 설
   }
 });
 
-test('북한 지역 철도 공지는 노선 정보에서 시범 운행과 정식 시간표 변경 가능성을 안내한다', () => {
+test('북한 지역 철도 공지는 노선 정보에서 정식 개편 내용과 검증 기준을 안내한다', () => {
   const notices = read('data/nimbi_rail_notices.js');
-  assert.match(notices, /cat:'route',[\s\S]*title:'북한 지역 철도 시범 운행 시간표 안내'/);
-  assert.match(notices, /정식 운행 시간표가 아닌 시범 운행 시간표/);
-  assert.doesNotMatch(notices, /북한 지역 철도 임시 운행 시간표/);
-  assert.match(notices, /20260909-north-trial-summary\.svg/);
-  assert.match(notices, /20260909-north-trial\.svg/);
-  for (const keyword of ['운행 시각', '운행 횟수', '정차·통과역', '열차번호', '승강장', '차량 운용 계획']) {
-    assert.ok(notices.includes(keyword), `${keyword} 변경 가능성 안내가 필요합니다`);
-  }
+  assert.match(notices, /cat:'route',[\s\S]*title:'북한 지역 철도 정식 운행 시간표 개편'/);
+  assert.doesNotMatch(notices, /북한 지역 철도 (?:임시|시범) 운행 시간표/);
+  assert.match(notices, /20260911-north-formal-summary\.svg/);
+  assert.match(notices, /20260911-north-formal\.svg/);
+  for (const keyword of ['ITX-마음', 'ITX-새마을', '전 역에 정차', '통과 불가역', '승강장']) assert.ok(notices.includes(keyword), `${keyword} 안내가 필요합니다`);
 });
