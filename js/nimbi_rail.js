@@ -3161,7 +3161,9 @@ function _addMapReachPathEdges(edges,a,b,mode){
   }
 }
 function _directReachableStations(stn,mode){
-  const out=new Set([stn]);
+  const origin=mode==='train'?railStationDisplayName(railStationDataName(stn)):stn;
+  const originKey=mode==='train'?railStationDataName(stn):stn;
+  const out=new Set([origin]);
   const edges=new Set();
   if(mode==='metro'&&typeof METRO_SCHED!=='undefined'){
     Object.values(METRO_SCHED).forEach(ent=>(ent.t||[]).forEach(service=>{
@@ -3175,10 +3177,14 @@ function _directReachableStations(stn,mode){
   }else if(typeof ALL_TRAINS!=='undefined'){
     ALL_TRAINS.forEach(t=>{
       const stops=(t.stops||[]).filter(s=>(hasTime(s.arr)||hasTime(s.dep))&&!isPassStop(t,s.s));
-      if(stops.some(s=>s.s===stn)){
-        stops.forEach(s=>out.add(s.s));
+      if(stops.some(s=>railStationDataName(s.s)===originKey)){
+        stops.forEach(s=>out.add(railStationDisplayName(railStationDataName(s.s))));
         const routeStops=(t.stops||[]).filter(s=>hasTime(s.arr)||hasTime(s.dep));
-        for(let i=0;i<routeStops.length-1;i++)_addMapReachPathEdges(edges,routeStops[i].s,routeStops[i+1].s,mode);
+        for(let i=0;i<routeStops.length-1;i++){
+          const from=railStationDisplayName(railStationDataName(routeStops[i].s));
+          const to=railStationDisplayName(railStationDataName(routeStops[i+1].s));
+          _addMapReachPathEdges(edges,from,to,mode);
+        }
       }
     });
   }
@@ -3187,22 +3193,24 @@ function _directReachableStations(stn,mode){
 function openStationReachabilityMap(stn){
   const mode=_appMode==='metro'?'metro':'train';
   const direct=_directReachableStations(stn,mode);
+  const origin=mode==='train'?railStationDisplayName(railStationDataName(stn)):stn;
   let stations=direct.stations;
   const mapped=mode==='metro'&&typeof METRO_LINES!=='undefined'
     ?new Set(METRO_LINES.flatMap(l=>(l.routes||[{stations:l.stations||[]}]).flatMap(r=>r.stations||[])))
     :new Set(Object.values(MAP_LINES).flatMap(l=>(l.routes||[]).flatMap(r=>r.stations.map(s=>s.n))));
   stations=new Set([...stations].filter(name=>mapped.has(name)));
-  if(mapped.has(stn))stations.add(stn);
+  if(mapped.has(origin))stations.add(origin);
   _mapTrackedTrain=null;
-  _mapReachability={origin:stn,stations,edges:direct.edges,mode};
+  _mapReachability={origin,stations,edges:direct.edges,mode,region:mode==='train'?_railRegion:null};
   if(mode==='metro'&&typeof METRO_LINES!=='undefined'){
     const line=METRO_LINES.find(l=>(l.routes||[{stations:l.stations||[]}]).some(r=>(r.stations||[]).includes(stn)));
     if(line)_metroMapRegion=line.region;
     _metroMapId='__all__';
   }
   switchTab('map');
-  const key=mode==='metro'?`metroall:${_metroMapRegion}`:'all';
-  const btn=mode==='train'?document.querySelector('.map-line-tab[onclick*="\'all\'"]'):null;
+  const key=mode==='metro'?`metroall:${_metroMapRegion}`
+    :_railRegion==='north'?'north':_railRegion==='all'?'allregions':'all';
+  const btn=mode==='train'&&key==='all'?document.querySelector('.map-line-tab[onclick*="\'all\'"]'):null;
   showMapLine(key,btn);
 }
 function clearStationReachabilityMap(){
@@ -3441,7 +3449,7 @@ function updateMapTrains(){
   if(old)old.remove();
 
   const reachActive=_mapReachability&&(
-    (_mapReachability.mode==='train'&&_mapCurrentLine==='all')||
+    (_mapReachability.mode==='train'&&['all','north','allregions'].includes(_mapCurrentLine))||
     (_mapReachability.mode==='metro'&&_mapCurrentLine.startsWith('metroall:'))
   );
   if(reachActive){
@@ -5095,7 +5103,7 @@ function showMapLine(lineKey, btn){
     :(lineKey==='all'?_allAsMapLine():MAP_LINES[lineKey]);
   if(!line){ const wrap=document.getElementById('map-svg-wrap'); if(wrap&&typeof lineKey==='string'&&lineKey.startsWith('metropick:'))wrap.innerHTML='<div style="padding:40px 16px;text-align:center;color:var(--text2)">겹쳐 볼 노선을 칩에서 선택하세요</div>'; return; }
   const reachView=_mapReachability&&(
-    (_mapReachability.mode==='train'&&lineKey==='all')||
+    (_mapReachability.mode==='train'&&['all','north','allregions'].includes(lineKey))||
     (_mapReachability.mode==='metro'&&typeof lineKey==='string'&&lineKey.startsWith('metroall:'))
   )?_mapReachability:null;
 

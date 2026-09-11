@@ -179,7 +179,7 @@ test('공지 이미지 배포 버전이 CSS·데이터·서비스워커에 함�
 
   assert.match(index, /nimbi_rail\.css\?v=2026091003/);
   assert.match(index, /nimbi_rail_notices\.js\?v=2026090903/);
-  assert.match(serviceWorker, /CACHE_NAME = 'nimbirail-2026091101'/);
+  assert.match(serviceWorker, /CACHE_NAME = 'nimbirail-2026091201'/);
 });
 
 test('UI 전면 개편 안내 공지가 승객 관점의 주요 변경점을 설명한다', () => {

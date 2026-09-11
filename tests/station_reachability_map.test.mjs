@@ -30,6 +30,19 @@ test('직통역은 실제 정차 편성과 전철 운행 편성에서 계산한�
   assert.match(app,/names\.includes\(stn\)/);
 });
 
+test('기차 직통역 지도는 선택 지역의 전체 노선도를 사용한다',()=>{
+  assert.match(app,/_railRegion==='north'\?'north':_railRegion==='all'\?'allregions':'all'/);
+  assert.match(app,/\['all','north','allregions'\]\.includes\(_mapCurrentLine\)/);
+  assert.match(app,/\['all','north','allregions'\]\.includes\(lineKey\)/);
+  assert.match(app,/_mapReachability=\{origin,stations,edges:direct\.edges,mode,region:/);
+});
+
+test('북한 지도 표기명과 원본 시간표 역명은 직통역 계산에서 정규화한다',()=>{
+  assert.match(app,/const originKey=mode==='train'\?railStationDataName\(stn\):stn/);
+  assert.match(app,/railStationDataName\(s\.s\)===originKey/);
+  assert.match(app,/railStationDisplayName\(railStationDataName\(routeStops\[i\]\.s\)\)/);
+});
+
 test('전체 네트워크에서 출발역과 직통역을 구분해 표시한다',()=>{
   assert.match(app,/const isReachable=!!\(reachView&&reachView\.stations\.has\(s\.n\)\)/);
   assert.match(app,/const isReachOrigin=!!\(reachView&&reachView\.origin===s\.n\)/);
@@ -49,7 +62,7 @@ test('시각 없는 중간역도 실제 노선도 순서로 펼쳐 직통 경로
   assert.match(app,/function _addMapReachPathEdges\(edges,a,b,mode\)/);
   assert.match(app,/const _mapReachPathCache=\{train:null,metro:null\}/);
   assert.match(app,/for\(let index=best\.from;index!==best\.to;index\+=step\)/);
-  assert.match(app,/_addMapReachPathEdges\(edges,routeStops\[i\]\.s,routeStops\[i\+1\]\.s,mode\)/);
+  assert.match(app,/_addMapReachPathEdges\(edges,from,to,mode\)/);
 });
 
 test('직통 경로 강조선은 역 아이콘과 같은 파란색을 사용한다',()=>{
