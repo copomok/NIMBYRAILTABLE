@@ -25,13 +25,17 @@ test('북한 철도망은 기존 노선과 추가 노선·동해선 지선을 �
   assert.equal(routes.경의선.at(-1),'문산');
   assert.equal(routes.경원선.at(-1),'철원');
   assert.equal(routes.동해선.at(-1),'간성');
-  assert.ok(routes.평원선.includes('북현내'));
+  assert.equal(routes.평원선.at(-1),'간성');
   assert.ok(routes.경의선.includes('금천(황해)'));
+  assert.ok(routes.경의선.includes('문덕'));
+  assert.ok(routes.경의선.includes('사리원'));
   assert.ok(routes.동해선.includes('고성(강원)'));
+  assert.ok(routes.동해선.includes('경성'));
+  assert.ok(routes.동해선.includes('락원'));
   assert.equal(north.routes.find(r=>r.name==='순천선').stations.map(s=>s.n).join(','),'평원,숙천,순천비행장,성천,신양,양덕,원산');
-  assert.equal(north.routes.find(r=>r.name==='녕원선').stations.map(s=>s.n).join(','),'평양,은산,녕원');
-  assert.equal(north.routes.find(r=>r.name==='만포선').stations.map(s=>s.n).join(','),'샘물동,강계,성간읍,전천읍,희천제사공장,향산읍,순천비행장,은산');
-  assert.equal(north.routes.find(r=>r.name==='평성선').stations.map(s=>s.n).join(','),'평양,강선,강서,남포,은율,송화,장연,태탄,벽성,해주,청단읍,연안읍,금곡리,개성');
+  assert.equal(north.routes.find(r=>r.name==='녕원선').stations.map(s=>s.n).join(','),'평양,은산,북창읍,강안동,녕원');
+  assert.equal(north.routes.find(r=>r.name==='만포선').stations.map(s=>s.n).join(','),'평양,은산,순천비행장,향산,희천,전천,성간,강계,만포');
+  assert.equal(north.routes.find(r=>r.name==='평성선').stations.map(s=>s.n).join(','),'평양,강선,강서,남포,은율,송화,장연,태탄,벽성,해주,김일성 벽화,연안읍,금곡로동자구,개성');
   assert.equal(north.routes.find(r=>r.name==='평성선'&&r.dash).stations.map(s=>s.n).join(','),'장연,룡연');
   const donghaeBranches=north.routes.filter(r=>r.name==='동해선'&&r.dash);
   assert.equal(JSON.stringify(donghaeBranches.map(r=>r.stations.map(s=>s.n))),JSON.stringify([['단천','북단천','혜산'],['청진','무산']]));
@@ -50,7 +54,7 @@ test('북한 지역도 전체보기와 노선별 지도를 각각 제공한다',
 });
 
 test('남한 경원선과 지역 전환 설정을 제공한다',()=>{
-  assert.equal(MAP_LINES.gyeongwon.routes[0].stations.map(s=>s.n).join(','),'서울,남금호,청량리,의정부,양주,동두천,연천,철원');
+  assert.equal(MAP_LINES.gyeongwon.routes[0].stations.map(s=>s.n).join(','),'서울,남금호,청량리,의정부,양주,동두천,전곡,연천,철원');
   assert.match(rail,/localStorage\.getItem\('nimbi_region'\)/);
   assert.match(rail,/철도 지역/);
   assert.match(index,/sidebar-region-label/);
