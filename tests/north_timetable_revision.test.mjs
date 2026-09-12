@@ -43,21 +43,47 @@ test('시간표 생성기는 과거 시범 열차를 시간 원본으로 읽지 
 });
 
 test('사진과 인게임 원본의 대표 운전시분을 그대로 쓴다',()=>{
-  const durations=new Map([[5241,312],[8001,240],[8021,211],[9521,180],[9701,315],[9751,281]]);
+  const durations=new Map([[5241,312],[8001,240],[8021,211],[9521,178],[9701,315],[9751,279]]);
   for(const [no,duration] of durations){const train=trains.find(item=>Number(item.no)===no);assert.equal(elapsed(train.stops[0].dep,train.stops.at(-1).arr),duration,`#${no}`);}
+});
+
+test('사진 제공 계통은 사진 방향의 승강장 숫자를 그대로 쓴다',()=>{
+  const expectedPlatforms=new Map([
+    [9521,{'원산':'1','통천':'1','고성':'3','간성':'1','속초':'1','양양':'1','주문':'1','강릉':'32','동강릉':'2','동해':'2','울진':'1','영해':'2','영덕':'1','강구':'2','청하':'2','포항':'5','경주':'3','북울산':'2','태화강':'5','울주':'5','좌천':'4','기장':'3','부산':'13'}],
+    [5202,{'원산':'4','천내':'2','고원':'2','금야':'2','정평':'2','함흥':'6','락원':'1','삼호':'2','운포':'1','신포':'1','북청':'1','리원':'1','단천':'2','북단천':'2','혜산':'1'}],
+    [5222,{'원산':'4','천내':'2','고원':'2','금야':'2','정평':'2','함주':'1','함흥':'6','락원':'1','삼호':'2','운포':'1','신포':'1','북청':'1','리원':'1','단천':'2','김책':'4','길주':'1','명천':'1','명간':'1','어랑':'2','경성':'4','청진':'1','무산':'1'}],
+    [9752,{'목포':'1','도림':'3','무안':'5','함평':'4','광주':'16','정읍':'4','전주':'4','공주':'3','천안':'6','수영':'6','한강로':'4','청량리':'25','의정부':'2','양주':'2','동두천':'2','연천':'4','철원':'3','평강':'2','세포':'3','고산':'3','안변':'3','원산':'6','함흥':'8','북청':'2','단천':'2','김책':'2','명간':'2','경성':'3','청진':'1','라선':'1','경흥':'2'}]
+  ]);
+  for(const [no,platforms] of expectedPlatforms){const train=trains.find(item=>Number(item.no)===no);for(const [station,platform] of Object.entries(platforms)){const stop=train.stops.find(item=>item.s===station);if(stop?.dep||stop===train.stops.at(-1))assert.equal(stop.p,platform,`#${no} ${station}`);}}
+});
+
+test('사진 제공 네 계통은 사진 원본 방향 전 구간을 첫역 출발 기준 초 버림으로 변환한다',()=>{
+  const aliases={통천읍:'통천',세포읍:'세포',고산읍:'고산',안변읍:'안변',고원읍:'고원',정평읍:'정평',금야읍:'금야',함주읍:'함주'};
+  const canon=name=>aliases[name]||String(name||'').replace(/역$/,'');
+  const cases=[[9521,'원산-부산 KTX','원산','부산'],[5202,'원산-혜산 ITX-마음','원산','혜산'],[5222,'원산-무산 ITX-마음','원산','무산'],[9752,'목포-경흥 KTX','목포','경흥']];
+  for(const [no,routeName,from,to] of cases){
+    const train=trains.find(item=>Number(item.no)===no),raw=Array.from(context.NIMBI_NORTH_INGAME_ROUTES[routeName]);
+    const first=raw.findIndex(row=>canon(row.station)===from),last=raw.findIndex((row,index)=>index>first&&canon(row.station)===to),segment=raw.slice(first,last+1),origin=segment[0].departure,start=minute(train.stops[0].dep);
+    for(const row of segment){if(!row.station)continue;const name=canon(row.station),stop=train.stops.find(item=>item.s===name);assert.ok(stop,`#${no} ${name}`);if(name!==from)assert.equal(minute(stop.arr),(start+Math.floor((row.arrival-origin)/60)+1440)%1440,`#${no} ${name} 도착`);if(name!==to){if(row.arrival===row.departure){assert.equal(stop.dep,null,`#${no} ${name} 0초 통과`);assert.equal(stop.p,undefined,`#${no} ${name} 통과 승강장`);}else assert.equal(minute(stop.dep),(start+Math.floor((row.departure-origin)/60)+1440)%1440,`#${no} ${name} 출발`);}}
+  }
+});
+
+test('정식 계통 노선 정보에는 지선 명칭을 쓰지 않는다',()=>{
+  for(const [first,last] of expected)for(const train of trains.filter(item=>Number(item.no)>=first&&Number(item.no)<=last))assert.doesNotMatch(train.line,/지선/,`#${train.no} ${train.line}`);
 });
 
 test('ITX-마음·새마을은 노선상 전 역에 정차한다',()=>{
   for(const [first,last,,, ,grade] of expected.filter(row=>row[5].startsWith('ITX')))
     for(const train of trains.filter(item=>Number(item.no)>=first&&Number(item.no)<=last))
-      train.stops.slice(0,-1).forEach(stop=>assert.ok(stop.dep,`#${train.no} ${stop.s} 정차`));
+      train.stops.slice(0,-1).forEach(stop=>{const photoExact=Number(train.no)>=5201&&Number(train.no)<=5234;if(!photoExact)assert.ok(stop.dep,`#${train.no} ${stop.s} 정차`);});
 });
 
 test('통과 불가역은 고속열차도 정차하고 통과역에는 승강장을 넣지 않는다',()=>{
   const forbidden=new Set(['기장','사천','함안','추풍령','불국사','입실','함평','라선','경흥','청진','단천','통천','고성','간성','속초','양양']);
   for(const [first,last] of expected)for(const train of trains.filter(item=>Number(item.no)>=first&&Number(item.no)<=last)){
     train.stops.forEach((stop,index)=>{
-      if(forbidden.has(stop.s)&&index<train.stops.length-1)assert.ok(stop.dep,`#${train.no} ${stop.s} 통과 금지`);
+      const photoExact=Number(train.no)>=9521&&Number(train.no)<=9540||Number(train.no)>=9751&&Number(train.no)<=9764;
+      if(forbidden.has(stop.s)&&index<train.stops.length-1&&!photoExact)assert.ok(stop.dep,`#${train.no} ${stop.s} 통과 금지`);
       if(index<train.stops.length-1&&stop.dep==null)assert.equal(stop.p,undefined,`#${train.no} ${stop.s} 통과 승강장 제외`);
     });
   }

@@ -20,8 +20,9 @@
     const start=reversed[0].arrival,total=reversed.at(-1).arrival-start;
     return reversed.slice().reverse().map((row,index,array)=>{const dwell=Math.max(0,row.departure-row.arrival),arrival=total-(row.departure-start);return {...row,arrival,departure:index===array.length-1?arrival:arrival+dwell,platform:oppositePlatform(canon(row.station),row.platform)};});
   }
-  function fit(lineName,from,to,names){
-    const raw=rawSegment(lineName,from,to),start=raw[0].arrival,anchors=[];
+  function fit(lineName,from,to,names,{photo=false}={}){
+    const raw=rawSegment(lineName,from,to),start=photo?raw[0].departure:raw[0].arrival,anchors=[];
+    const quantize=photo?Math.floor:Math.round;
     for(let i=0;i<names.length;i++){
       const candidates=raw.map((row,index)=>({row,index})).filter(item=>canon(item.row.station)===canon(names[i]));
       const match=candidates.find(item=>!anchors.length||item.index>anchors.at(-1).rawIndex)||candidates[0];
@@ -33,11 +34,15 @@
     if(!anchors.length||anchors[0].nameIndex!==0||anchors.at(-1).nameIndex!==names.length-1)throw new Error(`${lineName}: ${from}-${to} 사진 역순서 앵커 부족`);
     return names.map((name,index)=>{
       const exact=anchors.find(anchor=>anchor.nameIndex===index);let arr,dep,p;
-      if(exact){arr=Math.round((exact.row.arrival-start)/60);dep=Math.round((exact.row.departure-start)/60);p=exact.row.platform||undefined;}
-      else{const left=anchors.filter(anchor=>anchor.nameIndex<index).at(-1),right=anchors.find(anchor=>anchor.nameIndex>index);const a=(left.row.departure-start)/60,b=(right.row.arrival-start)/60;arr=Math.round(a+(b-a)*(index-left.nameIndex)/(right.nameIndex-left.nameIndex));dep=null;}
+      if(exact){arr=quantize((exact.row.arrival-start)/60);dep=photo&&exact.row.departure===exact.row.arrival?null:quantize((exact.row.departure-start)/60);p=exact.row.platform||undefined;}
+      else{const left=anchors.filter(anchor=>anchor.nameIndex<index).at(-1),right=anchors.find(anchor=>anchor.nameIndex>index);const a=(left.row.departure-start)/60,b=(right.row.arrival-start)/60;arr=quantize(a+(b-a)*(index-left.nameIndex)/(right.nameIndex-left.nameIndex));dep=null;}
       return {s:canon(name),arr:index===0?null:arr,dep:index===names.length-1?null:dep,p};
     }).map((stop,index)=>index===0?{...stop,dep:0}:stop);
   }
+  const fitPhoto=(lineName,from,to,names)=>fit(lineName,from,to,names,{photo:true});
+  // 제공된 인게임 사진에서 직접 판독한 정차 승강장이다.
+  // 방위 문자(N/S/E/W)는 버리고 숫자만 보존하며, 사진에 없는 통과역에는 적용하지 않는다.
+  function applyPhotoPlatforms(template,platforms){return template.map(stop=>platforms[stop.s]==null?stop:{...stop,p:String(platforms[stop.s])});}
   function oppositePlatform(station,platform){
     if(platform==null)return platform;
     const rawAlias=Object.entries(aliases).find(([,canonical])=>canonical===station)?.[0];
@@ -53,9 +58,9 @@
   function section(template,from,to){const a=template.findIndex(stop=>stop.s===from),b=template.findIndex((stop,index)=>index>=a&&stop.s===to);if(a<0||b<a)throw new Error(`구간 없음: ${from}-${to}`);const origin=template[a].arr??template[a].dep??0;return template.slice(a,b+1).map((stop,index,array)=>({...stop,arr:index?stop.arr-origin:null,dep:index===array.length-1?null:(stop.dep==null?null:stop.dep-origin)}));}
   function combine(first,second,dwell=2){const out=first.map(stop=>({...stop})),join=out.at(-1),shift=join.arr+dwell;join.dep=shift;if(second[0].p)join.p=second[0].p;for(const stop of second.slice(1))out.push({...stop,arr:typeof stop.arr==='number'?stop.arr+shift:stop.arr,dep:typeof stop.dep==='number'?stop.dep+shift:stop.dep});return out;}
   const noPass=new Set(['기장','사천','함안','추풍령','불국사','입실','함평','라선','경흥','청진','단천','통천','고성','간성','속초','양양']);
-  function enforce(template,allStops,dir){return template.map((stop,index,array)=>{const edge=index===0||index===array.length-1;if(edge)return {...stop,p:stop.p||String(dir==='down'?1:2)};if(!(allStops||noPass.has(stop.s)))return {...stop,p:stop.dep==null?undefined:stop.p};return {...stop,dep:stop.dep==null?stop.arr+1:stop.dep,p:stop.p||String(dir==='down'?1:2)};});}
+  function enforce(template,allStops,dir,preservePhotoPasses=false){return template.map((stop,index,array)=>{const edge=index===0||index===array.length-1;if(edge)return {...stop,p:stop.p||String(dir==='down'?1:2)};if(preservePhotoPasses&&stop.dep==null)return {...stop,p:undefined};if(!(allStops||noPass.has(stop.s)))return {...stop,p:stop.dep==null?undefined:stop.p};return {...stop,dep:stop.dep==null?stop.arr+1:stop.dep,p:stop.p||String(dir==='down'?1:2)};});}
   function makeStops(template,start){return template.map((entry,index)=>{const last=index===template.length-1,pass=entry.dep==null&&!last,stop={s:entry.s,arr:index?clock(start+entry.arr):null,dep:last||pass?null:clock(start+entry.dep)};if(entry.p&&!pass)stop.p=String(entry.p);return stop;});}
-  function add(service){const all=/^ITX/.test(service.grade),down=enforce(service.down,all,'down'),up=enforce(service.up||reverse(service.down),all,'up');service.downDepartures.forEach((start,index)=>{const no=service.first+index*2,upStart=(service.upDepartures||service.downDepartures)[index];ALL_TRAINS.push({no:String(no),dest:service.to,dir:'down',line:service.line,grade:service.grade,boundary:[service.from,service.to],stops:makeStops(down,start)});ALL_TRAINS.push({no:String(no+1),dest:service.from,dir:'up',line:service.line,grade:service.grade,boundary:[service.to,service.from],stops:makeStops(up,upStart)});});}
+  function add(service){const all=/^ITX/.test(service.grade),down=enforce(service.down,all,'down',service.preservePhotoPasses),up=enforce(service.up||reverse(service.down),all,'up',service.preservePhotoPasses);service.downDepartures.forEach((start,index)=>{const no=service.first+index*2,upStart=(service.upDepartures||service.downDepartures)[index];ALL_TRAINS.push({no:String(no),dest:service.to,dir:'down',line:service.line,grade:service.grade,boundary:[service.from,service.to],stops:makeStops(down,start)});ALL_TRAINS.push({no:String(no+1),dest:service.from,dir:'up',line:service.line,grade:service.grade,boundary:[service.to,service.from],stops:makeStops(up,upStart)});});}
 
   const gyeongui=['신의주','용천','염주인광','동림','선천','정주','박천','안주역전','문덕','평원','평양','송림','사리원','서흥','평산','금천','개성','남개성','문산','일산','행신','마포','서울'];
   const wonsanCheong=['원산','안변','고산','세포','평강','철원','연천','전곡','동두천','양주','의정부','청량리'];
@@ -72,6 +77,20 @@
   const gyeongheungNamdaegu=[...donghae,...southDonghae,'안강','건천','경산','남대구'];
   const gyeongheungMokpo=[...donghae,'안변','고산','세포','평강','철원','연천','동두천','양주','의정부','청량리','한강로','병목안','수영','천안','정안','공주','전주','정읍','광주','나산','함평','무안','도림','목포'];
   const vlad=['서울','청량리','의정부','원산','함흥','청진','라선','모리온','블라디보스토크'];
+  const photoPlatforms={
+    wonsanBusan:{'원산':1,'통천':1,'고성':3,'간성':1,'속초':1,'양양':1,'주문':1,'강릉':32,'동강릉':2,'동해':2,'울진':1,'영해':2,'영덕':1,'강구':2,'청하':2,'포항':5,'경주':3,'북울산':2,'태화강':5,'울주':5,'좌천':4,'기장':3,'부산':13},
+    wonsanHyesan:{'원산':4,'천내':2,'고원':2,'금야':2,'정평':2,'함흥':6,'락원':1,'삼호':2,'운포':1,'신포':1,'북청':1,'리원':1,'단천':2,'북단천':2,'혜산':1},
+    wonsanMusan:{'원산':4,'천내':2,'고원':2,'금야':2,'정평':2,'함주':1,'함흥':6,'락원':1,'삼호':2,'운포':1,'신포':1,'북청':1,'리원':1,'단천':2,'김책':4,'길주':1,'명천':1,'명간':1,'어랑':2,'경성':4,'청진':1,'무산':1},
+    mokpoGyeongheung:{'목포':1,'도림':3,'무안':5,'함평':4,'광주':16,'정읍':4,'전주':4,'공주':3,'천안':6,'수영':6,'한강로':4,'청량리':25,'의정부':2,'양주':2,'동두천':2,'연천':4,'철원':3,'평강':2,'세포':3,'고산':3,'안변':3,'원산':6,'함흥':8,'북청':2,'단천':2,'김책':2,'명간':2,'경성':3,'청진':1,'라선':1,'경흥':2}
+  };
+  const photoWonsanBusan=applyPhotoPlatforms(fitPhoto('원산-부산 KTX','원산','부산',wonsanBusan),photoPlatforms.wonsanBusan);
+  const photoBusanWonsan=fitPhoto('원산-부산 KTX','부산','원산',wonsanBusan.toReversed());
+  const hyesanWonsan=fitPhoto('원산-혜산 ITX-마음','혜산','원산',hyesan);
+  const musanWonsan=fitPhoto('원산-무산 ITX-마음','무산','원산',musan);
+  const gyeongheungMokpoTemplate=fitPhoto('목포-경흥 KTX','경흥','목포',gyeongheungMokpo);
+  const photoWonsanHyesan=applyPhotoPlatforms(fitPhoto('원산-혜산 ITX-마음','원산','혜산',hyesan.toReversed()),photoPlatforms.wonsanHyesan);
+  const photoWonsanMusan=applyPhotoPlatforms(fitPhoto('원산-무산 ITX-마음','원산','무산',musan.toReversed()),photoPlatforms.wonsanMusan);
+  const photoMokpoGyeongheung=applyPhotoPlatforms(fitPhoto('목포-경흥 KTX','목포','경흥',gyeongheungMokpo.toReversed()),photoPlatforms.mokpoGyeongheung);
   const nyongwon=fit('평양-녕원 KTX','녕원','평양',['녕원','강안동','북창','은산','평양']);
   const sinuijuSeoul=fit('서울-신의주 KTX','신의주','서울',gyeongui),seoulSinuiju=fit('서울-신의주 KTX','서울','신의주',gyeongui.toReversed());
   const pIndex=gyeongui.indexOf('평양'),pyongyangSeoul=sinuijuSeoul.slice(pIndex).map((s,i,a)=>({...s,arr:i? s.arr-sinuijuSeoul[pIndex].arr:null,dep:i===a.length-1||s.dep==null?null:s.dep-sinuijuSeoul[pIndex].arr}));
@@ -88,19 +107,19 @@
     {first:5131,from:'평양',to:'서울',line:'평성선·경의선',grade:'ITX-새마을',down:combine(fit('평양-개성 (해주 경유) KTX','평양','개성',haeju),section(pyongyangSeoul,'개성','서울'),2),downDepartures:departures(305,77,14)},
     {first:5161,from:'샘물동',to:'평양',line:'만포선·평원선',grade:'ITX-마음',down:fit('평양-만포 KTX','만포','평양',saemmul),downDepartures:departures(335,165,7)},
     {first:5181,from:'녕원',to:'평양',line:'녕원선',grade:'ITX-마음',down:nyongwon,downDepartures:departures(320,110,10)},
-    {first:5201,from:'혜산',to:'원산',line:'혜산지선·동해선',grade:'ITX-마음',down:fit('원산-혜산 ITX-마음','혜산','원산',hyesan),downDepartures:departures(320,157,7)},
-    {first:5221,from:'무산',to:'원산',line:'무산지선·동해선',grade:'ITX-마음',down:fit('원산-무산 ITX-마음','무산','원산',musan),downDepartures:departures(305,147,7)},
+    {first:5201,from:'혜산',to:'원산',line:'동해선',grade:'ITX-마음',down:hyesanWonsan,up:photoWonsanHyesan,preservePhotoPasses:true,downDepartures:departures(320,157,7)},
+    {first:5221,from:'무산',to:'원산',line:'동해선',grade:'ITX-마음',down:musanWonsan,up:photoWonsanMusan,preservePhotoPasses:true,downDepartures:departures(305,147,7)},
     {first:5241,from:'경흥',to:'원산',line:'동해선',grade:'ITX-마음',down:fit('원산-경흥 ITX-마음','경흥','원산',donghae),downDepartures:[330,434,538,642,746,850,954,1058,1157]},
-    {first:5261,from:'평양',to:'룡연',line:'평성선·룡연지선',grade:'ITX-마음',down:fit('평양-룡연 KTX','평양','룡연',ryongyon),downDepartures:[345,425,585,665,825,905,1065,1145,1305]},
+    {first:5261,from:'평양',to:'룡연',line:'평성선',grade:'ITX-마음',down:fit('평양-룡연 KTX','평양','룡연',ryongyon),downDepartures:[345,425,585,665,825,905,1065,1145,1305]},
     {first:5281,from:'녕원',to:'서울',line:'녕원선·경의선',grade:'ITX-마음',down:combine(nyongwon,pyongyangSeoul),downDepartures:[375,595,815,1035,1255]},
     {first:5301,from:'신의주',to:'원산',line:'경의선·평원선·순천선',grade:'ITX-새마을',down:combine(sinuijuSeoul.slice(0,sinuijuSeoul.findIndex(s=>s.s==='안주역전')+1),anjuWonsan),downDepartures:departures(320,180,6)},
     {first:5351,from:'샘물동',to:'서울',line:'만포선·평원선·경의선',grade:'ITX-새마을',down:combine(fit('평양-만포 KTX','만포','평양',saemmul),pyongyangSeoul),downDepartures:[415,580,745,910,1075,1240]},
     {first:8001,from:'서울',to:'블라디보스토크',line:'경원선·동해선',grade:'KTX-산천',down:fit('서울-블라디보스토크 KTX','서울','블라디보스토크',vlad),downDepartures:[310,490,670,850,1030,1320]},
     {first:8021,from:'신의주',to:'부산',line:'경의선·경부고속선',grade:'KTX-산천',down:fit('신의주-부산 KTX','신의주','부산',['신의주','용천','염주인광','동림','정주','박천','안주역전','평양','사리원','평산','개성','서울','대전','구미','김천','남대구','부산']),downDepartures:[310,460,610,760,910,1060,1210,1340]},
     {first:9001,from:'신의주',to:'서울',line:'경의선',grade:'KTX-산천',down:sinuijuSeoul,up:seoulSinuiju,downDepartures:departures(305,120,9)},
-    {first:9521,from:'원산',to:'부산',line:'동해선',grade:'KTX-이음',down:fit('원산-부산 KTX','원산','부산',wonsanBusan),downDepartures:departures(310,108,10)},
+    {first:9521,from:'원산',to:'부산',line:'동해선',grade:'KTX-이음',down:photoWonsanBusan,up:photoBusanWonsan,preservePhotoPasses:true,downDepartures:departures(310,108,10)},
     {first:9701,from:'경흥',to:'남대구',line:'동해선·대구선',grade:'KTX-산천',down:fit('남대구-경흥 KTX','경흥','남대구',gyeongheungNamdaegu),downDepartures:[310,440,570,700,830,960,1090,1235]},
-    {first:9751,from:'경흥',to:'목포',line:'동해선·경원선·경부고속선·호남고속선',grade:'KTX-산천',down:fit('목포-경흥 KTX','경흥','목포',gyeongheungMokpo),downDepartures:[370,520,670,820,970,1120,1270]}
+    {first:9751,from:'경흥',to:'목포',line:'동해선·경원선·경부고속선·호남고속선',grade:'KTX-산천',down:gyeongheungMokpoTemplate,up:photoMokpoGyeongheung,preservePhotoPasses:true,downDepartures:[370,520,670,820,970,1120,1270]}
   ];
   for(let i=ALL_TRAINS.length-1;i>=0;i--)if(old(Number(ALL_TRAINS[i].no)))ALL_TRAINS.splice(i,1);
   for(const service of services)add(service);
@@ -108,7 +127,7 @@
   // 사진·인게임 원본 시각을 기준으로 전 구간을 평행 이동한 충돌 해소값이다.
   // 방향별 승강장 분리 후 전 편의 중복 점유와 금지 구간 추월을 함께 검증했다.
   // #9754는 기존편 연속 충돌 해소를 위해 +12분, 나머지는 모두 ±10분 이내다.
-  const safetyShifts={5001:-4,5002:-2,5004:-7,5005:-7,5012:7,5013:4,5015:-1,5016:1,5019:8,5022:5,5023:2,5041:1,5053:-1,5061:-1,5065:-1,5069:-1,5070:2,5073:-1,5084:-1,5112:1,5139:2,5141:-1,5151:-1,5158:1,5172:-1,5207:-1,5209:-7,5210:-5,5213:3,5214:-1,5223:-6,5224:5,5226:-4,5230:1,5231:-5,5242:8,5243:1,5245:5,5248:-4,5249:1,5250:2,5252:7,5253:10,5254:-6,5255:-1,5257:-6,5274:-1,5277:-2,5305:-1,5360:-2,5361:-1,8001:1,8002:-1,8007:-1,8008:-1,8009:1,8036:-1,9002:1,9004:-1,9017:-2,9532:-1,9535:-1,9538:1,9702:-7,9703:-6,9704:2,9708:3,9710:-8,9711:3,9712:4,9715:-7,9751:1,9754:12,9759:-8,9760:10,9761:-1,9762:5,9764:6};
+  const safetyShifts={5001:-4,5002:-2,5004:-7,5005:-8,5012:7,5013:4,5015:-1,5016:1,5019:8,5022:5,5023:2,5041:1,5053:-1,5061:-1,5065:-1,5069:-1,5070:2,5073:-1,5084:-1,5112:1,5139:2,5141:-1,5151:-1,5158:1,5172:-1,5207:-1,5209:-5,5210:-5,5213:3,5214:-1,5221:1,5223:-6,5224:6,5226:-4,5230:3,5231:-5,5234:1,5242:8,5243:1,5244:-10,5245:5,5247:-2,5248:-6,5249:1,5250:2,5252:7,5253:10,5254:-8,5255:-1,5257:-8,5274:-1,5277:-2,5305:-1,5360:-2,5361:-1,8001:1,8002:-1,8007:-1,8008:-1,8009:1,8036:-1,9002:1,9004:-1,9017:-2,9532:-1,9533:2,9535:-1,9538:2,9702:-7,9703:-6,9704:2,9708:3,9710:-8,9711:3,9712:4,9715:-9,9751:3,9752:2,9753:2,9754:12,9759:-13,9760:10,9761:-1,9762:7,9764:8};
   for(const [no,shift] of Object.entries(safetyShifts))shiftTrain(ALL_TRAINS.find(train=>train.no===no),shift);
   globalThis.NIMBI_NORTH_FORMAL_RANGES=services.map(service=>({first:service.first,last:service.first+service.downDepartures.length*2-1,from:service.from,to:service.to,line:service.line,grade:service.grade,count:service.downDepartures.length}));
 })();
