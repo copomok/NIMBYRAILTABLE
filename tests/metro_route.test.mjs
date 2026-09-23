@@ -59,5 +59,10 @@ assert.equal(vm.runInContext("METRO_SCHED['강서선'].t.length",context),166);
 assert.equal(vm.runInContext("METRO_SCHED['은평선'].t.length",context),168);
 assert.ok(vm.runInContext("METRO_SCHED['강서선'].t.some(t=>t.some((_,i)=>i%3===2&&t[i]===30))",context),'강서선 잠실 운행편이 필요합니다.');
 assert.ok(vm.runInContext("METRO_SCHED['은평선'].t.some(t=>t.some((_,i)=>i%3===2&&t[i]===19))",context),'은평선 남안양 운행편이 필요합니다.');
+assert.deepEqual(Array.from(vm.runInContext("METRO_GEO['강서선'].m[0]",context)),[126.486408,37.745926],'강화역은 인게임 실제 좌표를 사용해야 합니다.');
+assert.deepEqual(Array.from(vm.runInContext("METRO_GEO['강서선'].m.at(-1)",context)),[127.099814,37.513113],'잠실역은 인게임 실제 좌표를 사용해야 합니다.');
+assert.deepEqual(Array.from(vm.runInContext("METRO_GEO['은평선'].m.at(-1)",context)),[126.939517,37.378651],'남안양역은 인게임 실제 좌표를 사용해야 합니다.');
+assert.equal(vm.runInContext('NIMBI_METRO_SEPTEMBER_REVISION.exactGameCoordinates',context),true);
+assert.equal(vm.runInContext('NIMBI_METRO_SEPTEMBER_REVISION.exactRunTimes',context),true);
 
 console.log('metro route tests passed');
