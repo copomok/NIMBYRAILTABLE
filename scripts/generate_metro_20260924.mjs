@@ -19,6 +19,7 @@ for(const station of stations){
 const context={};
 vm.createContext(context);
 vm.runInContext(`${fs.readFileSync('data/nimbi_metro.js','utf8')};this.lines=METRO_LINES;`,context);
+vm.runInContext(`${fs.readFileSync('data/nimbi_metro_sched.js','utf8')};this.schedules=METRO_SCHED;`,context);
 
 // 기존 노선도에서 동명이 아닌 역의 화면 좌표를 수집합니다. 이미 표시되던 역은
 // 이 값을 그대로 보존하고, 신설 역만 해당 노선의 실제 경위도로 국소 보간합니다.
@@ -45,13 +46,16 @@ function regression(calibration,inputIndex,outputIndex){
 }
 
 const wrapMinute=value=>((value%1440)+1440)%1440;
-const toMinute=(seconds,tz)=>wrapMinute(Math.round((meta.clock_epoch_s+seconds+tz)/60));
-function buildRevision(name,color){
+// 인게임 시각은 UTC+0 절대초이므로 tz_delta_s 설정과 무관하게 한국 표준시(+09:00)로 바꿉니다.
+const KST_OFFSET_SECONDS=9*60*60;
+const toMinute=seconds=>wrapMinute(Math.round((meta.clock_epoch_s+seconds+KST_OFFSET_SECONDS)/60));
+const rawLines=new Map(raw.filter(item=>item.class==='Line').map(line=>[line.id,line]));
+const rawSchedules=raw.filter(item=>item.class==='Schedule'&&item.shifts?.length);
+const nameAt=(line,stopIndex)=>stationById.get(line.stops[stopIndex].station_id)?.name.replace(/역$/,'');
+
+function linePresentation(name,color){
   const line=raw.find(item=>item.class==='Line'&&item.name===name);
-  const schedule=raw
-    .filter(item=>item.class==='Schedule'&&item.name===name&&item.shifts?.length)
-    .sort((a,b)=>b.shifts.length-a.shifts.length)[0];
-  if(!line||!schedule)throw new Error(`${name} 활성 노선 또는 스케줄을 찾을 수 없습니다.`);
+  if(!line)throw new Error(`${name} 노선을 찾을 수 없습니다.`);
 
   const stopNames=line.stops.map(stop=>stationById.get(stop.station_id)?.name.replace(/역$/,''));
   const canonicalNames=[];
@@ -76,39 +80,80 @@ function buildRevision(name,color){
     Number((lat*yProjection.scale+yProjection.offset).toFixed(1))
   ];
 
+  return {line,stations:canonicalNames,coords:canonicalCoords,
+    xy:canonicalCoords.map((coords,index)=>knownDiagramXY.get(canonicalNames[index])?.slice()||project(coords)),color};
+}
+
+function collectServices({familyLineNames,stationNames,classByLine={},terminalCorrection=true}){
+  const familyLines=raw.filter(item=>item.class==='Line'&&familyLineNames.includes(item.name));
+  const familyIds=new Set(familyLines.map(line=>line.id));
+  const indexByName=new Map(stationNames.map((name,index)=>[name,index]));
   const seen=new Set;
-  const trips=[];
-  for(const shift of schedule.shifts){
-    for(const run of shift.runs||[]){
-      if(run.line_id!==line.id)continue;
+  const services=[];
+  let rawRuns=0,correctedTerminals=0,depotTerminations=0;
+  for(const schedule of rawSchedules){
+    const containsFamily=schedule.shifts.some(shift=>(shift.runs||[]).some(run=>familyIds.has(run.line_id)));
+    if(!containsFamily)continue;
+    for(const shift of schedule.shifts){
+      const runs=shift.runs||[];
+      for(let runPosition=0;runPosition<runs.length;runPosition++){
+        const run=runs[runPosition];
+        if(!familyIds.has(run.line_id))continue;
+        rawRuns++;
+        const line=rawLines.get(run.line_id);
       const trip=[];
       for(let stopIndex=run.enter_stop_idx,arrayIndex=0;stopIndex<=run.exit_stop_idx;stopIndex++,arrayIndex+=2){
-        const stationIndex=indexByName.get(stopNames[stopIndex]);
-        const arrival=toMinute(run.arrival_departure[arrayIndex],schedule.tz_delta_s);
-        const departure=toMinute(run.arrival_departure[arrayIndex+1],schedule.tz_delta_s);
+        const stationIndex=indexByName.get(nameAt(line,stopIndex));
+        if(stationIndex===undefined)throw new Error(`${line.name} 역 매핑 누락: ${nameAt(line,stopIndex)}`);
+        const arrival=toMinute(run.arrival_departure[arrayIndex]);
+        const departure=toMinute(run.arrival_departure[arrayIndex+1]);
         // 반환점은 인게임 노선에 같은 역이 연속 두 번 기록되므로 한 번만 표시하되
         // 첫 기록의 도착과 둘째 기록의 출발을 보존합니다.
         if(trip.length&&trip.at(-1)===stationIndex)trip[trip.length-2]=departure;
         else trip.push(arrival,departure,stationIndex);
       }
-      const key=trip.join(',');
-      if(!seen.has(key)){seen.add(key);trips.push(trip);}
+        if(terminalCorrection&&run.exit_stop_idx===line.stops.length-1){
+          const originName=nameAt(line,0);
+          const nextRun=runs[runPosition+1];
+          const nextLine=nextRun&&rawLines.get(nextRun.line_id);
+          const nextIsFamily=nextRun&&familyIds.has(nextRun.line_id);
+          const nextStartsAtOrigin=nextIsFamily&&nameAt(nextLine,nextRun.enter_stop_idx)===originName;
+          const nextIsDepot=nextLine&&/(입고|주박|기지)/.test(nextLine.name);
+          if(nextStartsAtOrigin){
+            const originIndex=indexByName.get(originName);
+            trip.push(toMinute(nextRun.arrival_departure[0]),toMinute(nextRun.arrival_departure[1]),originIndex);
+            correctedTerminals++;
+          }else if(nextIsDepot){
+            depotTerminations++;
+          }else if(!nextRun){
+            // 주간 데이터 경계에서 다음 run이 잘린 경우에는 반대 방향의 첫 구간 운전시분으로 보완합니다.
+            const firstDeparture=line.stops[0].departure;
+            const nextArrival=line.stops[1].arrival;
+            const travelMinutes=Math.max(1,Math.round((nextArrival-firstDeparture)/60));
+            const originIndex=indexByName.get(originName);
+            const arrival=wrapMinute(trip.at(-2)+travelMinutes);
+            trip.push(arrival,arrival,originIndex);
+            correctedTerminals++;
+          }
+        }
+        const serviceClass=classByLine[line.name]||0;
+        const key=`${serviceClass}|${trip.join(',')}`;
+        if(!seen.has(key)){seen.add(key);services.push({trip,serviceClass});}
+      }
     }
   }
-  trips.sort((a,b)=>a[1]-b[1]||a.length-b.length||a.join(',').localeCompare(b.join(',')));
-
-  return {
-    name,color,lineId:line.id,scheduleId:schedule.id,
-    stations:canonicalNames,
-    coords:canonicalCoords,
-    xy:canonicalCoords.map((coords,index)=>knownDiagramXY.get(canonicalNames[index])?.slice()||project(coords)),
-    trips,
-    rawRuns:schedule.shifts.flatMap(shift=>shift.runs||[]).filter(run=>run.line_id===line.id).length
-  };
+  services.sort((a,b)=>a.trip[1]-b.trip[1]||a.serviceClass-b.serviceClass||a.trip.length-b.trip.length||a.trip.join(',').localeCompare(b.trip.join(',')));
+  return {trips:services.map(item=>item.trip),classes:services.map(item=>item.serviceClass),rawRuns,correctedTerminals,depotTerminations};
 }
 
-const revisions=[buildRevision('강서선','#6ccc6c'),buildRevision('은평선','#545454')];
-const payload=Object.fromEntries(revisions.map(item=>[item.name,item]));
+const gangseo=linePresentation('강서선','#6ccc6c');
+const eunpyeong=linePresentation('은평선','#545454');
+const ansanLine=context.lines.find(line=>line.name==='안산안양선');
+const revisions={
+  '강서선':{...gangseo,...collectServices({familyLineNames:['강서선','강서선/급행'],stationNames:gangseo.stations,classByLine:{'강서선/급행':1}}),updateLine:true},
+  '은평선':{...eunpyeong,...collectServices({familyLineNames:['은평선'],stationNames:eunpyeong.stations}),updateLine:true},
+  '안산안양선':{stations:context.schedules['안산안양선'].s.slice(),...collectServices({familyLineNames:['안산안양선','안산안양선/1','안산안양선/2'],stationNames:context.schedules['안산안양선'].s}),updateLine:false}
+};
 const output=`// 이 파일은 scripts/generate_metro_20260924.mjs로 인게임 JSON에서 생성했습니다. 직접 편집하지 마세요.
 (function applyMetroSeptemberRevision(global){
   'use strict';
@@ -116,10 +161,10 @@ const output=`// 이 파일은 scripts/generate_metro_20260924.mjs로 인게임 
   const schedules=typeof METRO_SCHED!=='undefined'?METRO_SCHED:global.METRO_SCHED;
   const geo=typeof METRO_GEO!=='undefined'?METRO_GEO:global.METRO_GEO;
   if(!Array.isArray(lines)||!schedules||!geo)return;
-  const revisions=${JSON.stringify(payload)};
+  const revisions=${JSON.stringify(revisions)};
   for(const [name,revision] of Object.entries(revisions)){
     const line=lines.find(item=>item.name===name);
-    if(line){
+    if(line&&revision.updateLine){
       line.color=revision.color;
       line.from=revision.stations[0];
       line.to=revision.stations.at(-1);
@@ -127,15 +172,16 @@ const output=`// 이 파일은 scripts/generate_metro_20260924.mjs로 인게임 
       line.stations=revision.stations.slice();
       line.routes=[{stations:revision.stations.slice(),xy:revision.xy.map(point=>point.slice())}];
     }
-    geo[name]={m:revision.coords.map(point=>point.slice())};
-    schedules[name]={s:revision.stations.slice(),t:revision.trips.map(trip=>trip.slice())};
+    if(revision.updateLine)geo[name]={m:revision.coords.map(point=>point.slice())};
+    schedules[name]={s:revision.stations.slice(),t:revision.trips.map(trip=>trip.slice()),c:revision.classes.slice()};
   }
   global.NIMBI_METRO_SEPTEMBER_REVISION={
     version:'2026-09-24',source:'Mysterious Enterprise Timetable Export 20221025T213119Z.json',
-    lines:Object.fromEntries(Object.entries(revisions).map(([name,item])=>[name,{lineId:item.lineId,scheduleId:item.scheduleId,rawRuns:item.rawRuns,services:item.trips.length}])),
-    exactGameCoordinates:true,exactRunTimes:true,preservedPassengerColors:true
+    timezone:'Asia/Seoul',utcOffsetMinutes:540,
+    lines:Object.fromEntries(Object.entries(revisions).map(([name,item])=>[name,{rawRuns:item.rawRuns,services:item.trips.length,correctedTerminals:item.correctedTerminals,depotTerminations:item.depotTerminations,expressServices:item.classes.filter(value=>value===1).length}])),
+    exactGameCoordinates:true,exactRunTimes:true,terminalCorrection:true,preservedPassengerColors:true
   };
 })(typeof globalThis!=='undefined'?globalThis:window);
 `;
 fs.writeFileSync(outputPath,output);
-for(const item of revisions)console.log(`${item.name}: ${item.stations.length}역, 원시 ${item.rawRuns}회, 일자 중복 제거 ${item.trips.length}편`);
+for(const [name,item] of Object.entries(revisions))console.log(`${name}: ${item.stations.length}역, 원시 ${item.rawRuns}회, 중복 제거 ${item.trips.length}편, 종점 보정 ${item.correctedTerminals}회, 입고 종착 ${item.depotTerminations}회, 급행 ${item.classes.filter(value=>value===1).length}편`);

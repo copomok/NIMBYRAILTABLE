@@ -55,8 +55,9 @@ assert.equal(gangseo.color,'#6ccc6c','강서선 승객용 노선색을 유지해
 assert.equal(eunpyeong.color,'#545454','은평선 승객용 노선색을 유지해야 합니다.');
 assert.deepEqual(Array.from(gangseo.stations),['강화','월곶','통진','구래','장기감정','북변','풍무','장기노오지','김포공항','신월','화곡','등촌','목동','선유도','당산','노량진','상도','국사봉','서사당','이수','내방','서초','교대','서강남','서역삼','역삼중앙','선릉','삼성','종합운동장','잠실새내','잠실']);
 assert.deepEqual(Array.from(eunpyeong.stations),['진관사','신도','은평','연서공원','응암','마포','망원','서교','창전','염리','한강로','이촌','동작','이수','사당','북과천','과천','내손','호계','남안양']);
-assert.equal(vm.runInContext("METRO_SCHED['강서선'].t.length",context),166);
+assert.equal(vm.runInContext("METRO_SCHED['강서선'].t.length",context),261);
 assert.equal(vm.runInContext("METRO_SCHED['은평선'].t.length",context),168);
+assert.equal(vm.runInContext("METRO_SCHED['안산안양선'].t.length",context),338);
 assert.ok(vm.runInContext("METRO_SCHED['강서선'].t.some(t=>t.some((_,i)=>i%3===2&&t[i]===30))",context),'강서선 잠실 운행편이 필요합니다.');
 assert.ok(vm.runInContext("METRO_SCHED['은평선'].t.some(t=>t.some((_,i)=>i%3===2&&t[i]===19))",context),'은평선 남안양 운행편이 필요합니다.');
 assert.deepEqual(Array.from(vm.runInContext("METRO_GEO['강서선'].m[0]",context)),[126.486408,37.745926],'강화역은 인게임 실제 좌표를 사용해야 합니다.');
@@ -64,5 +65,11 @@ assert.deepEqual(Array.from(vm.runInContext("METRO_GEO['강서선'].m.at(-1)",co
 assert.deepEqual(Array.from(vm.runInContext("METRO_GEO['은평선'].m.at(-1)",context)),[126.939517,37.378651],'남안양역은 인게임 실제 좌표를 사용해야 합니다.');
 assert.equal(vm.runInContext('NIMBI_METRO_SEPTEMBER_REVISION.exactGameCoordinates',context),true);
 assert.equal(vm.runInContext('NIMBI_METRO_SEPTEMBER_REVISION.exactRunTimes',context),true);
+assert.equal(vm.runInContext('NIMBI_METRO_SEPTEMBER_REVISION.utcOffsetMinutes',context),540);
+assert.equal(vm.runInContext("METRO_SCHED['강서선'].c.filter(value=>value===1).length",context),75,'강서선 급행 75편을 별도 등급으로 표시해야 합니다.');
+assert.equal(vm.runInContext("METRO_SCHED['은평선'].t.filter(t=>{const s=METRO_SCHED['은평선'].s,q=t.filter((_,i)=>i%3===2).map(i=>s[i]);return q.includes('한강로')&&q.at(-1)==='신도'}).length",context),0,'한강로 이후 상행이 신도에서 잘리면 안 됩니다.');
+assert.ok(vm.runInContext("METRO_SCHED['은평선'].t.some(t=>{const s=METRO_SCHED['은평선'].s,q=t.filter((_,i)=>i%3===2).map(i=>s[i]);return q.includes('한강로')&&q.at(-1)==='진관사'})",context),'한강로 이후 진관사 종착 보정편이 필요합니다.');
+assert.equal(vm.runInContext("METRO_SCHED['안산안양선'].t.filter(t=>METRO_SCHED['안산안양선'].s[t.at(-1)]==='원시').length",context),12,'입고로 이어지는 실제 원시 종착편을 유지해야 합니다.');
+assert.ok(vm.runInContext("METRO_SCHED['안산안양선'].t.some(t=>METRO_SCHED['안산안양선'].s[t.at(-1)]==='새솔')",context),'후속 영업운행이 있는 원시 도착편은 새솔까지 보완해야 합니다.');
 
 console.log('metro route tests passed');

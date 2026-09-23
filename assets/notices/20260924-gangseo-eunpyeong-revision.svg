@@ -18,7 +18,7 @@
   <text x="280" y="448" fill="#111827" font-family="Arial,Apple SD Gothic Neo,sans-serif" font-size="27" font-weight="800">강화 ─ 월곶 ─ 노량진 ─ 이수 ─ 강남 도심 ─ 잠실</text>
   <path d="M280 480H1205" stroke="#6ccc6c" stroke-width="12" stroke-linecap="round"/>
   <g fill="#6ccc6c"><circle cx="280" cy="480" r="10"/><circle cx="430" cy="480" r="10"/><circle cx="650" cy="480" r="10"/><circle cx="815" cy="480" r="10"/><circle cx="1040" cy="480" r="10"/><circle cx="1205" cy="480" r="10"/></g>
-  <text x="130" y="534" fill="#475467" font-family="Arial,Apple SD Gothic Neo,sans-serif" font-size="23">31개 역 · 인게임 운행 편성 166개 · 월곶·상도 및 이수–잠실 구간 반영</text>
+  <text x="130" y="534" fill="#475467" font-family="Arial,Apple SD Gothic Neo,sans-serif" font-size="23">31개 역 · 일반 186편·급행 75편 · 월곶·상도 및 이수–잠실 구간 반영</text>
 
   <rect x="96" y="596" width="1248" height="318" rx="22" fill="#f8f8f9" stroke="#545454" stroke-width="3"/>
   <circle cx="140" cy="648" r="15" fill="#545454"/>
