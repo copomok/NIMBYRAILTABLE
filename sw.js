@@ -1,4 +1,4 @@
-const CACHE_NAME = 'nimbirail-2026091201';
+const CACHE_NAME = 'nimbirail-2026092401';
 const ASSETS = [
   '/NIMBYRAILTABLE/',
   '/NIMBYRAILTABLE/index.html',
@@ -31,6 +31,7 @@ const ASSETS = [
   '/NIMBYRAILTABLE/data/nimbi_metro_schedule_updates.js',
   '/NIMBYRAILTABLE/data/nimbi_metro_service_policy.js',
   '/NIMBYRAILTABLE/data/nimbi_metro_geo.js',
+  '/NIMBYRAILTABLE/data/nimbi_metro_20260924_update.js',
   '/NIMBYRAILTABLE/js/features/nimbi_congestion.js',
   '/NIMBYRAILTABLE/js/features/nimbi_engagement.js',
   '/NIMBYRAILTABLE/js/features/nimbi_operations_hub.js',
@@ -70,6 +71,7 @@ const ASSETS = [
   '/NIMBYRAILTABLE/assets/notices/20260803-jamsil-mokpo-srt-expansion.svg',
   '/NIMBYRAILTABLE/assets/notices/20260911-north-formal-summary.svg',
   '/NIMBYRAILTABLE/assets/notices/20260911-north-formal.svg',
+  '/NIMBYRAILTABLE/assets/notices/20260924-gangseo-eunpyeong-revision.svg',
 ];
 
 self.addEventListener('install', e => {

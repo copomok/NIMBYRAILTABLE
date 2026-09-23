@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1440" height="1060" viewBox="0 0 1440 1060" role="img" aria-labelledby="title desc">
+  <title id="title">강서선·은평선 전 구간 및 시간표 개편</title>
+  <desc id="desc">강서선과 은평선의 개편 전후 운행 구간, 추가 역, 운행 편성 수와 복원된 노선색을 비교한 안내표</desc>
+  <rect width="1440" height="1060" fill="#f5f7fa"/>
+  <rect x="56" y="48" width="1328" height="964" rx="28" fill="#fff" stroke="#d8dee8" stroke-width="2"/>
+  <text x="96" y="108" fill="#667085" font-family="Arial,Apple SD Gothic Neo,sans-serif" font-size="22" font-weight="700" letter-spacing="2">NIMBYRAIL PASSENGER INFORMATION</text>
+  <text x="96" y="165" fill="#111827" font-family="Arial,Apple SD Gothic Neo,sans-serif" font-size="44" font-weight="800">강서선·은평선 전 구간 및 시간표 개편</text>
+  <text x="96" y="207" fill="#475467" font-family="Arial,Apple SD Gothic Neo,sans-serif" font-size="24">2026년 9월 24일 · 신규 인게임 파일 반영</text>
+
+  <rect x="96" y="250" width="1248" height="318" rx="22" fill="#f7fcf7" stroke="#6ccc6c" stroke-width="3"/>
+  <circle cx="140" cy="302" r="15" fill="#6ccc6c"/>
+  <text x="170" y="313" fill="#1f2937" font-family="Arial,Apple SD Gothic Neo,sans-serif" font-size="34" font-weight="800">강서선</text>
+  <text x="1190" y="311" fill="#477f47" font-family="Arial,Apple SD Gothic Neo,sans-serif" font-size="22" font-weight="700">노선색 복원 #6ccc6c</text>
+  <text x="130" y="365" fill="#667085" font-family="Arial,Apple SD Gothic Neo,sans-serif" font-size="22" font-weight="700">개편 전</text>
+  <text x="280" y="365" fill="#344054" font-family="Arial,Apple SD Gothic Neo,sans-serif" font-size="27">강화 ─ 노량진 ─ 남안양</text>
+  <path d="M280 395H1205" stroke="#cbd5e1" stroke-width="10" stroke-linecap="round"/>
+  <text x="130" y="448" fill="#477f47" font-family="Arial,Apple SD Gothic Neo,sans-serif" font-size="22" font-weight="700">개편 후</text>
+  <text x="280" y="448" fill="#111827" font-family="Arial,Apple SD Gothic Neo,sans-serif" font-size="27" font-weight="800">강화 ─ 월곶 ─ 노량진 ─ 이수 ─ 강남 도심 ─ 잠실</text>
+  <path d="M280 480H1205" stroke="#6ccc6c" stroke-width="12" stroke-linecap="round"/>
+  <g fill="#6ccc6c"><circle cx="280" cy="480" r="10"/><circle cx="430" cy="480" r="10"/><circle cx="650" cy="480" r="10"/><circle cx="815" cy="480" r="10"/><circle cx="1040" cy="480" r="10"/><circle cx="1205" cy="480" r="10"/></g>
+  <text x="130" y="534" fill="#475467" font-family="Arial,Apple SD Gothic Neo,sans-serif" font-size="23">31개 역 · 인게임 운행 편성 166개 · 월곶·상도 및 이수–잠실 구간 반영</text>
+
+  <rect x="96" y="596" width="1248" height="318" rx="22" fill="#f8f8f9" stroke="#545454" stroke-width="3"/>
+  <circle cx="140" cy="648" r="15" fill="#545454"/>
+  <text x="170" y="659" fill="#1f2937" font-family="Arial,Apple SD Gothic Neo,sans-serif" font-size="34" font-weight="800">은평선</text>
+  <text x="1190" y="657" fill="#545454" font-family="Arial,Apple SD Gothic Neo,sans-serif" font-size="22" font-weight="700">노선색 복원 #545454</text>
+  <text x="130" y="711" fill="#667085" font-family="Arial,Apple SD Gothic Neo,sans-serif" font-size="22" font-weight="700">개편 전</text>
+  <text x="280" y="711" fill="#344054" font-family="Arial,Apple SD Gothic Neo,sans-serif" font-size="27">진관사 ─ 응암 ─ 한강로</text>
+  <path d="M280 741H1205" stroke="#cbd5e1" stroke-width="10" stroke-linecap="round"/>
+  <text x="130" y="794" fill="#545454" font-family="Arial,Apple SD Gothic Neo,sans-serif" font-size="22" font-weight="700">개편 후</text>
+  <text x="280" y="794" fill="#111827" font-family="Arial,Apple SD Gothic Neo,sans-serif" font-size="27" font-weight="800">진관사 ─ 한강로 ─ 이촌 ─ 이수 ─ 과천 ─ 남안양</text>
+  <path d="M280 826H1205" stroke="#545454" stroke-width="12" stroke-linecap="round"/>
+  <g fill="#545454"><circle cx="280" cy="826" r="10"/><circle cx="500" cy="826" r="10"/><circle cx="675" cy="826" r="10"/><circle cx="830" cy="826" r="10"/><circle cx="1035" cy="826" r="10"/><circle cx="1205" cy="826" r="10"/></g>
+  <text x="130" y="880" fill="#475467" font-family="Arial,Apple SD Gothic Neo,sans-serif" font-size="23">20개 역 · 인게임 운행 편성 168개 · 한강로–남안양 연장 구간 반영</text>
+
+  <rect x="96" y="942" width="1248" height="44" rx="12" fill="#eef2f6"/>
+  <text x="720" y="971" text-anchor="middle" fill="#344054" font-family="Arial,Apple SD Gothic Neo,sans-serif" font-size="20" font-weight="700">시간표 탭에서 역별 출발 시각과 전 구간 운행을 확인하세요.</text>
+</svg>

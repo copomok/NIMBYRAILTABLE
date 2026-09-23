@@ -7,6 +7,8 @@ const context={};
 vm.createContext(context);
 vm.runInContext(fs.readFileSync('data/nimbi_metro.js','utf8'),context);
 vm.runInContext(fs.readFileSync('data/nimbi_metro_sched.js','utf8'),context);
+vm.runInContext(fs.readFileSync('data/nimbi_metro_geo.js','utf8'),context);
+vm.runInContext(fs.readFileSync('data/nimbi_metro_20260924_update.js','utf8'),context);
 
 const slice=(start,end)=>{
   const from=source.indexOf(start);
@@ -46,5 +48,16 @@ for(const segment of branch.segments){
 }
 
 assert.ok(!source.includes('운행 데이터 없는 구간 → 추정 fallback'),'실제 운행편이 없는 경로를 허위 추정 직통으로 표시하면 안 됩니다.');
+
+const gangseo=vm.runInContext("METRO_LINES.find(line=>line.name==='강서선')",context);
+const eunpyeong=vm.runInContext("METRO_LINES.find(line=>line.name==='은평선')",context);
+assert.equal(gangseo.color,'#6ccc6c','강서선 승객용 노선색을 유지해야 합니다.');
+assert.equal(eunpyeong.color,'#545454','은평선 승객용 노선색을 유지해야 합니다.');
+assert.deepEqual(Array.from(gangseo.stations),['강화','월곶','통진','구래','장기감정','북변','풍무','장기노오지','김포공항','신월','화곡','등촌','목동','선유도','당산','노량진','상도','국사봉','서사당','이수','내방','서초','교대','서강남','서역삼','역삼중앙','선릉','삼성','종합운동장','잠실새내','잠실']);
+assert.deepEqual(Array.from(eunpyeong.stations),['진관사','신도','은평','연서공원','응암','마포','망원','서교','창전','염리','한강로','이촌','동작','이수','사당','북과천','과천','내손','호계','남안양']);
+assert.equal(vm.runInContext("METRO_SCHED['강서선'].t.length",context),166);
+assert.equal(vm.runInContext("METRO_SCHED['은평선'].t.length",context),168);
+assert.ok(vm.runInContext("METRO_SCHED['강서선'].t.some(t=>t.some((_,i)=>i%3===2&&t[i]===30))",context),'강서선 잠실 운행편이 필요합니다.');
+assert.ok(vm.runInContext("METRO_SCHED['은평선'].t.some(t=>t.some((_,i)=>i%3===2&&t[i]===19))",context),'은평선 남안양 운행편이 필요합니다.');
 
 console.log('metro route tests passed');

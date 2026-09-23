@@ -1247,5 +1247,21 @@ const NOTICES = [
 <a class="notice-timetable-attachment summary" href="assets/notices/20260911-north-formal-summary.svg" target="_blank" rel="noopener noreferrer"><img src="assets/notices/20260911-north-formal-summary.svg" alt="북한 지역 철도 정식 운행 요약표" loading="lazy"><span>한눈에 보는 정식 운행계획</span></a>
 <a class="notice-timetable-attachment" href="assets/notices/20260911-north-formal.svg" target="_blank" rel="noopener noreferrer"><img src="assets/notices/20260911-north-formal.svg" alt="북한 지역 철도 정식 운행 전체 시간표" loading="lazy"><span>역별 전체 시간표</span></a>
 </div>`
+  },
+  {
+    date:'2026-09-24',
+    cat:'timetable',
+    title:'강서선·은평선 전 구간과 시간표가 개편됩니다',
+    body:`새 인게임 파일을 기준으로 <strong>강서선과 은평선의 노선 구간·배선·전철 시간표</strong>를 전면 갱신했습니다.<br><br>
+
+<strong>■ 강서선</strong><br>
+기존 강화–남안양에서 <span class="n-highlight">강화–잠실</span>로 운행 구간이 변경됩니다. 월곶·상도와 강남 도심 구간(이수–잠실)이 새로 반영되며, 인게임 운행 편성 166개를 시간표에 적용했습니다.<br><br>
+
+<strong>■ 은평선</strong><br>
+기존 진관사–한강로에서 <span class="n-highlight">진관사–남안양</span>으로 연장됩니다. 이촌·동작·이수·사당·과천권 구간이 새로 반영되며, 인게임 운행 편성 168개를 시간표에 적용했습니다.<br><br>
+
+<div class="n-box">노선색은 가독성을 위해 기존 승객용 색상인 강서선 초록색(#6ccc6c), 은평선 짙은 회색(#545454)으로 원상복구했습니다. 인게임 원본의 ARGB 값은 노선 구간과 시간표 판독에만 사용했습니다.</div><br>
+
+<a class="notice-timetable-attachment summary" href="assets/notices/20260924-gangseo-eunpyeong-revision.svg" target="_blank" rel="noopener noreferrer"><img src="assets/notices/20260924-gangseo-eunpyeong-revision.svg" alt="강서선 은평선 개편 전후 비교표" loading="lazy"><span>노선 개편 전후 비교 크게 보기</span></a>`
   }
 ];
