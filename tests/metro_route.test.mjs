@@ -71,5 +71,9 @@ assert.equal(vm.runInContext("METRO_SCHED['은평선'].t.filter(t=>{const s=METR
 assert.ok(vm.runInContext("METRO_SCHED['은평선'].t.some(t=>{const s=METRO_SCHED['은평선'].s,q=t.filter((_,i)=>i%3===2).map(i=>s[i]);return q.includes('한강로')&&q.at(-1)==='진관사'})",context),'한강로 이후 진관사 종착 보정편이 필요합니다.');
 assert.equal(vm.runInContext("METRO_SCHED['안산안양선'].t.filter(t=>METRO_SCHED['안산안양선'].s[t.at(-1)]==='원시').length",context),12,'입고로 이어지는 실제 원시 종착편을 유지해야 합니다.');
 assert.ok(vm.runInContext("METRO_SCHED['안산안양선'].t.some(t=>METRO_SCHED['안산안양선'].s[t.at(-1)]==='새솔')",context),'후속 영업운행이 있는 원시 도착편은 새솔까지 보완해야 합니다.');
+assert.equal(vm.runInContext("Math.min(...METRO_SCHED['강서선'].t.map((t,i)=>METRO_SCHED['강서선'].c[i]===0&&METRO_SCHED['강서선'].s[t[2]]==='강화'&&METRO_SCHED['강서선'].s[t[5]]==='월곶'?(t[1]<240?t[1]+1440:t[1]):Infinity))",context),300,'강화발 잠실 방면 일반 첫차는 05:00이어야 합니다.');
+assert.equal(vm.runInContext("Math.min(...METRO_SCHED['강서선'].t.map((t,i)=>METRO_SCHED['강서선'].c[i]===1&&METRO_SCHED['강서선'].s[t[2]]==='김포공항'&&METRO_SCHED['강서선'].s[t[5]]==='화곡'?(t[1]<240?t[1]+1440:t[1]):Infinity))",context),300,'김포공항발 급행 첫차는 05:00이어야 합니다.');
+assert.equal(vm.runInContext("Math.min(...METRO_SCHED['은평선'].t.flatMap(t=>{const s=METRO_SCHED['은평선'].s,r=[];for(let i=0;i<t.length-3;i+=3)if(s[t[i+2]]==='응암'&&s[t[i+5]]==='연서공원')r.push(t[i+1]<240?t[i+1]+1440:t[i+1]);return r}))",context),260,'응암발 진관사 방면 첫차는 04:20이어야 합니다.');
+assert.equal(vm.runInContext("Math.min(...METRO_SCHED['안산안양선'].t.map(t=>t[1]<240?t[1]+1440:t[1]))",context),276,'안산안양선 최초 시발은 04:36이어야 합니다.');
 
 console.log('metro route tests passed');

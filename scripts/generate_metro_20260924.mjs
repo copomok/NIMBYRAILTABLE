@@ -146,13 +146,26 @@ function collectServices({familyLineNames,stationNames,classByLine={},terminalCo
   return {trips:services.map(item=>item.trip),classes:services.map(item=>item.serviceClass),rawRuns,correctedTerminals,depotTerminations};
 }
 
+function calibrateServices(data,offsetByClass){
+  data.trips=data.trips.map((trip,index)=>{
+    const offset=offsetByClass[data.classes[index]]??offsetByClass.default??0;
+    return trip.map((value,position)=>position%3===2?value:wrapMinute(value+offset));
+  });
+  const paired=data.trips.map((trip,index)=>({trip,serviceClass:data.classes[index]}));
+  paired.sort((a,b)=>a.trip[1]-b.trip[1]||a.serviceClass-b.serviceClass||a.trip.length-b.trip.length||a.trip.join(',').localeCompare(b.trip.join(',')));
+  data.trips=paired.map(item=>item.trip);
+  data.classes=paired.map(item=>item.serviceClass);
+  data.calibrationMinutes=offsetByClass;
+  return data;
+}
+
 const gangseo=linePresentation('강서선','#6ccc6c');
 const eunpyeong=linePresentation('은평선','#545454');
 const ansanLine=context.lines.find(line=>line.name==='안산안양선');
 const revisions={
-  '강서선':{...gangseo,...collectServices({familyLineNames:['강서선','강서선/급행'],stationNames:gangseo.stations,classByLine:{'강서선/급행':1}}),updateLine:true},
-  '은평선':{...eunpyeong,...collectServices({familyLineNames:['은평선'],stationNames:eunpyeong.stations}),updateLine:true},
-  '안산안양선':{stations:context.schedules['안산안양선'].s.slice(),...collectServices({familyLineNames:['안산안양선','안산안양선/1','안산안양선/2'],stationNames:context.schedules['안산안양선'].s}),updateLine:false}
+  '강서선':{...gangseo,...calibrateServices(collectServices({familyLineNames:['강서선','강서선/급행'],stationNames:gangseo.stations,classByLine:{'강서선/급행':1}}),{0:89,1:89}),updateLine:true},
+  '은평선':{...eunpyeong,...calibrateServices(collectServices({familyLineNames:['은평선'],stationNames:eunpyeong.stations}),{0:89}),updateLine:true},
+  '안산안양선':{stations:context.schedules['안산안양선'].s.slice(),...calibrateServices(collectServices({familyLineNames:['안산안양선','안산안양선/1','안산안양선/2'],stationNames:context.schedules['안산안양선'].s}),{0:89}),updateLine:false}
 };
 const output=`// 이 파일은 scripts/generate_metro_20260924.mjs로 인게임 JSON에서 생성했습니다. 직접 편집하지 마세요.
 (function applyMetroSeptemberRevision(global){
@@ -178,10 +191,10 @@ const output=`// 이 파일은 scripts/generate_metro_20260924.mjs로 인게임 
   global.NIMBI_METRO_SEPTEMBER_REVISION={
     version:'2026-09-24',source:'Mysterious Enterprise Timetable Export 20221025T213119Z.json',
     timezone:'Asia/Seoul',utcOffsetMinutes:540,
-    lines:Object.fromEntries(Object.entries(revisions).map(([name,item])=>[name,{rawRuns:item.rawRuns,services:item.trips.length,correctedTerminals:item.correctedTerminals,depotTerminations:item.depotTerminations,expressServices:item.classes.filter(value=>value===1).length}])),
+    lines:Object.fromEntries(Object.entries(revisions).map(([name,item])=>[name,{rawRuns:item.rawRuns,services:item.trips.length,correctedTerminals:item.correctedTerminals,depotTerminations:item.depotTerminations,expressServices:item.classes.filter(value=>value===1).length,calibrationMinutes:item.calibrationMinutes}])),
     exactGameCoordinates:true,exactRunTimes:true,terminalCorrection:true,preservedPassengerColors:true
   };
 })(typeof globalThis!=='undefined'?globalThis:window);
 `;
 fs.writeFileSync(outputPath,output);
-for(const [name,item] of Object.entries(revisions))console.log(`${name}: ${item.stations.length}역, 원시 ${item.rawRuns}회, 중복 제거 ${item.trips.length}편, 종점 보정 ${item.correctedTerminals}회, 입고 종착 ${item.depotTerminations}회, 급행 ${item.classes.filter(value=>value===1).length}편`);
+for(const [name,item] of Object.entries(revisions))console.log(`${name}: ${item.stations.length}역, 원시 ${item.rawRuns}회, 중복 제거 ${item.trips.length}편, 종점 보정 ${item.correctedTerminals}회, 입고 종착 ${item.depotTerminations}회, 급행 ${item.classes.filter(value=>value===1).length}편, 기준 보정 ${JSON.stringify(item.calibrationMinutes)}분`);
