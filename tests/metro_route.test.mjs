@@ -5,6 +5,7 @@ import vm from 'node:vm';
 const source=fs.readFileSync('js/nimbi_rail.js','utf8');
 const context={};
 vm.createContext(context);
+vm.runInContext(fs.readFileSync('data/nimbi_station_data.js','utf8'),context);
 vm.runInContext(fs.readFileSync('data/nimbi_metro.js','utf8'),context);
 vm.runInContext(fs.readFileSync('data/nimbi_metro_sched.js','utf8'),context);
 vm.runInContext(fs.readFileSync('data/nimbi_metro_geo.js','utf8'),context);
@@ -55,9 +56,9 @@ assert.equal(gangseo.color,'#6ccc6c','강서선 승객용 노선색을 유지해
 assert.equal(eunpyeong.color,'#545454','은평선 승객용 노선색을 유지해야 합니다.');
 assert.deepEqual(Array.from(gangseo.stations),['강화','월곶','통진','구래','장기감정','북변','풍무','장기노오지','김포공항','신월','화곡','등촌','목동','선유도','당산','노량진','상도','국사봉','서사당','이수','내방','서초','교대','서강남','서역삼','역삼중앙','선릉','삼성','종합운동장','잠실새내','잠실']);
 assert.deepEqual(Array.from(eunpyeong.stations),['진관사','신도','은평','연서공원','응암','마포','망원','서교','창전','염리','한강로','이촌','동작','이수','사당','북과천','과천','내손','호계','남안양']);
-assert.equal(vm.runInContext("METRO_SCHED['강서선'].t.length",context),261);
-assert.equal(vm.runInContext("METRO_SCHED['은평선'].t.length",context),168);
-assert.equal(vm.runInContext("METRO_SCHED['안산안양선'].t.length",context),338);
+assert.equal(vm.runInContext("METRO_SCHED['강서선'].t.length",context),234);
+assert.equal(vm.runInContext("METRO_SCHED['은평선'].t.length",context),162);
+assert.equal(vm.runInContext("METRO_SCHED['안산안양선'].t.length",context),332);
 assert.ok(vm.runInContext("METRO_SCHED['강서선'].t.some(t=>t.some((_,i)=>i%3===2&&t[i]===30))",context),'강서선 잠실 운행편이 필요합니다.');
 assert.ok(vm.runInContext("METRO_SCHED['은평선'].t.some(t=>t.some((_,i)=>i%3===2&&t[i]===19))",context),'은평선 남안양 운행편이 필요합니다.');
 assert.deepEqual(Array.from(vm.runInContext("METRO_GEO['강서선'].m[0]",context)),[126.486408,37.745926],'강화역은 인게임 실제 좌표를 사용해야 합니다.');
@@ -75,5 +76,12 @@ assert.equal(vm.runInContext("Math.min(...METRO_SCHED['강서선'].t.map((t,i)=>
 assert.equal(vm.runInContext("Math.min(...METRO_SCHED['강서선'].t.map((t,i)=>METRO_SCHED['강서선'].c[i]===1&&METRO_SCHED['강서선'].s[t[2]]==='김포공항'&&METRO_SCHED['강서선'].s[t[5]]==='화곡'?(t[1]<240?t[1]+1440:t[1]):Infinity))",context),300,'김포공항발 급행 첫차는 05:00이어야 합니다.');
 assert.equal(vm.runInContext("Math.min(...METRO_SCHED['은평선'].t.flatMap(t=>{const s=METRO_SCHED['은평선'].s,r=[];for(let i=0;i<t.length-3;i+=3)if(s[t[i+2]]==='응암'&&s[t[i+5]]==='연서공원')r.push(t[i+1]<240?t[i+1]+1440:t[i+1]);return r}))",context),260,'응암발 진관사 방면 첫차는 04:20이어야 합니다.');
 assert.equal(vm.runInContext("Math.min(...METRO_SCHED['안산안양선'].t.map(t=>t[1]<240?t[1]+1440:t[1]))",context),276,'안산안양선 최초 시발은 04:36이어야 합니다.');
+assert.deepEqual(Array.from(vm.runInContext("METRO_SCHED['안산안양선'].t.filter(t=>METRO_SCHED['안산안양선'].s[t[2]]==='비산').map(t=>t[1]).sort((a,b)=>a-b).slice(0,2)",context)),[308,314],'비산 시발 영업열차는 인게임 기준 05:08, 05:14이어야 합니다.');
+assert.equal(vm.runInContext("Object.values(METRO_SCHED).flatMap(x=>x.t||[]).filter(t=>t.length<=3).length",context),0,'한 역에만 머무는 심야 주박 운행은 시간표에서 제외해야 합니다.');
+assert.ok(vm.runInContext("Object.values(NIMBI_METRO_SEPTEMBER_REVISION.lines).reduce((sum,line)=>sum+line.excludedSingleStationRuns,0)",context)>0,'인게임 원본의 단일역 주박 운행 제외 건수가 기록되어야 합니다.');
+assert.deepEqual(Array.from(vm.runInContext("[STATION_DB['잠실새내역'].lon,STATION_DB['잠실새내역'].lat]",context)),[127.085504,37.511594],'신설역 주소 조회에는 실제 인게임 좌표를 써야 합니다.');
+assert.deepEqual(Array.from(vm.runInContext("[STATION_DB['월곶(김포)역'].lon,STATION_DB['월곶(김포)역'].lat]",context)),[126.551426,37.714442],'동명이역 월곶(김포)의 실제 좌표를 분리해 저장해야 합니다.');
+assert.ok(fs.readFileSync('js/features/nimbi_shell.js','utf8').includes("route.stations||[]).forEach(name=>stationNames.add(name))"),'전철 신설역이 통합 검색에 포함되어야 합니다.');
+assert.ok(source.includes('const cacheKey=`${name}|${(+lat).toFixed(6)},${(+lon).toFixed(6)}`'),'주소 캐시는 역 이름뿐 아니라 실제 좌표까지 구분해야 합니다.');
 
 console.log('metro route tests passed');

@@ -12108,14 +12108,15 @@ async function siLoadAddress(name, lat, lon){
   const box=document.getElementById('si-addr');
   if(!box) return;
   let cache={}; try{ cache=JSON.parse(localStorage.getItem('nimbi_addr')||'{}'); }catch(e){}
-  if(cache[name]){ box.innerHTML='📍 '+cache[name]; return; }
+  const cacheKey=`${name}|${(+lat).toFixed(6)},${(+lon).toFixed(6)}`;
+  if(cache[cacheKey]){ box.innerHTML='📍 '+cache[cacheKey]; return; }
   const coordStr=`${(+lon).toFixed(4)}°E, ${(+lat).toFixed(4)}°N`;
   try{
     const r=await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}&accept-language=ko&zoom=16&addressdetails=1`,{headers:{Accept:'application/json'}});
     const j=await r.json(); const a=j.address||{};
     const parts=[a.state||a.province, a.city||a.county||a.town||a.village, a.borough||a.city_district, a.suburb||a.neighbourhood||a.quarter, a.road].filter(Boolean);
     const seen=new Set(); const addr=parts.filter(p=>!seen.has(p)&&seen.add(p)).slice(0,4).join(' ');
-    if(addr){ cache[name]=addr; try{ localStorage.setItem('nimbi_addr',JSON.stringify(cache)); }catch(e){} }
+    if(addr){ cache[cacheKey]=addr; try{ localStorage.setItem('nimbi_addr',JSON.stringify(cache)); }catch(e){} }
     const cur=document.getElementById('si-addr');
     if(cur && String(cur.dataset.lat)===String(lat)) cur.innerHTML='📍 '+(addr||coordStr);
   }catch(e){

@@ -139,6 +139,7 @@
     const seen=new Set();
     const stationNames=new Set(typeof STATION_DB!=='undefined'?Object.keys(STATION_DB):[]);
     if(typeof ALL_TRAINS!=='undefined')ALL_TRAINS.forEach(train=>(train.stops||[]).forEach(stop=>{if(stop.s&&(stop.arr||stop.dep))stationNames.add(stop.s);}));
+    if(typeof METRO_LINES!=='undefined')METRO_LINES.forEach(line=>(line.routes||[]).forEach(route=>(route.stations||[]).forEach(name=>stationNames.add(name))));
     if(typeof NORTH_STATION_DATA_ALIASES!=='undefined')Object.keys(NORTH_STATION_DATA_ALIASES).forEach(name=>stationNames.add(name));
     stationNames.forEach(name=>{
       if(mode()==='train'&&typeof isRailStationInRegion==='function'&&!isRailStationInRegion(name))return;

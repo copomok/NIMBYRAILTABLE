@@ -48,7 +48,7 @@ function regression(calibration,inputIndex,outputIndex){
 const wrapMinute=value=>((value%1440)+1440)%1440;
 // 인게임 시각은 UTC+0 절대초이므로 tz_delta_s 설정과 무관하게 한국 표준시(+09:00)로 바꿉니다.
 const KST_OFFSET_SECONDS=9*60*60;
-const toMinute=seconds=>wrapMinute(Math.round((meta.clock_epoch_s+seconds+KST_OFFSET_SECONDS)/60));
+const toMinute=(seconds,minuteMode='round')=>wrapMinute(Math[minuteMode]((meta.clock_epoch_s+seconds+KST_OFFSET_SECONDS)/60));
 const rawLines=new Map(raw.filter(item=>item.class==='Line').map(line=>[line.id,line]));
 const rawSchedules=raw.filter(item=>item.class==='Schedule'&&item.shifts?.length);
 const nameAt=(line,stopIndex)=>stationById.get(line.stops[stopIndex].station_id)?.name.replace(/역$/,'');
@@ -84,13 +84,13 @@ function linePresentation(name,color){
     xy:canonicalCoords.map((coords,index)=>knownDiagramXY.get(canonicalNames[index])?.slice()||project(coords)),color};
 }
 
-function collectServices({familyLineNames,stationNames,classByLine={},terminalCorrection=true}){
+function collectServices({familyLineNames,stationNames,classByLine={},terminalCorrection=true,minuteMode='round'}){
   const familyLines=raw.filter(item=>item.class==='Line'&&familyLineNames.includes(item.name));
   const familyIds=new Set(familyLines.map(line=>line.id));
   const indexByName=new Map(stationNames.map((name,index)=>[name,index]));
   const seen=new Set;
   const services=[];
-  let rawRuns=0,correctedTerminals=0,depotTerminations=0;
+  let rawRuns=0,correctedTerminals=0,depotTerminations=0,excludedSingleStationRuns=0;
   for(const schedule of rawSchedules){
     const containsFamily=schedule.shifts.some(shift=>(shift.runs||[]).some(run=>familyIds.has(run.line_id)));
     if(!containsFamily)continue;
@@ -100,13 +100,14 @@ function collectServices({familyLineNames,stationNames,classByLine={},terminalCo
         const run=runs[runPosition];
         if(!familyIds.has(run.line_id))continue;
         rawRuns++;
+        if(run.enter_stop_idx===run.exit_stop_idx){excludedSingleStationRuns++;continue;}
         const line=rawLines.get(run.line_id);
       const trip=[];
       for(let stopIndex=run.enter_stop_idx,arrayIndex=0;stopIndex<=run.exit_stop_idx;stopIndex++,arrayIndex+=2){
         const stationIndex=indexByName.get(nameAt(line,stopIndex));
         if(stationIndex===undefined)throw new Error(`${line.name} 역 매핑 누락: ${nameAt(line,stopIndex)}`);
-        const arrival=toMinute(run.arrival_departure[arrayIndex]);
-        const departure=toMinute(run.arrival_departure[arrayIndex+1]);
+        const arrival=toMinute(run.arrival_departure[arrayIndex],minuteMode);
+        const departure=toMinute(run.arrival_departure[arrayIndex+1],minuteMode);
         // 반환점은 인게임 노선에 같은 역이 연속 두 번 기록되므로 한 번만 표시하되
         // 첫 기록의 도착과 둘째 기록의 출발을 보존합니다.
         if(trip.length&&trip.at(-1)===stationIndex)trip[trip.length-2]=departure;
@@ -121,7 +122,7 @@ function collectServices({familyLineNames,stationNames,classByLine={},terminalCo
           const nextIsDepot=nextLine&&/(입고|주박|기지)/.test(nextLine.name);
           if(nextStartsAtOrigin){
             const originIndex=indexByName.get(originName);
-            trip.push(toMinute(nextRun.arrival_departure[0]),toMinute(nextRun.arrival_departure[1]),originIndex);
+            trip.push(toMinute(nextRun.arrival_departure[0],minuteMode),toMinute(nextRun.arrival_departure[1],minuteMode),originIndex);
             correctedTerminals++;
           }else if(nextIsDepot){
             depotTerminations++;
@@ -143,7 +144,7 @@ function collectServices({familyLineNames,stationNames,classByLine={},terminalCo
     }
   }
   services.sort((a,b)=>a.trip[1]-b.trip[1]||a.serviceClass-b.serviceClass||a.trip.length-b.trip.length||a.trip.join(',').localeCompare(b.trip.join(',')));
-  return {trips:services.map(item=>item.trip),classes:services.map(item=>item.serviceClass),rawRuns,correctedTerminals,depotTerminations};
+  return {trips:services.map(item=>item.trip),classes:services.map(item=>item.serviceClass),rawRuns,correctedTerminals,depotTerminations,excludedSingleStationRuns};
 }
 
 function calibrateServices(data,offsetByClass){
@@ -165,7 +166,8 @@ const ansanLine=context.lines.find(line=>line.name==='안산안양선');
 const revisions={
   '강서선':{...gangseo,...calibrateServices(collectServices({familyLineNames:['강서선','강서선/급행'],stationNames:gangseo.stations,classByLine:{'강서선/급행':1}}),{0:89,1:89}),updateLine:true},
   '은평선':{...eunpyeong,...calibrateServices(collectServices({familyLineNames:['은평선'],stationNames:eunpyeong.stations}),{0:89}),updateLine:true},
-  '안산안양선':{stations:context.schedules['안산안양선'].s.slice(),...calibrateServices(collectServices({familyLineNames:['안산안양선','안산안양선/1','안산안양선/2'],stationNames:context.schedules['안산안양선'].s}),{0:89}),updateLine:false}
+  // 기존 표시가 전 편 1분 늦었으므로 원본 초 시각의 정상 반올림 뒤 보정축을 1분 당깁니다.
+  '안산안양선':{stations:context.schedules['안산안양선'].s.slice(),...calibrateServices(collectServices({familyLineNames:['안산안양선','안산안양선/1','안산안양선/2'],stationNames:context.schedules['안산안양선'].s}),{0:88}),updateLine:false}
 };
 const output=`// 이 파일은 scripts/generate_metro_20260924.mjs로 인게임 JSON에서 생성했습니다. 직접 편집하지 마세요.
 (function applyMetroSeptemberRevision(global){
@@ -173,6 +175,7 @@ const output=`// 이 파일은 scripts/generate_metro_20260924.mjs로 인게임 
   const lines=typeof METRO_LINES!=='undefined'?METRO_LINES:global.METRO_LINES;
   const schedules=typeof METRO_SCHED!=='undefined'?METRO_SCHED:global.METRO_SCHED;
   const geo=typeof METRO_GEO!=='undefined'?METRO_GEO:global.METRO_GEO;
+  const stationDb=typeof STATION_DB!=='undefined'?STATION_DB:global.STATION_DB;
   if(!Array.isArray(lines)||!schedules||!geo)return;
   const revisions=${JSON.stringify(revisions)};
   for(const [name,revision] of Object.entries(revisions)){
@@ -187,12 +190,28 @@ const output=`// 이 파일은 scripts/generate_metro_20260924.mjs로 인게임 
     }
     if(revision.updateLine)geo[name]={m:revision.coords.map(point=>point.slice())};
     schedules[name]={s:revision.stations.slice(),t:revision.trips.map(trip=>trip.slice()),c:revision.classes.slice()};
+    if(revision.updateLine&&stationDb){
+      revision.stations.forEach((station,index)=>{
+        const key=name==='강서선'&&station==='월곶'?'월곶(김포)역':name==='강서선'&&station==='상도'?'상도(강서선)역':station+'역';
+        const previous=stationDb[key]||{};
+        const [lon,lat]=revision.coords[index];
+        stationDb[key]={...previous,lon,lat,platforms:Array.isArray(previous.platforms)?previous.platforms:[],lines:[...new Set([...(previous.lines||[]),name])]};
+      });
+    }
+  }
+  let removedSingleStationServices=0;
+  for(const schedule of Object.values(schedules)){
+    if(!Array.isArray(schedule.t))continue;
+    const keep=schedule.t.map(trip=>Array.isArray(trip)&&trip.length>3);
+    removedSingleStationServices+=keep.filter(value=>!value).length;
+    schedule.t=schedule.t.filter((_,index)=>keep[index]);
+    if(Array.isArray(schedule.c))schedule.c=schedule.c.filter((_,index)=>keep[index]);
   }
   global.NIMBI_METRO_SEPTEMBER_REVISION={
     version:'2026-09-24',source:'Mysterious Enterprise Timetable Export 20221025T213119Z.json',
     timezone:'Asia/Seoul',utcOffsetMinutes:540,
-    lines:Object.fromEntries(Object.entries(revisions).map(([name,item])=>[name,{rawRuns:item.rawRuns,services:item.trips.length,correctedTerminals:item.correctedTerminals,depotTerminations:item.depotTerminations,expressServices:item.classes.filter(value=>value===1).length,calibrationMinutes:item.calibrationMinutes}])),
-    exactGameCoordinates:true,exactRunTimes:true,terminalCorrection:true,preservedPassengerColors:true
+    lines:Object.fromEntries(Object.entries(revisions).map(([name,item])=>[name,{rawRuns:item.rawRuns,services:item.trips.length,correctedTerminals:item.correctedTerminals,depotTerminations:item.depotTerminations,excludedSingleStationRuns:item.excludedSingleStationRuns,expressServices:item.classes.filter(value=>value===1).length,calibrationMinutes:item.calibrationMinutes}])),
+    removedSingleStationServices,exactGameCoordinates:true,exactRunTimes:true,terminalCorrection:true,preservedPassengerColors:true
   };
 })(typeof globalThis!=='undefined'?globalThis:window);
 `;
