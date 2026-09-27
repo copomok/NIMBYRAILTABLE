@@ -13,12 +13,12 @@
   color-scheme:light;
 }
 [data-theme="dark"]{
-  --bg:#0d1117;--bg0:#0d1117;--bg1:#11161d;--bg2:#161b22;--bg3:#21262d;
-  --surface:#161b22;--surface-muted:#11161d;--surface-secondary:#21262d;--surface-elevated:#1b222c;--surface-active:#16283a;
-  --border:#30363d;--border-strong:#3d4854;
-  --text:#e6edf3;--text1:#e6edf3;--text2:#a5afb9;--text3:#76818d;
-  --accent:#388bfd;--accent2:#58a6ff;--accent-soft:#142a42;
-  --green:#3fb950;--orange:#f97316;--red:#f85149;
+  --bg:#08111b;--bg0:#08111b;--bg1:#0c1723;--bg2:#111f2e;--bg3:#192a3b;
+  --surface:#111f2e;--surface-muted:#0c1723;--surface-secondary:#192a3b;--surface-elevated:#152638;--surface-active:#193652;
+  --border:#26394b;--border-strong:#37536d;
+  --text:#eef5fb;--text1:#eef5fb;--text2:#b0c0d0;--text3:#8398ad;
+  --accent:#4ca4ff;--accent2:#8cc8ff;--accent-soft:#153553;
+  --green:#4dd17b;--orange:#ffad4f;--red:#ff6b68;
   color-scheme:dark;
 }
 *{scrollbar-color:#c7ced5 transparent;scrollbar-width:thin}
@@ -222,16 +222,16 @@ body.global-search-open{overflow:hidden}
 }
 
 /* Dark mode keeps the original NIMBY Rail colour identity while sharing the new architecture. */
-[data-theme="dark"] *{scrollbar-color:#303b47 transparent}
-[data-theme="dark"] .top-command-bar{background:rgba(17,22,29,.96)}
+[data-theme="dark"] *{scrollbar-color:var(--border-strong) transparent}
+[data-theme="dark"] .top-command-bar{background:rgba(8,17,27,.96)}
 [data-theme="dark"] .mobile-brand{color:var(--text1)}[data-theme="dark"] .mobile-brand .logo-icon,[data-theme="dark"] .sidebar-brand-mark{background:#162c40;color:var(--accent2)}
 [data-theme="dark"] .global-search-trigger,[data-theme="dark"] .global-search-trigger kbd,[data-theme="dark"] input[type="text"],[data-theme="dark"] input[type="search"],[data-theme="dark"] select,[data-theme="dark"] .term-sel,[data-theme="dark"] .trip-form-input,[data-theme="dark"] .hdr-refresh-btn,[data-theme="dark"] .my-btn,[data-theme="dark"] .command-icon-btn{background:var(--surface);border-color:var(--border-strong);color:var(--text1);box-shadow:none}
 [data-theme="dark"] .search-card,[data-theme="dark"] .detail-card,[data-theme="dark"] .stat-section,[data-theme="dark"] .xfer-card,[data-theme="dark"] .train-line-wrap,[data-theme="dark"] .metro-card,[data-theme="dark"] .rt-card,[data-theme="dark"] .settings-card,[data-theme="dark"] .network-summary,[data-theme="dark"] .network-summary button,[data-theme="dark"] .active-trains,[data-theme="dark"] .active-train-list button,[data-theme="dark"] .home-quick,[data-theme="dark"] .home-section,[data-theme="dark"] .daily-card,[data-theme="dark"] .myplan,[data-theme="dark"] .table-wrap,[data-theme="dark"] tbody td,[data-theme="dark"] .empty,[data-theme="dark"] .map-line-tabs,[data-theme="dark"] .map-line-tab,[data-theme="dark"] .map-legend,[data-theme="dark"] .map-popup,[data-theme="dark"] .my-panel,[data-theme="dark"] .my-sub-panel,[data-theme="dark"] .my-panel-header,[data-theme="dark"] .my-menu-item,[data-theme="dark"] .acct-card,[data-theme="dark"] .global-search-dialog,[data-theme="dark"] .global-search-dialog>header,[data-theme="dark"] .global-search-results>button{background:var(--surface)!important;color:var(--text1)}
 [data-theme="dark"] thead th,[data-theme="dark"] .global-search-dialog>footer,[data-theme="dark"] .filter-row,[data-theme="dark"] .detail-head{background:var(--surface-secondary)}
 [data-theme="dark"] tbody tr:hover td,[data-theme="dark"] .active-train-list button:hover,[data-theme="dark"] .network-summary button:hover,[data-theme="dark"] .my-menu-item:hover,[data-theme="dark"] .global-search-results>button:hover,[data-theme="dark"] .global-search-results>button.selected{background:var(--surface-active)!important}
 [data-theme="dark"] .sr>div{background:var(--surface)}[data-theme="dark"] .sr:hover>div,[data-theme="dark"] .tl-row:hover{background:var(--surface-active)}[data-theme="dark"] .sr.pass-row>div{background:var(--surface-muted);color:var(--text3)}
-[data-theme="dark"] .train-status-banner.running{background:var(--surface-active);color:#79c0ff;border-color:#285377}
-[data-theme="dark"] #panel-map.active{background:var(--bg)}[data-theme="dark"] #panel-map .map-svg-wrap{background:#111827;border-color:var(--border)}[data-theme="dark"] .map-svg-wrap svg{background:#111827}
+[data-theme="dark"] .train-status-banner.running{background:var(--surface-active);color:var(--accent2);border-color:var(--border-strong)}
+[data-theme="dark"] #panel-map.active{background:var(--bg)}[data-theme="dark"] #panel-map .map-svg-wrap{background:#0c1723;border-color:var(--border)}[data-theme="dark"] .map-svg-wrap svg{background:#0c1723}
 [data-theme="dark"] .tabs{background:var(--surface)}[data-theme="dark"] .tab.active{background:var(--surface-active)}[data-theme="dark"] ::selection{background:#264b70;color:#fff}
 
 /* Theme-complete surfaces */
@@ -439,4 +439,56 @@ body.map-station-list-open{overflow:hidden}
   .map-station-list-summary{padding:8px 16px}
   .map-station-list>footer{display:grid;grid-template-columns:.85fr 1.15fr;padding:10px 16px calc(12px + env(safe-area-inset-bottom))}
   .map-station-list>footer button{min-height:44px;padding:0 8px;font-size:11px}
+}
+
+/* Shared dark-navy surface and action rules across legacy-backed screens. */
+[data-theme="dark"] html,[data-theme="dark"] body{background:var(--bg);color:var(--text1)}
+[data-theme="dark"] .app-sidebar{background:#0c1a28;border-color:#1d3347}
+[data-theme="dark"] .sidebar-brand{border-bottom-color:#22394d}
+[data-theme="dark"] .sidebar-nav button.active{background:#173651;color:#a9d3ff}
+[data-theme="dark"] .sidebar-nav button:hover,[data-theme="dark"] .sidebar-account:hover{background:#172c3f}
+[data-theme="dark"] .top-command-bar{border-bottom-color:var(--border);box-shadow:0 4px 18px rgba(0,0,0,.16)}
+[data-theme="dark"] .global-search-trigger,[data-theme="dark"] .global-search-trigger kbd,[data-theme="dark"] .global-search-dialog,[data-theme="dark"] .global-search-dialog>header,[data-theme="dark"] .global-search-results>button,[data-theme="dark"] .global-search-dialog>footer{border-color:var(--border)}
+[data-theme="dark"] .global-search-trigger:hover,[data-theme="dark"] .global-search-results>button:hover,[data-theme="dark"] .global-search-results>button.selected{background:var(--surface-active)!important}
+[data-theme="dark"] input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="color"]),[data-theme="dark"] select,[data-theme="dark"] textarea,[data-theme="dark"] .term-sel,[data-theme="dark"] .trip-form-input{background-color:var(--surface-muted);border-color:var(--border-strong);color:var(--text1)}
+[data-theme="dark"] select option{background:var(--surface);color:var(--text1)}
+[data-theme="dark"] input::placeholder,[data-theme="dark"] textarea::placeholder{color:var(--text3)}
+[data-theme="dark"] .btn:not(.btn-primary):not(.btn-danger),[data-theme="dark"] .btn-filter-toggle,[data-theme="dark"] .map-layer-btn,[data-theme="dark"] .directory-header>button,[data-theme="dark"] .mr-guide,[data-theme="dark"] .mr-result-actions button:not(.primary),[data-theme="dark"] .map-station-list>footer button:not(.primary){background:var(--surface-secondary);border-color:var(--border-strong);color:var(--text1)}
+[data-theme="dark"] .btn:not(.btn-primary):hover,[data-theme="dark"] .btn-filter-toggle:hover,[data-theme="dark"] .map-layer-btn:hover,[data-theme="dark"] .directory-header>button:hover{background:var(--surface-active);border-color:var(--accent);color:var(--text1)}
+[data-theme="dark"] .btn-primary,[data-theme="dark"] .mr-search-button,[data-theme="dark"] .overview-heading>button{background:var(--accent);border-color:var(--accent);color:#071522}
+[data-theme="dark"] .btn-primary:hover,[data-theme="dark"] .mr-search-button:hover,[data-theme="dark"] .overview-heading>button:hover{background:#78bcff;border-color:#78bcff;color:#071522}
+[data-theme="dark"] .search-card,[data-theme="dark"] .detail-card,[data-theme="dark"] .stat-section,[data-theme="dark"] .xfer-card,[data-theme="dark"] .train-line-wrap,[data-theme="dark"] .metro-card,[data-theme="dark"] .rt-card,[data-theme="dark"] .settings-card,[data-theme="dark"] .home-quick,[data-theme="dark"] .home-section,[data-theme="dark"] .daily-card,[data-theme="dark"] .myplan,[data-theme="dark"] .quick-station,[data-theme="dark"] .network-preview,[data-theme="dark"] .station-directory,[data-theme="dark"] .network-summary,[data-theme="dark"] .active-trains{background-color:var(--surface);border-color:var(--border);color:var(--text1)}
+[data-theme="dark"] .network-summary button,[data-theme="dark"] .active-train-list button,[data-theme="dark"] .rail-table-row,[data-theme="dark"] .station-table>button{background:var(--surface);border-color:var(--border);color:var(--text1)}
+[data-theme="dark"] .network-summary button:hover,[data-theme="dark"] .active-train-list button:hover,[data-theme="dark"] .rail-table-row:hover,[data-theme="dark"] .station-table>button:hover{background:var(--surface-active)!important}
+[data-theme="dark"] .table-wrap,[data-theme="dark"] .map-line-tabs,[data-theme="dark"] .map-legend,[data-theme="dark"] .map-popup,[data-theme="dark"] .map-station-list-table{background:var(--surface);border-color:var(--border)}
+[data-theme="dark"] thead th,[data-theme="dark"] .station-table-head,[data-theme="dark"] .map-station-list-head{background:var(--surface-secondary);border-color:var(--border);color:var(--text2)}
+[data-theme="dark"] tbody td{background:var(--surface)!important;color:var(--text1)}
+[data-theme="dark"] tbody tr:hover td{background:var(--surface-active)!important}
+[data-theme="dark"] .sr.origin>div,[data-theme="dark"] .hl-at>div{background:color-mix(in srgb,var(--green) 11%,var(--surface))!important}
+[data-theme="dark"] .sr.terminus>div{background:color-mix(in srgb,var(--red) 9%,var(--surface))!important}
+[data-theme="dark"] .hl-next>div{background:var(--surface-active)!important}
+[data-theme="dark"] .empty,[data-theme="dark"] .global-search-empty{background:var(--surface-muted);border-color:var(--border-strong);color:var(--text2)}
+[data-theme="dark"] .map-line-tab{background:var(--surface-secondary);border-color:var(--border);color:var(--text2)}
+[data-theme="dark"] .map-line-tab.active{background:var(--accent-soft);border-color:var(--accent);color:var(--accent2)}
+[data-theme="dark"] #map-controls-bar{background:var(--surface);border-color:var(--border)}
+[data-theme="dark"] #panel-map.active{background:linear-gradient(145deg,#091521,#0d1b29 68%,#0a1520)}
+[data-theme="dark"] #panel-map .map-svg-wrap,[data-theme="dark"] .map-svg-wrap svg{background:#0b1723;border-color:var(--border)}
+[data-theme="dark"] .map-legend{color:var(--text2)}
+[data-theme="dark"] .map-station-list{background:var(--surface-elevated);border-color:var(--border-strong)}
+[data-theme="dark"] .map-station-list-head{background:var(--surface-secondary)}
+[data-theme="dark"] .map-station-list-row{background:var(--surface);color:var(--text2)}
+[data-theme="dark"] .map-station-list-row>strong{color:var(--text1)}
+[data-theme="dark"] .my-panel,[data-theme="dark"] .my-sub-panel,[data-theme="dark"] .my-panel-header,[data-theme="dark"] .my-menu-item,[data-theme="dark"] .acct-card{background:var(--surface);border-color:var(--border);color:var(--text1)}
+[data-theme="dark"] .alarm-popup,[data-theme="dark"] .booking-popup,[data-theme="dark"] .delay-explanation-dialog,[data-theme="dark"] .journey-sheet,[data-theme="dark"] .rot-popup,[data-theme="dark"] .notice-popup,[data-theme="dark"] .mobile-more-sheet>section{background:var(--surface-elevated)!important;border-color:var(--border-strong)!important;color:var(--text1)}
+[data-theme="dark"] .detail-head,[data-theme="dark"] .cmp-row.cmp-head,[data-theme="dark"] .rt-back-head,[data-theme="dark"] .tcard-back-head{background:var(--surface-secondary);color:var(--text1)}
+[data-theme="dark"] .trip-mini,[data-theme="dark"] .trip-widget,[data-theme="dark"] .ticket-card,[data-theme="dark"] .book-card{background-color:var(--surface);border-color:var(--border);color:var(--text1)}
+[data-theme="dark"] .network-preview-open,[data-theme="dark"] .home-metrics button,[data-theme="dark"] .home-route-chips button{background:var(--surface-secondary)!important;border-color:var(--border);color:var(--text1)}
+[data-theme="dark"] .mobile-bottom-nav{background:rgba(10,20,31,.97);border-color:var(--border);backdrop-filter:blur(14px)}
+[data-theme="dark"] .mobile-bottom-nav button.active{color:var(--accent2)}
+[data-theme="dark"] .map-station-list-tools select:disabled{opacity:.5}
+
+@media(max-width:767px){
+  .btn-primary,.btn-next-train,.quick-station>div>button,.mobile-more-grid>button,.my-menu-item{min-height:44px}
+  [data-theme="dark"] .top-command-bar{background:rgba(8,17,27,.97)}
+  [data-theme="dark"] .mobile-bottom-nav{background:rgba(8,17,27,.97)}
 }

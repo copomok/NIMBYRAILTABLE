@@ -6,18 +6,18 @@
 <title>님비레일 시간표</title>
 <script>
   (()=>{try{
-    const preference=localStorage.getItem('nimbi_theme')||'system';
+    const preference=localStorage.getItem('nimbi_theme')||'dark';
     const dark=preference==='dark'||(preference==='system'&&matchMedia('(prefers-color-scheme: dark)').matches);
     document.documentElement.dataset.theme=dark?'dark':'light';
     document.documentElement.dataset.themePreference=preference;
-  }catch(_){document.documentElement.dataset.theme='light';}})();
+  }catch(_){document.documentElement.dataset.theme='dark';}})();
 </script>
-<link rel="stylesheet" href="assets/css/nimbi_rail.css?v=2026092702">
-  <link rel="stylesheet" href="assets/css/nimbi_redesign.css?v=2026092701">
+<link rel="stylesheet" href="assets/css/nimbi_rail.css?v=2026091003">
+  <link rel="stylesheet" href="assets/css/nimbi_redesign.css?v=2026092702">
   <link rel="stylesheet" href="assets/css/nimbi_operations_hub.css?v=2026090702">
 <!-- PWA -->
 <link rel="manifest" href="manifest.json">
-<meta name="theme-color" content="#f3f5f7">
+<meta name="theme-color" content="#08111b">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black">
@@ -649,7 +649,7 @@
   <script src="js/features/nimbi_congestion.js?v=2026073110"></script>
   <script src="js/features/nimbi_engagement.js?v=2026073110"></script>
   <script src="js/features/nimbi_operations_hub.js?v=2026090702"></script>
-  <script src="js/features/nimbi_shell.js?v=2026092403"></script>
+  <script src="js/features/nimbi_shell.js?v=2026092702"></script>
   <script>
   if('serviceWorker' in navigator){
     window.addEventListener('load', ()=>{

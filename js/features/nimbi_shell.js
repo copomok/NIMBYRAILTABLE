@@ -111,7 +111,7 @@
     return preference==='dark'||(preference==='system'&&matchMedia('(prefers-color-scheme: dark)').matches)?'dark':'light';
   }
   function syncThemeControls(){
-    let preference='system';try{preference=localStorage.getItem('nimbi_theme')||'system';}catch(_){}
+    let preference='dark';try{preference=localStorage.getItem('nimbi_theme')||'dark';}catch(_){}
     document.documentElement.dataset.theme=resolvedTheme(preference);
     document.documentElement.dataset.themePreference=preference;
     document.querySelectorAll('[data-theme-choice]').forEach(button=>{
@@ -327,7 +327,7 @@
       return result;
     };
     installStationWorkspace();syncThemeControls();syncShell();renderOverview();renderStationDirectory();syncStationWorkspace();enhanceLegacyIcons(document);
-    const scheme=matchMedia('(prefers-color-scheme: dark)');scheme.addEventListener?.('change',()=>{if((localStorage.getItem('nimbi_theme')||'system')==='system')syncThemeControls();});
+    const scheme=matchMedia('(prefers-color-scheme: dark)');scheme.addEventListener?.('change',()=>{if((localStorage.getItem('nimbi_theme')||'dark')==='system')syncThemeControls();});
     const input=document.getElementById('global-search-input');
     input?.addEventListener('input',event=>renderSearch(event.target.value));
     input?.addEventListener('keydown',event=>{

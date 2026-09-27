@@ -41,7 +41,9 @@ test('라이트·다크·시스템 테마는 초기 화면 전에 적용되고 �
   assert.match(html,/data-theme-choice="system"/);
   assert.match(shell,/localStorage\.setItem\('nimbi_theme'/);
   assert.match(css,/\[data-theme="dark"\]/);
-  assert.match(css,/--bg:#0d1117/);
+  assert.match(html,/localStorage\.getItem\('nimbi_theme'\)\|\|'dark'/);
+  assert.match(css,/--bg:#08111b/);
+  assert.match(css,/--accent:#4ca4ff/);
 });
 
 test('홈과 역 화면은 카드 갤러리 대신 고밀도 표 컴포넌트를 사용한다',()=>{

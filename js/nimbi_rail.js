@@ -9354,7 +9354,7 @@ function renderSettingsSection(el){
   ];
   const sd=getStationDefaults();
   const rd=getRouteDefaults();
-  let themePref='system';try{themePref=localStorage.getItem('nimbi_theme')||'system';}catch(e){}
+  let themePref='dark';try{themePref=localStorage.getItem('nimbi_theme')||'dark';}catch(e){}
   const prefButtons=[
     ['window','🪟 창측'],['aisle','🚶 복도측'],['power','⚡ 콘센트'],
     ['front','⬆ 앞쪽'],['rear','⬇ 뒤쪽'],['fwd','▲ 순방향'],['rev','▽ 역방향']
