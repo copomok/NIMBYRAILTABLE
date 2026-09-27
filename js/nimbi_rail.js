@@ -14201,6 +14201,7 @@ function renderOpsRake(host){
 // 🔍 전철 경로 검색 — 출발·도착역 최소환승 경로 안내
 // ══════════════════════════════════════════
 let _mrFrom='', _mrVia='', _mrTo='', _mrMode='transfer', _mrTimeMode='depart', _mrTime='', _mrEdgeMode='normal', _mrLastJourney=null;
+let _mrPickerDraftMode='depart', _mrPickerDraftEdge='normal';
 function setMrMode(m){_mrMode=m;document.querySelectorAll('.mr-mode-chip').forEach(c=>c.classList.toggle('on',c.dataset.mode===m));if(_mrFrom&&_mrTo)searchMetroRoute();}
 let _metroGraphCache=null;
 function _metroGraph(){
@@ -14291,6 +14292,31 @@ function setMrEdgeMode(mode,checked){
   document.querySelectorAll('.mr-edge-check input').forEach(input=>{input.checked=input.value===_mrEdgeMode;});
   if(_mrFrom&&_mrTo)searchMetroRoute();
 }
+function _mrClockLabel(value){
+  const [h,m]=String(value||_mrDefaultTime()).split(':').map(Number),amp=h<12?'오전':'오후',hour=h%12||12;
+  return `${amp} ${String(hour).padStart(2,'0')}:${String(m||0).padStart(2,'0')}`;
+}
+function openMrTimePicker(){
+  closeMrTimePicker();
+  _mrPickerDraftMode=_mrTimeMode;_mrPickerDraftEdge=_mrEdgeMode;
+  const [h,m]=String(_mrTime||_mrDefaultTime()).split(':').map(Number),hour=h%12||12;
+  const wrap=document.createElement('div');wrap.id='mr-time-picker-wrap';wrap.className='mr-time-picker-wrap';
+  const opts=(from,to,current)=>Array.from({length:to-from+1},(_,index)=>{const value=from+index;return `<option value="${value}"${value===current?' selected':''}>${String(value).padStart(2,'0')}</option>`;}).join('');
+  wrap.innerHTML=`<div class="mr-time-picker-backdrop" onclick="closeMrTimePicker()"></div><section class="mr-time-picker" role="dialog" aria-modal="true" aria-label="경로 검색 시각 선택"><div class="mr-picker-tabs"><button type="button" data-picker-mode="depart" class="${_mrTimeMode==='depart'?'on':''}" onclick="setMrPickerMode('depart')">출발</button><button type="button" data-picker-mode="arrive" class="${_mrTimeMode==='arrive'?'on':''}" onclick="setMrPickerMode('arrive')">도착</button></div><div class="mr-picker-clock"><select id="mr-picker-amp" aria-label="오전 오후"><option value="am"${h<12?' selected':''}>오전</option><option value="pm"${h>=12?' selected':''}>오후</option></select><select id="mr-picker-hour" aria-label="시">${opts(1,12,hour)}</select><span>:</span><select id="mr-picker-minute" aria-label="분">${opts(0,59,m||0)}</select></div><div class="mr-picker-edges"><label><input type="checkbox" value="first"${_mrEdgeMode==='first'?' checked':''} onchange="setMrPickerEdge('first',this.checked)"><span>첫차타기</span></label><label><input type="checkbox" value="last"${_mrEdgeMode==='last'?' checked':''} onchange="setMrPickerEdge('last',this.checked)"><span>막차타기</span></label></div><footer><button type="button" onclick="closeMrTimePicker()">취소</button><button type="button" class="confirm" onclick="applyMrTimePicker()">확인</button></footer></section>`;
+  document.body.appendChild(wrap);document.body.classList.add('mr-time-picker-open');
+}
+function setMrPickerMode(mode){
+  _mrPickerDraftMode=mode==='arrive'?'arrive':'depart';document.querySelectorAll('[data-picker-mode]').forEach(button=>button.classList.toggle('on',button.dataset.pickerMode===_mrPickerDraftMode));
+}
+function setMrPickerEdge(mode,checked){
+  _mrPickerDraftEdge=checked?(mode==='last'?'last':'first'):'normal';document.querySelectorAll('.mr-picker-edges input').forEach(input=>{input.checked=input.value===_mrPickerDraftEdge;});
+}
+function applyMrTimePicker(){
+  const amp=document.getElementById('mr-picker-amp')?.value,hour=Number(document.getElementById('mr-picker-hour')?.value||12),minute=Number(document.getElementById('mr-picker-minute')?.value||0);
+  let h=hour%12;if(amp==='pm')h+=12;_mrTime=`${String(h).padStart(2,'0')}:${String(minute).padStart(2,'0')}`;_mrTimeMode=_mrPickerDraftMode;_mrEdgeMode=_mrPickerDraftEdge;
+  closeMrTimePicker();renderMetroRouteTab();if(_mrFrom&&_mrTo)searchMetroRoute();
+}
+function closeMrTimePicker(){const wrap=document.getElementById('mr-time-picker-wrap');if(wrap)wrap.remove();document.body.classList.remove('mr-time-picker-open');}
 function _mrShareRoute(){
   const text=`NIMBY Rail 전철 경로: ${[_mrFrom,_mrVia,_mrTo].filter(Boolean).join(' → ')}`;
   if(navigator.share){navigator.share({title:'NIMBY Rail 전철 경로',text}).catch(()=>{});return;}
@@ -14402,7 +14428,7 @@ function renderMetroRouteTab(){
         </div>
         <button class="mr-swap" onclick="_mrSwap()" title="출발·도착 바꾸기" aria-label="출발역과 도착역 바꾸기">⇅</button>
       </div>
-      <div class="mr-time-row"><div class="mr-time-mode"><button type="button" data-time-mode="depart" class="${_mrTimeMode==='depart'?'on':''}" onclick="setMrTimeMode('depart')">출발 시각</button><button type="button" data-time-mode="arrive" class="${_mrTimeMode==='arrive'?'on':''}" onclick="setMrTimeMode('arrive')">도착 시각</button></div><input type="time" id="mr-time" value="${_mrTime||_mrDefaultTime()}" aria-label="경로 검색 기준 시각"><div class="mr-edge-options" aria-label="첫차 또는 막차 선택"><label class="mr-edge-check"><input type="checkbox" value="first"${_mrEdgeMode==='first'?' checked':''} onchange="setMrEdgeMode('first',this.checked)"><span>첫차 보기</span></label><label class="mr-edge-check"><input type="checkbox" value="last"${_mrEdgeMode==='last'?' checked':''} onchange="setMrEdgeMode('last',this.checked)"><span>막차 보기</span></label></div></div>
+      <div class="mr-time-row"><button type="button" class="mr-time-trigger" onclick="openMrTimePicker()"><span>${_mrTimeMode==='arrive'?'도착':'출발'}</span><b>${_mrClockLabel(_mrTime||_mrDefaultTime())}</b>${_mrEdgeMode!=='normal'?`<em>${_mrEdgeMode==='first'?'첫차':'막차'}</em>`:''}<i aria-hidden="true">⌄</i></button><input type="time" id="mr-time" value="${_mrTime||_mrDefaultTime()}" hidden aria-label="경로 검색 기준 시각"></div>
       <div class="mr-search-foot"><div class="mr-modes" aria-label="경로 정렬"><button class="mr-mode-chip${_mrMode==='transfer'?' on':''}" data-mode="transfer" onclick="setMrMode('transfer')">최소 환승</button><button class="mr-mode-chip${_mrMode==='time'?' on':''}" data-mode="time" onclick="setMrMode('time')">최소 시간</button></div><button class="btn btn-primary mr-search-button" onclick="_mrFrom=document.getElementById('mr-from').value.trim();_mrVia=document.getElementById('mr-via').value.trim();_mrTo=document.getElementById('mr-to').value.trim();_mrTime=document.getElementById('mr-time').value;searchMetroRoute()">길찾기</button></div>
     </div>
     <div id="mr-result"></div>`;
@@ -14484,7 +14510,7 @@ function searchMetroRoute(){
       const finalLeg=i===legs.length-1;
       const cutOff=finalLeg&&!realOk;
       rail+=`<div class="rt-node" style="--lc:${lg.l.color}">
-        <div class="rt-time"><b>${fmt(lg.dep)}</b><small>출발</small>${edge}</div>
+        <div class="rt-time"><b>${fmt(lg.dep)}</b><div class="rt-time-label"><small>출발</small>${edge}</div></div>
         <div class="rt-rail"><span class="rt-dot rt-board rt-mdot"></span><span class="rt-seg"></span></div>
         <div class="rt-info">
           <button type="button" class="rt-stn rt-stn-link" onclick="openMetroRouteTimetable('${boardArg}','${lineArg}',${lg.svc})">${_opsEsc(lg.board)}<span class="rt-chev">›</span></button>
@@ -14492,7 +14518,7 @@ function searchMetroRoute(){
           <div class="rt-cnt">${lg.nStops}개 역 · ${segMin}분${lg.via.length?` <span class="rt-via-tg" onclick="this.parentElement.nextElementSibling.classList.toggle('open')">경유역 ▾</span>`:''}</div>
           ${lg.via.length?`<div class="rt-via">${lg.via.map(_opsEsc).join(' · ')}</div>`:''}
         </div></div>`;
-      rail+=`<div class="rt-node rt-leg-arrive${finalLeg?' rt-final-arrive':''}${cutOff?' rt-service-ended':''}" style="--lc:${lg.l.color}"><div class="rt-time"><b>${fmt(lg.arr)}</b><small>${cutOff?'운행 종료':'도착'}</small>${edge}</div><div class="rt-rail"><span class="rt-dot rt-alight"></span><span class="rt-seg"></span></div><div class="rt-info"><button type="button" class="rt-stn rt-stn-link" onclick="openMetroRouteTimetable('${alightArg}','${lineArg}',${lg.svc})">${_opsEsc(lg.alight)}<span class="rt-chev">›</span>${cutOff?'<span class="rt-ended-tag">여기까지 운행</span>':''}</button>${cutOff?'<div class="rt-sub">익일 오전 4시 전 연결 열차가 없어 이후 구간은 이동할 수 없습니다.</div>':''}</div></div>`;
+      rail+=`<div class="rt-node rt-leg-arrive${finalLeg?' rt-final-arrive':''}${cutOff?' rt-service-ended':''}" style="--lc:${lg.l.color}"><div class="rt-time"><b>${fmt(lg.arr)}</b><div class="rt-time-label"><small>${cutOff?'운행 종료':'도착'}</small></div></div><div class="rt-rail"><span class="rt-dot rt-alight"></span><span class="rt-seg"></span></div><div class="rt-info"><button type="button" class="rt-stn rt-stn-link" onclick="openMetroRouteTimetable('${alightArg}','${lineArg}',${lg.svc})">${_opsEsc(lg.alight)}<span class="rt-chev">›</span>${cutOff?'<span class="rt-ended-tag">여기까지 운행</span>':''}</button>${cutOff?'<div class="rt-sub">익일 오전 4시 전 연결 열차가 없어 이후 구간은 이동할 수 없습니다.</div>':''}</div></div>`;
       if(i<legs.length-1){ const wait=legs[i+1].ds-lg.as;
         rail+=`<div class="rt-node rt-walk"><div class="rt-time"><small>환승</small></div><div class="rt-rail"><span class="rt-seg rt-dash"></span><span class="rt-walk-ic">↔</span></div><div class="rt-info"><div class="rt-sub rt-xfer">${_opsEsc(lg.alight)}역 환승 · 대기 ${wait}분</div></div></div>`;
       }

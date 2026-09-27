@@ -10,10 +10,14 @@ test('전철 경로 검색은 출발·도착 기준 시각과 경유지를 받�
   assert.match(app,/id="mr-via"/);
   assert.match(app,/type="time" id="mr-time"/);
   assert.doesNotMatch(app,/id="mr-datetime"|type="datetime-local"/);
-  assert.match(app,/data-time-mode="depart"/);
-  assert.match(app,/data-time-mode="arrive"/);
+  assert.match(app,/data-picker-mode="depart"/);
+  assert.match(app,/data-picker-mode="arrive"/);
   assert.match(app,/value="first"/);
   assert.match(app,/value="last"/);
+  assert.match(app,/function openMrTimePicker\(\)/);
+  assert.match(app,/class="mr-time-picker"/);
+  assert.match(app,/>첫차타기<\/span>/);
+  assert.match(app,/>막차타기<\/span>/);
   assert.match(app,/function _mrPlannedRoute\(from,via,to,mode\)/);
 });
 
@@ -35,7 +39,7 @@ test('도착 시각 기준 검색은 목적지부터 선행 열차를 역산한�
 
 test('각 환승 구간은 승차역 출발과 하차역 도착 시각을 모두 표시한다',()=>{
   assert.match(app,/rt-leg-arrive\$\{finalLeg/);
-  assert.match(app,/<b>\$\{fmt\(lg\.arr\)\}<\/b><small>\$\{cutOff\?'운행 종료':'도착'\}<\/small>/);
+  assert.match(app,/<b>\$\{fmt\(lg\.arr\)\}<\/b><div class="rt-time-label"><small>\$\{cutOff\?'운행 종료':'도착'\}<\/small><\/div>/);
 });
 
 test('지도 역 팝업에서 출발·경유·도착지를 설정할 수 있다',()=>{
@@ -83,6 +87,13 @@ test('경로의 역명을 누르면 해당 편성이 강조된 역 시간표를 
   assert.match(app,/data-svc="\$\{r\.svc\}"/);
   assert.match(app,/routeRow\.classList\.add\('mtt-row--route'\)/);
   assert.match(app,/class="rt-stn rt-stn-link"/);
+  assert.match(redesign,/\.rt-stn-link\{[^}]*font-weight:800/);
+});
+
+test('첫차·막차 표식은 출발 시각 옆에만 표시하고 결과 행의 구분선은 제거한다',()=>{
+  assert.match(app,/<div class="rt-time-label"><small>출발<\/small>\$\{edge\}<\/div>/);
+  assert.doesNotMatch(app,/<small>\$\{cutOff\?'운행 종료':'도착'\}<\/small>\$\{edge\}/);
+  assert.match(redesign,/#mr-result \.rt-info\{[^}]*border:0/);
 });
 
 test('마지막 역 아이콘에서 타임라인 선이 끝난다',()=>{
