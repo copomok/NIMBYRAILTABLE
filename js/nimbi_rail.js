@@ -3460,7 +3460,7 @@ function updateMapTrains(){
 
   // 경로 안내 지도는 선택 구간 자체만 보여 준다. 실시간 열차 표시는
   // 경로선과 출발·경유·환승·도착 지점의 판독을 방해하므로 표시하지 않는다.
-  const journeyActive=!!(_metroJourneyMap&&typeof _mapCurrentLine==='string'&&_mapCurrentLine.startsWith('metroall:'));
+  const journeyActive=!!(_metroJourneyMap&&typeof _mapCurrentLine==='string'&&(_mapCurrentLine.startsWith('metroall:')||_mapCurrentLine.startsWith('metrojourney:')));
   if(journeyActive){
     const countEl=document.getElementById('map-train-count');
     if(countEl)countEl.textContent='경로 안내';
@@ -5032,6 +5032,20 @@ function _metroRegionAsMapLine(region){
   });});
   return _metroRegionCache[region]={name:region+' 권역 전체',color:'#8b949e',isMetro:true,allView:true,metroRegion:region,noSpread:true,lineCount:lines.length,routes};
 }
+// 경로가 둘 이상의 권역을 지날 때는 각 권역의 전체 노선을 같은 좌표계에 합친다.
+// 출발 권역 하나만 그리면 환승 이후 경로 좌표가 없어 강조선이 끊기기 때문이다.
+let _metroJourneyRegionCache={};
+function _metroRegionsAsMapLine(encodedRegions){
+  if(typeof METRO_LINES==='undefined')return null;
+  const regions=decodeURIComponent(encodedRegions||'').split('|').filter(Boolean);
+  const key=regions.slice().sort().join('|');if(_metroJourneyRegionCache[key])return _metroJourneyRegionCache[key];
+  const regionSet=new Set(regions),lines=METRO_LINES.filter(line=>regionSet.has(line.region));if(!lines.length)return null;
+  let segSum=0,segN=0;
+  lines.forEach(line=>(line.routes||[{stations:line.stations,xy:line.xy}]).forEach(route=>{for(let i=1;i<route.xy.length;i++){segSum+=Math.hypot(route.xy[i][0]-route.xy[i-1][0],route.xy[i][1]-route.xy[i-1][1]);segN++;}}));
+  const avg=segN?segSum/segN:32,f=Math.min(7,Math.max(3,44/Math.max(avg,1))),routes=[];
+  lines.forEach(line=>(line.routes||[{stations:line.stations,xy:line.xy}]).forEach(route=>routes.push({color:line.color,dash:!!route.dash,stations:route.stations.map((name,index)=>({n:name,x:Math.round(route.xy[index][0]*f),y:Math.round(route.xy[index][1]*f)}))})));
+  return _metroJourneyRegionCache[key]={name:`${regions.join('·')} 경로 권역`,color:'#8b949e',isMetro:true,allView:true,metroRegions:regions,noSpread:true,lineCount:lines.length,routes};
+}
 // 겹쳐보기 — 사용자가 고른 노선들(_metroPickSet)만 한 좌표계에 겹쳐 그림.
 // 권역과 무관하게 여러 노선 혼합 가능. 라벨은 시·종착역 + 고른 노선끼리의 환승역(좌표 공유).
 function _metroPickAsMapLine(){
@@ -5101,6 +5115,7 @@ function showMapLine(lineKey, btn){
   if(btn)btn.classList.add('active');
   const line=lineKey==='allregions'?_allRegionsAsMapLine()
     :(typeof lineKey==='string'&&lineKey.startsWith('metroall:'))?_metroRegionAsMapLine(lineKey.slice(9))
+    :(typeof lineKey==='string'&&lineKey.startsWith('metrojourney:'))?_metroRegionsAsMapLine(lineKey.slice(13))
     :(typeof lineKey==='string'&&lineKey.startsWith('metropick:'))?_metroPickAsMapLine()
     :(typeof lineKey==='string'&&lineKey.startsWith('metro:'))?_metroAsMapLine(lineKey.slice(6))
     :(lineKey==='all'?_allAsMapLine():MAP_LINES[lineKey]);
@@ -5109,7 +5124,7 @@ function showMapLine(lineKey, btn){
     (_mapReachability.mode==='train'&&['all','north','allregions'].includes(lineKey))||
     (_mapReachability.mode==='metro'&&typeof lineKey==='string'&&lineKey.startsWith('metroall:'))
   )?_mapReachability:null;
-  const journeyView=_metroJourneyMap&&typeof lineKey==='string'&&lineKey.startsWith('metroall:')?_metroJourneyMap:null;
+  const journeyView=_metroJourneyMap&&typeof lineKey==='string'&&(lineKey.startsWith('metroall:')||lineKey.startsWith('metrojourney:'))?_metroJourneyMap:null;
 
   // 추적 중이면: 열차가 실제 운행하는 구간만, 열차 등급 색으로 통일해 렌더
   const _trk=_mapTrackedTrain?getTrainByNo(_mapTrackedTrain):null;
@@ -5268,12 +5283,15 @@ function showMapLine(lineKey, btn){
     }
   }
   const journeyNamedStations=new Set();
+  const journeyMajorStations=new Set();
   if(journeyView){
-    journeyNamedStations.add(journeyView.from);journeyNamedStations.add(journeyView.to);
-    if(journeyView.via)journeyNamedStations.add(journeyView.via);
+    const mapTo=journeyView.mapTo||journeyView.to;
+    journeyNamedStations.add(journeyView.from);journeyNamedStations.add(mapTo);
+    journeyMajorStations.add(journeyView.from);journeyMajorStations.add(mapTo);
+    if(journeyView.via&&journeyView.segments.some(segment=>segment.stns.includes(journeyView.via)))journeyNamedStations.add(journeyView.via);
     journeyView.segments.forEach((segment,index)=>{
-      if(index)journeyNamedStations.add(segment.stns[0]);
-      if(index<journeyView.segments.length-1)journeyNamedStations.add(segment.stns.at(-1));
+      if(index){journeyNamedStations.add(segment.stns[0]);journeyMajorStations.add(segment.stns[0]);}
+      if(index<journeyView.segments.length-1){journeyNamedStations.add(segment.stns.at(-1));journeyMajorStations.add(segment.stns.at(-1));}
     });
   }
 
@@ -5294,12 +5312,13 @@ function showMapLine(lineKey, btn){
       const isReachable=!!(reachView&&reachView.stations.has(s.n));
       const isReachOrigin=!!(reachView&&reachView.origin===s.n);
       const isJourneyPoint=!!(journeyView&&journeyNamedStations.has(s.n));
+      const isJourneyMajor=!!(journeyView&&journeyMajorStations.has(s.n));
       const showReachLabel=!reachView||reachLabelKeys.has(rkey);
       const isMinor=!!(_hubSet&&!_hubSet.has(rkey)&&!(isReachable&&showReachLabel));
       // 추적 뷰: 미정차(통과)역은 작고 옅게
       const faded=!!(_trkStopSet&&!_trkStopSet.has(s.n));
-      const r2=isJourneyPoint?8:isReachOrigin?10:isReachable?6:isMinor?2.2:(faded?3.5:(isEnd?7:5));
-      const sw=isJourneyPoint?3:isReachOrigin?4:isReachable?3:isMinor?1.2:(faded?1.5:(isEnd?3:2));
+      const r2=isJourneyPoint?(isJourneyMajor?8:4):isReachOrigin?10:isReachable?6:isMinor?2.2:(faded?3.5:(isEnd?7:5));
+      const sw=isJourneyPoint?(isJourneyMajor?3:2):isReachOrigin?4:isReachable?3:isMinor?1.2:(faded?1.5:(isEnd?3:2));
       const nodeColor=isJourneyPoint?r.color:isReachable?'var(--accent)':r.color;
       const nodeOpacity=reachView&&!isReachable?'0.14':(faded?'0.35':'1');
       // 히트 영역
@@ -5343,7 +5362,7 @@ function showMapLine(lineKey, btn){
         ty=y+manualOffset[s.n][1]+4;
         anchor=manualOffset[s.n][0]<0?'end':manualOffset[s.n][0]>0?'start':'middle';
       }
-      if(!isMinor&&showReachLabel) parts.push(`<text x="${tx}" y="${ty}" fill="${isJourneyPoint?'var(--text1)':isReachable?'var(--text1)':'var(--text2)'}" font-size="${isJourneyPoint?12:isReachOrigin?13:(faded?9.5:(isEnd?12:11))}" font-weight="${isJourneyPoint||isReachable?800:(isEnd?700:400)}" opacity="${reachView&&!isReachable?0.12:(faded?0.4:1)}" text-anchor="${anchor}" pointer-events="none" font-family="Noto Sans KR,sans-serif">${s.n}</text>`);
+      if(!isMinor&&showReachLabel) parts.push(`<text x="${tx}" y="${ty}" fill="${isJourneyPoint?'var(--text1)':isReachable?'var(--text1)':'var(--text2)'}" font-size="${isJourneyPoint?(isJourneyMajor?12:10):isReachOrigin?13:(faded?9.5:(isEnd?12:11))}" font-weight="${isJourneyMajor||isReachable?800:(isEnd?700:500)}" opacity="${reachView&&!isReachable?0.12:(faded?0.4:1)}" text-anchor="${anchor}" pointer-events="none" font-family="Noto Sans KR,sans-serif">${s.n}</text>`);
       // 전철 노선도: 환승 노선 색 점 (역명 옆) + 기차 환승 표시
       if(line.isMetro&&!journeyView&&!isMinor&&!faded){
         const xf=(_xferMap&&_xferMap[s.n])||[];
@@ -11064,7 +11083,6 @@ function _renderMetroLineDetail(el,id){
         ${patInfo}
         <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap">
           <button onclick="event.stopPropagation();showMetroOnMap('${l.id}')" style="padding:8px 14px;border-radius:10px;border:1px solid ${l.color};background:transparent;color:${l.color};font-size:12.5px;font-weight:700;cursor:pointer;font-family:var(--sans)">지도형 노선도</button>
-          <button onclick="event.stopPropagation();showMetroLineLinear('${l.id}')" style="padding:8px 14px;border-radius:10px;border:1px solid ${l.color};background:color-mix(in srgb,${l.color} 10%,transparent);color:${l.color};font-size:12.5px;font-weight:700;cursor:pointer;font-family:var(--sans)">선형 노선도</button>
         </div>
       </div>
       <div class="mtl-live-head">
@@ -12592,7 +12610,7 @@ function closeMetroStationDisplay(){
   document.body.classList.remove('metro-display-paired');
 }
 // 🚇 전철 역 전체 시간표 — 카카오지하철식(방면별 열, 같은 시간대는 같은 행에 정렬)
-let _mttExpressOnly=false, _mttStation=null, _mttLine=null;
+let _mttExpressOnly=false, _mttStation=null, _mttLine=null, _mttRouteSvc=null;
 function _mttFilterEntries(entries,expressOnly){
   return expressOnly?entries.filter(entry=>Number(entry.cls)>0):entries;
 }
@@ -12608,6 +12626,10 @@ function _openMetroTimetableRow(row,line,svc,clk,k0,k1){
   if(wrap)wrap.querySelectorAll('.mtt-row--selected').forEach(el=>el.classList.remove('mtt-row--selected'));
   if(row&&row.classList)row.classList.add('mtt-row--selected');
   openMetroTrain(line,svc,clk,k0,k1);
+}
+function openMetroRouteTimetable(stn,line,svc){
+  _mttRouteSvc=Number(svc);
+  openMetroTimetable(stn,line,false);
 }
 function openMetroTimetable(stn, line, preserveFilter){
   const old=document.getElementById('mtt-wrap'); if(old)old.remove();
@@ -12647,7 +12669,7 @@ function openMetroTimetable(stn, line, preserveFilter){
     const cur=r.isNext?' mtt-row--next':'';
     let idAttr=''; if(r.isNext&&!anchor.set&&r.m===nextAnchorM){ idAttr=' id="mtt-next"'; anchor.set=true; }
     const clk=(r.svc!=null)?` onclick="_openMetroTimetableRow(this,'${escL(r.line)}',${r.svc},${r.clk},${r.k0},${r.k1})"`:'';
-    return `<div class="mtt-row${cur}${r.svc!=null?' mtt-row--tap':''}"${idAttr}${clk}><span class="mtt-t">${fClk(r.clk)}</span><span class="mtt-od">${od}</span>${_metroClsTag(r.cls)}</div>`;
+    return `<div class="mtt-row${cur}${r.svc!=null?' mtt-row--tap':''}"${idAttr}${r.svc!=null?` data-svc="${r.svc}"`:''}${clk}><span class="mtt-t">${fClk(r.clk)}</span><span class="mtt-od">${od}</span>${_metroClsTag(r.cls)}</div>`;
   };
   const grid=hours.map(h=>{
     const cells=colData.map(rows=>{
@@ -12675,10 +12697,11 @@ function openMetroTimetable(stn, line, preserveFilter){
     </div>`;
   document.body.appendChild(wrap);
   // 다음 열차 위치로 자동 스크롤(없으면 맨 위)
-  const nx=wrap.querySelector('#mtt-next'), sc=wrap.querySelector('.mtt-scroll');
-  if(nx) nx.scrollIntoView({block:'center'}); else if(sc) sc.scrollTop=0;
+  const routeRow=_mttRouteSvc==null?null:wrap.querySelector(`.mtt-row[data-svc="${_mttRouteSvc}"]`);
+  if(routeRow){wrap.querySelectorAll('.mtt-row--next').forEach(row=>row.classList.remove('mtt-row--next'));routeRow.classList.add('mtt-row--route');routeRow.scrollIntoView({block:'center'});}
+  else {const nx=wrap.querySelector('#mtt-next'),sc=wrap.querySelector('.mtt-scroll');if(nx)nx.scrollIntoView({block:'center'});else if(sc)sc.scrollTop=0;}
 }
-function closeMetroTimetable(){ const el=document.getElementById('mtt-wrap'); if(el)el.remove(); const t=document.getElementById('mtn-wrap'); if(t)t.remove(); _mttStation=null;_mttLine=null;_mttExpressOnly=false; document.body.classList.remove('metro-paired'); }
+function closeMetroTimetable(){ const el=document.getElementById('mtt-wrap'); if(el)el.remove(); const t=document.getElementById('mtn-wrap'); if(t)t.remove(); _mttStation=null;_mttLine=null;_mttExpressOnly=false;_mttRouteSvc=null; document.body.classList.remove('metro-paired'); }
 // 왕복 편성을 회차점(A>B>A·연속중복) 기준 방향별 leg 구간으로 분할
 function _metroLegRanges(idxSeq){
   const ranges=[]; let start=0; const n=idxSeq.length;
@@ -14177,7 +14200,7 @@ function renderOpsRake(host){
 // ══════════════════════════════════════════
 // 🔍 전철 경로 검색 — 출발·도착역 최소환승 경로 안내
 // ══════════════════════════════════════════
-let _mrFrom='', _mrVia='', _mrTo='', _mrMode='transfer', _mrTimeMode='depart', _mrDateTime='', _mrLastJourney=null;
+let _mrFrom='', _mrVia='', _mrTo='', _mrMode='transfer', _mrTimeMode='depart', _mrTime='', _mrEdgeMode='normal', _mrLastJourney=null;
 function setMrMode(m){_mrMode=m;document.querySelectorAll('.mr-mode-chip').forEach(c=>c.classList.toggle('on',c.dataset.mode===m));if(_mrFrom&&_mrTo)searchMetroRoute();}
 let _metroGraphCache=null;
 function _metroGraph(){
@@ -14252,14 +14275,20 @@ function _mrFocusSearch(){
   const input=document.getElementById('mr-from');
   if(input){input.focus();input.select();input.scrollIntoView({block:'center',behavior:'smooth'});}
 }
-function _mrDefaultDateTime(){
-  const d=new Date();d.setSeconds(0,0);
+function _mrDefaultTime(){
+  const d=new Date();
   const p=n=>String(n).padStart(2,'0');
-  return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}`;
+  return `${p(d.getHours())}:${p(d.getMinutes())}`;
 }
 function setMrTimeMode(mode){
   _mrTimeMode=mode==='arrive'?'arrive':'depart';
   document.querySelectorAll('.mr-time-mode button').forEach(button=>button.classList.toggle('on',button.dataset.timeMode===_mrTimeMode));
+  if(_mrFrom&&_mrTo)searchMetroRoute();
+}
+function setMrEdgeMode(mode,checked){
+  const timeInput=document.getElementById('mr-time');if(timeInput)_mrTime=timeInput.value;
+  _mrEdgeMode=checked?(mode==='last'?'last':'first'):'normal';
+  document.querySelectorAll('.mr-edge-check input').forEach(input=>{input.checked=input.value===_mrEdgeMode;});
   if(_mrFrom&&_mrTo)searchMetroRoute();
 }
 function _mrShareRoute(){
@@ -14282,28 +14311,11 @@ function _mrPlannedRoute(from,via,to,mode){
 }
 function _mrOpenMap(kind){
   if(!_mrLastJourney)return;
-  if(kind==='linear'){_mrShowLinearDiagram();return;}
   _metroJourneyMap=_mrLastJourney;
-  const first=_mrLastJourney.segments[0],line=_metroGraph().lineById[first?.lid];
+  const graph=_metroGraph(),first=_mrLastJourney.segments[0],line=graph.lineById[first?.lid];
+  const regions=[...new Set(_mrLastJourney.segments.map(segment=>graph.lineById[segment.lid]?.region).filter(Boolean))];
   if(line)_metroMapRegion=line.region;
-  _metroMapId='__all__';switchTab('map');showMapLine(`metroall:${_metroMapRegion}`,null);
-}
-function _mrShowLinearDiagram(journey=_mrLastJourney){
-  if(!journey)return;
-  let host=document.getElementById('mr-linear-overlay');
-  if(!host){host=document.createElement('div');host.id='mr-linear-overlay';host.className='mr-linear-overlay';document.body.appendChild(host);}
-  const G=_metroGraph();
-  const rows=journey.segments.map((segment,segmentIndex)=>{
-    const line=G.lineById[segment.lid]||{name:'노선',color:'#388bfd'};
-    return `<section class="mr-linear-line" style="--lc:${line.color}"><header><i></i><b>${_opsEsc(line.name)}</b></header><div class="mr-linear-stations">${segment.stns.map((station,index)=>`<div class="mr-linear-station${index===0?' first':''}${index===segment.stns.length-1?' last':''}"><i></i><span>${_opsEsc(station)}</span></div>`).join('')}</div>${segmentIndex<journey.segments.length-1?`<div class="mr-linear-transfer">${_opsEsc(segment.stns.at(-1))} 환승</div>`:''}</section>`;
-  }).join('');
-  host.innerHTML=`<div class="mr-linear-sheet"><header><div><small>LINEAR ROUTE DIAGRAM</small><h2>${_opsEsc(journey.from)} → ${_opsEsc(journey.to)}</h2></div><button onclick="document.getElementById('mr-linear-overlay').classList.remove('open')" aria-label="닫기">×</button></header><div class="mr-linear-body">${rows}</div></div>`;
-  host.classList.add('open');
-}
-function showMetroLineLinear(id){
-  const line=(typeof METRO_LINES!=='undefined')&&METRO_LINES.find(item=>item.id===id);if(!line)return;
-  const routes=line.routes||[{stations:line.stations||[]}];
-  _mrShowLinearDiagram({from:line.from||routes[0]?.stations?.[0]||line.name,to:line.to||routes[0]?.stations?.at(-1)||'',segments:routes.map(route=>({lid:line.id,stns:route.stations||[]}))});
+  _metroMapId='__all__';switchTab('map');showMapLine(regions.length>1?`metrojourney:${encodeURIComponent(regions.join('|'))}`:`metroall:${_metroMapRegion}`,null);
 }
 let _metroJourneyMap=null;
 function setMapStationAsRoutePoint(kind,station){
@@ -14390,8 +14402,8 @@ function renderMetroRouteTab(){
         </div>
         <button class="mr-swap" onclick="_mrSwap()" title="출발·도착 바꾸기" aria-label="출발역과 도착역 바꾸기">⇅</button>
       </div>
-      <div class="mr-time-row"><div class="mr-time-mode"><button type="button" data-time-mode="depart" class="${_mrTimeMode==='depart'?'on':''}" onclick="setMrTimeMode('depart')">출발 시각</button><button type="button" data-time-mode="arrive" class="${_mrTimeMode==='arrive'?'on':''}" onclick="setMrTimeMode('arrive')">도착 시각</button></div><input type="datetime-local" id="mr-datetime" value="${_mrDateTime||_mrDefaultDateTime()}" aria-label="경로 검색 기준 시각"></div>
-      <div class="mr-search-foot"><div class="mr-modes" aria-label="경로 정렬"><button class="mr-mode-chip${_mrMode==='transfer'?' on':''}" data-mode="transfer" onclick="setMrMode('transfer')">최소 환승</button><button class="mr-mode-chip${_mrMode==='time'?' on':''}" data-mode="time" onclick="setMrMode('time')">최소 시간</button></div><button class="btn btn-primary mr-search-button" onclick="_mrFrom=document.getElementById('mr-from').value.trim();_mrVia=document.getElementById('mr-via').value.trim();_mrTo=document.getElementById('mr-to').value.trim();_mrDateTime=document.getElementById('mr-datetime').value;searchMetroRoute()">길찾기</button></div>
+      <div class="mr-time-row"><div class="mr-time-mode"><button type="button" data-time-mode="depart" class="${_mrTimeMode==='depart'?'on':''}" onclick="setMrTimeMode('depart')">출발 시각</button><button type="button" data-time-mode="arrive" class="${_mrTimeMode==='arrive'?'on':''}" onclick="setMrTimeMode('arrive')">도착 시각</button></div><input type="time" id="mr-time" value="${_mrTime||_mrDefaultTime()}" aria-label="경로 검색 기준 시각"><div class="mr-edge-options" aria-label="첫차 또는 막차 선택"><label class="mr-edge-check"><input type="checkbox" value="first"${_mrEdgeMode==='first'?' checked':''} onchange="setMrEdgeMode('first',this.checked)"><span>첫차 보기</span></label><label class="mr-edge-check"><input type="checkbox" value="last"${_mrEdgeMode==='last'?' checked':''} onchange="setMrEdgeMode('last',this.checked)"><span>막차 보기</span></label></div></div>
+      <div class="mr-search-foot"><div class="mr-modes" aria-label="경로 정렬"><button class="mr-mode-chip${_mrMode==='transfer'?' on':''}" data-mode="transfer" onclick="setMrMode('transfer')">최소 환승</button><button class="mr-mode-chip${_mrMode==='time'?' on':''}" data-mode="time" onclick="setMrMode('time')">최소 시간</button></div><button class="btn btn-primary mr-search-button" onclick="_mrFrom=document.getElementById('mr-from').value.trim();_mrVia=document.getElementById('mr-via').value.trim();_mrTo=document.getElementById('mr-to').value.trim();_mrTime=document.getElementById('mr-time').value;searchMetroRoute()">길찾기</button></div>
     </div>
     <div id="mr-result"></div>`;
 }
@@ -14401,7 +14413,7 @@ function _metroSegService(lineName, board, alight, afterSrv, patternId){
   const names=ent.s, svcs=ent.t, cArr=ent.c;
   if(!names.includes(board)||!names.includes(alight))return null;
   const srvMin=m=>(((m-240)%1440)+1440)%1440;
-  let best=null;
+  let best=null;const all=[];
   for(let si=0;si<svcs.length;si++){ const f=svcs[si], n=f.length/3, cls=cArr?cArr[si]:0;
     const idxSeq=[];for(let i=0;i<n;i++)idxSeq.push(f[3*i+2]);
     for(const [start,end] of _metroLegRanges(idxSeq)){
@@ -14410,27 +14422,31 @@ function _metroSegService(lineName, board, alight, afterSrv, patternId){
       if(k<0)continue;
       for(let i=k+1;i<=end;i++){if(names[idxSeq[i]]===alight){mIdx=i;break;}}
       if(mIdx<0)continue;
-      let ds=srvMin(f[3*k+1]);
+      const rawDs=srvMin(f[3*k+1]);let ds=rawDs;
       while(ds<afterSrv)ds+=1440;
       const arrBase=srvMin(f[3*mIdx]);
       let as=arrBase;while(as<ds)as+=1440;
       const via=[];for(let x=k+1;x<mIdx;x++)via.push(names[idxSeq[x]]);
+      let rawAs=arrBase;while(rawAs<rawDs)rawAs+=1440;
+      const serviceKey=`${si}:${start}:${end}`;
+      if(rawAs<=1440)all.push({ds:rawDs,as:rawAs,si,k0:start,k1:end,key:serviceKey});
       if(ds>=1440||as>1440)continue;
-      const cand={ds,as,dep:f[3*k+1]%1440,arr:f[3*mIdx]%1440,nStops:mIdx-k,via,cls};
+      const cand={ds,as,dep:f[3*k+1]%1440,arr:f[3*mIdx]%1440,nStops:mIdx-k,via,cls,svc:si,k0:start,k1:end,key:serviceKey,dest:names[idxSeq[end]]};
       if(!best||cand.ds<best.ds)best=cand;
     }
   }
+  if(best&&all.length){best.isFirst=best.key===all.reduce((a,b)=>a.ds<=b.ds?a:b).key;best.isLast=best.key===all.reduce((a,b)=>a.ds>=b.ds?a:b).key;}
   return best;
 }
 function _metroSegServiceBefore(lineName,board,alight,beforeSrv){
   const ent=(typeof METRO_SCHED!=='undefined')&&METRO_SCHED[lineName];if(!ent)return null;
-  const names=ent.s,svcs=ent.t,cArr=ent.c,srvMin=m=>(((m-240)%1440)+1440)%1440;let best=null;
+  const names=ent.s,svcs=ent.t,cArr=ent.c,srvMin=m=>(((m-240)%1440)+1440)%1440;let best=null;const all=[];
   for(let si=0;si<svcs.length;si++){const f=svcs[si],n=f.length/3,cls=cArr?cArr[si]:0,idxSeq=[];for(let i=0;i<n;i++)idxSeq.push(f[3*i+2]);
     for(const [start,end] of _metroLegRanges(idxSeq)){let k=-1,mIdx=-1;for(let i=start;i<end;i++)if(names[idxSeq[i]]===board){k=i;break;}if(k<0)continue;for(let i=k+1;i<=end;i++)if(names[idxSeq[i]]===alight){mIdx=i;break;}if(mIdx<0)continue;
-      const ds=srvMin(f[3*k+1]);let as=srvMin(f[3*mIdx]);while(as<ds)as+=1440;if(as>beforeSrv||as>1440)continue;
-      const via=[];for(let x=k+1;x<mIdx;x++)via.push(names[idxSeq[x]]);const cand={ds,as,dep:f[3*k+1]%1440,arr:f[3*mIdx]%1440,nStops:mIdx-k,via,cls};if(!best||cand.as>best.as)best=cand;
+      const ds=srvMin(f[3*k+1]);let as=srvMin(f[3*mIdx]);while(as<ds)as+=1440;const serviceKey=`${si}:${start}:${end}`;if(as<=1440)all.push({ds,as,si,k0:start,k1:end,key:serviceKey});if(as>beforeSrv||as>1440)continue;
+      const via=[];for(let x=k+1;x<mIdx;x++)via.push(names[idxSeq[x]]);const cand={ds,as,dep:f[3*k+1]%1440,arr:f[3*mIdx]%1440,nStops:mIdx-k,via,cls,svc:si,k0:start,k1:end,key:serviceKey,dest:names[idxSeq[end]]};if(!best||cand.as>best.as)best=cand;
     }
-  }return best;
+  }if(best&&all.length){best.isFirst=best.key===all.reduce((a,b)=>a.ds<=b.ds?a:b).key;best.isLast=best.key===all.reduce((a,b)=>a.ds>=b.ds?a:b).key;}return best;
 }
 function searchMetroRoute(){
   const out=document.getElementById('mr-result'); if(!out)return;
@@ -14441,19 +14457,19 @@ function searchMetroRoute(){
   if(r.err==='noStn'){const bad=_metroGraph().stnLines[from]?to:from;out.innerHTML=`<div class="mr-hint">전철 노선에 <b>${_opsEsc(bad)}</b> 역이 없습니다. 역명을 확인하세요.</div>`;return;}
   if(r.err||!r.segments||!r.segments.length){out.innerHTML='<div class="mr-hint">경로를 찾을 수 없습니다.</div>';return;}
   const G=_metroGraph();
-  const selected=_mrDateTime?new Date(_mrDateTime):new Date();
   const srvMin=m=>(((m-240)%1440)+1440)%1440;
   const fmt=m=>{m=((Math.round(m))%1440+1440)%1440;return `${Math.floor(m/60)}:${String(m%60).padStart(2,'0')}`;};
   const durFmt=m=>{const h=Math.floor(m/60);return h?`${h}시간 ${m%60}분`:`${m}분`;};
-  const selectedSrv=srvMin(selected.getHours()*60+selected.getMinutes());
+  const selectedClock=(_mrTime||_mrDefaultTime()).split(':').map(Number);
+  const selectedSrv=srvMin((selectedClock[0]||0)*60+(selectedClock[1]||0));
   const XBUF=2; // 환승 도보 버퍼(분)
   // ── 실제 운행 데이터로 구간별 다음 열차 탐색 ──
   const legs=[];let realOk=r.segments.length>0,endedAt=null;
-  if(_mrTimeMode==='arrive'){
-    let beforeSrv=selectedSrv;
+  if(_mrEdgeMode==='last'||(_mrEdgeMode==='normal'&&_mrTimeMode==='arrive')){
+    let beforeSrv=_mrEdgeMode==='last'?1440:selectedSrv;
     for(let i=r.segments.length-1;i>=0;i--){const s=r.segments[i],l=G.lineById[s.lid]||{name:'?',color:'#8b949e'},svc=_metroSegServiceBefore(l.name,s.stns[0],s.stns.at(-1),beforeSrv);if(!svc){realOk=false;break;}legs.unshift({l,segment:s,board:s.stns[0],alight:s.stns.at(-1),...svc});beforeSrv=svc.ds-XBUF;}
   }else{
-    let afterSrv=selectedSrv;
+    let afterSrv=_mrEdgeMode==='first'?0:selectedSrv;
     for(const s of r.segments){const l=G.lineById[s.lid]||{name:'?',color:'#8b949e'},svc=_metroSegService(l.name,s.stns[0],s.stns.at(-1),afterSrv,s.pid);if(!svc){realOk=false;endedAt=legs.at(-1)?.alight||from;break;}legs.push({l,segment:s,board:s.stns[0],alight:s.stns.at(-1),...svc});afterSrv=svc.as+XBUF;}
   }
   let rail='', headDur, headMeta, foot;
@@ -14461,16 +14477,22 @@ function searchMetroRoute(){
   legs.forEach((lg,i)=>{
       const segMin=lg.as-lg.ds;
       const exp=lg.cls===2?'<span class="mtb-exp mtb-exp--t">특급</span>':lg.cls===1?'<span class="mtb-exp">급행</span>':'';
+      const edge=lg.isFirst?'<span class="rt-edge-tag first">첫차</span>':lg.isLast?'<span class="rt-edge-tag last">막차</span>':'';
+      const lineArg=String(lg.l.name).replace(/\\/g,'\\\\').replace(/'/g,"\\'");
+      const boardArg=String(lg.board).replace(/\\/g,'\\\\').replace(/'/g,"\\'");
+      const alightArg=String(lg.alight).replace(/\\/g,'\\\\').replace(/'/g,"\\'");
+      const finalLeg=i===legs.length-1;
+      const cutOff=finalLeg&&!realOk;
       rail+=`<div class="rt-node" style="--lc:${lg.l.color}">
-        <div class="rt-time"><b>${fmt(lg.dep)}</b><small>출발</small></div>
+        <div class="rt-time"><b>${fmt(lg.dep)}</b><small>출발</small>${edge}</div>
         <div class="rt-rail"><span class="rt-dot rt-board rt-mdot"></span><span class="rt-seg"></span></div>
         <div class="rt-info">
-          <div class="rt-stn">${_opsEsc(lg.board)}<span class="rt-chev">›</span></div>
-          <div class="rt-sub">${exp}<span class="rt-lchip" style="background:${lg.l.color}">${_opsEsc(lg.l.name)}</span> ${_opsEsc(lg.alight)}행</div>
+          <button type="button" class="rt-stn rt-stn-link" onclick="openMetroRouteTimetable('${boardArg}','${lineArg}',${lg.svc})">${_opsEsc(lg.board)}<span class="rt-chev">›</span></button>
+          <div class="rt-sub">${exp}<span class="rt-lchip" style="background:${lg.l.color}">${_opsEsc(lg.l.name)}</span> ${_opsEsc(lg.dest)}행</div>
           <div class="rt-cnt">${lg.nStops}개 역 · ${segMin}분${lg.via.length?` <span class="rt-via-tg" onclick="this.parentElement.nextElementSibling.classList.toggle('open')">경유역 ▾</span>`:''}</div>
           ${lg.via.length?`<div class="rt-via">${lg.via.map(_opsEsc).join(' · ')}</div>`:''}
         </div></div>`;
-      rail+=`<div class="rt-node rt-leg-arrive" style="--lc:${lg.l.color}"><div class="rt-time"><b>${fmt(lg.arr)}</b><small>도착</small></div><div class="rt-rail"><span class="rt-dot rt-alight"></span><span class="rt-seg"></span></div><div class="rt-info"><div class="rt-stn">${_opsEsc(lg.alight)}</div></div></div>`;
+      rail+=`<div class="rt-node rt-leg-arrive${finalLeg?' rt-final-arrive':''}${cutOff?' rt-service-ended':''}" style="--lc:${lg.l.color}"><div class="rt-time"><b>${fmt(lg.arr)}</b><small>${cutOff?'운행 종료':'도착'}</small>${edge}</div><div class="rt-rail"><span class="rt-dot rt-alight"></span><span class="rt-seg"></span></div><div class="rt-info"><button type="button" class="rt-stn rt-stn-link" onclick="openMetroRouteTimetable('${alightArg}','${lineArg}',${lg.svc})">${_opsEsc(lg.alight)}<span class="rt-chev">›</span>${cutOff?'<span class="rt-ended-tag">여기까지 운행</span>':''}</button>${cutOff?'<div class="rt-sub">익일 오전 4시 전 연결 열차가 없어 이후 구간은 이동할 수 없습니다.</div>':''}</div></div>`;
       if(i<legs.length-1){ const wait=legs[i+1].ds-lg.as;
         rail+=`<div class="rt-node rt-walk"><div class="rt-time"><small>환승</small></div><div class="rt-rail"><span class="rt-seg rt-dash"></span><span class="rt-walk-ic">↔</span></div><div class="rt-info"><div class="rt-sub rt-xfer">${_opsEsc(lg.alight)}역 환승 · 대기 ${wait}분</div></div></div>`;
       }
@@ -14480,12 +14502,12 @@ function searchMetroRoute(){
     const total=last.as-legs[0].ds;
     headDur=durFmt(total);
     headMeta=`${r.transfers>0?`환승 ${r.transfers}회`:'직통'} · <span class="rt-mono">${fmt(legs[0].dep)}→${fmt(last.arr)}</span>`;
-    foot=`실제 운행 시각표 기준 · ${_mrTimeMode==='arrive'?'선택 시각까지 도착':'선택 시각 이후 출발'} · 익일 오전 4시 영업 종료.`;
+    foot=`실제 운행 시각표 기준 · ${_mrEdgeMode==='first'?'첫차 연결':_mrEdgeMode==='last'?'막차 연결':_mrTimeMode==='arrive'?'선택 시각까지 도착':'선택 시각 이후 출발'} · 익일 오전 4시 영업 종료.`;
   } else {
     if(!legs.length){out.innerHTML='<div class="mr-hint">선택한 영업일의 운행 시각표로 연결되는 경로를 찾을 수 없습니다. 시각이나 역명을 확인하세요.</div>';return;}
-    const last=legs.at(-1);rail+=`<div class="rt-node rt-last rt-service-ended"><div class="rt-time"><small>운행 종료</small></div><div class="rt-rail"><span class="rt-dot"></span></div><div class="rt-info"><div class="rt-stn">${_opsEsc(endedAt||last.alight)}<span class="rt-ended-tag">여기까지 운행</span></div><div class="rt-sub">익일 오전 4시 전 연결 열차가 없어 이후 구간은 이동할 수 없습니다.</div></div></div>`;headDur='이동 가능 구간';headMeta=`${fmt(legs[0].dep)} → --:--`;foot='막차 운행이 끝났습니다. 표시된 마지막 역까지만 이동할 수 있습니다.';
+    headDur='이동 가능 구간';headMeta=`${fmt(legs[0].dep)} → --:--`;foot='막차 운행이 끝났습니다. 표시된 마지막 역까지만 이동할 수 있습니다.';
   }
-  _mrLastJourney={from,via,to,segments:realOk?r.segments:legs.map(l=>l.segment),legs};
+  _mrLastJourney={from,via,to,mapTo:realOk?to:legs.at(-1)?.alight||from,segments:realOk?r.segments:legs.map(l=>l.segment),legs};
   out.innerHTML=`
     <section class="mr-route-result${realOk?'':' partial'}">
       <header class="mr-result-header"><div><strong>${[from,via,to].filter(Boolean).map(_opsEsc).join(' → ')}</strong><span class="badge blue">${_mrMode==='time'?'최소 시간':'최소 환승'}</span></div><div><b>${realOk?'총 ':''}${headDur}</b><small>${headMeta}</small></div></header>
@@ -14493,7 +14515,7 @@ function searchMetroRoute(){
       <div class="rt-tl">${rail}</div>
     </div></div>
     <p class="ops-hint">${foot}</p>
-    <footer class="mr-result-actions"><button type="button" onclick="_mrShareRoute()">공유하기</button><button type="button" onclick="_mrOpenMap('map')">지도에서 보기</button><button type="button" onclick="_mrOpenMap('linear')">선형 노선도</button><button type="button" class="primary" onclick="_mrFocusSearch()">다른 경로 보기 <span>→</span></button></footer>
+    <footer class="mr-result-actions"><button type="button" onclick="_mrShareRoute()">공유하기</button><button type="button" onclick="_mrOpenMap('map')">지도에서 보기</button><button type="button" class="primary" onclick="_mrFocusSearch()">다른 경로 보기 <span>→</span></button></footer>
     </section>`;
 }
 
