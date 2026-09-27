@@ -70,12 +70,15 @@ test('지도는 노선 우선 표현과 저대비 보조 격자를 사용한다'
   assert.match(app,/_mapStationListModel/);
   assert.match(app,/downloadCurrentLineStationList/);
   assert.match(app,/focusMapStationFromList/);
-  assert.match(app,/const \{source,routeOptions,rows\}=_mapStationListModel\(\),visible=rows/);
+  assert.match(app,/const \{source,routeOptions,rows,total\}=_mapStationListModel\(\),visible=rows/);
+  assert.match(app,/row\.routeLabels\.map\(label=>_mapStationEsc\(label\)\)/);
+  assert.doesNotMatch(app,/거리 \(km\)|누적 거리\(km\)|row\.distance\.toFixed/);
   assert.match(app,/_updateMetroMapTrains/);
   assert.match(app,/_metroLineLiveTrains\(line\.name\)/);
   assert.match(app,/onclick="openCurrentLineStationList\(\)">역 목록/);
   assert.match(css,/\.map-station-list-table/);
   assert.match(css,/\.map-station-list-row/);
+  assert.match(css,/@media\(max-width:760px\)\{[\s\S]*?\.map-station-list/);
 });
 
 test('역 검색은 입력 포커스와 한글 조합 상태를 유지한다',()=>{
