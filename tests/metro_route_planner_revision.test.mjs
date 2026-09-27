@@ -18,7 +18,7 @@ test('전철 경로 검색은 출발·도착 기준 시각과 경유지를 받�
   assert.match(app,/class="mr-time-picker"/);
   assert.match(app,/>첫차타기<\/span>/);
   assert.match(app,/>막차타기<\/span>/);
-  assert.match(app,/function _mrPlannedRoute\(from,via,to,mode\)/);
+  assert.match(app,/function _mrPlannedRoute\(from,via,to,mode,excludedPids\)/);
 });
 
 test('출발 검색은 익일 4시 영업 경계를 넘겨 다음날 첫차를 붙이지 않는다',()=>{
@@ -92,11 +92,34 @@ test('실제 종착 행선지와 첫차·막차 표식을 사용한다',()=>{
 });
 
 test('경로의 역명을 누르면 해당 편성이 강조된 역 시간표를 연다',()=>{
-  assert.match(app,/function openMetroRouteTimetable\(stn,line,svc\)/);
-  assert.match(app,/data-svc="\$\{r\.svc\}"/);
+  assert.match(app,/function openMetroRouteTimetable\(stn,line,svc,clk,k0,k1\)/);
+  assert.match(app,/data-svc="\$\{r\.svc\}" data-clk="\$\{r\.clk\}" data-k0="\$\{r\.k0\}" data-k1="\$\{r\.k1\}"/);
   assert.match(app,/routeRow\.classList\.add\('mtt-row--route'\)/);
   assert.match(app,/class="rt-stn rt-stn-link"/);
   assert.match(redesign,/\.rt-stn-link\{[^}]*font-weight:800/);
+});
+
+test('현재 시각 기본값과 첫차·막차 실제 출발 시각을 검색 상자에 반영한다',()=>{
+  assert.match(app,/const shownTime=_mrTimeExplicit&&_mrTime\?_mrTime:_mrDefaultTime\(\)/);
+  assert.match(app,/function _mrShowResolvedTime\(clockMinute\)/);
+  assert.match(app,/if\(_mrEdgeMode!=='normal'\)_mrShowResolvedTime\(legs\[0\]\.dep\)/);
+});
+
+test('부분 운행 종료 시 이용 불가 운행 패턴을 제외하고 대체 경로를 다시 찾는다',()=>{
+  assert.match(app,/function _metroFindRoute\(from,to,mode,excludedPids\)/);
+  assert.match(app,/blocked\.add\(failedPid\)/);
+  assert.match(app,/return searchMetroRoute\(blocked,routeAttempt\+1\)/);
+});
+
+test('통합 길찾기는 전철·기차와 교통수단 필터 및 예상 운임을 제공한다',()=>{
+  assert.match(app,/>통합 길찾기<\/button>/);
+  assert.match(app,/function _mrIntegratedEdges\(\)/);
+  assert.match(app,/function searchIntegratedRoute\(from,via,to\)/);
+  assert.match(app,/KTX·SRT/);
+  assert.match(app,/일반열차/);
+  assert.match(app,/>GTX<\/label>/);
+  assert.match(app,/function _mrMetroFare\(distanceKm\)/);
+  assert.match(app,/예상 \$\{fare\.toLocaleString\(\)\}원/);
 });
 
 test('첫차·막차 표식은 출발 시각 옆에만 표시하고 결과 행의 구분선은 제거한다',()=>{
