@@ -5,8 +5,9 @@ import fs from 'node:fs';
 const app=fs.readFileSync(new URL('../js/nimbi_rail.js',import.meta.url),'utf8');
 const shell=fs.readFileSync(new URL('../js/features/nimbi_shell.js',import.meta.url),'utf8');
 
-test('북한 지도 표기명과 시간표 원본 역명을 같은 역으로 조회한다',()=>{
-  assert.match(app,/NORTH_STATION_DATA_ALIASES=\{[^}]*'은산':'은산읍'[^}]*'강계':'강계학생소년궁전'/);
+test('북한 역명은 임의 축약 없이 인게임 원본 이름으로 조회한다',()=>{
+  assert.match(app,/NORTH_STATION_DATA_ALIASES=\{'룡연':'룡연읍'\}/);
+  assert.doesNotMatch(app,/'은산':'은산읍'|'강계':'강계학생소년궁전'|'희천':'희천제사공장'/);
   assert.match(app,/function getRailTrainsByStation\(raw\)/);
   assert.match(app,/getRailTrainsByStation\(stn\)\.forEach/);
   assert.match(app,/function _stationStoppingTrains\(trainName\)[\s\S]*getRailTrainsByStation\(trainName\)/);

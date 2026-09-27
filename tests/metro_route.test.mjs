@@ -23,8 +23,10 @@ ${slice('function _metroLegRanges','\nfunction _metroLegRangeForClick')}
 ${slice('let _metroGraphCache=null;','\nfunction renderMetroRouteTab')}
 ${slice('function _metroSegService','\nfunction searchMetroRoute')}
 this.findRoute=_metroFindRoute;
+this.findPlanned=_mrPlannedRoute;
 this.graph=_metroGraph;
 this.nextService=_metroSegService;
+this.prevService=_metroSegServiceBefore;
 `,context);
 
 const direct=context.findRoute('행신','고양중앙로','transfer');
@@ -83,5 +85,18 @@ assert.deepEqual(Array.from(vm.runInContext("[STATION_DB['잠실새내역'].lon,
 assert.deepEqual(Array.from(vm.runInContext("[STATION_DB['월곶(김포)역'].lon,STATION_DB['월곶(김포)역'].lat]",context)),[126.551426,37.714442],'동명이역 월곶(김포)의 실제 좌표를 분리해 저장해야 합니다.');
 assert.ok(fs.readFileSync('js/features/nimbi_shell.js','utf8').includes("route.stations||[]).forEach(name=>stationNames.add(name))"),'전철 신설역이 통합 검색에 포함되어야 합니다.');
 assert.ok(source.includes('const cacheKey=`${name}|${(+lat).toFixed(6)},${(+lon).toFixed(6)}`'),'주소 캐시는 역 이름뿐 아니라 실제 좌표까지 구분해야 합니다.');
+const sample=Object.values(context.graph().patterns).find(pattern=>pattern.stations.length>=4);
+assert.ok(sample,'경유지 검증용 실제 운행 패턴이 있어야 합니다.');
+const waypoint=sample.stations[Math.floor(sample.stations.length/2)];
+const planned=context.findPlanned(sample.stations[0],waypoint,sample.stations.at(-1),'transfer');
+assert.ok(!planned.err,'경유지를 포함한 실제 경로를 찾아야 합니다.');
+assert.ok(planned.segments.some(segment=>segment.stns.includes(waypoint)),'안내 경로가 지정 경유지를 지나야 합니다.');
+
+const sampleLine=context.graph().lineById[sample.lid];
+const forward=context.nextService(sampleLine.name,sample.stations[0],sample.stations.at(-1),0,sample.id);
+assert.ok(forward,'영업일 내 실제 운행편이 있어야 합니다.');
+const backward=context.prevService(sampleLine.name,sample.stations[0],sample.stations.at(-1),forward.as);
+assert.ok(backward&&backward.as<=forward.as,'도착 시각 기준으로 이전 운행편을 찾아야 합니다.');
+assert.equal(context.nextService(sampleLine.name,sample.stations[0],sample.stations.at(-1),1440,sample.id),null,'익일 4시 이후 다음날 첫차를 이어 붙이면 안 됩니다.');
 
 console.log('metro route tests passed');
