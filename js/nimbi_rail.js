@@ -3458,6 +3458,15 @@ function updateMapTrains(){
     return;
   }
 
+  // 경로 안내 지도는 선택 구간 자체만 보여 준다. 실시간 열차 표시는
+  // 경로선과 출발·경유·환승·도착 지점의 판독을 방해하므로 표시하지 않는다.
+  const journeyActive=!!(_metroJourneyMap&&typeof _mapCurrentLine==='string'&&_mapCurrentLine.startsWith('metroall:'));
+  if(journeyActive){
+    const countEl=document.getElementById('map-train-count');
+    if(countEl)countEl.textContent='경로 안내';
+    return;
+  }
+
   _syncMapTrainVisibilityButton();
   if(!_mapShowTrains){
     const countEl=document.getElementById('map-train-count');
@@ -5258,6 +5267,15 @@ function showMapLine(lineKey, btn){
       }
     }
   }
+  const journeyNamedStations=new Set();
+  if(journeyView){
+    journeyNamedStations.add(journeyView.from);journeyNamedStations.add(journeyView.to);
+    if(journeyView.via)journeyNamedStations.add(journeyView.via);
+    journeyView.segments.forEach((segment,index)=>{
+      if(index)journeyNamedStations.add(segment.stns[0]);
+      if(index<journeyView.segments.length-1)journeyNamedStations.add(segment.stns.at(-1));
+    });
+  }
 
   // 역 점 + 이름 (중복 없이)
   const rendered=new Set();
@@ -5265,6 +5283,7 @@ function showMapLine(lineKey, btn){
   const _xferMap=(line.isMetro&&typeof METRO_LINES!=='undefined')?_metroXferMap(METRO_LINES.find(x=>x.id===line.metroId)):null;
   routes.forEach(r=>{
     r.stations.forEach((s,i)=>{
+      if(journeyView&&!journeyNamedStations.has(s.n))return;
       // 동명이역(춘양 등)은 좌표까지 같아야 중복 처리 — 위치가 다르면 각각 표시
       const rkey=s.n+'@'+Math.round(s.x)+','+Math.round(s.y);
       if(rendered.has(rkey))return;
@@ -5274,13 +5293,14 @@ function showMapLine(lineKey, btn){
       // 관제 뷰: 허브역 외에는 아주 작은 점 + 라벨 생략 (좌표 기반 키로 동명이역 구분)
       const isReachable=!!(reachView&&reachView.stations.has(s.n));
       const isReachOrigin=!!(reachView&&reachView.origin===s.n);
+      const isJourneyPoint=!!(journeyView&&journeyNamedStations.has(s.n));
       const showReachLabel=!reachView||reachLabelKeys.has(rkey);
       const isMinor=!!(_hubSet&&!_hubSet.has(rkey)&&!(isReachable&&showReachLabel));
       // 추적 뷰: 미정차(통과)역은 작고 옅게
       const faded=!!(_trkStopSet&&!_trkStopSet.has(s.n));
-      const r2=isReachOrigin?10:isReachable?6:isMinor?2.2:(faded?3.5:(isEnd?7:5));
-      const sw=isReachOrigin?4:isReachable?3:isMinor?1.2:(faded?1.5:(isEnd?3:2));
-      const nodeColor=isReachable?'var(--accent)':r.color;
+      const r2=isJourneyPoint?8:isReachOrigin?10:isReachable?6:isMinor?2.2:(faded?3.5:(isEnd?7:5));
+      const sw=isJourneyPoint?3:isReachOrigin?4:isReachable?3:isMinor?1.2:(faded?1.5:(isEnd?3:2));
+      const nodeColor=isJourneyPoint?r.color:isReachable?'var(--accent)':r.color;
       const nodeOpacity=reachView&&!isReachable?'0.14':(faded?'0.35':'1');
       // 히트 영역
       parts.push(`<circle class="map-station-hit" cx="${x}" cy="${y}" r="${r2+8}" fill="transparent" style="cursor:pointer" onclick="openMapPopup('${s.n}','${line.name}')"><title>${s.n}</title></circle>`);
@@ -5323,9 +5343,9 @@ function showMapLine(lineKey, btn){
         ty=y+manualOffset[s.n][1]+4;
         anchor=manualOffset[s.n][0]<0?'end':manualOffset[s.n][0]>0?'start':'middle';
       }
-      if(!isMinor&&showReachLabel) parts.push(`<text x="${tx}" y="${ty}" fill="${isReachable?'var(--text1)':'var(--text2)'}" font-size="${isReachOrigin?13:(faded?9.5:(isEnd?12:11))}" font-weight="${isReachable?800:(isEnd?700:400)}" opacity="${reachView&&!isReachable?0.12:(faded?0.4:1)}" text-anchor="${anchor}" pointer-events="none" font-family="Noto Sans KR,sans-serif">${s.n}</text>`);
+      if(!isMinor&&showReachLabel) parts.push(`<text x="${tx}" y="${ty}" fill="${isJourneyPoint?'var(--text1)':isReachable?'var(--text1)':'var(--text2)'}" font-size="${isJourneyPoint?12:isReachOrigin?13:(faded?9.5:(isEnd?12:11))}" font-weight="${isJourneyPoint||isReachable?800:(isEnd?700:400)}" opacity="${reachView&&!isReachable?0.12:(faded?0.4:1)}" text-anchor="${anchor}" pointer-events="none" font-family="Noto Sans KR,sans-serif">${s.n}</text>`);
       // 전철 노선도: 환승 노선 색 점 (역명 옆) + 기차 환승 표시
-      if(line.isMetro&&!isMinor&&!faded){
+      if(line.isMetro&&!journeyView&&!isMinor&&!faded){
         const xf=(_xferMap&&_xferMap[s.n])||[];
         const hasTrain=_isTrainStn(s.n);
         if(xf.length||hasTrain){
@@ -14347,34 +14367,31 @@ function renderMetroRouteTab(){
       <button type="button" class="mr-guide" onclick="alert('출발·도착 시각 중 하나를 선택하고 필요하면 경유지를 추가하세요. 열차 운행은 익일 오전 4시에 종료됩니다.')" aria-label="경로 검색 이용 안내">ⓘ 이용 안내</button>
     </header>
     <div class="search-card mr-search-panel">
-      <div class="mr-io">
-        <div class="mr-field"><label>출발역</label>
+      <div class="mr-place-stack">
+        <div class="mr-place-rail" aria-hidden="true"><i class="from"></i><span></span><i class="via"></i><span></span><i class="to"></i></div>
+        <div class="mr-field mr-place-field"><label>출발</label>
           <div class="autocomplete-wrap" style="min-width:0">
-            <input type="text" id="mr-from" class="term-sel" style="margin-bottom:0" value="${_mrFrom||''}" placeholder="출발 전철역 (초성 가능)" autocomplete="off"
+            <input type="text" id="mr-from" class="term-sel" style="margin-bottom:0" value="${_mrFrom||''}" placeholder="출발역" autocomplete="off"
               oninput="_metroAcShow('mr-from','_mrPickFrom')" onfocus="this.select();_metroAcShow('mr-from','_mrPickFrom')"
               onblur="setTimeout(()=>{const d=document.getElementById('mr-from-ac');if(d)d.style.display='none';},150)"
               onkeydown="if(event.key==='Enter'){_mrFrom=this.value.trim();searchMetroRoute();}">
             <div class="ac-dropdown" id="mr-from-ac"></div>
           </div>
         </div>
-        <button class="mr-swap" onclick="_mrSwap()" title="출발·도착 바꾸기" aria-label="출발역과 도착역 바꾸기">↔</button>
-        <div class="mr-field"><label>도착역</label>
+        <div class="mr-field mr-place-field"><label>경유 <small>선택</small></label><div class="autocomplete-wrap"><input type="text" id="mr-via" class="term-sel" value="${_mrVia||''}" placeholder="경유지 추가" autocomplete="off" oninput="_metroAcShow('mr-via','_mrPickVia')" onfocus="this.select();_metroAcShow('mr-via','_mrPickVia')" onblur="setTimeout(()=>{const d=document.getElementById('mr-via-ac');if(d)d.style.display='none';},150)"><div class="ac-dropdown" id="mr-via-ac"></div></div></div>
+        <div class="mr-field mr-place-field"><label>도착</label>
           <div class="autocomplete-wrap" style="min-width:0">
-            <input type="text" id="mr-to" class="term-sel" style="margin-bottom:0" value="${_mrTo||''}" placeholder="도착 전철역 (초성 가능)" autocomplete="off"
+            <input type="text" id="mr-to" class="term-sel" style="margin-bottom:0" value="${_mrTo||''}" placeholder="도착역" autocomplete="off"
               oninput="_metroAcShow('mr-to','_mrPickTo')" onfocus="this.select();_metroAcShow('mr-to','_mrPickTo')"
               onblur="setTimeout(()=>{const d=document.getElementById('mr-to-ac');if(d)d.style.display='none';},150)"
               onkeydown="if(event.key==='Enter'){_mrTo=this.value.trim();searchMetroRoute();}">
             <div class="ac-dropdown" id="mr-to-ac"></div>
           </div>
         </div>
+        <button class="mr-swap" onclick="_mrSwap()" title="출발·도착 바꾸기" aria-label="출발역과 도착역 바꾸기">⇅</button>
       </div>
-      <div class="mr-via-field"><label>경유지 <small>선택</small></label><div class="autocomplete-wrap"><input type="text" id="mr-via" class="term-sel" value="${_mrVia||''}" placeholder="경유 전철역" autocomplete="off" oninput="_metroAcShow('mr-via','_mrPickVia')" onfocus="this.select();_metroAcShow('mr-via','_mrPickVia')" onblur="setTimeout(()=>{const d=document.getElementById('mr-via-ac');if(d)d.style.display='none';},150)"><div class="ac-dropdown" id="mr-via-ac"></div></div></div>
       <div class="mr-time-row"><div class="mr-time-mode"><button type="button" data-time-mode="depart" class="${_mrTimeMode==='depart'?'on':''}" onclick="setMrTimeMode('depart')">출발 시각</button><button type="button" data-time-mode="arrive" class="${_mrTimeMode==='arrive'?'on':''}" onclick="setMrTimeMode('arrive')">도착 시각</button></div><input type="datetime-local" id="mr-datetime" value="${_mrDateTime||_mrDefaultDateTime()}" aria-label="경로 검색 기준 시각"></div>
-      <button class="btn btn-primary mr-search-button" onclick="_mrFrom=document.getElementById('mr-from').value.trim();_mrVia=document.getElementById('mr-via').value.trim();_mrTo=document.getElementById('mr-to').value.trim();_mrDateTime=document.getElementById('mr-datetime').value;searchMetroRoute()">경로 검색</button>
-      <div class="mr-modes">
-        <button class="mr-mode-chip${_mrMode==='transfer'?' on':''}" data-mode="transfer" onclick="setMrMode('transfer')"><b>↻</b><span><strong>최소 환승</strong><small>환승 횟수를 최소화</small></span></button>
-        <button class="mr-mode-chip${_mrMode==='time'?' on':''}" data-mode="time" onclick="setMrMode('time')"><b>◷</b><span><strong>최소 시간</strong><small>소요 시간을 최소화</small></span></button>
-      </div>
+      <div class="mr-search-foot"><div class="mr-modes" aria-label="경로 정렬"><button class="mr-mode-chip${_mrMode==='transfer'?' on':''}" data-mode="transfer" onclick="setMrMode('transfer')">최소 환승</button><button class="mr-mode-chip${_mrMode==='time'?' on':''}" data-mode="time" onclick="setMrMode('time')">최소 시간</button></div><button class="btn btn-primary mr-search-button" onclick="_mrFrom=document.getElementById('mr-from').value.trim();_mrVia=document.getElementById('mr-via').value.trim();_mrTo=document.getElementById('mr-to').value.trim();_mrDateTime=document.getElementById('mr-datetime').value;searchMetroRoute()">길찾기</button></div>
     </div>
     <div id="mr-result"></div>`;
 }
@@ -14440,8 +14457,8 @@ function searchMetroRoute(){
     for(const s of r.segments){const l=G.lineById[s.lid]||{name:'?',color:'#8b949e'},svc=_metroSegService(l.name,s.stns[0],s.stns.at(-1),afterSrv,s.pid);if(!svc){realOk=false;endedAt=legs.at(-1)?.alight||from;break;}legs.push({l,segment:s,board:s.stns[0],alight:s.stns.at(-1),...svc});afterSrv=svc.as+XBUF;}
   }
   let rail='', headDur, headMeta, foot;
-  if(realOk){
-    legs.forEach((lg,i)=>{
+  // 목적지까지 연결되지 않더라도 실제로 탈 수 있는 마지막 구간까지는 그대로 그린다.
+  legs.forEach((lg,i)=>{
       const segMin=lg.as-lg.ds;
       const exp=lg.cls===2?'<span class="mtb-exp mtb-exp--t">특급</span>':lg.cls===1?'<span class="mtb-exp">급행</span>':'';
       rail+=`<div class="rt-node" style="--lc:${lg.l.color}">
@@ -14457,7 +14474,8 @@ function searchMetroRoute(){
       if(i<legs.length-1){ const wait=legs[i+1].ds-lg.as;
         rail+=`<div class="rt-node rt-walk"><div class="rt-time"><small>환승</small></div><div class="rt-rail"><span class="rt-seg rt-dash"></span><span class="rt-walk-ic">↔</span></div><div class="rt-info"><div class="rt-sub rt-xfer">${_opsEsc(lg.alight)}역 환승 · 대기 ${wait}분</div></div></div>`;
       }
-    });
+  });
+  if(realOk){
     const last=legs[legs.length-1];
     const total=last.as-legs[0].ds;
     headDur=durFmt(total);
@@ -14465,11 +14483,11 @@ function searchMetroRoute(){
     foot=`실제 운행 시각표 기준 · ${_mrTimeMode==='arrive'?'선택 시각까지 도착':'선택 시각 이후 출발'} · 익일 오전 4시 영업 종료.`;
   } else {
     if(!legs.length){out.innerHTML='<div class="mr-hint">선택한 영업일의 운행 시각표로 연결되는 경로를 찾을 수 없습니다. 시각이나 역명을 확인하세요.</div>';return;}
-    const last=legs.at(-1);rail+=`<div class="rt-node rt-last"><div class="rt-time"><small>운행 종료</small></div><div class="rt-rail"><span class="rt-dot"></span></div><div class="rt-info"><div class="rt-stn">${_opsEsc(endedAt||last.alight)}</div><div class="rt-sub">익일 오전 4시 전 연결 열차가 없어 여기까지만 이동할 수 있습니다.</div></div></div>`;headDur='이동 가능 구간';headMeta=`${fmt(legs[0].dep)} 출발`;foot='첫차·막차 영업 경계에 따라 전체 목적지까지 운행이 종료되었습니다.';
+    const last=legs.at(-1);rail+=`<div class="rt-node rt-last rt-service-ended"><div class="rt-time"><small>운행 종료</small></div><div class="rt-rail"><span class="rt-dot"></span></div><div class="rt-info"><div class="rt-stn">${_opsEsc(endedAt||last.alight)}<span class="rt-ended-tag">여기까지 운행</span></div><div class="rt-sub">익일 오전 4시 전 연결 열차가 없어 이후 구간은 이동할 수 없습니다.</div></div></div>`;headDur='이동 가능 구간';headMeta=`${fmt(legs[0].dep)} → --:--`;foot='막차 운행이 끝났습니다. 표시된 마지막 역까지만 이동할 수 있습니다.';
   }
-  _mrLastJourney={from,via,to,segments:r.segments,legs};
+  _mrLastJourney={from,via,to,segments:realOk?r.segments:legs.map(l=>l.segment),legs};
   out.innerHTML=`
-    <section class="mr-route-result">
+    <section class="mr-route-result${realOk?'':' partial'}">
       <header class="mr-result-header"><div><strong>${[from,via,to].filter(Boolean).map(_opsEsc).join(' → ')}</strong><span class="badge blue">${_mrMode==='time'?'최소 시간':'최소 환승'}</span></div><div><b>${realOk?'총 ':''}${headDur}</b><small>${headMeta}</small></div></header>
     <div class="rt-list"><div class="rt-card">
       <div class="rt-tl">${rail}</div>
