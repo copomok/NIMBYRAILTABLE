@@ -14464,15 +14464,38 @@ function _metroSegService(lineName, board, alight, afterSrv, patternId){
   if(best&&all.length){best.isFirst=best.key===all.reduce((a,b)=>a.ds<=b.ds?a:b).key;best.isLast=best.key===all.reduce((a,b)=>a.ds>=b.ds?a:b).key;}
   return best;
 }
-function _metroSegServiceBefore(lineName,board,alight,beforeSrv){
+function _metroSegServiceBefore(lineName,board,alight,beforeSrv,sortBy='arrival'){
   const ent=(typeof METRO_SCHED!=='undefined')&&METRO_SCHED[lineName];if(!ent)return null;
   const names=ent.s,svcs=ent.t,cArr=ent.c,srvMin=m=>(((m-240)%1440)+1440)%1440;let best=null;const all=[];
   for(let si=0;si<svcs.length;si++){const f=svcs[si],n=f.length/3,cls=cArr?cArr[si]:0,idxSeq=[];for(let i=0;i<n;i++)idxSeq.push(f[3*i+2]);
     for(const [start,end] of _metroLegRanges(idxSeq)){let k=-1,mIdx=-1;for(let i=start;i<end;i++)if(names[idxSeq[i]]===board){k=i;break;}if(k<0)continue;for(let i=k+1;i<=end;i++)if(names[idxSeq[i]]===alight){mIdx=i;break;}if(mIdx<0)continue;
-      const ds=srvMin(f[3*k+1]);let as=srvMin(f[3*mIdx]);while(as<ds)as+=1440;const serviceKey=`${si}:${start}:${end}`;if(as<=1440)all.push({ds,as,si,k0:start,k1:end,key:serviceKey});if(as>beforeSrv||as>1440)continue;
-      const via=[];for(let x=k+1;x<mIdx;x++)via.push(names[idxSeq[x]]);const cand={ds,as,dep:f[3*k+1]%1440,arr:f[3*mIdx]%1440,nStops:mIdx-k,via,cls,svc:si,k0:start,k1:end,key:serviceKey,dest:names[idxSeq[end]]};if(!best||cand.as>best.as)best=cand;
+      const ds=srvMin(f[3*k+1]);let as=srvMin(f[3*mIdx]);while(as<ds)as+=1440;const serviceKey=`${si}:${start}:${end}`;if(as<=1440)all.push({ds,as,si,k0:start,k1:end,key:serviceKey});const boundary=sortBy==='departure'?ds:as;if(boundary>beforeSrv||as>1440)continue;
+      const via=[];for(let x=k+1;x<mIdx;x++)via.push(names[idxSeq[x]]);const cand={ds,as,dep:f[3*k+1]%1440,arr:f[3*mIdx]%1440,nStops:mIdx-k,via,cls,svc:si,k0:start,k1:end,key:serviceKey,dest:names[idxSeq[end]]};const metric=sortBy==='departure'?cand.ds:cand.as;if(!best||metric>(sortBy==='departure'?best.ds:best.as))best=cand;
     }
   }if(best&&all.length){best.isFirst=best.key===all.reduce((a,b)=>a.ds<=b.ds?a:b).key;best.isLast=best.key===all.reduce((a,b)=>a.ds>=b.ds?a:b).key;}return best;
+}
+// 막차 찾기는 모든 환승 구간의 막차를 역순으로 붙이는 것이 아니라,
+// 출발역에서 가장 늦게 출발하면서 목적지까지 실제로 연결되는 여정을 찾는다.
+// 첫 구간 후보를 늦은 순서로 낮춰 가며, 후속 구간은 도착 후 탈 수 있는 가장 빠른 편을 사용한다.
+function _mrLatestDepartJourney(segments,graph,xbuf){
+  if(!segments.length)return null;
+  const firstSegment=segments[0],firstLine=graph.lineById[firstSegment.lid]||{name:'?',color:'#8b949e'};
+  let beforeSrv=1440,attempts=0;
+  while(beforeSrv>=0&&attempts++<2048){
+    const firstSvc=_metroSegServiceBefore(firstLine.name,firstSegment.stns[0],firstSegment.stns.at(-1),beforeSrv,'departure');
+    if(!firstSvc)return null;
+    const legs=[{l:firstLine,segment:firstSegment,board:firstSegment.stns[0],alight:firstSegment.stns.at(-1),...firstSvc}];
+    let afterSrv=firstSvc.as+xbuf,complete=true;
+    for(let i=1;i<segments.length;i++){
+      const segment=segments[i],line=graph.lineById[segment.lid]||{name:'?',color:'#8b949e'};
+      const svc=_metroSegService(line.name,segment.stns[0],segment.stns.at(-1),afterSrv,segment.pid);
+      if(!svc){complete=false;break;}
+      legs.push({l:line,segment,board:segment.stns[0],alight:segment.stns.at(-1),...svc});afterSrv=svc.as+xbuf;
+    }
+    if(complete)return legs;
+    beforeSrv=firstSvc.ds-1;
+  }
+  return null;
 }
 function searchMetroRoute(){
   const out=document.getElementById('mr-result'); if(!out)return;
@@ -14491,8 +14514,11 @@ function searchMetroRoute(){
   const XBUF=2; // 환승 도보 버퍼(분)
   // ── 실제 운행 데이터로 구간별 다음 열차 탐색 ──
   const legs=[];let realOk=r.segments.length>0,endedAt=null;
-  if(_mrEdgeMode==='last'||(_mrEdgeMode==='normal'&&_mrTimeMode==='arrive')){
-    let beforeSrv=_mrEdgeMode==='last'?1440:selectedSrv;
+  if(_mrEdgeMode==='last'){
+    const latestLegs=_mrLatestDepartJourney(r.segments,G,XBUF);
+    if(latestLegs)legs.push(...latestLegs);else realOk=false;
+  }else if(_mrEdgeMode==='normal'&&_mrTimeMode==='arrive'){
+    let beforeSrv=selectedSrv;
     for(let i=r.segments.length-1;i>=0;i--){const s=r.segments[i],l=G.lineById[s.lid]||{name:'?',color:'#8b949e'},svc=_metroSegServiceBefore(l.name,s.stns[0],s.stns.at(-1),beforeSrv);if(!svc){realOk=false;break;}legs.unshift({l,segment:s,board:s.stns[0],alight:s.stns.at(-1),...svc});beforeSrv=svc.ds-XBUF;}
   }else{
     let afterSrv=_mrEdgeMode==='first'?0:selectedSrv;

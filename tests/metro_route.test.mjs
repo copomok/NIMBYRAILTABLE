@@ -27,6 +27,7 @@ this.findPlanned=_mrPlannedRoute;
 this.graph=_metroGraph;
 this.nextService=_metroSegService;
 this.prevService=_metroSegServiceBefore;
+this.latestJourney=_mrLatestDepartJourney;
 `,context);
 
 const direct=context.findRoute('행신','고양중앙로','transfer');
@@ -98,5 +99,18 @@ assert.ok(forward,'영업일 내 실제 운행편이 있어야 합니다.');
 const backward=context.prevService(sampleLine.name,sample.stations[0],sample.stations.at(-1),forward.as);
 assert.ok(backward&&backward.as<=forward.as,'도착 시각 기준으로 이전 운행편을 찾아야 합니다.');
 assert.equal(context.nextService(sampleLine.name,sample.stations[0],sample.stations.at(-1),1440,sample.id),null,'익일 4시 이후 다음날 첫차를 이어 붙이면 안 됩니다.');
+
+vm.runInContext(`
+METRO_SCHED['막차검증A']={s:['1','2'],c:[0,0],t:[[300,300,0,320,320,1],[600,600,0,620,620,1]]};
+METRO_SCHED['막차검증B']={s:['2','3'],c:[0,0],t:[[800,800,0,820,820,1],[1000,1000,0,1020,1020,1]]};
+`,context);
+const latest=context.latestJourney([
+  {lid:'late-a',pid:'late-a-pattern',stns:['1','2']},
+  {lid:'late-b',pid:'late-b-pattern',stns:['2','3']}
+],{lineById:{'late-a':{name:'막차검증A',color:'#111'},'late-b':{name:'막차검증B',color:'#222'}}},2);
+assert.ok(latest,'출발역의 막차로 목적지까지 연결되는 여정을 찾아야 합니다.');
+assert.equal(latest[0].dep,600,'첫 구간은 출발역에서 탈 수 있는 가장 늦은 열차여야 합니다.');
+assert.equal(latest[1].dep,800,'후속 구간은 환승 가능한 가장 빠른 일반 연결편이어야 합니다.');
+assert.equal(latest[1].isLast,false,'후속 구간까지 막차를 강제해서는 안 됩니다.');
 
 console.log('metro route tests passed');

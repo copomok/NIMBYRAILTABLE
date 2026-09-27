@@ -33,8 +33,17 @@ test('출발 검색은 익일 4시 영업 경계를 넘겨 다음날 첫차를 �
 
 test('도착 시각 기준 검색은 목적지부터 선행 열차를 역산한다',()=>{
   assert.match(app,/function _metroSegServiceBefore/);
-  assert.match(app,/if\(_mrEdgeMode==='last'\|\|\(_mrEdgeMode==='normal'&&_mrTimeMode==='arrive'\)\)/);
+  assert.match(app,/else if\(_mrEdgeMode==='normal'&&_mrTimeMode==='arrive'\)/);
   assert.match(app,/for\(let i=r\.segments\.length-1;i>=0;i--\)/);
+});
+
+test('막차 검색은 출발 가능한 가장 늦은 첫 구간을 찾고 후속 구간은 가장 빠른 연결편을 탄다',()=>{
+  assert.match(app,/function _mrLatestDepartJourney\(segments,graph,xbuf\)/);
+  assert.match(app,/const firstSvc=_metroSegServiceBefore\([^;]+,'departure'\)/);
+  assert.match(app,/for\(let i=1;i<segments\.length;i\+\+\)/);
+  assert.match(app,/const svc=_metroSegService\(line\.name,segment\.stns\[0\],segment\.stns\.at\(-1\),afterSrv,segment\.pid\)/);
+  assert.match(app,/beforeSrv=firstSvc\.ds-1/);
+  assert.doesNotMatch(app,/let beforeSrv=_mrEdgeMode==='last'\?1440:selectedSrv/);
 });
 
 test('각 환승 구간은 승차역 출발과 하차역 도착 시각을 모두 표시한다',()=>{
