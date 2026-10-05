@@ -28,7 +28,7 @@ assert.ok(source.includes('${hasExpress?`<div class="mtt-filterbar">'),'급행 �
 assert.ok(source.includes("_openMetroTimetableRow(this,'${escL(r.line)}',${r.svc},${r.clk},${r.k0},${r.k1})"), '전체 시간표 클릭은 선택 행과 방향 leg 범위를 함께 전달해야 합니다.');
 assert.ok(source.includes("row.classList.add('mtt-row--selected')"), 'PC 병행 화면에서 조회 중인 시간표 행을 표시해야 합니다.');
 assert.ok(source.includes("timetable.querySelectorAll('.mtt-row--selected').forEach(row=>row.classList.remove('mtt-row--selected'))"),'열차 시간표를 닫으면 전체 시간표의 선택 강조를 해제해야 합니다.');
-assert.ok(source.includes("const METRO_MODE_TABS=['metrolines','metroroute','map','stationinfo','notice']"),'배선 탭 없이 전철 공지는 가장 오른쪽 탭이어야 합니다.');
+assert.ok(source.includes("const METRO_MODE_TABS=['metrolines','metroroute','map','stationinfo','notice','control']"),'전철 탭 구성에 운행 상황판까지 포함되어야 합니다.');
 assert.ok(!source.includes("switchTab('metroschematic')"),'삭제된 배선 기능의 탭 진입점이 남으면 안 됩니다.');
 assert.ok(!source.includes('배선도(실시간)'),'노선 상세에 삭제된 배선도 버튼이 남으면 안 됩니다.');
 assert.ok(source.includes("b.style.order=String(Math.max(0,visible.indexOf(id)))"),'모드별 탭 순서를 화면에 적용해야 합니다.');
@@ -52,7 +52,43 @@ assert.ok(source.includes("onclick=\"openMetroStationDisplay("),'역 상세에 �
 assert.ok(source.includes('function openMetroStationDisplay(stn)'),'전철 전광판은 별도 모달로 열려야 합니다.');
 assert.ok(source.includes("_metroStationBoardHTML(stn,true)"),'전광판 모달은 광역·도시철도 전용 디자인을 사용해야 합니다.');
 assert.ok(source.includes("const viewMode=displayBoard?'pos':_metroBoardMode"),'전광판 모달은 항상 현위치를 기본 표시해야 합니다.');
-assert.ok(source.includes("const renderLines=displayBoard?[lineOrder[_metroDisplayLineIndex]]:lineOrder"),'전광판 모달은 선택한 단일 노선만 표시해야 합니다.');
+assert.ok(source.includes("const renderLines=displayBoard?(_metroDisplayLineGroups[_metroDisplayLineIndex]||[lineOrder[0]]):lineOrder"),'전광판 모달은 설정에 따라 단일 노선 또는 공유 선로 노선 그룹을 표시해야 합니다.');
+assert.ok(source.includes("const METRO_SHARED_TRACK_BOARD_KEY='nimbi_metro_shared_track_board'"),'선로 공유 구간 전광판 설정은 기기에 저장되어야 합니다.');
+assert.ok(source.includes('function toggleMetroSharedTrackBoard()'),'설정에서 선로 공유 구간 같이 보기를 전환할 수 있어야 합니다.');
+assert.ok(source.includes('선로 공유 구간 같이 보기'),'설정 화면에 선로 공유 구간 같이 보기 항목이 있어야 합니다.');
+assert.ok(source.includes('findIndex(group=>group.includes(previousLine))'),'설정을 전환해 전광판 그룹이 바뀌어도 보고 있던 노선을 유지해야 합니다.');
+for(const rule of [
+  "{from:'청량리',to:'한강로',lines:['경부선','구인선','신노원선']}",
+  "{from:'한강로',to:'구로',lines:['경부선','구인선']}",
+  "{from:'의정부',to:'북상계',lines:['신노원선','노원선']}",
+  "{from:'등촌',to:'당산',lines:['강서선','인천종단선']}",
+  "{from:'기흥',to:'처인',lines:['수원이천선','안산용인선']}",
+  "{from:'대야미',to:'원시',lines:['안산성남선','안산안양선']}",
+  "{from:'수원',to:'갈곶',lines:['경부선','장호원선']}",
+  "{from:'천안',to:'당진',lines:['경부선','고남-합덕 통근']}",
+  "{from:'지정',to:'판부',lines:['종원선','중앙선']}"
+])assert.ok(source.includes(rule),`선로 공유 구간 규칙 ${rule} 누락`);
+assert.ok(css.includes('#metro-display-board .mtb-display-selected-dir.mtb-display-shared .mtb2-col[data-dir]{display:flex}'),'모바일 공유 전광판은 모든 노선·방향을 가로 스크롤로 함께 표시해야 합니다.');
+const metroLineSource=fs.readFileSync('data/nimbi_metro.js','utf8');
+const sharedSchedSource=fs.readFileSync('data/nimbi_metro_sched.js','utf8');
+const sharedStart=source.indexOf('const METRO_SHARED_TRACK_BOARD_SECTIONS');
+const sharedEnd=source.indexOf('\nfunction setMetroBoardMode',sharedStart);
+const sharedContext={_metroSharedTrackBoardOn:true};
+vm.createContext(sharedContext);
+vm.runInContext(`${metroLineSource}\nthis.METRO_LINES=METRO_LINES;`,sharedContext);
+vm.runInContext(`${sharedSchedSource}\nthis.METRO_SCHED=METRO_SCHED;`,sharedContext);
+vm.runInContext(`${source.slice(sharedStart,sharedEnd)}\nthis.sharedLines=_metroSharedTrackLinesAt;this.displayGroups=_metroDisplayGroupsForStation;`,sharedContext);
+const sharedCases=[
+  ['서울',['경부선','구인선','신노원선']],['노량진',['경부선','구인선']],['북상계',['신노원선','노원선']],
+  ['목동',['강서선','인천종단선']],['동백',['수원이천선','안산용인선']],['안산',['안산성남선','안산안양선']],
+  ['오산',['경부선','장호원선']],['합덕',['경부선','고남-합덕 통근']],['원주',['종원선','중앙선']]
+];
+for(const [station,lines] of sharedCases){
+  assert.deepEqual(Array.from(sharedContext.sharedLines(station,lines[0],lines)),lines,`${station} 공유 선로 전광판은 ${lines.join('·')}을 함께 표시해야 합니다.`);
+}
+assert.deepEqual(Array.from(sharedContext.sharedLines('가산','경부선',['경부선','구인선'])),['경부선'],'지정된 공유 구간 밖에서는 다른 노선을 합치면 안 됩니다.');
+sharedContext._metroSharedTrackBoardOn=false;
+assert.deepEqual(Array.from(sharedContext.sharedLines('서울','경부선',['경부선','구인선','신노원선'])),['경부선'],'설정을 끄면 기존 단일 노선 전광판을 유지해야 합니다.');
 assert.ok(source.includes('function setMetroDisplayLine(step)'),'환승역 전광판은 화살표로 노선을 전환해야 합니다.');
 assert.ok(source.includes('function setMetroDisplayDirection(index)'),'모바일 전광판은 상·하행을 따로 전환해야 합니다.');
 assert.ok(source.includes("cls===1?'<em class=\"mtb2-r-express\">급행</em>'"),'광역철도 급행은 행선지 뒤에 급행 표기를 붙여야 합니다.');

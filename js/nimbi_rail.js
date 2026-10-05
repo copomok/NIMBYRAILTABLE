@@ -9254,6 +9254,16 @@ function openMySection(section){
 // ⚙️ 설정 — 환경 모드 (PC / 모바일 / 워치)
 // ══════════════════════════════════════════
 let _uiMode=(()=>{try{return localStorage.getItem('nimbi_uimode')||'mobile';}catch(e){return 'mobile';}})();
+const METRO_SHARED_TRACK_BOARD_KEY='nimbi_metro_shared_track_board';
+let _metroSharedTrackBoardOn=(()=>{try{return localStorage.getItem(METRO_SHARED_TRACK_BOARD_KEY)==='1';}catch(e){return false;}})();
+function metroSharedTrackBoardEnabled(){return _metroSharedTrackBoardOn;}
+function toggleMetroSharedTrackBoard(){
+  _metroSharedTrackBoardOn=!_metroSharedTrackBoardOn;
+  try{localStorage.setItem(METRO_SHARED_TRACK_BOARD_KEY,_metroSharedTrackBoardOn?'1':'0');}catch(e){}
+  const sc=document.getElementById('my-sub-content');
+  if(sc&&sc.querySelector('.set-modes'))renderSettingsSection(sc);
+  if(document.getElementById('metro-display-board')&&typeof _refreshMetroDisplayBoard==='function')_refreshMetroDisplayBoard();
+}
 function _applyUiMode(){
   const r=document.documentElement;
   r.classList.remove('ui-pc','ui-mobile','ui-watch');
@@ -9422,6 +9432,16 @@ function renderSettingsSection(el){
       ${[['south','남한'],['north','북한'],['all','전체']].map(([value,label])=>`<button class="seat-auto-chip${_railRegion===value?' on':''}" onclick="setRailRegion('${value}');renderSettingsSection(document.getElementById('my-sub-content'))">${label}</button>`).join('')}
     </div>
     <div class="settings-help">선택한 지역의 노선도·역·통합 검색 정보만 표시하며 이 기기에 저장됩니다.</div>
+    <div class="settings-divider"></div>
+    <div class="settings-title">전철 출발 안내</div>
+    <div class="sim-toggle-card">
+      <div class="sim-toggle-info">
+        <div class="sim-toggle-title">선로 공유 구간 같이 보기</div>
+        <div class="sim-toggle-desc">공용 선로 구간의 역 전광판에서 서로 다른 노선의 열차를 한 화면에 함께 표시합니다. 각 열차의 노선·방면·행선지는 그대로 구분됩니다.</div>
+      </div>
+      <button class="sim-switch${_metroSharedTrackBoardOn?' on':''}" onclick="toggleMetroSharedTrackBoard()" role="switch" aria-checked="${_metroSharedTrackBoardOn}"><span class="sim-knob"></span></button>
+    </div>
+    <div class="settings-help">청량리–한강로, 한강로–구로 등 지정된 실제 선로 공유 구간에만 적용됩니다.</div>
     <div class="settings-divider"></div>
     <div class="settings-title">지연 시뮬레이션</div>
     <div class="sim-toggle-card">
@@ -11611,6 +11631,63 @@ let _metroBoardStn=null;
 let _metroDisplayLineIndex=0;
 let _metroDisplayDirIndex=0;
 let _metroDisplayLines=[];
+let _metroDisplayLineGroups=[];
+// 같은 물리 선로를 사용하는 구간. DB 기준 지정–판부의 실제 노선명은 중앙선입니다.
+const METRO_SHARED_TRACK_BOARD_SECTIONS=[
+  {from:'청량리',to:'한강로',lines:['경부선','구인선','신노원선']},
+  {from:'한강로',to:'구로',lines:['경부선','구인선']},
+  {from:'의정부',to:'북상계',lines:['신노원선','노원선']},
+  {from:'등촌',to:'당산',lines:['강서선','인천종단선']},
+  {from:'기흥',to:'처인',lines:['수원이천선','안산용인선']},
+  {from:'대야미',to:'원시',lines:['안산성남선','안산안양선']},
+  {from:'수원',to:'갈곶',lines:['경부선','장호원선']},
+  {from:'천안',to:'당진',lines:['경부선','고남-합덕 통근']},
+  {from:'지정',to:'판부',lines:['종원선','중앙선']}
+];
+function _metroSharedTrackSectionContains(rule,stn){
+  if(typeof METRO_LINES!=='undefined'){
+    for(const line of rule.lines){
+      const def=METRO_LINES.find(item=>item.name===line);
+      if(!def)continue;
+      for(const route of (def.routes||[{stations:def.stations}])){
+        const names=route.stations||[],a=names.indexOf(rule.from),b=names.indexOf(rule.to),p=names.indexOf(stn);
+        if(a>=0&&b>=0&&p>=Math.min(a,b)&&p<=Math.max(a,b))return true;
+      }
+    }
+  }
+  // 구형·축약 데이터 폴백. 실제 구간 판정은 위의 노선도 선형을 우선합니다.
+  if(typeof METRO_SCHED==='undefined')return false;
+  for(const line of rule.lines){
+    const names=METRO_SCHED[line]&&METRO_SCHED[line].s;
+    if(!names)continue;
+    const a=names.indexOf(rule.from),b=names.indexOf(rule.to),p=names.indexOf(stn);
+    if(a>=0&&b>=0&&p>=Math.min(a,b)&&p<=Math.max(a,b))return true;
+  }
+  return false;
+}
+function _metroSharedTrackLinesAt(stn,selectedLine,availableLines){
+  const available=new Set(availableLines||[]);
+  if(!_metroSharedTrackBoardOn||!available.has(selectedLine))return [selectedLine];
+  const joined=new Set([selectedLine]);
+  let changed=true;
+  while(changed){
+    changed=false;
+    METRO_SHARED_TRACK_BOARD_SECTIONS.forEach(rule=>{
+      if(!_metroSharedTrackSectionContains(rule,stn)||!rule.lines.some(line=>joined.has(line)))return;
+      rule.lines.forEach(line=>{if(available.has(line)&&!joined.has(line)){joined.add(line);changed=true;}});
+    });
+  }
+  return (availableLines||[]).filter(line=>joined.has(line));
+}
+function _metroDisplayGroupsForStation(stn,lineOrder){
+  const groups=[],seen=new Set();
+  lineOrder.forEach(line=>{
+    const group=_metroSharedTrackLinesAt(stn,line,lineOrder);
+    const key=[...group].sort().join('|');
+    if(!seen.has(key)){seen.add(key);groups.push(group);}
+  });
+  return groups;
+}
 function setMetroBoardMode(m,targetId){
   _metroBoardMode=m;
   const id=targetId||'metro-board';
@@ -11627,8 +11704,8 @@ function _refreshMetroDisplayBoard(){
   if(html){const tmp=document.createElement('div');tmp.innerHTML=html;host.replaceWith(tmp.firstElementChild);}
 }
 function setMetroDisplayLine(step){
-  if(!_metroDisplayLines.length)return;
-  _metroDisplayLineIndex=(_metroDisplayLineIndex+Number(step)+_metroDisplayLines.length)%_metroDisplayLines.length;
+  if(!_metroDisplayLineGroups.length)return;
+  _metroDisplayLineIndex=(_metroDisplayLineIndex+Number(step)+_metroDisplayLineGroups.length)%_metroDisplayLineGroups.length;
   _metroDisplayDirIndex=0;
   _refreshMetroDisplayBoard();
 }
@@ -11894,17 +11971,21 @@ function _metroStationBoardHTML(stn,displayBoard=false){
     return cb-ca;
   });
   if(displayBoard){
+    const previousLine=(_metroDisplayLineGroups[_metroDisplayLineIndex]||[])[0]||_metroDisplayLines[_metroDisplayLineIndex]||'';
     _metroDisplayLines=lineOrder;
-    _metroDisplayLineIndex=Math.max(0,Math.min(_metroDisplayLineIndex,lineOrder.length-1));
+    _metroDisplayLineGroups=_metroDisplayGroupsForStation(stn,lineOrder);
+    const preservedIndex=previousLine?_metroDisplayLineGroups.findIndex(group=>group.includes(previousLine)):-1;
+    _metroDisplayLineIndex=preservedIndex>=0?preservedIndex:Math.max(0,Math.min(_metroDisplayLineIndex,_metroDisplayLineGroups.length-1));
   }
-  const renderLines=displayBoard?[lineOrder[_metroDisplayLineIndex]]:lineOrder;
+  const renderLines=displayBoard?(_metroDisplayLineGroups[_metroDisplayLineIndex]||[lineOrder[0]]):lineOrder;
+  const sharedDisplay=displayBoard&&renderLines.length>1;
   let displayDirLabels=[];
   const blocks=renderLines.map(line=>{
     const color=_metroLineColor(line), dirs=lines[line], boardKind=_metroBoardKind(line,stn);
     // 분기역(계통 다수)은 좌표 기준 2개 물리 방면으로 병합 — 같은 쪽 계통은 한 열에 통합
     const dirCounts={}; Object.keys(dirs).forEach(k=>dirCounts[k]=dirs[k].length);
     const groups=_metroDirGroups(line, stn, dirCounts);
-    if(displayBoard)displayDirLabels=groups.map((grp,i)=>`${i===0?'하행':'상행'} · ${grp.join('·')} 방면`);
+    if(displayBoard&&!sharedDisplay)displayDirLabels=groups.map((grp,i)=>`${i===0?'하행':'상행'} · ${grp.join('·')} 방면`);
     _metroDisplayDirIndex=Math.max(0,Math.min(_metroDisplayDirIndex,groups.length-1));
     const platformNos=_metroBoardPlatforms(stn,line);
     const cols=groups.map((grp,grpIdx)=>{
@@ -11983,12 +12064,14 @@ function _metroStationBoardHTML(stn,displayBoard=false){
     </div>`;
   }).join('');
   const boardId=displayBoard?'metro-display-board':'metro-board';
-  const selectedLine=displayBoard?lineOrder[_metroDisplayLineIndex]:'';
+  const selectedGroup=displayBoard?(_metroDisplayLineGroups[_metroDisplayLineIndex]||[]):[];
+  const selectedLine=selectedGroup[0]||'';
   const selectedColor=displayBoard?_metroLineColor(selectedLine):'';
+  const selectedLabel=selectedGroup.length>1?`선로 공유 · ${selectedGroup.join(' · ')}`:selectedLine;
   const lineNav=displayBoard?`<div class="mtb-display-line-nav" style="--mc:${selectedColor}">
-    <button onclick="event.stopPropagation();setMetroDisplayLine(-1)" aria-label="이전 노선"${lineOrder.length<2?' disabled':''}>◀</button>
-    <span><i></i><b>${_opsEsc(selectedLine)}</b><small>${_metroDisplayLineIndex+1} / ${lineOrder.length}</small></span>
-    <button onclick="event.stopPropagation();setMetroDisplayLine(1)" aria-label="다음 노선"${lineOrder.length<2?' disabled':''}>▶</button>
+    <button onclick="event.stopPropagation();setMetroDisplayLine(-1)" aria-label="이전 노선"${_metroDisplayLineGroups.length<2?' disabled':''}>◀</button>
+    <span><i></i><b>${_opsEsc(selectedLabel)}</b><small>${_metroDisplayLineIndex+1} / ${_metroDisplayLineGroups.length}</small></span>
+    <button onclick="event.stopPropagation();setMetroDisplayLine(1)" aria-label="다음 노선"${_metroDisplayLineGroups.length<2?' disabled':''}>▶</button>
   </div>`:'';
   const dirNav=displayBoard&&displayDirLabels.length>1?`<div class="mtb-display-dir-nav" style="--mc:${selectedColor}">
     ${displayDirLabels.slice(0,2).map((label,i)=>`<button class="${_metroDisplayDirIndex===i?'on':''}" onclick="event.stopPropagation();setMetroDisplayDirection(${i})">${_opsEsc(label)}</button>`).join('')}
@@ -12000,7 +12083,7 @@ function _metroStationBoardHTML(stn,displayBoard=false){
         <button class="mtb-mode${_metroBoardMode==='pos'?' on':''}" onclick="setMetroBoardMode('pos')">현위치</button>
       </span></div>`}
     ${dirNav}
-    <div class="${displayBoard?'mtb-display-selected-dir mtb-display-dir-'+_metroDisplayDirIndex:''}">
+    <div class="${displayBoard?'mtb-display-selected-dir mtb-display-dir-'+_metroDisplayDirIndex+(sharedDisplay?' mtb-display-shared':''):''}">
     ${blocks}
     </div>
     <div class="mtb-foot">인게임 시각표 기준 · 운행 ${running}편 · ${viewMode==='pos'?'편성 현위치(역명·남은 역 수)':'계통별 실제 착발 반영'}</div>
@@ -12586,6 +12669,7 @@ function openMetroStationDisplay(stn){
   _metroDisplayLineIndex=0;
   _metroDisplayDirIndex=0;
   _metroDisplayLines=[];
+  _metroDisplayLineGroups=[];
   const html=_metroStationBoardHTML(stn,true);
   if(!html)return;
   const safe=_opsEsc(stn);

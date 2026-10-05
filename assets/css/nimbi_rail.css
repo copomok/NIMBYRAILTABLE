@@ -2229,6 +2229,9 @@ button, select, input[type=range],
   #metro-display-board .mtb2-cols{overflow:visible}
   #metro-display-board .mtb-display-dir-0 .mtb2-col[data-dir]:not([data-dir="0"]),
   #metro-display-board .mtb-display-dir-1 .mtb2-col[data-dir]:not([data-dir="1"]){display:none}
+  #metro-display-board .mtb-display-selected-dir.mtb-display-shared .mtb2-col[data-dir]{display:flex}
+  #metro-display-board .mtb-display-shared .mtb2-cols{overflow-x:auto;scroll-snap-type:x proximity}
+  #metro-display-board .mtb-display-shared .mtb2-col{min-width:min(82vw,360px);scroll-snap-align:start}
   .mtb-display-dir-nav{display:flex;gap:5px;margin:0 0 9px}
   .mtb-display-dir-nav>button{flex:1;min-width:0;padding:8px 5px;border:1px solid var(--border);border-radius:8px;background:var(--bg3);color:var(--text3);font-size:10px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .mtb-display-dir-nav>button.on{background:color-mix(in srgb,var(--mc,var(--accent)) 24%,var(--bg3));border-color:var(--mc,var(--accent));color:var(--text1)}
