@@ -4,6 +4,11 @@ import fs from 'node:fs';
 const source=fs.readFileSync('js/nimbi_rail.js','utf8');
 const css=fs.readFileSync('assets/css/nimbi_rail.css','utf8');
 
+assert.ok(css.includes('.trip-leg-swipe{display:block;width:100%;max-width:100%;box-sizing:border-box;overflow:hidden;clip-path:inset(0 round 8px);contain:paint}'),'여행 열차 카드 스와이프 버튼은 카드 프레임 밖으로 새면 안 됩니다.');
+assert.ok(css.includes('.trip-leg-actions{width:max-content;overflow:hidden}'),'여행 열차 카드 액션은 실제 버튼 너비만 차지해야 합니다.');
+assert.ok(css.includes('.trip-sheet{height:min(82dvh,760px);max-height:82vh}'),'예매 변경 시트는 열차 목록이 펼쳐질 수 있는 높이를 확보해야 합니다.');
+assert.ok(css.includes('#trip-swap-body>.trip-sheet-list{flex:1 1 0;min-height:80px}'),'예매 변경 열차 목록은 시트 안에서 스크롤 가능해야 합니다.');
+
 assert.ok(source.includes("return{label:'매진'"),'매진 상태 매핑이 누락되었습니다.');
 for(const label of ['여유','보통','혼잡'])assert.ok(source.includes(`label:'${label}'`),`${label} 상태 매핑이 누락되었습니다.`);
 assert.ok(!source.includes("btn.textContent=available===1?'1석'"),'검색 결과에 잔여 좌석 수를 직접 표시하면 안 됩니다.');
