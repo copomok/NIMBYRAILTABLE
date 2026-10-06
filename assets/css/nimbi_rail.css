@@ -2171,15 +2171,6 @@ button, select, input[type=range],
 .mtb-display-line-nav>span b{font-size:13px;color:var(--text1);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .mtb-display-line-nav>span small{font-family:var(--mono);font-size:9px;color:var(--text3)}
 .mtb-display-dir-nav{display:none}
-.mtb2-shared-head{display:flex;align-items:center;gap:4px;min-width:0;flex-wrap:wrap}
-.mtb2-shared-head i,.mtb2-service-line{display:inline-flex;align-items:center;width:max-content;border:1px solid color-mix(in srgb,var(--lc) 62%,transparent);border-radius:4px;background:color-mix(in srgb,var(--lc) 18%,#07101d);color:color-mix(in srgb,var(--lc) 72%,#fff);font-style:normal;font-weight:900;line-height:1.25}
-.mtb2-shared-head i{padding:2px 5px;font-size:9px}
-.mtb2-service-line{max-width:100%;padding:1px 4px;font-size:7px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.mtb2-dest--shared{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;min-width:0}
-.mtb2-train--shared{cursor:pointer}
-.mtb2-train--shared:hover{background:color-mix(in srgb,var(--mc) 16%,rgba(255,255,255,.025))}
-.mtb2-shared-route{display:flex!important;align-items:center;justify-content:center;gap:7px;min-height:31px!important}
-.mtb2-shared-route i{width:8px;height:8px;border-radius:50%;background:var(--mc)}
 /* 광역철도형: 1~3번 사진의 저상형 LED 출발 안내기 */
 .mtb2-line--regional{border:5px solid #353b42;border-radius:4px;background:#080b0c;box-shadow:inset 0 0 0 1px #08090a,0 5px 15px rgba(0,0,0,.32)}
 .mtb2-line--regional .mtb2-lhead{padding:6px 10px;background:#080b0c;border-color:#342d17}
@@ -2238,9 +2229,6 @@ button, select, input[type=range],
   #metro-display-board .mtb2-cols{overflow:visible}
   #metro-display-board .mtb-display-dir-0 .mtb2-col[data-dir]:not([data-dir="0"]),
   #metro-display-board .mtb-display-dir-1 .mtb2-col[data-dir]:not([data-dir="1"]){display:none}
-  #metro-display-board .mtb-display-selected-dir.mtb-display-shared .mtb2-col[data-dir]{display:flex}
-  #metro-display-board .mtb-display-shared .mtb2-cols{overflow-x:auto;scroll-snap-type:x proximity}
-  #metro-display-board .mtb-display-shared .mtb2-col{min-width:min(82vw,360px);scroll-snap-align:start}
   .mtb-display-dir-nav{display:flex;gap:5px;margin:0 0 9px}
   .mtb-display-dir-nav>button{flex:1;min-width:0;padding:8px 5px;border:1px solid var(--border);border-radius:8px;background:var(--bg3);color:var(--text3);font-size:10px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .mtb-display-dir-nav>button.on{background:color-mix(in srgb,var(--mc,var(--accent)) 24%,var(--bg3));border-color:var(--mc,var(--accent));color:var(--text1)}

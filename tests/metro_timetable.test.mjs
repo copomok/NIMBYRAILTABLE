@@ -45,7 +45,7 @@ assert.ok(source.includes("<span>${start}</span>"),'운행 전 열차는 첫 역
 assert.ok(source.includes("<span>${p.away}전역 <b>${p.state}</b></span>"),'역명과 n전역 양쪽에 접근·도착·출발 상태를 유지해야 합니다.');
 assert.ok(source.includes("const METRO_COMMUTER_BOARD_LINES=new Set(["),'광역철도 전광판 노선 분류가 있어야 합니다.');
 assert.ok(source.includes("boardKind=_metroBoardKind(line,stn)"),'노선과 현재 역에 따라 광역·도시철도 전광판을 자동 선택해야 합니다.');
-assert.ok(source.includes("const lineClass=displayBoard?` mtb2-line--${boardKind}${sharedBlock?' mtb2-line--shared':''}`:''"),'전광판 전용 디자인은 별도 전광판에서만 렌더링되어야 합니다.');
+assert.ok(source.includes("const lineClass=displayBoard?` mtb2-line--${boardKind}`:''"),'전광판 전용 디자인은 별도 전광판에서만 렌더링되어야 합니다.');
 assert.ok(source.includes('<span class="mtb-title">🚇 실시간 도착</span>'),'기존 역 시간표 카드는 실시간 도착 제목을 유지해야 합니다.');
 assert.ok(source.includes('🚇 출발 안내 전광판 열기'),'역 상세의 전광판 명칭은 기차 탭과 같은 출발 안내 전광판이어야 합니다.');
 assert.ok(source.includes("onclick=\"openMetroStationDisplay("),'역 상세에 출발 안내 전광판 열기 버튼이 있어야 합니다.');
@@ -59,7 +59,7 @@ assert.ok(source.includes('선로 공유 구간 같이 보기'),'설정 화면�
 assert.ok(source.includes('findIndex(group=>group.includes(previousLine))'),'설정을 전환해 전광판 그룹이 바뀌어도 보고 있던 노선을 유지해야 합니다.');
 assert.ok(source.includes('const boardSpecs=_metroSharedBoardSpecs(lines,renderLines,sharedDisplay)'),'공유 노선은 여러 전광판이 아니라 단일 통합 전광판 사양으로 합쳐야 합니다.');
 assert.ok(source.includes('const blocks=boardSpecs.map(spec=>'),'통합된 전광판 사양 하나를 실제 전광판 하나로 렌더링해야 합니다.');
-assert.ok(source.includes('mtb2-service-line'),'통합 전광판의 각 열차 행에서 원래 노선을 구분해야 합니다.');
+assert.ok(!source.includes('mtb2-service-line')&&!source.includes('mtb2-line--shared'),'통합 모드는 기존 전광판에 없던 노선 배지·전용 외형을 추가하면 안 됩니다.');
 for(const rule of [
   "{from:'청량리',to:'한강로',lines:['경부선','구인선','신노원선']}",
   "{from:'한강로',to:'구로',lines:['경부선','구인선']}",
@@ -71,7 +71,7 @@ for(const rule of [
   "{from:'천안',to:'당진',lines:['경부선','고남-합덕 통근']}",
   "{from:'지정',to:'판부',lines:['종원선','중앙선']}"
 ])assert.ok(source.includes(rule),`선로 공유 구간 규칙 ${rule} 누락`);
-assert.ok(css.includes('#metro-display-board .mtb-display-selected-dir.mtb-display-shared .mtb2-col[data-dir]{display:flex}'),'모바일 공유 전광판은 모든 노선·방향을 가로 스크롤로 함께 표시해야 합니다.');
+assert.ok(!css.includes('.mtb2-shared-head')&&!css.includes('.mtb-display-shared'),'공유 모드도 기존 전광판과 같은 CSS 구조를 사용해야 합니다.');
 const metroLineSource=fs.readFileSync('data/nimbi_metro.js','utf8');
 const sharedSchedSource=fs.readFileSync('data/nimbi_metro_sched.js','utf8');
 const sharedStart=source.indexOf('const METRO_SHARED_TRACK_BOARD_SECTIONS');

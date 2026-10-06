@@ -12023,7 +12023,7 @@ function _metroStationBoardHTML(stn,displayBoard=false){
     // 분기역(계통 다수)은 좌표 기준 2개 물리 방면으로 병합 — 같은 쪽 계통은 한 열에 통합
     const dirCounts={}; Object.keys(dirs).forEach(k=>dirCounts[k]=dirs[k].length);
     const groups=sharedBlock?_metroSharedDirGroups(sourceLines,stn,dirCounts):_metroDirGroups(line,stn,dirCounts);
-    if(displayBoard&&!sharedDisplay)displayDirLabels=groups.map((grp,i)=>`${i===0?'하행':'상행'} · ${grp.join('·')} 방면`);
+    if(displayBoard)displayDirLabels=groups.map((grp,i)=>`${i===0?'하행':'상행'} · ${grp.join('·')} 방면`);
     _metroDisplayDirIndex=Math.max(0,Math.min(_metroDisplayDirIndex,groups.length-1));
     const platformNos=_metroBoardPlatforms(stn,line);
     const esc=x=>String(x).replace(/\\/g,'\\\\').replace(/'/g,"\\'");
@@ -12057,8 +12057,7 @@ function _metroStationBoardHTML(stn,displayBoard=false){
           const destHTML=displayBoard&&boardKind==='regional'
             ?_metroDisplayDestination(u.dest,u.cls,showDest)
             :`${_metroClsTag(u.cls)}${showDest?u.dest+'행':'&nbsp;'}`;
-          const lineTag=sharedBlock?`<small class="mtb2-service-line" style="--lc:${_metroLineColor(u.line)}">${_opsEsc(u.line)}</small>`:'';
-          const destHtml=`<span class="mtb2-dest${sharedBlock?' mtb2-dest--shared':''}">${lineTag}${destHTML}</span>`;
+          const destHtml=`<span class="mtb2-dest">${destHTML}</span>`;
           let infoHtml;
           if(displayBoard&&boardKind==='regional'){
             infoHtml=_metroRegionalPositionHTML(_metroTrainPos(u.line,u.svc,u.k0,u.k1,stn));
@@ -12083,15 +12082,15 @@ function _metroStationBoardHTML(stn,displayBoard=false){
           } else {
             infoHtml=`<span class="mtb2-rel">${relTxt(u.rel)}</span><span class="mtb2-clk">${fSrvClock(u.sec)}</span>`;
           }
-          const rowAction=sharedBlock?` onclick="event.stopPropagation();closeMetroStationDisplay();openMetroTimetable('${esc(stn)}','${esc(u.line)}')" role="button" title="${_opsEsc(u.line)} 전체 시간표 보기"`:'';
-          return `<div class="mtb2-train${i===0?' mtb2-train--now':''}${sharedBlock?' mtb2-train--shared':''}"${rowAction}>
+          return `<div class="mtb2-train${i===0?' mtb2-train--now':''}">
             <span class="mtb2-seq">${i+1}</span><span class="mtb2-plat">${sharedBlock?(u.plat==='—'?'—':u.plat+'홈'):plat}</span>${destHtml}${infoHtml}</div>`;
         }).join('')||'<div class="mtb2-none">운행 정보 없음</div>';
       }
-      const routeHTML=sharedBlock
-        ?`<div class="mtb2-urban-route mtb2-shared-route"><span>${_opsEsc(stn)}</span><i></i><i></i><i></i><b>${_opsEsc(label)} 방면</b></div>`
-        :displayBoard&&boardKind==='urban'
-        ?_metroUrbanRouteHTML(line,stn,routeTrain,entries)
+      const routeLine=sharedBlock?(entries.find(entry=>entry.line===line)?.line||entries[0]?.line||line):line;
+      const primaryEntries=sharedBlock?entries.filter(entry=>entry.line===routeLine):entries;
+      const primaryRouteTrain=primaryEntries[0]?toTrain(primaryEntries[0]):routeTrain;
+      const routeHTML=displayBoard&&boardKind==='urban'
+        ?_metroUrbanRouteHTML(routeLine,stn,primaryRouteTrain,primaryEntries)
         :`<div class="mtb2-urban-route"><span>${_opsEsc(stn)}</span><i></i><i></i><i></i><b>${_opsEsc(grp[0]||label)}</b></div>`;
       return `<div class="mtb2-col" data-dir="${grpIdx}">
         <div class="mtb2-dir"><span class="mtb2-arr">▸</span>${label} 방면</div>
@@ -12102,16 +12101,14 @@ function _metroStationBoardHTML(stn,displayBoard=false){
       </div>`;
     }).join('');
     const clock=`${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
-    const lineClass=displayBoard?` mtb2-line--${boardKind}${sharedBlock?' mtb2-line--shared':''}`:'';
-    const openAction=!sharedBlock&&displayBoard
+    const lineClass=displayBoard?` mtb2-line--${boardKind}`:'';
+    const openAction=displayBoard
       ?`closeMetroStationDisplay();openMetroTimetable('${esc(stn)}','${esc(line)}')`
-      :!sharedBlock?`openMetroTimetable('${esc(stn)}','${esc(line)}')`:'';
-    const openAttrs=openAction?` style="--mc:${color};cursor:pointer" onclick="${openAction}" role="button" title="전체 시간표 보기"`:` style="--mc:${color}"`;
-    const sharedHeads=sharedBlock?`<span class="mtb2-shared-head">${sourceLines.map(source=>`<i style="--lc:${_metroLineColor(source)}">${_opsEsc(source)}</i>`).join('')}</span>`:`<b>${_opsEsc(spec.label)}</b>`;
-    return `<div class="mtb2-line${lineClass}"${openAttrs}>
-      <div class="mtb2-lhead"><span class="mtb2-dot"></span>${sharedHeads}
-        ${displayBoard?`<span class="mtb2-device-title">${sharedBlock?'공용 선로 통합 출발 안내':boardKind==='regional'?`${stn} 방면 타는 곳 안내`:'이번열차 운행 안내'}</span>
-        <time>${clock}</time>`:''}<span class="mtb2-more">${sharedBlock?'노선별 행 선택':'전체 시간표 ›'}</span></div>
+      :`openMetroTimetable('${esc(stn)}','${esc(line)}')`;
+    return `<div class="mtb2-line${lineClass}" style="--mc:${color};cursor:pointer" onclick="${openAction}" role="button" title="전체 시간표 보기">
+      <div class="mtb2-lhead"><span class="mtb2-dot"></span><b>${_opsEsc(spec.label)}</b>
+        ${displayBoard?`<span class="mtb2-device-title">${boardKind==='regional'?`${stn} 방면 타는 곳 안내`:'이번열차 운행 안내'}</span>
+        <time>${clock}</time>`:''}<span class="mtb2-more">전체 시간표 ›</span></div>
       <div class="mtb2-cols">${cols}</div>
     </div>`;
   }).join('');
@@ -12119,7 +12116,7 @@ function _metroStationBoardHTML(stn,displayBoard=false){
   const selectedGroup=displayBoard?(_metroDisplayLineGroups[_metroDisplayLineIndex]||[]):[];
   const selectedLine=selectedGroup[0]||'';
   const selectedColor=displayBoard?_metroLineColor(selectedLine):'';
-  const selectedLabel=selectedGroup.length>1?`선로 공유 · ${selectedGroup.join(' · ')}`:selectedLine;
+  const selectedLabel=selectedGroup.length>1?selectedGroup.join(' · '):selectedLine;
   const lineNav=displayBoard?`<div class="mtb-display-line-nav" style="--mc:${selectedColor}">
     <button onclick="event.stopPropagation();setMetroDisplayLine(-1)" aria-label="이전 노선"${_metroDisplayLineGroups.length<2?' disabled':''}>◀</button>
     <span><i></i><b>${_opsEsc(selectedLabel)}</b><small>${_metroDisplayLineIndex+1} / ${_metroDisplayLineGroups.length}</small></span>
@@ -12135,7 +12132,7 @@ function _metroStationBoardHTML(stn,displayBoard=false){
         <button class="mtb-mode${_metroBoardMode==='pos'?' on':''}" onclick="setMetroBoardMode('pos')">현위치</button>
       </span></div>`}
     ${dirNav}
-    <div class="${displayBoard?'mtb-display-selected-dir mtb-display-dir-'+_metroDisplayDirIndex+(sharedDisplay?' mtb-display-shared':''):''}">
+    <div class="${displayBoard?'mtb-display-selected-dir mtb-display-dir-'+_metroDisplayDirIndex:''}">
     ${blocks}
     </div>
     <div class="mtb-foot">인게임 시각표 기준 · 운행 ${running}편 · ${viewMode==='pos'?'편성 현위치(역명·남은 역 수)':'계통별 실제 착발 반영'}</div>
