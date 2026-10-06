@@ -53,10 +53,10 @@ test('운행 정보창은 반응형 시트이며 새 캐시로 배포된다',()=
   assert.match(css,/#book-route-detail-wrap/);
   assert.match(css,/@media\(min-width:768px\)/);
   assert.match(css,/@media\(max-width:520px\)/);
-  assert.match(html,/nimbi_redesign\.css\?v=2026100616/);
-  assert.match(html,/nimbi_rail\.css\?v=2026100616/);
-  assert.match(html,/nimbi_rail\.js\?v=2026100616/);
-  assert.match(sw,/nimbirail-2026100616/);
+  assert.match(html,/nimbi_redesign\.css\?v=2026100617/);
+  assert.match(html,/nimbi_rail\.css\?v=2026100617/);
+  assert.match(html,/nimbi_rail\.js\?v=2026100617/);
+  assert.match(sw,/nimbirail-2026100617/);
   assert.match(app,/class="brd-head-info"/);
   assert.match(redesignCss,/\.brd-schedule-view\{margin:0 0 14px/);
 });
