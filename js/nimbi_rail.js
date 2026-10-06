@@ -8528,14 +8528,11 @@ function renderLiveActivityBanner(active){
   const id=String(ticket.id).replace(/"/g,'&quot;');
   const grade=GRADE_COLORS[train.grade]||'#4ca4ff';
   const tl=preBoard?null:getTripTimeline3(train,status,ticket);
-  const sectionFrom=preBoard?ticket.fromStn:(status?.atStn||status?.passStn||tl?.prev?.name||ticket.fromStn);
-  const sectionTo=preBoard?ticket.toStn:(tl?.cur?.name||ticket.toStn);
   const ledStation=preBoard?ticket.fromStn:(tl?.cur?.name||status?.atStn||status?.passStn||ticket.toStn);
   const ledFinal=ledStation===ticket.toStn?' · 내리는 문 확인':'';
   const state=preBoard?`${minsUntilDep<=0?'곧':fmtDurKor(minsUntilDep)+' 후'} 출발`:'탑승 중';
   slot.innerHTML=`<button type="button" class="live-activity-banner" style="--live-grade:${grade}" onclick="openQRPopup(&quot;${id}&quot;)" aria-label="${_opsEsc(train.grade)} ${_opsEsc(train.no)}, ${_opsEsc(state)}, 승차권 보기">
     <span class="live-activity-train"><b class="live-activity-grade">${_opsEsc(train.grade)}</b><strong class="live-activity-number">${_opsEsc(train.no)}</strong></span>
-    <span class="live-activity-section"><small>현재 구간</small><b>${_opsEsc(sectionFrom)} → ${_opsEsc(sectionTo)}</b></span>
     <span class="trip-led header-trip-led"><span class="trip-led-tag">이번 역</span><span class="trip-led-scr"><span class="trip-led-txt">${_opsEsc(ledStation+ledFinal)}</span></span></span>
     <span class="live-activity-state"><i aria-hidden="true"></i>${preBoard?'승차 준비':'탑승 중'}</span>
   </button>`;
@@ -8654,7 +8651,9 @@ function _ticketAccordionHTML(items,cardHTML){
   const count=first.passengerCount||1;
   const from=first.xferGroup?(first.xferOrigin||first.fromStn):first.fromStn;
   const to=first.xferGroup?(first.xferDest||last.toStn):first.toStn;
-  const expandedCard=items.length===1?cardHTML.replace(/(<div class="ticket-card[^\"]*"[^>]*?) onclick="openQRPopup\('[^']+'\)"/,'$1'):cardHTML;
+  const actionMatch=items.length===1?cardHTML.match(/<div class="ticket-card-actions(?: xfer-ticket-actions)?">[\s\S]*?<\/div>/):null;
+  const actionHTML=actionMatch?.[0]||'';
+  const expandedCard=items.length===1?cardHTML.replace(/(<div class="ticket-card[^\"]*"[^>]*?) onclick="openQRPopup\('[^']+'\)"/,'$1').replace(actionHTML,''):cardHTML;
   return `<details class="ticket-accordion" style="--ticket-grade:${GRADE_COLORS[first.grade]||'var(--accent)'}">
     <summary class="ticket-accordion-summary">
       <span class="ticket-accordion-date"><time>${_opsEsc(dateLabel)}</time><span class="ticket-accordion-status ${statusClass}">${status}</span></span>
@@ -8663,6 +8662,7 @@ function _ticketAccordionHTML(items,cardHTML){
       <span class="ticket-accordion-hint" aria-hidden="true">⌄</span>
     </summary>
     <div class="ticket-accordion-detail"><div class="ticket-accordion-panel">${expandedCard}</div></div>
+    ${actionHTML?`<div class="ticket-accordion-actions">${actionHTML}</div>`:''}
   </details>`;
 }
 
@@ -10574,7 +10574,7 @@ function openBookRouteDetail(trainNo,from,to,travelDate){
   const routeMap=_bookRouteMapHTML(t,from,to,gradeColor,travelDate);
   const wrap=document.createElement('div');wrap.id='book-route-detail-wrap';wrap.style.setProperty('--brd-grade',gradeColor);
   wrap.innerHTML=`<div class="book-route-detail-backdrop"></div><section class="book-route-detail-sheet" role="dialog" aria-modal="true" aria-label="${esc(t.grade)} ${esc(t.no)} 운행 정보">
-    <header class="brd-header"><div class="brd-title-line"><small>운행 정보</small><h2><span>${esc(t.grade)}</span><b>${esc(t.no)}</b></h2></div><div class="brd-head-actions"><button type="button" class="brd-close" aria-label="닫기">✕</button></div></header>
+    <header class="brd-header"><div class="brd-head-info"><small>운행 정보</small><h2><span>${esc(t.grade)}</span><b>${esc(t.no)}</b></h2></div><div class="brd-head-actions"><button type="button" class="brd-close" aria-label="닫기">✕</button></div></header>
     <div class="brd-summary"><time>${dateLabel}</time><strong>${esc(from)} <span>${esc(allStops[fromIdx].dep||allStops[fromIdx].arr||'—')}</span><i>→</i> ${esc(to)} <span>${esc(allStops[toIdx].arr||allStops[toIdx].dep||'—')}</span></strong><small class="brd-operation-state"><b>${esc(operationMain)}</b>${operationSub?`<span>${esc(operationSub)}</span>`:''}</small></div>
     <div class="brd-view-tabs" role="tablist"><button type="button" class="brd-view-tab active" data-view="schedule" role="tab" aria-selected="true" onclick="setBookRouteDetailTab('schedule')">시간표</button><button type="button" class="brd-view-tab" data-view="map" role="tab" aria-selected="false" onclick="setBookRouteDetailTab('map')">지도</button></div>
     <div class="brd-view brd-schedule-view active"><div class="brd-columns"><span>역명</span><span>도착</span><span>출발</span></div><div class="brd-stop-list">${rows}</div></div>
