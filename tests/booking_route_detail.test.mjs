@@ -52,10 +52,10 @@ test('운행 정보창은 반응형 시트이며 새 캐시로 배포된다',()=
   assert.match(css,/#book-route-detail-wrap/);
   assert.match(css,/@media\(min-width:768px\)/);
   assert.match(css,/@media\(max-width:520px\)/);
-  assert.match(html,/nimbi_redesign\.css\?v=2026100604/);
-  assert.match(html,/nimbi_rail\.css\?v=2026100604/);
-  assert.match(html,/nimbi_rail\.js\?v=2026100604/);
-  assert.match(sw,/nimbirail-2026100604/);
+  assert.match(html,/nimbi_redesign\.css\?v=2026100605/);
+  assert.match(html,/nimbi_rail\.css\?v=2026100605/);
+  assert.match(html,/nimbi_rail\.js\?v=2026100605/);
+  assert.match(sw,/nimbirail-2026100605/);
 });
 
 test('운행 정보는 시간표·지도 탭과 선택 구간 노선도를 제공한다',()=>{
@@ -142,20 +142,23 @@ test('승차권 목록은 요약 행을 접고 펼치며 기존 카드의 QR 동
   assert.match(app,/function _ticketAccordionHTML\(items,cardHTML\)/);
   assert.match(app,/class="ticket-accordion"/);
   assert.match(app,/class="ticket-accordion-summary"/);
-  assert.match(app,/class="ticket-accordion-detail">\$\{cardHTML\}/);
+  assert.match(app,/class="ticket-accordion-detail"><div class="ticket-accordion-panel">\$\{expandedCard\}/);
+  assert.match(app,/expandedCard=items\.length===1\?cardHTML\.replace/);
+  assert.match(app,/first\.grade/);
   assert.match(app,/openQRPopup\('\$\{tk\.id\}'\)/);
   assert.match(redesignCss,/\.ticket-accordion-summary/);
   assert.match(redesignCss,/\.ticket-accordion\[open\] \.ticket-accordion-hint/);
 });
 
-test('라이브 알람은 앱 상단 진행 카드와 목적지·좌석이 포함된 시스템 알림을 제공한다',()=>{
+test('라이브 알람은 상단바 한 줄 전광판과 시스템 알림을 제공한다',()=>{
   assert.match(app,/function renderLiveActivityBanner\(active\)/);
   assert.match(app,/class="live-activity-banner"/);
-  assert.match(app,/목적지: \$\{_opsEsc\(ticket\.toStn\)\}/);
-  assert.match(app,/class="live-activity-progress"/);
-  assert.match(app,/function dismissLiveActivityBanner\(ticketId\)/);
+  assert.match(app,/getElementById\('header-live-activity'\)/);
+  assert.match(app,/탑승 중/);
+  assert.match(app,/class="live-activity-led"/);
   assert.match(app,/tag:'trip-live'.*requireInteraction:true/);
-  assert.match(redesignCss,/\.live-activity-banner\{position:fixed/);
+  assert.match(redesignCss,/\.header-live-activity/);
+  assert.doesNotMatch(redesignCss,/\.live-activity-banner\{position:fixed/);
 });
 
 test('모바일 운행 정보창은 후속 터치로 닫히지 않는다',()=>{

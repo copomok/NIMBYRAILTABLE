@@ -8521,33 +8521,19 @@ function updateLiveActivity(){
 
 // 앱이 열린 동안에도 라이브 알람을 상단 여정 카드로 보여준다. 알림 권한과는 독립적인 표시 UI다.
 function renderLiveActivityBanner(active){
-  let banner=document.getElementById('live-activity-banner');
-  if(!active){banner?.remove();try{sessionStorage.removeItem('nimbi_liveact_banner_dismissed');}catch(_){}return;}
+  const slot=document.getElementById('header-live-activity');
+  if(!slot)return;
+  if(!active||!liveActEnabled()){slot.replaceChildren();return;}
   const {ticket,train,status,preBoard,minsUntilDep}=active;
-  try{if(sessionStorage.getItem('nimbi_liveact_banner_dismissed')===String(ticket.id)){banner?.remove();return;}}catch(_){}
   const id=String(ticket.id).replace(/"/g,'&quot;');
   const grade=GRADE_COLORS[train.grade]||'#4ca4ff';
-  const arr=toMin(ticket.arrTime),dep=toMin(ticket.depTime),now=new Date(),nowMin=now.getHours()*60+now.getMinutes();
-  let remaining=preBoard?minsUntilDep:(arr!=null&&dep!=null?((arr>=dep?arr:arr+1440)-nowMin):null);
-  if(remaining!=null)remaining=Math.max(0,remaining%1440);
-  const pct=preBoard?0:dep!=null&&arr!=null?Math.max(0,Math.min(100,Math.round(((nowMin>=dep?nowMin:nowMin+1440)-dep)/Math.max(1,(arr>=dep?arr:arr+1440)-dep)*100))):0;
-  const etaLabel=remaining==null?'':remaining<=0?'곧':`${fmtDurKor(remaining)} 후`;
-  const title=preBoard?`${etaLabel||'곧'} 출발`:`${remaining!=null?`${etaLabel} 도착`:'탑승 중'}`;
-  const seat=[ticket.seatClassLabel,seatSummary(ticket.seats)].filter(Boolean).join(' · ');
-  const date=new Date(`${ticket.travelDate}T00:00:00`),dateText=Number.isNaN(date.getTime())?'실시간 정보':`${date.getMonth()+1}월 ${date.getDate()}일 ${['일','월','화','수','목','금','토'][date.getDay()]}요일 · 실시간 정보`;
-  const context=preBoard?`${ticket.fromStn} ${ticket.depTime} 출발 준비`:(status?.atStn?`${status.atStn}역 정차 중`:status?.passStn?`${status.passStn}역 통과 중`:`${ticket.fromStn} → ${ticket.toStn} 이동 중`);
-  const markup=`<aside id="live-activity-banner" class="live-activity-banner" style="--live-grade:${grade}" aria-label="실시간 승차 여정" aria-live="polite">
-    <button type="button" class="live-activity-main" onclick="openQRPopup(&quot;${id}&quot;)" aria-label="${_opsEsc(title)}, 목적지 ${_opsEsc(ticket.toStn)}. 승차권 보기">
-      <span class="live-activity-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="5" y="3" width="14" height="17" rx="4"/><path d="M8 7h8v5H8zM8 17h.01M16 17h.01M8 21l-2 2M16 21l2 2"/></svg></span>
-      <span class="live-activity-content"><span class="live-activity-kicker">${_opsEsc(dateText)}</span><strong>${_opsEsc(title)}</strong><span class="live-activity-destination">목적지: ${_opsEsc(ticket.toStn)}</span><span class="live-activity-seat">${_opsEsc(seat||`${train.grade} ${train.no}`)} · ${_opsEsc(context)}</span><span class="live-activity-progress" aria-label="여정 진행 ${pct}%"><i style="width:${pct}%"></i></span></span>
-    </button><button type="button" class="live-activity-close" onclick="dismissLiveActivityBanner(&quot;${id}&quot;)" aria-label="라이브 알람 닫기">×</button>
-  </aside>`;
-  if(!banner)document.body.insertAdjacentHTML('afterbegin',markup);
-  else banner.outerHTML=markup;
-  banner=document.getElementById('live-activity-banner');
-  if(banner)banner.dataset.ticket=String(ticket.id);
+  const tl=preBoard?null:getTripTimeline3(train,status,ticket);
+  const current=preBoard?`${ticket.fromStn} 출발 준비`:status?.atStn?`${status.atStn} 정차`:status?.passStn?`${status.passStn} 통과`:tl?.cur?.name?`${tl.cur.name} 경유`:'이동 중';
+  const state=preBoard?`${minsUntilDep<=0?'곧':fmtDurKor(minsUntilDep)+' 후'} 출발`:'탑승 중';
+  slot.innerHTML=`<button type="button" class="live-activity-banner" style="--live-grade:${grade}" onclick="openQRPopup(&quot;${id}&quot;)" aria-label="${_opsEsc(train.grade)} ${_opsEsc(train.no)}, ${_opsEsc(state)}, 승차권 보기">
+    <span class="live-activity-grade">${_opsEsc(train.grade)}</span><b class="live-activity-number">${_opsEsc(train.no)}</b><span class="live-activity-state">● ${_opsEsc(state)}</span><span class="live-activity-led"><i aria-hidden="true"></i>${_opsEsc(current)}　→　${_opsEsc(ticket.toStn)}</span>
+  </button>`;
 }
-function dismissLiveActivityBanner(ticketId){try{sessionStorage.setItem('nimbi_liveact_banner_dismissed',String(ticketId));}catch(_){}document.getElementById('live-activity-banner')?.remove();}
 
 function renderTickets(){
   const el=document.getElementById('result-ticket');
@@ -8662,14 +8648,15 @@ function _ticketAccordionHTML(items,cardHTML){
   const count=first.passengerCount||1;
   const from=first.xferGroup?(first.xferOrigin||first.fromStn):first.fromStn;
   const to=first.xferGroup?(first.xferDest||last.toStn):first.toStn;
+  const expandedCard=items.length===1?cardHTML.replace(/(<div class="ticket-card[^\"]*"[^>]*?) onclick="openQRPopup\('[^']+'\)"/,'$1'):cardHTML;
   return `<details class="ticket-accordion" style="--ticket-grade:${GRADE_COLORS[first.grade]||'var(--accent)'}">
     <summary class="ticket-accordion-summary">
       <span class="ticket-accordion-date"><time>${_opsEsc(dateLabel)}</time><span class="ticket-accordion-status ${statusClass}">${status}</span></span>
-      <span class="ticket-accordion-kind"><b>기차 승차권</b><small>${count}매${items.length>1?` · 환승 ${items.length}구간`:''}</small></span>
+      <span class="ticket-accordion-kind"><b><strong>${_opsEsc(first.grade)} ${_opsEsc(first.trainNo)}</strong><span> · 기차 승차권</span></b><small>${count}매${items.length>1?` · 환승 ${items.length}구간`:''}</small></span>
       <span class="ticket-accordion-route"><span><small>${_opsEsc(from)}</small><b>${_opsEsc(first.depTime||'—')}</b></span><i aria-hidden="true">→</i><span><small>${_opsEsc(to)}</small><b>${_opsEsc(last.arrTime||'—')}</b></span></span>
       <span class="ticket-accordion-hint" aria-hidden="true">⌄</span>
     </summary>
-    <div class="ticket-accordion-detail">${cardHTML}</div>
+    <div class="ticket-accordion-detail"><div class="ticket-accordion-panel">${expandedCard}</div></div>
   </details>`;
 }
 
