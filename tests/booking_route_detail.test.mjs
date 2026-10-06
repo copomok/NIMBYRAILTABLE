@@ -53,10 +53,10 @@ test('운행 정보창은 반응형 시트이며 새 캐시로 배포된다',()=
   assert.match(css,/#book-route-detail-wrap/);
   assert.match(css,/@media\(min-width:768px\)/);
   assert.match(css,/@media\(max-width:520px\)/);
-  assert.match(html,/nimbi_redesign\.css\?v=2026100612/);
-  assert.match(html,/nimbi_rail\.css\?v=2026100612/);
-  assert.match(html,/nimbi_rail\.js\?v=2026100612/);
-  assert.match(sw,/nimbirail-2026100612/);
+  assert.match(html,/nimbi_redesign\.css\?v=2026100613/);
+  assert.match(html,/nimbi_rail\.css\?v=2026100613/);
+  assert.match(html,/nimbi_rail\.js\?v=2026100613/);
+  assert.match(sw,/nimbirail-2026100613/);
   assert.match(app,/class="brd-head-info"/);
   assert.match(redesignCss,/\.brd-schedule-view\{margin:0 0 14px/);
 });
@@ -188,8 +188,9 @@ test('라이브 알람은 상단바 2단 전광판과 시스템 알림을 제공
   assert.match(redesignCss,/\.ticket-accordion-summary \.ticket-accordion-kind \.ticket-train-number\{height:26px;font-size:20px/);
   assert.match(redesignCss,/\.live-activity-banner \.live-activity-grade\{min-width:70px;height:28px[^}]*font-size:14px/);
   assert.match(redesignCss,/\.live-activity-banner \.live-activity-number\{height:28px;font-size:20px/);
-  assert.match(redesignCss,/\.live-activity-banner \.header-trip-led\{grid-row:1/);
-  assert.match(redesignCss,/\.live-activity-banner \.header-trip-led \.trip-led-txt\{font-size:26px/);
+  assert.match(app,/class="live-activity-mainline"[\s\S]*class="trip-led header-trip-led"/);
+  assert.doesNotMatch(redesignCss,/\.live-activity-banner \.header-trip-led\{grid-row:/);
+  assert.match(redesignCss,/\.live-activity-banner \.header-trip-led \.trip-led-txt\{font-size:20px/);
   assert.match(redesignCss,/\.live-activity-banner \.live-activity-state\.boarding\{color:var\(--accent2\)\}/);
   assert.match(redesignCss,/\.live-activity-banner \.live-activity-state\.alighting\{color:var\(--orange\)\}/);
   assert.match(redesignCss,/\.ticket-accordion-actions \.btn\{min-height:42px/);

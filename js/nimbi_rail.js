@@ -8534,8 +8534,8 @@ function renderLiveActivityBanner(active){
   const stateClass=preBoard?'boarding':preArr?'alighting':'onboard';
   const ledLabel=preBoard?'출발역':preArr?'도착역':'이번 역';
   slot.innerHTML=`<button type="button" class="live-activity-banner" style="--live-grade:${grade}" onclick="openQRPopup(&quot;${id}&quot;)" aria-label="${_opsEsc(train.grade)} ${_opsEsc(train.no)}, ${_opsEsc(state)}, 승차권 보기">
-    <span class="trip-led header-trip-led"><span class="trip-led-tag">${ledLabel}</span><span class="trip-led-scr"><span class="trip-led-txt">${_opsEsc(ledStation+ledFinal)}</span></span></span>
     <span class="live-activity-mainline"><span class="live-activity-train"><b class="live-activity-grade">${_opsEsc(train.grade)}</b><strong class="live-activity-number">${_opsEsc(train.no)}</strong><span class="live-activity-destination">${_opsEsc(ticket.toStn)}행</span></span><span class="live-activity-booked-route"><small>예매 구간</small><b>${_opsEsc(ticket.fromStn)} → ${_opsEsc(ticket.toStn)}</b></span><span class="live-activity-state ${stateClass}"><i aria-hidden="true"></i>${state}</span></span>
+    <span class="trip-led header-trip-led"><span class="trip-led-tag">${ledLabel}</span><span class="trip-led-scr"><span class="trip-led-txt">${_opsEsc(ledStation+ledFinal)}</span></span></span>
   </button>`;
 }
 
