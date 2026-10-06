@@ -45,7 +45,7 @@ assert.ok(source.includes("<span>${start}</span>"),'운행 전 열차는 첫 역
 assert.ok(source.includes("<span>${p.away}전역 <b>${p.state}</b></span>"),'역명과 n전역 양쪽에 접근·도착·출발 상태를 유지해야 합니다.');
 assert.ok(source.includes("const METRO_COMMUTER_BOARD_LINES=new Set(["),'광역철도 전광판 노선 분류가 있어야 합니다.');
 assert.ok(source.includes("boardKind=_metroBoardKind(line,stn)"),'노선과 현재 역에 따라 광역·도시철도 전광판을 자동 선택해야 합니다.');
-assert.ok(source.includes("const lineClass=displayBoard?` mtb2-line--${boardKind}`:''"),'전광판 전용 디자인은 별도 전광판에서만 렌더링되어야 합니다.');
+assert.ok(source.includes("const lineClass=displayBoard?` mtb2-line--${boardKind}${sharedBlock?' mtb2-line--shared':''}`:''"),'전광판 전용 디자인은 별도 전광판에서만 렌더링되어야 합니다.');
 assert.ok(source.includes('<span class="mtb-title">🚇 실시간 도착</span>'),'기존 역 시간표 카드는 실시간 도착 제목을 유지해야 합니다.');
 assert.ok(source.includes('🚇 출발 안내 전광판 열기'),'역 상세의 전광판 명칭은 기차 탭과 같은 출발 안내 전광판이어야 합니다.');
 assert.ok(source.includes("onclick=\"openMetroStationDisplay("),'역 상세에 출발 안내 전광판 열기 버튼이 있어야 합니다.');
@@ -57,6 +57,9 @@ assert.ok(source.includes("const METRO_SHARED_TRACK_BOARD_KEY='nimbi_metro_share
 assert.ok(source.includes('function toggleMetroSharedTrackBoard()'),'설정에서 선로 공유 구간 같이 보기를 전환할 수 있어야 합니다.');
 assert.ok(source.includes('선로 공유 구간 같이 보기'),'설정 화면에 선로 공유 구간 같이 보기 항목이 있어야 합니다.');
 assert.ok(source.includes('findIndex(group=>group.includes(previousLine))'),'설정을 전환해 전광판 그룹이 바뀌어도 보고 있던 노선을 유지해야 합니다.');
+assert.ok(source.includes('const boardSpecs=_metroSharedBoardSpecs(lines,renderLines,sharedDisplay)'),'공유 노선은 여러 전광판이 아니라 단일 통합 전광판 사양으로 합쳐야 합니다.');
+assert.ok(source.includes('const blocks=boardSpecs.map(spec=>'),'통합된 전광판 사양 하나를 실제 전광판 하나로 렌더링해야 합니다.');
+assert.ok(source.includes('mtb2-service-line'),'통합 전광판의 각 열차 행에서 원래 노선을 구분해야 합니다.');
 for(const rule of [
   "{from:'청량리',to:'한강로',lines:['경부선','구인선','신노원선']}",
   "{from:'한강로',to:'구로',lines:['경부선','구인선']}",
@@ -77,7 +80,7 @@ const sharedContext={_metroSharedTrackBoardOn:true};
 vm.createContext(sharedContext);
 vm.runInContext(`${metroLineSource}\nthis.METRO_LINES=METRO_LINES;`,sharedContext);
 vm.runInContext(`${sharedSchedSource}\nthis.METRO_SCHED=METRO_SCHED;`,sharedContext);
-vm.runInContext(`${source.slice(sharedStart,sharedEnd)}\nthis.sharedLines=_metroSharedTrackLinesAt;this.displayGroups=_metroDisplayGroupsForStation;`,sharedContext);
+vm.runInContext(`${source.slice(sharedStart,sharedEnd)}\nthis.sharedLines=_metroSharedTrackLinesAt;this.displayGroups=_metroDisplayGroupsForStation;this.boardSpecs=_metroSharedBoardSpecs;`,sharedContext);
 const sharedCases=[
   ['서울',['경부선','구인선','신노원선']],['노량진',['경부선','구인선']],['북상계',['신노원선','노원선']],
   ['목동',['강서선','인천종단선']],['동백',['수원이천선','안산용인선']],['안산',['안산성남선','안산안양선']],
@@ -89,6 +92,23 @@ for(const [station,lines] of sharedCases){
 assert.deepEqual(Array.from(sharedContext.sharedLines('가산','경부선',['경부선','구인선'])),['경부선'],'지정된 공유 구간 밖에서는 다른 노선을 합치면 안 됩니다.');
 sharedContext._metroSharedTrackBoardOn=false;
 assert.deepEqual(Array.from(sharedContext.sharedLines('서울','경부선',['경부선','구인선','신노원선'])),['경부선'],'설정을 끄면 기존 단일 노선 전광판을 유지해야 합니다.');
+const oneBoard=sharedContext.boardSpecs({
+  경부선:{서울:[{line:'경부선',dest:'수원'}]},
+  구인선:{서울:[{line:'구인선',dest:'을왕'}]},
+  신노원선:{서울:[{line:'신노원선',dest:'의정부'}]}
+},['경부선','구인선','신노원선'],true);
+assert.equal(oneBoard.length,1,'공유 노선은 전광판 여러 개가 아니라 전광판 한 개로 합쳐야 합니다.');
+assert.deepEqual(Array.from(oneBoard[0].sourceLines),['경부선','구인선','신노원선']);
+assert.equal(oneBoard[0].dirs.서울.length,3,'같은 방면의 모든 노선 편성을 한 출발 목록에 합쳐야 합니다.');
+const dirEntriesStart=source.indexOf('function _metroDirEntries');
+const dirEntriesEnd=source.indexOf('\n// 노선별 역명→좌표',dirEntriesStart);
+const dirEntriesContext={};vm.createContext(dirEntriesContext);
+vm.runInContext(`${source.slice(dirEntriesStart,dirEntriesEnd)}\nthis.dirEntries=_metroDirEntries;`,dirEntriesContext);
+const sameMinute=dirEntriesContext.dirEntries([
+  {atSec:36000,dest:'A',orig:'X',next:'N',cls:0,svc:0,line:'경부선',k0:0,k1:1},
+  {atSec:36000,dest:'B',orig:'X',next:'N',cls:0,svc:1,line:'구인선',k0:0,k1:1}
+],true);
+assert.equal(sameMinute.entries.length,2,'같은 분에 출발하는 서로 다른 공유 노선 열차를 중복으로 지우면 안 됩니다.');
 assert.ok(source.includes('function setMetroDisplayLine(step)'),'환승역 전광판은 화살표로 노선을 전환해야 합니다.');
 assert.ok(source.includes('function setMetroDisplayDirection(index)'),'모바일 전광판은 상·하행을 따로 전환해야 합니다.');
 assert.ok(source.includes("cls===1?'<em class=\"mtb2-r-express\">급행</em>'"),'광역철도 급행은 행선지 뒤에 급행 표기를 붙여야 합니다.');

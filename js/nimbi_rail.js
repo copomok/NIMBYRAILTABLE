@@ -11570,11 +11570,11 @@ function _metroStationDeps(stn){
   return out;
 }
 // 방면 출발편 목록 → 운행일초 정렬(중복 분 제거). v3 실측 시각표를 그대로 반영(보간 없음).
-function _metroDirEntries(list){
+function _metroDirEntries(list,preserveLines=false){
   const srvSec=s=>(((s-14400)%86400)+86400)%86400;
-  const real=list.map(o=>({sec:srvSec(o.atSec),dest:o.dest,orig:o.orig,cls:o.cls,svc:o.svc,line:o.line,k0:o.k0,k1:o.k1})).sort((a,b)=>a.sec-b.sec);
+  const real=list.map(o=>({sec:srvSec(o.atSec),dest:o.dest,orig:o.orig,next:o.next,cls:o.cls,svc:o.svc,line:o.line,k0:o.k0,k1:o.k1})).sort((a,b)=>a.sec-b.sec);
   const seen=new Set();
-  const entries=real.filter(o=>{const m=Math.floor(o.sec/60); if(seen.has(m))return false; seen.add(m); return true;});
+  const entries=real.filter(o=>{const m=Math.floor(o.sec/60),key=preserveLines?`${o.line}|${m}`:m; if(seen.has(key))return false; seen.add(key); return true;});
   const secs=entries.map(o=>Math.floor(o.sec/60)*60);
   return {entries, first:secs[0], last:secs[secs.length-1]};
 }
@@ -11619,9 +11619,37 @@ function _metroDirGroups(lineName, stnName, dirCounts){
     const a1=ai(g1),a2=ai(g2);for(const k of noXY){const ni=names.indexOf(k);(Math.abs(ni-a1)<=Math.abs(ni-a2)?g1:g2).push(k);}}
   return _metroOrderDirGroups(lineName,stnName,[g1,g2].filter(g=>g.length));
 }
+// 여러 노선의 급행·완행 다음 역을 실제 지도 좌표 방향으로 묶어 공용 선로의 두 방면을 만듭니다.
+function _metroSharedDirGroups(sourceLines,stnName,dirCounts){
+  const keys=Object.keys(dirCounts).sort((a,b)=>dirCounts[b]-dirCounts[a]);
+  if(keys.length<=2)return keys.map(key=>[key]);
+  const vectors={};
+  for(const key of keys){
+    for(const line of sourceLines){
+      const xm=_metroLineXY(line),s=_metroXYof(xm,stnName),p=_metroXYof(xm,key);
+      if(!s||!p)continue;
+      const dx=p[0]-s[0],dy=p[1]-s[1],len=Math.hypot(dx,dy)||1;
+      vectors[key]=[dx/len,dy/len];break;
+    }
+  }
+  const withVector=keys.filter(key=>vectors[key]);
+  if(withVector.length<2)return [keys];
+  const p1=vectors[withVector[0]];
+  let p2=null,minDot=2;
+  withVector.forEach(key=>{const v=vectors[key],dot=v[0]*p1[0]+v[1]*p1[1];if(dot<minDot){minDot=dot;p2=v;}});
+  if(!p2||minDot>-.12)return [keys];
+  const groups=[[],[]];
+  keys.forEach(key=>{
+    const v=vectors[key];
+    if(!v){groups[groups[0].length<=groups[1].length?0:1].push(key);return;}
+    const d1=v[0]*p1[0]+v[1]*p1[1],d2=v[0]*p2[0]+v[1]*p2[1];
+    groups[d1>=d2?0:1].push(key);
+  });
+  return groups.filter(group=>group.length);
+}
 // 방면 그룹(다중 다음역) 편 병합 — 지선별로 분내 중복 제거 후 합침(서로 다른 계통 동시각은 유지)
-function _metroGroupEntries(dirsMap, keys){
-  let all=[]; for(const k of keys) all=all.concat(_metroDirEntries(dirsMap[k]).entries);
+function _metroGroupEntries(dirsMap, keys, preserveLines=false){
+  let all=[]; for(const k of keys) all=all.concat(_metroDirEntries(dirsMap[k],preserveLines).entries);
   all.sort((a,b)=>a.sec-b.sec);
   const secs=all.map(o=>Math.floor(o.sec/60)*60);
   return {entries:all, first:secs[0], last:secs[secs.length-1]};
@@ -11687,6 +11715,14 @@ function _metroDisplayGroupsForStation(stn,lineOrder){
     if(!seen.has(key)){seen.add(key);groups.push(group);}
   });
   return groups;
+}
+function _metroSharedBoardSpecs(lineDirs,renderLines,sharedDisplay){
+  if(!sharedDisplay)return renderLines.map(line=>({line,label:line,sourceLines:[line],dirs:lineDirs[line]}));
+  const dirs={};
+  renderLines.forEach(line=>Object.entries(lineDirs[line]||{}).forEach(([next,entries])=>{
+    (dirs[next]=dirs[next]||[]).push(...entries);
+  }));
+  return [{line:renderLines[0],label:renderLines.join(' · '),sourceLines:[...renderLines],dirs}];
 }
 function setMetroBoardMode(m,targetId){
   _metroBoardMode=m;
@@ -11980,19 +12016,30 @@ function _metroStationBoardHTML(stn,displayBoard=false){
   const renderLines=displayBoard?(_metroDisplayLineGroups[_metroDisplayLineIndex]||[lineOrder[0]]):lineOrder;
   const sharedDisplay=displayBoard&&renderLines.length>1;
   let displayDirLabels=[];
-  const blocks=renderLines.map(line=>{
-    const color=_metroLineColor(line), dirs=lines[line], boardKind=_metroBoardKind(line,stn);
+  const boardSpecs=_metroSharedBoardSpecs(lines,renderLines,sharedDisplay);
+  const blocks=boardSpecs.map(spec=>{
+    const line=spec.line,sourceLines=spec.sourceLines,dirs=spec.dirs,sharedBlock=sourceLines.length>1;
+    const color=_metroLineColor(line),boardKind=_metroBoardKind(line,stn);
     // 분기역(계통 다수)은 좌표 기준 2개 물리 방면으로 병합 — 같은 쪽 계통은 한 열에 통합
     const dirCounts={}; Object.keys(dirs).forEach(k=>dirCounts[k]=dirs[k].length);
-    const groups=_metroDirGroups(line, stn, dirCounts);
+    const groups=sharedBlock?_metroSharedDirGroups(sourceLines,stn,dirCounts):_metroDirGroups(line,stn,dirCounts);
     if(displayBoard&&!sharedDisplay)displayDirLabels=groups.map((grp,i)=>`${i===0?'하행':'상행'} · ${grp.join('·')} 방면`);
     _metroDisplayDirIndex=Math.max(0,Math.min(_metroDisplayDirIndex,groups.length-1));
     const platformNos=_metroBoardPlatforms(stn,line);
+    const esc=x=>String(x).replace(/\\/g,'\\\\').replace(/'/g,"\\'");
+    const platformFor=o=>{
+      if(!sharedBlock)return platformNos.length?platformNos[0]:'—';
+      const sourceDirs=lines[o.line]||{},sourceCounts={};Object.keys(sourceDirs).forEach(key=>sourceCounts[key]=sourceDirs[key].length);
+      const sourceGroups=_metroDirGroups(o.line,stn,sourceCounts);
+      const sourceIndex=Math.max(0,sourceGroups.findIndex(group=>group.includes(o.next)));
+      const sourcePlatforms=_metroBoardPlatforms(stn,o.line);
+      return sourcePlatforms.length?sourcePlatforms[Math.min(sourceIndex,sourcePlatforms.length-1)]:'—';
+    };
     const cols=groups.map((grp,grpIdx)=>{
       const label=grp.join(' • ');
       const plat=platformNos.length?(platformNos[Math.min(grpIdx,platformNos.length-1)]+'홈'):'—';
-      const {entries,first,last}=_metroGroupEntries(dirs, grp);
-      const toTrain=o=>({rel:o.sec-nowS,dest:o.dest,sec:o.sec,cls:o.cls,svc:o.svc,line:o.line,k0:o.k0,k1:o.k1});
+      const {entries,first,last}=_metroGroupEntries(dirs,grp,sharedBlock);
+      const toTrain=o=>({rel:o.sec-nowS,dest:o.dest,sec:o.sec,next:o.next,cls:o.cls,svc:o.svc,line:o.line,k0:o.k0,k1:o.k1,plat:sharedBlock?platformFor(o):plat});
       let trainsHtml, routeTrain=entries[0]?toTrain(entries[0]):null;
       if(nowS>last){
         // 오늘 막차 이후 → 운행 종료 + 첫차·행선지 안내
@@ -12010,7 +12057,8 @@ function _metroStationBoardHTML(stn,displayBoard=false){
           const destHTML=displayBoard&&boardKind==='regional'
             ?_metroDisplayDestination(u.dest,u.cls,showDest)
             :`${_metroClsTag(u.cls)}${showDest?u.dest+'행':'&nbsp;'}`;
-          const destHtml=`<span class="mtb2-dest">${destHTML}</span>`;
+          const lineTag=sharedBlock?`<small class="mtb2-service-line" style="--lc:${_metroLineColor(u.line)}">${_opsEsc(u.line)}</small>`:'';
+          const destHtml=`<span class="mtb2-dest${sharedBlock?' mtb2-dest--shared':''}">${lineTag}${destHTML}</span>`;
           let infoHtml;
           if(displayBoard&&boardKind==='regional'){
             infoHtml=_metroRegionalPositionHTML(_metroTrainPos(u.line,u.svc,u.k0,u.k1,stn));
@@ -12035,11 +12083,14 @@ function _metroStationBoardHTML(stn,displayBoard=false){
           } else {
             infoHtml=`<span class="mtb2-rel">${relTxt(u.rel)}</span><span class="mtb2-clk">${fSrvClock(u.sec)}</span>`;
           }
-          return `<div class="mtb2-train${i===0?' mtb2-train--now':''}">
-            <span class="mtb2-seq">${i+1}</span><span class="mtb2-plat">${plat}</span>${destHtml}${infoHtml}</div>`;
+          const rowAction=sharedBlock?` onclick="event.stopPropagation();closeMetroStationDisplay();openMetroTimetable('${esc(stn)}','${esc(u.line)}')" role="button" title="${_opsEsc(u.line)} 전체 시간표 보기"`:'';
+          return `<div class="mtb2-train${i===0?' mtb2-train--now':''}${sharedBlock?' mtb2-train--shared':''}"${rowAction}>
+            <span class="mtb2-seq">${i+1}</span><span class="mtb2-plat">${sharedBlock?(u.plat==='—'?'—':u.plat+'홈'):plat}</span>${destHtml}${infoHtml}</div>`;
         }).join('')||'<div class="mtb2-none">운행 정보 없음</div>';
       }
-      const routeHTML=displayBoard&&boardKind==='urban'
+      const routeHTML=sharedBlock
+        ?`<div class="mtb2-urban-route mtb2-shared-route"><span>${_opsEsc(stn)}</span><i></i><i></i><i></i><b>${_opsEsc(label)} 방면</b></div>`
+        :displayBoard&&boardKind==='urban'
         ?_metroUrbanRouteHTML(line,stn,routeTrain,entries)
         :`<div class="mtb2-urban-route"><span>${_opsEsc(stn)}</span><i></i><i></i><i></i><b>${_opsEsc(grp[0]||label)}</b></div>`;
       return `<div class="mtb2-col" data-dir="${grpIdx}">
@@ -12050,16 +12101,17 @@ function _metroStationBoardHTML(stn,displayBoard=false){
         ${displayBoard&&boardKind==='urban'?'':`<div class="mtb2-fl">첫 ${fSrvClock(first)} · 막 ${fSrvClock(last)}</div>`}
       </div>`;
     }).join('');
-    const esc=x=>String(x).replace(/\\/g,'\\\\').replace(/'/g,"\\'");
     const clock=`${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
-    const lineClass=displayBoard?` mtb2-line--${boardKind}`:'';
-    const openAction=displayBoard
+    const lineClass=displayBoard?` mtb2-line--${boardKind}${sharedBlock?' mtb2-line--shared':''}`:'';
+    const openAction=!sharedBlock&&displayBoard
       ?`closeMetroStationDisplay();openMetroTimetable('${esc(stn)}','${esc(line)}')`
-      :`openMetroTimetable('${esc(stn)}','${esc(line)}')`;
-    return `<div class="mtb2-line${lineClass}" style="--mc:${color};cursor:pointer" onclick="${openAction}" role="button" title="전체 시간표 보기">
-      <div class="mtb2-lhead"><span class="mtb2-dot"></span><b>${line}</b>
-        ${displayBoard?`<span class="mtb2-device-title">${boardKind==='regional'?`${stn} 방면 타는 곳 안내`:'이번열차 운행 안내'}</span>
-        <time>${clock}</time>`:''}<span class="mtb2-more">전체 시간표 ›</span></div>
+      :!sharedBlock?`openMetroTimetable('${esc(stn)}','${esc(line)}')`:'';
+    const openAttrs=openAction?` style="--mc:${color};cursor:pointer" onclick="${openAction}" role="button" title="전체 시간표 보기"`:` style="--mc:${color}"`;
+    const sharedHeads=sharedBlock?`<span class="mtb2-shared-head">${sourceLines.map(source=>`<i style="--lc:${_metroLineColor(source)}">${_opsEsc(source)}</i>`).join('')}</span>`:`<b>${_opsEsc(spec.label)}</b>`;
+    return `<div class="mtb2-line${lineClass}"${openAttrs}>
+      <div class="mtb2-lhead"><span class="mtb2-dot"></span>${sharedHeads}
+        ${displayBoard?`<span class="mtb2-device-title">${sharedBlock?'공용 선로 통합 출발 안내':boardKind==='regional'?`${stn} 방면 타는 곳 안내`:'이번열차 운행 안내'}</span>
+        <time>${clock}</time>`:''}<span class="mtb2-more">${sharedBlock?'노선별 행 선택':'전체 시간표 ›'}</span></div>
       <div class="mtb2-cols">${cols}</div>
     </div>`;
   }).join('');
