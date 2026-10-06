@@ -8531,9 +8531,11 @@ function renderLiveActivityBanner(active){
   const ledStation=preBoard?ticket.fromStn:preArr?ticket.toStn:(tl?.cur?.name||status?.atStn||status?.passStn||ticket.toStn);
   const ledFinal=ledStation===ticket.toStn?' · 내리는 문 확인':'';
   const state=preBoard?'승차 준비':preArr?'하차 준비':'탑승 중';
+  const stateClass=preBoard?'boarding':preArr?'alighting':'onboard';
+  const ledLabel=preBoard?'출발역':preArr?'도착역':'이번 역';
   slot.innerHTML=`<button type="button" class="live-activity-banner" style="--live-grade:${grade}" onclick="openQRPopup(&quot;${id}&quot;)" aria-label="${_opsEsc(train.grade)} ${_opsEsc(train.no)}, ${_opsEsc(state)}, 승차권 보기">
-    <span class="live-activity-mainline"><span class="live-activity-train"><b class="live-activity-grade">${_opsEsc(train.grade)}</b><strong class="live-activity-number">${_opsEsc(train.no)}</strong><span class="live-activity-destination">${_opsEsc(ticket.toStn)}행</span></span><span class="live-activity-booked-route"><small>예매 구간</small><b>${_opsEsc(ticket.fromStn)} → ${_opsEsc(ticket.toStn)}</b></span><span class="live-activity-state"><i aria-hidden="true"></i>${state}</span></span>
-    <span class="trip-led header-trip-led"><span class="trip-led-tag">이번 역</span><span class="trip-led-scr"><span class="trip-led-txt">${_opsEsc(ledStation+ledFinal)}</span></span></span>
+    <span class="trip-led header-trip-led"><span class="trip-led-tag">${ledLabel}</span><span class="trip-led-scr"><span class="trip-led-txt">${_opsEsc(ledStation+ledFinal)}</span></span></span>
+    <span class="live-activity-mainline"><span class="live-activity-train"><b class="live-activity-grade">${_opsEsc(train.grade)}</b><strong class="live-activity-number">${_opsEsc(train.no)}</strong><span class="live-activity-destination">${_opsEsc(ticket.toStn)}행</span></span><span class="live-activity-booked-route"><small>예매 구간</small><b>${_opsEsc(ticket.fromStn)} → ${_opsEsc(ticket.toStn)}</b></span><span class="live-activity-state ${stateClass}"><i aria-hidden="true"></i>${state}</span></span>
   </button>`;
 }
 

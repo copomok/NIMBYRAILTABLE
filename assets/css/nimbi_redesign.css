@@ -591,4 +591,34 @@ body.map-station-list-open{overflow:hidden}
 .live-activity-banner .live-activity-number{height:28px;font-size:20px;line-height:1}
 @media(max-width:767px){.ticket-accordion-summary .ticket-accordion-kind .ticket-train-grade{min-width:54px;height:23px;padding:0 8px;font-size:12px}.ticket-accordion-summary .ticket-accordion-kind .ticket-train-number{height:23px;font-size:18px}.live-activity-banner .live-activity-grade{min-width:58px;height:24px;padding:0 8px;font-size:12px}.live-activity-banner .live-activity-number{height:24px;font-size:18px}}
 @media(max-width:380px){.ticket-accordion-summary .ticket-accordion-kind .ticket-train-grade{min-width:48px;height:21px;padding:0 6px;font-size:11px}.ticket-accordion-summary .ticket-accordion-kind .ticket-train-number{height:21px;font-size:16px}.live-activity-banner .live-activity-grade{min-width:48px;height:21px;padding:0 6px;font-size:10px}.live-activity-banner .live-activity-number{height:21px;font-size:16px}}
+
+/* 전광판을 여정 상태 바의 주 정보로 올리고, 운행·예매 정보는 보조 크기로 정돈한다. */
+.live-activity-banner{grid-template-rows:auto auto;gap:8px;padding:10px 14px}
+.live-activity-banner .header-trip-led{grid-row:1;display:flex;align-items:center;gap:12px;min-height:64px;margin:0;padding:12px 16px;border-radius:8px}
+.live-activity-banner .header-trip-led .trip-led-tag{font-size:12px;padding:4px 9px}
+.live-activity-banner .header-trip-led .trip-led-txt{font-size:26px;letter-spacing:1.5px}
+.live-activity-banner .live-activity-mainline{grid-row:2;grid-template-columns:auto minmax(0,1fr) auto;gap:14px;min-height:28px}
+.live-activity-banner .live-activity-train{gap:7px}
+.live-activity-banner .live-activity-grade{min-width:58px;height:26px;padding:0 8px;border-radius:6px;font-size:12px}
+.live-activity-banner .live-activity-number{height:26px;font-size:18px}
+.live-activity-banner .live-activity-destination{font-size:11px;font-weight:650}
+.live-activity-banner .live-activity-booked-route{gap:6px}
+.live-activity-banner .live-activity-booked-route small{font-size:9px}
+.live-activity-banner .live-activity-booked-route b{font-size:11px;font-weight:650}
+.live-activity-banner .live-activity-state{gap:5px;font-size:10px;color:var(--green)}
+.live-activity-banner .live-activity-state i{width:8px;height:8px;background:currentColor;box-shadow:0 0 7px currentColor}
+.live-activity-banner .live-activity-state.boarding{color:var(--accent2)}
+.live-activity-banner .live-activity-state.alighting{color:var(--orange)}
+.ticket-accordion-summary{gap:8px 10px;padding:11px 12px 12px}
+.ticket-accordion-date time{font-size:12px}
+.ticket-accordion-route{margin-top:3px;gap:8px}
+.ticket-accordion-route small{font-size:12px}
+.ticket-accordion-route b{font-size:clamp(18px,3.6vw,21px)}
+.ticket-accordion-route i{font-size:20px}
+.ticket-accordion-actions{padding:8px 12px 12px}
+.ticket-accordion-actions .ticket-card-actions{gap:7px}
+.ticket-accordion-actions .btn{min-height:42px;padding:7px 12px!important;font-size:12px!important}
+@media(max-width:767px){.live-activity-banner{gap:7px;padding:8px 10px}.live-activity-banner .header-trip-led{min-height:54px;padding:9px 12px}.live-activity-banner .header-trip-led .trip-led-txt{font-size:22px}.live-activity-banner .live-activity-mainline{gap:9px}.live-activity-banner .live-activity-grade{min-width:52px;height:24px;font-size:11px}.live-activity-banner .live-activity-number{height:24px;font-size:17px}.live-activity-banner .live-activity-booked-route b{font-size:10px}.ticket-accordion-summary{padding:10px 11px 11px}.ticket-accordion-route{gap:6px}.ticket-accordion-route small{font-size:12px}.ticket-accordion-route b{font-size:18px}.ticket-accordion-actions{padding:7px 10px 10px}.ticket-accordion-actions .ticket-card-actions{gap:6px}.ticket-accordion-actions .btn{min-height:40px;padding:6px 10px!important;font-size:11px!important}}
+@media(max-width:520px){.live-activity-banner .header-trip-led{min-height:50px;padding:8px 10px}.live-activity-banner .header-trip-led .trip-led-tag{font-size:10px}.live-activity-banner .header-trip-led .trip-led-txt{font-size:20px}.live-activity-banner .live-activity-mainline{grid-template-columns:auto minmax(0,1fr) auto;gap:7px}.live-activity-banner .live-activity-grade{min-width:46px;height:22px;padding:0 6px;font-size:10px}.live-activity-banner .live-activity-number{height:22px;font-size:16px}.live-activity-banner .live-activity-destination{font-size:9px}.live-activity-banner .live-activity-booked-route{gap:4px}.live-activity-banner .live-activity-booked-route small{font-size:8px}.live-activity-banner .live-activity-booked-route b{font-size:9px}.live-activity-banner .live-activity-state{font-size:9px}.live-activity-banner .live-activity-state i{width:7px;height:7px}.ticket-accordion-route b{font-size:17px}.ticket-accordion-actions{padding:7px 9px 9px}.ticket-accordion-actions .ticket-card-actions{gap:5px}.ticket-accordion-actions .btn{min-height:40px;padding:6px 9px!important;font-size:11px!important}}
+@media(max-width:380px){.live-activity-banner .live-activity-mainline{gap:5px}.live-activity-banner .live-activity-grade{min-width:42px;padding:0 5px;font-size:9px}.live-activity-banner .live-activity-number{font-size:15px}.live-activity-banner .live-activity-destination{font-size:8px}.live-activity-banner .live-activity-booked-route b{font-size:8px}.live-activity-banner .live-activity-state{gap:3px;font-size:8px}.ticket-accordion-route{grid-template-columns:minmax(0,1fr) 22px minmax(0,1fr);gap:4px}}
 @media(prefers-reduced-motion:reduce){.ticket-accordion-detail,.ticket-accordion-panel,.ticket-accordion-hint{transition:none!important}}
