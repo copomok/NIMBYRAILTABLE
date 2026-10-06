@@ -8156,7 +8156,7 @@ function selectTicketCalDate(d){ _ticketCalSel=(_ticketCalSel===d?null:d); rende
 // ── 탑승 중인 열차 위젯 (승차권 탭 상단 고정 표시) ──
 function renderTripWidget(active){
   if(!active) return '';
-  const {ticket,train,status,preBoard,minsUntilDep}=active;
+  const {ticket,train,status,preBoard,minsUntilDep,preArr}=active;
 
   // ── 승차 준비 중 위젯 (출발 10분 전) ──
   if(preBoard){
@@ -8524,17 +8524,16 @@ function renderLiveActivityBanner(active){
   const slot=document.getElementById('header-live-activity');
   if(!slot)return;
   if(!active||!liveActEnabled()){slot.replaceChildren();return;}
-  const {ticket,train,status,preBoard,minsUntilDep}=active;
+  const {ticket,train,status,preBoard,minsUntilDep,preArr}=active;
   const id=String(ticket.id).replace(/"/g,'&quot;');
   const grade=GRADE_COLORS[train.grade]||'#4ca4ff';
   const tl=preBoard?null:getTripTimeline3(train,status,ticket);
-  const ledStation=preBoard?ticket.fromStn:(tl?.cur?.name||status?.atStn||status?.passStn||ticket.toStn);
+  const ledStation=preBoard?ticket.fromStn:preArr?ticket.toStn:(tl?.cur?.name||status?.atStn||status?.passStn||ticket.toStn);
   const ledFinal=ledStation===ticket.toStn?' · 내리는 문 확인':'';
-  const state=preBoard?`${minsUntilDep<=0?'곧':fmtDurKor(minsUntilDep)+' 후'} 출발`:'탑승 중';
+  const state=preBoard?'승차 준비':preArr?'하차 준비':'탑승 중';
   slot.innerHTML=`<button type="button" class="live-activity-banner" style="--live-grade:${grade}" onclick="openQRPopup(&quot;${id}&quot;)" aria-label="${_opsEsc(train.grade)} ${_opsEsc(train.no)}, ${_opsEsc(state)}, 승차권 보기">
-    <span class="live-activity-train"><b class="live-activity-grade">${_opsEsc(train.grade)}</b><strong class="live-activity-number">${_opsEsc(train.no)}</strong></span>
+    <span class="live-activity-mainline"><span class="live-activity-train"><b class="live-activity-grade">${_opsEsc(train.grade)}</b><strong class="live-activity-number">${_opsEsc(train.no)}</strong><span class="live-activity-destination">${_opsEsc(ticket.toStn)}행</span></span><span class="live-activity-booked-route"><small>예매 구간</small><b>${_opsEsc(ticket.fromStn)} → ${_opsEsc(ticket.toStn)}</b></span><span class="live-activity-state"><i aria-hidden="true"></i>${state}</span></span>
     <span class="trip-led header-trip-led"><span class="trip-led-tag">이번 역</span><span class="trip-led-scr"><span class="trip-led-txt">${_opsEsc(ledStation+ledFinal)}</span></span></span>
-    <span class="live-activity-state"><i aria-hidden="true"></i>${preBoard?'승차 준비':'탑승 중'}</span>
   </button>`;
 }
 
@@ -8651,10 +8650,10 @@ function _ticketAccordionHTML(items,cardHTML){
   const count=first.passengerCount||1;
   const from=first.xferGroup?(first.xferOrigin||first.fromStn):first.fromStn;
   const to=first.xferGroup?(first.xferDest||last.toStn):first.toStn;
-  const actionMatch=items.length===1?cardHTML.match(/<div class="ticket-card-actions(?: xfer-ticket-actions)?">[\s\S]*?<\/div>/):null;
+  const actionMatch=cardHTML.match(/<div class="ticket-card-actions(?: xfer-ticket-actions)?">[\s\S]*?<\/div>/);
   const actionHTML=actionMatch?.[0]||'';
-  const expandedCard=items.length===1?cardHTML.replace(/(<div class="ticket-card[^\"]*"[^>]*?) onclick="openQRPopup\('[^']+'\)"/,'$1').replace(actionHTML,''):cardHTML;
-  return `<details class="ticket-accordion" style="--ticket-grade:${GRADE_COLORS[first.grade]||'var(--accent)'}">
+  const expandedCard=cardHTML.replace(/(<div class="ticket-card[^\"]*"[^>]*?) onclick="openQRPopup\('[^']+'\)"/,'$1').replace(actionHTML,'');
+  return `<div class="ticket-accordion-shell" style="--ticket-grade:${GRADE_COLORS[first.grade]||'var(--accent)'}"><details class="ticket-accordion">
     <summary class="ticket-accordion-summary">
       <span class="ticket-accordion-date"><time>${_opsEsc(dateLabel)}</time><span class="ticket-accordion-status ${statusClass}">${status}</span></span>
       <span class="ticket-accordion-kind"><b class="ticket-train-id"><span class="ticket-train-grade">${_opsEsc(first.grade)}</span><span class="ticket-train-number">${_opsEsc(first.trainNo)}</span></b><small>${count}매${items.length>1?` · 환승 ${items.length}구간`:''}</small></span>
@@ -8662,8 +8661,7 @@ function _ticketAccordionHTML(items,cardHTML){
       <span class="ticket-accordion-hint" aria-hidden="true">⌄</span>
     </summary>
     <div class="ticket-accordion-detail"><div class="ticket-accordion-panel">${expandedCard}</div></div>
-    ${actionHTML?`<div class="ticket-accordion-actions">${actionHTML}</div>`:''}
-  </details>`;
+  </details>${actionHTML?`<div class="ticket-accordion-actions">${actionHTML}</div>`:''}</div>`;
 }
 
 function _ticketEndpointDelayHTML(tk){

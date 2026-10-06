@@ -53,10 +53,10 @@ test('운행 정보창은 반응형 시트이며 새 캐시로 배포된다',()=
   assert.match(css,/#book-route-detail-wrap/);
   assert.match(css,/@media\(min-width:768px\)/);
   assert.match(css,/@media\(max-width:520px\)/);
-  assert.match(html,/nimbi_redesign\.css\?v=2026100608/);
-  assert.match(html,/nimbi_rail\.css\?v=2026100608/);
-  assert.match(html,/nimbi_rail\.js\?v=2026100608/);
-  assert.match(sw,/nimbirail-2026100608/);
+  assert.match(html,/nimbi_redesign\.css\?v=2026100609/);
+  assert.match(html,/nimbi_rail\.css\?v=2026100609/);
+  assert.match(html,/nimbi_rail\.js\?v=2026100609/);
+  assert.match(sw,/nimbirail-2026100609/);
   assert.match(app,/class="brd-head-info"/);
   assert.match(redesignCss,/\.brd-schedule-view\{margin:0 0 14px/);
 });
@@ -148,7 +148,7 @@ test('승차권 목록은 요약 행을 접고 펼치며 기존 카드의 QR 동
   assert.match(app,/class="ticket-accordion-detail"><div class="ticket-accordion-panel">\$\{expandedCard\}/);
   assert.match(app,/ticket-card-actions\(\?: xfer-ticket-actions\)\?/);
   assert.match(app,/\.replace\(actionHTML,''\)/);
-  assert.match(app,/class="ticket-accordion-actions">\$\{actionHTML\}/);
+  assert.match(app,/<\/details>\$\{actionHTML\?`<div class="ticket-accordion-actions">\$\{actionHTML\}<\/div>`:''\}<\/div>`/);
   assert.match(app,/first\.grade/);
   assert.match(app,/ticket-train-grade/);
   assert.match(app,/ticket-train-number/);
@@ -158,13 +158,15 @@ test('승차권 목록은 요약 행을 접고 펼치며 기존 카드의 QR 동
   assert.match(redesignCss,/\.ticket-accordion\[open\] \.ticket-accordion-hint/);
 });
 
-test('라이브 알람은 상단바 한 줄 전광판과 시스템 알림을 제공한다',()=>{
+test('라이브 알람은 상단바 2단 전광판과 시스템 알림을 제공한다',()=>{
   assert.match(app,/function renderLiveActivityBanner\(active\)/);
   assert.match(app,/class="live-activity-banner"/);
   assert.match(app,/getElementById\('header-live-activity'\)/);
   assert.match(app,/탑승 중/);
   assert.match(app,/class="trip-led header-trip-led"/);
   assert.match(app,/class="live-activity-state"/);
+  assert.match(app,/class="live-activity-booked-route"/);
+  assert.match(app,/ticket\.fromStn\)} → \$\{_opsEsc\(ticket\.toStn\)/);
   assert.match(app,/tag:'trip-live'.*requireInteraction:true/);
   assert.match(redesignCss,/\.header-live-activity/);
   assert.doesNotMatch(redesignCss,/\.live-activity-banner\{position:fixed/);
@@ -172,10 +174,16 @@ test('라이브 알람은 상단바 한 줄 전광판과 시스템 알림을 제
   assert.match(redesignCss,/\.live-activity-banner\{display:grid;grid-template-columns:auto/);
   assert.match(redesignCss,/\.live-activity-banner\{grid-template-columns:auto minmax\(0,1fr\) auto/);
   assert.match(redesignCss,/\.live-activity-grade[^}]*font-size:22px/);
+  assert.match(redesignCss,/\.live-activity-mainline\{display:grid/);
+  assert.match(redesignCss,/\.header-trip-led \.trip-led-txt\{font-size:20px/);
   assert.doesNotMatch(app,/class="live-activity-section"/);
   assert.match(redesignCss,/\.header-trip-led/);
   assert.match(redesignCss,/\.ticket-accordion-route b\{[^}]*clamp\(18px,3\.8vw,22px\)/);
   assert.match(redesignCss,/\.ticket-accordion-detail\{[^}]*background:var\(--surface\)/);
+  assert.match(redesignCss,/\.ticket-list:has\(>\.ticket-accordion-shell\)/);
+  assert.match(redesignCss,/\.ticket-accordion-kind \.ticket-train-grade\{[^}]*background:var\(--ticket-grade\)/);
+  assert.match(redesignCss,/\.ticket-accordion-kind \.ticket-train-number\{height:42px/);
+  assert.match(redesignCss,/\.ticket-accordion-panel>\.ticket-card \.ticket-card-id\{margin-top:22px/);
 });
 
 test('모바일 운행 정보창은 후속 터치로 닫히지 않는다',()=>{
