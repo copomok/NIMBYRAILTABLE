@@ -44,7 +44,8 @@ test('운행 정보창은 정차역과 승차·하차 구간을 구분한다',()
   assert.match(app,/class="brd-arr"/);
   assert.match(app,/class="brd-dep"/);
   assert.match(app,/_realPlatform\(t\.no,s\.s\)/);
-  assert.match(css,/\.brd-stop\.ride \.brd-rail:before/);
+  assert.match(css,/\.brd-stop\.board \.brd-rail:after\{top:50%\}/);
+  assert.match(css,/\.brd-stop\.alight \.brd-rail:after\{bottom:50%\}/);
   assert.match(css,/\.brd-stop\.before,.brd-stop\.after/);
 });
 
@@ -52,10 +53,12 @@ test('운행 정보창은 반응형 시트이며 새 캐시로 배포된다',()=
   assert.match(css,/#book-route-detail-wrap/);
   assert.match(css,/@media\(min-width:768px\)/);
   assert.match(css,/@media\(max-width:520px\)/);
-  assert.match(html,/nimbi_redesign\.css\?v=2026100606/);
-  assert.match(html,/nimbi_rail\.css\?v=2026100606/);
-  assert.match(html,/nimbi_rail\.js\?v=2026100606/);
-  assert.match(sw,/nimbirail-2026100606/);
+  assert.match(html,/nimbi_redesign\.css\?v=2026100607/);
+  assert.match(html,/nimbi_rail\.css\?v=2026100607/);
+  assert.match(html,/nimbi_rail\.js\?v=2026100607/);
+  assert.match(sw,/nimbirail-2026100607/);
+  assert.match(app,/class="brd-title-line"/);
+  assert.match(redesignCss,/\.brd-schedule-view\{margin:0 20px 14px/);
 });
 
 test('운행 정보는 시간표·지도 탭과 선택 구간 노선도를 제공한다',()=>{
@@ -145,6 +148,8 @@ test('승차권 목록은 요약 행을 접고 펼치며 기존 카드의 QR 동
   assert.match(app,/class="ticket-accordion-detail"><div class="ticket-accordion-panel">\$\{expandedCard\}/);
   assert.match(app,/expandedCard=items\.length===1\?cardHTML\.replace/);
   assert.match(app,/first\.grade/);
+  assert.match(app,/ticket-train-grade/);
+  assert.match(app,/ticket-train-number/);
   assert.doesNotMatch(app,/기차 승차권/);
   assert.match(app,/openQRPopup\('\$\{tk\.id\}'\)/);
   assert.match(redesignCss,/\.ticket-accordion-summary/);

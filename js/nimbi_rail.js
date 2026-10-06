@@ -8658,7 +8658,7 @@ function _ticketAccordionHTML(items,cardHTML){
   return `<details class="ticket-accordion" style="--ticket-grade:${GRADE_COLORS[first.grade]||'var(--accent)'}">
     <summary class="ticket-accordion-summary">
       <span class="ticket-accordion-date"><time>${_opsEsc(dateLabel)}</time><span class="ticket-accordion-status ${statusClass}">${status}</span></span>
-      <span class="ticket-accordion-kind"><b><strong>${_opsEsc(first.grade)} ${_opsEsc(first.trainNo)}</strong></b><small>${count}매${items.length>1?` · 환승 ${items.length}구간`:''}</small></span>
+      <span class="ticket-accordion-kind"><b class="ticket-train-id"><span class="ticket-train-grade">${_opsEsc(first.grade)}</span><span class="ticket-train-number">${_opsEsc(first.trainNo)}</span></b><small>${count}매${items.length>1?` · 환승 ${items.length}구간`:''}</small></span>
       <span class="ticket-accordion-route"><span><small>${_opsEsc(from)}</small><b>${_opsEsc(first.depTime||'—')}</b></span><i aria-hidden="true">→</i><span><small>${_opsEsc(to)}</small><b>${_opsEsc(last.arrTime||'—')}</b></span></span>
       <span class="ticket-accordion-hint" aria-hidden="true">⌄</span>
     </summary>
@@ -10574,7 +10574,7 @@ function openBookRouteDetail(trainNo,from,to,travelDate){
   const routeMap=_bookRouteMapHTML(t,from,to,gradeColor,travelDate);
   const wrap=document.createElement('div');wrap.id='book-route-detail-wrap';wrap.style.setProperty('--brd-grade',gradeColor);
   wrap.innerHTML=`<div class="book-route-detail-backdrop"></div><section class="book-route-detail-sheet" role="dialog" aria-modal="true" aria-label="${esc(t.grade)} ${esc(t.no)} 운행 정보">
-    <header class="brd-header"><div><small>운행 정보</small><h2>${esc(t.grade)} <b>${esc(t.no)}</b></h2></div><div class="brd-head-actions"><button type="button" class="brd-close" aria-label="닫기">✕</button></div></header>
+    <header class="brd-header"><div class="brd-title-line"><small>운행 정보</small><h2><span>${esc(t.grade)}</span><b>${esc(t.no)}</b></h2></div><div class="brd-head-actions"><button type="button" class="brd-close" aria-label="닫기">✕</button></div></header>
     <div class="brd-summary"><time>${dateLabel}</time><strong>${esc(from)} <span>${esc(allStops[fromIdx].dep||allStops[fromIdx].arr||'—')}</span><i>→</i> ${esc(to)} <span>${esc(allStops[toIdx].arr||allStops[toIdx].dep||'—')}</span></strong><small class="brd-operation-state"><b>${esc(operationMain)}</b>${operationSub?`<span>${esc(operationSub)}</span>`:''}</small></div>
     <div class="brd-view-tabs" role="tablist"><button type="button" class="brd-view-tab active" data-view="schedule" role="tab" aria-selected="true" onclick="setBookRouteDetailTab('schedule')">시간표</button><button type="button" class="brd-view-tab" data-view="map" role="tab" aria-selected="false" onclick="setBookRouteDetailTab('map')">지도</button></div>
     <div class="brd-view brd-schedule-view active"><div class="brd-columns"><span>역명</span><span>도착</span><span>출발</span></div><div class="brd-stop-list">${rows}</div></div>
