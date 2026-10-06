@@ -116,7 +116,8 @@ assert.ok(source.includes('class="mtb2-rloc"')&&source.includes('class="mtb2-rst
 assert.ok(source.includes('mtb2-rloc mtb2-rloc--flip'),'광역철도 역명과 N전역은 한 위치 열에서 교대로 표시해야 합니다.');
 assert.ok(!source.includes('class="mtb2-rclock"'),'광역철도 전광판에서 출발 시각 열은 제거되어야 합니다.');
 assert.ok(source.includes('class="mtb-urban-train"')&&source.includes('--train-pos:'),'도시철도 노선 막대에 실제 위치 열차 아이콘이 있어야 합니다.');
-assert.ok(source.includes('const uniqueEntries=[...new Map((entries||[]).map(e=>[`${e.svc}|${e.k0}|${e.k1}`,e])).values()]'),'도시철도 노선 막대는 동일 편성을 중복 없이 계산해야 합니다.');
+assert.ok(source.includes('const uniqueEntries=[...new Map((entries||[]).map(e=>[`${e.line||line}|${e.svc}|${e.k0}|${e.k1}`,e])).values()]'),'도시철도 노선 막대는 노선까지 구분해 동일 편성을 중복 없이 계산해야 합니다.');
+assert.ok(source.includes('const routeEntries=sharedBlock?entries:primaryEntries'),'공유 선로 도시철도 전광판 하단에는 모든 공유 노선 편성 위치를 전달해야 합니다.');
 assert.ok(source.includes('const trainHTML=trainPositions.map((train,i)=>'),'도시철도 노선 막대는 범위 안의 모든 운행 편성을 표시해야 합니다.');
 assert.ok(source.includes("if(now<raw[0].arr||now>raw[raw.length-1].dep)return null"),'도시철도 노선 막대는 실제 운행 중인 편성만 표시해야 합니다.');
 assert.ok(!source.includes('class="mtb-urban-alternate"'),'도시철도 전광판에서 첫·막차 교대 문구를 제거해야 합니다.');
@@ -188,23 +189,31 @@ const urbanRouteStart=source.indexOf('function _metroUrbanRouteHTML');
 const urbanRouteEnd=source.indexOf('\nfunction _metroStationBoardHTML',urbanRouteStart);
 assert.ok(urbanRouteStart>=0&&urbanRouteEnd>urbanRouteStart,'도시철도 노선 막대 함수 누락');
 const urbanRouteContext={
-  METRO_SCHED:{도시선:{
-    s:['가역','나역','조회역'],
-    t:[
-      [540,541,0,550,551,1,560,561,2],
-      [530,531,0,545,546,1,555,556,2]
-    ]
-  }},
+  METRO_SCHED:{
+    도시선:{
+      s:['가역','나역','조회역'],
+      t:[
+        [540,541,0,550,551,1,560,561,2],
+        [530,531,0,545,546,1,555,556,2]
+      ]
+    },
+    공유선:{
+      s:['가역','나역','조회역'],
+      t:[[535,536,0,548,549,1,558,559,2]]
+    }
+  },
   Date:class {getHours(){return 9;} getMinutes(){return 5;} getSeconds(){return 0;}},
   _opsEsc:value=>String(value)
 };
 vm.createContext(urbanRouteContext);
 vm.runInContext(`${source.slice(urbanRouteStart,urbanRouteEnd)}\nthis.urbanRoute=_metroUrbanRouteHTML;`,urbanRouteContext);
 const urbanRouteHTML=urbanRouteContext.urbanRoute('도시선','조회역',{svc:0,k0:0,k1:2},[
-  {svc:0,k0:0,k1:2},{svc:1,k0:0,k1:2},{svc:1,k0:0,k1:2}
+  {line:'도시선',svc:0,k0:0,k1:2},{line:'도시선',svc:1,k0:0,k1:2},{line:'도시선',svc:1,k0:0,k1:2},
+  {line:'공유선',svc:0,k0:0,k1:2}
 ]);
-assert.equal((urbanRouteHTML.match(/class="mtb-urban-train"/g)||[]).length,2,'같은 전역 범위에 운행 중인 모든 편성을 중복 없이 표시해야 합니다.');
+assert.equal((urbanRouteHTML.match(/class="mtb-urban-train"/g)||[]).length,3,'같은 전역 범위에 운행 중인 모든 공유 노선 편성을 중복 없이 표시해야 합니다.');
 assert.equal(urbanRouteHTML.split("openMetroTrain('도시선'").length-1,2,'도시철도 전광판의 각 열차 아이콘은 해당 편성 시간표를 열어야 합니다.');
+assert.equal(urbanRouteHTML.split("openMetroTrain('공유선'").length-1,1,'공유 노선 열차 아이콘은 해당 노선의 실제 편성 시간표를 열어야 합니다.');
 assert.ok(urbanRouteHTML.includes('event.stopPropagation()'),'열차 아이콘 클릭은 전광판 전체 시간표 클릭으로 전파되면 안 됩니다.');
 assert.ok(!urbanRouteHTML.includes('첫')&&!urbanRouteHTML.includes('막'),'도시철도 노선 막대에 첫·막차 정보를 표시하면 안 됩니다.');
 

@@ -11934,10 +11934,13 @@ function _metroUrbanRouteHTML(line,stn,u,entries){
   const srv=x=>(((x-240)%1440)+1440)%1440;
   const nowDate=new Date();
   const clockNow=srv(nowDate.getHours()*60+nowDate.getMinutes()+nowDate.getSeconds()/60);
-  const uniqueEntries=[...new Map((entries||[]).map(e=>[`${e.svc}|${e.k0}|${e.k1}`,e])).values()];
+  const uniqueEntries=[...new Map((entries||[]).map(e=>[`${e.line||line}|${e.svc}|${e.k0}|${e.k1}`,e])).values()];
   const trainPositions=uniqueEntries.map(e=>{
-    const service=ent.t[e.svc];
+    const entryLine=e.line||line;
+    const entryEnt=(typeof METRO_SCHED!=='undefined')&&METRO_SCHED[entryLine];
+    const service=entryEnt&&entryEnt.t[e.svc];
     if(!service)return null;
+    const entryNames=entryEnt.s;
     const raw=[];
     let offset=0, previous=-Infinity;
     for(let k=e.k0;k<=e.k1;k++){
@@ -11945,7 +11948,7 @@ function _metroUrbanRouteHTML(line,stn,u,entries){
       while(arr<previous){offset+=1440;arr+=1440;dep+=1440;}
       if(dep<arr)dep+=1440;
       previous=dep;
-      raw.push({name:names[service[3*k+2]],arr,dep});
+      raw.push({name:entryNames[service[3*k+2]],arr,dep});
     }
     if(!raw.length)return null;
     let now=clockNow;
@@ -11968,14 +11971,14 @@ function _metroUrbanRouteHTML(line,stn,u,entries){
     if(trainIndex==null||trainIndex<start||trainIndex>target)return null;
     return {
       pos:Math.max(0,Math.min(100,((trainIndex-start)/denominator)*100)),
-      svc:e.svc,k0:e.k0,k1:e.k1,
+      line:entryLine,svc:e.svc,k0:e.k0,k1:e.k1,
       clickClock:((service[3*e.k0+1]%1440)+1440)%1440
     };
   }).filter(Boolean).sort((a,b)=>a.pos-b.pos);
   const laneEnds=[-Infinity,-Infinity,-Infinity,-Infinity];
-  const lineArg=String(line).replace(/\\/g,'\\\\').replace(/'/g,"\\'");
   const trainHTML=trainPositions.map((train,i)=>{
     const pos=train.pos;
+    const lineArg=String(train.line||line).replace(/\\/g,'\\\\').replace(/'/g,"\\'");
     let lane=laneEnds.findIndex(last=>pos-last>=7);
     if(lane<0)lane=i%laneEnds.length;
     laneEnds[lane]=pos;
@@ -12089,8 +12092,9 @@ function _metroStationBoardHTML(stn,displayBoard=false){
       const routeLine=sharedBlock?(entries.find(entry=>entry.line===line)?.line||entries[0]?.line||line):line;
       const primaryEntries=sharedBlock?entries.filter(entry=>entry.line===routeLine):entries;
       const primaryRouteTrain=primaryEntries[0]?toTrain(primaryEntries[0]):routeTrain;
+      const routeEntries=sharedBlock?entries:primaryEntries;
       const routeHTML=displayBoard&&boardKind==='urban'
-        ?_metroUrbanRouteHTML(routeLine,stn,primaryRouteTrain,primaryEntries)
+        ?_metroUrbanRouteHTML(routeLine,stn,primaryRouteTrain,routeEntries)
         :`<div class="mtb2-urban-route"><span>${_opsEsc(stn)}</span><i></i><i></i><i></i><b>${_opsEsc(grp[0]||label)}</b></div>`;
       return `<div class="mtb2-col" data-dir="${grpIdx}">
         <div class="mtb2-dir"><span class="mtb2-arr">▸</span>${label} 방면</div>
