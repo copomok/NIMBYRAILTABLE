@@ -8652,7 +8652,7 @@ function _ticketAccordionHTML(items,cardHTML){
   return `<details class="ticket-accordion" style="--ticket-grade:${GRADE_COLORS[first.grade]||'var(--accent)'}">
     <summary class="ticket-accordion-summary">
       <span class="ticket-accordion-date"><time>${_opsEsc(dateLabel)}</time><span class="ticket-accordion-status ${statusClass}">${status}</span></span>
-      <span class="ticket-accordion-kind"><b><strong>${_opsEsc(first.grade)} ${_opsEsc(first.trainNo)}</strong><span> · 기차 승차권</span></b><small>${count}매${items.length>1?` · 환승 ${items.length}구간`:''}</small></span>
+      <span class="ticket-accordion-kind"><b><strong>${_opsEsc(first.grade)} ${_opsEsc(first.trainNo)}</strong></b><small>${count}매${items.length>1?` · 환승 ${items.length}구간`:''}</small></span>
       <span class="ticket-accordion-route"><span><small>${_opsEsc(from)}</small><b>${_opsEsc(first.depTime||'—')}</b></span><i aria-hidden="true">→</i><span><small>${_opsEsc(to)}</small><b>${_opsEsc(last.arrTime||'—')}</b></span></span>
       <span class="ticket-accordion-hint" aria-hidden="true">⌄</span>
     </summary>

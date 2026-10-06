@@ -12,8 +12,8 @@
     document.documentElement.dataset.themePreference=preference;
   }catch(_){document.documentElement.dataset.theme='dark';}})();
 </script>
-<link rel="stylesheet" href="assets/css/nimbi_rail.css?v=2026100605">
-  <link rel="stylesheet" href="assets/css/nimbi_redesign.css?v=2026100605">
+<link rel="stylesheet" href="assets/css/nimbi_rail.css?v=2026100606">
+  <link rel="stylesheet" href="assets/css/nimbi_redesign.css?v=2026100606">
   <link rel="stylesheet" href="assets/css/nimbi_operations_hub.css?v=2026090702">
 <!-- PWA -->
 <link rel="manifest" href="manifest.json">
@@ -103,12 +103,12 @@
   <span id="header-clock" style="font-family:var(--mono);font-size:14px;font-weight:600;color:var(--text1);letter-spacing:1px"></span>
   <button class="hdr-refresh-btn" id="hdr-refresh" onclick="refreshCurrentTab()" title="현재 화면 새로고침" aria-label="현재 화면 새로고침"><svg><use href="#i-refresh"/></svg></button>
   <button class="command-icon-btn" type="button" onclick="openMyPage();openMySection('alarm')" title="알림" aria-label="알림 열기"><svg><use href="#i-bell"/></svg></button>
-  <div id="header-live-activity" class="header-live-activity" aria-live="polite"></div>
   <button class="command-icon-btn" id="theme-toggle" type="button" onclick="toggleThemeMenu(this)" title="테마" aria-label="테마 선택"><svg><use href="#i-moon"/></svg></button>
   <button class="my-btn" onclick="openMyPage()" title="마이페이지" aria-label="마이페이지 열기">
     <svg><use href="#i-user"/></svg>
   </button>
 </header>
+<div id="header-live-activity" class="header-live-activity" aria-live="polite"></div>
 <div class="theme-menu" id="theme-menu" hidden role="menu" aria-label="화면 테마">
   <button type="button" role="menuitemradio" data-theme-choice="light" onclick="setNimbiTheme('light')"><svg><use href="#i-sun"/></svg><span>라이트</span></button>
   <button type="button" role="menuitemradio" data-theme-choice="dark" onclick="setNimbiTheme('dark')"><svg><use href="#i-moon"/></svg><span>다크</span></button>
@@ -646,7 +646,7 @@
   <script src="js/features/nimbi_booking_dynamics.js?v=2026072802"></script>
   <script src="js/features/nimbi_inventory.js?v=2026073124"></script>
 <script src="js/features/nimbi_delay.js?v=2026090302"></script>
-<script src="js/nimbi_rail.js?v=2026100605"></script>
+<script src="js/nimbi_rail.js?v=2026100606"></script>
   <script src="js/features/nimbi_congestion.js?v=2026073110"></script>
   <script src="js/features/nimbi_engagement.js?v=2026073110"></script>
   <script src="js/features/nimbi_operations_hub.js?v=2026090702"></script>

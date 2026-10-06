@@ -52,10 +52,10 @@ test('운행 정보창은 반응형 시트이며 새 캐시로 배포된다',()=
   assert.match(css,/#book-route-detail-wrap/);
   assert.match(css,/@media\(min-width:768px\)/);
   assert.match(css,/@media\(max-width:520px\)/);
-  assert.match(html,/nimbi_redesign\.css\?v=2026100605/);
-  assert.match(html,/nimbi_rail\.css\?v=2026100605/);
-  assert.match(html,/nimbi_rail\.js\?v=2026100605/);
-  assert.match(sw,/nimbirail-2026100605/);
+  assert.match(html,/nimbi_redesign\.css\?v=2026100606/);
+  assert.match(html,/nimbi_rail\.css\?v=2026100606/);
+  assert.match(html,/nimbi_rail\.js\?v=2026100606/);
+  assert.match(sw,/nimbirail-2026100606/);
 });
 
 test('운행 정보는 시간표·지도 탭과 선택 구간 노선도를 제공한다',()=>{
@@ -145,6 +145,7 @@ test('승차권 목록은 요약 행을 접고 펼치며 기존 카드의 QR 동
   assert.match(app,/class="ticket-accordion-detail"><div class="ticket-accordion-panel">\$\{expandedCard\}/);
   assert.match(app,/expandedCard=items\.length===1\?cardHTML\.replace/);
   assert.match(app,/first\.grade/);
+  assert.doesNotMatch(app,/기차 승차권/);
   assert.match(app,/openQRPopup\('\$\{tk\.id\}'\)/);
   assert.match(redesignCss,/\.ticket-accordion-summary/);
   assert.match(redesignCss,/\.ticket-accordion\[open\] \.ticket-accordion-hint/);
@@ -159,6 +160,9 @@ test('라이브 알람은 상단바 한 줄 전광판과 시스템 알림을 제
   assert.match(app,/tag:'trip-live'.*requireInteraction:true/);
   assert.match(redesignCss,/\.header-live-activity/);
   assert.doesNotMatch(redesignCss,/\.live-activity-banner\{position:fixed/);
+  assert.match(redesignCss,/\.header-live-activity\{display:none;position:sticky;top:var\(--topbar-h\)/);
+  assert.match(redesignCss,/\.ticket-accordion-route b\{[^}]*clamp\(18px,3\.8vw,22px\)/);
+  assert.match(redesignCss,/\.ticket-accordion-detail\{[^}]*background:var\(--surface\)/);
 });
 
 test('모바일 운행 정보창은 후속 터치로 닫히지 않는다',()=>{
