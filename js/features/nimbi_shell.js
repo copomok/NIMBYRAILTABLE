@@ -206,9 +206,37 @@
       :typeof MAP_LINES!=='undefined'?Object.entries(MAP_LINES).slice(0,6).map(([key,line])=>({key,name:line.name,color:line.color||'var(--accent)'})):[];
     return `<div class="network-preview" role="img" aria-label="네트워크 노선 미리보기"><div class="network-preview-lines">${routes.map((route,index)=>`<button type="button" style="--route-color:${esc(route.color)};--route-offset:${index}" onclick="nimbiOpenNetwork('${esc(route.key)}')"><i></i><span>${esc(route.name)}</span></button>`).join('')}</div><button class="network-preview-open" type="button" onclick="nimbiOpenNetwork('all')">${svg('i-map')} 전체 네트워크 열기</button></div>`;
   }
+  function metroClock(minute){
+    const value=((Number(minute)||0)%1440+1440)%1440;
+    return `${String(Math.floor(value/60)).padStart(2,'0')}:${String(value%60).padStart(2,'0')}`;
+  }
+  function renderMetroOverview(host){
+    const snapshot=typeof _metroHomeSnapshot==='function'?_metroHomeSnapshot():{running:[],before:0,done:0,express:0,limited:0,stationCount:0,lineCount:0};
+    const active=snapshot.running.slice(0,8);
+    host.innerHTML=`<section class="rail-overview metro-overview" aria-labelledby="overview-title">
+      <div class="overview-heading"><div><span>METRO NETWORK</span><h1 id="overview-title">홈</h1><p>도시철도 운행 편성과 노선별 현재 위치를 확인하세요.</p></div><time id="overview-clock" aria-label="현재 시간"></time></div>
+      <div class="network-summary" aria-label="전철 네트워크 요약">
+        <button type="button" onclick="nimbiNavigate('metrolines')"><span>운행 중</span><strong>${snapshot.running.length.toLocaleString()}</strong><small>현재 편성</small></button>
+        <button type="button" onclick="nimbiNavigate('stationinfo')"><span>전철역</span><strong>${snapshot.stationCount.toLocaleString()}</strong><small>조회 가능</small></button>
+        <button type="button" onclick="nimbiNavigate('metrolines')"><span>도시철도 노선</span><strong>${snapshot.lineCount.toLocaleString()}</strong><small>운행 계통</small></button>
+        <button type="button" onclick="nimbiNavigate('metrolines')"><span>급행·특급</span><strong>${(snapshot.express+snapshot.limited).toLocaleString()}</strong><small>급행 ${snapshot.express} · 특급 ${snapshot.limited}</small></button>
+      </div>
+      <div class="overview-workspace">
+        <section class="active-trains"><div class="rail-section-heading"><div><span>LIVE METRO SERVICES</span><h2>현재 운행 편성</h2></div><button type="button" onclick="nimbiNavigate('metrolines')">노선별 보기</button></div>
+          ${active.length?`<div class="rail-table metro-home-table" role="table" aria-label="현재 운행 전철"><div class="rail-table-head" role="row"><span>첫 출발</span><span>노선</span><span>운행 구간</span><span>현재 위치</span><span>종별</span></div>${active.map(train=>`<button type="button" class="rail-table-row" role="row" onclick="openMetroTrain('${esc(train.line)}',${train.svcIdx},${train.clickClock},0,${train.k1})"><time>${metroClock(train.startClock)}</time><span class="rail-train-name"><i style="--route-color:${esc(train.color)}"></i><strong>${esc(train.line)}</strong></span><span>${esc(train.origin)} → ${esc(train.dest)}</span><b>${esc(train.atStation?`${train.fromStn} 정차`:`${train.fromStn} → ${train.toStn}`)}</b><em class="is-normal">${train.cls===2?'특급':train.cls===1?'급행':'일반'}</em></button>`).join('')}</div>`:`<div class="rail-empty">현재 운행 중인 전철 편성이 없습니다.</div>`}
+        </section>
+        <aside class="overview-aside"><section class="quick-station"><div class="rail-section-heading"><div><span>METRO STATION SEARCH</span><h2>전철역 빠른 검색</h2></div></div><label for="overview-station-search">전철역 이름</label><div><input id="overview-station-search" type="search" placeholder="예: 한강로, ㅎㄱㄹ" onkeydown="if(event.key==='Enter')nimbiQuickStation(this.value)"><button type="button" onclick="nimbiQuickStation(document.getElementById('overview-station-search').value)">${svg('i-search')}<span>역 찾기</span></button></div></section>${renderNetworkPreview('metro')}</aside>
+      </div>
+    </section>`;
+  }
   function renderOverview(){
     const host=document.getElementById('home-network-overview');if(!host||typeof ALL_TRAINS==='undefined')return;
     const appMode=mode();
+    if(appMode==='metro'){
+      renderMetroOverview(host);
+      const metroClockElement=document.getElementById('overview-clock');if(metroClockElement)metroClockElement.textContent=new Date().toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false});
+      return;
+    }
     const stationCount=directoryStations().length;
     const routeCount=appMode==='metro'&&typeof METRO_LINES!=='undefined'?METRO_LINES.length:(typeof MAP_LINES!=='undefined'?Object.keys(MAP_LINES).length:new Set(ALL_TRAINS.map(train=>train.line)).size);
     let running=[];

@@ -3710,7 +3710,7 @@ globalThis.NIMBI_NORTH_INGAME_ROUTES={
       "track": null
     },
     {
-      "station": "평동초등학교",
+      "station": "호평",
       "arrival": 1423,
       "departure": 1471,
       "platform": "1",
@@ -3850,7 +3850,7 @@ globalThis.NIMBI_NORTH_INGAME_ROUTES={
       "track": null
     },
     {
-      "station": "평동초등학교",
+      "station": "호평",
       "arrival": 18757,
       "departure": 18804,
       "platform": "2",
@@ -6292,7 +6292,7 @@ globalThis.NIMBI_NORTH_INGAME_STATIONS={
       "원산-혜산 ITX-마음"
     ]
   },
-  "평동초등학교": {
+  "호평": {
     "lon": 127.24698121407998,
     "lat": 37.65367473609844,
     "platforms": [

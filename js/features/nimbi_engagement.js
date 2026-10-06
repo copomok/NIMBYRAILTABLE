@@ -125,9 +125,52 @@
     return homeAnalysis().view;
   }
 
+  window.homeMetroSwapRoute=function(){
+    const from=document.getElementById('home-metro-from'),to=document.getElementById('home-metro-to');if(!from||!to)return;
+    const value=from.value;from.value=to.value;to.value=value;
+  };
+  window.homeMetroRouteSearch=function(){
+    const from=document.getElementById('home-metro-from')?.value.trim()||'';
+    const to=document.getElementById('home-metro-to')?.value.trim()||'';
+    if(!from||!to){alert('출발역과 도착역을 입력해 주세요.');return;}
+    _mrFrom=from;_mrVia='';_mrTo=to;
+    switchTab('metroroute');renderMetroRouteTab();
+    requestAnimationFrame(()=>{const fromInput=document.getElementById('mr-from'),toInput=document.getElementById('mr-to');if(fromInput)fromInput.value=from;if(toInput)toInput.value=to;searchMetroRoute();window.scrollTo({top:0,behavior:'smooth'});});
+  };
+  function renderMetroDailyDiscovery(host){
+    const snapshot=typeof _metroHomeSnapshot==='function'?_metroHomeSnapshot():{running:[],before:0,done:0,express:0,limited:0,lineCounts:[]};
+    const lineDefs=new Map((typeof METRO_LINES!=='undefined'?METRO_LINES:[]).map(line=>[line.name,line]));
+    const busyLines=(snapshot.lineCounts||[]).slice(0,6);
+    host.className='daily-discovery metro-daily-discovery';
+    host.innerHTML=`<section class="home-quick metro-home-route">
+      <div class="home-section-head"><b>빠른 전철 경로 검색</b><span>운행 시각표·환승 반영</span></div>
+      <div class="home-quick-fields">
+        <label><span>출발역</span><input id="home-metro-from" placeholder="전철역 입력" autocomplete="off" onkeydown="if(event.key==='Enter')homeMetroRouteSearch()"></label>
+        <button type="button" onclick="homeMetroSwapRoute()" aria-label="출발 도착 바꾸기">⇄</button>
+        <label><span>도착역</span><input id="home-metro-to" placeholder="전철역 입력" autocomplete="off" onkeydown="if(event.key==='Enter')homeMetroRouteSearch()"></label>
+        <button class="home-search-btn" type="button" onclick="homeMetroRouteSearch()">경로 찾기</button>
+      </div>
+    </section>
+    <section class="home-section"><div class="home-section-head"><b>오늘의 도시철도 운행</b><span>${String(new Date().getHours()).padStart(2,'0')}:${String(new Date().getMinutes()).padStart(2,'0')} 기준</span></div>
+      <div class="home-metrics">
+        <button onclick="switchTab('metrolines')"><b>${snapshot.before}</b><span>운행 예정</span></button>
+        <button onclick="switchTab('metrolines')"><b>${snapshot.express}</b><span>급행 운행</span></button>
+        <button onclick="switchTab('metrolines')"><b>${snapshot.limited}</b><span>특급 운행</span></button>
+        <button onclick="switchTab('metrolines')"><b>${snapshot.done}</b><span>운행 종료</span></button>
+      </div>
+    </section>
+    <section class="home-section metro-home-lines"><div class="home-section-head"><b>노선별 현재 운행</b><span>시각표 기준 편성 위치</span></div>
+      <div class="home-interest-list">${busyLines.length?busyLines.map(([name,count])=>{const line=lineDefs.get(name);return `<button type="button" onclick="openMetroLine('${esc(line?.id||'')}')"><span><i style="background:${esc(line?.color||'#388bfd')}"></i><b>${esc(name)}</b></span><em class="ok">${count}대 운행 중</em></button>`;}).join(''):'<div class="rail-empty">현재 운행 중인 전철 편성이 없습니다.</div>'}</div>
+    </section>
+    <section class="home-section metro-home-note"><div class="home-section-head"><b>전철 운행 안내</b><span>인게임 시각표 기준</span></div><p>편성을 선택하면 정차역, 행선지와 현재 위치를 확인할 수 있습니다. 노선별 전체 운행은 전철 노선 화면에서 확인하세요.</p><button type="button" class="home-search-btn" onclick="switchTab('metrolines')">전철 노선 열기</button></section>`;
+  }
+
   window.renderDailyDiscovery=function(){
     const host=document.getElementById('daily-discovery');
-    if(!host||typeof ALL_TRAINS==='undefined')return;
+    if(!host)return;
+    let currentMode='train';try{currentMode=localStorage.getItem('nimbi_mode')==='metro'?'metro':'train';}catch(e){}
+    if(currentMode==='metro'){renderMetroDailyDiscovery(host);return;}
+    if(typeof ALL_TRAINS==='undefined')return;
     const stations=stationCandidates();
     const station=dailyPick(stations,'station');
     const featured=dailyPick(ALL_TRAINS.filter(t=>t.stops.filter(s=>hasTime(s.arr)||hasTime(s.dep)).length>=5),'train');

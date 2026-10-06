@@ -4,7 +4,11 @@ const input=process.argv[2];
 const output=process.argv[3];
 if(!input||!output)throw new Error('usage: node tools/extract_north_ingame_routes.mjs <timetable-export.json> <output.js>');
 const records=JSON.parse(fs.readFileSync(input,'utf8'));
-const stations=new Map(records.filter(item=>item.class==='Station').map(item=>[item.id,item.name.replace(/역$/,'')]));
+const stationName=raw=>{
+  const name=String(raw||'').replace(/역$/,'');
+  return name==='평동초등학교'?'호평':name;
+};
+const stations=new Map(records.filter(item=>item.class==='Station').map(item=>[item.id,stationName(item.name)]));
 const wanted=[
   '경부선','한강로-부산 ITX새마을',
   '원산-부산 KTX','서울-신의주 KTX','남대구-경흥 KTX','평양-만포 KTX',
@@ -31,7 +35,7 @@ for(const name of wanted){
 }
 const stationMeta={};
 for(const station of records.filter(item=>item.class==='Station'&&stationLines.has(item.id))){
-  const name=station.name.replace(/역$/,'');
+  const name=stationName(station.name);
   const platforms=new Set();
   for(const route of Object.values(routes))for(const stop of route)if(stop.station===name&&stop.platform)platforms.add(Number(stop.platform));
   stationMeta[name]={lon:station.lonlat[0],lat:station.lonlat[1],platforms:[...platforms].sort((a,b)=>a-b),lines:[...stationLines.get(station.id)]};

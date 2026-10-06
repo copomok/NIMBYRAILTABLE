@@ -11878,6 +11878,37 @@ function _metroLineLiveTrains(lineName){
   const out=[]; for(let s=0;s<ent.t.length;s++){ const p=_metroTrainLivePos(lineName,s); if(p)out.push({...p,svcIdx:s,cls:ent.c?ent.c[s]:0}); }
   return out;
 }
+let _metroHomeSnapshotCache=null;
+// 홈 화면용 전철 운행 스냅샷. 장거리열차 ALL_TRAINS와 분리해 전철 시각표만 집계한다.
+function _metroHomeSnapshot(){
+  const now=new Date(),key=`${now.getFullYear()}-${now.getMonth()}-${now.getDate()}-${now.getHours()}-${now.getMinutes()}`;
+  if(_metroHomeSnapshotCache?.key===key)return _metroHomeSnapshotCache.value;
+  const stationNames=new Set(),running=[],lineCounts=new Map();
+  let before=0,done=0,express=0,limited=0,total=0;
+  const lineDefs=new Map((typeof METRO_LINES!=='undefined'?METRO_LINES:[]).map(line=>[line.name,line]));
+  for(const [line,ent] of Object.entries(typeof METRO_SCHED!=='undefined'?METRO_SCHED:{})){
+    (ent.s||[]).forEach(name=>stationNames.add(name));
+    for(let svcIdx=0;svcIdx<(ent.t||[]).length;svcIdx++){
+      const f=ent.t[svcIdx],k1=Math.floor((f?.length||0)/3)-1;if(!f||k1<1)continue;
+      total++;
+      const position=_metroTrainPos(line,svcIdx,0,k1),live=_metroTrainLivePos(line,svcIdx),cls=ent.c?.[svcIdx]||0;
+      if(position?.state==='before'){before++;continue;}
+      if(position?.state==='after'||!live){done++;continue;}
+      if(cls===1)express++;else if(cls===2)limited++;
+      lineCounts.set(line,(lineCounts.get(line)||0)+1);
+      const def=lineDefs.get(line);
+      running.push({
+        line,lineId:def?.id||'',color:def?.color||'#388bfd',svcIdx,cls,k1,
+        origin:ent.s[f[2]],dest:live.dest,fromStn:live.fromStn,toStn:live.toStn,
+        atStation:live.atStation,frac:live.frac,clickClock:live.clickClock,startClock:f[1]
+      });
+    }
+  }
+  running.sort((a,b)=>(b.cls-a.cls)||(b.startClock-a.startClock)||a.line.localeCompare(b.line,'ko'));
+  const value={running,before,done,total,express,limited,stationCount:stationNames.size,lineCount:lineDefs.size,lineCounts:[...lineCounts].sort((a,b)=>b[1]-a[1])};
+  _metroHomeSnapshotCache={key,value};
+  return value;
+}
 function _metroLiveTrainLabel(dest,cls){return cls===2?`${dest} 특급`:cls===1?`${dest} 급행`:`${dest}행`;}
 function _metroLiveArrowPath(x,y,downward){
   const F=n=>(+n).toFixed(1);
@@ -12218,6 +12249,28 @@ function _metroStationBoardHTML(stn,displayBoard=false){
     <div class="mtb-foot">인게임 시각표 기준 · 운행 ${running}편 · ${viewMode==='pos'?'편성 현위치(역명·남은 역 수)':'계통별 실제 착발 반영'}</div>
   </div>`;
 }
+// 기차 모드 역 상세에 표시할 정적 전철 승강장 안내.
+// 도착 시각은 섞지 않고 인게임 승강장 DB와 실제 편성 진행방향만 요약한다.
+function _metroPlatformGuideHTML(stn){
+  if(typeof METRO_LINES==='undefined'||typeof METRO_SCHED==='undefined')return '';
+  const rows=[],stationDeps=_metroStationDeps(stn);
+  METRO_LINES.forEach(line=>{
+    const deps=stationDeps.filter(item=>item.line===line.name);if(!deps.length)return;
+    const dirCounts={};deps.forEach(item=>{dirCounts[item.next]=(dirCounts[item.next]||0)+1;});
+    const groups=_metroDirGroups(line.name,stn,dirCounts),platforms=_metroBoardPlatforms(stn,line.name);
+    if(!platforms.length)return;
+    // 인게임의 1N/1S처럼 한 번호 승강장이 양방향 선로를 함께 품을 수 있으므로
+    // 번호를 임의로 상·하행에 나누지 않고 해당 번호에 연결된 실제 방면을 모두 안내한다.
+    const directions=[...new Set(groups.flat())],destinations=[...new Set(deps.map(item=>item.dest))];
+    platforms.forEach(platform=>rows.push({platform,line:line.name,color:line.color||'#388bfd',directions,destinations}));
+  });
+  const unique=[],seen=new Set();
+  rows.sort((a,b)=>a.platform-b.platform||a.line.localeCompare(b.line,'ko')).forEach(row=>{
+    const key=`${row.platform}|${row.line}|${row.directions.join('|')}`;if(!seen.has(key)){seen.add(key);unique.push(row);}
+  });
+  if(!unique.length)return '';
+  return `<section class="si-metro-platform-guide"><header><div><span>METRO PLATFORMS</span><b>전철 승강장 안내</b></div><small>운행 방향 기준</small></header><div class="si-metro-platform-rows">${unique.map(row=>`<article><strong>${row.platform}<small>번</small></strong><i style="--metro-line:${row.color}"></i><span><b>${_opsEsc(row.line)}</b><small>${_opsEsc(row.directions.join(' · '))} 방면${row.destinations.length?` · ${_opsEsc(row.destinations.slice(0,3).join(' · '))}행`:''}</small></span></article>`).join('')}</div></section>`;
+}
 function renderSICard(name){
   const el=document.getElementById('si-card');
   if(!el)return;
@@ -12236,7 +12289,7 @@ function renderSICard(name){
     trains.forEach(t=>{const p=_platformForTrain(name,trainName,trains,t);if(p!=null)set.add(p);});
     platforms=[...set].sort((a,b)=>a-b);
   }
-  if(platforms.length===0&&d?.platforms?.length>0) platforms=d.platforms;
+  if(platforms.length===0&&trains.length>0&&d?.platforms?.length>0) platforms=d.platforms;
   // Reset selected platform if it was filtered out
   if(_siCardPlatform!==null&&!platforms.includes(_siCardPlatform)) _siCardPlatform=null;
   if(_siCardPlatform===null&&platforms.length>0) _siCardPlatform=platforms[0];
@@ -12252,7 +12305,7 @@ function renderSICard(name){
           <div style="font-size:22px;font-weight:700">${trainName}</div>
           <div style="font-size:11px;color:var(--text2);text-align:right">${_appMode==='metro'
             ?(metroLines.length?`${metroLines.length}개 노선`:'')
-            :`${platforms.length>0?platforms.length+'개 홈<br>':''}${trains.length}편 경유`}</div>
+            :(trains.length?`${platforms.length>0?platforms.length+'개 홈<br>':''}${trains.length}편 경유`:(metroLines.length?`${metroLines.length}개 전철 노선`:''))}</div>
         </div>
         ${d?`<div id="si-addr" data-lat="${d.lat}" data-lon="${d.lon}" style="font-size:11px;color:var(--text3);margin-top:4px">📍 ${d.addr||'주소 확인 중…'}</div>`:''}
         ${(()=>{ // 모드별 라벨: 기차 모드 = 열차 등급만 (편수·약호 없이), 전철 모드 = 전철 노선만
@@ -12277,7 +12330,7 @@ function renderSICard(name){
           </div>`;
         })()}
       </div>
-      ${_appMode!=='metro'?`<div style="padding:12px 16px 4px">
+      ${_appMode!=='metro'&&trains.length?`<div style="padding:12px 16px 4px">
         <button class="si-board-btn" onclick="openStationBoard('${nameEsc}')">🚉 출발 안내 전광판 열기</button>
       </div>`:''}
       ${_appMode==='metro'?`<div style="padding:12px 16px 4px">
@@ -12327,9 +12380,10 @@ function renderSICard(name){
           </div>
         </div>
       </div>`:''}
-      ${_appMode!=='metro'?`<div id="si-platform-trains" style="padding:14px 16px">
+      ${_appMode!=='metro'&&trains.length?`<div id="si-platform-trains" style="padding:14px 16px">
         ${_siPlatformTrainsHTML(name, trains)}
       </div>`:''}
+      ${_appMode!=='metro'?_metroPlatformGuideHTML(trainName):''}
       ${_appMode!=='metro'&&metroLines.length?`<div style="padding:0 16px 12px">
         <button class="si-board-btn" onclick="switchModeStation('metro','${nameEsc}')">🚇 전철 ${trainName}역으로 전환</button>
       </div>`:''}
