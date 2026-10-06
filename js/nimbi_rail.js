@@ -8528,10 +8528,16 @@ function renderLiveActivityBanner(active){
   const id=String(ticket.id).replace(/"/g,'&quot;');
   const grade=GRADE_COLORS[train.grade]||'#4ca4ff';
   const tl=preBoard?null:getTripTimeline3(train,status,ticket);
-  const current=preBoard?`${ticket.fromStn} 출발 준비`:status?.atStn?`${status.atStn} 정차`:status?.passStn?`${status.passStn} 통과`:tl?.cur?.name?`${tl.cur.name} 경유`:'이동 중';
+  const sectionFrom=preBoard?ticket.fromStn:(status?.atStn||status?.passStn||tl?.prev?.name||ticket.fromStn);
+  const sectionTo=preBoard?ticket.toStn:(tl?.cur?.name||ticket.toStn);
+  const ledStation=preBoard?ticket.fromStn:(tl?.cur?.name||status?.atStn||status?.passStn||ticket.toStn);
+  const ledFinal=ledStation===ticket.toStn?' · 내리는 문 확인':'';
   const state=preBoard?`${minsUntilDep<=0?'곧':fmtDurKor(minsUntilDep)+' 후'} 출발`:'탑승 중';
   slot.innerHTML=`<button type="button" class="live-activity-banner" style="--live-grade:${grade}" onclick="openQRPopup(&quot;${id}&quot;)" aria-label="${_opsEsc(train.grade)} ${_opsEsc(train.no)}, ${_opsEsc(state)}, 승차권 보기">
-    <span class="live-activity-grade">${_opsEsc(train.grade)}</span><b class="live-activity-number">${_opsEsc(train.no)}</b><span class="live-activity-state">● ${_opsEsc(state)}</span><span class="live-activity-led"><i aria-hidden="true"></i>${_opsEsc(current)}　→　${_opsEsc(ticket.toStn)}</span>
+    <span class="live-activity-train"><b class="live-activity-grade">${_opsEsc(train.grade)}</b><strong class="live-activity-number">${_opsEsc(train.no)}</strong></span>
+    <span class="live-activity-section"><small>현재 구간</small><b>${_opsEsc(sectionFrom)} → ${_opsEsc(sectionTo)}</b></span>
+    <span class="trip-led header-trip-led"><span class="trip-led-tag">이번 역</span><span class="trip-led-scr"><span class="trip-led-txt">${_opsEsc(ledStation+ledFinal)}</span></span></span>
+    <span class="live-activity-state"><i aria-hidden="true"></i>${preBoard?'승차 준비':'탑승 중'}</span>
   </button>`;
 }
 

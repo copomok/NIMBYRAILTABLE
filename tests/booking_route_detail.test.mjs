@@ -156,11 +156,15 @@ test('라이브 알람은 상단바 한 줄 전광판과 시스템 알림을 제
   assert.match(app,/class="live-activity-banner"/);
   assert.match(app,/getElementById\('header-live-activity'\)/);
   assert.match(app,/탑승 중/);
-  assert.match(app,/class="live-activity-led"/);
+  assert.match(app,/class="live-activity-section"/);
+  assert.match(app,/class="trip-led header-trip-led"/);
+  assert.match(app,/class="live-activity-state"/);
   assert.match(app,/tag:'trip-live'.*requireInteraction:true/);
   assert.match(redesignCss,/\.header-live-activity/);
   assert.doesNotMatch(redesignCss,/\.live-activity-banner\{position:fixed/);
   assert.match(redesignCss,/\.header-live-activity\{display:none;position:sticky;top:var\(--topbar-h\)/);
+  assert.match(redesignCss,/\.live-activity-banner\{display:grid;grid-template-columns:auto/);
+  assert.match(redesignCss,/\.header-trip-led/);
   assert.match(redesignCss,/\.ticket-accordion-route b\{[^}]*clamp\(18px,3\.8vw,22px\)/);
   assert.match(redesignCss,/\.ticket-accordion-detail\{[^}]*background:var\(--surface\)/);
 });
