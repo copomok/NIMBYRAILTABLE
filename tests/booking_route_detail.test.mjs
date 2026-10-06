@@ -132,7 +132,30 @@ test('익일 자정 이후에는 전날 출발한 막차를 현재 운행으로 
 test('모바일에서도 열차 아이콘은 타임라인 선과 역 노드 위에 표시된다',()=>{
   assert.match(css,/\.brd-rail\{[^}]*isolation:isolate;z-index:2/);
   assert.match(css,/\.brd-rail:before\{[^}]*z-index:0/);
-  assert.match(css,/\.brd-live-marker\{[^}]*z-index:6/);
+  assert.match(css,/\.brd-live-marker\{[^}]*z-index:10/);
+  assert.match(css,/\.brd-stop\.live-marker-row\{z-index:3;opacity:1\}/);
+  assert.match(app,/i===liveMarkerIdx\?' live-marker-row':''/);
+  assert.match(app,/row\.classList\.toggle\('live-marker-row',i===liveMarkerIdx\)/);
+});
+
+test('승차권 목록은 요약 행을 접고 펼치며 기존 카드의 QR 동작을 유지한다',()=>{
+  assert.match(app,/function _ticketAccordionHTML\(items,cardHTML\)/);
+  assert.match(app,/class="ticket-accordion"/);
+  assert.match(app,/class="ticket-accordion-summary"/);
+  assert.match(app,/class="ticket-accordion-detail">\$\{cardHTML\}/);
+  assert.match(app,/openQRPopup\('\$\{tk\.id\}'\)/);
+  assert.match(redesignCss,/\.ticket-accordion-summary/);
+  assert.match(redesignCss,/\.ticket-accordion\[open\] \.ticket-accordion-hint/);
+});
+
+test('라이브 알람은 앱 상단 진행 카드와 목적지·좌석이 포함된 시스템 알림을 제공한다',()=>{
+  assert.match(app,/function renderLiveActivityBanner\(active\)/);
+  assert.match(app,/class="live-activity-banner"/);
+  assert.match(app,/목적지: \$\{_opsEsc\(ticket\.toStn\)\}/);
+  assert.match(app,/class="live-activity-progress"/);
+  assert.match(app,/function dismissLiveActivityBanner\(ticketId\)/);
+  assert.match(app,/tag:'trip-live'.*requireInteraction:true/);
+  assert.match(redesignCss,/\.live-activity-banner\{position:fixed/);
 });
 
 test('모바일 운행 정보창은 후속 터치로 닫히지 않는다',()=>{

@@ -502,3 +502,34 @@ body.map-station-list-open{overflow:hidden}
   [data-theme="dark"] .top-command-bar{background:rgba(8,17,27,.97)}
   [data-theme="dark"] .mobile-bottom-nav{background:rgba(8,17,27,.97)}
 }
+
+/* 승차권 목록은 요약을 먼저 보여주고, 선택하면 기존 승차권 카드와 동작을 펼친다. */
+.ticket-accordion{overflow:hidden;border:1px solid var(--border);border-radius:12px;background:var(--surface);box-shadow:0 8px 22px rgba(0,0,0,.12)}
+.ticket-accordion+.ticket-accordion{margin-top:10px}
+.ticket-accordion-summary{position:relative;display:grid;grid-template-columns:1fr auto;gap:12px 16px;padding:14px 16px 15px;list-style:none;cursor:pointer;background:linear-gradient(180deg,color-mix(in srgb,var(--ticket-grade) 18%,var(--surface)),color-mix(in srgb,var(--ticket-grade) 7%,var(--surface) 93%));}
+.ticket-accordion-summary::-webkit-details-marker{display:none}
+.ticket-accordion-date,.ticket-accordion-kind{display:flex;align-items:center;justify-content:space-between;gap:10px;min-width:0}
+.ticket-accordion-date time{color:var(--text2);font-size:12px;font-variant-numeric:tabular-nums}
+.ticket-accordion-status{padding:4px 9px;border:1px solid var(--border);border-radius:999px;background:var(--surface);color:var(--text2);font-size:11px;font-weight:800;white-space:nowrap}
+.ticket-accordion-status.available{border-color:color-mix(in srgb,var(--accent) 45%,var(--border));color:var(--accent2)}
+.ticket-accordion-status.active{border-color:color-mix(in srgb,var(--green) 45%,var(--border));color:var(--green)}
+.ticket-accordion-status.cancelled{border-color:color-mix(in srgb,var(--red) 45%,var(--border));color:var(--red)}
+.ticket-accordion-status.done{color:var(--text3)}
+.ticket-accordion-kind{grid-column:1/-1;padding-bottom:9px;border-bottom:1px solid var(--border)}
+.ticket-accordion-kind b{color:var(--text1);font-size:13px}.ticket-accordion-kind small{color:var(--text3);font-size:11px}
+.ticket-accordion-route{grid-column:1/-1;display:grid;grid-template-columns:minmax(0,1fr) 30px minmax(0,1fr);align-items:center;gap:10px;max-width:560px;width:100%;margin:2px auto 0;text-align:center}
+.ticket-accordion-route>span{display:grid;gap:3px;min-width:0}.ticket-accordion-route small{overflow:hidden;color:var(--text2);font-size:12px;text-overflow:ellipsis;white-space:nowrap}.ticket-accordion-route b{color:var(--text1);font:700 clamp(20px,4vw,26px)/1.1 var(--mono);font-variant-numeric:tabular-nums}.ticket-accordion-route i{color:var(--text3);font-style:normal;font-size:19px}
+.ticket-accordion-hint{position:absolute;right:14px;bottom:10px;color:var(--text3);font-size:18px;transition:transform .18s ease}.ticket-accordion[open] .ticket-accordion-hint{transform:rotate(180deg)}
+.ticket-accordion-detail{padding:10px;background:var(--surface-muted);border-top:1px solid var(--border)}.ticket-accordion-detail>.ticket-card{margin:0}.ticket-accordion-detail>.ticket-card,.ticket-accordion-detail>.xfer-ticket-card{box-shadow:none}
+.ticket-list:has(>.ticket-accordion){display:flex;flex-direction:column;gap:10px}.ticket-list:has(>.ticket-accordion)>.ticket-accordion{margin:0}
+
+/* 앱이 열린 동안 라이브 알람은 목적지·좌석·진행률을 묶은 상단 여정 배너로 표시한다. */
+.live-activity-banner{position:fixed;z-index:11000;top:calc(env(safe-area-inset-top,0px) + 12px);left:50%;display:grid;grid-template-columns:minmax(0,1fr) 32px;gap:8px;width:min(760px,calc(100vw - 24px));padding:12px 14px;border:1px solid color-mix(in srgb,var(--live-grade) 38%,var(--border));border-top:3px solid var(--live-grade);border-radius:16px;background:linear-gradient(110deg,color-mix(in srgb,var(--live-grade) 20%,var(--surface-elevated)),var(--surface-elevated) 68%);color:var(--text1);box-shadow:0 16px 46px rgba(0,0,0,.38);transform:translateX(-50%);animation:live-banner-in .2s ease-out}
+.live-activity-main{display:grid;grid-template-columns:54px minmax(0,1fr);align-items:center;gap:13px;min-width:0;padding:0;border:0;background:transparent;color:inherit;text-align:left;cursor:pointer}
+.live-activity-icon{display:grid;place-items:center;width:54px;height:54px;border-radius:15px;background:var(--live-grade);color:#fff}.live-activity-icon svg{width:30px;height:30px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.live-activity-content{display:grid;gap:3px;min-width:0}.live-activity-kicker{color:var(--text3);font-size:11px}.live-activity-content>strong{font-size:clamp(17px,3.5vw,23px);line-height:1.2}.live-activity-destination{color:var(--text1);font-size:14px;font-weight:750}.live-activity-seat{overflow:hidden;color:var(--text2);font-size:12px;text-overflow:ellipsis;white-space:nowrap}
+.live-activity-progress{height:5px;margin-top:5px;overflow:hidden;border-radius:999px;background:var(--surface-secondary)}.live-activity-progress i{display:block;height:100%;border-radius:inherit;background:var(--live-grade);transition:width .4s ease}
+.live-activity-close{align-self:start;width:32px;height:32px;border:1px solid var(--border);border-radius:9px;background:var(--surface-secondary);color:var(--text2);font-size:22px;line-height:1;cursor:pointer}
+@keyframes live-banner-in{from{opacity:0;translate:0 -8px}to{opacity:1;translate:0 0}}
+@media(max-width:520px){.ticket-accordion-summary{padding:12px}.ticket-accordion-detail{padding:7px}.ticket-accordion-route{gap:6px}.live-activity-banner{top:calc(env(safe-area-inset-top,0px) + 8px);grid-template-columns:minmax(0,1fr) 30px;padding:10px;border-radius:14px}.live-activity-main{grid-template-columns:46px minmax(0,1fr);gap:10px}.live-activity-icon{width:46px;height:46px;border-radius:13px}.live-activity-icon svg{width:26px;height:26px}.live-activity-seat{font-size:11px}}
+@media(min-width:768px){.book-route-detail-sheet{width:min(860px,calc(100vw - 48px));height:min(84vh,900px)}.brd-header{padding:22px 28px 14px}.brd-header h2{font-size:24px}.brd-header h2 b{font-size:28px}.brd-summary{margin-right:28px;margin-left:28px;padding:20px 24px}.brd-summary>time{font-size:14px}.brd-summary>strong{font-size:21px}.brd-summary>.brd-operation-state{font-size:16px}.brd-operation-state span{font-size:14px}.brd-view-tabs{margin-right:28px;margin-left:28px}.brd-columns,.brd-stop{grid-template-columns:minmax(220px,1fr) 76px 76px;column-gap:22px}.brd-columns{padding:11px 28px 11px 86px}.brd-stop{min-height:82px;padding-left:86px}.brd-rail{left:52px}.brd-station strong{font-size:17px}.brd-station>span:not(.brd-stop-badge){font-size:12px}.brd-stop time{font-size:15px}}
