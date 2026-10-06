@@ -53,10 +53,10 @@ test('운행 정보창은 반응형 시트이며 새 캐시로 배포된다',()=
   assert.match(css,/#book-route-detail-wrap/);
   assert.match(css,/@media\(min-width:768px\)/);
   assert.match(css,/@media\(max-width:520px\)/);
-  assert.match(html,/nimbi_redesign\.css\?v=2026100613/);
-  assert.match(html,/nimbi_rail\.css\?v=2026100613/);
-  assert.match(html,/nimbi_rail\.js\?v=2026100613/);
-  assert.match(sw,/nimbirail-2026100613/);
+  assert.match(html,/nimbi_redesign\.css\?v=2026100614/);
+  assert.match(html,/nimbi_rail\.css\?v=2026100614/);
+  assert.match(html,/nimbi_rail\.js\?v=2026100614/);
+  assert.match(sw,/nimbirail-2026100614/);
   assert.match(app,/class="brd-head-info"/);
   assert.match(redesignCss,/\.brd-schedule-view\{margin:0 0 14px/);
 });
@@ -160,15 +160,18 @@ test('승차권 목록은 요약 행을 접고 펼치며 기존 카드의 QR 동
 
 test('라이브 알람은 상단바 2단 전광판과 시스템 알림을 제공한다',()=>{
   assert.match(app,/function renderLiveActivityBanner\(active\)/);
-  assert.match(app,/class="live-activity-banner"/);
+  assert.match(app,/class="live-activity-banner\$\{collapsed\?' collapsed':''\}"/);
   assert.match(app,/getElementById\('header-live-activity'\)/);
   assert.match(app,/탑승 중/);
   assert.match(app,/class="trip-led header-trip-led"/);
   assert.match(app,/class="live-activity-state \$\{stateClass\}"/);
-  assert.match(app,/class="live-activity-booked-route"/);
-  assert.match(app,/ticket\.fromStn\)} → \$\{_opsEsc\(ticket\.toStn\)/);
+  assert.match(app,/class="live-activity-eta"/);
+  assert.match(app,/tl\?\.cur\?\.name\|\|status\?\.atStn/);
   assert.match(app,/const stateClass=preBoard\?'boarding':preArr\?'alighting':'onboard'/);
   assert.match(app,/const ledLabel=preBoard\?'출발역':preArr\?'도착역':'이번 역'/);
+  assert.match(app,/class="live-activity-toggle" aria-controls="live-activity-led"/);
+  assert.match(app,/function toggleLiveActivityBanner\(event\)/);
+  assert.match(app,/nimbi_liveact_collapsed/);
   assert.match(app,/tag:'trip-live'.*requireInteraction:true/);
   assert.match(redesignCss,/\.header-live-activity/);
   assert.doesNotMatch(redesignCss,/\.live-activity-banner\{position:fixed/);
@@ -193,6 +196,9 @@ test('라이브 알람은 상단바 2단 전광판과 시스템 알림을 제공
   assert.match(redesignCss,/\.live-activity-banner \.header-trip-led \.trip-led-txt\{font-size:20px/);
   assert.match(redesignCss,/\.live-activity-banner \.live-activity-state\.boarding\{color:var\(--accent2\)\}/);
   assert.match(redesignCss,/\.live-activity-banner \.live-activity-state\.alighting\{color:var\(--orange\)\}/);
+  assert.match(redesignCss,/\.live-activity-display-row \.header-trip-led\{flex:1/);
+  assert.match(redesignCss,/\.live-activity-banner\.collapsed \.header-trip-led\{display:none\}/);
+  assert.match(redesignCss,/\.live-activity-toggle\{display:grid/);
   assert.match(redesignCss,/\.ticket-accordion-actions \.btn\{min-height:42px/);
   assert.match(redesignCss,/\.ticket-accordion-panel>\.ticket-card \.ticket-card-id\{margin-top:22px/);
 });

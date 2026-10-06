@@ -8533,10 +8533,38 @@ function renderLiveActivityBanner(active){
   const state=preBoard?'승차 준비':preArr?'하차 준비':'탑승 중';
   const stateClass=preBoard?'boarding':preArr?'alighting':'onboard';
   const ledLabel=preBoard?'출발역':preArr?'도착역':'이번 역';
-  slot.innerHTML=`<button type="button" class="live-activity-banner" style="--live-grade:${grade}" onclick="openQRPopup(&quot;${id}&quot;)" aria-label="${_opsEsc(train.grade)} ${_opsEsc(train.no)}, ${_opsEsc(state)}, 승차권 보기">
-    <span class="live-activity-mainline"><span class="live-activity-train"><b class="live-activity-grade">${_opsEsc(train.grade)}</b><strong class="live-activity-number">${_opsEsc(train.no)}</strong><span class="live-activity-destination">${_opsEsc(ticket.toStn)}행</span></span><span class="live-activity-booked-route"><small>예매 구간</small><b>${_opsEsc(ticket.fromStn)} → ${_opsEsc(ticket.toStn)}</b></span><span class="live-activity-state ${stateClass}"><i aria-hidden="true"></i>${state}</span></span>
-    <span class="trip-led header-trip-led"><span class="trip-led-tag">${ledLabel}</span><span class="trip-led-scr"><span class="trip-led-txt">${_opsEsc(ledStation+ledFinal)}</span></span></span>
-  </button>`;
+  const etaStop=preBoard?ticket.fromStn:preArr?ticket.toStn:(tl?.cur?.name||status?.atStn||ticket.toStn);
+  let etaText='운행 중';
+  if(preBoard)etaText=`${minsUntilDep<=0?'곧':fmtDurKor(minsUntilDep)+' 후'} 출발 예정`;
+  else if(preArr)etaText=`${active.minsUntilArr<=0?'곧':fmtDurKor(active.minsUntilArr)+' 후'} 도착 예정`;
+  else if(status?.atStn&&status.atStn===etaStop)etaText='현재 정차 중';
+  else if(tl?.cur?.time){const stopM=toMin(tl.cur.time),now=new Date(),nowM=now.getHours()*60+now.getMinutes();if(stopM!==null){let d=stopM-nowM;if(d<0)d+=1440;etaText=d<=0?'곧 도착 예정':`${fmtDurKor(d)} 후 도착 예정`;}}
+  const collapsed=(()=>{try{return localStorage.getItem('nimbi_liveact_collapsed')==='1';}catch(_){return false;}})();
+  slot.innerHTML=`<section class="live-activity-banner${collapsed?' collapsed':''}" style="--live-grade:${grade}">
+    <div class="live-activity-mainline">
+      <button type="button" class="live-activity-summary" onclick="openQRPopup(&quot;${id}&quot;)" aria-label="${_opsEsc(train.grade)} ${_opsEsc(train.no)}, ${_opsEsc(state)}, 승차권 보기">
+        <span class="live-activity-train"><i class="live-activity-state-dot ${stateClass}" aria-hidden="true"></i><b class="live-activity-state ${stateClass}">${state}</b><strong class="live-activity-grade">${_opsEsc(train.grade)}</strong><strong class="live-activity-number">${_opsEsc(train.no)}</strong></span>
+        <span class="live-activity-eta"><small>${preBoard?'승차역':preArr?'도착 예정':'이번 정차'} ${_opsEsc(etaStop)}</small><b>${_opsEsc(etaText)}</b></span>
+      </button>
+    </div>
+    <div class="live-activity-display-row"><div class="trip-led header-trip-led"><span class="trip-led-tag">${ledLabel}</span><span class="trip-led-scr"><span class="trip-led-txt">${_opsEsc(ledStation+ledFinal)}</span></span></div>
+      <button type="button" class="live-activity-toggle" aria-controls="live-activity-led" aria-expanded="${collapsed?'false':'true'}" aria-label="전광판 ${collapsed?'펼치기':'접기'}" onclick="toggleLiveActivityBanner(event)">${collapsed?'⌄':'⌃'}</button>
+    </div>
+  </section>`;
+  const led=slot.querySelector('.header-trip-led');if(led)led.id='live-activity-led';
+}
+
+function toggleLiveActivityBanner(event){
+  event?.stopPropagation();
+  const banner=document.querySelector('#header-live-activity .live-activity-banner');
+  const toggle=banner?.querySelector('.live-activity-toggle');
+  if(!banner||!toggle)return;
+  const collapsed=!banner.classList.contains('collapsed');
+  banner.classList.toggle('collapsed',collapsed);
+  toggle.setAttribute('aria-expanded',String(!collapsed));
+  toggle.setAttribute('aria-label',`전광판 ${collapsed?'펼치기':'접기'}`);
+  toggle.textContent=collapsed?'⌄':'⌃';
+  try{localStorage.setItem('nimbi_liveact_collapsed',collapsed?'1':'0');}catch(_){}
 }
 
 function renderTickets(){
