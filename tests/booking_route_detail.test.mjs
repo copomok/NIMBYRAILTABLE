@@ -53,10 +53,10 @@ test('운행 정보창은 반응형 시트이며 새 캐시로 배포된다',()=
   assert.match(css,/#book-route-detail-wrap/);
   assert.match(css,/@media\(min-width:768px\)/);
   assert.match(css,/@media\(max-width:520px\)/);
-  assert.match(html,/nimbi_redesign\.css\?v=2026100701/);
-  assert.match(html,/nimbi_rail\.css\?v=2026100701/);
-  assert.match(html,/nimbi_rail\.js\?v=2026100701/);
-  assert.match(sw,/nimbirail-2026100701/);
+  assert.match(html,/nimbi_redesign\.css\?v=2026100702/);
+  assert.match(html,/nimbi_rail\.css\?v=2026100702/);
+  assert.match(html,/nimbi_rail\.js\?v=2026100702/);
+  assert.match(sw,/nimbirail-2026100702/);
   assert.match(app,/class="brd-head-info"/);
   assert.match(redesignCss,/\.brd-schedule-view\{margin:0 0 14px/);
 });
@@ -173,7 +173,7 @@ test('라이브 알람은 상단바 2단 전광판과 시스템 알림을 제공
   assert.match(app,/function toggleLiveActivityBanner\(event\)/);
   assert.match(app,/nimbi_liveact_banner_collapsed/);
   assert.match(app,/const etaLabel=preBoard\?/);
-  assert.match(app,/class="live-activity-eta"><strong>\$\{_opsEsc\(etaLabel\)\}<small>\(\$\{_opsEsc\(etaDetail\)\}\)<\/small><\/span>/);
+  assert.match(app,/class="live-activity-eta"><strong>\$\{_opsEsc\(etaLabel\)\}<\/strong><small>\(\$\{_opsEsc\(etaDetail\)\}\)<\/small><\/span>/);
   assert.match(app,/toggle\.textContent=collapsed\?'펼치기':'접기'/);
   assert.match(app,/const etaLabel=preBoard\?`\$\{ticket\.fromStn\} 출발`:`이번 정차 \$\{etaStop\}`/);
   assert.match(app,/tag:'trip-live'.*requireInteraction:true/);
@@ -202,7 +202,7 @@ test('라이브 알람은 상단바 2단 전광판과 시스템 알림을 제공
   assert.match(redesignCss,/\.live-activity-banner \.live-activity-state\.alighting\{color:var\(--orange\)\}/);
   assert.match(redesignCss,/\.live-activity-banner\.collapsed \.live-activity-content\{display:none\}/);
   assert.doesNotMatch(redesignCss,/\.live-activity-banner\.collapsed \.live-activity-eta\{display:none\}/);
-  assert.match(redesignCss,/\.live-activity-banner \.live-activity-eta strong\{[^}]*font-size:21px/);
+  assert.match(redesignCss,/\.live-activity-banner \.live-activity-eta strong\{[^}]*font-size:18px/);
   assert.match(redesignCss,/\.live-activity-banner \.live-activity-toggle\{appearance:none!important;[^}]*background:transparent!important/);
   assert.match(redesignCss,/\.ticket-accordion-actions \.btn\{min-height:42px/);
   assert.match(redesignCss,/\.ticket-accordion-panel>\.ticket-card \.ticket-card-id\{margin-top:22px/);

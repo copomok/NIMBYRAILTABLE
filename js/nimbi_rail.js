@@ -11002,7 +11002,7 @@ function openBookingWithDate(trainNo, from, to, depT, arrT, travelDate, isRound,
 // ══════════════════════════════════════════
 // 🚉 역 정보 탭
 // ══════════════════════════════════════════
-let _siSubTab='near', _siCurrent=null, _siCardPlatform=null, _siNearAll=[], _siNearShowClosed=false, _siNearLat=null, _siNearLon=null, _siHideTerm=false, _siUpcomingOnly=false, _siBoardTimer=null;
+let _siSubTab='near', _siCurrent=null, _siCardPlatform=null, _siMetroGuidePlatform=null, _siNearAll=[], _siNearShowClosed=false, _siNearLat=null, _siNearLon=null, _siHideTerm=false, _siUpcomingOnly=false, _siBoardTimer=null;
 // 운행일 기준(04:00~익일 03:59) 분 변환: 04:00=0 … 03:59=1439
 function _srvMin(m){ return ((m-240)%1440+1440)%1440; }
 
@@ -11369,7 +11369,7 @@ function renderSINearList(){
 }
 
 function openStationDetail(name){
-  _siCurrent=railStationDataName(name); _siSubTab='detail'; _siCardPlatform=null;
+  _siCurrent=railStationDataName(name); _siSubTab='detail'; _siCardPlatform=null; _siMetroGuidePlatform=null;
   switchTab('stationinfo');
   setTimeout(()=>renderStationInfo(),50);
 }
@@ -11451,7 +11451,7 @@ function siSearchKey(e){
 
 function siSelect(name){
   name=railStationDataName(name);
-  _siCurrent=name; _siCardPlatform=null;
+  _siCurrent=name; _siCardPlatform=null; _siMetroGuidePlatform=null;
   const inp=document.getElementById('si-inp');
   if(inp)inp.value=name.endsWith('역')?name.slice(0,-1):name;   // 검색창은 맨 이름(○○)
   const el=document.getElementById('si-results');
@@ -12302,48 +12302,130 @@ function _metroPlatformUses(stn,platform){
   return [...uses.values()].sort((a,b)=>a.line.localeCompare(b.line,'ko'));
 }
 
-// 전철 탭 전용 정적 승강장 안내. 실시간 도착 정보와 분리해 노선·방향·보조 승강장을 보여준다.
-function _metroPlatformGuideHTML(stn){
-  if(typeof METRO_LINES==='undefined'||typeof METRO_SCHED==='undefined')return '';
+// 편성 배열에서 현재 역 이후의 실제 운행 구간을 복원한다. A→B→A 선형도 다음 역으로 occurrence를 구분한다.
+function _metroServicePath(stn,dep){
+  const ent=typeof METRO_SCHED!=='undefined'&&METRO_SCHED[dep.line],f=ent?.t?.[dep.svc];
+  if(!ent||!f)return [];
+  const n=f.length/3,at=k=>ent.s[f[3*k+2]];
+  let start=-1;
+  for(let k=Math.max(0,dep.k0||0);k<n-1;k++){
+    if(at(k)===stn&&at(k+1)===dep.next){start=k;break;}
+  }
+  if(start<0){for(let k=0;k<n-1;k++){if(at(k)===stn&&at(k+1)===dep.next){start=k;break;}}}
+  if(start<0)return [];
+  const end=Math.min(Number.isFinite(dep.k1)?dep.k1:n-1,n-1),path=[];
+  for(let k=start;k<=end;k++){const name=at(k);if(name&&path[path.length-1]!==name)path.push(name);}
+  return path;
+}
+
+function _metroStationImportance(name){
+  if(!name)return 0;
+  let score=_isTrainStn(name)?4:0;
+  if(typeof METRO_LINES!=='undefined')METRO_LINES.forEach(line=>{
+    if((line.routes||[{stations:line.stations||[]}]).some(route=>(route.stations||[]).includes(name)))score++;
+  });
+  return score;
+}
+
+// 기본 표시는 다음역·중간 주요역·종착역 3곳. 분기 종착은 최대 5곳까지 허용한다.
+function _metroDirectionLandmarks(stn,row){
+  if(row.terminating&&!row.deps.length)return [];
+  const paths=row.deps.map(dep=>_metroServicePath(stn,dep)).filter(path=>path.length>1).sort((a,b)=>b.length-a.length);
+  const next=[...new Set(row.deps.map(dep=>dep.next).filter(name=>name&&name!==stn))];
+  const termini=[...new Set(row.deps.map(dep=>dep.dest).filter(name=>name&&name!==stn))];
+  const out=[],seen=new Set(),push=(name,kind)=>{if(name&&!seen.has(name)&&out.length<5){seen.add(name);out.push({name,kind});}};
+  next.slice(0,1).forEach(name=>push(name,'다음역'));
+  const path=paths[0]||[],terminalSet=new Set(termini);
+  const middle=path.slice(2,-1).filter(name=>!seen.has(name)&&!terminalSet.has(name));
+  if(middle.length){
+    const midpoint=(path.length-1)/2;
+    middle.sort((a,b)=>{
+      const as=_metroStationImportance(a),bs=_metroStationImportance(b);
+      if(as!==bs)return bs-as;
+      return Math.abs(path.indexOf(a)-midpoint)-Math.abs(path.indexOf(b)-midpoint);
+    });
+    push(middle[0],'주요역');
+  }
+  termini.forEach(name=>push(name,'종착역'));
+  return out;
+}
+
+function _metroDirectionHTML(stn,row){
+  const landmarks=_metroDirectionLandmarks(stn,row);
+  if(!landmarks.length)return '<span class="si-metro-terminal">당역종착</span>';
+  return `<span class="si-metro-direction">${landmarks.map((item,index)=>`${index?'<i>,</i>':''}<span>${_opsEsc(item.name)}<small>(${item.kind})</small></span>`).join('')}<em>방면</em></span>`;
+}
+
+// 승강장별·방향별 사용 정보를 만든다. 보조 홈도 같은 승강장 목록에 포함하되 UI에서 등급을 구분하지 않는다.
+function _metroPlatformGuideRows(stn){
+  if(typeof METRO_SCHED==='undefined')return [];
   const usage=new Map(),stationDeps=_metroStationDeps(stn);
-  const add=(line,platform,role,dep)=>{
-    const key=`${platform}|${line}`,row=usage.get(key)||{platform,line,color:_metroLineColor(line),roles:new Set(),directions:new Set(),next:new Set()};
-    row.roles.add(role);
-    if(dep.dest&&dep.dest!==stn)row.directions.add(dep.dest);
-    if(dep.next&&dep.next!==stn)row.next.add(dep.next);
+  const add=(line,platform,directionKey,dep,terminating=false)=>{
+    if(!Number.isFinite(Number(platform)))return;
+    const key=`${Number(platform)}|${line}|${directionKey}`;
+    const row=usage.get(key)||{platform:Number(platform),line,color:_metroLineColor(line),deps:[],terminating};
+    if(dep&&!row.deps.some(item=>item.svc===dep.svc&&item.next===dep.next&&item.dest===dep.dest))row.deps.push(dep);
+    row.terminating=row.terminating||terminating;
     usage.set(key,row);
   };
   [...new Set(stationDeps.map(item=>item.line))].forEach(line=>{
-    const deps=stationDeps.filter(item=>item.line===line);let mapped=false;
+    const deps=stationDeps.filter(item=>item.line===line);
+    const raw=(typeof METRO_PLATFORM_DIRECTIONS!=='undefined'&&METRO_PLATFORM_DIRECTIONS.lines?.[line])||null;
+    const matchedOccurrences=new Set();
     deps.forEach(dep=>{
       const occurrence=_metroPlatformOccurrence(line,stn,dep.next);if(!occurrence)return;
-      (occurrence.p||[]).forEach(platform=>add(line,platform,'주',dep));
-      (occurrence.a||[]).forEach(platform=>add(line,platform,'보조',dep));
-      mapped=true;
+      matchedOccurrences.add(occurrence.i);
+      [...(occurrence.p||[]),...(occurrence.a||[])].forEach(platform=>add(line,platform,`raw-${occurrence.i}`,dep));
     });
-    if(mapped)return;
-    // 인게임 원본에 없는 수동 노선만 기존 DB 순서로 방면과 승강장을 1:1 대응한다.
+    // 출발편이 없는 종착 occurrence도 승강장 안내에서 누락하지 않는다.
+    (raw?.platforms?.[stn]||[]).filter(occ=>!matchedOccurrences.has(occ.i)).forEach(occ=>{
+      [...(occ.p||[]),...(occ.a||[])].forEach(platform=>add(line,platform,`raw-${occ.i}`,null,true));
+    });
+    if(raw||!deps.length)return;
+    // 원본에 없는 수동 노선은 기존 승강장 순서와 방면 그룹을 대응한다.
     const dirCounts={};deps.forEach(dep=>{dirCounts[dep.next]=(dirCounts[dep.next]||0)+1;});
     const groups=_metroDirGroups(line,stn,dirCounts),platforms=_metroBoardPlatforms(stn,line);
     groups.forEach((group,index)=>{
       const platform=platforms[Math.min(index,platforms.length-1)];if(platform==null)return;
-      deps.filter(dep=>group.includes(dep.next)).forEach(dep=>add(line,platform,'주',dep));
+      deps.filter(dep=>group.includes(dep.next)).forEach(dep=>add(line,platform,`fallback-${index}`,dep));
     });
   });
-  const rows=[...usage.values()].sort((a,b)=>a.platform-b.platform||a.line.localeCompare(b.line,'ko'));
-  if(!rows.length)return '';
-  return `<section class="si-metro-platform-guide"><header><div><span>METRO PLATFORMS</span><b>전철 승강장 안내</b></div><small>인게임 운행 방향 기준</small></header><div class="si-metro-platform-rows">${rows.map(row=>{
-    const roles=[...row.roles],role=roles.length>1?'주·보조':roles[0];
-    const directions=[...row.directions],next=[...row.next];
-    const directionText=directions.length?`${directions.slice(0,4).join(' · ')} 방면`:(next.length?`${next.slice(0,4).join(' · ')} 방면`:'운행 방향 확인 중');
-    return `<article><strong>${row.platform}<small>번</small></strong><i style="--metro-line:${row.color}"></i><span><b>${_opsEsc(row.line)}<em class="si-metro-platform-role${role==='보조'?' is-aux':''}">${role}</em></b><small>${_opsEsc(directionText)}${next.length?` · 다음 ${_opsEsc(next.slice(0,3).join(' · '))}`:''}</small></span></article>`;
-  }).join('')}</div></section>`;
+  return [...usage.values()].sort((a,b)=>a.platform-b.platform||a.line.localeCompare(b.line,'ko'));
+}
+
+// 전철 탭 전용 정적 승강장 안내. 승강장 버튼을 고르면 그 홈의 실제 노선·방향만 펼친다.
+function _metroPlatformGuideHTML(stn){
+  if(typeof METRO_LINES==='undefined'||typeof METRO_SCHED==='undefined')return '';
+  const rows=_metroPlatformGuideRows(stn),platforms=[...new Set(rows.map(row=>row.platform))];
+  if(!platforms.length)return '';
+  if(_siMetroGuidePlatform===null||!platforms.includes(_siMetroGuidePlatform))_siMetroGuidePlatform=platforms[0];
+  const selected=rows.filter(row=>row.platform===_siMetroGuidePlatform);
+  const stnEsc=String(stn).replace(/\\/g,'\\\\').replace(/'/g,"\\'");
+  return `<section class="si-metro-platform-guide"><header><b>전철 승강장 안내</b><small>총 ${platforms.length}개 승강장</small></header>
+    <div class="si-metro-platform-tabs" role="tablist" aria-label="전철 승강장 선택">${platforms.map(platform=>`<button class="${platform===_siMetroGuidePlatform?'on':''}" onclick="selectSIMetroPlatform('${stnEsc}',${platform})" role="tab" aria-selected="${platform===_siMetroGuidePlatform}">${platform}<small>번</small></button>`).join('')}</div>
+    <div class="si-metro-platform-panel"><strong>${_siMetroGuidePlatform}<small>번 승강장</small></strong><div class="si-metro-platform-services">${selected.map(row=>`<article style="--metro-line:${row.color}"><i></i><b>${_opsEsc(row.line)}</b>${_metroDirectionHTML(stn,row)}</article>`).join('')}</div></div>
+  </section>`;
+}
+
+function selectSIMetroPlatform(stn,platform){
+  _siMetroGuidePlatform=Number(platform);
+  renderSICard(_siCurrent||stn);
 }
 
 function _metroLinesForTrainPlatformHTML(stn,platform){
   if(platform==null)return '';
-  const uses=_metroPlatformUses(stn,platform);if(!uses.length)return '';
-  return `<div class="si-train-metro-uses"><strong>🚇 이 승강장을 쓰는 전철</strong><div>${uses.map(item=>`<span style="--metro-line:${item.color}"><i></i>${_opsEsc(item.line)}${item.roles.includes('보조')?'<small>보조</small>':''}</span>`).join('')}</div></div>`;
+  const rows=_metroPlatformGuideRows(stn).filter(row=>row.platform===Number(platform));if(!rows.length)return '';
+  const grouped=new Map();
+  rows.forEach(row=>{
+    const item=grouped.get(row.line)||{line:row.line,color:row.color,destinations:new Set(),terminating:false};
+    row.deps.forEach(dep=>{if(dep.dest&&dep.dest!==stn)item.destinations.add(dep.dest);});
+    item.terminating=item.terminating||row.terminating;
+    grouped.set(row.line,item);
+  });
+  return `<div class="si-train-metro-uses"><strong>🚇 이 승강장을 쓰는 전철</strong><div>${[...grouped.values()].map(item=>{
+    const directions=[...item.destinations],label=directions.length?`${directions.slice(0,4).join(' · ')} 방면`:'당역종착';
+    return `<span style="--metro-line:${item.color}"><i></i><b>${_opsEsc(item.line)}</b><small>(${_opsEsc(label)})</small></span>`;
+  }).join('')}</div></div>`;
 }
 function renderSICard(name){
   const el=document.getElementById('si-card');
