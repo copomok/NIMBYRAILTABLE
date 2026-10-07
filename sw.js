@@ -16,6 +16,7 @@ const ASSETS = [
   '/NIMBYRAILTABLE/data/nimbi_realplat.js',
   '/NIMBYRAILTABLE/data/nimbi_homonyms.js',
   '/NIMBYRAILTABLE/data/nimbi_station_db_updates.js',
+  '/NIMBYRAILTABLE/data/nimbi_metro_platform_directions.js',
   '/NIMBYRAILTABLE/data/nimbi_regional_platforms.js',
   '/NIMBYRAILTABLE/data/nimbi_station_history.js',
   '/NIMBYRAILTABLE/data/nimbi_rail_notices.js',

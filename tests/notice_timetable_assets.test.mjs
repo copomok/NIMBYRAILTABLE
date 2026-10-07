@@ -177,9 +177,9 @@ test('공지 이미지 배포 버전이 CSS·데이터·서비스워커에 함�
   const index = read('index.html');
   const serviceWorker = read('sw.js');
 
-  assert.match(index, /nimbi_redesign\.css\?v=2026100618/);
+  assert.match(index, /nimbi_redesign\.css\?v=2026100701/);
   assert.match(index, /nimbi_rail_notices\.js\?v=2026092402/);
-  assert.match(index, /nimbi_rail\.css\?v=2026100618/);
+  assert.match(index, /nimbi_rail\.css\?v=2026100701/);
   assert.match(serviceWorker, /CACHE_NAME = 'nimbirail-2026100701'/);
 });
 

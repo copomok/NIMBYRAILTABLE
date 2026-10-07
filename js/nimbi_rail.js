@@ -12138,7 +12138,12 @@ function _metroStationBoardHTML(stn,displayBoard=false){
     const platformNos=_metroBoardPlatforms(stn,line);
     const esc=x=>String(x).replace(/\\/g,'\\\\').replace(/'/g,"\\'");
     const platformFor=o=>{
-      if(!sharedBlock)return platformNos.length?platformNos[0]:'—';
+      const occurrence=_metroPlatformOccurrence(o.line,stn,o.next);
+      if(occurrence?.p?.length)return occurrence.p.join('·');
+      if(!sharedBlock){
+        const groupIndex=Math.max(0,groups.findIndex(group=>group.includes(o.next)));
+        return platformNos.length?platformNos[Math.min(groupIndex,platformNos.length-1)]:'—';
+      }
       const sourceDirs=lines[o.line]||{},sourceCounts={};Object.keys(sourceDirs).forEach(key=>sourceCounts[key]=sourceDirs[key].length);
       const sourceGroups=_metroDirGroups(o.line,stn,sourceCounts);
       const sourceIndex=Math.max(0,sourceGroups.findIndex(group=>group.includes(o.next)));
@@ -12147,9 +12152,8 @@ function _metroStationBoardHTML(stn,displayBoard=false){
     };
     const cols=groups.map((grp,grpIdx)=>{
       const label=grp.join(' • ');
-      const plat=platformNos.length?(platformNos[Math.min(grpIdx,platformNos.length-1)]+'홈'):'—';
       const {entries,first,last}=_metroGroupEntries(dirs,grp,sharedBlock);
-      const toTrain=o=>({rel:o.sec-nowS,dest:o.dest,sec:o.sec,next:o.next,cls:o.cls,svc:o.svc,line:o.line,k0:o.k0,k1:o.k1,plat:sharedBlock?platformFor(o):plat});
+      const toTrain=o=>({rel:o.sec-nowS,dest:o.dest,sec:o.sec,next:o.next,cls:o.cls,svc:o.svc,line:o.line,k0:o.k0,k1:o.k1,plat:platformFor(o)});
       let trainsHtml, routeTrain=entries[0]?toTrain(entries[0]):null;
       if(nowS>last){
         // 오늘 막차 이후 → 운행 종료 + 첫차·행선지 안내
@@ -12193,7 +12197,7 @@ function _metroStationBoardHTML(stn,displayBoard=false){
             infoHtml=`<span class="mtb2-rel">${relTxt(u.rel)}</span><span class="mtb2-clk">${fSrvClock(u.sec)}</span>`;
           }
           return `<div class="mtb2-train${i===0?' mtb2-train--now':''}">
-            <span class="mtb2-seq">${i+1}</span><span class="mtb2-plat">${sharedBlock?(u.plat==='—'?'—':u.plat+'홈'):plat}</span>${destHtml}${infoHtml}</div>`;
+            <span class="mtb2-seq">${i+1}</span><span class="mtb2-plat">${u.plat==='—'?'—':u.plat+'홈'}</span>${destHtml}${infoHtml}</div>`;
         }).join('')||'<div class="mtb2-none">운행 정보 없음</div>';
       }
       const routeLine=sharedBlock?(entries.find(entry=>entry.line===line)?.line||entries[0]?.line||line):line;
@@ -12249,27 +12253,97 @@ function _metroStationBoardHTML(stn,displayBoard=false){
     <div class="mtb-foot">인게임 시각표 기준 · 운행 ${running}편 · ${viewMode==='pos'?'편성 현위치(역명·남은 역 수)':'계통별 실제 착발 반영'}</div>
   </div>`;
 }
-// 기차 모드 역 상세에 표시할 정적 전철 승강장 안내.
-// 도착 시각은 섞지 않고 인게임 승강장 DB와 실제 편성 진행방향만 요약한다.
+// 인게임 Line은 A→B→A 선형에서 같은 역을 방향별 occurrence로 따로 보관한다.
+// 실제 편성의 다음 정차역이 route상 어느 occurrence 뒤에 오는지 비교해 사용할 승강장을 찾는다.
+function _metroPlatformOccurrence(line,stn,next){
+  const data=(typeof METRO_PLATFORM_DIRECTIONS!=='undefined'&&METRO_PLATFORM_DIRECTIONS.lines?.[line])||null;
+  const rows=data?.platforms?.[stn]||[],route=data?.route||[];
+  if(!rows.length)return null;
+  let best=null,bestGap=Infinity;
+  rows.forEach(row=>{
+    let bound=route.length;
+    for(let i=row.i+1;i<route.length;i++){if(route[i]===stn){bound=i;break;}}
+    for(let i=row.i+1;i<bound;i++){
+      if(route[i]===next&&i-row.i<bestGap){best=row;bestGap=i-row.i;break;}
+    }
+  });
+  if(best)return best;
+  // 단방향 자료나 불완전한 지선은 가장 가까운 동일 역 occurrence를 안전한 폴백으로 사용한다.
+  rows.forEach(row=>{
+    route.forEach((name,index)=>{
+      const gap=Math.abs(index-row.i);
+      if(name===next&&gap>0&&gap<bestGap){best=row;bestGap=gap;}
+    });
+  });
+  return best||rows[0];
+}
+
+function _metroPlatformUses(stn,platform){
+  const uses=new Map(),activeLines=new Set(_metroStationDeps(stn).map(item=>item.line));
+  const lines=(typeof METRO_PLATFORM_DIRECTIONS!=='undefined'&&METRO_PLATFORM_DIRECTIONS.lines)||{};
+  Object.entries(lines).forEach(([line,data])=>{
+    if(activeLines.size&&!activeLines.has(line))return;
+    const roles=new Set();
+    (data.platforms?.[stn]||[]).forEach(row=>{
+      if((row.p||[]).includes(platform))roles.add('주');
+      if((row.a||[]).includes(platform))roles.add('보조');
+    });
+    if(roles.size)uses.set(line,{line,color:_metroLineColor(line),roles:[...roles]});
+  });
+  // 최신 원본에 없는 수동 전철 노선은 기존 PLATFORM_DB의 노선 연결을 유지한다.
+  if(typeof PLATFORM_DB!=='undefined'){
+    const key=PLATFORM_DB[stn]?stn:(PLATFORM_DB[stn+'역']?stn+'역':null);
+    const info=key&&PLATFORM_DB[key]?.[String(platform)];
+    (info?.l||[]).forEach(raw=>{
+      const line=String(raw).split('/')[0].split(' (')[0].trim();
+      if(activeLines.has(line)&&!uses.has(line))uses.set(line,{line,color:_metroLineColor(line),roles:['주']});
+    });
+  }
+  return [...uses.values()].sort((a,b)=>a.line.localeCompare(b.line,'ko'));
+}
+
+// 전철 탭 전용 정적 승강장 안내. 실시간 도착 정보와 분리해 노선·방향·보조 승강장을 보여준다.
 function _metroPlatformGuideHTML(stn){
   if(typeof METRO_LINES==='undefined'||typeof METRO_SCHED==='undefined')return '';
-  const rows=[],stationDeps=_metroStationDeps(stn);
-  METRO_LINES.forEach(line=>{
-    const deps=stationDeps.filter(item=>item.line===line.name);if(!deps.length)return;
-    const dirCounts={};deps.forEach(item=>{dirCounts[item.next]=(dirCounts[item.next]||0)+1;});
-    const groups=_metroDirGroups(line.name,stn,dirCounts),platforms=_metroBoardPlatforms(stn,line.name);
-    if(!platforms.length)return;
-    // 인게임의 1N/1S처럼 한 번호 승강장이 양방향 선로를 함께 품을 수 있으므로
-    // 번호를 임의로 상·하행에 나누지 않고 해당 번호에 연결된 실제 방면을 모두 안내한다.
-    const directions=[...new Set(groups.flat())],destinations=[...new Set(deps.map(item=>item.dest))];
-    platforms.forEach(platform=>rows.push({platform,line:line.name,color:line.color||'#388bfd',directions,destinations}));
+  const usage=new Map(),stationDeps=_metroStationDeps(stn);
+  const add=(line,platform,role,dep)=>{
+    const key=`${platform}|${line}`,row=usage.get(key)||{platform,line,color:_metroLineColor(line),roles:new Set(),directions:new Set(),next:new Set()};
+    row.roles.add(role);
+    if(dep.dest&&dep.dest!==stn)row.directions.add(dep.dest);
+    if(dep.next&&dep.next!==stn)row.next.add(dep.next);
+    usage.set(key,row);
+  };
+  [...new Set(stationDeps.map(item=>item.line))].forEach(line=>{
+    const deps=stationDeps.filter(item=>item.line===line);let mapped=false;
+    deps.forEach(dep=>{
+      const occurrence=_metroPlatformOccurrence(line,stn,dep.next);if(!occurrence)return;
+      (occurrence.p||[]).forEach(platform=>add(line,platform,'주',dep));
+      (occurrence.a||[]).forEach(platform=>add(line,platform,'보조',dep));
+      mapped=true;
+    });
+    if(mapped)return;
+    // 인게임 원본에 없는 수동 노선만 기존 DB 순서로 방면과 승강장을 1:1 대응한다.
+    const dirCounts={};deps.forEach(dep=>{dirCounts[dep.next]=(dirCounts[dep.next]||0)+1;});
+    const groups=_metroDirGroups(line,stn,dirCounts),platforms=_metroBoardPlatforms(stn,line);
+    groups.forEach((group,index)=>{
+      const platform=platforms[Math.min(index,platforms.length-1)];if(platform==null)return;
+      deps.filter(dep=>group.includes(dep.next)).forEach(dep=>add(line,platform,'주',dep));
+    });
   });
-  const unique=[],seen=new Set();
-  rows.sort((a,b)=>a.platform-b.platform||a.line.localeCompare(b.line,'ko')).forEach(row=>{
-    const key=`${row.platform}|${row.line}|${row.directions.join('|')}`;if(!seen.has(key)){seen.add(key);unique.push(row);}
-  });
-  if(!unique.length)return '';
-  return `<section class="si-metro-platform-guide"><header><div><span>METRO PLATFORMS</span><b>전철 승강장 안내</b></div><small>운행 방향 기준</small></header><div class="si-metro-platform-rows">${unique.map(row=>`<article><strong>${row.platform}<small>번</small></strong><i style="--metro-line:${row.color}"></i><span><b>${_opsEsc(row.line)}</b><small>${_opsEsc(row.directions.join(' · '))} 방면${row.destinations.length?` · ${_opsEsc(row.destinations.slice(0,3).join(' · '))}행`:''}</small></span></article>`).join('')}</div></section>`;
+  const rows=[...usage.values()].sort((a,b)=>a.platform-b.platform||a.line.localeCompare(b.line,'ko'));
+  if(!rows.length)return '';
+  return `<section class="si-metro-platform-guide"><header><div><span>METRO PLATFORMS</span><b>전철 승강장 안내</b></div><small>인게임 운행 방향 기준</small></header><div class="si-metro-platform-rows">${rows.map(row=>{
+    const roles=[...row.roles],role=roles.length>1?'주·보조':roles[0];
+    const directions=[...row.directions],next=[...row.next];
+    const directionText=directions.length?`${directions.slice(0,4).join(' · ')} 방면`:(next.length?`${next.slice(0,4).join(' · ')} 방면`:'운행 방향 확인 중');
+    return `<article><strong>${row.platform}<small>번</small></strong><i style="--metro-line:${row.color}"></i><span><b>${_opsEsc(row.line)}<em class="si-metro-platform-role${role==='보조'?' is-aux':''}">${role}</em></b><small>${_opsEsc(directionText)}${next.length?` · 다음 ${_opsEsc(next.slice(0,3).join(' · '))}`:''}</small></span></article>`;
+  }).join('')}</div></section>`;
+}
+
+function _metroLinesForTrainPlatformHTML(stn,platform){
+  if(platform==null)return '';
+  const uses=_metroPlatformUses(stn,platform);if(!uses.length)return '';
+  return `<div class="si-train-metro-uses"><strong>🚇 이 승강장을 쓰는 전철</strong><div>${uses.map(item=>`<span style="--metro-line:${item.color}"><i></i>${_opsEsc(item.line)}${item.roles.includes('보조')?'<small>보조</small>':''}</span>`).join('')}</div></div>`;
 }
 function renderSICard(name){
   const el=document.getElementById('si-card');
@@ -12362,6 +12436,7 @@ function renderSICard(name){
           </div>`).join('')}
         </div>`;
       })():''}
+      ${_appMode==='metro'?_metroPlatformGuideHTML(trainName):''}
       ${_appMode==='metro'?_metroStationBoardHTML(trainName):''}
       ${_appMode==='metro'&&_isTrainStn(trainName)?`<div style="padding:12px 16px 4px">
         <button class="si-board-btn" onclick="switchModeStation('train','${nameEsc}')">🚆 기차 ${trainName}역으로 전환</button>
@@ -12383,7 +12458,6 @@ function renderSICard(name){
       ${_appMode!=='metro'&&trains.length?`<div id="si-platform-trains" style="padding:14px 16px">
         ${_siPlatformTrainsHTML(name, trains)}
       </div>`:''}
-      ${_appMode!=='metro'?_metroPlatformGuideHTML(trainName):''}
       ${_appMode!=='metro'&&metroLines.length?`<div style="padding:0 16px 12px">
         <button class="si-board-btn" onclick="switchModeStation('metro','${nameEsc}')">🚇 전철 ${trainName}역으로 전환</button>
       </div>`:''}
@@ -12618,6 +12692,7 @@ function _siPlatformTrainsHTML(name, trains){
       ${chip(upcOn,'이후 열차만','toggleSIUpcoming')}
       ${chip(termOn,'당역종착 제외','toggleSITerm')}
     </div>
+    ${_siCardPlatform!==null?_metroLinesForTrainPlatformHTML(trainName,_siCardPlatform):''}
     ${destsStr?`<div style="font-size:10px;color:var(--accent2);margin-bottom:8px">📍 ${destsStr}</div>`:''}
     ${navHtml}
     ${endedHtml}
