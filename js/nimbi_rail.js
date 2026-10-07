@@ -12327,7 +12327,7 @@ function _metroStationImportance(name){
   return score;
 }
 
-// 기본 표시는 다음역·중간 주요역·종착역 3곳. 분기 종착은 최대 5곳까지 허용한다.
+// 실제 행선 안내판처럼 다음역 1곳·주요역 최대 3곳·대표 최종 종착역 1곳을 운행 순서대로 고른다.
 function _metroDirectionLandmarks(stn,row){
   if(row.terminating&&!row.deps.length)return [];
   const paths=row.deps.map(dep=>_metroServicePath(stn,dep)).filter(path=>path.length>1).sort((a,b)=>b.length-a.length);
@@ -12335,25 +12335,25 @@ function _metroDirectionLandmarks(stn,row){
   const termini=[...new Set(row.deps.map(dep=>dep.dest).filter(name=>name&&name!==stn))];
   const out=[],seen=new Set(),push=(name,kind)=>{if(name&&!seen.has(name)&&out.length<5){seen.add(name);out.push({name,kind});}};
   next.slice(0,1).forEach(name=>push(name,'다음역'));
-  const path=paths[0]||[],terminalSet=new Set(termini);
-  const middle=path.slice(2,-1).filter(name=>!seen.has(name)&&!terminalSet.has(name));
+  const path=paths[0]||[],terminal=path[path.length-1]||termini[0]||null;
+  const middle=path.slice(2,-1).filter(name=>!seen.has(name)&&name!==terminal);
   if(middle.length){
     const midpoint=(path.length-1)/2;
-    middle.sort((a,b)=>{
+    const majors=middle.sort((a,b)=>{
       const as=_metroStationImportance(a),bs=_metroStationImportance(b);
       if(as!==bs)return bs-as;
       return Math.abs(path.indexOf(a)-midpoint)-Math.abs(path.indexOf(b)-midpoint);
-    });
-    push(middle[0],'주요역');
+    }).slice(0,3).sort((a,b)=>path.indexOf(a)-path.indexOf(b));
+    majors.forEach(name=>push(name,'주요역'));
   }
-  termini.forEach(name=>push(name,'종착역'));
+  push(terminal,'종착역');
   return out;
 }
 
 function _metroDirectionHTML(stn,row){
   const landmarks=_metroDirectionLandmarks(stn,row);
   if(!landmarks.length)return '<span class="si-metro-terminal">당역종착</span>';
-  return `<span class="si-metro-direction">${landmarks.map((item,index)=>`${index?'<i>,</i>':''}<span>${_opsEsc(item.name)}<small>(${item.kind})</small></span>`).join('')}<em>방면</em></span>`;
+  return `<span class="si-metro-direction"><span>${landmarks.map(item=>_opsEsc(item.name)).join(' · ')}</span><em>방면</em></span>`;
 }
 
 // 승강장별·방향별 사용 정보를 만든다. 보조 홈도 같은 승강장 목록에 포함하되 UI에서 등급을 구분하지 않는다.
@@ -12401,9 +12401,9 @@ function _metroPlatformGuideHTML(stn){
   if(_siMetroGuidePlatform===null||!platforms.includes(_siMetroGuidePlatform))_siMetroGuidePlatform=platforms[0];
   const selected=rows.filter(row=>row.platform===_siMetroGuidePlatform);
   const stnEsc=String(stn).replace(/\\/g,'\\\\').replace(/'/g,"\\'");
-  return `<section class="si-metro-platform-guide"><header><b>전철 승강장 안내</b><small>총 ${platforms.length}개 승강장</small></header>
-    <div class="si-metro-platform-tabs" role="tablist" aria-label="전철 승강장 선택">${platforms.map(platform=>`<button class="${platform===_siMetroGuidePlatform?'on':''}" onclick="selectSIMetroPlatform('${stnEsc}',${platform})" role="tab" aria-selected="${platform===_siMetroGuidePlatform}">${platform}<small>번</small></button>`).join('')}</div>
-    <div class="si-metro-platform-panel"><strong>${_siMetroGuidePlatform}<small>번 승강장</small></strong><div class="si-metro-platform-services">${selected.map(row=>`<article style="--metro-line:${row.color}"><i></i><b>${_opsEsc(row.line)}</b>${_metroDirectionHTML(stn,row)}</article>`).join('')}</div></div>
+  return `<section class="si-metro-platform-guide"><div class="si-metro-platform-heading"><b>전철 승강장 안내</b><small>총 ${platforms.length}개 승강장</small></div>
+    <div class="si-metro-platform-tabs" role="tablist" aria-label="전철 승강장 선택">${platforms.map(platform=>`<button class="${platform===_siMetroGuidePlatform?'on':''}" onclick="selectSIMetroPlatform('${stnEsc}',${platform})" role="tab" aria-label="${platform}번 승강장" aria-selected="${platform===_siMetroGuidePlatform}">${platform}</button>`).join('')}</div>
+    <div class="si-metro-platform-panel"><strong aria-label="${_siMetroGuidePlatform}번 승강장">${_siMetroGuidePlatform}</strong><div class="si-metro-platform-services">${selected.map(row=>`<article style="--metro-line:${row.color}"><i></i><b>${_opsEsc(row.line)}</b>${_metroDirectionHTML(stn,row)}</article>`).join('')}</div></div>
   </section>`;
 }
 

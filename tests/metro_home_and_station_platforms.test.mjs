@@ -47,6 +47,9 @@ test('전철 승강장 안내는 승강장 탭에서 실제 방향만 펼쳐 표
   assert.match(app,/plat:platformFor\(o\)/);
   assert.match(app,/si-metro-platform-tabs/);
   assert.match(app,/si-metro-platform-services/);
+  assert.match(app,/si-metro-platform-heading/);
+  assert.doesNotMatch(app,/\$\{platform\}<small>번<\/small>/);
+  assert.doesNotMatch(app,/\$\{item\.kind\}/);
   assert.match(app,/다음역/);
   assert.match(app,/주요역/);
   assert.match(app,/종착역/);
@@ -55,6 +58,7 @@ test('전철 승강장 안내는 승강장 탭에서 실제 방향만 펼쳐 표
   assert.match(css,/\.si-metro-platform-guide/);
   assert.match(css,/\.si-metro-platform-tabs/);
   assert.match(css,/\.si-metro-platform-panel/);
+  assert.match(css,/\.si-metro-platform-heading/);
   assert.match(css,/\.si-metro-direction/);
 });
 
@@ -79,7 +83,7 @@ test('인게임 A→B→A occurrence와 보조 승강장을 원본 그대로 보
   assert.deepEqual(Array.from(data.lines['강서선'].platforms['구래'][1].a),[6]);
   assert.deepEqual(Array.from(data.lines['경부선'].platforms['양주'][0].p),[5]);
   assert.deepEqual(Array.from(data.lines['경부선'].platforms['양주'][1].p),[6]);
-  assert.match(index,/nimbi_metro_platform_directions\.js\?v=2026100702/);
+  assert.match(index,/nimbi_metro_platform_directions\.js\?v=2026100703/);
   assert.match(serviceWorker,/data\/nimbi_metro_platform_directions\.js/);
 });
 
@@ -117,8 +121,13 @@ test('실제 편성 경로에서 다음역·주요역·종착역과 당역종착
   })))`,context));
   assert.ok(rows.some(row=>row.platform===1&&row.line==='경의선'&&row.terminating&&row.marks.length===0));
   assert.deepEqual(rows.find(row=>row.platform===1&&row.line==='GTX-A').marks,[
-    {name:'잠실',kind:'다음역'},{name:'수진',kind:'주요역'},{name:'평택시청',kind:'종착역'}
+    {name:'잠실',kind:'다음역'},
+    {name:'수진',kind:'주요역'},
+    {name:'북용인',kind:'주요역'},
+    {name:'동탄',kind:'주요역'},
+    {name:'평택시청',kind:'종착역'}
   ]);
+  assert.equal(rows.find(row=>row.platform===1&&row.line==='GTX-A').marks.filter(mark=>mark.kind==='종착역').length,1);
   assert.ok(rows.every(row=>row.marks.length<=5));
   const trainGuide=vm.runInContext("_metroLinesForTrainPlatformHTML('서울',1)",context);
   assert.match(trainGuide,/경의선<\/b><small>\(당역종착\)<\/small>/);
