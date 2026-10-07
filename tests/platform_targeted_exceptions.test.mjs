@@ -42,3 +42,32 @@ test('철회한 전수 승강장 오버레이를 앱에서 불러오거나 캐�
   assert.doesNotMatch(fs.readFileSync('index.html', 'utf8'), /nimbi_ingame_platforms/);
   assert.doesNotMatch(fs.readFileSync('sw.js', 'utf8'), /nimbi_ingame_platforms/);
 });
+
+test('남도해양 전 편은 영업 구간 전체에 방향별 승강장이 연결된다', () => {
+  const trains=vm.runInContext('ALL_TRAINS',context);
+  for(const train of trains.filter(item=>item.grade==='남도해양')){
+    for(const stop of train.stops){
+      assert.ok(Number.isFinite(context.__platforms[train.no]?.[stop.s]),`#${train.no} ${stop.s}`);
+    }
+  }
+  assert.equal(context.__platforms[2501]?.['보성'],3);
+  assert.equal(context.__platforms[2502]?.['보성'],4);
+  assert.equal(context.__platforms[2521]?.['통영'],1);
+  assert.equal(context.__platforms[2522]?.['통영'],4);
+});
+
+test('병목안 하행 1번 계통의 대응 상행은 4번 승강장을 쓴다', () => {
+  const trains=vm.runInContext('ALL_TRAINS',context);
+  for(const down of trains.filter(item=>item.dir==='down'&&context.__platforms[item.no]?.['병목안']===1)){
+    const up=trains.find(item=>Number(item.no)===Number(down.no)+1&&item.dir==='up');
+    if(up?.stops.some(stop=>stop.s==='병목안'))assert.equal(context.__platforms[up.no]?.['병목안'],4,`#${up.no}`);
+  }
+});
+
+test('이천·경기광주 SRT는 방향별 본선 승강장을 일관되게 쓴다', () => {
+  for(let no=681;no<=700;no++){
+    const up=no%2===0;
+    assert.equal(context.__platforms[no]?.['이천'],up?2:1,`#${no} 이천`);
+    assert.equal(context.__platforms[no]?.['경기광주'],up?4:3,`#${no} 경기광주`);
+  }
+});

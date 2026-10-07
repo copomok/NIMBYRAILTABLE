@@ -271,6 +271,51 @@
       setPlatform(no,'봉화',no%2===1?3:2);
     }
   }
+
+  // 남도해양 #2501~2534는 역 승강장 구조에는 계통이 등록돼 있었지만
+  // 열차별 REAL_PLAT 연결이 누락돼 있었다. 동일 경로의 기존 일반열차와
+  // PLATFORM_DB에 확정된 방향별 선로를 기준으로 전 구간을 연결한다.
+  const namdoCommonDown={목포:7,남악:1,일로:1,시종:1,영암:1,작천:1,장흥:1,
+    보성:3,조성:1,동강:1,별량:1,순천:1};
+  const namdoCommonUp={목포:9,남악:2,일로:2,시종:2,영암:2,작천:2,장흥:2,
+    보성:4,조성:2,동강:4,별량:2,순천:2};
+  const yeosuDown={율촌:1,여수공항:1,여천:1,여수:2};
+  const yeosuUp={율촌:2,여수공항:2,여천:2,여수:2};
+  const gohyeonDown={남광양:4,진상:4,하동:2,횡천:1,사천:1,고성:1,'고성(경남)':1,
+    안정:1,통영:1,사등:1,고현:2};
+  const gohyeonUp={남광양:3,진상:1,하동:1,횡천:4,사천:2,고성:4,'고성(경남)':4,
+    안정:2,통영:4,사등:2,고현:3};
+  const applyPlatforms=(train,values)=>{
+    for(const [station,platform] of Object.entries(values)){
+      if(train.stops.some(stop=>stop.s===station))setPlatform(train.no,station,platform);
+    }
+  };
+  for(const train of ALL_TRAINS){
+    const no=Number(train.no);
+    if(no>=2501&&no<=2514){
+      applyPlatforms(train,train.dir==='up'?namdoCommonUp:namdoCommonDown);
+      applyPlatforms(train,train.dir==='up'?yeosuUp:yeosuDown);
+    }else if(no>=2521&&no<=2534){
+      applyPlatforms(train,train.dir==='up'?namdoCommonUp:namdoCommonDown);
+      applyPlatforms(train,train.dir==='up'?gohyeonUp:gohyeonDown);
+    }
+  }
+
+  // 병목안은 하행 1·2번, 상행 3·4번을 대응 사용한다. 하행 1번을 쓰는
+  // 왕복 계통의 상행편은 4번으로 보내고, 하행 2번 계통은 기존 3번을 쓴다.
+  for(const down of ALL_TRAINS){
+    if(down.dir!=='down'||REAL_PLAT[down.no]?.['병목안']!==1)continue;
+    const up=ALL_TRAINS.find(train=>Number(train.no)===Number(down.no)+1&&train.dir==='up');
+    if(up?.stops.some(stop=>stop.s==='병목안'))setPlatform(up.no,'병목안',4);
+  }
+
+  // 잠실-간성/봉화 SRT의 동일 방향 승강장을 통일한다. 봉화 계통 상행에
+  // 하행 값(경기광주 3·이천 1)이 복제돼 있던 오류를 함께 교정한다.
+  for(let no=681;no<=700;no++){
+    const up=no%2===0;
+    setPlatform(no,'경기광주',up?4:3);
+    setPlatform(no,'이천',up?2:1);
+  }
 })();
 
 // 북한 정식 개편 21개 계통의 인게임 방향별 승강장 확정값.
