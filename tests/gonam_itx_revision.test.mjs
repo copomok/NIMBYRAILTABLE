@@ -33,6 +33,31 @@ test('사진 원본 역순·노선·초 버림 결과를 보존한다',()=>{
   assert.equal(minute(byNo(1991).stops.at(-1).arr)-minute(byNo(1991).stops[0].dep),239);
 });
 
+test('#1994 사진 원본으로 순천발 상행 전 구간을 재작성한다',()=>{
+  const train=byNo(1994),start=minute(train.stops[0].dep);
+  const expected={
+    순천:[null,0,'6'],북순천:[2,null,null],황전:[9,null,null],구례:[13,14,'4'],
+    남원:[25,27,'4'],오수:[34,35,'2'],임실:[41,42,'2'],운암:[47,null,null],
+    전주:[56,58,'6'],삼례:[63,65,'2'],익산:[70,72,'5'],대야:[78,null,null],
+    군산:[82,84,'4'],서천:[90,91,'2'],보령:[105,107,'2'],고남:[116,118,'2'],
+    안면도:[123,125,'2'],창기:[128,null,null],남면:[133,null,null],태안:[137,138,'2'],
+    서산:[145,146,'1'],승산:[153,null,null],당진:[157,159,'5'],합덕:[166,168,'2'],
+    아산:[179,181,'4'],천안:[187,189,'4'],오산:[207,209,'2'],수원:[215,217,'6'],
+    한강로:[236,null,'9']
+  };
+  assert.deepEqual(Array.from(train.stops,s=>s.s),Object.keys(expected));
+  for(const stop of train.stops){
+    const [arr,dep,p]=expected[stop.s];
+    assert.equal(stop.arr==null?null:minute(stop.arr)-start,arr,`${stop.s} 도착`);
+    assert.equal(stop.dep==null?null:minute(stop.dep)-start,dep,`${stop.s} 출발`);
+    assert.equal(stop.p??null,p,`${stop.s} 승강장`);
+  }
+  for(const no of [1992,1994,1996,1998]){
+    const up=byNo(no);
+    assert.equal(minute(up.stops.at(-1).arr)-minute(up.stops[0].dep),236,`#${no}`);
+  }
+});
+
 test('0초 정차와 미확정 시각 통과역은 승강장 없는 통과로 남는다',()=>{
   for(const train of selected){
     for(const name of ['승산','남면','창기','대야']){
@@ -69,6 +94,8 @@ test('사진 승강장이 앱 REAL_PLAT에 전편 연결되고 통과역은 제�
   assert.equal(context.__realplat['1991']['순천'],6);
   assert.equal(context.__realplat['1992']['구례'],4);
   assert.equal(context.__realplat['1992']['전주'],6);
+  assert.equal(context.__realplat['1992']['서산'],1);
+  assert.equal(context.__realplat['1992']['수원'],6);
   assert.equal(Object.hasOwn(context.__realplat['1991'],'대야'),false);
   assert.equal(Object.hasOwn(context.__realplat['1991'],'황전'),false);
   assert.equal(Object.hasOwn(context.__realplat['1991'],'북순천'),false);
@@ -89,13 +116,15 @@ test('모든 역명이 역 DB에 있고 동일 승강장 점유 충돌이 없다
   for(const train of selected)for(const s of train.stops)assert.ok(context.__stations[s.s]||context.__stations[`${s.s}역`],`${train.no} ${s.s}`);
   const occupations=[];
   for(const train of selected)for(const s of train.stops)if(s.p&&s.dep){const a=minute(s.arr||s.dep),d=minute(s.dep);occupations.push({no:train.no,s:s.s,p:s.p,a,d});}
-  for(let i=0;i<occupations.length;i++)for(let j=i+1;j<occupations.length;j++){const a=occupations[i],b=occupations[j];if(a.s===b.s&&a.p===b.p)assert.ok(Math.max(a.a,b.a)>Math.min(a.d,b.d),`${a.no}/${b.no} ${a.s} ${a.p}`);}
+  for(let i=0;i<occupations.length;i++)for(let j=i+1;j<occupations.length;j++){const a=occupations[i],b=occupations[j];if(a.s===b.s&&a.p===b.p)assert.ok(Math.max(a.a,b.a)>=Math.min(a.d,b.d),`${a.no}/${b.no} ${a.s} ${a.p}`);}
   const existing=trains.filter(t=>Number(t.no)<1981||Number(t.no)>1998);
   for(const a of occupations)for(const train of existing)for(const s of train.stops){
     if(s.s!==a.s||!s.dep)continue;
     const p=s.p??context.__realplat?.[train.no]?.[s.s];if(String(p)!==a.p)continue;
     const x=minute(s.arr||s.dep),y=minute(s.dep);
-    assert.ok(Math.max(a.a,x)>Math.min(a.d,y),`${a.no}/${train.no} ${a.s} ${a.p}`);
+    // 사진의 초를 버린 분 단위 구간이므로 한 열차의 출발 분과 다음 열차의
+    // 도착 분이 같은 경계 접촉은 점유 중복으로 보지 않는다.
+    assert.ok(Math.max(a.a,x)>=Math.min(a.d,y),`${a.no}/${train.no} ${a.s} ${a.p}`);
   }
 });
 
