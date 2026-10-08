@@ -107,11 +107,14 @@ test('확정 운용표는 전 편을 한 번씩 포함하고 회차가 5분 이�
   const numbers=sets.flatMap(r=>r.seq);
   assert.deepEqual(Array.from(numbers).sort((a,b)=>a-b),Array.from(selected,t=>t.no).sort((a,b)=>a-b));
   assert.equal(new Set(numbers).size,18);
+  assert.equal(sets.length,7);
+  assert.deepEqual(Array.from(sets.find(set=>set.id.includes('전주 ITX-마음 2')).seq),['1982','1983','1986','1989']);
+  assert.equal(sets.some(set=>set.id.includes('익일')),false);
   for(const set of sets){
     const seq=set.seq.map(byNo);assert.equal(seq[0].boundary[0],seq.at(-1).boundary[1],set.id);
     for(let i=1;i<seq.length;i++){
       const prev=seq[i-1],next=seq[i];assert.equal(prev.boundary[1],next.boundary[0],set.id);
-      let gap=minute(next.stops[0].dep)-minute(prev.stops.at(-1).arr);if(gap<0)gap+=1440;
+      const gap=minute(next.stops[0].dep)-minute(prev.stops.at(-1).arr);
       assert.ok(gap>=5,`${set.id}: ${prev.no}->${next.no} ${gap}분`);
     }
   }
