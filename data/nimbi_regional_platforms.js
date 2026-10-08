@@ -126,6 +126,33 @@
     }
   }
 
+  // 2026-10-08 인게임 Timetable Export에서 직접 발췌한 장항선 승강장.
+  // 한강로-장항-전주/서대전 무궁화호의 아산~광천 구간은 하행과 상행이
+  // 서로 다른 본선 승강장을 사용한다. 서산은 고남 경유 일반열차가
+  // 하행 2번·상행 1번, 한강로-태안 KTX가 하행 5번·상행 4번을 사용한다.
+  const applyVerifiedPlatform=(train,station,platform)=>{
+    const stop=train.stops.find(item=>item.s===station);
+    if(!stop)return;
+    const mapped=REAL_PLAT[train.no]||(REAL_PLAT[train.no]={});
+    mapped[station]=platform;
+    stop.p=String(platform);
+  };
+  const janghangMugunghwa={
+    down:{아산:3,예산:2,홍북:1,홍성:1,광천:3},
+    up:{아산:4,예산:1,홍북:2,홍성:2,광천:4}
+  };
+  for(const train of ALL_TRAINS){
+    const no=Number(train.no);
+    if(no>=1461&&no<=1490&&train.grade==='무궁화호'){
+      const platforms=janghangMugunghwa[train.dir];
+      if(platforms)for(const [station,platform] of Object.entries(platforms)){
+        applyVerifiedPlatform(train,station,platform);
+      }
+    }
+    if(no>=1981&&no<=1998)applyVerifiedPlatform(train,'서산',train.dir==='up'?1:2);
+    if(no>=221&&no<=230)applyVerifiedPlatform(train,'서산',train.dir==='up'?4:5);
+  }
+
   // 복선 구간인데 한 방향 사진값이 반대편 전 편에 복제된 계통을 인게임
   // PLATFORM_DB의 노선·등급별 승강장 쌍으로 분리한다. 교외선·보은선의
   // 단선 구간과 진행 방향이 바뀌는 중간 종착역은 이 목록에 넣지 않는다.
