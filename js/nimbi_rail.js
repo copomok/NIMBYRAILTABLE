@@ -11756,6 +11756,7 @@ const METRO_SHARED_TRACK_BOARD_SECTIONS=[
   {from:'대야미',to:'원시',lines:['안산성남선','안산안양선']},
   {from:'수원',to:'갈곶',lines:['경부선','장호원선']},
   {from:'천안',to:'당진',lines:['경부선','고남-합덕 통근']},
+  {from:'서동탄',to:'청계',lines:['안양동탄선','화성선']},
   {from:'지정',to:'판부',lines:['종원선','중앙선']}
 ];
 function _metroSharedTrackSectionContains(rule,stn){

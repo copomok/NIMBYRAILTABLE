@@ -69,6 +69,7 @@ for(const rule of [
   "{from:'대야미',to:'원시',lines:['안산성남선','안산안양선']}",
   "{from:'수원',to:'갈곶',lines:['경부선','장호원선']}",
   "{from:'천안',to:'당진',lines:['경부선','고남-합덕 통근']}",
+  "{from:'서동탄',to:'청계',lines:['안양동탄선','화성선']}",
   "{from:'지정',to:'판부',lines:['종원선','중앙선']}"
 ])assert.ok(source.includes(rule),`선로 공유 구간 규칙 ${rule} 누락`);
 assert.ok(!css.includes('.mtb2-shared-head')&&!css.includes('.mtb-display-shared'),'공유 모드도 기존 전광판과 같은 CSS 구조를 사용해야 합니다.');
@@ -84,7 +85,8 @@ vm.runInContext(`${source.slice(sharedStart,sharedEnd)}\nthis.sharedLines=_metro
 const sharedCases=[
   ['서울',['경부선','구인선','신노원선']],['노량진',['경부선','구인선']],['북상계',['신노원선','노원선']],
   ['목동',['강서선','인천종단선']],['동백',['수원이천선','안산용인선']],['안산',['안산성남선','안산안양선']],
-  ['오산',['경부선','장호원선']],['합덕',['경부선','고남-합덕 통근']],['원주',['종원선','중앙선']]
+  ['오산',['경부선','장호원선']],['합덕',['경부선','고남-합덕 통근']],['서동탄',['안양동탄선','화성선']],
+  ['청계',['안양동탄선','화성선']],['원주',['종원선','중앙선']]
 ];
 for(const [station,lines] of sharedCases){
   assert.deepEqual(Array.from(sharedContext.sharedLines(station,lines[0],lines)),lines,`${station} 공유 선로 전광판은 ${lines.join('·')}을 함께 표시해야 합니다.`);
