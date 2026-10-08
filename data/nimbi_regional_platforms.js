@@ -359,3 +359,19 @@
     }
   }
 })();
+
+// #1981~1998 한강로-전주/순천 ITX-마음.
+// 인게임 사진에서 판독해 각 stop.p에 기록한 숫자를 앱 승강장 조회표에도
+// 연결한다. 0초 정차 및 통과로 판정한 역은 승강장을 표시하지 않는다.
+(()=>{
+  if(typeof REAL_PLAT==='undefined'||typeof ALL_TRAINS==='undefined')return;
+  for(const train of ALL_TRAINS){
+    const no=Number(train.no);
+    if(no<1981||no>1998)continue;
+    const mapped=REAL_PLAT[train.no]||(REAL_PLAT[train.no]={});
+    for(const station of Object.keys(mapped))delete mapped[station];
+    for(const stop of train.stops){
+      if(stop.p!=null)mapped[stop.s]=Number(stop.p);
+    }
+  }
+})();

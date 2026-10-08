@@ -5,7 +5,7 @@ import vm from 'node:vm';
 
 const root=new URL('../',import.meta.url);
 let src='';
-for(const file of ['data/nimbi_rail_data.js','data/nimbi_north_ingame_routes.js','data/nimbi_station_data.js','data/nimbi_north_station_revision.js','data/nimbi_north_rail_revision.js','data/nimbi_gonam_itx_revision.js','data/nimbi_realplat.js'])src+=fs.readFileSync(new URL(file,root),'utf8')+'\n';
+for(const file of ['data/nimbi_rail_data.js','data/nimbi_north_ingame_routes.js','data/nimbi_station_data.js','data/nimbi_north_station_revision.js','data/nimbi_north_rail_revision.js','data/nimbi_gonam_itx_revision.js','data/nimbi_realplat.js','data/nimbi_regional_platforms.js'])src+=fs.readFileSync(new URL(file,root),'utf8')+'\n';
 src+=';globalThis.__trains=ALL_TRAINS;globalThis.__stations=STATION_DB;globalThis.__realplat=REAL_PLAT;';
 const context={};vm.createContext(context);vm.runInContext(src,context);
 const trains=context.__trains,selected=trains.filter(t=>Number(t.no)>=1981&&Number(t.no)<=1998);
@@ -26,7 +26,7 @@ test('1981~1998은 9왕복 ITX-마음으로 완전 대치된다',()=>{
 test('사진 원본 역순·노선·초 버림 결과를 보존한다',()=>{
   assert.equal(byNo(1981).line,'경부선·태안선·장항선');
   assert.equal(byNo(1991).line,'경부선·태안선·장항선·전라선');
-  assert.deepEqual(Array.from(byNo(1981).stops,s=>s.s),['한강로','수원','오산','천안','아산','합덕','당진','송악','서산','태안','남면','창기','안면도','고남','보령','서천','군산','익산','삼례','전주']);
+  assert.deepEqual(Array.from(byNo(1981).stops,s=>s.s),['한강로','수원','오산','천안','아산','합덕','당진','승산','서산','태안','남면','창기','안면도','고남','보령','서천','군산','대야','익산','삼례','전주']);
   assert.equal(byNo(1981).stops.find(s=>s.s==='수원').arr,'5:17');
   assert.equal(byNo(1981).stops.find(s=>s.s==='수원').dep,'5:19');
   assert.equal(minute(byNo(1991).stops.find(s=>s.s==='전주').arr)-minute(byNo(1991).stops[0].dep),177);
@@ -35,18 +35,43 @@ test('사진 원본 역순·노선·초 버림 결과를 보존한다',()=>{
 
 test('0초 정차와 미확정 시각 통과역은 승강장 없는 통과로 남는다',()=>{
   for(const train of selected){
-    for(const name of ['송악','남면','창기']){
+    for(const name of ['승산','남면','창기','대야']){
       const s=train.stops.find(stop=>stop.s===name);assert.ok(s,`${train.no} ${name}`);assert.equal(s.dep,null);assert.equal(s.p,undefined);
     }
     for(const s of train.stops.slice(1,-1))if(s.dep===null)assert.equal(s.p,undefined,`${train.no} ${s.s}`);
   }
-  for(const name of ['운암','구례','황전','북순천'])assert.equal(byNo(1991).stops.find(s=>s.s===name).dep,null);
+  for(const name of ['운암','황전','북순천'])assert.equal(byNo(1991).stops.find(s=>s.s===name).dep,null);
+  assert.deepEqual(Array.from(byNo(1991).stops.slice(-5),s=>s.s),['남원','구례','황전','북순천','순천']);
+  assert.notEqual(byNo(1991).stops.find(s=>s.s==='구례').dep,null);
+  assert.equal(byNo(1991).stops.some(s=>s.s==='곡성'),false);
+  assert.equal(byNo(1991).stops.some(s=>s.s==='송악'),false);
 });
 
 test('정차역 승강장은 사진의 숫자만 저장한다',()=>{
   const expected={한강로:'9',수원:'4',오산:'8',천안:'3',아산:'3',합덕:'3',당진:'6',서산:'2',태안:'1',안면도:'1',고남:'1',보령:'1',서천:'1',군산:'3',익산:'2',삼례:'1',전주:'7'};
   for(const [name,p] of Object.entries(expected))assert.equal(byNo(1981).stops.find(s=>s.s===name).p,p,name);
   for(const train of selected)for(const s of train.stops)if(s.p!=null)assert.match(s.p,/^\d+$/);
+});
+
+test('사진 승강장이 앱 REAL_PLAT에 전편 연결되고 통과역은 제외된다',()=>{
+  for(const train of selected){
+    const mapped=context.__realplat[train.no];
+    assert.ok(mapped,`#${train.no}`);
+    for(const stop of train.stops){
+      if(stop.p!=null)assert.equal(mapped[stop.s],Number(stop.p),`${train.no} ${stop.s}`);
+      else assert.equal(Object.hasOwn(mapped,stop.s),false,`${train.no} ${stop.s} 통과역`);
+    }
+  }
+  assert.equal(context.__realplat['1981']['한강로'],9);
+  assert.equal(context.__realplat['1981']['전주'],7);
+  assert.equal(context.__realplat['1982']['전주'],7);
+  assert.equal(context.__realplat['1991']['구례'],1);
+  assert.equal(context.__realplat['1991']['순천'],6);
+  assert.equal(context.__realplat['1992']['구례'],4);
+  assert.equal(context.__realplat['1992']['전주'],6);
+  assert.equal(Object.hasOwn(context.__realplat['1991'],'대야'),false);
+  assert.equal(Object.hasOwn(context.__realplat['1991'],'황전'),false);
+  assert.equal(Object.hasOwn(context.__realplat['1991'],'북순천'),false);
 });
 
 test('통합 배차·첫막차 조건을 충족한다',()=>{

@@ -189,6 +189,15 @@ const notices=[
       ['KTX-산천 · 경흥 ↔ 남대구',selectNumbers(range(9701,9716))],
       ['KTX-산천 · 경흥 ↔ 목포',selectNumbers(range(9751,9764))]
     ]
+  },
+  {
+    id:'20261008-gonam-itx',date:'2026.10.08',
+    title:'고남 경유 ITX-마음 전체 운행계획',expected:18,
+    subtitle:'한강로–전주·순천 통합 9회 왕복',
+    groups:[
+      ['ITX-마음 · 한강로 ↔ 전주',selectNumbers(range(1981,1990))],
+      ['ITX-마음 · 한강로 ↔ 순천',selectNumbers(range(1991,1998))]
+    ]
   }
 ];
 

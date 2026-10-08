@@ -19,7 +19,8 @@ const FULL_NOTICE_IDS = [
   '20260731-gyeongbuk-loop',
   '20260801-gyooe-loop',
   '20260802-taebaek',
-  '20260911-north-formal'
+  '20260911-north-formal',
+  '20261008-gonam-itx'
 ];
 const SUMMARY_NOTICE_IDS = [
   '20260620-ktx-adjustments',
@@ -40,7 +41,8 @@ const SUMMARY_NOTICE_IDS = [
   '20260801-gyooe-loop-summary',
   '20260802-taebaek-summary',
   '20260803-jamsil-mokpo-srt-expansion',
-  '20260911-north-formal-summary'
+  '20260911-north-formal-summary',
+  '20261008-gonam-itx-summary'
 ];
 const NOTICE_IDS = [...FULL_NOTICE_IDS, ...SUMMARY_NOTICE_IDS];
 
@@ -166,7 +168,8 @@ test('신설 계통 공지는 요약표와 전체 시간표를 함께 제공한�
     ['20260710-major-revision-summary.svg', '20260710-major-revision.svg'],
     ['20260729-mugunghwa-summary.svg', '20260729-mugunghwa.svg'],
     ['20260802-taebaek-summary.svg', '20260802-taebaek.svg'],
-    ['20260911-north-formal-summary.svg', '20260911-north-formal.svg']
+    ['20260911-north-formal-summary.svg', '20260911-north-formal.svg'],
+    ['20261008-gonam-itx-summary.svg', '20261008-gonam-itx.svg']
   ]) {
     assert.ok(notices.includes(summary), `${summary} 연결이 필요합니다`);
     assert.ok(notices.includes(full), `${full} 연결이 필요합니다`);
@@ -180,7 +183,7 @@ test('공지 이미지 배포 버전이 CSS·데이터·서비스워커에 함�
   assert.match(index, /nimbi_redesign\.css\?v=2026100703/);
   assert.match(index, /nimbi_rail_notices\.js\?v=2026100801/);
   assert.match(index, /nimbi_rail\.css\?v=2026100703/);
-  assert.match(serviceWorker, /CACHE_NAME = 'nimbirail-2026100802'/);
+  assert.match(serviceWorker, /CACHE_NAME = 'nimbirail-2026100803'/);
 });
 
 test('전철 역명 변경 공지는 노선별 개명과 동명이역 해소 내용을 안내한다', () => {
@@ -206,4 +209,14 @@ test('북한 지역 철도 공지는 노선 정보에서 정식 개편 내용과
   assert.match(notices, /20260911-north-formal-summary\.svg/);
   assert.match(notices, /20260911-north-formal\.svg/);
   for (const keyword of ['ITX-마음', 'ITX-새마을', '전 역에 정차', '통과 불가역', '승강장']) assert.ok(notices.includes(keyword), `${keyword} 안내가 필요합니다`);
+});
+
+test('고남 경유 ITX-마음 신설 공지는 운행계획과 두 시간표 이미지를 안내한다', () => {
+  const notices = read('data/nimbi_rail_notices.js');
+  assert.match(notices, /title:'고남 경유 한강로–전주·순천 ITX-마음 신설'/);
+  for (const keyword of ['#1981~#1990', '#1991~#1998', '110~125분', '승산·남면·창기', '대야', '남원 · 구례', '동일 승강장 중복 점유']) {
+    assert.ok(notices.includes(keyword), `${keyword} 안내가 필요합니다`);
+  }
+  assert.match(notices, /20261008-gonam-itx-summary\.svg/);
+  assert.match(notices, /20261008-gonam-itx\.svg/);
 });

@@ -1284,5 +1284,37 @@ const NOTICES = [
 역명 중복이 해소됨에 따라 광주1호선의 <strong>일곡</strong>과 안산안양선의 <strong>비산</strong>은 노선·지역 괄호 없이 표시됩니다. 교하선·춘천선의 <strong>서초</strong>는 기존 역명을 그대로 사용합니다.<br><br>
 
 <div class="n-box">역명 변경은 노선도, 전철 시간표, 역 검색, 실제 역 좌표 및 승강장 안내에 모두 반영되었습니다. 운행 구간과 운행 시각은 변경되지 않습니다.</div>`
+  },
+  {
+    date:'2026-10-08',
+    cat:'timetable',
+    title:'고남 경유 한강로–전주·순천 ITX-마음 신설',
+    body:`서해안의 태안·고남과 전북·전남을 잇는 <strong>한강로–전주·순천 ITX-마음</strong>이 새로 운행합니다. 두 계통을 하나의 통합 운행계통으로 편성해 하루 9회 왕복 운행합니다.<br><br>
+
+<strong>■ 신설 운행계획</strong><br>
+<table>
+<tr><th>운행 계통</th><th>열차번호</th><th>운행 횟수</th><th>첫 출발</th><th>마지막 출발</th></tr>
+<tr><td>한강로 ↔ 전주</td><td>#1981~#1990</td><td>하루 5회 왕복</td><td>한강로 05:00<br>전주 05:05</td><td>한강로 20:35<br>전주 20:40</td></tr>
+<tr><td>한강로 ↔ 순천</td><td>#1991~#1998</td><td>하루 4회 왕복</td><td>한강로 06:51<br>순천 07:04</td><td>한강로 18:34<br>순천 18:30</td></tr>
+</table><br>
+
+<div class="n-box">
+공통 경유역: 한강로 · 수원 · 오산 · 천안 · 아산 · 합덕 · 당진 · 서산 · 태안 · 안면도 · 고남 · 보령 · 서천 · 군산 · 익산 · 삼례 · 전주<br>
+순천행은 전주에서 임실 · 오수 · 남원 · 구례를 거쳐 순천까지 운행합니다.
+</div><br>
+
+<strong>■ 통합 약 2시간 간격</strong><br>
+전주행과 순천행을 합쳐 약 <strong>110~125분 간격</strong>으로 운행합니다. 편도 소요시간은 전주행 약 2시간 55분, 순천행 약 3시간 59분입니다. 막차는 양방향 모두 23시대에 종착합니다.<br><br>
+
+<strong>■ 통과역 및 승강장 안내</strong><br>
+인게임 운행자료에서 정차시간이 0초인 승산·남면·창기와 군산–익산 사이 대야는 통과역으로 표시합니다. 순천 계통의 운암·황전·북순천도 통과하며, 통과역에는 승강장을 표시하지 않습니다. 정차역 승강장은 첨부 운행자료의 숫자 승강장을 반영했습니다.<br><br>
+
+<strong>■ 운행 안전 검증</strong><br>
+태안선 단선 구간에서 양방향 열차가 같은 승강장을 동시에 점유하지 않도록 상행과 하행의 출발 시각을 분리했습니다. 기존 열차와 겹친 일부 편은 구간 운전시분을 유지한 채 전 구간 시각을 소폭 이동했으며, 동일 승강장 중복 점유와 금지된 무단 추월이 없도록 검증했습니다.<br><br>
+
+<div class="notice-timetable-gallery notice-timetable-pair">
+<a class="notice-timetable-attachment summary" href="assets/notices/20261008-gonam-itx-summary.svg" target="_blank" rel="noopener noreferrer"><img src="assets/notices/20261008-gonam-itx-summary.svg" alt="고남 경유 ITX-마음 신설 운행 요약표" loading="lazy"><span>한눈에 보는 신설 운행계획</span></a>
+<a class="notice-timetable-attachment" href="assets/notices/20261008-gonam-itx.svg" target="_blank" rel="noopener noreferrer"><img src="assets/notices/20261008-gonam-itx.svg" alt="고남 경유 ITX-마음 역별 전체 시간표" loading="lazy"><span>역별 전체 시간표</span></a>
+</div>`
   }
 ];
