@@ -1266,5 +1266,23 @@ const NOTICES = [
 <div class="n-box">노선색은 가독성을 위해 기존 승객용 색상인 강서선 초록색(#6ccc6c), 은평선 짙은 회색(#545454)으로 원상복구했습니다. 인게임 원본의 ARGB 값은 노선 구간과 시간표 판독에만 사용했습니다.</div><br>
 
 <a class="notice-timetable-attachment summary" href="assets/notices/20260924-gangseo-eunpyeong-revision.svg" target="_blank" rel="noopener noreferrer"><img src="assets/notices/20260924-gangseo-eunpyeong-revision.svg" alt="강서선 은평선 개편 전후 비교표" loading="lazy"><span>노선 개편 전후 비교 크게 보기</span></a>`
+  },
+  {
+    date:'2026-10-08',
+    cat:'route',
+    title:'전철 일부 역명이 변경됩니다',
+    body:`인게임 역명 변경과 동명이역 정리에 따라 일부 전철역의 표시 이름을 다음과 같이 변경했습니다.<br><br>
+
+<table>
+<tr><th>노선</th><th>기존 역명</th><th>변경 역명</th></tr>
+<tr><td>광주2호선</td><td>일곡</td><td><strong>월곡</strong></td></tr>
+<tr><td>광명성남선</td><td>비산</td><td><strong>안양천</strong></td></tr>
+<tr><td>강서선</td><td>서초</td><td><strong>대법원</strong></td></tr>
+</table><br>
+
+<strong>■ 동명이역 부가 표기 정리</strong><br>
+역명 중복이 해소됨에 따라 광주1호선의 <strong>일곡</strong>과 안산안양선의 <strong>비산</strong>은 노선·지역 괄호 없이 표시됩니다. 교하선·춘천선의 <strong>서초</strong>는 기존 역명을 그대로 사용합니다.<br><br>
+
+<div class="n-box">역명 변경은 노선도, 전철 시간표, 역 검색, 실제 역 좌표 및 승강장 안내에 모두 반영되었습니다. 운행 구간과 운행 시각은 변경되지 않습니다.</div>`
   }
 ];

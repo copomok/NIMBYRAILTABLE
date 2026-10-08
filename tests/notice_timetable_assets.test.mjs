@@ -178,9 +178,17 @@ test('공지 이미지 배포 버전이 CSS·데이터·서비스워커에 함�
   const serviceWorker = read('sw.js');
 
   assert.match(index, /nimbi_redesign\.css\?v=2026100703/);
-  assert.match(index, /nimbi_rail_notices\.js\?v=2026092402/);
+  assert.match(index, /nimbi_rail_notices\.js\?v=2026100801/);
   assert.match(index, /nimbi_rail\.css\?v=2026100703/);
-  assert.match(serviceWorker, /CACHE_NAME = 'nimbirail-2026100801'/);
+  assert.match(serviceWorker, /CACHE_NAME = 'nimbirail-2026100802'/);
+});
+
+test('전철 역명 변경 공지는 노선별 개명과 동명이역 해소 내용을 안내한다', () => {
+  const notices = read('data/nimbi_rail_notices.js');
+  assert.match(notices, /title:'전철 일부 역명이 변경됩니다'/);
+  for (const keyword of ['광주2호선', '월곡', '광명성남선', '안양천', '강서선', '대법원', '교하선·춘천선', '운행 시각은 변경되지 않습니다']) {
+    assert.ok(notices.includes(keyword), `${keyword} 안내가 필요합니다`);
+  }
 });
 
 test('UI 전면 개편 안내 공지가 승객 관점의 주요 변경점을 설명한다', () => {
