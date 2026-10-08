@@ -7,7 +7,7 @@ const ROOT=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'..');
 const OUT=path.join(ROOT,'assets','notices');
 
 function loadTrains(){
-  const source=['nimbi_rail_data.js','nimbi_north_ingame_routes.js','nimbi_station_data.js','nimbi_north_station_revision.js','nimbi_north_rail_revision.js']
+  const source=['nimbi_rail_data.js','nimbi_north_ingame_routes.js','nimbi_station_data.js','nimbi_north_station_revision.js','nimbi_north_rail_revision.js','nimbi_gonam_itx_revision.js']
     .map(file=>fs.readFileSync(path.join(ROOT,'data',file),'utf8')).join('\n');
   const context={};
   vm.createContext(context);
