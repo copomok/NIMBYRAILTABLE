@@ -195,6 +195,10 @@
     for(const station of Object.keys(mapped)){
       if(!currentStations.has(station))delete mapped[station];
     }
+    // 강릉-광주 KTX-이음 장성은 사진 개정에서 영업 정차가 아닌 통과로 확정.
+    const no=Number(train.no);
+    if(no>=621&&no<=632&&train.grade==='KTX-이음'&&
+      train.stops.find(stop=>stop.s==='장성')?.dep==null)delete mapped['장성'];
   }
 
   // 인게임 시간표에는 존재하지만 기존 PLATFORM_DB에 빠져 있던 승강장.

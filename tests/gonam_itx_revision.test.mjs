@@ -5,7 +5,7 @@ import vm from 'node:vm';
 
 const root=new URL('../',import.meta.url);
 let src='';
-for(const file of ['data/nimbi_rail_data.js','data/nimbi_north_ingame_routes.js','data/nimbi_station_data.js','data/nimbi_north_station_revision.js','data/nimbi_north_rail_revision.js','data/nimbi_gonam_itx_revision.js','data/nimbi_realplat.js','data/nimbi_regional_platforms.js'])src+=fs.readFileSync(new URL(file,root),'utf8')+'\n';
+for(const file of ['data/nimbi_rail_data.js','data/nimbi_north_ingame_routes.js','data/nimbi_station_data.js','data/nimbi_north_station_revision.js','data/nimbi_north_rail_revision.js','data/nimbi_gonam_itx_revision.js','data/nimbi_pass_stations_revision.js','data/nimbi_realplat.js','data/nimbi_regional_platforms.js'])src+=fs.readFileSync(new URL(file,root),'utf8')+'\n';
 src+=';globalThis.__trains=ALL_TRAINS;globalThis.__stations=STATION_DB;globalThis.__realplat=REAL_PLAT;';
 const context={};vm.createContext(context);vm.runInContext(src,context);
 const trains=context.__trains,selected=trains.filter(t=>Number(t.no)>=1981&&Number(t.no)<=1998);
@@ -26,7 +26,7 @@ test('1981~1998은 9왕복 ITX-마음으로 완전 대치된다',()=>{
 test('사진 원본 역순·노선·초 버림 결과를 보존한다',()=>{
   assert.equal(byNo(1981).line,'경부선·태안선·장항선');
   assert.equal(byNo(1991).line,'경부선·태안선·장항선·전라선');
-  assert.deepEqual(Array.from(byNo(1981).stops,s=>s.s),['한강로','수원','오산','천안','아산','합덕','당진','승산','서산','태안','남면','창기','안면도','고남','보령','서천','군산','대야','익산','삼례','전주']);
+  assert.deepEqual(Array.from(byNo(1981).stops,s=>s.s),['한강로','남안양','수원','오산','평택','천안','아산','합덕','당진','승산','서산','태안','남면','창기','안면도','고남','보령','서천','군산','대야','익산','삼례','전주']);
   assert.equal(byNo(1981).stops.find(s=>s.s==='수원').arr,'5:17');
   assert.equal(byNo(1981).stops.find(s=>s.s==='수원').dep,'5:19');
   assert.equal(minute(byNo(1991).stops.find(s=>s.s==='전주').arr)-minute(byNo(1991).stops[0].dep),177);
@@ -42,8 +42,8 @@ test('#1994 사진 원본으로 순천발 상행 전 구간을 재작성한다',
     군산:[82,84,'4'],서천:[90,91,'2'],보령:[105,107,'2'],고남:[116,118,'2'],
     안면도:[123,125,'2'],창기:[128,null,null],남면:[133,null,null],태안:[137,138,'2'],
     서산:[145,146,'1'],승산:[153,null,null],당진:[157,159,'5'],합덕:[166,168,'2'],
-    아산:[179,181,'4'],천안:[187,189,'4'],오산:[207,209,'2'],수원:[215,217,'6'],
-    한강로:[236,null,'9']
+    아산:[179,181,'4'],천안:[187,189,'4'],평택:[199,null,null],오산:[207,209,'2'],
+    수원:[215,217,'6'],남안양:[224,null,null],한강로:[236,null,'9']
   };
   assert.deepEqual(Array.from(train.stops,s=>s.s),Object.keys(expected));
   for(const stop of train.stops){
@@ -60,7 +60,7 @@ test('#1994 사진 원본으로 순천발 상행 전 구간을 재작성한다',
 
 test('0초 정차와 미확정 시각 통과역은 승강장 없는 통과로 남는다',()=>{
   for(const train of selected){
-    for(const name of ['승산','남면','창기','대야']){
+    for(const name of ['승산','남면','창기','대야','남안양','평택']){
       const s=train.stops.find(stop=>stop.s===name);assert.ok(s,`${train.no} ${name}`);assert.equal(s.dep,null);assert.equal(s.p,undefined);
     }
     for(const s of train.stops.slice(1,-1))if(s.dep===null)assert.equal(s.p,undefined,`${train.no} ${s.s}`);
