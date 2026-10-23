@@ -28,7 +28,7 @@
   <text x="85" y="462" class="section">변경 노선</text>
   <rect x="80" y="483" width="1280" height="64" rx="11" fill="#20364d"/>
   <rect x="80" y="483" width="9" height="64" rx="4" fill="#a07800"/>
-  <text x="109" y="524" class="line">성남화성선</text><text x="370" y="524" class="detail">잠실–양감 연장 · 옛 시간표 완전 대체 · 종원선 공유</text><text x="1308" y="527" class="count">202편</text>
+  <text x="109" y="524" class="line">성남화성선</text><text x="370" y="524" class="detail">잠실–양감 · 20편성 6분 18초 · 종원선 공유</text><text x="1308" y="527" class="count">202편</text>
   <rect x="80" y="559" width="1280" height="64" rx="11" fill="#20364d"/>
   <rect x="80" y="559" width="9" height="64" rx="4" fill="#5cc72e"/>
   <text x="109" y="600" class="line">교하선</text><text x="370" y="600" class="detail">이태원–서빙고 사이 녹사평 추가</text><text x="1308" y="603" class="count">141편</text>

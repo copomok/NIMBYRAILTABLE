@@ -73,6 +73,19 @@ function services(line,route){
     ? schedules.filter(schedule=>schedule.id==='0x6000002760001'&&schedule.shifts.length===20)
     : schedules;
   if(line.name==='성남화성선'&&selectedSchedules.length!==1)throw new Error('성남화성선 개정 통합 스케줄을 찾지 못했습니다');
+  let servicePattern={};
+  if(line.name==='성남화성선'){
+    const activeShifts=selectedSchedules[0].shifts;
+    const firstRuns=activeShifts.map(shift=>shift.runs.filter(run=>run.line_id===line.id&&run.enter_stop_idx===0&&run.exit_stop_idx>0));
+    if(firstRuns.some(runs=>runs.length<2))throw new Error('성남화성선 편성의 반복 운행을 검증할 수 없습니다');
+    const cycleSeconds=firstRuns[0][1].arrival_departure[1]-firstRuns[0][0].arrival_departure[1];
+    const phases=firstRuns.map(runs=>((runs[0].arrival_departure[1]%cycleSeconds)+cycleSeconds)%cycleSeconds).sort((a,b)=>a-b);
+    const gaps=phases.map((phase,index)=>(phases[(index+1)%phases.length]-phase+cycleSeconds)%cycleSeconds);
+    const nominalHeadwaySeconds=cycleSeconds/activeShifts.length;
+    if(!Number.isInteger(nominalHeadwaySeconds)||gaps.some(gap=>gap!==nominalHeadwaySeconds))
+      throw new Error(`성남화성선 편성 간격 불일치: ${gaps.join(',')}`);
+    servicePattern={activeShifts:activeShifts.length,cycleSeconds,nominalHeadwaySeconds};
+  }
   for(const schedule of selectedSchedules)for(const shift of schedule.shifts||[]){
     const runs=shift.runs||[];
     for(let ri=0;ri<runs.length;ri++){
@@ -111,7 +124,7 @@ function services(line,route){
     }
   }
   output.sort((a,b)=>a[1]-b[1]||a.length-b.length||a.join(',').localeCompare(b.join(',')));
-  return {trips:output,rawRuns,excludedSingleStationRuns,correctedTerminals,depotTerminations};
+  return {trips:output,rawRuns,excludedSingleStationRuns,correctedTerminals,depotTerminations,...servicePattern};
 }
 function directions(line){
   const route=line.stops.map(stop=>short(stop.station_id)||'');

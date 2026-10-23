@@ -32,6 +32,9 @@ test('인게임 개편 노선과 실제 운행편이 반영된다',()=>{
   assert.deepEqual(Array.from(sched.성남화성선.s.slice(0,4)),['잠실','가락','복정','수진']);
   assert.equal(lines.find(line=>line.name==='경의중앙선').color,'#10b0a8');
   assert.equal(context.NIMBI_METRO_OCTOBER_REVISION.lines.성남화성선.rawRuns,1344);
+  assert.equal(context.NIMBI_METRO_OCTOBER_REVISION.lines.성남화성선.activeShifts,20);
+  assert.equal(context.NIMBI_METRO_OCTOBER_REVISION.lines.성남화성선.cycleSeconds,7560);
+  assert.equal(context.NIMBI_METRO_OCTOBER_REVISION.lines.성남화성선.nominalHeadwaySeconds,378);
   assert.deepEqual(Array.from(sched.교하선.s.slice(15,18)),['이태원','녹사평','서빙고']);
   assert.deepEqual(Array.from(sched.남북선.s.slice(6,9)),['서빙고','한강진','한남']);
   assert.ok(!sched['GTX-A'].s.includes('야당'));
