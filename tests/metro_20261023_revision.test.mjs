@@ -18,7 +18,7 @@ vm.runInContext('globalThis.snapshot={lines:METRO_LINES,sched:METRO_SCHED,geo:ME
 const {lines,sched,geo,stations,platforms}=context.snapshot;
 
 test('인게임 개편 노선과 실제 운행편이 반영된다',()=>{
-  const expected={경의중앙선:112,성남화성선:393,교하선:141,남북선:118,'GTX-A':76};
+  const expected={경의중앙선:112,성남화성선:202,교하선:141,남북선:118,'GTX-A':76};
   for(const [name,count] of Object.entries(expected)){
     assert.equal(sched[name].t.length,count,name);
     assert.equal(sched[name].c.length,count,name);
@@ -30,6 +30,8 @@ test('인게임 개편 노선과 실제 운행편이 반영된다',()=>{
   }
   assert.deepEqual(Array.from(sched.경의중앙선.s.slice(0,8)),['임진강','문산','월롱','덕은','금릉','운정','야당','탄현']);
   assert.deepEqual(Array.from(sched.성남화성선.s.slice(0,4)),['잠실','가락','복정','수진']);
+  assert.equal(lines.find(line=>line.name==='경의중앙선').color,'#10b0a8');
+  assert.equal(context.NIMBI_METRO_OCTOBER_REVISION.lines.성남화성선.rawRuns,1344);
   assert.deepEqual(Array.from(sched.교하선.s.slice(15,18)),['이태원','녹사평','서빙고']);
   assert.deepEqual(Array.from(sched.남북선.s.slice(6,9)),['서빙고','한강진','한남']);
   assert.ok(!sched['GTX-A'].s.includes('야당'));

@@ -66,7 +66,14 @@ function services(line,route){
   const stationIndex=new Map(route.ids.map((id,index)=>[id,index]));
   const output=[],seen=new Set;
   let rawRuns=0,excludedSingleStationRuns=0,correctedTerminals=0,depotTerminations=0;
-  for(const schedule of schedules)for(const shift of schedule.shifts||[]){
+  // The revised Seongnam–Hwaseong schedule groups all 20 active train shifts in
+  // MochiStar 0076. The export also retains 19 superseded one-shift schedules;
+  // reading both would interleave the old and revised departure times.
+  const selectedSchedules=line.name==='성남화성선'
+    ? schedules.filter(schedule=>schedule.id==='0x6000002760001'&&schedule.shifts.length===20)
+    : schedules;
+  if(line.name==='성남화성선'&&selectedSchedules.length!==1)throw new Error('성남화성선 개정 통합 스케줄을 찾지 못했습니다');
+  for(const schedule of selectedSchedules)for(const shift of schedule.shifts||[]){
     const runs=shift.runs||[];
     for(let ri=0;ri<runs.length;ri++){
       const run=runs[ri];
@@ -124,7 +131,7 @@ for(const name of affected){
   const route=mainRoute(line),svc=services(line,route),dir=directions(line);
   if(!svc.trips.length)throw new Error(`${name}: no services`);
   const display=baseLineByName.get(name);
-  const color=display?.color||`#${line.color.slice(-6)}`;
+  const color=name==='경의중앙선'?baseLineByName.get('중앙선').color:(display?.color||`#${line.color.slice(-6)}`);
   const depotSource=name==='경의중앙선'?'경의선':name;
   const oldRoute=baseLineByName.get(depotSource)?.routes?.[0]?.stations||[];
   const depots=(context.baseGeo[depotSource]?.d||[]).map(depot=>({
