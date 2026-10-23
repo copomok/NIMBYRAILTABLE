@@ -42,7 +42,8 @@ const SUMMARY_NOTICE_IDS = [
   '20260802-taebaek-summary',
   '20260803-jamsil-mokpo-srt-expansion',
   '20260911-north-formal-summary',
-  '20261008-gonam-itx-summary'
+  '20261008-gonam-itx-summary',
+  '20261023-metro-revision'
 ];
 const NOTICE_IDS = [...FULL_NOTICE_IDS, ...SUMMARY_NOTICE_IDS];
 
@@ -181,9 +182,9 @@ test('공지 이미지 배포 버전이 CSS·데이터·서비스워커에 함�
   const serviceWorker = read('sw.js');
 
   assert.match(index, /nimbi_redesign\.css\?v=2026100703/);
-  assert.match(index, /nimbi_rail_notices\.js\?v=2026100801/);
+  assert.match(index, /nimbi_rail_notices\.js\?v=2026102301/);
   assert.match(index, /nimbi_rail\.css\?v=2026100703/);
-  assert.match(serviceWorker, /CACHE_NAME = 'nimbirail-2026102201'/);
+  assert.match(serviceWorker, /CACHE_NAME = 'nimbirail-2026102301'/);
 });
 
 test('전철 역명 변경 공지는 노선별 개명과 동명이역 해소 내용을 안내한다', () => {

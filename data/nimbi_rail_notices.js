@@ -1316,5 +1316,27 @@ const NOTICES = [
 <a class="notice-timetable-attachment summary" href="assets/notices/20261008-gonam-itx-summary.svg" target="_blank" rel="noopener noreferrer"><img src="assets/notices/20261008-gonam-itx-summary.svg" alt="고남 경유 ITX-마음 신설 운행 요약표" loading="lazy"><span>한눈에 보는 신설 운행계획</span></a>
 <a class="notice-timetable-attachment" href="assets/notices/20261008-gonam-itx.svg" target="_blank" rel="noopener noreferrer"><img src="assets/notices/20261008-gonam-itx.svg" alt="고남 경유 ITX-마음 역별 전체 시간표" loading="lazy"><span>역별 전체 시간표</span></a>
 </div>`
+  },
+  {
+    date:'2026-10-23',
+    cat:'timetable',
+    title:'경의중앙선 통합 및 전철 5개 노선 개편',
+    body:`새 인게임 파일에 맞춰 <strong>경의선·중앙선을 경의중앙선 하나로 통합</strong>하고, 교하선·남북선·성남화성선·GTX-A의 노선과 시간표를 갱신했습니다.<br><br>
+
+<strong>■ 경의중앙선</strong><br>
+임진강–문산–서울–청량리–원주–판부를 잇는 <span class="n-highlight">38개 역, 112편의 통합 계통</span>을 반영했습니다. 운정·탄현·풍산과 녹사평·한강진이 포함되며 기존 경의선·중앙선의 별도 전철 시간표는 통합 계통으로 대체됩니다.<br><br>
+
+<strong>■ 다른 노선의 변경 사항</strong><br>
+<table>
+<tr><th>노선</th><th>변경 내용</th><th>반영 편수</th></tr>
+<tr><td>성남화성선</td><td>수진–양감에서 잠실–양감으로 연장. 잠실–수진은 종원선과 선로 공유</td><td>393편</td></tr>
+<tr><td>교하선</td><td>이태원–서빙고 사이 녹사평 추가</td><td>141편</td></tr>
+<tr><td>남북선</td><td>서빙고–한남 사이 한강진 추가</td><td>118편</td></tr>
+<tr><td>GTX-A</td><td>문산–평택시청 구간 역 순서·시간표 갱신</td><td>76편</td></tr>
+</table><br>
+
+<div class="n-box">역 위치는 인게임 역 좌표를 사용했고, 시간표는 인게임 UTC 시각을 한국 표준시로 변환한 뒤 기존 사이트의 검증된 시간 보정축을 유지했습니다. 한 역에만 머무는 주박 기록은 여객 시간표에서 제외했습니다. 각 노선의 역별 시각과 승강장은 전철 시간표·역 정보에서 확인할 수 있습니다.</div><br>
+
+<a class="notice-timetable-attachment summary" href="assets/notices/20261023-metro-revision.svg" target="_blank" rel="noopener noreferrer"><img src="assets/notices/20261023-metro-revision.svg" alt="경의중앙선 통합과 전철 노선 개편 요약표" loading="lazy"><span>전철 개편 전후 비교 크게 보기</span></a>`
   }
 ];

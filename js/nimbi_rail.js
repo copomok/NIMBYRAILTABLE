@@ -11580,8 +11580,8 @@ function _metroClsTag(c){ return c===2?'<span class="mtb-exp mtb-exp--t">특급<
 // 역 전광판 외형 분류. 운행 로직은 동일하고 표시 장치의 세대·형태만 구분한다.
 const METRO_COMMUTER_BOARD_LINES=new Set([
   '경부선','구인선','전북선','충청선','전남선','구미선','고령하양선',
-  '중앙선','장호원선','종원선','춘천선',
-  '광주진목선','평택안성선','화성선','경의선','동남선','김해거제선',
+  '경의중앙선','장호원선','종원선','춘천선',
+  '광주진목선','평택안성선','화성선','동남선','김해거제선',
   '대구밀양선','포항선'
 ]);
 const METRO_BOARD_SECTION_RULES=[
@@ -11746,7 +11746,7 @@ let _metroDisplayLineIndex=0;
 let _metroDisplayDirIndex=0;
 let _metroDisplayLines=[];
 let _metroDisplayLineGroups=[];
-// 같은 물리 선로를 사용하는 구간. DB 기준 지정–판부의 실제 노선명은 중앙선입니다.
+// 같은 물리 선로를 사용하는 구간.
 const METRO_SHARED_TRACK_BOARD_SECTIONS=[
   {from:'청량리',to:'한강로',lines:['경부선','구인선','신노원선']},
   {from:'한강로',to:'구로',lines:['경부선','구인선']},
@@ -11757,7 +11757,8 @@ const METRO_SHARED_TRACK_BOARD_SECTIONS=[
   {from:'수원',to:'갈곶',lines:['경부선','장호원선']},
   {from:'천안',to:'당진',lines:['경부선','고남-합덕 통근']},
   {from:'서동탄',to:'청계',lines:['안양동탄선','화성선']},
-  {from:'지정',to:'판부',lines:['종원선','중앙선']}
+  {from:'잠실',to:'수진',lines:['종원선','성남화성선']},
+  {from:'지정',to:'판부',lines:['종원선','경의중앙선']}
 ];
 function _metroSharedTrackSectionContains(rule,stn){
   if(typeof METRO_LINES!=='undefined'){

@@ -70,7 +70,8 @@ for(const rule of [
   "{from:'수원',to:'갈곶',lines:['경부선','장호원선']}",
   "{from:'천안',to:'당진',lines:['경부선','고남-합덕 통근']}",
   "{from:'서동탄',to:'청계',lines:['안양동탄선','화성선']}",
-  "{from:'지정',to:'판부',lines:['종원선','중앙선']}"
+  "{from:'잠실',to:'수진',lines:['종원선','성남화성선']}",
+  "{from:'지정',to:'판부',lines:['종원선','경의중앙선']}"
 ])assert.ok(source.includes(rule),`선로 공유 구간 규칙 ${rule} 누락`);
 assert.ok(!css.includes('.mtb2-shared-head')&&!css.includes('.mtb-display-shared'),'공유 모드도 기존 전광판과 같은 CSS 구조를 사용해야 합니다.');
 const metroLineSource=fs.readFileSync('data/nimbi_metro.js','utf8');
@@ -81,12 +82,14 @@ const sharedContext={_metroSharedTrackBoardOn:true};
 vm.createContext(sharedContext);
 vm.runInContext(`${metroLineSource}\nthis.METRO_LINES=METRO_LINES;`,sharedContext);
 vm.runInContext(`${sharedSchedSource}\nthis.METRO_SCHED=METRO_SCHED;`,sharedContext);
+vm.runInContext(`${fs.readFileSync('data/nimbi_metro_geo.js','utf8')}\nthis.METRO_GEO=METRO_GEO;`,sharedContext);
+vm.runInContext(fs.readFileSync('data/nimbi_metro_20261023_update.js','utf8'),sharedContext);
 vm.runInContext(`${source.slice(sharedStart,sharedEnd)}\nthis.sharedLines=_metroSharedTrackLinesAt;this.displayGroups=_metroDisplayGroupsForStation;this.boardSpecs=_metroSharedBoardSpecs;`,sharedContext);
 const sharedCases=[
   ['서울',['경부선','구인선','신노원선']],['노량진',['경부선','구인선']],['북상계',['신노원선','노원선']],
   ['목동',['강서선','인천종단선']],['동백',['수원이천선','안산용인선']],['안산',['안산성남선','안산안양선']],
   ['오산',['경부선','장호원선']],['합덕',['경부선','고남-합덕 통근']],['서동탄',['안양동탄선','화성선']],
-  ['청계',['안양동탄선','화성선']],['원주',['종원선','중앙선']]
+  ['청계',['안양동탄선','화성선']],['복정',['종원선','성남화성선']],['원주',['종원선','경의중앙선']]
 ];
 for(const [station,lines] of sharedCases){
   assert.deepEqual(Array.from(sharedContext.sharedLines(station,lines[0],lines)),lines,`${station} 공유 선로 전광판은 ${lines.join('·')}을 함께 표시해야 합니다.`);
@@ -126,7 +129,7 @@ assert.ok(!source.includes('class="mtb-urban-alternate"'),'도시철도 전광�
 assert.ok(source.includes("${displayBoard&&boardKind==='urban'?'':`<div class=\"mtb2-fl\">"),'도시철도 전광판 하단의 첫·막차 정보도 숨겨야 합니다.');
 assert.ok(source.includes('const start=Math.max(0,target-4)')&&source.includes('seq.slice(start,target+1)'),'도시철도 노선 막대는 이전 4개 역과 현재역만 표시해야 합니다.');
 assert.ok(source.includes("now>=absA[i+1]-1 ? result('접근'"),'다음 역 도착 1분 전부터만 접근으로 표시해야 합니다.');
-for(const line of ['경부선','구인선','전북선','충청선','전남선','구미선','고령하양선','중앙선','장호원선','종원선','춘천선','광주진목선','평택안성선','화성선','경의선','동남선','김해거제선','대구밀양선','포항선']){
+for(const line of ['경부선','구인선','전북선','충청선','전남선','구미선','고령하양선','경의중앙선','장호원선','종원선','춘천선','광주진목선','평택안성선','화성선','동남선','김해거제선','대구밀양선','포항선']){
   assert.ok(source.includes(`'${line}'`),`${line}은 광역철도형 전광판 목록에 포함되어야 합니다.`);
 }
 for(const rule of [

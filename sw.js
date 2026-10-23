@@ -1,4 +1,4 @@
-const CACHE_NAME = 'nimbirail-2026102201';
+const CACHE_NAME = 'nimbirail-2026102301';
 const ASSETS = [
   '/NIMBYRAILTABLE/',
   '/NIMBYRAILTABLE/index.html',
@@ -37,6 +37,7 @@ const ASSETS = [
   '/NIMBYRAILTABLE/data/nimbi_metro_geo.js',
   '/NIMBYRAILTABLE/data/nimbi_metro_20260924_update.js',
   '/NIMBYRAILTABLE/data/nimbi_metro_station_renames.js',
+  '/NIMBYRAILTABLE/data/nimbi_metro_20261023_update.js',
   '/NIMBYRAILTABLE/js/features/nimbi_congestion.js',
   '/NIMBYRAILTABLE/js/features/nimbi_engagement.js',
   '/NIMBYRAILTABLE/js/features/nimbi_operations_hub.js',
@@ -78,6 +79,7 @@ const ASSETS = [
   '/NIMBYRAILTABLE/assets/notices/20260911-north-formal.svg',
   '/NIMBYRAILTABLE/assets/notices/20260924-gangseo-eunpyeong-revision.svg',
   '/NIMBYRAILTABLE/assets/notices/20261008-gonam-itx-summary.svg',
+  '/NIMBYRAILTABLE/assets/notices/20261023-metro-revision.svg',
   '/NIMBYRAILTABLE/assets/notices/20261008-gonam-itx.svg',
 ];
 

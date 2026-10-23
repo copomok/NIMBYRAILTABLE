@@ -1,0 +1,42 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1440" height="870" viewBox="0 0 1440 870" role="img" aria-labelledby="title desc">
+  <title id="title">경의중앙선 통합 및 전철 5개 노선 개편</title>
+  <desc id="desc">경의선과 중앙선은 경의중앙선으로 통합됩니다. 성남화성선은 잠실까지 연장되고 잠실부터 수진까지 종원선과 선로를 공유합니다. 교하선과 남북선에 신설역이 반영되고 GTX-A 역 순서와 운행 시각도 갱신됩니다.</desc>
+  <style>
+    text{font-family:Apple SD Gothic Neo,Malgun Gothic,Noto Sans KR,sans-serif;fill:#f2f6fb}
+    .eyebrow{font-size:18px;font-weight:700;letter-spacing:3px;fill:#78d9c6}
+    .title{font-size:47px;font-weight:800}
+    .subtitle{font-size:22px;fill:#b8c8d6}
+    .section{font-size:29px;font-weight:800}
+    .line{font-size:22px;font-weight:700}
+    .detail{font-size:20px;fill:#d3e0ea}
+    .count{font-size:28px;font-weight:800;text-anchor:end}
+    .footer{font-size:17px;fill:#90aabd}
+  </style>
+  <rect width="1440" height="870" fill="#0e1b2b"/>
+  <rect x="40" y="39" width="1360" height="791" rx="28" fill="#16283d" stroke="#304e67" stroke-width="2"/>
+  <text x="82" y="93" class="eyebrow">NIMBYRAIL PASSENGER INFORMATION</text>
+  <text x="82" y="156" class="title">전철 노선·시간표 개편</text>
+  <text x="82" y="196" class="subtitle">2026.10.23 · 인게임 노선 및 운행자료 반영</text>
+
+  <rect x="80" y="226" width="1280" height="184" rx="21" fill="#1d3a47" stroke="#3a766f" stroke-width="2"/>
+  <text x="108" y="272" class="section">경의선 + 중앙선 → 경의중앙선</text>
+  <text x="108" y="313" class="detail">임진강 ─ 문산 ─ 서울 ─ 청량리 ─ 원주 ─ 판부</text>
+  <text x="108" y="350" class="detail">운정 · 야당 · 탄현 · 풍산 · 녹사평 · 한강진 포함</text>
+  <text x="1308" y="291" class="count" fill="#89e7bc">38개 역</text>
+  <text x="1308" y="351" class="count" fill="#89e7bc">112편</text>
+
+  <text x="85" y="462" class="section">변경 노선</text>
+  <rect x="80" y="483" width="1280" height="64" rx="11" fill="#20364d"/>
+  <rect x="80" y="483" width="9" height="64" rx="4" fill="#a07800"/>
+  <text x="109" y="524" class="line">성남화성선</text><text x="370" y="524" class="detail">잠실–양감 연장 · 잠실–수진 종원선과 선로 공유</text><text x="1308" y="527" class="count">393편</text>
+  <rect x="80" y="559" width="1280" height="64" rx="11" fill="#20364d"/>
+  <rect x="80" y="559" width="9" height="64" rx="4" fill="#5cc72e"/>
+  <text x="109" y="600" class="line">교하선</text><text x="370" y="600" class="detail">이태원–서빙고 사이 녹사평 추가</text><text x="1308" y="603" class="count">141편</text>
+  <rect x="80" y="635" width="1280" height="64" rx="11" fill="#20364d"/>
+  <rect x="80" y="635" width="9" height="64" rx="4" fill="#7a9b2e"/>
+  <text x="109" y="676" class="line">남북선</text><text x="370" y="676" class="detail">서빙고–한남 사이 한강진 추가</text><text x="1308" y="679" class="count">118편</text>
+  <rect x="80" y="711" width="1280" height="64" rx="11" fill="#20364d"/>
+  <rect x="80" y="711" width="9" height="64" rx="4" fill="#9a6292"/>
+  <text x="109" y="752" class="line">GTX-A</text><text x="370" y="752" class="detail">문산–평택시청 역 순서·운행 조정</text><text x="1308" y="755" class="count">76편</text>
+  <text x="83" y="813" class="footer">운행편수는 중복 기록과 단일역 주박을 정리한 사이트 시간표 기준입니다. 실제 역별 출발 시각은 전철 시간표에서 확인하세요.</text>
+</svg>
