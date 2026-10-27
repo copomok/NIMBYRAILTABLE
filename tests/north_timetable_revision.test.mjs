@@ -64,6 +64,23 @@ test('신설 KTX와 녕원 ITX는 사진 역순·통과·승강장·초 버림�
   assert.deepEqual([at(short,'평양').p,at(short,'덕천').p],['7','2']);
 });
 
+test('신의주–부산 KTX는 사진의 모든 WP를 양방향 통과 시각으로 반영한다',()=>{
+  const down=trains.find(train=>train.no==='8021'),up=trains.find(train=>train.no==='8022');
+  const route=['신의주','룡천','염주','동림','선천','곽산','정주','운하','운전','안주역전','문덕','금풍','평원','순안','서포','서평양','평양','송림','사리원','서흥','평산','금천','개성','개성공단','판문','도라산','문산','일산','행신','서울','병목안','수영','천안','정안','세종','대전','산내','영동','구미','남대구','청도','부산'];
+  assert.deepEqual(Array.from(down.stops,stop=>stop.s),route);
+  assert.deepEqual(Array.from(up.stops,stop=>stop.s),route.toReversed());
+  for(const train of trains.filter(item=>+item.no>=8021&&+item.no<=8036)){
+    assert.equal(train.stops.length,route.length,`#${train.no} 경유역 수`);
+    for(const stop of train.stops){
+      assert.notEqual(stop.arr,'통과',`#${train.no} ${stop.s} 통과 시각 누락`);
+      if(stop.dep==null&&stop!==train.stops.at(-1))assert.equal(stop.p,undefined,`#${train.no} ${stop.s} 통과역 승강장`);
+    }
+  }
+  const offset=(train,name)=>elapsed(train.stops[0].dep,train.stops.find(stop=>stop.s===name).arr);
+  for(const [name,value] of [['룡천',6],['염주',9],['동림',11],['선천',15],['곽산',20],['행신',126],['병목안',145],['정안',164],['세종',168],['산내',181],['영동',187],['구미',198],['청도',219]])assert.equal(offset(down,name),value,`하행 ${name}`);
+  for(const [name,value] of [['청도',18],['구미',38],['영동',50],['산내',56],['세종',69],['정안',73],['병목안',95],['행신',111],['곽산',219],['선천',223],['동림',227],['염주',230],['룡천',234]])assert.equal(offset(up,name),value,`상행 ${name}`);
+});
+
 test('녕원–평양·서울 통합 배차는 양방향 60–75분이며 당일 종착한다',()=>{
   for(const dir of ['down','up']){
     const list=trains.filter(train=>train.dir===dir&&((+train.no>=5181&&+train.no<=5200)||(+train.no>=5281&&+train.no<=5292))).sort((a,b)=>minute(a.stops[0].dep)-minute(b.stops[0].dep));
