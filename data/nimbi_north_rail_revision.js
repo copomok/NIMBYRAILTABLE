@@ -212,17 +212,17 @@
     {first:5101,from:'평양',to:'원산',line:'평원선·순천선',grade:'ITX-새마을',down:fit('평양-원산 무궁화호','평양','원산',pyongyangWonsan),downDepartures:departures(325,90,12)},
     {first:5131,from:'평양',to:'서울',line:'평성선·경의선',grade:'ITX-새마을',down:combine(fit('평양-개성 (해주 경유) KTX','평양','개성',haeju),section(pyongyangSeoul,'개성','서울'),2),downDepartures:departures(305,77,14)},
     {first:5161,from:'샘물동',to:'평양',line:'만포선·평원선',grade:'ITX-마음',down:fit('평양-만포 KTX','만포','평양',saemmul),downDepartures:departures(335,165,7)},
-    {first:5181,from:'녕원',to:'평양',line:'녕원선',grade:'ITX-새마을',down:nyongwonPyongyangPhoto,up:pyongyangNyongwonPhoto,preservePhotoPasses:true,downDepartures:[365,430,560,625,755,820,950,1015,1145,1215]},
+    {first:5181,from:'녕원',to:'평양',line:'녕원선',grade:'ITX-마음',down:nyongwonPyongyangPhoto,up:pyongyangNyongwonPhoto,preservePhotoPasses:true,downDepartures:[365,430,560,625,755,820,950,1015,1145,1275]},
     {first:5201,from:'혜산',to:'원산',line:'동해선',grade:'ITX-마음',down:hyesanWonsan,up:photoWonsanHyesan,preservePhotoPasses:true,downDepartures:departures(320,157,7)},
     {first:5221,from:'무산',to:'원산',line:'동해선',grade:'ITX-마음',down:musanWonsan,up:photoWonsanMusan,preservePhotoPasses:true,downDepartures:departures(305,147,7)},
     {first:5241,from:'경흥',to:'원산',line:'동해선',grade:'ITX-마음',down:fit('원산-경흥 ITX-마음','경흥','원산',donghae),downDepartures:[330,434,538,642,746,850,954,1058,1157]},
     {first:5261,from:'평양',to:'룡연',line:'평성선',grade:'ITX-마음',down:fit('평양-룡연 KTX','평양','룡연',ryongyon),downDepartures:[345,425,585,665,825,905,1065,1145,1305]},
     // 서울 계통 1왕복을 증편해야 양 끝에서 출발한 모든 편성이 당일 원 기점으로 복귀한다.
-    {first:5281,from:'녕원',to:'서울',line:'녕원선·경의선',grade:'ITX-새마을',down:nyongwonSeoulPhoto,up:seoulNyongwonPhoto,preservePhotoPasses:true,downDepartures:[300,495,690,885,1080,1275]},
+    {first:5281,from:'녕원',to:'서울',line:'녕원선·경의선',grade:'ITX-새마을',down:nyongwonSeoulPhoto,up:seoulNyongwonPhoto,preservePhotoPasses:true,downDepartures:[300,495,690,885,1080,1215]},
     {first:5301,from:'신의주',to:'원산',line:'경의선·평원선·순천선',grade:'ITX-새마을',down:combine(sinuijuSeoul.slice(0,sinuijuSeoul.findIndex(s=>s.s==='안주역전')+1),anjuWonsan),downDepartures:departures(320,180,6)},
     {first:5351,from:'샘물동',to:'서울',line:'만포선·평원선·경의선',grade:'ITX-새마을',down:combine(fit('평양-만포 KTX','만포','평양',saemmul),pyongyangSeoul),downDepartures:[415,580,745,910,1075,1240]},
     {first:8001,from:'서울',to:'블라디보스토크',line:'경원선·동해선',grade:'KTX-산천',down:fit('서울-블라디보스토크 KTX','서울','블라디보스토크',vlad),downDepartures:[310,490,670,850,1030,1320]},
-    {first:8021,from:'신의주',to:'부산',line:'경의선·경부고속선',grade:'KTX-산천',down:ktxSinuijuBusan,up:ktxBusanSinuiju,preservePhotoPasses:true,downDepartures:[310,435,560,685,810,935,1060,1185]},
+    {first:8021,from:'신의주',to:'부산',line:'경의선·경부고속선',grade:'KTX-산천',down:ktxSinuijuBusan,up:ktxBusanSinuiju,preservePhotoPasses:true,downDepartures:[310,435,560,685,810,935,1060,1185,1265,1316]},
     {first:9001,from:'신의주',to:'서울',line:'경의선',grade:'KTX-산천',down:sinuijuSeoul,up:seoulSinuiju,downDepartures:departures(305,120,9)},
     {first:9521,from:'원산',to:'부산',line:'동해선',grade:'KTX-이음',down:photoWonsanBusan,up:photoBusanWonsan,preservePhotoPasses:true,downDepartures:departures(310,108,10)},
     {first:9701,from:'경흥',to:'남대구',line:'동해선·대구선',grade:'KTX-산천',down:fit('남대구-경흥 KTX','경흥','남대구',gyeongheungNamdaegu),downDepartures:[310,440,570,700,830,960,1090,1235]},
@@ -248,6 +248,7 @@
   safetyShifts[8024]=-9; // 정안–천안에서 기존 열차보다 선행
   safetyShifts[8029]=-1; // 병목안–천안에서 기존 열차보다 선행
   safetyShifts[8035]=9; // 수영–천안에서 #97 후행, 부산 14번 승강장 분리
+  safetyShifts[8037]=-15; // 심야 문산–일산 및 병목안–수영에서 기존 열차 선행
   safetyShifts[5194]=-1;
   safetyShifts[5290]=1;
   safetyShifts[8034]=2; // 정안–천안에서 기존 열차보다 선행

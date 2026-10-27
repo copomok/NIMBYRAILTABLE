@@ -2799,27 +2799,31 @@ const CONFIRMED_ROTATION = (()=>{
   addNorthCycles('샘물동-평양 ITX-마음',5161,7,1);
   // 녕원선 단거리 10왕복: 서울 직통편과 통합 65분 간격, 당일 원 기점 복귀.
   const localDown=i=>String(5181+2*i),localUp=i=>String(5182+2*i);
-  sets.push({id:'녕원-평양 ITX-새마을 1(녕원기점)',seq:[localDown(0),localUp(2),localDown(4),localUp(6),localDown(8),localUp(9)]});
-  sets.push({id:'녕원-평양 ITX-새마을 2(평양기점)',seq:[localUp(0),localDown(2),localUp(4),localDown(6),localUp(8),localDown(9)]});
-  sets.push({id:'녕원-평양 ITX-새마을 3(녕원기점)',seq:[localDown(1),localUp(3),localDown(5),localUp(7)]});
-  sets.push({id:'녕원-평양 ITX-새마을 4(평양기점)',seq:[localUp(1),localDown(3),localUp(5),localDown(7)]});
+  sets.push({id:'녕원-평양 ITX-마음 1(녕원기점)',seq:[localDown(0),localUp(2),localDown(4),localUp(6),localDown(8),localUp(9)]});
+  sets.push({id:'녕원-평양 ITX-마음 2(평양기점)',seq:[localUp(0),localDown(2),localUp(4),localDown(6),localUp(8),localDown(9)]});
+  sets.push({id:'녕원-평양 ITX-마음 3(녕원기점)',seq:[localDown(1),localUp(3),localDown(5),localUp(7)]});
+  sets.push({id:'녕원-평양 ITX-마음 4(평양기점)',seq:[localUp(1),localDown(3),localUp(5),localDown(7)]});
   addNorthCycles('혜산-원산 ITX-마음',5201,7,1);
   addNorthCycles('무산-원산 ITX-마음',5221,7,1);
   addNorthCycles('경흥-원산 ITX-마음',5241,9,1);
   addNorthCycles('평양-룡연 ITX-마음',5261,9,1);
-  // 직통 6왕복: 3시간 운행·3시간 15분 간격으로 양끝 2편성에 완결한다.
-  const longDown=i=>String(5281+2*i),longUp=i=>String(5282+2*i);
-  sets.push({id:'녕원-서울 ITX-새마을 1(녕원기점)',seq:[longDown(0),longUp(1),longDown(2),longUp(3),longDown(4),longUp(5)]});
-  sets.push({id:'녕원-서울 ITX-새마을 2(서울기점)',seq:[longUp(0),longDown(1),longUp(2),longDown(3),longUp(4),longDown(5)]});
+  // 5291을 5199보다 앞에 배치해도 5분 회차와 당일 원 기점 복귀가 성립하는 최소 편성.
+  sets.push({id:'녕원-서울 ITX-새마을 1(녕원기점)',seq:['5281','5284','5285','5290']});
+  sets.push({id:'녕원-서울 ITX-새마을 2(서울기점)',seq:['5282','5283','5286','5289']});
+  sets.push({id:'녕원-서울 ITX-새마을 3(녕원기점)',seq:['5287','5292']});
+  sets.push({id:'녕원-서울 ITX-새마을 4(서울기점)',seq:['5288','5291']});
   addNorthCycles('신의주-원산 ITX-새마을',5301,6,1);
   addNorthCycles('샘물동-서울 ITX-새마을',5351,6,2);
   addNorthCycles('서울-블라디보스토크 KTX-산천',8001,6,1);
-  // 4시간 안팎 편도·125분 간격: 250분 뒤 맞은편 열차로 회차한다.
-  const ktxDown=i=>String(8021+2*i),ktxUp=i=>String(8022+2*i);
-  for(let r=0;r<2;r++){
-    sets.push({id:`신의주-부산 KTX-산천 ${r*2+1}(신의주기점)`,seq:[ktxDown(r),ktxUp(r+2),ktxDown(r+4),ktxUp(r+6)]});
-    sets.push({id:`신의주-부산 KTX-산천 ${r*2+2}(부산기점)`,seq:[ktxUp(r),ktxDown(r+2),ktxUp(r+4),ktxDown(r+6)]});
-  }
+  // 야간 2왕복 증편 후의 당일 순환. 각 편성은 5분 이상 회차하고 원 기점으로 돌아간다.
+  for(const [id,seq] of [
+    ['1(신의주기점)',['8021','8026','8029','8036']],
+    ['2(부산기점)',['8022','8025','8030','8035']],
+    ['3(신의주기점)',['8023','8028','8031','8038']],
+    ['4(부산기점)',['8024','8027','8032','8037']],
+    ['5(신의주기점)',['8033','8040']],
+    ['6(부산기점)',['8034','8039']]
+  ])sets.push({id:`신의주-부산 KTX-산천 ${id}`,seq});
   addNorthCycles('신의주-서울 KTX-산천',9001,9,1);
   addNorthCycles('원산-부산 KTX-이음',9521,10,1);
   addNorthCycles('경흥-남대구 KTX-산천',9701,8,1);
