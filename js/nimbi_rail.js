@@ -143,7 +143,7 @@ function routeDistanceKm(t, fromStn, toStn){
   // 구간 내 정거장: 좌표(신뢰 불가/미확보 시 null)와 시각(분)
   const E=[];
   for(let i=fi;i<=ti;i++){
-    let c=_stnCoord(S[i].s);
+    let c=_stnCoord(S[i].geoKey||S[i].s);
     if(UNTRUSTED_COORDS.has(S[i].s)) c=null; // 신뢰 불가 좌표 무시 → 시간으로 추정
     const m=toMin(hasTime(S[i].dep)?S[i].dep:(hasTime(S[i].arr)?S[i].arr:null));
     E.push({c, m});
@@ -2797,16 +2797,29 @@ const CONFIRMED_ROTATION = (()=>{
   addNorthCycles('평양-원산 ITX-새마을',5101,12,1);
   addNorthCycles('평양-해주-서울 ITX-새마을',5131,14,1);
   addNorthCycles('샘물동-평양 ITX-마음',5161,7,1);
-  addNorthCycles('녕원-평양 ITX-마음',5181,10,1);
+  // 녕원선 단거리 10왕복: 서울 직통편과 통합 65분 간격, 당일 원 기점 복귀.
+  const localDown=i=>String(5181+2*i),localUp=i=>String(5182+2*i);
+  sets.push({id:'녕원-평양 ITX-새마을 1(녕원기점)',seq:[localDown(0),localUp(2),localDown(4),localUp(6),localDown(8),localUp(9)]});
+  sets.push({id:'녕원-평양 ITX-새마을 2(평양기점)',seq:[localUp(0),localDown(2),localUp(4),localDown(6),localUp(8),localDown(9)]});
+  sets.push({id:'녕원-평양 ITX-새마을 3(녕원기점)',seq:[localDown(1),localUp(3),localDown(5),localUp(7)]});
+  sets.push({id:'녕원-평양 ITX-새마을 4(평양기점)',seq:[localUp(1),localDown(3),localUp(5),localDown(7)]});
   addNorthCycles('혜산-원산 ITX-마음',5201,7,1);
   addNorthCycles('무산-원산 ITX-마음',5221,7,1);
   addNorthCycles('경흥-원산 ITX-마음',5241,9,1);
   addNorthCycles('평양-룡연 ITX-마음',5261,9,1);
-  addNorthCycles('녕원-서울 ITX-마음',5281,5,1);
+  // 직통 6왕복: 3시간 운행·3시간 15분 간격으로 양끝 2편성에 완결한다.
+  const longDown=i=>String(5281+2*i),longUp=i=>String(5282+2*i);
+  sets.push({id:'녕원-서울 ITX-새마을 1(녕원기점)',seq:[longDown(0),longUp(1),longDown(2),longUp(3),longDown(4),longUp(5)]});
+  sets.push({id:'녕원-서울 ITX-새마을 2(서울기점)',seq:[longUp(0),longDown(1),longUp(2),longDown(3),longUp(4),longDown(5)]});
   addNorthCycles('신의주-원산 ITX-새마을',5301,6,1);
   addNorthCycles('샘물동-서울 ITX-새마을',5351,6,2);
   addNorthCycles('서울-블라디보스토크 KTX-산천',8001,6,1);
-  addNorthCycles('신의주-부산 KTX-산천',8021,8,1);
+  // 4시간 안팎 편도·125분 간격: 250분 뒤 맞은편 열차로 회차한다.
+  const ktxDown=i=>String(8021+2*i),ktxUp=i=>String(8022+2*i);
+  for(let r=0;r<2;r++){
+    sets.push({id:`신의주-부산 KTX-산천 ${r*2+1}(신의주기점)`,seq:[ktxDown(r),ktxUp(r+2),ktxDown(r+4),ktxUp(r+6)]});
+    sets.push({id:`신의주-부산 KTX-산천 ${r*2+2}(부산기점)`,seq:[ktxUp(r),ktxDown(r+2),ktxUp(r+4),ktxDown(r+6)]});
+  }
   addNorthCycles('신의주-서울 KTX-산천',9001,9,1);
   addNorthCycles('원산-부산 KTX-이음',9521,10,1);
   addNorthCycles('경흥-남대구 KTX-산천',9701,8,1);
@@ -4501,7 +4514,10 @@ north:{
       {n:'성천',x:28,y:-405},{n:'신양',x:76,y:-385},{n:'양덕',x:121,y:-367},{n:'원산',x:307,y:-353}
     ]},
     {name:'녕원선',color:'#84cc16',stations:[
-      {n:'평양',x:-93,y:-304},{n:'은산읍',x:-27,y:-419},{n:'북창읍',x:39,y:-470},{n:'강안동',x:42,y:-527},{n:'녕원',x:98,y:-545}
+      {n:'평양',x:-93,y:-304},{n:'서평양',x:-95,y:-319},{n:'서포',x:-93,y:-331},
+      {n:'배산점',x:-62,y:-366},{n:'평성',x:-59,y:-375},{n:'은산',x:-26,y:-419},
+      {n:'구봉',x:8,y:-447},{n:'북창',x:40,y:-471},{n:'송림(녕원선)',x:40,y:-486},
+      {n:'남덕',x:38,y:-502},{n:'덕천',x:42,y:-527},{n:'녕원',x:98,y:-546}
     ]},
     {name:'만포선',color:'#ec4899',stations:[
       {n:'평양',x:-93,y:-304},{n:'은산읍',x:-27,y:-419},{n:'순천비행장',x:-46,y:-429},
@@ -10367,7 +10383,7 @@ function _bookRouteMapHTML(t,from,to,gradeColor,travelDate,projectMinutes=0){
   const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   // 무시각 통과역까지 좌표점으로 유지해야 실제 노선 선형이 끊기거나 직선화되지 않는다.
   // 통과역의 점·역명은 아래 노드 단계에서 그리지 않고 선분 계산에만 사용한다.
-  const points=(t.stops||[]).map((s,idx)=>({s,idx,coord:_stnCoord(s.s)})).filter(x=>x.coord);
+  const points=(t.stops||[]).map((s,idx)=>({s,idx,coord:_stnCoord(s.geoKey||s.s)})).filter(x=>x.coord);
   let fromIdx=points.findIndex(x=>x.s.s===from),toIdx=points.findIndex((x,i)=>i>fromIdx&&x.s.s===to);
   if(points.length<2||fromIdx<0||toIdx<0)return '<div class="brd-map-empty">표시할 수 있는 노선 좌표가 없습니다.</div>';
   const W=620,H=380,P=48;

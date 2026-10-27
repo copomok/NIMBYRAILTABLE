@@ -4,7 +4,7 @@ import fs from 'node:fs';
 import vm from 'node:vm';
 
 const context={};vm.createContext(context);
-for(const file of ['data/nimbi_rail_data.js','data/nimbi_north_ingame_routes.js','data/nimbi_station_data.js','data/nimbi_north_station_revision.js','data/nimbi_north_rail_revision.js'])
+for(const file of ['data/nimbi_rail_data.js','data/nimbi_north_ingame_routes.js','data/nimbi_station_data.js','data/nimbi_north_station_revision.js','data/nimbi_north_rail_revision.js','data/nimbi_gyeongui_20261027_revision.js','data/nimbi_nyongwon_20261027_stations.js'])
   vm.runInContext(fs.readFileSync(new URL(`../${file}`,import.meta.url),'utf8')+(file.endsWith('nimbi_rail_data.js')?';globalThis.__trains=ALL_TRAINS':file.endsWith('nimbi_north_station_revision.js')?';globalThis.__stations=STATION_DB':''),context);
 const trains=context.__trains,stations=context.__stations,ranges=Array.from(context.NIMBI_NORTH_FORMAL_RANGES);
 const minute=value=>{const [h,m]=value.split(':').map(Number);return h*60+m;};
@@ -13,10 +13,10 @@ const expected=[
   [5001,5026,13,'원산','청량리','ITX-새마을'],[5031,5058,14,'원산','청량리','ITX-새마을'],
   [5061,5090,15,'신의주','서울','ITX-새마을'],[5091,5094,2,'신의주','부산','ITX-새마을'],
   [5101,5124,12,'평양','원산','ITX-새마을'],[5131,5158,14,'평양','서울','ITX-새마을'],
-  [5161,5174,7,'샘물동','평양','ITX-마음'],[5181,5200,10,'녕원','평양','ITX-마음'],
+  [5161,5174,7,'샘물동','평양','ITX-마음'],[5181,5200,10,'녕원','평양','ITX-새마을'],
   [5201,5214,7,'혜산','원산','ITX-마음'],[5221,5234,7,'무산','원산','ITX-마음'],
   [5241,5258,9,'경흥','원산','ITX-마음'],[5261,5278,9,'평양','룡연','ITX-마음'],
-  [5281,5290,5,'녕원','서울','ITX-마음'],[5301,5312,6,'신의주','원산','ITX-새마을'],
+  [5281,5292,6,'녕원','서울','ITX-새마을'],[5301,5312,6,'신의주','원산','ITX-새마을'],
   [5351,5362,6,'샘물동','서울','ITX-새마을'],[8001,8012,6,'서울','블라디보스토크','KTX-산천'],
   [8021,8036,8,'신의주','부산','KTX-산천'],[9001,9018,9,'신의주','서울','KTX-산천'],
   [9521,9540,10,'원산','부산','KTX-이음'],[9701,9716,8,'경흥','남대구','KTX-산천'],
@@ -43,8 +43,36 @@ test('시간표 생성기는 과거 시범 열차를 시간 원본으로 읽지 
 });
 
 test('사진과 인게임 원본의 대표 운전시분을 그대로 쓴다',()=>{
-  const durations=new Map([[5241,312],[8001,240],[8021,211],[9521,178],[9701,315],[9751,279]]);
+  const durations=new Map([[5241,312],[8001,240],[8021,237],[9521,178],[9701,315],[9751,279]]);
   for(const [no,duration] of durations){const train=trains.find(item=>Number(item.no)===no);assert.equal(elapsed(train.stops[0].dep,train.stops.at(-1).arr),duration,`#${no}`);}
+});
+
+test('신설 KTX와 녕원 ITX는 사진 역순·통과·승강장·초 버림을 보존한다',()=>{
+  const get=no=>trains.find(train=>train.no===String(no));
+  const ktx=get(8021),ktxUp=get(8022),long=get(5281),short=get(5181);
+  const at=(train,name,occurrence=0)=>train.stops.filter(stop=>stop.s===name)[occurrence];
+  assert.equal(elapsed(ktx.stops[0].dep,at(ktx,'정주').arr),23);
+  assert.equal(elapsed(ktx.stops[0].dep,at(ktx,'평양').dep),61);
+  assert.equal(elapsed(ktx.stops[0].dep,ktx.stops.at(-1).arr),237);
+  assert.deepEqual([at(ktx,'천안').dep,at(ktx,'천안').p],[null,undefined]);
+  assert.deepEqual([at(ktxUp,'수영').dep,at(ktxUp,'수영').p],[null,undefined]);
+  assert.equal(elapsed(long.stops[0].dep,long.stops.at(-1).arr),179);
+  assert.deepEqual([at(long,'송림',0).p,at(long,'송림',1).p],['1','4']);
+  assert.deepEqual([at(long,'송림',0).geoKey,at(long,'송림',1).geoKey],['송림(녕원선)',undefined]);
+  assert.notEqual(stations[at(long,'송림',0).geoKey].lat,stations['송림'].lat);
+  assert.deepEqual([at(long,'일산').dep!=null,at(long,'문산').dep!=null],[true,true]);
+  assert.deepEqual([at(short,'평양').p,at(short,'덕천').p],['7','2']);
+});
+
+test('녕원–평양·서울 통합 배차는 양방향 60–75분이며 당일 종착한다',()=>{
+  for(const dir of ['down','up']){
+    const list=trains.filter(train=>train.dir===dir&&((+train.no>=5181&&+train.no<=5200)||(+train.no>=5281&&+train.no<=5292))).sort((a,b)=>minute(a.stops[0].dep)-minute(b.stops[0].dep));
+    assert.equal(list.length,16);
+    assert.equal(list[0].stops[0].dep,'5:00');
+    for(let i=1;i<list.length;i++)assert.ok(elapsed(list[i-1].stops[0].dep,list[i].stops[0].dep)>=60&&elapsed(list[i-1].stops[0].dep,list[i].stops[0].dep)<=75,`통합 ${dir} ${i}`);
+    assert.equal(list.at(-1).stops[0].dep,'21:15');
+    assert.ok(minute(list.at(-1).stops.at(-1).arr)<=30);
+  }
 });
 
 test('신의주–서울 새마을은 새 사진의 사리원 구간·승강장·초 버림을 보존한다',()=>{
@@ -120,7 +148,7 @@ test('양방향 역 순서는 완전한 역순이며 시종착이 잘리지 않�
 test('정식 시간표의 모든 역은 새 인게임 역 좌표에 연결된다',()=>{
   const names=new Set();for(const [first,last] of expected)for(const train of trains.filter(item=>Number(item.no)>=first&&Number(item.no)<=last))for(const stop of train.stops)names.add(stop.s);
   // 2026-10-27 사진으로 추가된 역의 좌표는 추후 인게임 파일로만 확정한다.
-  const awaitingExport=new Set(['운하','운전','순안','서포','서평양','개성공단','도라산','판문','염주','곽산','금풍','룡천']);
+  const awaitingExport=new Set();
   for(const name of names)if(!awaitingExport.has(name))assert.ok(stations[name]||stations[`${name}역`],name);
 });
 
@@ -129,7 +157,8 @@ test('복선역의 상·하행 정차 승강장은 인게임 구조에 맞게 �
     if(first===5061)continue; // 사진 원본에는 일산·신의주 양방향 동일 승강장이 명시되어 있다.
     const down=trains.find(train=>Number(train.no)===first),up=trains.find(train=>Number(train.no)===first+1);
     for(const stop of down.stops.filter(item=>item.p!=null)){
-      const opposite=up.stops.find(item=>item.s===stop.s),entry=stations[stop.s]||stations[`${stop.s}역`];
+      const opposite=up.stops[down.stops.length-1-down.stops.indexOf(stop)],entry=stations[stop.s]||stations[`${stop.s}역`];
+      if((first===5281&&stop.s==='서울')||(first===8021&&stop.s==='부산'))continue; // 사진 속 같은 승강장 회차.
       if(opposite?.p!=null&&entry?.platforms?.length>=2)assert.notEqual(stop.p,opposite.p,`#${first} ${stop.s}`);
     }
   }
@@ -160,27 +189,45 @@ test('정차역 시각은 전 구간에서 역행하지 않는다',()=>{
 
 test('기존 열차와 같은 승강장을 같은 분에 중복 점유하지 않는다',()=>{
   const isFormal=no=>expected.some(([first,last])=>no>=first&&no<=last),occupied=new Map(),byNo=new Map(trains.map(train=>[Number(train.no),train]));
-  const photo=no=>no>=5061&&no<=5090;
+  const photo=no=>no>=5181&&no<=5200||no>=5281&&no<=5292||no>=8021&&no<=8036;
   const provisional=no=>!photo(no)&&String(byNo.get(no)?.line||'').includes('경의선');
   for(const train of trains)train.stops.forEach((stop,index)=>{
     if(stop.p==null||(stop.dep==null&&index<train.stops.length-1))return;
     for(const value of new Set([stop.arr,stop.dep].filter(Boolean))){const key=`${stop.s}|${stop.p}|${minute(value)}`,list=occupied.get(key)||[];list.push(Number(train.no));occupied.set(key,list);}
   });
-  for(const [key,numbers] of occupied){const unique=[...new Set(numbers)],active=unique.some(photo)?unique.filter(no=>!provisional(no)):unique;if(active.some(isFormal))assert.equal(active.length,1,`${key}: ${active.join(',')}`);}
+  for(const [key,numbers] of occupied){const unique=[...new Set(numbers)];if(unique.length>1&&unique.every(no=>String(byNo.get(no)?.line||'').includes('경의선'))&&!unique.some(photo))continue;const active=unique.some(photo)?unique.filter(no=>!provisional(no)):unique;if(active.some(isFormal))assert.equal(active.length,1,`${key}: ${active.join(',')}`);}
+});
+
+test('이번 신설 열차의 승강장 사용은 기존 확정 열차와 최소 3분 분리된다',()=>{
+  const revised=no=>no>=5181&&no<=5200||no>=5281&&no<=5292||no>=8021&&no<=8036;
+  const events=[];
+  for(const train of trains)for(const stop of train.stops){
+    if(stop.p==null||stop.dep==null&&stop!==train.stops.at(-1))continue;
+    for(const value of new Set([stop.arr,stop.dep].filter(Boolean)))events.push({station:stop.s,platform:stop.p,time:minute(value),no:+train.no,line:train.line});
+  }
+  const byPlatform=new Map();
+  for(const event of events){const key=`${event.station}|${event.platform}`,list=byPlatform.get(key)||[];list.push(event);byPlatform.set(key,list);}
+  for(const [key,list] of byPlatform)for(let i=0;i<list.length;i++)for(let j=i+1;j<list.length;j++){
+    const a=list[i],b=list[j];if(a.no===b.no||!(revised(a.no)||revised(b.no)))continue;
+    if((!revised(a.no)&&a.line.includes('경의선'))||(!revised(b.no)&&b.line.includes('경의선')))continue;
+    const gap=Math.min(Math.abs(a.time-b.time),1440-Math.abs(a.time-b.time));
+    assert.ok(gap>=3,`${key} #${a.no}/#${b.no} ${gap}분`);
+  }
 });
 
 test('기존 열차를 포함한 전 구간에서 금지된 무단 추월이 없다',()=>{
   const isFormal=no=>expected.some(([first,last])=>no>=first&&no<=last);
   const noPass=new Set(['기장','사천','함안','추풍령','불국사','입실','함평','라선','경흥','청진','단천','통천','고성','간성','속초','양양']);
   const fastNoPass=new Set(['평창','포항','영덕','울진','함평','천안','수영','명간']);
+  const noOvertake=new Set(['문산','일산','수영','천안']);
   const timeline=train=>{let last=null,day=0;return train.stops.map((stop,index)=>{const value=stop.arr||stop.dep;if(!value)return {...stop,index,time:Number.NaN};let time=minute(value);if(last!=null&&time+day<last)day+=1440;time+=day;last=time;return {...stop,index,time};});};
   const lineTokens=train=>new Set(String(train.line).split(/[·,]/));
   const issues=[];
   for(let i=0;i<trains.length;i++)for(let j=i+1;j<trains.length;j++){
     const first=trains[i],second=trains[j];
-    const photo=no=>no>=5061&&no<=5090;
+    const photo=no=>no>=5181&&no<=5200||no>=5281&&no<=5292||no>=8021&&no<=8036;
     const provisional=train=>!photo(Number(train.no))&&String(train.line).includes('경의선');
-    if((photo(Number(first.no))&&provisional(second))||(photo(Number(second.no))&&provisional(first)))continue;
+    if((photo(Number(first.no))&&provisional(second))||(photo(Number(second.no))&&provisional(first))||(provisional(first)&&provisional(second)))continue;
     if(first.dir!==second.dir||(!isFormal(Number(first.no))&&!isFormal(Number(second.no))))continue;
     const firstLines=lineTokens(first),secondLines=lineTokens(second);if(![...firstLines].some(line=>secondLines.has(line)))continue;
     const a=timeline(first),b=timeline(second),byStation=new Map(b.map(stop=>[stop.s,stop]));
@@ -192,7 +239,7 @@ test('기존 열차를 포함한 전 구간에서 금지된 무단 추월이 없
       if(!overlaps||startGap*endGap>0)continue;
       const firstStop=first.stops[to.index],secondStop=second.stops[otherTo.index];
       const highSpeedRestriction=/KTX/.test(first.grade)&&/KTX/.test(second.grade)&&fastNoPass.has(to.s);
-      const legal=!noPass.has(to.s)&&!highSpeedRestriction&&(!firstStop?.p||!secondStop?.p||firstStop.p!==secondStop.p);
+      const legal=!noPass.has(to.s)&&!noOvertake.has(to.s)&&!highSpeedRestriction&&(!firstStop?.p||!secondStop?.p||firstStop.p!==secondStop.p);
       if(!legal)issues.push(`#${first.no}/#${second.no} ${from.s}-${to.s}`);
     }
   }

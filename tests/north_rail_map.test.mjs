@@ -35,7 +35,7 @@ test('북한 철도망은 기존 노선과 추가 노선·동해선 지선을 �
   assert.ok(routes.동해선.includes('경성'));
   assert.ok(routes.동해선.includes('락원'));
   assert.equal(north.routes.find(r=>r.name==='순천선').stations.map(s=>s.n).join(','),'평원,숙천,순천비행장,성천,신양,양덕,원산');
-  assert.equal(north.routes.find(r=>r.name==='녕원선').stations.map(s=>s.n).join(','),'평양,은산읍,북창읍,강안동,녕원');
+  assert.equal(north.routes.find(r=>r.name==='녕원선').stations.map(s=>s.n).join(','),'평양,서평양,서포,배산점,평성,은산,구봉,북창,송림(녕원선),남덕,덕천,녕원');
   assert.equal(north.routes.find(r=>r.name==='만포선').stations.map(s=>s.n).join(','),'평양,은산읍,순천비행장,향산읍,희천제사공장,전천읍,성간읍,강계학생소년궁전,샘물동');
   assert.equal(north.routes.find(r=>r.name==='평성선').stations.map(s=>s.n).join(','),'평양,강선,강서,남포,은율,송화,장연,태탄,벽성,해주,청단읍,연안읍,금곡리,개성');
   assert.equal(north.routes.find(r=>r.name==='평성선'&&r.dash).stations.map(s=>s.n).join(','),'장연,룡연');
