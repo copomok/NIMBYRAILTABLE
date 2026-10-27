@@ -1338,5 +1338,18 @@ const NOTICES = [
 <div class="n-box">역 위치는 인게임 역 좌표를 사용했고, 시간표는 인게임 UTC 시각을 한국 표준시로 변환한 뒤 기존 사이트의 검증된 시간 보정축을 유지했습니다. 성남화성선의 6분 18초 간격은 인게임 편성 배치 기준이며, 사이트의 분 단위 시간표에서는 6분·7분 간격으로 번갈아 표시될 수 있습니다. 한 역에만 머무는 주박 기록은 여객 시간표에서 제외했습니다.</div><br>
 
 <a class="notice-timetable-attachment summary" href="assets/notices/20261023-metro-revision.svg" target="_blank" rel="noopener noreferrer"><img src="assets/notices/20261023-metro-revision.svg" alt="경의중앙선 통합과 전철 노선 개편 요약표" loading="lazy"><span>전철 개편 전후 비교 크게 보기</span></a>`
+  },
+  {
+    date:'2026-10-27',
+    cat:'route',
+    title:'마포–부산(충주 경유) KTX-이음 삼랑진–부산 경로 표기 정정',
+    body:`마포–부산(충주 경유) <strong>KTX-이음 #501~#526</strong>의 운행 정보와 지도에서 삼랑진–부산 구간에 실제로 경유하지 않는 역이 표시되던 오류를 바로잡았습니다.<br><br>
+
+<table>
+<tr><th>변경 전</th><th>변경 후</th></tr>
+<tr><td>삼랑진 → 물금 → 북부산 → 동래 → 부산</td><td><strong>삼랑진 → 부산 직통</strong></td></tr>
+</table><br>
+
+물금·북부산·동래의 잘못된 통과 표기만 삭제했습니다. <span class="n-highlight">모든 열차의 출발·도착 시각과 소요시간은 변경되지 않습니다.</span> 상행도 부산에서 삼랑진으로 직통 운행하는 순서로 표시됩니다.`
   }
 ];

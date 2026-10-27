@@ -182,9 +182,9 @@ test('공지 이미지 배포 버전이 CSS·데이터·서비스워커에 함�
   const serviceWorker = read('sw.js');
 
   assert.match(index, /nimbi_redesign\.css\?v=2026100703/);
-  assert.match(index, /nimbi_rail_notices\.js\?v=2026102303/);
+  assert.match(index, /nimbi_rail_notices\.js\?v=2026102701/);
   assert.match(index, /nimbi_rail\.css\?v=2026100703/);
-  assert.match(serviceWorker, /CACHE_NAME = 'nimbirail-2026102703'/);
+  assert.match(serviceWorker, /CACHE_NAME = 'nimbirail-2026102704'/);
 });
 
 test('전철 역명 변경 공지는 노선별 개명과 동명이역 해소 내용을 안내한다', () => {
@@ -192,6 +192,18 @@ test('전철 역명 변경 공지는 노선별 개명과 동명이역 해소 내
   assert.match(notices, /title:'전철 일부 역명이 변경됩니다'/);
   for (const keyword of ['광주2호선', '월곡', '광명성남선', '안양천', '강서선', '대법원', '교하선·춘천선', '운행 시각은 변경되지 않습니다']) {
     assert.ok(notices.includes(keyword), `${keyword} 안내가 필요합니다`);
+  }
+});
+
+test('삼랑진–부산 직통 경로 정정 공지는 시각 불변과 적용 열차를 안내한다', () => {
+  const context = {};
+  vm.createContext(context);
+  vm.runInContext(`${read('data/nimbi_rail_notices.js')}\nglobalThis.__NOTICES__ = NOTICES;`, context);
+  const notice = context.__NOTICES__.find(item => item.title.includes('삼랑진–부산 경로 표기 정정'));
+  assert.ok(notice);
+  assert.equal(notice.cat, 'route');
+  for (const keyword of ['#501~#526', '삼랑진 → 부산 직통', '물금·북부산·동래', '시각과 소요시간은 변경되지 않습니다']) {
+    assert.ok(notice.body.includes(keyword), `${keyword} 안내가 필요합니다`);
   }
 });
 
