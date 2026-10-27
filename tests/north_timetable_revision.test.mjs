@@ -49,13 +49,14 @@ test('사진과 인게임 원본의 대표 운전시분을 그대로 쓴다',()=
 
 test('신의주–서울 새마을은 새 사진의 사리원 구간·승강장·초 버림을 보존한다',()=>{
   const down=trains.find(train=>train.no==='5061'),up=trains.find(train=>train.no==='5062');
-  const order=['신의주','용천','염주','동림','선천','곽산','정주','박천','청천','운하','운전','안주역전','문덕','숙천','평원','순안','서포','서평양','평양','송림','사리원','서흥','평산','금천','개성','개성공단','판문','도라산','문산','일산','마포','서울'];
-  assert.deepEqual(Array.from(down.stops,stop=>stop.s),order);
-  assert.deepEqual(Array.from(up.stops,stop=>stop.s),order.toReversed());
+  const order=['서울','마포','행신','일산','문산','도라산','판문','개성공단','개성','금천','평산','서흥','사리원','송림','평양','서평양','서포','순안','평원','금풍','문덕','안주역전','운전','운하','정주','곽산','선천','동림','염주','룡천','신의주'];
+  assert.deepEqual(Array.from(up.stops,stop=>stop.s),order);
+  assert.deepEqual(Array.from(down.stops,stop=>stop.s),order.toReversed());
+  for(const train of trains.filter(item=>Number(item.no)>=5061&&Number(item.no)<=5090))assert.deepEqual(Array.from(train.stops,stop=>stop.s),train.dir==='up'?order:order.toReversed(),`#${train.no} 역순`);
   const check=(train,station,arrival,departure,platform)=>{const stop=train.stops.find(item=>item.s===station);assert.deepEqual([stop.arr,stop.dep,stop.p],[arrival,departure,platform],`#${train.no} ${station}`);};
-  check(down,'신의주',null,'5:00','5');check(down,'염주','5:15','5:16','1');check(down,'곽산','5:41','5:42','1');check(down,'사리원','7:26','7:27','5');check(down,'판문','8:25','8:26','1');check(down,'문산','8:34','8:35','3');check(down,'마포','8:53','8:54','5');
-  check(up,'서울',null,'5:00','10');check(up,'문산','5:23','5:24','4');check(up,'판문','5:32','5:33','2');check(up,'사리원','6:31','6:32','6');check(up,'곽산','8:36','8:37','2');check(up,'염주','8:51','8:52','2');check(up,'신의주','8:59',null,'5');
-  for(const [train,names] of [[down,['박천','청천']],[up,['동림','용천']]])for(const name of names){const stop=train.stops.find(item=>item.s===name);assert.equal(stop.arr,'통과',`#${train.no} ${name}`);assert.equal(stop.dep,null);assert.equal(stop.p,undefined);}
+  check(down,'신의주',null,'5:00','5');check(down,'룡천','5:06','5:07','1');check(down,'염주','5:15','5:16','1');check(down,'곽산','5:41','5:42','1');check(down,'금풍','6:27','6:28','1');check(down,'사리원','7:26','7:27','5');check(down,'판문','8:25','8:26','1');check(down,'문산','8:34','8:35','3');check(down,'마포','8:53','8:54','5');
+  check(up,'서울',null,'5:00','10');check(up,'문산','5:23','5:24','4');check(up,'판문','5:32','5:33','2');check(up,'사리원','6:31','6:32','6');check(up,'금풍','7:30','7:31','2');check(up,'정주','8:09','8:10','4');check(up,'곽산','8:16','8:17','2');check(up,'염주','8:42','8:43','2');check(up,'룡천','8:51','8:52','2');check(up,'신의주','8:59',null,'5');
+  for(const [train,time] of [[down,'8:50'],[up,'5:08']]){const stop=train.stops.find(item=>item.s==='행신');assert.equal(stop.arr,time,`#${train.no} 행신`);assert.equal(stop.dep,null);assert.equal(stop.p,undefined);}
   assert.equal(elapsed(down.stops[0].dep,down.stops.at(-1).arr),238);
   assert.equal(elapsed(up.stops[0].dep,up.stops.at(-1).arr),239);
   for(const train of [down,up])assert.ok(train.stops.every(stop=>!stop.s.startsWith('WP')&&!stop.s.startsWith('웨이포인트')));
@@ -98,7 +99,7 @@ test('정식 계통 노선 정보에는 지선 명칭을 쓰지 않는다',()=>{
 test('ITX-마음·새마을은 사진에 표시된 통과역 외에는 정차한다',()=>{
   for(const [first,last,,, ,grade] of expected.filter(row=>row[5].startsWith('ITX')))
     for(const train of trains.filter(item=>Number(item.no)>=first&&Number(item.no)<=last))
-      train.stops.slice(0,-1).forEach(stop=>{const photoExact=Number(train.no)>=5201&&Number(train.no)<=5234;const saemaeulPass=Number(train.no)>=5061&&Number(train.no)<=5090&&stop.arr==='통과';if(!photoExact&&!saemaeulPass)assert.ok(stop.dep,`#${train.no} ${stop.s} 정차`);});
+      train.stops.slice(0,-1).forEach(stop=>{const photoExact=Number(train.no)>=5201&&Number(train.no)<=5234;const saemaeulPass=Number(train.no)>=5061&&Number(train.no)<=5090&&stop.s==='행신';if(!photoExact&&!saemaeulPass)assert.ok(stop.dep,`#${train.no} ${stop.s} 정차`);});
 });
 
 test('통과 불가역은 고속열차도 정차하고 통과역에는 승강장을 넣지 않는다',()=>{
@@ -119,7 +120,7 @@ test('양방향 역 순서는 완전한 역순이며 시종착이 잘리지 않�
 test('정식 시간표의 모든 역은 새 인게임 역 좌표에 연결된다',()=>{
   const names=new Set();for(const [first,last] of expected)for(const train of trains.filter(item=>Number(item.no)>=first&&Number(item.no)<=last))for(const stop of train.stops)names.add(stop.s);
   // 2026-10-27 사진으로 추가된 역의 좌표는 추후 인게임 파일로만 확정한다.
-  const awaitingExport=new Set(['청천','운하','운전','순안','서포','서평양','개성공단','도라산','판문','염주','곽산']);
+  const awaitingExport=new Set(['운하','운전','순안','서포','서평양','개성공단','도라산','판문','염주','곽산','금풍','룡천']);
   for(const name of names)if(!awaitingExport.has(name))assert.ok(stations[name]||stations[`${name}역`],name);
 });
 
