@@ -43,7 +43,8 @@ const SUMMARY_NOTICE_IDS = [
   '20260803-jamsil-mokpo-srt-expansion',
   '20260911-north-formal-summary',
   '20261008-gonam-itx-summary',
-  '20261023-metro-revision'
+  '20261023-metro-revision',
+  '20261027-service-update'
 ];
 const NOTICE_IDS = [...FULL_NOTICE_IDS, ...SUMMARY_NOTICE_IDS];
 
@@ -182,9 +183,9 @@ test('공지 이미지 배포 버전이 CSS·데이터·서비스워커에 함�
   const serviceWorker = read('sw.js');
 
   assert.match(index, /nimbi_redesign\.css\?v=2026100703/);
-  assert.match(index, /nimbi_rail_notices\.js\?v=2026102701/);
+  assert.match(index, /nimbi_rail_notices\.js\?v=2026102702/);
   assert.match(index, /nimbi_rail\.css\?v=2026100703/);
-  assert.match(serviceWorker, /CACHE_NAME = 'nimbirail-2026102704'/);
+  assert.match(serviceWorker, /CACHE_NAME = 'nimbirail-2026102705'/);
 });
 
 test('전철 역명 변경 공지는 노선별 개명과 동명이역 해소 내용을 안내한다', () => {
@@ -195,15 +196,19 @@ test('전철 역명 변경 공지는 노선별 개명과 동명이역 해소 내
   }
 });
 
-test('삼랑진–부산 직통 경로 정정 공지는 시각 불변과 적용 열차를 안내한다', () => {
+test('10월 27일 공지는 여객 관점에서 모든 운행·노선 변경을 안내한다', () => {
   const context = {};
   vm.createContext(context);
   vm.runInContext(`${read('data/nimbi_rail_notices.js')}\nglobalThis.__NOTICES__ = NOTICES;`, context);
-  const notice = context.__NOTICES__.find(item => item.title.includes('삼랑진–부산 경로 표기 정정'));
+  const notice = context.__NOTICES__.find(item => item.title === '10월 27일 열차 운행·노선 안내');
   assert.ok(notice);
-  assert.equal(notice.cat, 'route');
-  for (const keyword of ['#501~#526', '삼랑진 → 부산 직통', '물금·북부산·동래', '시각과 소요시간은 변경되지 않습니다']) {
+  assert.equal(notice.cat, 'timetable');
+  for (const keyword of ['#501~#526', '13회 왕복', '05:21', '05:31', '삼랑진–부산은 직통', '물금·북부산·동래', '#520은 17:30', '#524는 20:42', '#1692', '#1484', '11분', '교하선', '서산선', '광주1호선', '20261027-service-update.svg']) {
     assert.ok(notice.body.includes(keyword), `${keyword} 안내가 필요합니다`);
+  }
+  const svg = read('assets/notices/20261027-service-update.svg');
+  for (const keyword of ['13회 왕복', '삼랑진 → 부산 직통', '#1484', '중랑 정차 4분 → 2분', '교하선', '서산선', '광주1호선']) {
+    assert.ok(svg.includes(keyword), `${keyword} 요약 이미지 반영이 필요합니다`);
   }
 });
 

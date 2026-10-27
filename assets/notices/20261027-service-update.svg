@@ -1,0 +1,55 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1440" height="1100" viewBox="0 0 1440 1100" role="img" aria-labelledby="title desc">
+  <title id="title">10월 27일 열차 운행·노선 안내</title>
+  <desc id="desc">마포와 부산을 잇는 충주 경유 KTX-이음 13회 왕복 운행, 무궁화호 일부 시각 조정, 교하선·서산선·광주1호선 노선도 표시 정정을 안내합니다.</desc>
+  <style>
+    text{font-family:Apple SD Gothic Neo,Malgun Gothic,Noto Sans KR,sans-serif;fill:#f2f6fb}
+    .eyebrow{font-size:18px;font-weight:700;letter-spacing:3px;fill:#83dfce}
+    .title{font-size:49px;font-weight:800}
+    .subtitle{font-size:22px;fill:#b7c9d8}
+    .section{font-size:31px;font-weight:800}
+    .lead{font-size:27px;font-weight:800}
+    .detail{font-size:22px;fill:#d5e2ec}
+    .small{font-size:20px;fill:#bdcedc}
+    .metric{font-size:30px;font-weight:800;fill:#a1ecdb}
+    .footer{font-size:18px;fill:#99b1c3}
+  </style>
+  <rect width="1440" height="1100" fill="#0e1b2b"/>
+  <rect x="40" y="38" width="1360" height="1024" rx="28" fill="#16283d" stroke="#304e67" stroke-width="2"/>
+  <text x="82" y="92" class="eyebrow">NIMBYRAIL PASSENGER INFORMATION</text>
+  <text x="82" y="155" class="title">10월 27일 열차 운행·노선 안내</text>
+  <text x="82" y="199" class="subtitle">부산 연장 KTX-이음 · 무궁화호 시각 조정 · 전철 노선도 정정</text>
+
+  <rect x="80" y="228" width="1280" height="366" rx="22" fill="#1d3b49" stroke="#3d776f" stroke-width="2"/>
+  <text x="108" y="272" class="eyebrow">KTX-이음 #501–#526</text>
+  <text x="108" y="318" class="section">마포 ↔ 부산, 충주 경유로 연장</text>
+  <text x="108" y="358" class="detail">서울 · 수영 · 충주 · 문경 · 상주 · 구미 · 남대구 · 밀양 경유</text>
+  <rect x="108" y="384" width="591" height="119" rx="14" fill="#294d59"/>
+  <rect x="713" y="384" width="619" height="119" rx="14" fill="#294d59"/>
+  <text x="132" y="419" class="small">첫차 출발</text>
+  <text x="132" y="458" class="metric">마포 05:21 · 부산 05:31</text>
+  <text x="737" y="419" class="small">막차 도착</text>
+  <text x="737" y="458" class="metric">부산 23:48 · 마포 23:40</text>
+  <text x="132" y="488" class="small">하루 13회 왕복</text>
+  <text x="737" y="488" class="small">편도 부산행 2시간 9분 · 마포행 2시간 11분</text>
+  <text x="108" y="541" class="lead">삼랑진 → 부산 직통</text>
+  <text x="482" y="540" class="small">물금·북부산·동래 미경유 · 이 구간의 도착 시각 불변</text>
+  <text x="108" y="574" class="small">부산발 마포행 #520 17:30 · #524 20:42 출발</text>
+
+  <rect x="80" y="618" width="1280" height="202" rx="22" fill="#20364d"/>
+  <text x="108" y="662" class="section">무궁화호 시각 조정</text>
+  <rect x="108" y="682" width="1224" height="55" rx="10" fill="#29435a"/>
+  <text x="132" y="718" class="detail">태백황지 → 청량리</text>
+  <text x="458" y="718" class="detail">#1692·1694·1696·1698·1700</text>
+  <text x="906" y="718" class="detail">중랑 정차 4분 → 2분</text>
+  <rect x="108" y="748" width="1224" height="55" rx="10" fill="#29435a"/>
+  <text x="132" y="784" class="detail">장항선 #1484</text>
+  <text x="458" y="784" class="detail">전 역 11분 늦춰 운행</text>
+  <text x="906" y="784" class="detail">#1464 시각은 그대로</text>
+
+  <rect x="80" y="844" width="1280" height="164" rx="22" fill="#20364d"/>
+  <text x="108" y="888" class="section">전철 노선도 표시 정정</text>
+  <text x="108" y="931" class="detail">교하선 덕양·내곡 / 서산선 성내·내곡 위치와 연결 순서 정정</text>
+  <text x="108" y="972" class="detail">광주1호선 일곡은 예향 다음 역 · 전철 운행 시각은 그대로</text>
+
+  <text x="83" y="1043" class="footer">정확한 역별 출발·도착 시각과 승강장은 앱의 최신 열차 상세 시간표에서 확인하세요.</text>
+</svg>
