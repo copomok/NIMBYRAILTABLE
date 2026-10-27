@@ -11,7 +11,7 @@ assert.ok(mapSource,'MAP_LINES 정의를 찾을 수 없습니다.');
 const MAP_LINES=vm.runInNewContext(`(${mapSource[1]})`);
 
 test('남한 경의선 노선도는 서울에서 문산까지 연결된다',()=>{
-  assert.equal(MAP_LINES.gyeongui.routes[0].stations.map(s=>s.n).join(','),'서울,행신,일산,문산');
+  assert.equal(MAP_LINES.gyeongui.routes[0].stations.map(s=>s.n).join(','),'서울,마포,행신,일산,문산');
   assert.match(index,/showMapLine\('gyeongui'/);
 });
 
@@ -26,9 +26,11 @@ test('북한 철도망은 기존 노선과 추가 노선·동해선 지선을 �
   assert.equal(routes.경원선.at(-1),'철원');
   assert.equal(routes.동해선.at(-1),'간성');
   assert.equal(routes.평원선.at(-1),'간성');
-  assert.ok(routes.경의선.includes('금천(황해)'));
-  assert.ok(routes.경의선.includes('문덕역'));
-  assert.ok(routes.경의선.includes('사리원역'));
+  assert.equal(routes.경의선.join(','),[
+    '신의주','룡천','염주','동림','선천','곽산','정주','운하','운전','안주역전',
+    '문덕','금풍','평원','순안','서포','서평양','평양','송림','사리원',
+    '서흥','평산','금천','개성','개성공단','판문','도라산','문산'
+  ].join(','));
   assert.ok(routes.동해선.includes('고성(강원)'));
   assert.ok(routes.동해선.includes('경성'));
   assert.ok(routes.동해선.includes('락원'));
