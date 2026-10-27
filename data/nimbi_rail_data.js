@@ -1596,43 +1596,50 @@ ALL_TRAINS.push(
   }
 }
 
-// 마포-남대구 KTX-이음: 인게임의 "마포-충주-남대구 KTX" 노선·승강장 구조를
-// 기준으로 기존의 불완전한 #501~529 데이터를 #501~526(13왕복)로 전면 대치한다.
-// WP8097은 구미-김천 사이의 비역 웨이포인트이므로 시간표에서 제외한다.
+// 마포-부산(충주 경유) KTX-이음. 기존 #501~529를 #501~526(13왕복)으로
+// 대치한다. 1000079026/1000079027 사진의 초 시각은 역별 버림하고,
+// 사진에 없는 중간역은 인게임 경부선·밀양선 역 순서대로 통과 처리했다.
+// 기존 열차와 같은 승강장 점유 간격 3분 및 회차 5분을 위해 편별 시각을 조정했다.
 {
   const clock=value=>{const n=(value%1440+1440)%1440;return `${Math.floor(n/60)}:${String(n%60).padStart(2,'0')}`;};
-  // db2_lines의 원본 초 시각을 각 역별로 독립 버림한다. 수영-장호원은
-  // 중부내륙선 직결 지선을 이용하므로 죽산·일죽을 경유하지 않는다.
-  const downSeconds=[
-    ['마포',null,0,11],['서울',235,295,7],['병목안',752,812,1],['수영',1127,1187,5],
-    ['장호원',2082,null],['돈산',2310,null],
-    ['충주',2803,2863,3],['수안보',3183,null],['북문경',3470,null],['문경',3767,3827,3],
-    ['상주',4188,4248,4],['구미',4954,5014,3],['약목',5221,null],['서왜관',5329,null],
-    ['하빈',5506,null],['호림',5693,null],['남대구',5847,null,13]
+  // 각 역의 분 단위 값은 사진 원본의 초를 독립적으로 버린 결과이다.
+  const down=[
+    ['마포',null,0,5],['서울',3,4,7],['한강로',null,null],
+    ['병목안',12,13,2],['수영',18,19,5],
+    ['장호원',34,null],['돈산',38,null],['충주',47,48,3],
+    ['수안보',54,null],['북문경',58,null],['문경',63,64,3],
+    ['상주',70,71,4],['구미',83,84,3],['약목',87,null],
+    ['서왜관',89,null],['하빈',91,null],['호림',94,null],
+    ['남대구',97,98,3],['가창',102,null],['청도',106,null],
+    ['밀양',110,111,3],['삼랑진',115,null],['물금',120,null],
+    ['북부산',124,null],['동래',126,null],['부산',129,null,14]
   ];
-  const upSeconds=[
-    ['남대구',null,0,13],['호림',131,null],['하빈',290,null],['서왜관',467,null],
-    ['약목',582,null],['구미',817,877,6],['상주',1569,1629,5],['문경',1891,1951,4],
-    ['북문경',2247,null],['수안보',2530,null],['충주',2849,2909,4],['돈산',3248,null],
-    ['장호원',3479,null],['수영',4549,4609,6],
-    ['병목안',4917,4977,3],['서울',5438,5498,8],['마포',5733,null,12]
+  const up=[
+    ['부산',null,0,14],['동래',3,null],['북부산',6,null],
+    ['물금',10,null],['삼랑진',14,null],['밀양',17,18,4],
+    ['청도',23,null],['가창',28,null],['남대구',32,33,4],
+    ['호림',35,null],['하빈',38,null],['서왜관',41,null],
+    ['약목',43,null],['구미',47,48,6],['상주',59,60,5],
+    ['문경',66,67,4],['북문경',72,null],['수안보',76,null],
+    ['충주',83,84,4],['돈산',90,null],['장호원',94,null],
+    ['수영',111,112,6],['병목안',117,118,3],
+    ['한강로',null,null],['서울',126,127,6],['마포',131,null,6]
   ];
-  const toMinutes=template=>template.map(([s,arr,dep,p])=>[s,arr==null?null:Math.floor(arr/60),dep==null?null:Math.floor(dep/60),p]);
-  const down=toMinutes(downSeconds),up=toMinutes(upSeconds);
+  // 각각 #501부터 순서대로 적용하는 시발 시각. 배차 균등보다 충돌 0건을 우선한다.
+  const downStarts=[321,421,497,602,666,728,808,900,982,1044,1118,1219,1299];
+  const upStarts=[331,392,510,595,630,734,812,895,975,1059,1158,1216,1289];
   for(let i=ALL_TRAINS.length-1;i>=0;i--){
     const no=+ALL_TRAINS[i].no;
     if(no>=501&&no<=529)ALL_TRAINS.splice(i,1);
   }
-  const first=335; // 05:35, 기존 경부고속선/경부선 열차 사이의 유효 시격에 배치
   for(let index=0;index<13;index++){
-    const start=first+index*80;
-    for(const [no,dir,template] of [[501+index*2,'down',down],[502+index*2,'up',up]]){
+    for(const [no,dir,template,start] of [[501+index*2,'down',down,downStarts[index]],[502+index*2,'up',up,upStarts[index]]]){
       const train={
-        no:String(no),dest:dir==='down'?'남대구':'마포',dir,
-        line:'경부고속선·중부내륙선·경부선',grade:'KTX-이음',
-        boundary:dir==='down'?['마포','남대구']:['남대구','마포'],
+        no:String(no),dest:dir==='down'?'부산':'마포',dir,
+        line:'경부고속선·중부내륙선·경부선·대구밀양선',grade:'KTX-이음',
+        boundary:dir==='down'?['마포','부산']:['부산','마포'],
         stops:template.map(([s,arr,dep,p],stopIndex)=>{
-          const stop={s,arr:arr==null?null:clock(start+arr),dep:dep==null?null:clock(start+dep)};
+          const stop={s,arr:arr==null?(dep==null?'통과':null):clock(start+arr),dep:dep==null?null:clock(start+dep)};
           if(p!=null&&(stopIndex===0||stopIndex===template.length-1||dep!=null))stop.p=String(p);
           return stop;
         })

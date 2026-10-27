@@ -335,6 +335,7 @@
   // 병목안은 하행 1·2번, 상행 3·4번을 대응 사용한다. 하행 1번을 쓰는
   // 왕복 계통의 상행편은 4번으로 보내고, 하행 2번 계통은 기존 3번을 쓴다.
   for(const down of ALL_TRAINS){
+    if(Number(down.no)>=501&&Number(down.no)<=526)continue; // 신설편은 사진의 상행 3번을 보존
     if(down.dir!=='down'||REAL_PLAT[down.no]?.['병목안']!==1)continue;
     const up=ALL_TRAINS.find(train=>Number(train.no)===Number(down.no)+1&&train.dir==='up');
     if(up?.stops.some(stop=>stop.s==='병목안'))setPlatform(up.no,'병목안',4);
@@ -378,13 +379,14 @@
   }
 })();
 
-// #501~526 마포-남대구 KTX-이음 정차역 승강장 확정값.
+// #501~526 마포-부산(충주 경유) KTX-이음 정차역 승강장 확정값.
 (()=>{
   if(typeof REAL_PLAT==='undefined'||typeof ALL_TRAINS==='undefined')return;
   for(const train of ALL_TRAINS){
     const no=Number(train.no);
     if(no<501||no>526)continue;
     const mapped=REAL_PLAT[train.no]||(REAL_PLAT[train.no]={});
+    for(const station of Object.keys(mapped))delete mapped[station];
     for(const stop of train.stops){
       if(stop.p!=null)mapped[stop.s]=Number(stop.p);
     }
