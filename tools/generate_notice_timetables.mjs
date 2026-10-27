@@ -164,13 +164,13 @@ const notices=[
   },
   {
     id:'20260911-north-formal',date:'2026.09.11',
-    title:'북한 지역 철도 정식 운행 전체 시간표',expected:356,
+    title:'북한 지역 철도 정식 운행 전체 시간표',expected:368,
     subtitle:'새 인게임·첨부 운행자료 기반 · 21개 계통',
     groups:[
       ['ITX-새마을 · 원산 ↔ 청량리',selectNumbers(range(5001,5026))],
       ['ITX-새마을 · 원산 ↔ 양구 ↔ 청량리',selectNumbers(range(5031,5058))],
-      ['ITX-새마을 · 신의주 ↔ 서울',selectNumbers(range(5061,5078))],
-      ['ITX-새마을 · 신의주 ↔ 부산',selectNumbers(range(5081,5084))],
+      ['ITX-새마을 · 신의주 ↔ 서울',selectNumbers(range(5061,5090))],
+      ['ITX-새마을 · 신의주 ↔ 부산',selectNumbers(range(5091,5094))],
       ['ITX-새마을 · 평양 ↔ 원산',selectNumbers(range(5101,5124))],
       ['ITX-새마을 · 평양 ↔ 해주 ↔ 서울',selectNumbers(range(5131,5158))],
       ['ITX-마음 · 샘물동 ↔ 평양',selectNumbers(range(5161,5174))],

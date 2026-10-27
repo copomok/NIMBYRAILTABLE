@@ -2783,8 +2783,17 @@ const CONFIRMED_ROTATION = (()=>{
   };
   addNorthCycles('원산-청량리 ITX-새마을',5001,13,1);
   addNorthCycles('원산-양구-청량리 ITX-새마을',5031,14,1);
-  addNorthCycles('신의주-서울 ITX-새마을',5061,9,1);
-  addNorthCycles('신의주-부산 ITX-새마을',5081,2,1);
+  // 65분 간격·약 4시간 편도 운행: 9편성으로 당일 전 편도 운행하고 원 기점에 복귀한다.
+  // 인덱스 차 4칸은 종착 후 약 21~22분 회차를 보장한다.
+  for(let r=0;r<3;r++){
+    const down=i=>String(5061+i*2),up=i=>String(5062+i*2);
+    sets.push({id:`신의주-서울 ITX-새마을 ${r*2+1}(신의주기점)`,seq:[down(r),up(r+4),down(r+8),up(r+12)]});
+    sets.push({id:`신의주-서울 ITX-새마을 ${r*2+2}(서울기점)`,seq:[up(r),down(r+4),up(r+8),down(r+12)]});
+  }
+  sets.push({id:'신의주-서울 ITX-새마을 7(신의주기점)',seq:['5067','5076']});
+  sets.push({id:'신의주-서울 ITX-새마을 8(서울기점)',seq:['5068','5083']});
+  sets.push({id:'신의주-서울 ITX-새마을 9(신의주기점)',seq:['5075','5084']});
+  addNorthCycles('신의주-부산 ITX-새마을',5091,2,1);
   addNorthCycles('평양-원산 ITX-새마을',5101,12,1);
   addNorthCycles('평양-해주-서울 ITX-새마을',5131,14,1);
   addNorthCycles('샘물동-평양 ITX-마음',5161,7,1);
