@@ -59,7 +59,7 @@
   function combine(first,second,dwell=2){const out=first.map(stop=>({...stop})),join=out.at(-1),shift=join.arr+dwell;join.dep=shift;if(second[0].p)join.p=second[0].p;for(const stop of second.slice(1))out.push({...stop,arr:typeof stop.arr==='number'?stop.arr+shift:stop.arr,dep:typeof stop.dep==='number'?stop.dep+shift:stop.dep});return out;}
   const noPass=new Set(['기장','사천','함안','추풍령','불국사','입실','함평','라선','경흥','청진','단천','통천','고성','간성','속초','양양']);
   function enforce(template,allStops,dir,preservePhotoPasses=false){return template.map((stop,index,array)=>{const edge=index===0||index===array.length-1;if(edge)return {...stop,p:stop.p||String(dir==='down'?1:2)};if(preservePhotoPasses&&stop.dep==null)return {...stop,p:undefined};if(!(allStops||noPass.has(stop.s)))return {...stop,p:stop.dep==null?undefined:stop.p};return {...stop,dep:stop.dep==null?stop.arr+1:stop.dep,p:stop.p||String(dir==='down'?1:2)};});}
-  function makeStops(template,start){return template.map((entry,index)=>{const last=index===template.length-1,pass=entry.dep==null&&!last,stop={s:entry.s,arr:index?clock(start+entry.arr):null,dep:last||pass?null:clock(start+entry.dep)};if(entry.p&&!pass)stop.p=String(entry.p);return stop;});}
+  function makeStops(template,start){return template.map((entry,index)=>{const last=index===template.length-1,pass=entry.dep==null&&!last,stop={s:entry.s,arr:index?(entry.arr==='통과'?'통과':clock(start+entry.arr)):null,dep:last||pass?null:clock(start+entry.dep)};if(entry.p&&!pass)stop.p=String(entry.p);return stop;});}
   function add(service){const all=/^ITX/.test(service.grade),down=enforce(service.down,all,'down',service.preservePhotoPasses),up=enforce(service.up||reverse(service.down),all,'up',service.preservePhotoPasses);service.downDepartures.forEach((start,index)=>{const no=service.first+index*2,upStart=(service.upDepartures||service.downDepartures)[index];ALL_TRAINS.push({no:String(no),dest:service.to,dir:'down',line:service.line,grade:service.grade,boundary:[service.from,service.to],stops:makeStops(down,start)});ALL_TRAINS.push({no:String(no+1),dest:service.from,dir:'up',line:service.line,grade:service.grade,boundary:[service.to,service.from],stops:makeStops(up,upStart)});});}
 
   const gyeongui=['신의주','용천','염주인광','동림','선천','정주','박천','안주역전','문덕','평원','평양','송림','사리원','서흥','평산','금천','개성','남개성','문산','일산','행신','마포','서울'];
@@ -96,29 +96,29 @@
   // 2026-10-27 새 ITX-새마을 사진. 각 역의 시·분은 사진의 초를 먼저 버린 값이다.
   // 신규 역 좌표는 다음 인게임 파일 수신 전까지 추정하지 않는다.
   const photoMinute=value=>{const [hour,minute]=value.split(':').map(Number);return hour*60+minute-300;};
-  const photoStops=rows=>rows.map(([s,arrival,departure,p],index)=>({s,arr:index?photoMinute(arrival):null,dep:index===rows.length-1?null:photoMinute(departure),p:String(p)}));
+  const photoStops=rows=>rows.map(([s,arrival,departure,p],index)=>arrival==='통과'?{s,arr:'통과',dep:null}:{s,arr:index?photoMinute(arrival):null,dep:index===rows.length-1?null:photoMinute(departure),p:String(p)});
   const saemaeulSeoulSinuiju=photoStops([
     ['서울',null,'05:00',10],['마포','05:03','05:04',6],['일산','05:13','05:14',3],
-    ['탄현','05:23','05:24',4],['도라산','05:28','05:29',2],['문산','05:32','05:33',2],
+    ['문산','05:23','05:24',4],['도라산','05:28','05:29',2],['판문','05:32','05:33',2],
     ['개성공단','05:35','05:36',2],['개성','05:40','05:41',4],['금천','05:52','05:53',2],
     ['평산','06:03','06:03',2],['서흥','06:12','06:12',2],['사리원','06:31','06:32',6],
     ['송림','06:46','06:47',1],['평양','07:02','07:03',8],['서평양','07:06','07:07',4],
     ['서포','07:09','07:10',2],['순안','07:17','07:18',2],['평원','07:25','07:26',2],
     ['숙천','07:30','07:31',2],['문덕','07:39','07:40',4],['안주역전','07:45','07:46',4],
     ['운전','07:52','07:53',2],['운하','07:58','07:59',2],['청천','08:09','08:10',4],
-    ['박천','08:16','08:17',2],['정주','08:26','08:27',2],['선천','08:36','08:37',2],
-    ['동림','08:42','08:43',2],['용천','08:51','08:52',2],['신의주','08:59',null,5]
+    ['박천','08:16','08:17',2],['정주','08:26','08:27',2],['곽산','08:36','08:37',2],
+    ['선천','08:42','08:43',2],['동림','통과'],['염주','08:51','08:52',2],['용천','통과'],['신의주','08:59',null,5]
   ]);
   const saemaeulSinuijuSeoul=photoStops([
-    ['신의주',null,'05:00',5],['용천','05:06','05:07',1],['동림','05:15','05:16',1],
-    ['선천','05:21','05:22',1],['정주','05:31','05:32',1],['박천','05:41','05:42',1],
-    ['청천','05:48','05:49',1],['운하','05:59','06:00',1],['운전','06:05','06:06',1],
+    ['신의주',null,'05:00',5],['용천','05:06','05:07',1],['염주','05:15','05:16',1],
+    ['동림','05:21','05:22',1],['선천','05:31','05:32',1],['곽산','05:41','05:42',1],
+    ['정주','05:48','05:49',1],['박천','통과'],['청천','통과'],['운하','05:59','06:00',1],['운전','06:05','06:06',1],
     ['안주역전','06:12','06:13',3],['문덕','06:18','06:19',1],['숙천','06:27','06:28',1],
     ['평원','06:32','06:33',1],['순안','06:40','06:41',1],['서포','06:48','06:49',1],
     ['서평양','06:51','06:52',1],['평양','06:55','06:56',7],['송림','07:11','07:12',4],
     ['사리원','07:26','07:27',5],['서흥','07:45','07:46',1],['평산','07:55','07:55',1],
     ['금천','08:05','08:06',1],['개성','08:17','08:18',1],['개성공단','08:21','08:22',1],
-    ['문산','08:25','08:26',1],['도라산','08:29','08:30',1],['탄현','08:34','08:35',3],
+    ['판문','08:25','08:26',1],['도라산','08:29','08:30',1],['문산','08:34','08:35',3],
     // 서울 최종 행은 사진 밖이다. 마포→서울의 반대 방향 운전시분과 승강장 사용 패턴으로 역산했다.
     ['일산','08:44','08:45',3],['마포','08:53','08:54',5],['서울','08:58',null,9]
   ]);
@@ -130,7 +130,7 @@
   const services=[
     {first:5001,from:'원산',to:'청량리',line:'경원선',grade:'ITX-새마을',down:fit('원산-마포 ITX-마음','원산','청량리',wonsanCheong),downDepartures:departures(325,85,13)},
     {first:5031,from:'원산',to:'청량리',line:'경원선',grade:'ITX-새마을',down:fit('서울-양구-원산 무궁화호','원산','청량리',yanggu),downDepartures:departures(310,75,14)},
-    {first:5061,from:'신의주',to:'서울',line:'경의선',grade:'ITX-새마을',down:saemaeulSinuijuSeoul,up:saemaeulSeoulSinuiju,downDepartures:departures(300,65,15)},
+    {first:5061,from:'신의주',to:'서울',line:'경의선',grade:'ITX-새마을',down:saemaeulSinuijuSeoul,up:saemaeulSeoulSinuiju,preservePhotoPasses:true,downDepartures:departures(300,65,15)},
     {first:5091,from:'신의주',to:'부산',line:'경의선·경부선',grade:'ITX-새마을',down:combine(sinuijuSeoul,seoulLocal,5),downDepartures:[330,1215]},
     {first:5101,from:'평양',to:'원산',line:'평원선·순천선',grade:'ITX-새마을',down:fit('평양-원산 무궁화호','평양','원산',pyongyangWonsan),downDepartures:departures(325,90,12)},
     {first:5131,from:'평양',to:'서울',line:'평성선·경의선',grade:'ITX-새마을',down:combine(fit('평양-개성 (해주 경유) KTX','평양','개성',haeju),section(pyongyangSeoul,'개성','서울'),2),downDepartures:departures(305,77,14)},
