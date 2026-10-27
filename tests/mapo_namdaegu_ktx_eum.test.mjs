@@ -16,7 +16,7 @@ const trains=context.__trains.filter(train=>Number(train.no)>=501&&Number(train.
 const platforms=context.__platforms;
 const minute=value=>{const [h,m]=value.split(':').map(Number);return h*60+m;};
 const elapsed=(a,b)=>{let n=minute(b)-minute(a);if(n<0)n+=1440;return n;};
-const down=['마포','서울','한강로','병목안','수영','장호원','돈산','충주','수안보','북문경','문경','상주','구미','약목','서왜관','하빈','호림','남대구','가창','청도','밀양','삼랑진','물금','북부산','동래','부산'];
+const down=['마포','서울','한강로','병목안','수영','장호원','돈산','충주','수안보','북문경','문경','상주','구미','약목','서왜관','하빈','호림','남대구','가창','청도','밀양','삼랑진','부산'];
 const commercial=new Set(['마포','서울','병목안','수영','충주','문경','상주','구미','남대구','밀양','부산']);
 
 test('501~526은 13왕복 KTX-이음이며 기존 불완전 527~529는 대치된다',()=>{
