@@ -22,6 +22,20 @@ const trains = context.trains;
 const platforms = context.platforms;
 const minute = value => { const [hour, min] = String(value).split(':').map(Number); return hour * 60 + min; };
 const timed = value => /^\d{1,2}:\d{2}$/.test(value || '');
+const shifts = new Map(process.argv.filter(arg => arg.startsWith('--shift=')).map(arg => {
+  const [no, amount] = arg.slice(8).split(':');
+  if (!no || !Number.isInteger(Number(amount))) throw new Error(`Invalid shift: ${arg}`);
+  return [no, Number(amount)];
+}));
+for (const train of trains) {
+  const delta = shifts.get(train.no);
+  if (!delta) continue;
+  for (const stop of train.stops) for (const field of ['arr', 'dep']) {
+    if (!timed(stop[field])) continue;
+    const shifted = (minute(stop[field]) + delta + 1440 * 10) % 1440;
+    stop[field] = `${Math.floor(shifted / 60)}:${String(shifted % 60).padStart(2, '0')}`;
+  }
+}
 const forbidden = new Set(['사천','함안','추풍령','불국사','입실','함평','어상천','영월','신동','무릉','문산','일산','수영','천안']);
 const yeongdongStations = new Set(['영주','봉화','법전','춘양','소천','분천','승부','석포','동점','철암','황지','동백산','도계','신기','동해']);
 const jeongseonStations = new Set(['정선','화암','북평(정선)','나전','아우라지','구절리']);
@@ -128,4 +142,6 @@ for (const [id, seq] of sets) {
     }
   }
 }
-console.log(JSON.stringify({ trains: trains.length, legs: legCount, unknownSegments: unknown.length, unknownTrains: new Set(unknown.map(i => i.no)).size, counts, affectedTrains: new Set(issues.flatMap(i => i.pair.split('/'))).size, topLines: byLine.slice(0, 15), confirmedRotationTrains: Object.keys(rotation).length, rotationSets: sets.size, rotationIssues: rotationIssues.length, rotationExamples: rotationIssues.slice(0, 20), issues: process.argv.includes('--all') ? issues : issues.slice(0, 100), unknown: unknown.slice(0, 20) }, null, 2));
+const rotationsOnly = process.argv.includes('--rotations');
+const focusTrain = process.argv.find(arg => arg.startsWith('--train='))?.slice(8);
+console.log(JSON.stringify({ trains: trains.length, legs: legCount, unknownSegments: unknown.length, unknownTrains: new Set(unknown.map(i => i.no)).size, counts, affectedTrains: new Set(issues.flatMap(i => i.pair.split('/'))).size, topLines: byLine.slice(0, 15), confirmedRotationTrains: Object.keys(rotation).length, rotationSets: sets.size, rotationIssues: rotationIssues.length, rotationExamples: process.argv.includes('--all') || rotationsOnly ? rotationIssues : rotationIssues.slice(0, 20), issues: rotationsOnly ? [] : focusTrain ? issues.filter(issue => issue.pair.split('/').includes(focusTrain)) : process.argv.includes('--all') ? issues : issues.slice(0, 100), unknown: unknown.slice(0, 20) }, null, 2));
