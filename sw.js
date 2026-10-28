@@ -1,4 +1,4 @@
-const CACHE_NAME = 'nimbirail-2026102902';
+const CACHE_NAME = 'nimbirail-2026102903';
 const ASSETS = [
   '/NIMBYRAILTABLE/',
   '/NIMBYRAILTABLE/index.html',
@@ -11,6 +11,7 @@ const ASSETS = [
   '/NIMBYRAILTABLE/data/nimbi_north_rail_revision.js',
   '/NIMBYRAILTABLE/data/nimbi_global_schedule_revision.js',
   '/NIMBYRAILTABLE/assets/notices/20261029-overtake-audit.svg',
+  '/NIMBYRAILTABLE/assets/notices/20261029-overtake-retimings-full.svg',
   '/NIMBYRAILTABLE/data/nimbi_gonam_itx_revision.js',
   '/NIMBYRAILTABLE/data/nimbi_pass_stations_revision.js',
   '/NIMBYRAILTABLE/data/nimbi_20261027_revision.js',
@@ -87,7 +88,6 @@ const ASSETS = [
   '/NIMBYRAILTABLE/assets/notices/20261023-metro-revision.svg',
   '/NIMBYRAILTABLE/assets/notices/20261008-gonam-itx.svg',
   '/NIMBYRAILTABLE/assets/notices/20261027-service-update.svg',
-  '/NIMBYRAILTABLE/assets/notices/20261028-minor-retimings.svg',
 ];
 
 self.addEventListener('install', e => {
