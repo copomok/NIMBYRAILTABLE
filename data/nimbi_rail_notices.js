@@ -1358,5 +1358,26 @@ const NOTICES = [
 교하선의 덕양·내곡, 서산선의 성내·내곡 위치와 연결 순서를 바로잡았습니다. 광주1호선 일곡은 예향 다음 역으로 표시하고, 평동–광주–공항 본선 순서는 유지합니다. <strong>이번 노선도 정정으로 전철 운행 시각은 바뀌지 않습니다.</strong><br><br>
 
 <a class="notice-timetable-attachment summary" href="assets/notices/20261027-service-update.svg" target="_blank" rel="noopener noreferrer"><img src="assets/notices/20261027-service-update.svg" alt="10월 27일 열차 운행·노선 변경 요약표" loading="lazy"><span>오늘의 운행·노선 변경 한눈에 보기</span></a>`
+  },
+  {
+    date:'2026-10-28',
+    cat:'timetable',
+    title:'열차 6편 출발 시각 조정 안내',
+    body:`일부 열차의 운행 간격을 조정했습니다. 아래 시각은 <strong>각 열차의 첫 역 출발 시각</strong>입니다. 이용 전 역별 시간표도 다시 확인해 주세요.<br><br>
+
+<table>
+<tr><th>열차</th><th>운행 구간</th><th>기존 출발</th><th>변경 출발</th></tr>
+<tr><td>#1804 무궁화호</td><td>부산 → 남대구</td><td>06:20</td><td>06:19</td></tr>
+<tr><td>#2078 ITX-청춘</td><td>부산 → 영덕</td><td>13:20</td><td>13:15</td></tr>
+<tr><td>#1214 ITX-새마을</td><td>부산 → 강릉</td><td>17:48</td><td>17:53</td></tr>
+<tr><td>#1642 무궁화호</td><td>부산 → 태백황지</td><td>13:50</td><td>13:52</td></tr>
+<tr><td>#438 KTX</td><td>목포 → 마포</td><td>16:35</td><td>16:30</td></tr>
+<tr><td>#1008 ITX-새마을</td><td>부산 → 한강로</td><td>10:37</td><td>10:36</td></tr>
+</table><br>
+
+<span class="n-highlight">#1214는 앞서 안내한 17:51과 달리, 현재 앱에 적용된 실제 출발 시각이 17:53입니다. 이용 시 17:53을 기준으로 확인해 주세요.</span><br><br>
+각 열차의 중간역 도착·출발 시각과 승강장은 앱의 최신 열차 상세 시간표에서 확인하실 수 있습니다.<br><br>
+
+<a class="notice-timetable-attachment summary" href="assets/notices/20261028-minor-retimings.svg" target="_blank" rel="noopener noreferrer"><img src="assets/notices/20261028-minor-retimings.svg" alt="열차 6편 출발 시각 조정 요약표" loading="lazy"><span>출발 시각 변경 한눈에 보기</span></a>`
   }
 ];

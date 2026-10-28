@@ -1,0 +1,57 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1440" height="923" viewBox="0 0 1280 820" role="img" aria-labelledby="title desc">
+  <title id="title">열차 6편 출발 시각 조정 안내</title>
+  <desc id="desc">부산발 1804, 2078, 1214, 1642, 1008 열차와 목포발 438 열차의 첫 역 출발 시각 변경을 안내합니다.</desc>
+  <style>
+    text{font-family:Apple SD Gothic Neo,Malgun Gothic,Noto Sans KR,sans-serif;fill:#f2f6fb}
+    .eyebrow{font-size:17px;font-weight:700;letter-spacing:2px;fill:#81ddca}
+    .title{font-size:42px;font-weight:800}
+    .sub{font-size:20px;fill:#bdcedc}
+    .head{font-size:19px;font-weight:700;fill:#b9d0df}
+    .cell{font-size:22px}
+    .number{font-size:24px;font-weight:800}
+    .changed{font-size:25px;font-weight:800;fill:#9ae7d5}
+    .note{font-size:17px;fill:#ffd998}
+  </style>
+  <rect width="1280" height="820" fill="#0e1b2b"/>
+  <rect x="36" y="34" width="1208" height="752" rx="26" fill="#16283d" stroke="#31536a" stroke-width="2"/>
+  <text x="68" y="83" class="eyebrow">NIMBYRAIL PASSENGER INFORMATION</text>
+  <text x="68" y="140" class="title">열차 6편 출발 시각 조정</text>
+  <text x="68" y="178" class="sub">2026년 10월 28일 · 표기 시각은 첫 역 출발 기준</text>
+  <rect x="68" y="210" width="1144" height="67" rx="12" fill="#28445b"/>
+  <text x="92" y="251" class="head">열차</text>
+  <text x="415" y="251" class="head">운행 구간</text>
+  <text x="848" y="251" class="head">기존</text>
+  <text x="1035" y="251" class="head">변경</text>
+  <rect x="68" y="283" width="1144" height="58" rx="9" fill="#20384e"/>
+  <text x="92" y="321" class="number">#1804 무궁화호</text>
+  <text x="415" y="321" class="cell">부산 → 남대구</text>
+  <text x="848" y="321" class="cell">06:20</text>
+  <text x="1035" y="321" class="changed">06:19</text>
+  <rect x="68" y="349" width="1144" height="58" rx="9" fill="#244056"/>
+  <text x="92" y="387" class="number">#2078 ITX-청춘</text>
+  <text x="415" y="387" class="cell">부산 → 영덕</text>
+  <text x="848" y="387" class="cell">13:20</text>
+  <text x="1035" y="387" class="changed">13:15</text>
+  <rect x="68" y="415" width="1144" height="58" rx="9" fill="#20384e"/>
+  <text x="92" y="453" class="number">#1214 ITX-새마을</text>
+  <text x="415" y="453" class="cell">부산 → 강릉</text>
+  <text x="848" y="453" class="cell">17:48</text>
+  <text x="1035" y="453" class="changed">17:53</text>
+  <rect x="68" y="481" width="1144" height="58" rx="9" fill="#244056"/>
+  <text x="92" y="519" class="number">#1642 무궁화호</text>
+  <text x="415" y="519" class="cell">부산 → 태백황지</text>
+  <text x="848" y="519" class="cell">13:50</text>
+  <text x="1035" y="519" class="changed">13:52</text>
+  <rect x="68" y="547" width="1144" height="58" rx="9" fill="#20384e"/>
+  <text x="92" y="585" class="number">#438 KTX</text>
+  <text x="415" y="585" class="cell">목포 → 마포</text>
+  <text x="848" y="585" class="cell">16:35</text>
+  <text x="1035" y="585" class="changed">16:30</text>
+  <rect x="68" y="613" width="1144" height="58" rx="9" fill="#244056"/>
+  <text x="92" y="651" class="number">#1008 ITX-새마을</text>
+  <text x="415" y="651" class="cell">부산 → 한강로</text>
+  <text x="848" y="651" class="cell">10:37</text>
+  <text x="1035" y="651" class="changed">10:36</text>
+  <text x="68" y="713" class="note">※ #1214 실제 적용 시각은 앞선 안내의 17:51이 아닌 17:53입니다.</text>
+  <text x="68" y="753" class="sub">중간역 시각과 승강장은 앱의 최신 열차 상세 시간표를 확인해 주세요.</text>
+</svg>

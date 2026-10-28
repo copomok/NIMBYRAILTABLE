@@ -1,4 +1,4 @@
-const CACHE_NAME = 'nimbirail-2026102707';
+const CACHE_NAME = 'nimbirail-2026102801';
 const ASSETS = [
   '/NIMBYRAILTABLE/',
   '/NIMBYRAILTABLE/index.html',
@@ -85,6 +85,7 @@ const ASSETS = [
   '/NIMBYRAILTABLE/assets/notices/20261023-metro-revision.svg',
   '/NIMBYRAILTABLE/assets/notices/20261008-gonam-itx.svg',
   '/NIMBYRAILTABLE/assets/notices/20261027-service-update.svg',
+  '/NIMBYRAILTABLE/assets/notices/20261028-minor-retimings.svg',
 ];
 
 self.addEventListener('install', e => {

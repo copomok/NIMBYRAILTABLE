@@ -44,7 +44,8 @@ const SUMMARY_NOTICE_IDS = [
   '20260911-north-formal-summary',
   '20261008-gonam-itx-summary',
   '20261023-metro-revision',
-  '20261027-service-update'
+  '20261027-service-update',
+  '20261028-minor-retimings'
 ];
 const NOTICE_IDS = [...FULL_NOTICE_IDS, ...SUMMARY_NOTICE_IDS];
 
@@ -183,9 +184,9 @@ test('공지 이미지 배포 버전이 CSS·데이터·서비스워커에 함�
   const serviceWorker = read('sw.js');
 
   assert.match(index, /nimbi_redesign\.css\?v=2026100703/);
-  assert.match(index, /nimbi_rail_notices\.js\?v=2026102702/);
+  assert.match(index, /nimbi_rail_notices\.js\?v=2026102801/);
   assert.match(index, /nimbi_rail\.css\?v=2026100703/);
-  assert.match(serviceWorker, /CACHE_NAME = 'nimbirail-2026102707'/);
+  assert.match(serviceWorker, /CACHE_NAME = 'nimbirail-2026102801'/);
 });
 
 test('전철 역명 변경 공지는 노선별 개명과 동명이역 해소 내용을 안내한다', () => {
@@ -210,6 +211,20 @@ test('10월 27일 공지는 여객 관점에서 모든 운행·노선 변경을 
   for (const keyword of ['13회 왕복', '삼랑진 → 부산 직통', '#1484', '중랑 정차 4분 → 2분', '교하선', '서산선', '광주1호선']) {
     assert.ok(svg.includes(keyword), `${keyword} 요약 이미지 반영이 필요합니다`);
   }
+});
+
+test('10월 28일 출발 시각 조정 공지는 실제 적용된 6편을 안내한다', () => {
+  const context = {};
+  vm.createContext(context);
+  vm.runInContext(`${read('data/nimbi_rail_notices.js')}\nglobalThis.__NOTICES__ = NOTICES;`, context);
+  const notice = context.__NOTICES__.find(item => item.title === '열차 6편 출발 시각 조정 안내');
+  assert.ok(notice);
+  assert.equal(notice.cat, 'timetable');
+  for (const keyword of ['#1804', '06:20', '06:19', '#2078', '13:20', '13:15', '#1214', '17:48', '17:53', '#1642', '13:50', '13:52', '#438', '16:35', '16:30', '#1008', '10:37', '10:36']) {
+    assert.ok(notice.body.includes(keyword), `${keyword} 안내가 필요합니다`);
+  }
+  assert.match(notice.body, /17:51과 달리/);
+  assert.match(read('assets/notices/20261028-minor-retimings.svg'), /#1214 실제 적용 시각/);
 });
 
 test('UI 전면 개편 안내 공지가 승객 관점의 주요 변경점을 설명한다', () => {
