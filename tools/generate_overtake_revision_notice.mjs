@@ -18,6 +18,7 @@ const DATA_FILES=[
 const esc=value=>String(value??'').replace(/[&<>"']/g,character=>({
   '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
 }[character]));
+const formatTime=value=>String(value??'').replace(/^0(?=\d:)/,'');
 
 function loadGrades(){
   const context={};
@@ -32,10 +33,15 @@ function loadGrades(){
 function parseReport(){
   const source=fs.readFileSync(REPORT,'utf8');
   return [...source.matchAll(/^\|\s*(\d+)\s*\|\s*([^|]+?)\s*\|\s*([^|]+?)\s*\|\s*([^|]+?)\s*\|\s*([+-]?\d+)\s*\|\s*([^|]+?)\s*\|\s*([^|]+?)\s*\|$/gm)]
-    .map(match=>({
-      no:match[1],route:match[2].replaceAll('–',' → '),
-      oldDeparture:match[3],newDeparture:match[4],delta:Number(match[5])
-    }));
+    .map(match=>{
+      const route=match[2].replaceAll('–',' → ');
+      const [origin,destination]=route.split(/\s*→\s*/);
+      if(!origin||!destination)throw new Error(`착발역을 분리할 수 없습니다: ${route}`);
+      return {
+        no:match[1],route,origin,destination,
+        oldDeparture:formatTime(match[3]),newDeparture:formatTime(match[4]),delta:Number(match[5])
+      };
+    });
 }
 
 const gradeColor=grade=>({
@@ -84,7 +90,7 @@ for(let index=1;index<groups.length;index++){
 const columns=[groups.slice(0,splitIndex),groups.slice(splitIndex)];
 const columnHeights=columns.map(column=>column.reduce((sum,group)=>sum+blockHeight(group),0));
 const startY=212,footerH=78,H=startY+Math.max(...columnHeights)+footerH;
-const columnWidths=[76,278,96,96,114];
+const columnWidths=[64,96,96,100,92,92,120];
 if(columnWidths.reduce((sum,width)=>sum+width,0)!==columnW)throw new Error('열 너비 합계가 맞지 않습니다.');
 
 const body=[];
@@ -106,7 +112,7 @@ columns.forEach((column,columnIndex)=>{
     body.push(`<text x="${x+columnW-14}" y="${y+25}" text-anchor="end" class="count">${group.rows.length}편</text>`);
     y+=sectionH;
     body.push(`<rect x="${x}" y="${y}" width="${columnW}" height="${headH}" fill="#30343b"/>`);
-    const headers=['열차','착발역·등급','기존 출발','변경 출발','증감'];
+    const headers=['열차','출발역','도착역','등급','기존 출발','변경 출발','증감'];
     let cursor=x;
     headers.forEach((header,index)=>{
       const width=columnWidths[index];
@@ -118,11 +124,11 @@ columns.forEach((column,columnIndex)=>{
     group.rows.forEach((row,rowIndex)=>{
       if(rowIndex%2)body.push(`<rect x="${x}" y="${y}" width="${columnW}" height="${rowH}" fill="#faf9f6"/>`);
       body.push(`<rect x="${x}" y="${y}" width="5" height="${rowH}" fill="${accent}"/>`);
-      const values=[`#${row.no}`,`${row.route} · ${row.grade}`,row.oldDeparture,row.newDeparture,`${row.delta>0?'+':''}${row.delta}분`];
+      const values=[`#${row.no}`,row.origin,row.destination,row.grade,row.oldDeparture,row.newDeparture,`${row.delta>0?'+':''}${row.delta}분`];
       cursor=x;
       values.forEach((value,index)=>{
         const width=columnWidths[index];
-        const className=index===0?'trainNo':index===1?'route':index===4?`delta ${row.delta>0?'later':'earlier'}`:'time';
+        const className=index===0?'trainNo':index>=1&&index<=3?'route':index===6?`delta ${row.delta>0?'later':'earlier'}`:'time';
         body.push(`<text x="${cursor+width/2}" y="${y+20}" text-anchor="middle" class="${className}">${esc(value)}</text>`);
         if(index)body.push(`<line x1="${cursor}" y1="${y}" x2="${cursor}" y2="${y+rowH}" class="grid"/>`);
         cursor+=width;
@@ -155,7 +161,7 @@ const css=`
   .grid{stroke:#cac7c0;stroke-width:1}.darkGrid{stroke:#777b82}
   .foot{font:500 13px 'Apple SD Gothic Neo','Noto Sans CJK KR',sans-serif;fill:#666}
 `;
-const svg=`<?xml version="1.0" encoding="UTF-8"?>\n<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" role="img" aria-labelledby="title desc"><title id="title">10월 29일 전 열차 시간표 변경 전체 내역</title><desc id="desc">458편의 열차번호, 착발역, 열차등급, 기존 출발, 변경 출발, 조정분을 135개 계통별로 표시합니다.</desc><style>${css}</style>${body.join('')}</svg>`;
+const svg=`<?xml version="1.0" encoding="UTF-8"?>\n<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" role="img" aria-labelledby="title desc"><title id="title">10월 29일 전 열차 시간표 변경 전체 내역</title><desc id="desc">458편의 열차번호, 출발역, 도착역, 열차등급, 기존 출발, 변경 출발, 조정분을 135개 계통별로 표시합니다.</desc><style>${css}</style>${body.join('')}</svg>`;
 fs.mkdirSync(path.dirname(TARGET),{recursive:true});
 fs.writeFileSync(TARGET,svg);
 process.stdout.write(`${path.relative(ROOT,TARGET)} · ${rows.length}편 · ${groups.length}개 계통 · ${(Buffer.byteLength(svg)/1024).toFixed(1)}KB · ${W}×${H}\n`);
