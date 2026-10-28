@@ -121,10 +121,11 @@ const rotationStart = rotationSource.indexOf('const CONFIRMED_ROTATION =');
 const rotationEnd = rotationSource.indexOf('\n// 042: 편성 운용', rotationStart);
 const rotationContext = { ALL_TRAINS: trains };
 vm.createContext(rotationContext);
-vm.runInContext(`${rotationSource.slice(rotationStart, rotationEnd)};globalThis.rotation=CONFIRMED_ROTATION`, rotationContext);
+vm.runInContext(`${rotationSource.slice(rotationStart, rotationEnd).replace('  const m={};\n  sets.forEach', '  globalThis.rotationSets=sets;\n  const m={};\n  sets.forEach')};globalThis.rotation=CONFIRMED_ROTATION`, rotationContext);
 const rotation = rotationContext.rotation;
 const byNo = new Map(trains.map(train => [train.no, train]));
 const sets = new Map(Object.values(rotation).map(item => [item.id, item.seq]));
+const rotationDuplicates = Object.entries(rotationContext.rotationSets.flatMap(set => set.seq).reduce((map, no) => (map[no] = (map[no] || 0) + 1, map), {})).filter(([, count]) => count > 1);
 const rotationIssues = [];
 for (const [id, seq] of sets) {
   const first = byNo.get(seq[0]), last = byNo.get(seq.at(-1));
@@ -144,4 +145,4 @@ for (const [id, seq] of sets) {
 }
 const rotationsOnly = process.argv.includes('--rotations');
 const focusTrain = process.argv.find(arg => arg.startsWith('--train='))?.slice(8);
-console.log(JSON.stringify({ trains: trains.length, legs: legCount, unknownSegments: unknown.length, unknownTrains: new Set(unknown.map(i => i.no)).size, counts, affectedTrains: new Set(issues.flatMap(i => i.pair.split('/'))).size, topLines: byLine.slice(0, 15), confirmedRotationTrains: Object.keys(rotation).length, rotationSets: sets.size, rotationIssues: rotationIssues.length, rotationExamples: process.argv.includes('--all') || rotationsOnly ? rotationIssues : rotationIssues.slice(0, 20), issues: rotationsOnly ? [] : focusTrain ? issues.filter(issue => issue.pair.split('/').includes(focusTrain)) : process.argv.includes('--all') ? issues : issues.slice(0, 100), unknown: unknown.slice(0, 20) }, null, 2));
+console.log(JSON.stringify({ trains: trains.length, legs: legCount, unknownSegments: unknown.length, unknownTrains: new Set(unknown.map(i => i.no)).size, counts, affectedTrains: new Set(issues.flatMap(i => i.pair.split('/'))).size, topLines: byLine.slice(0, 15), confirmedRotationTrains: Object.keys(rotation).length, rotationSets: sets.size, rotationDuplicates, rotationIssues: rotationIssues.length, rotationExamples: process.argv.includes('--all') || rotationsOnly ? rotationIssues : rotationIssues.slice(0, 20), issues: rotationsOnly ? [] : focusTrain ? issues.filter(issue => issue.pair.split('/').includes(focusTrain)) : process.argv.includes('--all') ? issues : issues.slice(0, 100), unknown: unknown.slice(0, 20) }, null, 2));
