@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 880 410" role="img" aria-labelledby="title desc">
+  <title id="title">2026년 10월 29일 전 열차 추월 검증 요약</title>
+  <desc id="desc">검사 대상 1879편, 기존 충돌 547건, 전 구간 시각 조정 458편, 수정 후 검사 가능한 무단 추월과 단선 충돌 0건. 시각 미기록 구간 1270개는 검증 제외.</desc>
+  <rect width="880" height="410" rx="20" fill="#0b1728"/>
+  <text x="42" y="58" fill="#e8f2ff" font-size="30" font-weight="700" font-family="sans-serif">전 열차 추월 검증 · 시간표 조정</text>
+  <text x="42" y="91" fill="#9bb4cf" font-size="17" font-family="sans-serif">2026.10.29 · 정규 시간표 기준</text>
+  <g font-family="sans-serif" text-anchor="middle">
+    <rect x="42" y="124" width="246" height="142" rx="16" fill="#152b45"/>
+    <text x="165" y="173" fill="#a7c1dc" font-size="18">전체 검사 열차</text>
+    <text x="165" y="228" fill="#ffffff" font-size="46" font-weight="700">1,879편</text>
+    <rect x="317" y="124" width="246" height="142" rx="16" fill="#152b45"/>
+    <text x="440" y="173" fill="#a7c1dc" font-size="18">전 구간 시각 조정</text>
+    <text x="440" y="228" fill="#69c8ff" font-size="46" font-weight="700">458편</text>
+    <rect x="592" y="124" width="246" height="142" rx="16" fill="#153b35"/>
+    <text x="715" y="173" fill="#b6dcd4" font-size="18">검사 가능 구간의 충돌</text>
+    <text x="715" y="228" fill="#6de3b4" font-size="46" font-weight="700">0건</text>
+  </g>
+  <rect x="42" y="294" width="796" height="83" rx="12" fill="#263040"/>
+  <text x="62" y="326" fill="#f5d992" font-size="17" font-weight="700" font-family="sans-serif">검증 범위 유의</text>
+  <text x="62" y="355" fill="#d3dce7" font-size="16" font-family="sans-serif">시각이 없는 인접 구간 1,270개는 판정 제외 · 무단 추월 없는 일부 3분 미만 간격은 유지</text>
+</svg>

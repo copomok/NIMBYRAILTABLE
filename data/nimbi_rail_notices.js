@@ -1379,5 +1379,15 @@ const NOTICES = [
 각 열차의 중간역 도착·출발 시각과 승강장은 앱의 최신 열차 상세 시간표에서 확인하실 수 있습니다.<br><br>
 
 <a class="notice-timetable-attachment summary" href="assets/notices/20261028-minor-retimings.svg" target="_blank" rel="noopener noreferrer"><img src="assets/notices/20261028-minor-retimings.svg" alt="열차 6편 출발 시각 조정 요약표" loading="lazy"><span>출발 시각 변경 한눈에 보기</span></a>`
+  },
+  {
+    date:'2026-10-29',
+    cat:'timetable',
+    title:'전 열차 추월 검증에 따른 시간표 조정',
+    body:`전체 열차 시간표를 대조해 <strong>458편의 전 구간 시각</strong>을 조정했습니다. 시발역 출발뿐 아니라 해당 열차의 모든 역 도착·출발 시각이 동일한 분수만큼 이동했습니다.<br><br>
+검사 가능한 구간에서 발견된 무단 추월·금지 역 추월·단선 교행 충돌 547건을 해소했습니다. <strong>통과 시각이 기록되지 않은 구간은 검증 대상에서 제외</strong>했으며, 무단 추월이 없는 일부 3분 미만 간격은 유지했습니다.<br><br>
+<a href="reports/2026-10-29-overtake-retimings.md" target="_blank" rel="noopener noreferrer">열차번호별 기존·변경 출발 시각 전체 목록 보기</a><br><br>
+수영–병목안 구간의 원본 시각 오류 11편도 별도로 정정했습니다. 이용 전 각 열차의 최신 역별 시간표를 확인해 주세요.<br><br>
+<a class="notice-timetable-attachment summary" href="assets/notices/20261029-overtake-audit.svg" target="_blank" rel="noopener noreferrer"><img src="assets/notices/20261029-overtake-audit.svg" alt="전 열차 추월 검증과 시간표 조정 요약" loading="lazy"><span>검증 결과 요약 크게 보기</span></a>`
   }
 ];

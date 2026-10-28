@@ -370,7 +370,7 @@
     {first:5091,from:'신의주',to:'부산',line:'경의선·경부선',grade:'ITX-새마을',down:combine(sinuijuSeoul,seoulLocal,5),downDepartures:[330,1215]},
     {first:5101,from:'평양',to:'원산',line:'평원선·순천선',grade:'ITX-새마을',down:pyongyangWonsanPhoto,up:wonsanPyongyangPhoto,preservePhotoPasses:true,downDepartures:departures(325,90,12)},
     {first:5131,from:'평양',to:'서울',line:'평성선·경의선',grade:'ITX-새마을',down:pyongyangHaejuSeoulPhoto,up:seoulHaejuPyongyangPhoto,preservePhotoPasses:true,downDepartures:departures(305,70,14)},
-    // 만포–평양/서울 통합 배차: 두 행선지를 합산해 공통 구간 75분 간격.
+    // 만포–평양/서울 통합 배차: 두 행선지를 합산해 공통 구간 60~95분 간격.
     {first:5161,from:'만포',to:'평양',line:'만포선·평성선',grade:'ITX-마음',down:manpoPyongyangPhoto,up:pyongyangManpoPhoto,preservePhotoPasses:true,downDepartures:[300,450,600,750,900,1050,1200],upDepartures:[379,529,679,829,979,1129,1279]},
     {first:5181,from:'녕원',to:'평양',line:'녕원선',grade:'ITX-마음',down:nyongwonPyongyangPhoto,up:pyongyangNyongwonPhoto,preservePhotoPasses:true,downDepartures:[365,430,560,625,755,820,950,1015,1145,1275]},
     {first:5201,from:'혜산',to:'원산',line:'동해선',grade:'ITX-마음',down:hyesanWonsan,up:photoWonsanHyesan,preservePhotoPasses:true,downDepartures:departures(320,157,7)},
@@ -435,6 +435,9 @@
   safetyShifts[5166]=12; // 평양역 #5109 및 #5354와 공통 구간 분리
   safetyShifts[5165]=14; // 서포역 #5110/#5073·은산역 #5285와 점유 분리
   safetyShifts[5171]=0; // 통합 배차 재편 뒤 #5197와 공통 구간 5분 확보
+  // 서울·평양 공통 구간의 근접 운행을 전 편 평행 이동으로 해소한다.
+  safetyShifts[5156]=10; // #5088과 서울–문산 구간 0~2분 병행 해소
+  safetyShifts[5292]=-8; // #5158과 서울–문산 구간 0~2분 병행 해소
   safetyShifts[5265]=8; // #5139와 강서–장연 병주·무단 추월 해소
   safetyShifts[5275]=8; // 평양–룡연 공통 구간 #5155와 5분 이상 분리
   for(const [no,shift] of Object.entries(safetyShifts))shiftTrain(ALL_TRAINS.find(train=>train.no===no),shift);

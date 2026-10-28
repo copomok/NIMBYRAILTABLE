@@ -184,9 +184,9 @@ test('공지 이미지 배포 버전이 CSS·데이터·서비스워커에 함�
   const serviceWorker = read('sw.js');
 
   assert.match(index, /nimbi_redesign\.css\?v=2026100703/);
-  assert.match(index, /nimbi_rail_notices\.js\?v=2026102801/);
+  assert.match(index, /nimbi_rail_notices\.js\?v=2026102901/);
   assert.match(index, /nimbi_rail\.css\?v=2026100703/);
-  assert.match(serviceWorker, /CACHE_NAME = 'nimbirail-2026102801'/);
+  assert.match(serviceWorker, /CACHE_NAME = 'nimbirail-2026102901'/);
 });
 
 test('전철 역명 변경 공지는 노선별 개명과 동명이역 해소 내용을 안내한다', () => {

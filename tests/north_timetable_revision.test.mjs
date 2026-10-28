@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import vm from 'node:vm';
+import { spawnSync } from 'node:child_process';
 
 const context={};vm.createContext(context);
 for(const file of ['data/nimbi_rail_data.js','data/nimbi_north_ingame_routes.js','data/nimbi_station_data.js','data/nimbi_north_station_revision.js','data/nimbi_north_rail_revision.js','data/nimbi_gyeongui_20261027_revision.js','data/nimbi_nyongwon_20261027_stations.js'])
@@ -69,6 +70,19 @@ test('만포–평양·서울은 공통 구간에서 한 계통처럼 60~95분 �
   }
   assert.ok(down[0]>=300&&down[0]<=390);
   assert.ok(up[0]>=300&&up[0]<=390);
+});
+
+test('전 구간 조정 후 검사 가능한 구간의 무단 추월과 단선 충돌은 없다',()=>{
+  const audit=spawnSync(process.execPath,[new URL('../tools/audit_all_trains.mjs',import.meta.url).pathname,'--all'],{encoding:'utf8',maxBuffer:32*1024*1024});
+  assert.equal(audit.status,0,audit.stderr);
+  const report=JSON.parse(audit.stdout);
+  assert.equal(report.appliedRevision.shifted,458);
+  assert.equal(report.appliedRevision.corrected,11);
+  assert.equal(report.invalidChronology.length,0);
+  assert.equal(report.rotationIssues,0);
+  for(const kind of ['illegal overtake','illegal station overtake','single-track meet'])
+    assert.equal(report.counts[kind]||0,0,kind);
+  assert.ok(report.unknownSegments>0,'통과 시각이 없는 구간은 별도로 보고해야 한다');
 });
 
 test('신설 KTX와 녕원 ITX는 사진 역순·통과·승강장·초 버림을 보존한다',()=>{
@@ -271,7 +285,7 @@ test('이번 신설 열차의 승강장 사용은 기존 확정 열차와 최소
   }
 });
 
-test('기존 열차를 포함한 전 구간에서 금지된 무단 추월이 없다',()=>{
+test('기존 제한 검사는 사진 확정 편의 지정 역 추월만 확인한다',()=>{
   const isFormal=no=>expected.some(([first,last])=>no>=first&&no<=last);
   const noPass=new Set(['기장','사천','함안','추풍령','불국사','입실','함평','라선','경흥','청진','단천','통천','고성','간성','속초','양양']);
   const fastNoPass=new Set(['평창','포항','영덕','울진','함평','천안','수영','명간']);

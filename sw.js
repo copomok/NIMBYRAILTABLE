@@ -1,4 +1,4 @@
-const CACHE_NAME = 'nimbirail-2026102802';
+const CACHE_NAME = 'nimbirail-2026102901';
 const ASSETS = [
   '/NIMBYRAILTABLE/',
   '/NIMBYRAILTABLE/index.html',
@@ -9,6 +9,8 @@ const ASSETS = [
   '/NIMBYRAILTABLE/data/nimbi_rail_data.js',
   '/NIMBYRAILTABLE/data/nimbi_north_ingame_routes.js',
   '/NIMBYRAILTABLE/data/nimbi_north_rail_revision.js',
+  '/NIMBYRAILTABLE/data/nimbi_global_schedule_revision.js',
+  '/NIMBYRAILTABLE/assets/notices/20261029-overtake-audit.svg',
   '/NIMBYRAILTABLE/data/nimbi_gonam_itx_revision.js',
   '/NIMBYRAILTABLE/data/nimbi_pass_stations_revision.js',
   '/NIMBYRAILTABLE/data/nimbi_20261027_revision.js',
