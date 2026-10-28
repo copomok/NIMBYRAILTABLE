@@ -45,7 +45,8 @@ const SUMMARY_NOTICE_IDS = [
   '20261008-gonam-itx-summary',
   '20261023-metro-revision',
   '20261027-service-update',
-  '20261028-minor-retimings'
+  '20261028-minor-retimings',
+  '20261029-overtake-audit'
 ];
 const NOTICE_IDS = [...FULL_NOTICE_IDS, ...SUMMARY_NOTICE_IDS];
 
@@ -186,7 +187,7 @@ test('공지 이미지 배포 버전이 CSS·데이터·서비스워커에 함�
   assert.match(index, /nimbi_redesign\.css\?v=2026100703/);
   assert.match(index, /nimbi_rail_notices\.js\?v=2026102901/);
   assert.match(index, /nimbi_rail\.css\?v=2026100703/);
-  assert.match(serviceWorker, /CACHE_NAME = 'nimbirail-2026102901'/);
+  assert.match(serviceWorker, /CACHE_NAME = 'nimbirail-2026102902'/);
 });
 
 test('전철 역명 변경 공지는 노선별 개명과 동명이역 해소 내용을 안내한다', () => {
@@ -225,6 +226,28 @@ test('10월 28일 출발 시각 조정 공지는 실제 적용된 6편을 안내
   }
   assert.match(notice.body, /17:51과 달리/);
   assert.match(read('assets/notices/20261028-minor-retimings.svg'), /#1214 실제 적용 시각/);
+});
+
+test('10월 28·29일 요약 이미지는 기존 공문형 디자인과 공지 내용을 유지한다', () => {
+  for (const id of ['20261028-minor-retimings', '20261029-overtake-audit']) {
+    const svg = read(`assets/notices/${id}.svg`);
+    assert.match(svg, /fill="#f4f1e9"/);
+    assert.match(svg, /class="brand"/);
+    assert.match(svg, /class="section"/);
+    assert.match(svg, /class="th headerText"/);
+    assert.match(svg, /fill="#30343b"/);
+    assert.doesNotMatch(svg, /fill="#0e1b2b"|fill="#0b1728"/);
+  }
+
+  const october28 = read('assets/notices/20261028-minor-retimings.svg');
+  for (const keyword of ['#1804 무궁화호', '#2078 ITX-청춘', '#1214 ITX-새마을', '#1642 무궁화호', '#438 KTX', '#1008 ITX-새마을', '17:51이 아닌 17:53']) {
+    assert.ok(october28.includes(keyword), `${keyword} 요약 내용이 필요합니다`);
+  }
+
+  const october29 = read('assets/notices/20261029-overtake-audit.svg');
+  for (const keyword of ['1,879편', '547건', '458편', '0건', '1,270개', '11편', '3분 미만 간격']) {
+    assert.ok(october29.includes(keyword), `${keyword} 요약 내용이 필요합니다`);
+  }
 });
 
 test('UI 전면 개편 안내 공지가 승객 관점의 주요 변경점을 설명한다', () => {
