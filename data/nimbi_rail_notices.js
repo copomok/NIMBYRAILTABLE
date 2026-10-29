@@ -1378,11 +1378,13 @@ const NOTICES = [
 </table><br>
 
 <strong>■ 전 열차 추월 검증 및 시간표 조정</strong><br>
-전체 열차 시간표를 대조해 <strong>458편의 전 구간 시각</strong>을 조정했습니다. 시발역 출발뿐 아니라 해당 열차의 모든 역 도착·출발 시각이 동일한 분수만큼 이동했습니다.<br><br>
+전체 열차 시간표를 대조해 <strong>457편의 전 구간 시각</strong>을 조정했습니다. 시발역 출발뿐 아니라 해당 열차의 모든 역 도착·출발 시각이 동일한 분수만큼 이동했습니다.<br><br>
+후속 배차 보정에서는 직전 배포본과 비교해 <strong>61편의 출발 시각</strong>이 바뀌었습니다. 부산→서울 정규 KTX #30·#66·#78은 각각 9:40·15:40·17:40 출발로 복원했습니다. 정규편 간격은 원칙적으로 15~25분이며, 10~30분인 다섯 곳에는 경부고속선 경유 추가편이나 다른 KTX 계통이 사이에 있습니다. <a href="reports/2026-10-29-ktx-cadence-followup.md" target="_blank" rel="noopener noreferrer">61편의 직전·최종 출발 시각과 배차 예외 보기</a><br><br>
+산내에 정차하는 상행 KTX 7편의 원본 병목안→서울 운전시분도 하행 패턴과 대조해 17~19분에서 <strong>7분</strong>으로 바로잡았습니다. 이 정정은 열차 전 구간 평행 이동과 별개이며, #66 서울 도착은 17:30→17:20, #78은 19:30→19:20입니다.<br><br>
 검사 가능한 구간에서 발견된 무단 추월·금지 역 추월·단선 교행 충돌 547건을 해소했습니다. <strong>통과 시각이 기록되지 않은 구간은 검증 대상에서 제외</strong>했으며, 무단 추월이 없는 일부 3분 미만 간격은 유지했습니다.<br><br>
 <a href="reports/2026-10-29-overtake-retimings.md" target="_blank" rel="noopener noreferrer">열차번호별 기존·변경 출발 시각 전체 목록 보기</a><br><br>
 수영–병목안 구간의 원본 시각 오류 11편도 별도로 정정했습니다. 이용 전 각 열차의 최신 역별 시간표를 확인해 주세요.<br><br>
 <a class="notice-timetable-attachment summary" href="assets/notices/20261029-overtake-audit.svg" target="_blank" rel="noopener noreferrer"><img src="assets/notices/20261029-overtake-audit.svg" alt="10월 28일과 29일 시간표 개정 요약" loading="lazy"><span>통합 개정 결과 한눈에 보기</span></a>
-<a class="notice-timetable-attachment" href="assets/notices/20261029-overtake-retimings-full.svg" target="_blank" rel="noopener noreferrer"><img src="assets/notices/20261029-overtake-retimings-full.svg" alt="458편 전체 열차 시간표 변경 내역" loading="lazy"><span>계통별 전체 변경 열차 보기</span></a>`
+<a class="notice-timetable-attachment" href="assets/notices/20261029-overtake-retimings-full.svg" target="_blank" rel="noopener noreferrer"><img src="assets/notices/20261029-overtake-retimings-full.svg" alt="457편 전체 열차 시간표 변경 내역" loading="lazy"><span>계통별 전체 변경 열차 보기</span></a>`
   }
 ];

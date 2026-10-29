@@ -76,7 +76,7 @@ test('전 구간 조정 후 검사 가능한 구간의 무단 추월과 단선 �
   const audit=spawnSync(process.execPath,[new URL('../tools/audit_all_trains.mjs',import.meta.url).pathname,'--all'],{encoding:'utf8',maxBuffer:32*1024*1024});
   assert.equal(audit.status,0,audit.stderr);
   const report=JSON.parse(audit.stdout);
-  assert.equal(report.appliedRevision.shifted,458);
+  assert.equal(report.appliedRevision.shifted,457);
   assert.equal(report.appliedRevision.corrected,11);
   assert.equal(report.invalidChronology.length,0);
   assert.equal(report.rotationIssues,0);

@@ -53,13 +53,13 @@ const gradeColor=grade=>({
 const GRADE_ORDER=['KTX','KTX-산천','KTX-이음','SRT','ITX-새마을','ITX-마음','ITX-청춘','무궁화호','국악와인','남도해양'];
 const rows=parseReport();
 const grades=loadGrades();
-if(rows.length!==458)throw new Error(`보고서 변경 열차는 458편이어야 합니다: ${rows.length}`);
+if(rows.length!==457)throw new Error(`보고서 변경 열차는 457편이어야 합니다: ${rows.length}`);
 if(new Set(rows.map(row=>row.no)).size!==rows.length)throw new Error('보고서에 중복 열차번호가 있습니다.');
 const missing=rows.filter(row=>!grades.has(row.no));
 if(missing.length)throw new Error(`열차등급을 찾을 수 없습니다: ${missing.map(row=>row.no).join(', ')}`);
 for(const row of rows)row.grade=grades.get(row.no);
 
-const expectedGrades={KTX:46,'KTX-산천':49,'KTX-이음':61,SRT:15,'ITX-새마을':96,'ITX-마음':44,'ITX-청춘':25,'무궁화호':116,'국악와인':4,'남도해양':2};
+const expectedGrades={KTX:49,'KTX-산천':55,'KTX-이음':60,SRT:17,'ITX-새마을':91,'ITX-마음':42,'ITX-청춘':24,'무궁화호':113,'국악와인':4,'남도해양':2};
 const actualGrades=rows.reduce((counts,row)=>(counts[row.grade]=(counts[row.grade]||0)+1,counts),{});
 for(const [grade,count] of Object.entries(expectedGrades)){
   if(actualGrades[grade]!==count)throw new Error(`${grade} 변경 편수 불일치: ${actualGrades[grade]} / ${count}`);
@@ -75,7 +75,7 @@ const groups=[...groupMap.values()].sort((a,b)=>{
   const gradeDifference=GRADE_ORDER.indexOf(a.grade)-GRADE_ORDER.indexOf(b.grade);
   return gradeDifference||a.route.localeCompare(b.route,'ko');
 });
-if(groups.length!==135)throw new Error(`변경 계통은 135개여야 합니다: ${groups.length}`);
+if(groups.length!==136)throw new Error(`변경 계통은 136개여야 합니다: ${groups.length}`);
 
 const W=1440,margin=48,gap=24,columnW=(W-margin*2-gap)/2;
 const sectionH=38,headH=34,rowH=30,blockGap=14;
@@ -98,7 +98,7 @@ body.push(`<rect width="${W}" height="${H}" fill="#f4f1e9"/>`);
 body.push(`<rect x="38" y="38" width="${W-76}" height="${H-76}" rx="8" fill="#fff" stroke="#d3cec2" stroke-width="2"/>`);
 body.push(`<text x="${margin+30}" y="90" class="brand">NIMBYRAIL PASSENGER INFORMATION</text>`);
 body.push(`<text x="${margin+30}" y="142" class="title">[붙임] 10월 29일 전 열차 시간표 변경 전체 내역</text>`);
-body.push(`<text x="${margin+30}" y="181" class="subtitle">458편 · 135개 운행 방향·계통 · 각 열차 전 구간 동일 분수 조정</text>`);
+body.push(`<text x="${margin+30}" y="181" class="subtitle">457편 · 136개 운행 방향·계통 · 각 열차 전 구간 동일 분수 조정</text>`);
 body.push(`<text x="${W-margin-30}" y="142" text-anchor="end" class="date">2026-10-29 기준</text>`);
 
 columns.forEach((column,columnIndex)=>{
@@ -161,7 +161,7 @@ const css=`
   .grid{stroke:#cac7c0;stroke-width:1}.darkGrid{stroke:#777b82}
   .foot{font:500 13px 'Apple SD Gothic Neo','Noto Sans CJK KR',sans-serif;fill:#666}
 `;
-const svg=`<?xml version="1.0" encoding="UTF-8"?>\n<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" role="img" aria-labelledby="title desc"><title id="title">10월 29일 전 열차 시간표 변경 전체 내역</title><desc id="desc">458편의 열차번호, 출발역, 도착역, 열차등급, 기존 출발, 변경 출발, 조정분을 135개 계통별로 표시합니다.</desc><style>${css}</style>${body.join('')}</svg>`;
+const svg=`<?xml version="1.0" encoding="UTF-8"?>\n<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" role="img" aria-labelledby="title desc"><title id="title">10월 29일 전 열차 시간표 변경 전체 내역</title><desc id="desc">457편의 열차번호, 출발역, 도착역, 열차등급, 기존 출발, 변경 출발, 조정분을 136개 계통별로 표시합니다.</desc><style>${css}</style>${body.join('')}</svg>`;
 fs.mkdirSync(path.dirname(TARGET),{recursive:true});
 fs.writeFileSync(TARGET,svg);
 process.stdout.write(`${path.relative(ROOT,TARGET)} · ${rows.length}편 · ${groups.length}개 계통 · ${(Buffer.byteLength(svg)/1024).toFixed(1)}KB · ${W}×${H}\n`);

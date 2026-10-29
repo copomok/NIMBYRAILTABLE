@@ -185,9 +185,9 @@ test('공지 이미지 배포 버전이 CSS·데이터·서비스워커에 함�
   const serviceWorker = read('sw.js');
 
   assert.match(index, /nimbi_redesign\.css\?v=2026100703/);
-  assert.match(index, /nimbi_rail_notices\.js\?v=2026102904/);
+  assert.match(index, /nimbi_rail_notices\.js\?v=2026102905/);
   assert.match(index, /nimbi_rail\.css\?v=2026100703/);
-  assert.match(serviceWorker, /CACHE_NAME = 'nimbirail-2026102904'/);
+  assert.match(serviceWorker, /CACHE_NAME = 'nimbirail-2026102905'/);
 });
 
 test('전철 역명 변경 공지는 노선별 개명과 동명이역 해소 내용을 안내한다', () => {
@@ -223,7 +223,7 @@ test('10월 28일 개별 조정과 29일 전수 개정은 29일 공지 하나로
   const notice = context.__NOTICES__.find(item => item.title === '전 열차 추월 검증 및 시간표 조정 안내');
   assert.ok(notice);
   assert.equal(notice.cat, 'timetable');
-  for (const keyword of ['#1804', '6:20', '6:19', '#2078', '13:20', '13:15', '#1214', '17:48', '17:52', '#1642', '13:50', '13:55', '#438', '16:35', '16:30', '#1008', '10:37', '10:36', '458편', '547건']) {
+  for (const keyword of ['#1804', '6:20', '6:19', '#2078', '13:20', '13:15', '#1214', '17:48', '17:52', '#1642', '13:50', '13:55', '#438', '16:35', '16:30', '#1008', '10:37', '10:36', '457편', '547건', '#66', '17:20', '#78', '19:20', '61편']) {
     assert.ok(notice.body.includes(keyword), `${keyword} 안내가 필요합니다`);
   }
   assert.match(notice.body, /20261029-overtake-audit\.svg/);
@@ -237,16 +237,16 @@ test('10월 29일 통합 요약 이미지는 기존 공문형 디자인과 최�
     assert.match(october29, pattern);
   }
   assert.doesNotMatch(october29, /fill="#0e1b2b"|fill="#0b1728"/);
-  for (const keyword of ['#1804 무궁화호', '#2078 ITX-청춘', '#1214 ITX-새마을', '17:52', '#1642 무궁화호', '13:55', '#438 KTX', '#1008 ITX-새마을', '1,879편', '547건', '458편', '0건', '1,270개', '11편', '3분 미만 간격']) {
+  for (const keyword of ['#1804 무궁화호', '#2078 ITX-청춘', '#1214 ITX-새마을', '17:52', '#1642 무궁화호', '13:55', '#438 KTX', '#1008 ITX-새마을', '1,879편', '547건', '457편', '0건', '1,270개', '11편', '3분 미만 간격', '산내 정차 상행 KTX 7편']) {
     assert.ok(october29.includes(keyword), `${keyword} 요약 내용이 필요합니다`);
   }
 });
 
-test('10월 29일 전체 변경 이미지는 보고서의 458편을 135개 계통으로 모두 표시한다', () => {
+test('10월 29일 전체 변경 이미지는 보고서의 457편을 136개 계통으로 모두 표시한다', () => {
   const full = read('assets/notices/20261029-overtake-retimings-full.svg');
   const report = read('reports/2026-10-29-overtake-retimings.md');
-  assert.equal((full.match(/class="trainNo">#\d+/g) || []).length, 458);
-  assert.equal((full.match(/class="group">/g) || []).length, 135);
+  assert.equal((full.match(/class="trainNo">#\d+/g) || []).length, 457);
+  assert.equal((full.match(/class="group">/g) || []).length, 136);
   for (const keyword of ['출발역', '도착역', '등급', '#2', '부산', '서울', 'KTX', '5:00', '5:01', '+1분', '#9763', '경흥', '목포', 'KTX-산천', '21:10', '21:13', '+3분']) {
     assert.ok(full.includes(keyword), `${keyword} 전체 변경 이미지 반영이 필요합니다`);
   }
