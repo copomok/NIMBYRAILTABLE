@@ -444,7 +444,7 @@ function _simDayContext(t){
   const rushMult=weekend?1.12:1.5;
   return (_simCtxCache[cacheKey]=Object.assign({day,dow,weekend,holiday,rushMult,weatherSource:'시뮬레이션'},wx));
 }
-if(typeof fetch==='function'){
+if(typeof fetch==='function' && !window.NIMBI_DISABLE_WEATHER){
   _loadRealWeather();
   _scheduleRealWeatherRefresh();
   document.addEventListener('visibilitychange',()=>{

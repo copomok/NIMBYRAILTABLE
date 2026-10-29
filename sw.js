@@ -1,5 +1,6 @@
-const CACHE_NAME = 'nimbirail-2026102905';
+const CACHE_NAME = 'nimbirail-2026102906';
 const ASSETS = [
+  '/NIMBYRAILTABLE/js/shared/nimbi_rail_domain.js',
   '/NIMBYRAILTABLE/',
   '/NIMBYRAILTABLE/index.html',
   '/NIMBYRAILTABLE/assets/css/nimbi_rail.css',

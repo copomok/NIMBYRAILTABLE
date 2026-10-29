@@ -1,0 +1,30 @@
+:root{
+  --bg:#0d1117;--bg1:#11161d;--bg2:#161b22;--bg3:#21262d;--border:#30363d;
+  --text:#e6edf3;--text1:#e6edf3;--text2:#8b949e;--text3:#6e7681;
+  --accent:#388bfd;--accent2:#58a6ff;
+  --green:#3fb950;--orange:#f97316;--red:#f85149;
+  --radius:8px;--mono:'JetBrains Mono',monospace;--sans:'Noto Sans KR',sans-serif;
+  --c-ktx:#3b82f6;--c-srt:#a855f7;--c-itxsm:#ef4444;--c-itxcc:#22c55e;--c-mgh:#f97316;--c-ndh:#38bdf8;--c-gaw:#343d68;
+  --safe-top:env(safe-area-inset-top,0px);
+}
+:root{
+  --bg:#f3f5f7;--bg0:#f3f5f7;--bg1:#f7f8fa;--bg2:#fff;--bg3:#eef1f4;
+  --surface:#fff;--surface-muted:#f7f8fa;--surface-secondary:#eef1f4;--surface-elevated:#fff;--surface-active:#edf5ff;
+  --border:#dce1e6;--border-strong:#c5cdd5;
+  --text:#17202a;--text1:#17202a;--text2:#55616d;--text3:#7b8793;
+  --accent:#1168ad;--accent2:#0c5b98;--accent-soft:#e8f2fa;
+  --green:#23864b;--orange:#c66b16;--red:#c43e3e;
+  --radius:8px;--radius-sm:6px;--sidebar-w:232px;--topbar-h:72px;
+  --mono:"SFMono-Regular",Consolas,"Liberation Mono",monospace;
+  --sans:"Pretendard Variable",Pretendard,"Noto Sans KR","Apple SD Gothic Neo",Inter,system-ui,sans-serif;
+  color-scheme:light;
+}
+[data-theme="dark"]{
+  --bg:#08111b;--bg0:#08111b;--bg1:#0c1723;--bg2:#111f2e;--bg3:#192a3b;
+  --surface:#111f2e;--surface-muted:#0c1723;--surface-secondary:#192a3b;--surface-elevated:#152638;--surface-active:#193652;
+  --border:#26394b;--border-strong:#37536d;
+  --text:#eef5fb;--text1:#eef5fb;--text2:#b0c0d0;--text3:#8398ad;
+  --accent:#4ca4ff;--accent2:#8cc8ff;--accent-soft:#153553;
+  --green:#4dd17b;--orange:#ffad4f;--red:#ff6b68;
+  color-scheme:dark;
+}

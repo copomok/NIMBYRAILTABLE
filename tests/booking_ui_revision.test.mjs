@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 
-const source=fs.readFileSync('js/nimbi_rail.js','utf8');
+const source=fs.readFileSync('js/shared/nimbi_rail_domain.js','utf8')+'\n'+fs.readFileSync('js/nimbi_rail.js','utf8');
 const css=fs.readFileSync('assets/css/nimbi_rail.css','utf8');
 
 assert.ok(css.includes('.trip-leg-swipe{display:block;width:100%;max-width:100%;box-sizing:border-box;overflow:hidden;clip-path:inset(0 round 8px);contain:paint}'),'여행 열차 카드 스와이프 버튼은 카드 프레임 밖으로 새면 안 됩니다.');

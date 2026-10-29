@@ -2,10 +2,10 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import vm from 'node:vm';
 
-const source=fs.readFileSync('js/nimbi_rail.js','utf8');
+const source=fs.readFileSync('js/shared/nimbi_rail_domain.js','utf8')+'\n'+fs.readFileSync('js/nimbi_rail.js','utf8');
 const css=fs.readFileSync('assets/css/nimbi_rail.css','utf8');
 const start=source.indexOf('function _makeFourAcrossCar');
-const end=source.indexOf('function _wideWindow');
+const end=source.indexOf('function isPassStop',start);
 assert.ok(start>=0&&end>start,'좌석 편성 함수 범위를 찾을 수 없습니다.');
 
 const context={};
