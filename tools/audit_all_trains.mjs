@@ -15,6 +15,7 @@ const files = [
   'nimbi_regional_platforms.js', 'nimbi_gyeongui_20261027_revision.js',
   'nimbi_nyongwon_20261027_stations.js',
   'nimbi_global_schedule_revision.js',
+  'nimbi_20261030_revision.js',
 ];
 const context = {};
 vm.createContext(context);

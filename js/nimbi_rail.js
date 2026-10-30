@@ -2639,20 +2639,28 @@ const CONFIRMED_ROTATION = (()=>{
   ])sets.push({id:`평양-해주-서울 ITX-새마을 ${id}`,seq});
   addNorthCycles('만포-평양 ITX-마음',5161);
   // 녕원선 단거리 10왕복: 서울 직통편과 통합 65분 간격, 당일 원 기점 복귀.
-  const localDown=i=>String(5181+2*i),localUp=i=>String(5182+2*i);
-  sets.push({id:'녕원-평양 ITX-마음 1(녕원기점)',seq:[localDown(0),localUp(2),localDown(4),localUp(6),localDown(8),localUp(9)]});
-  sets.push({id:'녕원-평양 ITX-마음 2(평양기점)',seq:[localUp(0),localDown(2),localUp(4),localDown(6),localUp(8),localDown(9)]});
-  sets.push({id:'녕원-평양 ITX-마음 3(녕원기점)',seq:[localDown(1),localUp(3),localDown(5),localUp(7)]});
-  sets.push({id:'녕원-평양 ITX-마음 4(평양기점)',seq:[localUp(1),localDown(3),localUp(5),localDown(7)]});
+  sets.push({id:'녕원-평양 ITX-마음 1(평양기점)',seq:['5182','5185','5190','5193','5198','5199']});
+  sets.push({id:'녕원-평양 ITX-마음 2(녕원기점)',seq:['5181','5186','5189','5194','5197','5200']});
+  sets.push({id:'녕원-평양 ITX-마음 3(녕원기점)',seq:['5183','5188','5191','5196']});
+  sets.push({id:'녕원-평양 ITX-마음 4(평양기점)',seq:['5184','5187','5192','5195']});
   addNorthCycles('혜산-원산 ITX-마음',5201);
   addNorthCycles('무산-원산 ITX-마음',5221);
   addNorthCycles('경흥-원산 ITX-마음',5241);
   addNorthCycles('평양-룡연 ITX-마음',5261);
-  // 5291을 5199보다 앞에 배치해도 5분 회차와 당일 원 기점 복귀가 성립하는 최소 편성.
-  sets.push({id:'녕원-서울 ITX-새마을 1(녕원기점)',seq:['5281','5284','5285','5290']});
-  sets.push({id:'녕원-서울 ITX-새마을 2(서울기점)',seq:['5282','5283','5286','5289']});
-  sets.push({id:'녕원-서울 ITX-새마을 3(녕원기점)',seq:['5287','5292']});
-  sets.push({id:'녕원-서울 ITX-새마을 4(서울기점)',seq:['5288','5291']});
+  sets.push({id:'녕원-서울 ITX-새마을 1(서울기점)',seq:['5282','5283','5288','5289']});
+  sets.push({id:'녕원-서울 ITX-새마을 2(녕원기점)',seq:['5281','5286','5287','5292']});
+  sets.push({id:'녕원-서울 ITX-새마을 3(서울기점)',seq:['5284','5291']});
+  sets.push({id:'녕원-서울 ITX-새마을 4(녕원기점)',seq:['5285','5290']});
+  // 신의주–평양 일반열차 보강 14왕복: 전 편 당일 원 기점 복귀, 최소 7편성.
+  for(const [id,seq] of [
+    ['1(신의주기점)',['5401','5404','5413','5416','5425','5428']],
+    ['2(신의주기점)',['5403','5406','5415','5418']],
+    ['3(평양기점)',['5402','5411','5414','5427']],
+    ['4(신의주기점)',['5405','5408','5417','5420']],
+    ['5(신의주기점)',['5407','5410','5419','5422']],
+    ['6(신의주기점)',['5409','5412','5421','5424']],
+    ['7(신의주기점)',['5423','5426']]
+  ])sets.push({id:`신의주-평양 무궁화호 ${id}`,seq});
   addNorthCycles('신의주-원산 ITX-새마을',5301);
   addNorthCycles('만포-서울 ITX-새마을',5351);
   addNorthCycles('서울-블라디보스토크 KTX-산천',8001);

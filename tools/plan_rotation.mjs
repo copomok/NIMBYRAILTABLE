@@ -7,7 +7,7 @@ const first = Number(process.argv[2]), last = Number(process.argv[3]);
 if (!Number.isInteger(first) || !Number.isInteger(last) || first > last) throw new Error('Give first and last train numbers');
 const context = {};
 vm.createContext(context);
-for (const file of ['nimbi_rail_data.js','nimbi_north_ingame_routes.js','nimbi_station_data.js','nimbi_north_station_revision.js','nimbi_north_rail_revision.js','nimbi_gonam_itx_revision.js','nimbi_pass_stations_revision.js','nimbi_20261027_revision.js']) {
+for (const file of ['nimbi_rail_data.js','nimbi_north_ingame_routes.js','nimbi_station_data.js','nimbi_north_station_revision.js','nimbi_north_rail_revision.js','nimbi_gonam_itx_revision.js','nimbi_pass_stations_revision.js','nimbi_20261027_revision.js','nimbi_global_schedule_revision.js','nimbi_20261030_revision.js']) {
   vm.runInContext(fs.readFileSync(new URL(`../data/${file}`, import.meta.url), 'utf8'), context, { filename: file });
 }
 vm.runInContext('globalThis.trains = ALL_TRAINS', context);

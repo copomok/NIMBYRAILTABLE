@@ -1386,5 +1386,25 @@ const NOTICES = [
 수영–병목안 구간의 원본 시각 오류 11편도 별도로 정정했습니다. 이용 전 각 열차의 최신 역별 시간표를 확인해 주세요.<br><br>
 <a class="notice-timetable-attachment summary" href="assets/notices/20261029-overtake-audit.svg" target="_blank" rel="noopener noreferrer"><img src="assets/notices/20261029-overtake-audit.svg" alt="10월 28일과 29일 시간표 개정 요약" loading="lazy"><span>통합 개정 결과 한눈에 보기</span></a>
 <a class="notice-timetable-attachment" href="assets/notices/20261029-overtake-retimings-full.svg" target="_blank" rel="noopener noreferrer"><img src="assets/notices/20261029-overtake-retimings-full.svg" alt="457편 전체 열차 시간표 변경 내역" loading="lazy"><span>계통별 전체 변경 열차 보기</span></a>`
+  },
+  {
+    date:'2026-10-30',
+    cat:'timetable',
+    title:'신의주–평양 일반열차 증편 및 녕원·산내 경유 시간표 정정',
+    body:`첨부 인게임 운행자료를 다시 판독해 북한 지역 일반열차와 산내 경유 KTX 시간표를 정정했습니다.<br><br>
+
+<strong>■ 신의주 ↔ 평양 무궁화호 신설</strong><br>
+#5401~#5428을 하루 <strong>14회 왕복</strong> 신설했습니다. 배차 간격은 KTX를 제외한 일반열차끼리 계산했으며, 하행은 20~40분, 상행은 주간 20~43분입니다. 신설편은 7편성으로 당일 운행 후 각 편성의 최초 출발지로 돌아옵니다.<br><br>
+
+<strong>■ 녕원 계통 정차시간 복원</strong><br>
+녕원–평양 #5181~#5200과 녕원–서울 #5281~#5292의 1분 미만 정차 문제를 바로잡았습니다. 사진 속 도착·출발 초를 각각 버린 분 단위 시각을 사용했고, 사진에서 끊긴 녕원 종착 한 역은 반대 방향 운전시분으로 역산했습니다.<br><br>
+
+<strong>■ KTX 표시·운전시분 정정</strong><br>
+신의주–서울 KTX-산천 #9001~#9018의 문산·룡천은 기존 시각을 유지한 채 통과역으로 바꿨습니다. 산내 정차 서울–부산 KTX 14편은 1시간 50분을 임의로 강제하지 않고 첨부 사진의 양방향 역별 시각으로 교체했으며, 빠진 통과역은 같은 계통 운전시분으로 보완했습니다.<br><br>
+
+<div class="n-box">전체 1,907편의 시각이 있는 35,943개 구간을 재검사한 결과 구간 내 무단추월과 시간 역전은 0건입니다. 통과 시각이 없는 구간은 판정에서 제외했습니다.</div><br>
+
+기존 열차 중 시발역 출발 시각이 바뀐 23편과 신설 28편의 출발 시각은 <a href="reports/2026-10-30-north-timetable-revision.md" target="_blank" rel="noopener noreferrer">전체 변경 보고서</a>에서 확인할 수 있습니다.<br><br>
+<a class="notice-timetable-attachment summary" href="assets/notices/20261030-north-timetable-revision.svg" target="_blank" rel="noopener noreferrer"><img src="assets/notices/20261030-north-timetable-revision.svg" alt="10월 30일 북한 지역 일반열차 신설 및 시간표 정정 요약" loading="lazy"><span>신설·정정 내용 한눈에 보기</span></a>`
   }
 ];

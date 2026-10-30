@@ -61,7 +61,7 @@ test('최종 전 열차 시간표에 무단추월·단선 교행 충돌과 5분 
   const audit=JSON.parse(execFileSync(process.execPath,[path.join(root,'tools/audit_all_trains.mjs'),'--correct-timeline'],{
     cwd:root,encoding:'utf8',maxBuffer:32*1024*1024
   }));
-  assert.equal(audit.trains,1879);
+  assert.equal(audit.trains,1907);
   assert.equal(audit.counts['illegal overtake']||0,0);
   assert.equal(audit.counts['illegal station overtake']||0,0);
   assert.equal(audit.counts['single-track meet']||0,0);
