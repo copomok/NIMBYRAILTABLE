@@ -1394,7 +1394,9 @@ const NOTICES = [
     body:`첨부 인게임 운행자료를 다시 판독해 북한 지역 일반열차와 산내 경유 KTX 시간표를 정정했습니다.<br><br>
 
 <strong>■ 신의주 ↔ 평양 무궁화호 신설</strong><br>
-#5401~#5428을 하루 <strong>14회 왕복</strong> 신설했습니다. 배차 간격은 KTX를 제외한 일반열차끼리 계산했으며, 하행은 20~40분, 상행은 주간 20~43분입니다. 신설편은 7편성으로 당일 운행 후 각 편성의 최초 출발지로 돌아옵니다.<br><br>
+#5401~#5428 하루 <strong>14회 왕복</strong>을 첨부 사진의 왕복 운전시분·정차시간·승강장에 맞춰 전면 재작성했습니다. 특정 편의 특정 역만 늘렸던 대피 정차는 모두 없애고, 전 편이 같은 사진 원형을 유지하도록 열차 전체를 평행 이동했습니다. 양방향 첫차는 06:24·06:23, 막차는 모두 23:58 도착이며, 최소 6편성이 당일 운행 후 최초 출발지로 돌아옵니다.<br><br>
+
+<div class="n-box">다른 일반열차와의 통합 간격보다 사진 원형과 무단추월 0건을 우선했습니다. 신설 무궁화호끼리는 방향별 최소 45분 이상 떨어지며, 충돌을 피하기 어려운 일부 통합 간격은 최대 64분입니다.</div><br>
 
 <strong>■ 녕원 계통 정차시간 복원</strong><br>
 녕원–평양 #5181~#5200과 녕원–서울 #5281~#5292의 1분 미만 정차 문제를 바로잡았습니다. 사진 속 도착·출발 초를 각각 버린 분 단위 시각을 사용했고, 사진에서 끊긴 녕원 종착 한 역은 반대 방향 운전시분으로 역산했습니다.<br><br>
@@ -1404,7 +1406,7 @@ const NOTICES = [
 
 <div class="n-box">전체 1,907편의 시각이 있는 35,943개 구간을 재검사한 결과 구간 내 무단추월과 시간 역전은 0건입니다. 통과 시각이 없는 구간은 판정에서 제외했습니다.</div><br>
 
-기존 열차 중 시발역 출발 시각이 바뀐 23편과 신설 28편의 출발 시각은 <a href="reports/2026-10-30-north-timetable-revision.md" target="_blank" rel="noopener noreferrer">전체 변경 보고서</a>에서 확인할 수 있습니다.<br><br>
+기존 열차 중 시발역 출발 시각이 바뀐 23편과 재배치한 무궁화호 28편의 기존·변경 출발 시각은 <a href="reports/2026-10-30-north-timetable-revision.md" target="_blank" rel="noopener noreferrer">전체 변경 보고서</a>에서 확인할 수 있습니다.<br><br>
 <a class="notice-timetable-attachment summary" href="assets/notices/20261030-north-timetable-revision.svg" target="_blank" rel="noopener noreferrer"><img src="assets/notices/20261030-north-timetable-revision.svg" alt="10월 30일 북한 지역 일반열차 신설 및 시간표 정정 요약" loading="lazy"><span>신설·정정 내용 한눈에 보기</span></a>`
   }
 ];

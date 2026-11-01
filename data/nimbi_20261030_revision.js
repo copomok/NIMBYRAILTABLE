@@ -118,8 +118,10 @@
     }
   }
 
-  // 1000079479: 신의주–평양 무궁화호 왕복 원형. 사진 밖 신의주 종착
-  // 한 역은 신의주→룡천 운전시분을 역산해 137분으로 보완했다.
+  // 1000079479 재판독: 한 장에 신의주→평양→신의주 왕복 운용이 이어진다.
+  // 각 역의 도착·출발 초를 따로 버리고, 방향 문자만 제외한 승강장 번호도
+  // 양방향 모두 사진 그대로 기록한다. 사진 밖 마지막 신의주 종착 한 역만
+  // 신의주→룡천 운전시분으로 역산해 상행 총 137분으로 보완했다.
   const mugunghwaDown=[
     {s:'신의주',arr:null,dep:0,p:1},{s:'룡천',arr:8,dep:9,p:1},
     {s:'염주',arr:18,dep:19,p:1},{s:'동림',arr:25,dep:27,p:1},
@@ -129,7 +131,7 @@
     {s:'문덕',arr:93,dep:94,p:1},{s:'금풍',arr:103,dep:104,p:1},
     {s:'평원',arr:110,dep:111,p:1},{s:'순안',arr:119,dep:120,p:1},
     {s:'서포',arr:127,dep:128,p:1},{s:'서평양',arr:131,dep:132,p:1},
-    {s:'평양',arr:136,dep:null,p:1},
+    {s:'평양',arr:136,dep:null,p:2},
   ];
   const mugunghwaUp=[
     {s:'평양',arr:null,dep:0,p:2},{s:'서평양',arr:4,dep:5,p:4},
@@ -142,8 +144,11 @@
     {s:'염주',arr:118,dep:119,p:2},{s:'룡천',arr:127,dep:129,p:2},
     {s:'신의주',arr:137,dep:null,p:2},
   ];
-  const downDepartures=[353,405,469,530,594,656,721,789,856,921,982,1046,1113,1178];
-  const upDepartures=[455,520,585,662,724,786,851,919,979,1042,1109,1174,1235,1304];
+  // 사진 원형을 한 역도 변형하지 않은 채 전 편을 평행 이동했다. 기존 전 열차와
+  // 분 단위 구간 순서를 대조해 개활선 무단추월 0건인 시각만 사용한다.
+  // 새 무궁화호끼리는 최소 45분 이상 떨어지며 양방향 막차는 모두 23:58 도착한다.
+  const downDepartures=[384,459,531,597,719,790,850,905,985,1030,1097,1171,1257,1302];
+  const upDepartures=[383,460,534,648,725,772,833,905,976,1042,1103,1181,1254,1301];
   for(let index=0;index<downDepartures.length;index++){
     const downNo=5401+index*2,upNo=downNo+1;
     ALL_TRAINS.push({
@@ -154,6 +159,14 @@
       no:String(upNo),dest:'신의주',dir:'up',line:'경의선',grade:'무궁화호',
       boundary:['평양','신의주'],stops:makeStops(mugunghwaUp,upDepartures[index]),
     });
+  }
+  // nimbi_regional_platforms.js보다 이 파일이 나중에 로드되므로 stop.p만으로는
+  // 앱의 승강장 안내에 나타나지 않는다. 사진값을 표시용 DB에도 함께 확정한다.
+  if(typeof REAL_PLAT!=='undefined')for(const train of ALL_TRAINS){
+    const no=Number(train.no);
+    if(no<5401||no>5428)continue;
+    const mapped=REAL_PLAT[train.no]||(REAL_PLAT[train.no]={});
+    for(const stop of train.stops)if(stop.p!=null)mapped[stop.s]=Number(stop.p);
   }
 
   const shiftTrain=(no,delta)=>{
@@ -168,14 +181,10 @@
     296:-6,5065:5,5089:11,5093:-10,
     5181:2,5184:8,5187:-2,5188:1,5191:-11,5194:-9,5196:1,5198:9,5199:5,5200:-2,
     5281:8,5283:10,5284:-31,5285:-3,5286:-19,5287:-2,5288:-4,5290:7,5291:-9,
-    5402:5,5405:-3,5406:2,5407:2,5408:-4,5409:2,5410:4,
-    5411:-8,5412:1,5413:-2,5414:-2,5415:1,5416:-2,5418:6,5419:4,
-    5420:-6,5425:-1,5427:-7,5428:-3,
   };
   for(const [no,delta]of Object.entries(shifts))shiftTrain(no,delta);
 
-  // 두 편은 큰 폭의 평행 이동 대신 사진의 정차역에서 KTX를 대피시킨다.
-  // #5403은 동림, #5424는 곽산에서 통과 열차 시각을 포함하도록 정차를 연장한다.
+  // 사진 템플릿 자체와 무관한 기존 열차의 대피 조정만 유지한다.
   const holdAfter=(no,station,minutes,occurrence=1)=>{
     const train=ALL_TRAINS.find(item=>item.no===String(no));
     const index=train?.stops
@@ -187,9 +196,6 @@
     for(let i=index+1;i<train.stops.length;i++)for(const key of ['arr','dep'])
       if(timed(train.stops[i][key]))train.stops[i][key]=clock(minute(train.stops[i][key])+minutes);
   };
-  holdAfter(5403,'동림',15);
-  holdAfter(5411,'운하',3);
-  holdAfter(5424,'곽산',7);
   holdAfter(5281,'송림',4,2);
 
   if(Array.isArray(globalThis.NIMBI_NORTH_FORMAL_RANGES))globalThis.NIMBI_NORTH_FORMAL_RANGES.push({

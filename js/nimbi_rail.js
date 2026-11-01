@@ -2651,15 +2651,15 @@ const CONFIRMED_ROTATION = (()=>{
   sets.push({id:'ë…•ì›-ì„œìš¸ ITX-ìƒˆë§ˆì„ 2(ë…•ì›ê¸°ì )',seq:['5281','5286','5287','5292']});
   sets.push({id:'ë…•ì›-ì„œìš¸ ITX-ìƒˆë§ˆì„ 3(ì„œìš¸ê¸°ì )',seq:['5284','5291']});
   sets.push({id:'ë…•ì›-ì„œìš¸ ITX-ìƒˆë§ˆì„ 4(ë…•ì›ê¸°ì )',seq:['5285','5290']});
-  // ì‹ ì˜ì£¼â€“í‰ì–‘ ì¼ë°˜ì—´ì°¨ ë³´ê°• 14ì™•ë³µ: ì „ í¸ ë‹¹ì¼ ì› ê¸°ì  ë³µê·€, ìµœì†Œ 7í¸ì„±.
+  // ì‹ ì˜ì£¼â€“í‰ì–‘ ë¬´ê¶í™”í˜¸ 14ì™•ë³µ: ì‚¬ì§„ ì›í˜• ì¬ë°°ì¹˜ í›„ ì „ í¸ ë‹¹ì¼ ì› ê¸°ì  ë³µê·€.
+  // ì „ í¸ 5ë¶„ ì´ìƒ íšŒì°¨ë¥¼ ë§Œì¡±í•˜ëŠ” ìµœì†Œ 6í¸ì„± ìš´ìš©ì´ë‹¤.
   for(const [id,seq] of [
-    ['1(ì‹ ì˜ì£¼ê¸°ì )',['5401','5404','5413','5416','5425','5428']],
-    ['2(ì‹ ì˜ì£¼ê¸°ì )',['5403','5406','5415','5418']],
-    ['3(í‰ì–‘ê¸°ì )',['5402','5411','5414','5427']],
-    ['4(ì‹ ì˜ì£¼ê¸°ì )',['5405','5408','5417','5420']],
-    ['5(ì‹ ì˜ì£¼ê¸°ì )',['5407','5410','5419','5422']],
-    ['6(ì‹ ì˜ì£¼ê¸°ì )',['5409','5412','5421','5424']],
-    ['7(ì‹ ì˜ì£¼ê¸°ì )',['5423','5426']]
+    ['1(ì‹ ì˜ì£¼ê¸°ì )',['5401','5406','5409','5416','5421','5426']],
+    ['2(í‰ì–‘ê¸°ì )',['5402','5405','5410','5415','5422','5425']],
+    ['3(ì‹ ì˜ì£¼ê¸°ì )',['5403','5412','5417','5424']],
+    ['4(í‰ì–‘ê¸°ì )',['5404','5411','5418','5423']],
+    ['5(ì‹ ì˜ì£¼ê¸°ì )',['5407','5414','5419','5428']],
+    ['6(í‰ì–‘ê¸°ì )',['5408','5413','5420','5427']]
   ])sets.push({id:`ì‹ ì˜ì£¼-í‰ì–‘ ë¬´ê¶í™”í˜¸ ${id}`,seq});
   addNorthCycles('ì‹ ì˜ì£¼-ì›ì‚° ITX-ìƒˆë§ˆì„',5301);
   addNorthCycles('ë§Œí¬-ì„œìš¸ ITX-ìƒˆë§ˆì„',5351);
@@ -7909,7815 +7909,408 @@ function renderTripWidget(active){
       ${tl.prev?`<div class="trip-tl-line-cell"><div class="trip-tl-line" style="background:linear-gradient(90deg,${gradeColor}55,${gradeColor}cc)"></div></div>`:''}
       <div class="trip-tl-stop">
         <div class="trip-tl-dot-cell"><span class="trip-tl-dot current" style="background:${gradeColor};border-color:${gradeColor};box-shadow:0 0 0 4px ${gradeColor}33"></span></div>
-        <div class="trip-tl-name-cell"><span class="trip-tl-name current" style="color:${gradeColor}">${tl.cur?tl.cur.name:'ì´ë™ ì¤‘'}</span><span class="trip-tl-time current" style="color:${gradeColor}">${tl.cur?tl.cur.time:''}</span></div>
-      </div>
-      ${tl.next?`<div class="trip-tl-line-cell"><div class="trip-tl-line" style="background:linear-gradient(90deg,${gradeColor}cc,${gradeColor}44)"></div></div>`:''}
-      ${tl.next?`<div class="trip-tl-stop">
-        <div class="trip-tl-dot-cell"><span class="trip-tl-dot small"></span></div>
-        <div class="trip-tl-name-cell"><span class="trip-tl-name">${tl.next.name}</span><span class="trip-tl-time">${tl.next.time||''}</span></div>
-      </div>`:''}
-    </div>` : '';
-
-  // ì°¨ë‚´ LED "ì´ë²ˆ ì—­" ì•ˆë‚´ (ì‹¤ì œ ì—´ì°¨ì²˜ëŸ¼ ì ‘ê·¼/ì •ì°¨ ì¤‘ì¸ ì—­ì„ í‘œì‹œ)
-  const ledLabel = 'ì´ë²ˆ ì—­';
-  const ledStn = (tl&&tl.cur?tl.cur.name:(status.atStn||'-'));
-  const ledFinal = (ledStn===ticket.toStn) ? ' Â· ë‚´ë¦¬ëŠ” ë¬¸ í™•ì¸' : '';
-
-  return `<div class="trip-widget" style="border-color:${gradeColor};background:linear-gradient(135deg,${gradeColor}18,${gradeColor}08)" onclick="jumpToTrain('${train.no}')">
-    <div class="trip-widget-head">
-      <span class="trip-widget-live-dot"></span>
-      <span class="trip-widget-label">íƒ‘ìŠ¹ ì¤‘</span>
-      <span class="trip-widget-grade" style="color:${gradeColor}">${train.grade}</span>
-      <span class="trip-widget-no">${train.no}</span>
-      ${nextEtaHtml}
-    </div>
-    ${ledEnabled()?`<div class="trip-led"><span class="trip-led-tag">${ledLabel}</span><span class="trip-led-scr"><span class="trip-led-txt">${ledStn}${ledFinal}</span></span></div>`:''}
-    <div class="trip-widget-state">${stateLabel}</div>
-    ${arrivalStr?`<div class="trip-widget-arrival">${arrivalStr}</div>`:''}
-    ${tlHtml}
-    <div class="trip-widget-progress">
-      <div class="trip-widget-progress-bar"><div class="trip-widget-progress-fill" style="width:${pct}%;background:linear-gradient(90deg,${gradeColor},${gradeColor}aa)"></div></div>
-      <div class="trip-widget-progress-labels"><span>${ticket.fromStn} ${ticket.depTime||''}</span><span>${ticket.toStn} ${ticket.arrTime||''}</span></div>
-    </div>
-    <div class="trip-widget-actions">
-      <button class="trip-widget-btn" onclick="event.stopPropagation();goLiveTrack('${train.no}')">ğŸ—ºï¸ ì‹¤ì‹œê°„ ìœ„ì¹˜</button>
-      <button class="trip-widget-btn${ledEnabled()?' on':''}" onclick="event.stopPropagation();toggleTripLED(event)">ğŸ’¡ LED${ledEnabled()?' ì¼œì§':' êº¼ì§'}</button>
-      <button class="trip-widget-btn${liveActEnabled()?' on':''}" onclick="event.stopPropagation();toggleLiveActivity()">ğŸ“² ë¼ì´ë¸Œ</button>
-    </div>
-  </div>`;
-}
-// ì‹¤ì‹œê°„ ìœ„ì¹˜: ì—´ë ¤ìˆëŠ” ìŠ¹ì°¨ê¶Œ ì˜¤ë²„ë ˆì´/QR íŒì—…ì„ ë‹«ê³  ë…¸ì„ ë„ íƒ­ìœ¼ë¡œ ì´ë™í•´ ì¶”ì 
-function goLiveTrack(no){
-  try{ closeQRPopup(); }catch(e){}
-  document.getElementById('fmt-popup-wrap')?.remove();
-  try{ closeMyPage(); }catch(e){}
-  switchTab('map');
-  setTimeout(()=>trackTrainOnMap(no),200);
-}
-// 013: ì´ë²ˆ ì •ì°¨ì—­ ì•ˆë‚´ëŠ” ë¶„ ë‹¨ìœ„ë¡œ í‘œì‹œí•˜ë©°, ìœ„ì ¯ 30ì´ˆ ì£¼ê¸° ì¬ë Œë”ë¡œ ê°±ì‹ ëœë‹¤.
-
-// í™ˆ(ì—´ì°¨ íƒ­)ìš© ê°„ëµ ì—¬ì • ì¹´ë“œ (ìƒì„¸ëŠ” ìŠ¹ì°¨ê¶Œ íƒ­)
-// ì°¨ë‚´ LEDÂ·í˜„ì¬ ìœ„ì¹˜(ì¶œë°œâ†”ë„ì°© ê°€ìš´ë°)ë¥¼ í•¨ê»˜ í‘œì‹œí•˜ë©°, ì„¤ì •ì—ì„œ ì¶•ì†Œ ëª¨ë“œë¡œ ë³¼ ìˆ˜ ìˆë‹¤.
-function renderTripWidgetCompact(active){
-  if(!active) return "";
-  const {ticket,train,status,preBoard,minsUntilDep,preArr,minsUntilArr}=active;
-  const gc=GRADE_COLORS[train.grade]||"#8b949e";
-  let stateLabel,metaText,stateIcon,stateColor,ledCur=null,midName=null,midTime='',onboard=false;
-  if(preBoard){
-    stateLabel="ìŠ¹ì°¨ ì¤€ë¹„"; stateIcon="ğŸš‰"; stateColor="var(--orange)";
-    metaText=`${fmtEta(minsUntilDep)} ì¶œë°œ ì˜ˆì •`;
-  }else if(preArr){
-    stateLabel="ë„ì°© ì¤€ë¹„"; stateIcon="ğŸ“"; stateColor="var(--green)"; onboard=true; ledCur=ticket.toStn;
-    metaText=`${fmtEta(minsUntilArr)} ${ticket.toStn} ë„ì°©`;
-  }else{
-    const tl=getTripTimeline3(train,status,ticket);
-    ledCur=(tl&&tl.cur?tl.cur.name:(status.atStn||status.passStn||null)); onboard=true;
-    // ê°€ìš´ë° ì¹¸ì€ 'ì´ë²ˆ ì—­'(tl.cur, ë„ì°© ì¤‘/ì •ì°¨ ì¤‘ì¸ ì—­) â€” ì¢…ì°©Â·ìŠ¹ì°¨ì—­ê³¼ ê²¹ì¹˜ë©´ ìƒëµ
-    if(tl&&tl.cur&&tl.cur.name!==ticket.toStn&&tl.cur.name!==ticket.fromStn){ midName=tl.cur.name; midTime=tl.cur.time||''; }
-    const depM=toMin(ticket.depTime),arrM=toMin(ticket.arrTime);
-    const now=new Date(),nowM=now.getHours()*60+now.getMinutes();
-    let diff=(arrM!=null&&depM!=null)?((arrM>=depM)?arrM-nowM:arrM+1440-nowM):null;
-    if(diff!=null&&diff<0)diff+=1440;
-    if(diff!=null&&diff>=1440)diff%=1440;
-    stateLabel="íƒ‘ìŠ¹ ì¤‘"; stateIcon="â—"; stateColor="var(--green)";
-    metaText=`${ticket.toStn}ê¹Œì§€ ${diff!=null?fmtEta(diff):"ìš´í–‰ ì¤‘"}`;
-  }
-  const hasMid = !!(onboard&&midName);
-  const seat=[ticket.seatClassLabel,seatSummary(ticket.seats)].filter(Boolean).join(" Â· ");
-  const idEsc=String(ticket.id).replace(/"/g,'&quot;');
-  // ì°¨ë‚´ LED (íƒ‘ìŠ¹/ë„ì°© ì¤€ë¹„ ì¤‘ + LED ì„¤ì • ì¼œì§ì¼ ë•Œ) â€” 'ì´ë²ˆ ì—­'(í˜„ì¬)ì„ ìˆœí™˜ í‘œì‹œ, ì¹´ë“œ í•˜ë‹¨ íŒ¨ë„ë¡œ ë°°ì¹˜
-  const ledStn = ledCur || (preBoard?ticket.fromStn:'ìš´í–‰ ì¤‘');
-  const ledFinal = (ledCur&&ledCur===ticket.toStn)?' Â· ë‚´ë¦¬ëŠ” ë¬¸ í™•ì¸':'';
-  const ledHtml = (onboard&&ledEnabled())
-    ? `<div class="trip-led trip-mini-led"><span class="trip-led-tag trip-mini-led-tag">ì´ë²ˆ ì—­</span><span class="trip-led-scr"><span class="trip-led-txt trip-mini-led-txt">${ledStn}${ledFinal}</span></span></div>`
-    : '';
-  // ì¶œë°œ Â· ë‹¤ìŒ Â· ë„ì°© 3ì—­ ì¸ë¼ì¸ (ê°€ìš´ë°ëŠ” ì´ë²ˆ ì—­ ë°ì´í„°, ë¼ë²¨ë§Œ 'ë‹¤ìŒ')
-  const stn=(lbl,name,time,cls)=>`<div class="tm-stn ${cls}"><span class="tm-stn-lbl">${lbl}</span><strong class="tm-stn-nm">${name}</strong><time class="tm-stn-tm">${time||'-'}</time></div>`;
-  const sep=`<span class="tm-sep" aria-hidden="true">â†’</span>`;
-  const routeInner = hasMid
-    ? `${stn('ì¶œë°œ',ticket.fromStn,ticket.depTime,'dep')}${sep}${stn('ë‹¤ìŒ',midName,midTime,'mid')}${sep}${stn('ë„ì°©',ticket.toStn,ticket.arrTime,'arr')}`
-    : `${stn('ì¶œë°œ',ticket.fromStn,ticket.depTime,'dep')}${sep}${stn('ë„ì°©',ticket.toStn,ticket.arrTime,'arr')}`;
-  // ì¶•ì†Œ ëª¨ë“œ: í•œ ì¤„ ìš”ì•½ + LED
-  if(_tripCompact){
-    return `<article class="trip-mini trip-mini--slim" style="--trip-color:${gc};--trip-soft:${gc}1f" onclick="openQRPopup(&quot;${idEsc}&quot;)">
-      <span class="trip-mini-accent" aria-hidden="true"></span>
-      <div class="trip-mini-train">
-        <span class="trip-mini-grade-badge" style="background:${gc}">${train.grade}</span>
-        <strong class="trip-mini-no">${train.no}</strong>
-        <span class="trip-mini-bound">${ticket.fromStn} â†’ ${ticket.toStn}</span>
-        <span class="trip-mini-status" style="color:${stateColor};margin-left:auto"><i style="background:${stateColor}"></i>${stateLabel}</span>
-      </div>
-      <div class="trip-mini-footer">
-        <span class="trip-mini-detail"><b>${stateIcon}</b>${metaText}</span>
-        <button type="button" class="trip-mini-go" onclick="event.stopPropagation();openQRPopup(&quot;${idEsc}&quot;)">ìŠ¹ì°¨ê¶Œ <b>â€º</b></button>
-      </div>
-      ${ledHtml}
-    </article>`;
-  }
-  // ì „ì²´ ëª¨ë“œ
-  return `<article class="trip-mini" style="--trip-color:${gc};--trip-soft:${gc}1f" onclick="openQRPopup(&quot;${idEsc}&quot;)">
-    <span class="trip-mini-accent" aria-hidden="true"></span>
-    <div class="trip-mini-kicker">
-      <span class="trip-mini-title">íƒ‘ìŠ¹ ì—¬ì •</span>
-      <span class="trip-mini-status" style="color:${stateColor}"><i style="background:${stateColor}"></i>${stateLabel}</span>
-    </div>
-    <div class="trip-mini-train">
-      <span class="trip-mini-grade-badge" style="background:${gc}">${train.grade}</span>
-      <strong class="trip-mini-no">${train.no}</strong>
-      <span class="trip-mini-bound">${(train&&train.dest)||ticket.toStn}í–‰</span>
-      <button type="button" class="trip-mini-go" onclick="event.stopPropagation();openQRPopup(&quot;${idEsc}&quot;)">ìŠ¹ì°¨ê¶Œ <b>â€º</b></button>
-    </div>
-    <div class="trip-mini-route">${routeInner}</div>
-    <div class="trip-mini-footer">
-      <span class="trip-mini-detail"><b>${stateIcon}</b>${metaText}</span>
-      ${seat?`<span class="trip-mini-seat">${seat}</span>`:""}
-    </div>
-    ${ledHtml}
-  </article>`;
-}
-// ì•ìœ¼ë¡œ 1ì£¼(ì˜¤ëŠ˜~+7ì¼)ì˜ ì˜ˆì • ìŠ¹ì°¨ê¶Œ (íƒ‘ìŠ¹ ì„ë°•/ì¤‘ì¸ excludeIdëŠ” ì œì™¸) â€” ê°€ê¹Œìš´ ì¶œë°œ ìˆœ
-function getUpcomingTickets(excludeId){
-  if(typeof loadTickets!=='function') return [];
-  const now=new Date(), nowM=now.getHours()*60+now.getMinutes();
-  const dayIdx={};
-  for(let i=0;i<8;i++){ const d=new Date(now); d.setDate(d.getDate()+i); dayIdx[todayLocalStr(d)]=i; }
-  return loadTickets()
-    .filter(tk=>tk.status==='active'&&tk.id!==excludeId&&dayIdx[tk.travelDate]!=null)
-    .map(tk=>{ const off=dayIdx[tk.travelDate]; const dep=toMin(tk.depTime);
-      let diff = dep==null?999999 : (dep-nowM)+off*1440;
-      return {ticket:tk, train:getTrainByNo(tk.trainNo), diff, dayoff:off}; })
-    .filter(x=>x.diff>0)
-    .sort((a,b)=>a.diff-b.diff);
-}
-// ì˜ˆì • ìŠ¹ì°¨ê¶Œ ìŠ¬ë¼ì´ë“œ ì¹´ë“œ (íƒ‘ìŠ¹ ì‹œê°„ ì „ Â· ì•ìœ¼ë¡œ 1ì£¼)
-// mini=true: íƒ‘ìŠ¹ ì—¬ì • ì¹´ë“œê°€ ë–  ìˆì„ ë•Œ í•œ ì¤„ ìš”ì•½ìœ¼ë¡œ ì‘ê²Œ í‘œì‹œ
-function renderPlanSlide(u, mini){
-  const {ticket,train,diff,dayoff}=u;
-  const gc=(train&&GRADE_COLORS[train.grade])||'#8b949e';
-  const grade=train?train.grade:(ticket.grade||'ì—´ì°¨');
-  // ì–¸ì œ ì¶œë°œ: ì˜¤ëŠ˜=ìƒëŒ€ì‹œê°„, ë‚´ì¼=ë‚´ì¼ HH:MM, ê·¸ ì™¸=M/D(ìš”ì¼) HH:MM
-  let when;
-  if(dayoff===0) when=`${fmtEta(diff)} ì¶œë°œ`;
-  else if(dayoff===1) when=`ë‚´ì¼ ${ticket.depTime||''} ì¶œë°œ`;
-  else { const wk=['ì¼','ì›”','í™”','ìˆ˜','ëª©','ê¸ˆ','í† ']; const d=new Date(); d.setDate(d.getDate()+dayoff);
-    when=`${d.getMonth()+1}/${d.getDate()}(${wk[d.getDay()]}) ${ticket.depTime||''} ì¶œë°œ`; }
-  const idEsc=String(ticket.id).replace(/"/g,'&quot;');
-  if(mini){
-    return `<button type="button" class="myplan-slide myplan-slide--mini" style="--pl:${gc}" onclick="openQRPopup(&quot;${idEsc}&quot;)">
-      <span class="myplan-slide-top">
-        <span class="myplan-slide-badge" style="background:${gc}">${grade}</span>
-        <strong class="myplan-slide-no">${ticket.trainNo}</strong>
-        <span class="myplan-slide-bound">${(train&&train.dest)||ticket.toStn}í–‰</span>
-        <span class="myplan-slide-when">${when}</span>
-      </span>
-      <span class="myplan-slide-foot"><span>${ticket.fromStn} ${ticket.depTime||'-'} â†’ ${ticket.toStn} ${ticket.arrTime||'-'}</span><em>ìŠ¹ì°¨ê¶Œ â€º</em></span>
-    </button>`;
-  }
-  return `<button type="button" class="myplan-slide" style="--pl:${gc}" onclick="openQRPopup(&quot;${idEsc}&quot;)">
-    <span class="myplan-slide-top">
-      <span class="myplan-slide-badge" style="background:${gc}">${grade}</span>
-      <strong class="myplan-slide-no">${ticket.trainNo}</strong>
-      <span class="myplan-slide-bound">${(train&&train.dest)||ticket.toStn}í–‰</span>
-      <span class="myplan-slide-when">${when}</span>
-    </span>
-    <span class="myplan-slide-route">
-      <span class="myplan-slide-stn"><b>${ticket.fromStn}</b><time>${ticket.depTime||'-'}</time></span>
-      <span class="myplan-slide-arrow">â†’</span>
-      <span class="myplan-slide-stn end"><b>${ticket.toStn}</b><time>${ticket.arrTime||'-'}</time></span>
-    </span>
-    <span class="myplan-slide-foot"><span>${[ticket.seatClassLabel,seatSummary(ticket.seats)].filter(Boolean).join(' Â· ')||'ìŠ¹ì°¨ê¶Œ'}</span><em>ìŠ¹ì°¨ê¶Œ â€º</em></span>
-  </button>`;
-}
-// í†µí•© "ë‚˜ì˜ ë‹¤ìŒ ì¼ì •" â€” íƒ‘ìŠ¹ ì„ë°•/ì¤‘ì¸ ê±´ì€ ì—¬ì • ì¹´ë“œ, ì•ìœ¼ë¡œ 1ì£¼ ì˜ˆì •ì€ ê°€ë¡œ ìŠ¬ë¼ì´ë”
-// íƒ‘ìŠ¹ ì—¬ì • ì¹´ë“œê°€ ë–  ìˆìœ¼ë©´ 1ì£¼ ìŠ¬ë¼ì´ë“œëŠ” ì‘ê²Œ(mini) í‘œì‹œ
-function renderMyPlan(){
-  const active=getActiveTripTicket();
-  const upcoming=getUpcomingTickets(active?active.ticket.id:null);
-  if(!active && !upcoming.length) return '';
-  const count=(active?1:0)+upcoming.length;
-  const mini=!!active;
-  const slider = upcoming.length
-    ? `<div class="myplan-slider-wrap">
-        <div class="myplan-slider${mini?' myplan-slider--mini':''}">${upcoming.map(u=>renderPlanSlide(u,mini)).join('')}</div>
-        ${upcoming.length>1?`<div class="myplan-slider-hint">â† ë°€ì–´ì„œ 1ì£¼ ì˜ˆë§¤ ë‚´ì—­ ë³´ê¸° â†’</div>`:''}
-      </div>`
-    : '';
-  return `<section class="myplan">
-    <div class="myplan-head"><b>ë‚˜ì˜ ë‹¤ìŒ ì¼ì •</b>${count>1?`<span>${count}ê±´ ì˜ˆì •</span>`:''}</div>
-    ${active?renderTripWidgetCompact(active):''}
-    ${slider}
-  </section>`;
-}
-// í™ˆ ìƒë‹¨ "ë‚˜ì˜ ë‹¤ìŒ ì¼ì •" ìœ„ì ¯ ê°±ì‹  (ì—¬ì • + ì˜ˆì • í†µí•©)
-function updateHomeTripWidget(){
-  const box=document.getElementById('home-trip-widget');
-  if(!box) return;
-  const html=renderMyPlan();
-  box.innerHTML = html;
-  box.style.display = html ? '' : 'none';
-  if(getActiveTripTicket()) updateTripLED();
-}
-function renderTripWidgetIfVisible(){
-  const tp=document.getElementById('panel-ticket');
-  if(tp&&tp.classList.contains('active')) renderTickets();
-  const hp=document.getElementById('panel-home');
-  if(hp&&hp.classList.contains('active')) updateHomeTripWidget();
-  updateLiveActivity();
-}
-setInterval(renderTripWidgetIfVisible, 30000); // 30ì´ˆë§ˆë‹¤ ìœ„ì ¯ ê°±ì‹ 
-setTimeout(()=>{ updateHomeTripWidget(); updateLiveActivity(); }, 800);
-
-// â”€â”€ ğŸ“² ë¼ì´ë¸Œ í™œë™ (ì ê¸ˆí™”ë©´ ì§„í–‰ ì•Œë¦¼) â”€â”€
-// ì›¹ í•œê³„ìƒ iOSëŠ” ë„¤ì´í‹°ë¸Œ ë¼ì´ë¸Œ ì•¡í‹°ë¹„í‹° ë¶ˆê°€ â†’ ì•ˆë“œë¡œì´ë“œ ì§€ì† ì•Œë¦¼ / ì•± ì—´ë¦¼ ì‹œ ê°±ì‹ 
-const LIVEACT_KEY='nimbi_liveact';
-function liveActEnabled(){ return localStorage.getItem(LIVEACT_KEY)==='1'; }
-function toggleLiveActivity(){
-  if(!liveActEnabled()){
-    if(!('Notification'in window)){ alert('ì´ ë¸Œë¼ìš°ì €ëŠ” ì•Œë¦¼ì„ ì§€ì›í•˜ì§€ ì•ŠìŠµë‹ˆë‹¤.'); return; }
-    Notification.requestPermission().then(p=>{
-      if(p==='granted'){ localStorage.setItem(LIVEACT_KEY,'1'); _liveActLast=''; updateLiveActivity();
-        alert('ğŸ“² ë¼ì´ë¸Œ í™œë™ì„ ì¼°ìŠµë‹ˆë‹¤.\níƒ‘ìŠ¹ ì¤‘ì´ë©´ ë„ì°©ê¹Œì§€ ë‚¨ì€ ì‹œê°„ì„ ì•Œë¦¼ìœ¼ë¡œ í‘œì‹œí•©ë‹ˆë‹¤.\n\nâ€» AndroidëŠ” ì ê¸ˆí™”ë©´ì— í‘œì‹œë©ë‹ˆë‹¤.\nâ€» iOSëŠ” ì•±ì´ ì—´ë ¤ ìˆì„ ë•Œë§Œ ê°±ì‹ ë©ë‹ˆë‹¤(ì›¹ ì œì•½).'); }
-      else alert('ì•Œë¦¼ ê¶Œí•œì´ ê±°ë¶€ë˜ì–´ ì¼¤ ìˆ˜ ì—†ìŠµë‹ˆë‹¤.');
-      updateHomeTripWidget();
-    });
-  } else {
-    localStorage.setItem(LIVEACT_KEY,'0');
-    if('serviceWorker'in navigator) navigator.serviceWorker.ready.then(r=>r.getNotifications({tag:'trip-live'}).then(ns=>ns.forEach(n=>n.close()))).catch(()=>{});
-    alert('ë¼ì´ë¸Œ í™œë™ì„ ê»ìŠµë‹ˆë‹¤.');
-    updateHomeTripWidget();
-  }
-}
-let _liveActLast='';
-function updateLiveActivity(){
-  const active=getActiveTripTicket();
-  renderLiveActivityBanner(liveActEnabled()?active:null);
-  if(!liveActEnabled()||!('serviceWorker'in navigator)||!('Notification'in window)||Notification.permission!=='granted') return;
-  navigator.serviceWorker.ready.then(reg=>{
-    if(!active){ reg.getNotifications({tag:'trip-live'}).then(ns=>ns.forEach(n=>n.close())); _liveActLast=''; return; }
-    const {ticket,train,status,preBoard,minsUntilDep}=active;
-    let title, body;
-    if(preBoard){ title=`${minsUntilDep<=0?'ê³§':fmtDurKor(minsUntilDep)+' í›„'} ì¶œë°œ Â· ${ticket.toStn}`; body=`${train.grade} ${train.no} Â· ${ticket.fromStn} ${ticket.depTime} ì¶œë°œ Â· ${ticket.seatClassLabel||''} ${seatSummary(ticket.seats)}`; }
-    else {
-      const tl=getTripTimeline3(train,status,ticket);
-      const next=(status&&status.atStn)?`${status.atStn} ì •ì°¨`:(tl&&tl.next?`ë‹¤ìŒ ì—­ ${tl.next.name}`:'ì´ë™ ì¤‘');
-      const arrM=toMin(ticket.arrTime), depM=toMin(ticket.depTime);
-      const now=new Date(); const nowM=now.getHours()*60+now.getMinutes();
-      let diff = arrM!=null&&depM!=null ? ((arrM>=depM)?arrM-nowM:arrM+1440-nowM) : null;
-      if(diff!=null&&diff<0) diff+=1440; if(diff!=null&&diff>=1440) diff%=1440;
-      title=`${diff!=null?(diff<=0?'ê³§':fmtDurKor(diff)+' í›„')+' ë„ì°©':'ìš´í–‰ ì¤‘'} Â· ${ticket.toStn}`;
-      body=`${train.grade} ${train.no} Â· ${next} Â· ${ticket.seatClassLabel||''} ${seatSummary(ticket.seats)}`;
-    }
-    const key=title+'|'+body;
-    if(key===_liveActLast) return; _liveActLast=key;
-    reg.showNotification(title,{body,icon:'/NIMBYRAILTABLE/assets/icons/icon-192.png',badge:'/NIMBYRAILTABLE/assets/icons/icon-192.png',tag:'trip-live',renotify:false,silent:true,requireInteraction:true,data:{url:'/NIMBYRAILTABLE/#ticket'}}).catch(()=>{});
-  }).catch(()=>{});
-}
-
-// ì•±ì´ ì—´ë¦° ë™ì•ˆì—ë„ ë¼ì´ë¸Œ ì•ŒëŒì„ ìƒë‹¨ ì—¬ì • ì¹´ë“œë¡œ ë³´ì—¬ì¤€ë‹¤. ì•Œë¦¼ ê¶Œí•œê³¼ëŠ” ë…ë¦½ì ì¸ í‘œì‹œ UIë‹¤.
-function renderLiveActivityBanner(active){
-  const slot=document.getElementById('header-live-activity');
-  if(!slot)return;
-  if(!active||!liveActEnabled()){slot.replaceChildren();return;}
-  const {ticket,train,status,preBoard,minsUntilDep,preArr}=active;
-  const id=String(ticket.id).replace(/"/g,'&quot;');
-  const grade=GRADE_COLORS[train.grade]||'#4ca4ff';
-  const tl=preBoard?null:getTripTimeline3(train,status,ticket);
-  const ledStation=preBoard?ticket.fromStn:preArr?ticket.toStn:(tl?.cur?.name||status?.atStn||status?.passStn||ticket.toStn);
-  const ledFinal=ledStation===ticket.toStn?' Â· ë‚´ë¦¬ëŠ” ë¬¸ í™•ì¸':'';
-  const state=preBoard?'ìŠ¹ì°¨ ì¤€ë¹„':preArr?'í•˜ì°¨ ì¤€ë¹„':'íƒ‘ìŠ¹ ì¤‘';
-  const stateClass=preBoard?'boarding':preArr?'alighting':'onboard';
-  const ledLabel=preBoard?'ì¶œë°œì—­':preArr?'ë„ì°©ì—­':'ì´ë²ˆ ì—­';
-  const etaStop=preBoard?ticket.fromStn:preArr?ticket.toStn:(tl?.cur?.name||status?.atStn||ticket.toStn);
-  let etaText='ìš´í–‰ ì¤‘';
-  if(preBoard)etaText=`${minsUntilDep<=0?'ê³§':fmtDurKor(minsUntilDep)+' í›„'} ì¶œë°œ ì˜ˆì •`;
-  else if(preArr)etaText=`${active.minsUntilArr<=0?'ê³§':fmtDurKor(active.minsUntilArr)+' í›„'} ë„ì°© ì˜ˆì •`;
-  else if(status?.atStn&&status.atStn===etaStop)etaText='í˜„ì¬ ì •ì°¨ ì¤‘';
-  else if(tl?.cur?.time){const stopM=toMin(tl.cur.time),now=new Date(),nowM=now.getHours()*60+now.getMinutes();if(stopM!==null){let d=stopM-nowM;if(d<0)d+=1440;etaText=d<=0?'ê³§ ë„ì°© ì˜ˆì •':`${fmtDurKor(d)} í›„ ë„ì°© ì˜ˆì •`;}}
-  const etaLabel=preBoard?`${ticket.fromStn} ì¶œë°œ`:`ì´ë²ˆ ì •ì°¨ ${etaStop}`;
-  const etaDetail=etaText.replace(' ì˜ˆì •','').replace(/ ë„ì°©$/,'').replace(/ ì¶œë°œ ì˜ˆì •$/,' ì¶œë°œ');
-  const collapsed=(()=>{try{return localStorage.getItem('nimbi_liveact_banner_collapsed')==='1';}catch(_){return false;}})();
-  slot.innerHTML=`<section class="live-activity-banner${collapsed?' collapsed':''}" style="--live-grade:${grade}">
-    <div class="live-activity-mainline">
-      <button type="button" class="live-activity-summary" onclick="openQRPopup(&quot;${id}&quot;)" aria-label="${_opsEsc(train.grade)} ${_opsEsc(train.no)}, ${_opsEsc(state)}, ìŠ¹ì°¨ê¶Œ ë³´ê¸°">
-        <span class="live-activity-train"><i class="live-activity-state-dot ${stateClass}" aria-hidden="true"></i><b class="live-activity-state ${stateClass}">${state}</b><strong class="live-activity-grade">${_opsEsc(train.grade)}</strong><strong class="live-activity-number">${_opsEsc(train.no)}</strong></span>
-        <span class="live-activity-eta"><strong>${_opsEsc(etaLabel)}</strong><small>(${_opsEsc(etaDetail)})</small></span>
-      </button>
-      <button type="button" class="live-activity-toggle" aria-controls="live-activity-content" aria-expanded="${collapsed?'false':'true'}" aria-label="${collapsed?'í¼ì¹˜ê¸°':'ì ‘ê¸°'}" onclick="toggleLiveActivityBanner(event)">${collapsed?'í¼ì¹˜ê¸°':'ì ‘ê¸°'}</button>
-    </div>
-    <div class="live-activity-content" id="live-activity-content"><div class="trip-led header-trip-led"><span class="trip-led-tag">${ledLabel}</span><span class="trip-led-scr"><span class="trip-led-txt">${_opsEsc(ledStation+ledFinal)}</span></span></div></div>
-  </section>`;
-}
-
-function toggleLiveActivityBanner(event){
-  event?.stopPropagation();
-  const banner=document.querySelector('#header-live-activity .live-activity-banner');
-  const toggle=banner?.querySelector('.live-activity-toggle');
-  if(!banner||!toggle)return;
-  const collapsed=!banner.classList.contains('collapsed');
-  banner.classList.toggle('collapsed',collapsed);
-  toggle.setAttribute('aria-expanded',String(!collapsed));
-  toggle.setAttribute('aria-label',collapsed?'í¼ì¹˜ê¸°':'ì ‘ê¸°');
-  toggle.textContent=collapsed?'í¼ì¹˜ê¸°':'ì ‘ê¸°';
-  try{localStorage.setItem('nimbi_liveact_banner_collapsed',collapsed?'1':'0');}catch(_){}
-}
-
-function renderTickets(){
-  const el=document.getElementById('result-ticket');
-  if(!el)return;
-  const tickets=loadTickets();
-
-  // â”€â”€ íƒ‘ìŠ¹ ì¤‘ì¸ ì—´ì°¨ ìœ„ì ¯ (ë§¨ ìœ„ ê³ ì •) â”€â”€
-  const activeTrip=getActiveTripTicket();
-  const tripWidget=renderTripWidget(activeTrip);
-
-  if(!tickets.length){
-    el.innerHTML=`${tripWidget}${renderPassSection()}<div class="empty"><div class="empty-icon">ğŸ«</div><p>ì˜ˆë§¤í•œ ìŠ¹ì°¨ê¶Œì´ ì—†ìŠµë‹ˆë‹¤.<br>ì—´ì°¨ ìƒì„¸ì—ì„œ ğŸ« ì˜ˆë§¤ ë²„íŠ¼ì„ ëˆŒëŸ¬ë³´ì„¸ìš”.</p></div>`;
-    return;
-  }
-
-  const now=new Date();
-  const nowMin=now.getHours()*60+now.getMinutes();
-
-  const isPast=tk=>{
-    if(tk.status==='cancelled')return false;
-    const depM=toMin(tk.depTime);
-    const arrM=toMin(tk.arrTime);
-    // ìì • ë„˜ëŠ” ì—´ì°¨ íŒë³„: dep > arr (ì˜ˆ: 23:00 ì¶œë°œ â†’ 01:00 ë„ì°©)
-    const isOvernight = depM!==null && arrM!==null && depM>arrM;
-    // ì‹¤ì œ ë„ì°© ë‚ ì§œ ê³„ì‚°
-    const arrDate = isOvernight ? (()=>{
-      const d=new Date(tk.travelDate+'T00:00:00');
-      d.setDate(d.getDate()+1);
-      return todayLocalStr(d);
-    })() : tk.travelDate;
-
-    // travelDateê°€ ì˜¤ëŠ˜ë³´ë‹¤ ì´ì „ì´ê³ , ë„ì°©ë‚ ì§œë„ ì˜¤ëŠ˜ë³´ë‹¤ ì´ì „ì´ë©´ íƒ‘ìŠ¹ì™„ë£Œ
-    if(arrDate<todayLocalStr(now)) return true;
-    // ë„ì°©ë‚ ì§œê°€ ì˜¤ëŠ˜ë³´ë‹¤ ë¯¸ë˜ë©´ ì•„ì§ ì˜ˆì •
-    if(arrDate>todayLocalStr(now)) return false;
-    // ë„ì°©ë‚ ì§œ == ì˜¤ëŠ˜: ë„ì°© ì‹œê°ì´ ì§€ë‚¬ìœ¼ë©´ íƒ‘ìŠ¹ì™„ë£Œ
-    return arrM!==null && arrM<nowMin;
-  };
-
-  const upcoming=tickets.filter(tk=>tk.status==='active'&&!isPast(tk));
-  const past=tickets.filter(tk=>tk.status==='active'&&isPast(tk));
-  const cancelled=tickets.filter(tk=>tk.status==='cancelled');
-
-  const tabs=`<div class="ticket-filter-tabs">
-    <button class="ticket-filter-tab${_ticketFilterTab==='upcoming'?' active':''}" onclick="setTicketFilter('upcoming')">ì˜ˆì • ${upcoming.length}</button>
-    <button class="ticket-filter-tab${_ticketFilterTab==='past'?' active':''}" onclick="setTicketFilter('past')">íƒ‘ìŠ¹ì™„ë£Œ ${past.length}</button>
-    <button class="ticket-filter-tab${_ticketFilterTab==='cancelled'?' active':''}" onclick="setTicketFilter('cancelled')">ì·¨ì†Œ ${cancelled.length}</button>
-  </div>`;
-
-  const headerHTML=`
-    <div class="result-header">
-      <div class="result-title">ğŸ« ë‚´ ìŠ¹ì°¨ê¶Œ</div>
-      <div style="display:flex;align-items:center;gap:6px">
-        <span class="badge blue">${tickets.filter(t=>t.status==='active').length}ê±´</span>
-        <div style="position:relative">
-          <button class="map-layer-btn" onclick="toggleTicketExportMenu()">ë‚´ë³´ë‚´ê¸° â–¾</button>
-          <div id="ticket-export-menu" style="display:none;position:absolute;right:0;top:calc(100% + 4px);background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:4px;z-index:50;min-width:140px;box-shadow:0 4px 12px rgba(0,0,0,.3)">
-            <button class="btn" style="width:100%;text-align:left;padding:8px 12px;font-size:13px;border-radius:6px" onclick="exportTicketsCSV()">ğŸ“„ CSV ë‹¤ìš´ë¡œë“œ</button>
-            <button class="btn" style="width:100%;text-align:left;padding:8px 12px;font-size:13px;border-radius:6px" onclick="exportTicketsPDF()">ğŸ–¨ï¸ PDF ì¸ì‡„</button>
-          </div>
-        </div>
-      </div>
-    </div>`;
-  const toggleHTML=`
-    <div class="ticket-view-toggle">
-      <button class="ticket-view-btn${_ticketView==='list'?' active':''}" onclick="setTicketView('list')">ğŸ“‹ ëª©ë¡</button>
-      <button class="ticket-view-btn${_ticketView==='calendar'?' active':''}" onclick="setTicketView('calendar')">ğŸ“… ìº˜ë¦°ë”</button>
-    </div>`;
-
-  if(_ticketView==='calendar'){
-    el.innerHTML=`${tripWidget}${headerHTML}${toggleHTML}${renderTicketCalendarHTML(tickets)}`;
-    updateTripLED();
-    return;
-  }
-
-  const list=_ticketFilterTab==='upcoming'?upcoming:_ticketFilterTab==='past'?past:cancelled;
-  const sorted=[...list].sort((a,b)=>{
-    if(_ticketFilterTab==='upcoming') return (a.travelDate+a.depTime).localeCompare(b.travelDate+b.depTime);
-    return b.bookedAt-a.bookedAt;
-  });
-
-  if(!sorted.length){
-    el.innerHTML=`${tripWidget}${headerHTML}${toggleHTML}${tabs}<div class="empty"><div class="empty-icon">ğŸ“­</div><p>í•´ë‹¹í•˜ëŠ” ìŠ¹ì°¨ê¶Œì´ ì—†ìŠµë‹ˆë‹¤.</p></div>`;
-    return;
-  }
-
-  // í™˜ìŠ¹ ìŠ¹ì°¨ê¶Œ(xferGroup)ì€ í•˜ë‚˜ì˜ ì—¬ì • ì¹´ë“œë¡œ ë¬¶ì–´ í‘œì‹œ
-  const _xfRendered=new Set();
-  const cards=sorted.map(tk=>{
-    if(tk.xferGroup){
-      if(_xfRendered.has(tk.xferGroup))return '';
-      _xfRendered.add(tk.xferGroup);
-      const legs=sorted.filter(x=>x.xferGroup===tk.xferGroup);
-      const card=legs.length>1?_xferTicketCardHTML(legs):_ticketCardHTML(tk);
-      return _ticketAccordionHTML(legs.length>1?legs:[tk],card);
-    }
-    return _ticketAccordionHTML([tk],_ticketCardHTML(tk));
-  }).join('');
-
-  el.innerHTML=`${tripWidget}${headerHTML}${toggleHTML}${tabs}<div class="ticket-list">${cards}</div>`;
-  updateTripLED();
-}
-
-// ëª©ë¡ì—ì„œëŠ” ì½”ë ˆì¼í†¡ì²˜ëŸ¼ ë‚ ì§œÂ·ìƒíƒœÂ·êµ¬ê°„ë§Œ ë¹ ë¥´ê²Œ ë¹„êµí•˜ê³ , í¼ì¹˜ë©´ ê¸°ì¡´ ìƒì„¸ ì¹´ë“œì™€ ë™ì‘ì„ ì œê³µí•œë‹¤.
-function _ticketAccordionHTML(items,cardHTML){
-  const first=items[0],last=items[items.length-1];
-  if(!first||!last)return cardHTML;
-  const date=new Date(`${first.travelDate}T00:00:00`);
-  const dateLabel=Number.isNaN(date.getTime())?first.travelDate:`${date.getFullYear()}.${String(date.getMonth()+1).padStart(2,'0')}.${String(date.getDate()).padStart(2,'0')} (${['ì¼','ì›”','í™”','ìˆ˜','ëª©','ê¸ˆ','í† '][date.getDay()]})`;
-  const status=first.status==='cancelled'?'ì·¨ì†Œë¨':ticketBoardState(first)==='active'?'ì´ìš© ì¤‘':_ticketFilterTab==='past'?'ì´ìš© ì™„ë£Œ':'ì´ìš© ê°€ëŠ¥';
-  const statusClass=first.status==='cancelled'?'cancelled':status==='ì´ìš© ì¤‘'?'active':status==='ì´ìš© ì™„ë£Œ'?'done':'available';
-  const count=first.passengerCount||1;
-  const from=first.xferGroup?(first.xferOrigin||first.fromStn):first.fromStn;
-  const to=first.xferGroup?(first.xferDest||last.toStn):first.toStn;
-  const actionMatch=cardHTML.match(/<div class="ticket-card-actions(?: xfer-ticket-actions)?">[\s\S]*?<\/div>/);
-  const actionHTML=actionMatch?.[0]||'';
-  const expandedCard=cardHTML.replace(/(<div class="ticket-card[^\"]*"[^>]*?) onclick="openQRPopup\('[^']+'\)"/,'$1').replace(actionHTML,'');
-  return `<div class="ticket-accordion-shell" style="--ticket-grade:${GRADE_COLORS[first.grade]||'var(--accent)'}"><details class="ticket-accordion">
-    <summary class="ticket-accordion-summary">
-      <span class="ticket-accordion-date"><time>${_opsEsc(dateLabel)}</time><span class="ticket-accordion-status ${statusClass}">${status}</span></span>
-      <span class="ticket-accordion-kind"><b class="ticket-train-id"><span class="ticket-train-grade">${_opsEsc(first.grade)}</span><span class="ticket-train-number">${_opsEsc(first.trainNo)}</span></b><small>${count}ë§¤${items.length>1?` Â· í™˜ìŠ¹ ${items.length}êµ¬ê°„`:''}</small></span>
-      <span class="ticket-accordion-route"><span><small>${_opsEsc(from)}</small><b>${_opsEsc(first.depTime||'â€”')}</b></span><i aria-hidden="true">â†’</i><span><small>${_opsEsc(to)}</small><b>${_opsEsc(last.arrTime||'â€”')}</b></span></span>
-      <span class="ticket-accordion-hint" aria-hidden="true">âŒ„</span>
-    </summary>
-    <div class="ticket-accordion-detail"><div class="ticket-accordion-panel">${expandedCard}</div></div>
-  </details>${actionHTML?`<div class="ticket-accordion-actions">${actionHTML}</div>`:''}</div>`;
-}
-
-function _ticketEndpointDelayHTML(tk){
-  if(tk.status==='cancelled')return {from:'',to:''};
-  const t=getTrainByNo(tk.trainNo);if(!t)return {from:'',to:''};
-  if(typeof _simTicketMatchesServiceDay==='function'&&!_simTicketMatchesServiceDay(t,tk.travelDate))return {from:'',to:''};
-  const timed=t.stops.filter(s=>hasTime(s.arr)||hasTime(s.dep));
-  const fi=timed.findIndex(s=>s.s===tk.fromStn),ti=timed.findIndex(s=>s.s===tk.toStn);
-  const depD=fi>=0?_simDelayAtStop(t,fi,tk.travelDate):0,arrD=ti>=0?_simDelayAtStop(t,ti,tk.travelDate):0;
-  const state=typeof _simState==='function'?_simState(t,tk.travelDate):null;
-  const cls='ticket-delay-est';
-  if(state?.phase==='running'||ticketBoardState(tk)==='active'){
-    return {from:depD>0?` <span class="${cls} actual">(${depD}ë¶„ ì§€ì—°)</span>`:'',to:''};
-  }
-  if(state?.phase==='done'||ticketBoardState(tk)==='done'||isTicketPast(tk)){
-    return {from:'',to:arrD>0?` <span class="${cls} actual">(${arrD}ë¶„ ì§€ì—°)</span>`:''};
-  }
-  return {
-    from:depD>0?` <span class="${cls}">(${depD}ë¶„ ì§€ì—° ì˜ˆìƒ)</span>`:'',
-    to:arrD>0?` <span class="${cls}">(${arrD}ë¶„ ì§€ì—° ì˜ˆìƒ)</span>`:''
-  };
-}
-// ìŠ¹ì°¨ê¶Œ ì¹´ë“œ HTML (ëª©ë¡Â·ìº˜ë¦°ë” ê³µìš©)
-function _ticketCardHTML(tk){
-    const gradeColor=(typeof GRADE_COLORS!=='undefined'&&GRADE_COLORS[tk.grade])||'#388bfd';
-    const cancelledCls=tk.status==='cancelled'?' ticket-cancelled':'';
-    const seatList=seatSummary(tk.seats);
-    const _tkt=getTrainByNo(tk.trainNo);
-    const tkDistKm=tk.distanceKm||(_tkt?Math.round(routeDistanceKm(_tkt,tk.fromStn,tk.toStn)):0);
-  const isTravelToday=_tkt?_bookRouteIsLiveServiceDate(_tkt,tk.travelDate):tk.travelDate===todayLocalStr();
-  return `<div class="ticket-card${cancelledCls}" style="--ticket-grade:${gradeColor}" onclick="openQRPopup('${tk.id}')">
-      <div class="ticket-card-top" style="border-color:${gradeColor}">
-        <span class="ticket-grade" style="color:${gradeColor}">${tk.grade}</span>
-        <span class="ticket-no">${tk.trainNo}</span>
-        ${tk.xferGroup?`<span class="ticket-xfer-badge" title="${tk.xferOrigin}â†’${tk.xferVia}â†’${tk.xferDest} í™˜ìŠ¹">ğŸ”„ í™˜ìŠ¹ ${tk.xferSeq}/${tk.xferTotal}</span>`:''}
-        ${tk.status==='cancelled'?'<span class="ticket-status-badge">ì·¨ì†Œë¨</span>'
-          :(()=>{const bs=ticketBoardState(tk);
-            if(bs==='active')return '<span class="rt-board-badge rt-board-active" style="margin-left:auto">â— íƒ‘ìŠ¹ ì¤‘</span>';
-            if(bs==='done')return '<span class="rt-board-badge rt-board-done" style="margin-left:auto">íƒ‘ìŠ¹ ì™„ë£Œ</span>';
-            return '';})()}
-      </div>
-      ${(()=>{const de=_ticketEndpointDelayHTML(tk);return `<div class="ticket-card-route">
-        <div class="ticket-station"><span class="ticket-station-name">${tk.fromStn}</span><span class="ticket-time">${tk.depTime||'-'}${de.from}</span></div>
-        <div class="ticket-arrow">â†’</div>
-        <div class="ticket-station"><span class="ticket-station-name">${tk.toStn}</span><span class="ticket-time">${tk.arrTime||'-'}${de.to}</span></div>
-      </div>`;})()}
-      ${(()=>{const ri=(typeof _simRefundInfo==='function')?_simRefundInfo(tk):null; if(!ri)return '';
-        return ri.eligible
-          ?`<div class="ticket-refund elig">ğŸ« <b>${ri.delay}ë¶„ ì§€ì—°</b> Â· ì „ì•¡ í™˜ë¶ˆ ëŒ€ìƒ <span>30ë¶„ ì´ìƒ ì§€ì—° ìŠ¹ì°¨ê¶Œ</span></div>`
-          :`<div class="ticket-refund noelig">30ë¶„ ì´ìƒ ì§€ì—°ì´ë‚˜ í™˜ë¶ˆ ì œì™¸ <span>${_opsEsc(ri.reason)}</span></div>`;})()}
-      <div class="ticket-card-divider"></div>
-      <div class="ticket-card-info">
-        <div class="ticket-info-row"><span>íƒ‘ìŠ¹ì¼</span><span>${tk.travelDate}</span></div>
-        <div class="ticket-info-row"><span>ë“±ê¸‰</span><span>${tk.seatClassLabel}</span></div>
-        ${Array.isArray(tk.mixed)&&tk.mixed.length?`<div class="ticket-mixed-box">${tk.mixed.map(s=>`<div class="ticket-mixed-seg ${s.kind==='standing'?'mx-stand':'mx-seat'}"><span class="mx-icon">${s.kind==='standing'?'ğŸš‰':'ğŸª‘'}</span><span class="mx-route">${s.fromStn}â†’${s.toStn}</span><span class="mx-kind">${s.kind==='standing'?'ì…ì„':s.seatClassLabel}</span><span class="mx-seat-no">${seatSummary(s.seats)}</span></div>`).join('')}</div>`
-          :`<div class="ticket-info-row"><span>ì¢Œì„</span><span>${seatList}</span></div>`}
-        <div class="ticket-info-row"><span>ì†Œìš”</span><span>${fmtDurKor(durMin(tk.depTime,tk.arrTime))}</span></div>
-        <div class="ticket-info-row"><span>ì¸ì›</span><span>${tk.passengerCount}ëª…</span></div>
-        <div class="ticket-info-row"><span>ìš´ì„</span><span class="ticket-fare">${tk.totalFare.toLocaleString()}ì›</span></div>
-      </div>
-      <div class="ticket-card-id" style="display:flex;align-items:center;justify-content:space-between">
-        <span>ì˜ˆë§¤ë²ˆí˜¸ ${tk.id}</span>
-        <button class="btn qr-btn ticket-action-qr" onclick="event.stopPropagation();openQRPopup('${tk.id}')" title="QRÂ·ì¢Œì„ ë³´ê¸°">ğŸ”² QR</button>
-      </div>
-      <div class="ticket-card-actions">
-        <button class="btn ticket-action-timetable" style="font-size:12px;padding:6px 12px" onclick="event.stopPropagation();openJourney('${tk.trainNo}')">ğŸš† ì‹œê°„í‘œ</button>
-        ${isTravelToday?`<button class="btn ticket-action-route" style="font-size:12px;padding:6px 12px" onclick="event.stopPropagation();openBookRouteDetail('${tk.trainNo}','${tk.fromStn}','${tk.toStn}','${tk.travelDate}')">ìš´í–‰ ì •ë³´</button>`:''}
-        ${tk.status==='active'&&_ticketFilterTab==='upcoming'?`<button class="btn ticket-action-cancel" style="font-size:12px;padding:6px 12px" onclick="event.stopPropagation();cancelTicket('${tk.id}')">ì˜ˆë§¤ ì·¨ì†Œ</button>`
-          :`<button class="btn ticket-action-delete" style="font-size:12px;padding:6px 12px" onclick="event.stopPropagation();deleteTicket('${tk.id}')">ê¸°ë¡ ì‚­ì œ</button>`}
-      </div>
-    </div>`;
-}
-
-// ğŸ”„ í™˜ìŠ¹ ìŠ¹ì°¨ê¶Œ ì¹´ë“œ â€” xferGroupìœ¼ë¡œ ë¬¶ì¸ ì„ í–‰Â·í›„í–‰ì„ ì½”ë ˆì¼í†¡ì‹ìœ¼ë¡œ í‘œì‹œ
-//    (ì¶œë°œâ€ºí™˜ìŠ¹â€ºë„ì°© 3ì—­ íƒ€ì„ë¼ì¸ + í•˜ë‹¨ ì„ í–‰/í›„í–‰ ìš”ì•½)
-function _xferTicketCardHTML(legs){
-  legs=[...legs].sort((a,b)=>(a.xferSeq||0)-(b.xferSeq||0));
-  const lead=legs[0], follow=legs[legs.length-1], g=lead;
-  const allCancelled=legs.every(t=>t.status==='cancelled');
-  const totalFare=legs.reduce((a,t)=>a+(t.totalFare||0),0);
-  const isTravelToday=legs.some(tk=>{const train=getTrainByNo(tk.trainNo);return train&&_bookRouteIsLiveServiceDate(train,tk.travelDate);});
-  const cancelledCls=allCancelled?' ticket-cancelled':'';
-  const origin=lead.fromStn, via=lead.toStn, dest=follow.toStn;
-  const oDep=lead.depTime||'-', vArr=lead.arrTime||'-', vDep=follow.depTime||'-', dArr=follow.arrTime||'-';
-  const route=`<div class="xfer-tk-route-line">
-    <div class="xfer-tk-stn">
-      <span class="xfer-tk-stn-name">${origin}</span>
-      <span class="xfer-tk-stn-t">${oDep}</span>
-    </div>
-    <span class="xfer-tk-gt">â€º</span>
-    <div class="xfer-tk-stn xfer-tk-stn-via">
-      <span class="xfer-tk-stn-name">${via}</span>
-      <span class="xfer-tk-stn-t">${vArr}</span>
-      <span class="xfer-tk-stn-t2">${vDep}</span>
-    </div>
-    <span class="xfer-tk-gt">â€º</span>
-    <div class="xfer-tk-stn">
-      <span class="xfer-tk-stn-name">${dest}</span>
-      <span class="xfer-tk-stn-t">${dArr}</span>
-    </div>
-  </div>`;
-  const legLines=legs.map(tk=>{
-    const seatList=seatSummary(tk.seats);
-    return `<div class="xfer-tk-legline" onclick="event.stopPropagation();openQRPopup('${tk.id}')">
-      <span class="xfer-role-tag ${tk.xferSeq===1?'lead':'follow'}">${tk.xferSeq===1?'ì„ í–‰':'í›„í–‰'}</span>
-      <span class="xfer-tk-legtrain" style="color:var(--c-${gcCssVar(tk.grade)})">${tk.grade} ${tk.trainNo}</span>
-      <span class="xfer-tk-legseat">${tk.seatClassLabel} ${seatList}</span>
-    </div>`;
-  }).join('');
-  const statusBadge=allCancelled?'<span class="ticket-status-badge" style="margin-left:auto">ì·¨ì†Œë¨</span>'
-    :(()=>{const st=legs.map(l=>ticketBoardState(l));
-      if(st.includes('active'))return '<span class="rt-board-badge rt-board-active" style="margin-left:auto">â— íƒ‘ìŠ¹ ì¤‘</span>';
-      if(st.every(s=>s==='done'))return '<span class="rt-board-badge rt-board-done" style="margin-left:auto">íƒ‘ìŠ¹ ì™„ë£Œ</span>';
-      return '';})();
-  return `<div class="ticket-card xfer-ticket-card${cancelledCls}">
-    <div class="ticket-card-top" style="border-color:#d29922">
-      <span class="ticket-grade" style="color:#d29922">ğŸ”„ í™˜ìŠ¹ ìŠ¹ì°¨ê¶Œ</span>
-      ${statusBadge}
-    </div>
-    ${route}
-    <div class="xfer-tk-legs">${legLines}</div>
-    <div class="ticket-card-divider"></div>
-    <div class="ticket-card-info">
-      <div class="ticket-info-row"><span>íƒ‘ìŠ¹ì¼</span><span>${g.travelDate}</span></div>
-      <div class="ticket-info-row"><span>ì¸ì›</span><span>${g.passengerCount}ëª…</span></div>
-      <div class="ticket-info-row"><span>ì´ ìš´ì„</span><span class="ticket-fare">${totalFare.toLocaleString()}ì›</span></div>
-    </div>
-    <div class="ticket-card-actions xfer-ticket-actions">
-      ${legs.map(tk=>`<button class="btn ticket-action-timetable" style="font-size:12px;padding:6px 12px" onclick="event.stopPropagation();openJourney('${tk.trainNo}')">${tk.xferSeq===1?'ì„ í–‰':'í›„í–‰'} ì‹œê°„í‘œ</button>`).join('')}
-      ${isTravelToday?legs.map(tk=>`<button class="btn ticket-action-route" style="font-size:12px;padding:6px 12px" onclick="event.stopPropagation();openBookRouteDetail('${tk.trainNo}','${tk.fromStn}','${tk.toStn}','${tk.travelDate}')">${tk.xferSeq===1?'ì„ í–‰':'í›„í–‰'} ìš´í–‰ ì •ë³´</button>`).join(''):''}
-      ${!allCancelled&&_ticketFilterTab==='upcoming'?`<button class="btn" style="font-size:12px;padding:6px 12px" onclick="event.stopPropagation();cancelXferGroup('${g.xferGroup}')">í™˜ìŠ¹ ì „ì²´ ì·¨ì†Œ</button>`
-        :`<button class="btn" style="font-size:12px;padding:6px 12px" onclick="event.stopPropagation();deleteXferGroup('${g.xferGroup}')">ê¸°ë¡ ì‚­ì œ</button>`}
-    </div>
-  </div>`;
-}
-function cancelXferGroup(grp){
-  const tickets=loadTickets();
-  const legs=tickets.filter(t=>t.xferGroup===grp&&t.status==='active');
-  if(!legs.length)return;
-  // ì„ í–‰ ì—´ì°¨ê°€ ì´ë¯¸ ì¶œë°œí–ˆìœ¼ë©´ ì „ì²´ ì·¨ì†Œ ë¶ˆê°€
-  const now=new Date(); const nowM=now.getHours()*60+now.getMinutes();
-  const lead=legs.slice().sort((a,b)=>(a.xferSeq||0)-(b.xferSeq||0))[0];
-  const dM=toMin(lead.depTime);
-  if(lead.travelDate===todayLocalStr(now)&&dM!==null&&dM<=nowM){
-    alert(`ì´ë¯¸ ì¶œë°œí•œ í™˜ìŠ¹ ì—¬ì •ì€ ì·¨ì†Œí•  ìˆ˜ ì—†ìŠµë‹ˆë‹¤.\n\n${lead.fromStn} ${lead.depTime} ì¶œë°œ`);return;
-  }
-  if(!confirm(`í™˜ìŠ¹ ì—¬ì •(${lead.xferOrigin}â†’${lead.xferVia}â†’${lead.xferDest})ì„ ì „ì²´ ì·¨ì†Œí•˜ì‹œê² ìŠµë‹ˆê¹Œ?\nì„ í–‰Â·í›„í–‰ ìŠ¹ì°¨ê¶Œì´ ëª¨ë‘ ì·¨ì†Œë©ë‹ˆë‹¤.`))return;
-  legs.forEach(tk=>{ tk.status='cancelled'; });
-  saveTickets(tickets);
-  try{ const alarms=loadAlarms(); const stns=new Set(); legs.forEach(l=>{stns.add(l.fromStn);stns.add(l.toStn);});
-    const nos=new Set(legs.map(l=>l.trainNo));
-    saveAlarms(alarms.filter(a=>!(nos.has(a.trainNo)&&stns.has(a.stn)))); }catch(e){}
-  renderTickets(); if(typeof renderAlarmIfOpen==='function')renderAlarmIfOpen();
-}
-function deleteXferGroup(grp){
-  if(!confirm('ì´ í™˜ìŠ¹ ì—¬ì • ê¸°ë¡ì„ ì‚­ì œí•˜ì‹œê² ìŠµë‹ˆê¹Œ?'))return;
-  const tickets=loadTickets().filter(t=>t.xferGroup!==grp);
-  saveTickets(tickets);
-  renderTickets();
-}
-
-// ìŠ¹ì°¨ê¶Œ ìº˜ë¦°ë” ë·° (ê³¼ê±°Â·ë¯¸ë˜ ëª¨ë‘ í‘œì‹œ)
-function renderTicketCalendarHTML(tickets){
-  if(!_ticketCalYM){const n=new Date();_ticketCalYM={y:n.getFullYear(),m:n.getMonth()};}
-  const {y,m}=_ticketCalYM;
-  const byDate={};
-  tickets.forEach(tk=>{ if(!tk.travelDate)return; (byDate[tk.travelDate]=byDate[tk.travelDate]||[]).push(tk); });
-  const monthCount=tickets.filter(tk=>tk.travelDate&&+tk.travelDate.slice(0,4)===y&&+tk.travelDate.slice(5,7)===m+1).length;
-  const first=new Date(y,m,1);
-  const startOffset=(first.getDay()+6)%7;           // ì›”=0
-  const daysInMonth=new Date(y,m+1,0).getDate();
-  const prevDays=new Date(y,m,0).getDate();
-  const todayStr=todayLocalStr();
-  const dowNames=['ì›”','í™”','ìˆ˜','ëª©','ê¸ˆ','í† ','ì¼'];
-  const dotFor=tk=> tk.status==='cancelled'
-    ? '<span class="tc-dot" style="background:var(--text3)"></span>'
-    : `<span class="tc-dot" style="background:var(--c-${gcCssVar(tk.grade)})"></span>`;
-  let gridHTML='';
-  for(let i=0;i<42;i++){
-    const dayNum=i-startOffset+1;
-    const dow=i%7;
-    let cy=y,cm=m,cd=dayNum,inMonth=true;
-    if(dayNum<1){cm=m-1;cd=prevDays+dayNum;inMonth=false;if(cm<0){cm=11;cy=y-1;}}
-    else if(dayNum>daysInMonth){cm=m+1;cd=dayNum-daysInMonth;inMonth=false;if(cm>11){cm=0;cy=y+1;}}
-    if(!inMonth){gridHTML+=`<div class="tc-cell tc-out"><span class="tc-num">${cd}</span></div>`;continue;}
-    const ds=`${cy}-${String(cm+1).padStart(2,'0')}-${String(cd).padStart(2,'0')}`;
-    const items=byDate[ds]||[];
-    const dots=items.slice(0,4).map(dotFor).join('');
-    const dowCls=dow===5?' tc-sat':dow===6?' tc-sun':'';
-    const clickable=items.length>0;
-    gridHTML+=`<div class="tc-cell${dowCls}${ds===todayStr?' tc-today':''}${ds===_ticketCalSel?' tc-sel':''}${clickable?' tc-has':''}" ${clickable?`onclick="selectTicketCalDate('${ds}')"`:''}>
-      <span class="tc-num">${cd}</span>
-      <span class="tc-dots">${dots}</span>
-    </div>`;
-  }
-  let detail;
-  if(_ticketCalSel&&byDate[_ticketCalSel]){
-    const items=[...byDate[_ticketCalSel]].sort((a,b)=>(a.depTime||'').localeCompare(b.depTime||''));
-    detail=`<div class="tc-detail"><div class="tc-detail-head">ğŸ« ${_ticketCalSel} Â· ${items.length}ê±´</div><div class="ticket-list">${items.map(_ticketCardHTML).join('')}</div></div>`;
-  } else {
-    detail=`<div class="tc-hint">ë‚ ì§œì˜ ì ì„ ëˆŒëŸ¬ ê·¸ë‚ ì˜ ìŠ¹ì°¨ê¶Œì„ í™•ì¸í•˜ì„¸ìš”${monthCount?'':' Â· ì´ ë‹¬ì—” ìŠ¹ì°¨ê¶Œì´ ì—†ìŠµë‹ˆë‹¤'}</div>`;
-  }
-  return `<div class="tc-wrap">
-    <div class="tc-header">
-      <button class="tc-nav" onclick="ticketCalShift(-1)" aria-label="ì´ì „ ë‹¬">â—€</button>
-      <div class="tc-title">${y}ë…„ ${m+1}ì›” <span class="tc-count">(${monthCount}ê±´)</span></div>
-      <button class="tc-nav" onclick="ticketCalShift(1)" aria-label="ë‹¤ìŒ ë‹¬">â–¶</button>
-    </div>
-    <div class="tc-dow">${dowNames.map((d,i)=>`<span class="${i===5?'tc-sat':i===6?'tc-sun':''}">${d}</span>`).join('')}</div>
-    <div class="tc-grid">${gridHTML}</div>
-    ${detail}
-  </div>`;
-}
-
-function toggleTicketExportMenu(){
-  const menu=document.getElementById('ticket-export-menu');
-  if(!menu)return;
-  menu.style.display=menu.style.display==='none'?'block':'none';
-}
-
-function exportTicketsCSV(){
-  const tickets=loadTickets();
-  if(!tickets.length){alert('ë‚´ë³´ë‚¼ ì˜ˆë§¤ ë‚´ì—­ì´ ì—†ìŠµë‹ˆë‹¤.');return;}
-  const BOM='ï»¿';
-  const header=['ì˜ˆë§¤ë²ˆí˜¸','ì—´ì°¨ë“±ê¸‰','ì—´ì°¨ë²ˆí˜¸','ì¶œë°œì—­','ë„ì°©ì—­','ì¶œë°œì‹œê°','ë„ì°©ì‹œê°','ì´ìš©ì¼','ì¢Œì„ë“±ê¸‰','ì¢Œì„','ì¸ì›','ìš´ì„(ì›)','ìƒíƒœ','ì˜ˆë§¤ì¼ì‹œ'];
-  const rows=tickets.map(tk=>[
-    tk.id, tk.grade, tk.trainNo, tk.fromStn, tk.toStn,
-    tk.depTime, tk.arrTime, tk.travelDate, tk.seatClassLabel,
-    tk.seats.join('/'), tk.passengerCount, tk.totalFare,
-    tk.status==='active'?'ìœ íš¨':tk.status==='cancelled'?'ì·¨ì†Œ':'ì™„ë£Œ',
-    new Date(tk.bookedAt).toLocaleString('ko-KR')
-  ].map(v=>`"${String(v??'').replace(/"/g,'""')}"`).join(','));
-  const blob=new Blob([BOM+header.join(',')+'\n'+rows.join('\n')],{type:'text/csv;charset=utf-8'});
-  const url=URL.createObjectURL(blob);
-  const a=document.createElement('a');
-  a.href=url; a.download=`nimbyrailtable_ì˜ˆë§¤ë‚´ì—­_${new Date().toISOString().slice(0,10).replace(/-/g,'')}.csv`;
-  a.click(); URL.revokeObjectURL(url);
-  const menu=document.getElementById('ticket-export-menu');
-  if(menu)menu.style.display='none';
-}
-
-function exportTicketsPDF(){
-  const menu=document.getElementById('ticket-export-menu');
-  if(menu)menu.style.display='none';
-  window.print();
-}
-
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-// ğŸ‘¤ ë§ˆì´í˜ì´ì§€ ìŠ¬ë¼ì´ë“œ íŒ¨ë„
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-function openMyPage(){
-  document.getElementById('my-backdrop').classList.add('open');
-  document.getElementById('my-panel').classList.add('open');
-  document.body.style.overflow='hidden';
-  _syncModeButtons();
-  try{updateAccountCard();}catch(e){}
-}
-function closeMyPage(){
-  document.getElementById('my-backdrop').classList.remove('open');
-  document.getElementById('my-panel').classList.remove('open');
-  document.getElementById('my-sub-panel').classList.remove('open');
-  document.body.style.overflow='';
-}
-function closeMySubPanel(){
-  document.getElementById('my-sub-panel').classList.remove('open');
-  if(window._mySubClockTimer){clearInterval(window._mySubClockTimer);window._mySubClockTimer=null;}
-}
-// ì„œë¸ŒíŒ¨ë„ ìƒë‹¨ í™”ì‚´í‘œ: ë‚´ ì—¬í–‰ì—ì„œëŠ” ë‹¨ê³„ë³„ ë’¤ë¡œê°€ê¸°, ê·¸ ì™¸ì—” ì„œë¸ŒíŒ¨ë„ ë‹«ê¸°
-function myBackAction(){
-  const sec=document.getElementById('my-sub-content')?.dataset.section;
-  if(sec==='mytrip'){
-    if(window._tripAddMode){ backFromTripAdd(window._tripAddMode.tripId); return; }
-    if(window._activeTripId){ backToTripList(); return; }
-  }
-  closeMySubPanel();
-}
-
-// ë™ì ìœ¼ë¡œ ì—´ë¦¬ëŠ” ì£¼ìš” íŒì—…ì´ í•˜ë‚˜ë¼ë„ ìˆìœ¼ë©´ ë°°ê²½ í˜ì´ì§€ì˜ í„°ì¹˜Â·ìŠ¤í¬ë¡¤ì„ ë§‰ëŠ”ë‹¤.
-// ê°œë³„ íŒì—…ë§ˆë‹¤ ì ê¸ˆ ì½”ë“œë¥¼ ë³µì œí•˜ì§€ ì•Šê³  body ì§ê³„ ì˜¤ë²„ë ˆì´ ë³€í™”ë¥¼ í•œ ë²ˆë§Œ ê´€ì°°í•œë‹¤.
-const _APP_MODAL_IDS=[
-  'alarm-popup-wrap','seat-watch-wrap','fav-cat-popup-wrap','group-manager-wrap','rotation-wrap',
-  'booking-popup-wrap','qr-popup-wrap','manboard-overlay','fmt-popup-wrap','pass-day-wrap',
-  'seat-selector-wrap','book-stn-picker-wrap','book-pass-picker-wrap','book-detail-wrap',
-  'si-board-wrap','metro-display-wrap','delay-explanation-modal','cmp-wrap'
-];
-function _syncAppModalLock(){
-  const open=_APP_MODAL_IDS.some(id=>document.getElementById(id));
-  document.body.classList.toggle('app-modal-open',open);
-}
-const _appModalObserver=new MutationObserver(_syncAppModalLock);
-_appModalObserver.observe(document.body,{childList:true});
-
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-// ğŸ‘¤ ê³„ì •(ë¡œì»¬ í”„ë¡œí•„) ê¸°ëŠ¥ â€” ì„œë²„ ì—†ì´ ì—¬ëŸ¬ ê³„ì •ì„ ê¸°ê¸° ë‚´ í”„ë¡œí•„ë¡œ ê´€ë¦¬,
-//    ë¡œê·¸ì¸=í”„ë¡œí•„ ì „í™˜, ê¸°ê¸° ê°„ ì—°ë™ì€ ë™ê¸°í™” ì½”ë“œ(ë‚´ë³´ë‚´ê¸°/ê°€ì ¸ì˜¤ê¸°)ë¡œ.
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-const ACCT_REG_KEY='nimbi_accounts';
-const ACCT_ACTIVE_KEY='nimbi_account_active';
-const ACCT_DATA_PREFIX='nimbi_acct_data_';
-// ê³„ì •ì— ì—°ë™ë˜ëŠ” ê°œì¸ê¸°ë¡ í‚¤ (ê¸°ê¸° UI ì„¤ì • nimbi_mode/led/zoom ë“±ì€ ì œì™¸)
-const ACCT_KEYS=['nimbi_alarms','nimbi_alarm_groups','nimbi_seat_watches','nimbi_favs','nimbi_fav_groups','nimbi_notice_read','nimbi_tickets','nimbi_passes','nimbi_seatprefs','nimbi_station_defaults','nimbi_route_defaults','nimbi_bookroutes','nimbi_puzzle'];
-const ACCT_PREFIXES=['nimbi_history_'];
-const ACCT_EMOJIS=['ğŸš†','ğŸš„','ğŸš…','ğŸš‡','ğŸš‰','ğŸ«','â­','ğŸ§­','ğŸ—ºï¸','ğŸŒ„','ğŸ§','ğŸ¦Š','ğŸ»','ğŸ°','ğŸ±','ğŸŒŸ'];
-function _acctEsc(s){return String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
-// í‘œì‹œìš© ì¸ì‚¬ë§: ë‹‰ë„¤ì„ ë’¤ì— 'ë‹˜' (ì´ë¯¸ 'ë‹˜'ìœ¼ë¡œ ëë‚˜ë©´ ê·¸ëŒ€ë¡œ)
-function _acctGreet(name){const n=String(name==null?'':name);return _acctEsc(n)+(/ë‹˜\s*$/.test(n)?'':'ë‹˜');}
-function _acctIsKey(k){return ACCT_KEYS.includes(k)||ACCT_PREFIXES.some(p=>k.startsWith(p));}
-function acctReg(){try{return JSON.parse(localStorage.getItem(ACCT_REG_KEY))||[];}catch(e){return[];}}
-function acctSaveReg(list){try{localStorage.setItem(ACCT_REG_KEY,JSON.stringify(list));}catch(e){}}
-function acctActiveId(){return localStorage.getItem(ACCT_ACTIVE_KEY)||'';}
-function acctActive(){const id=acctActiveId();return acctReg().find(a=>a.id===id)||null;}
-function _acctUid(){return 'a'+Date.now().toString(36)+Math.random().toString(36).slice(2,7);}
-function acctSnapshotLive(){const snap={};for(let i=0;i<localStorage.length;i++){const k=localStorage.key(i);if(_acctIsKey(k))snap[k]=localStorage.getItem(k);}return snap;}
-function acctApply(snap){const del=[];for(let i=0;i<localStorage.length;i++){const k=localStorage.key(i);if(_acctIsKey(k))del.push(k);}del.forEach(k=>localStorage.removeItem(k));Object.keys(snap||{}).forEach(k=>{try{localStorage.setItem(k,snap[k]);}catch(e){}});}
-function _acctSlot(id){return ACCT_DATA_PREFIX+id;}
-function acctSaveSlot(id,snap){try{localStorage.setItem(_acctSlot(id),JSON.stringify(snap));}catch(e){}}
-function acctLoadSlot(id){try{return JSON.parse(localStorage.getItem(_acctSlot(id)))||{};}catch(e){return{};}}
-// ìµœì´ˆ ì‹¤í–‰: ê³„ì • ì—†ìœ¼ë©´ ê¸°ì¡´ ë¡œì»¬ ë°ì´í„°ë¡œ ê¸°ë³¸ ê³„ì • ìƒì„±(ë°ì´í„° ë³´ì¡´)
-function acctInit(){
-  let reg=acctReg();
-  if(!reg.length){
-    const id=_acctUid();
-    reg=[{id,name:'ì—¬í–‰ê°',emoji:'ğŸš†',created:Date.now()}];
-    acctSaveReg(reg); localStorage.setItem(ACCT_ACTIVE_KEY,id);
-    acctSaveSlot(id,acctSnapshotLive());
-  } else {
-    // ì´ˆê¸° ìë™ìƒì„± ê¸°ë³¸ëª… 'ë‚˜ì˜ ê³„ì •' â†’ ì¸ì‚¬ë§ì— ì–´ìš¸ë¦¬ëŠ” 'ì—¬í–‰ê°'ìœ¼ë¡œ ì´ê´€
-    let changed=false;
-    reg.forEach(a=>{if(a.name==='ë‚˜ì˜ ê³„ì •'){a.name='ì—¬í–‰ê°';changed=true;}});
-    if(changed)acctSaveReg(reg);
-    if(!reg.find(a=>a.id===acctActiveId()))localStorage.setItem(ACCT_ACTIVE_KEY,reg[0].id);
-  }
-}
-function acctSwitch(id){
-  const cur=acctActiveId(); if(id===cur){closeMySubPanel();return;}
-  if(cur)acctSaveSlot(cur,acctSnapshotLive());
-  acctApply(acctLoadSlot(id)); localStorage.setItem(ACCT_ACTIVE_KEY,id); location.reload();
-}
-function acctCreate(name,emoji){
-  const cur=acctActiveId(); if(cur)acctSaveSlot(cur,acctSnapshotLive());
-  const id=_acctUid(); const reg=acctReg();
-  reg.push({id,name:(name||'ìƒˆ ê³„ì •').slice(0,20),emoji:emoji||'ğŸš†',created:Date.now()}); acctSaveReg(reg);
-  acctSaveSlot(id,{}); acctApply({}); localStorage.setItem(ACCT_ACTIVE_KEY,id); location.reload();
-}
-function acctRename(id,name,emoji){
-  const reg=acctReg(); const a=reg.find(x=>x.id===id); if(!a)return;
-  if(name!=null)a.name=name.slice(0,20); if(emoji)a.emoji=emoji; acctSaveReg(reg);
-  updateAccountCard(); if(document.getElementById('acct-sec'))renderAccountSection();
-}
-function acctDelete(id){
-  let reg=acctReg();
-  if(reg.length<=1){alert('ë§ˆì§€ë§‰ ê³„ì •ì€ ì‚­ì œí•  ìˆ˜ ì—†ìŠµë‹ˆë‹¤.');return;}
-  const a=reg.find(x=>x.id===id); if(!a)return;
-  if(!confirm(`'${a.name}' ê³„ì •ê³¼ ê·¸ ì•ˆì˜ ëª¨ë“  ê¸°ë¡(ìŠ¹ì°¨ê¶ŒÂ·ì¦ê²¨ì°¾ê¸°Â·ì•ŒëŒ ë“±)ì„ ì´ ê¸°ê¸°ì—ì„œ ì‚­ì œí• ê¹Œìš”?`))return;
-  reg=reg.filter(x=>x.id!==id); acctSaveReg(reg);
-  try{localStorage.removeItem(_acctSlot(id));}catch(e){}
-  if(acctActiveId()===id){const nid=reg[0].id;acctApply(acctLoadSlot(nid));localStorage.setItem(ACCT_ACTIVE_KEY,nid);location.reload();return;}
-  renderAccountSection();
-}
-// â”€â”€ ë™ê¸°í™” ë¦´ë ˆì´ (ì§§ì€ ì½”ë“œ) â”€â”€
-const ACCT_RELAY_DEFAULT=''; // ë°°í¬í•œ Cloudflare Worker URLì„ ë„£ìœ¼ë©´ ì „ ê¸°ê¸° ë¬´ì„¤ì • ì‚¬ìš©
-function acctRelayUrl(){ let u=''; try{u=localStorage.getItem('nimbi_relay_url')||'';}catch(e){} return (u||ACCT_RELAY_DEFAULT||'').replace(/\/+$/,''); }
-function acctSetRelayUrl(u){ try{localStorage.setItem('nimbi_relay_url',(u||'').trim());}catch(e){} }
-function _acctPayload(){ const a=acctActive(); if(!a)return null; return {v:1,id:a.id,name:a.name,emoji:a.emoji,data:acctSnapshotLive()}; }
-function acctExportCodeLocal(){ const p=_acctPayload(); if(!p)return ''; try{return btoa(unescape(encodeURIComponent(JSON.stringify(p))));}catch(e){return '';} }
-async function acctUploadCode(){ // ë¦´ë ˆì´ì— ì˜¬ë¦¬ê³  ì§§ì€ ì½”ë“œ ë°˜í™˜
-  const url=acctRelayUrl(); if(!url) throw new Error('no-relay');
-  const p=_acctPayload(); if(!p) throw new Error('ê³„ì •ì´ ì—†ìŠµë‹ˆë‹¤.');
-  const res=await fetch(url+'/',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(p)});
-  let j=null; try{j=await res.json();}catch(e){}
-  if(!res.ok||!j||!j.code) throw new Error((j&&j.error)||('ì—…ë¡œë“œ ì‹¤íŒ¨('+res.status+')'));
-  return j.code;
-}
-async function acctDownloadPayload(code){
-  const url=acctRelayUrl(); if(!url) throw new Error('no-relay');
-  const res=await fetch(url+'/'+encodeURIComponent(code));
-  if(res.status===404) throw new Error('ì½”ë“œë¥¼ ì°¾ì„ ìˆ˜ ì—†ì–´ìš”(ë§Œë£Œë˜ì—ˆê±°ë‚˜ ì˜¤íƒ€).');
-  if(!res.ok) throw new Error('ë‹¤ìš´ë¡œë“œ ì‹¤íŒ¨('+res.status+')');
-  return await res.json();
-}
-// í˜ì´ë¡œë“œë¥¼ ê³„ì •ì— ë°˜ì˜(ì—…ì„œíŠ¸ í›„ ìƒˆë¡œê³ ì¹¨)
-function _acctApplyPayload(payload){
-  if(!payload||!payload.id||typeof payload.data!=='object') return {ok:false,msg:'ìœ íš¨í•œ ë™ê¸°í™” ë°ì´í„°ê°€ ì•„ë‹™ë‹ˆë‹¤.'};
-  const cur=acctActiveId(); if(cur)acctSaveSlot(cur,acctSnapshotLive());
-  let reg=acctReg(); let a=reg.find(x=>x.id===payload.id);
-  if(a){a.name=payload.name||a.name;a.emoji=payload.emoji||a.emoji;}
-  else reg.push({id:payload.id,name:(payload.name||'ê°€ì ¸ì˜¨ ê³„ì •').slice(0,20),emoji:payload.emoji||'ğŸš†',created:Date.now()});
-  acctSaveReg(reg); acctSaveSlot(payload.id,payload.data);
-  acctApply(payload.data); localStorage.setItem(ACCT_ACTIVE_KEY,payload.id); location.reload();
-  return {ok:true};
-}
-// ê°€ì ¸ì˜¤ê¸° â€” ì§§ì€ ì½”ë“œ(ë¦´ë ˆì´) ë˜ëŠ” ë ˆê±°ì‹œ base64 ìë™ íŒë³„
-async function acctImportCode(code){
-  code=(code||'').trim();
-  let payload=null;
-  if(/^[A-Za-z0-9]{4,12}$/.test(code)){
-    if(!acctRelayUrl()) return {ok:false,msg:'ì§§ì€ ì½”ë“œë¥¼ ì“°ë ¤ë©´ ë¨¼ì € ì•„ë˜ ë™ê¸°í™” ì„œë²„ ì„¤ì •ì„ ì™„ë£Œí•˜ì„¸ìš”.'};
-    try{ payload=await acctDownloadPayload(code); }catch(e){ return {ok:false,msg:e.message}; }
-  } else {
-    try{ payload=JSON.parse(decodeURIComponent(escape(atob(code)))); }catch(e){ return {ok:false,msg:'ì½”ë“œ í˜•ì‹ì´ ì˜¬ë°”ë¥´ì§€ ì•ŠìŠµë‹ˆë‹¤.'}; }
-  }
-  return _acctApplyPayload(payload);
-}
-// ê³„ì •ë³„ ê¸°ë¡ ìš”ì•½(ê°œìˆ˜)
-function _acctSummary(){
-  const cnt=k=>{try{const v=JSON.parse(localStorage.getItem(k));return Array.isArray(v)?v.length:0;}catch(e){return 0;}};
-  return {tickets:cnt('nimbi_tickets'),favs:cnt('nimbi_favs'),passes:cnt('nimbi_passes'),alarms:cnt('nimbi_alarms')};
-}
-// â”€â”€ ê³„ì • UI â”€â”€
-function updateAccountCard(){
-  const el=document.getElementById('acct-card'); if(!el)return;
-  const a=acctActive(); const n=acctReg().length;
-  if(!a){el.innerHTML=`<div class="acct-card-inner"><span class="acct-avatar">ğŸ‘¤</span><div class="acct-info"><div class="acct-name">ë¡œê·¸ì¸</div><div class="acct-sub">ê³„ì •ì„ ë§Œë“¤ì–´ ê¸°ë¡ì„ ì—°ë™í•˜ì„¸ìš”</div></div><span class="my-menu-arrow">â€º</span></div>`;return;}
-  const s=_acctSummary();
-  el.innerHTML=`<div class="acct-card-inner"><span class="acct-avatar">${a.emoji}</span><div class="acct-info"><div class="acct-name">${_acctGreet(a.name)}</div><div class="acct-sub">ğŸ«${s.tickets} â­${s.favs}${n>1?' Â· '+n+'ê°œ ê³„ì •':''} Â· ë™ê¸°í™” ì½”ë“œë¡œ ì—°ë™</div></div><span class="my-menu-arrow">â€º</span></div>`;
-}
-function renderAccountSection(){
-  const el=document.getElementById('my-sub-content'); if(!el)return;
-  const a=acctActive(); const reg=acctReg(); const s=_acctSummary();
-  const others=reg.filter(x=>x.id!==(a&&a.id));
-  el.innerHTML=`<div class="acct-sec" id="acct-sec">
-    <div class="acct-big">
-      <span class="acct-avatar">${a?a.emoji:'ğŸ‘¤'}</span>
-      <div class="acct-info"><div class="acct-name" style="font-size:18px">${a?_acctGreet(a.name):'ê³„ì • ì—†ìŒ'}</div>
-        <div class="acct-sub">ì´ ê¸°ê¸°ì˜ í™œì„± ê³„ì •</div></div>
-      <button class="btn-pass-toggle" onclick="acctUiEditToggle()">âœï¸ í¸ì§‘</button>
-    </div>
-    <div id="acct-edit" style="display:none"></div>
-
-    <h3>ğŸ“Š ë‚´ ê¸°ë¡</h3>
-    ${_acctRecRows()}
-
-    <h3>ğŸ”— ê¸°ê¸° ê°„ ì—°ë™</h3>
-    <p class="hint" style="margin:0 0 10px;font-size:12px;color:var(--text2)">ì´ ê³„ì •ì˜ ìŠ¹ì°¨ê¶ŒÂ·ì¦ê²¨ì°¾ê¸°Â·ì•ŒëŒ ë“± ëª¨ë“  ê¸°ë¡ì„ ë‹¤ë¥¸ ê¸°ê¸°ë¡œ ì˜®ê¸°ë ¤ë©´ <b>ë™ê¸°í™” ì½”ë“œ</b>ë¥¼ ë‚´ë³´ë‚´ê³ , ë‹¤ë¥¸ ê¸°ê¸°ì—ì„œ ê°€ì ¸ì˜¤ì„¸ìš”.</p>
-    <div style="display:flex;gap:8px;margin-bottom:8px">
-      <button class="btn btn-primary" style="flex:1;justify-content:center" onclick="acctUiShowExport()">ğŸ“¤ ë™ê¸°í™” ì½”ë“œ ë‚´ë³´ë‚´ê¸°</button>
-      <button class="btn" style="flex:1;justify-content:center;background:var(--bg3);color:var(--text)" onclick="acctUiImportToggle()">ğŸ“¥ ì½”ë“œë¡œ ê°€ì ¸ì˜¤ê¸°</button>
-    </div>
-    <div id="acct-export" style="display:none;margin-bottom:8px"></div>
-    <div id="acct-import" style="display:none;margin-bottom:8px"></div>
-    <div style="text-align:right"><button class="manboard-cancel" style="color:var(--text2);margin-top:0" onclick="acctUiRelayToggle()">âš™ï¸ ë™ê¸°í™” ì„œë²„ ì„¤ì •</button></div>
-    <div id="acct-relay" style="display:none;margin-bottom:8px"></div>
-
-    <h3>ğŸ‘¥ ê³„ì • ì „í™˜</h3>
-    ${others.length?others.map(x=>{const sd=acctLoadSlot(x.id);let tc=0,fc=0;try{tc=(JSON.parse(sd.nimbi_tickets||'[]')||[]).length;fc=(JSON.parse(sd.nimbi_favs||'[]')||[]).length;}catch(e){}
-      return `<div class="acct-row"><span class="acct-avatar" style="width:38px;height:38px;font-size:20px">${x.emoji}</span>
-        <div class="acct-info"><div class="acct-name" style="font-size:14px">${_acctGreet(x.name)}</div><div class="acct-sub">ğŸ«${tc} â­${fc}</div></div>
-        <button class="btn-pass-toggle" onclick="acctSwitch('${x.id}')">ì „í™˜</button>
-        <button class="btn-pass-toggle" style="color:var(--red)" onclick="acctDelete('${x.id}')">ì‚­ì œ</button></div>`;}).join(''):'<p class="hint" style="font-size:12px;color:var(--text3);margin-bottom:8px">ë‹¤ë¥¸ ê³„ì •ì´ ì—†ìŠµë‹ˆë‹¤.</p>'}
-    <button class="btn" style="width:100%;justify-content:center;background:var(--bg2);color:var(--text);border:1px dashed var(--border)" onclick="acctUiNewToggle()">ï¼‹ ìƒˆ ê³„ì • ë§Œë“¤ê¸°</button>
-    <div id="acct-new" style="display:none;margin-top:8px"></div>
-  </div>`;
-}
-// ê³„ì • ê¸°ë¡ ìš”ì•½ì„ 'ì•„ì´ì½˜ ë¼ë²¨ ê°œìˆ˜' í–‰ìœ¼ë¡œ (íƒ­í•˜ë©´ í•´ë‹¹ ì„¹ì…˜ìœ¼ë¡œ)
-function _acctRecRows(){
-  const recs=[
-    {e:'ğŸ«',l:'ìŠ¹ì°¨ê¶Œ',k:'nimbi_tickets',u:'ë§¤',s:'ticket'},
-    {e:'ğŸŸï¸',l:'ì •ê¸°ê¶Œ',k:'nimbi_passes',u:'ë§¤',s:'pass'},
-    {e:'â­',l:'ì¦ê²¨ì°¾ê¸°',k:'nimbi_favs',u:'ê°œ',s:'fav'},
-    {e:'ğŸ””',l:'ìŠ¹í•˜ì°¨ ì•ŒëŒ',k:'nimbi_alarms',u:'ê°œ',s:'alarm'},
-  ];
-  const cnt=k=>{try{const v=JSON.parse(localStorage.getItem(k));return Array.isArray(v)?v.length:0;}catch(e){return 0;}};
-  return recs.map(r=>`<div class="acct-rec" onclick="openMySection('${r.s}')"><span class="acct-rec-ic">${r.e}</span><span class="acct-rec-label">${r.l}</span><span class="acct-rec-cnt">${cnt(r.k)}${r.u}</span><span class="my-menu-arrow">â€º</span></div>`).join('');
-}
-function _acctEmojiPicker(cur,cb){
-  return `<div class="acct-emoji-pick">${ACCT_EMOJIS.map(e=>`<button class="${e===cur?'sel':''}" onclick="${cb}('${e}',this)">${e}</button>`).join('')}</div>`;
-}
-let _acctPickEmoji='ğŸš†';
-function acctPick(e,btn){ _acctPickEmoji=e; const box=btn.parentElement; box.querySelectorAll('button').forEach(b=>b.classList.remove('sel')); btn.classList.add('sel'); }
-function acctUiEditToggle(){
-  const box=document.getElementById('acct-edit'); if(!box)return;
-  if(box.style.display!=='none'){box.style.display='none';return;}
-  const a=acctActive(); if(!a)return; _acctPickEmoji=a.emoji;
-  box.style.display='block';
-  box.innerHTML=`<div style="padding:12px;background:var(--bg2);border:1px solid var(--border);border-radius:10px;margin-bottom:8px">
-    <input class="acct-input" id="acct-edit-name" maxlength="20" value="${_acctEsc(a.name)}" placeholder="ë‹‰ë„¤ì„">
-    ${_acctEmojiPicker(a.emoji,'acctPick')}
-    <button class="btn btn-primary" style="width:100%;justify-content:center" onclick="acctRename('${a.id}',document.getElementById('acct-edit-name').value.trim()||'ê³„ì •',_acctPickEmoji);acctUiEditToggle()">ì €ì¥</button></div>`;
-}
-function acctUiNewToggle(){
-  const box=document.getElementById('acct-new'); if(!box)return;
-  if(box.style.display!=='none'){box.style.display='none';return;}
-  _acctPickEmoji='ğŸš†'; box.style.display='block';
-  box.innerHTML=`<div style="padding:12px;background:var(--bg2);border:1px solid var(--border);border-radius:10px">
-    <input class="acct-input" id="acct-new-name" maxlength="20" placeholder="ìƒˆ ê³„ì • ë‹‰ë„¤ì„">
-    ${_acctEmojiPicker('ğŸš†','acctPick')}
-    <p class="hint" style="font-size:11px;color:var(--text3);margin:4px 0 8px">ìƒˆ ê³„ì •ì€ ë¹ˆ ìƒíƒœë¡œ ì‹œì‘í•©ë‹ˆë‹¤. í˜„ì¬ ê³„ì •ì˜ ê¸°ë¡ì€ ê·¸ëŒ€ë¡œ ë³´ì¡´ë©ë‹ˆë‹¤.</p>
-    <button class="btn btn-primary" style="width:100%;justify-content:center" onclick="acctCreate(document.getElementById('acct-new-name').value.trim()||'ìƒˆ ê³„ì •',_acctPickEmoji)">ë§Œë“¤ê³  ì „í™˜</button></div>`;
-}
-async function acctUiShowExport(){
-  const box=document.getElementById('acct-export'); if(!box)return;
-  const imp=document.getElementById('acct-import'); if(imp)imp.style.display='none';
-  box.style.display='block';
-  if(acctRelayUrl()){
-    box.innerHTML=`<div class="acct-shortcode acct-shortcode-load">ì½”ë“œ ìƒì„± ì¤‘â€¦</div>`;
-    try{
-      const code=await acctUploadCode();
-      box.innerHTML=`<div class="acct-shortcode">${_acctEsc(code)}</div>
-        <button class="btn btn-primary" style="width:100%;justify-content:center;margin-top:8px" onclick="acctUiCopyCode(this,'${_acctEsc(code)}')">ğŸ“‹ ì½”ë“œ ë³µì‚¬</button>
-        <p class="hint" style="font-size:11px;color:var(--text3);margin-top:6px">ë‹¤ë¥¸ ê¸°ê¸°ì˜ 'ì½”ë“œë¡œ ê°€ì ¸ì˜¤ê¸°'ì— ì´ <b>${code.length}ì ì½”ë“œ</b>ë¥¼ ì…ë ¥í•˜ë©´ ê¸°ë¡ì´ ê·¸ëŒ€ë¡œ ì˜®ê²¨ì§‘ë‹ˆë‹¤. (180ì¼ í›„ ë§Œë£Œ)</p>`;
-    }catch(e){
-      box.innerHTML=`<p class="hint" style="font-size:12px;color:var(--red)">ë™ê¸°í™” ì„œë²„ ì—°ê²° ì‹¤íŒ¨: ${_acctEsc(e.message||e)}</p>
-        <p class="hint" style="font-size:11px;color:var(--text3);margin-top:4px">ì•„ë˜ âš™ï¸ ë™ê¸°í™” ì„œë²„ ì„¤ì •ì„ í™•ì¸í•˜ì„¸ìš”.</p>`;
-    }
-  } else {
-    const code=acctExportCodeLocal();
-    box.innerHTML=`<textarea class="acct-code" readonly onclick="this.select()">${_acctEsc(code)}</textarea>
-      <button class="btn btn-primary" style="width:100%;justify-content:center;margin-top:6px" onclick="acctUiCopyCode(this,null)">ğŸ“‹ ì½”ë“œ ë³µì‚¬</button>
-      <p class="hint" style="font-size:11px;color:var(--text3);margin-top:6px">âš™ï¸ ë™ê¸°í™” ì„œë²„ë¥¼ ì„¤ì •í•˜ë©´ <b>6ì ì§§ì€ ì½”ë“œ</b>ë¡œ ë°”ë€ë‹ˆë‹¤. (ì§€ê¸ˆì€ ì„œë²„ ì—†ì´ ì“°ëŠ” ë¡œì»¬ ì½”ë“œ)</p>`;
-  }
-}
-function acctUiCopyCode(btn,short){
-  const ta=document.getElementById('acct-export')&&document.getElementById('acct-export').querySelector('textarea');
-  const text=short||(ta?ta.value:'');
-  const done=()=>{const o=btn.textContent;btn.textContent='âœ… ë³µì‚¬ë¨';setTimeout(()=>{btn.textContent=o;},1500);};
-  try{navigator.clipboard.writeText(text).then(done,()=>{if(ta){ta.select();document.execCommand('copy');}done();});}
-  catch(e){if(ta){ta.select();try{document.execCommand('copy');}catch(_){}}done();}
-}
-function acctUiImportToggle(){
-  const box=document.getElementById('acct-import'); if(!box)return;
-  const exp=document.getElementById('acct-export'); if(exp)exp.style.display='none';
-  if(box.style.display!=='none'){box.style.display='none';return;}
-  box.style.display='block';
-  box.innerHTML=`<input class="acct-input" id="acct-import-code" placeholder="6ì ì½”ë“œ (ë˜ëŠ” ë¡œì»¬ ì½”ë“œ ë¶™ì—¬ë„£ê¸°)" style="font-family:var(--mono);text-align:center;letter-spacing:2px;text-transform:uppercase">
-    <button class="btn btn-primary" style="width:100%;justify-content:center;margin-top:8px" onclick="acctUiDoImport(this)">ğŸ“¥ ê°€ì ¸ì˜¤ê¸° (ë¡œê·¸ì¸)</button>
-    <p class="hint" style="font-size:11px;color:var(--text3);margin-top:6px">ê°™ì€ ê³„ì • ì½”ë“œë©´ ê¸°ì¡´ ê³„ì •ì´ ê°±ì‹ ë˜ê³ , ìƒˆ ê³„ì • ì½”ë“œë©´ ê³„ì •ì´ ì¶”ê°€ë©ë‹ˆë‹¤.</p>`;
-}
-async function acctUiDoImport(btn){
-  const el=document.getElementById('acct-import-code'); const v=(el&&el.value)||'';
-  if(!v.trim()){alert('ì½”ë“œë¥¼ ì…ë ¥í•´ ì£¼ì„¸ìš”.');return;}
-  if(btn){btn.disabled=true;btn.textContent='ê°€ì ¸ì˜¤ëŠ” ì¤‘â€¦';}
-  const r=await acctImportCode(v);
-  if(!r||!r.ok){ if(btn){btn.disabled=false;btn.textContent='ğŸ“¥ ê°€ì ¸ì˜¤ê¸° (ë¡œê·¸ì¸)';} alert((r&&r.msg)||'ê°€ì ¸ì˜¤ê¸°ì— ì‹¤íŒ¨í–ˆìŠµë‹ˆë‹¤.'); }
-}
-// âš™ï¸ ë™ê¸°í™” ì„œë²„(ë¦´ë ˆì´) ì„¤ì •
-function acctUiRelayToggle(){
-  const box=document.getElementById('acct-relay'); if(!box)return;
-  if(box.style.display!=='none'){box.style.display='none';return;}
-  box.style.display='block';
-  let stored=''; try{stored=localStorage.getItem('nimbi_relay_url')||'';}catch(e){}
-  box.innerHTML=`<div style="padding:12px;background:var(--bg2);border:1px solid var(--border);border-radius:10px">
-    <p class="hint" style="font-size:11px;color:var(--text2);margin-bottom:8px">ì§§ì€ ì½”ë“œ(6ì)ë¥¼ ì“°ë ¤ë©´ ë¬´ë£Œ Cloudflare Worker ì£¼ì†Œê°€ í•„ìš”í•©ë‹ˆë‹¤. ì €ì¥ì†Œì˜ <b>sync-worker/README.md</b> 5ë¶„ ê°€ì´ë“œë¥¼ ë”°ë¼ ë°°í¬í•˜ì„¸ìš”.</p>
-    <input class="acct-input" id="acct-relay-url" placeholder="https://nimbi-sync.xxx.workers.dev" value="${_acctEsc(stored)}">
-    <div style="display:flex;gap:6px;margin-top:6px">
-      <button class="btn btn-primary" style="flex:1;justify-content:center" onclick="acctUiSaveRelay()">ì €ì¥</button>
-      <button class="btn" style="flex:1;justify-content:center;background:var(--bg3);color:var(--text)" onclick="acctUiTestRelay()">ì—°ê²° í…ŒìŠ¤íŠ¸</button>
-    </div>
-    <div id="acct-relay-msg" style="font-size:11px;margin-top:6px"></div></div>`;
-}
-function acctUiSaveRelay(){
-  const v=(document.getElementById('acct-relay-url')||{}).value||''; acctSetRelayUrl(v);
-  const m=document.getElementById('acct-relay-msg'); if(m){m.style.color='var(--green)';m.textContent=v.trim()?'âœ… ì €ì¥ë¨. ì´ì œ ì§§ì€ ì½”ë“œë¡œ ë‚´ë³´ë‚´ê¸°/ê°€ì ¸ì˜¤ê¸°ê°€ ë©ë‹ˆë‹¤.':'ì£¼ì†Œë¥¼ ë¹„ì› ìŠµë‹ˆë‹¤(ì„œë²„ ì—†ì´ ë¡œì»¬ ì½”ë“œ ì‚¬ìš©).';}
-}
-async function acctUiTestRelay(){
-  const v=(document.getElementById('acct-relay-url')||{}).value||''; const m=document.getElementById('acct-relay-msg'); if(!m)return;
-  if(!v.trim()){m.style.color='var(--red)';m.textContent='ì£¼ì†Œë¥¼ ì…ë ¥í•˜ì„¸ìš”.';return;}
-  m.style.color='var(--text2)';m.textContent='í…ŒìŠ¤íŠ¸ ì¤‘â€¦';
-  try{ const res=await fetch(v.replace(/\/+$/,'')+'/'); const j=await res.json(); if(j&&(j.ok||j.service)){m.style.color='var(--green)';m.textContent='âœ… ì—°ê²° ì„±ê³µ';}else{m.style.color='var(--red)';m.textContent='ì‘ë‹µì´ ì´ìƒí•©ë‹ˆë‹¤. ì£¼ì†Œë¥¼ í™•ì¸í•˜ì„¸ìš”.';} }
-  catch(e){ m.style.color='var(--red)';m.textContent='ì—°ê²° ì‹¤íŒ¨: '+(e.message||e); }
-}
-
-const MY_TITLES = {
-  account:'ğŸ‘¤ ë‚´ ê³„ì •',
-  book:'ğŸ« ì—´ì°¨ ì˜ˆë§¤',
-  ticket:'ğŸŸï¸ ìŠ¹ì°¨ê¶Œ ì¡°íšŒ',
-  mytrip:'ğŸ§³ ë‚´ ì—¬í–‰',
-  pass:'ğŸŸï¸ ì •ê¸°ê¶Œ ì˜ˆë§¤',
-  alarm:'ğŸ”” ìŠ¹í•˜ì°¨ ì•ŒëŒ',
-  fav:'â­ ì¦ê²¨ì°¾ê¸°',
-  stats:'ğŸ“Š ìš´í–‰ í†µê³„',
-  notice:'ğŸ“¢ ê³µì§€ì‚¬í•­',
-  daytrip:'ğŸŒ„ ë‹¹ì¼ì¹˜ê¸° ì¶”ì²œ',
-  terminal:'ğŸ–¥ï¸ í„°ë¯¸ë„ ë·°',
-  puzzle:'ğŸ§© ë£¨íŠ¸ í¼ì¦',
-  settings:'âš™ï¸ ì„¤ì •',
-};
-
-function openMySection(section){
-  window._tripAddMode=null; // ì—¬ì • ì¶”ê°€ ëª¨ë“œëŠ” ì„¹ì…˜ ì „í™˜ ì‹œ í•­ìƒ í•´ì œ
-  const titleEl = document.getElementById('my-sub-title');
-  const contentEl = document.getElementById('my-sub-content');
-  if(titleEl) titleEl.textContent = MY_TITLES[section]||'';
-  if(contentEl)contentEl.dataset.section=section;
-  document.getElementById('my-sub-panel').classList.add('open');
-  // ì„œë¸ŒíŒ¨ë„ í—¤ë” ì‹œê³„
-  if(window._mySubClockTimer) clearInterval(window._mySubClockTimer);
-  const clockEl=document.getElementById('my-sub-clock');
-  if(clockEl){
-    const tick=()=>{const n=new Date();if(clockEl)clockEl.textContent=`${String(n.getHours()).padStart(2,'0')}:${String(n.getMinutes()).padStart(2,'0')}:${String(n.getSeconds()).padStart(2,'0')}`;};
-    tick(); window._mySubClockTimer=setInterval(tick,1000);
-  }
-  if(!contentEl) return;
-  contentEl.innerHTML = '';
-  // ì„œë¸ŒíŒ¨ë„ ì „ì²´í™”ë©´ìœ¼ë¡œ ì½˜í…ì¸  ë Œë”ë§ (íƒ­ ì´ë™ ì—†ìŒ)
-  if(section==='account'){
-    renderAccountSection();
-  } else if(section==='book'){
-    contentEl.innerHTML = '<div style="padding:0"><div id="my-result-book"></div></div>';
-    renderMyBookTab();
-  } else if(section==='ticket'){
-    contentEl.innerHTML = '<div id="result-ticket"></div>';
-    renderTickets();
-  } else if(section==='mytrip'){
-    contentEl.innerHTML = '<div id="result-mytrip"></div>';
-    renderMyTrips();
-  } else if(section==='alarm'){
-    contentEl.innerHTML = '<div id="result-alarm"></div>';
-    renderAlarms();
-  } else if(section==='fav'){
-    contentEl.innerHTML = '<div id="result-fav"></div>';
-    renderFavs();
-  } else if(section==='stats'){
-    contentEl.innerHTML = '<div id="result-stats"></div>';
-    renderStats();
-  } else if(section==='notice'){
-    contentEl.innerHTML = '<div id="result-notice"></div>';
-    updateNoticeBadge(); renderNotice();
-  } else if(section==='pass'){
-    contentEl.innerHTML = '<div id="result-pass-my">' + renderPassSection() + '</div>';
-  } else if(section==='daytrip'){
-    contentEl.innerHTML = '<div id="result-daytrip"></div>';
-    renderDaytrip();
-  } else if(section==='terminal'){
-    contentEl.innerHTML = '<div id="result-terminal"></div>';
-    renderTerminalView();
-  } else if(section==='puzzle'){
-    contentEl.innerHTML = '<div id="result-puzzle"></div>';
-    renderRoutePuzzle();
-  } else if(section==='settings'){
-    renderSettingsSection(contentEl);
-  }
-}
-
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-// âš™ï¸ ì„¤ì • â€” í™˜ê²½ ëª¨ë“œ (PC / ëª¨ë°”ì¼ / ì›Œì¹˜)
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-let _uiMode=(()=>{try{return localStorage.getItem('nimbi_uimode')||'mobile';}catch(e){return 'mobile';}})();
-const METRO_SHARED_TRACK_BOARD_KEY='nimbi_metro_shared_track_board';
-let _metroSharedTrackBoardOn=(()=>{try{return localStorage.getItem(METRO_SHARED_TRACK_BOARD_KEY)==='1';}catch(e){return false;}})();
-function metroSharedTrackBoardEnabled(){return _metroSharedTrackBoardOn;}
-function toggleMetroSharedTrackBoard(){
-  _metroSharedTrackBoardOn=!_metroSharedTrackBoardOn;
-  try{localStorage.setItem(METRO_SHARED_TRACK_BOARD_KEY,_metroSharedTrackBoardOn?'1':'0');}catch(e){}
-  const sc=document.getElementById('my-sub-content');
-  if(sc&&sc.querySelector('.set-modes'))renderSettingsSection(sc);
-  if(document.getElementById('metro-display-board')&&typeof _refreshMetroDisplayBoard==='function')_refreshMetroDisplayBoard();
-}
-function _applyUiMode(){
-  const r=document.documentElement;
-  r.classList.remove('ui-pc','ui-mobile','ui-watch');
-  r.classList.add('ui-'+_uiMode);
-  const w=document.getElementById('watch-view');
-  if(_uiMode==='watch'){ if(!w)_buildWatchView(); _renderWatchView(); _startWatchTimer(); }
-  else { if(w)w.remove(); _stopWatchTimer(); }
-}
-function setUiMode(m){
-  if(!['pc','mobile','watch'].includes(m))return;
-  _uiMode=m;
-  try{localStorage.setItem('nimbi_uimode',m);}catch(e){}
-  _applyUiMode();
-  const el=document.getElementById('my-sub-content');
-  if(el&&el.querySelector('.set-modes'))renderSettingsSection(el);
-}
-const STATION_DEFAULT_KEY='nimbi_station_defaults';
-const STATION_DEFAULTS={dir:'all',pass:'all',grade:'all',line:'all',terminus:'all',night:'all',after:''};
-const STATION_DEFAULT_ALLOWED={
-  dir:['all','down','up'],pass:['all','stop'],
-  grade:['all','KTX','SRT','ITX-ìƒˆë§ˆì„','ITX-ì²­ì¶˜','ë¬´ê¶í™”í˜¸','ë‚¨ë„í•´ì–‘','êµ­ì•…ì™€ì¸'],
-  line:['all','ê²½ë¶€ì„ ','ê²½ë¶€ê³ ì†ì„ ','í˜¸ë‚¨ì„ ','ì „ë¼ì„ ','ê²½ì „ì„ ','ì¤‘ì•™ì„ ','ë™í•´ì„ ','ê°•ë¦‰ì„ ','ì¤‘ë¶€ë‚´ë¥™ì„ '],
-  terminus:['all','exclude'],night:['all','only','highlight']
-};
-function _safeDefaults(raw,defaults,allowed){
-  const out={...defaults};
-  if(!raw||typeof raw!=='object'||Array.isArray(raw))return out;
-  Object.keys(defaults).forEach(key=>{
-    if(key==='after'){
-      const value=String(raw[key]||'').trim();
-      out[key]=!value||/^(?:[01]?\d|2[0-3]):[0-5]\d$/.test(value)?value:defaults[key];
-    }else if(!allowed[key]||allowed[key].includes(String(raw[key])))out[key]=String(raw[key]??defaults[key]);
-  });
-  return out;
-}
-function getStationDefaults(){
-  try{return _safeDefaults(JSON.parse(localStorage.getItem(STATION_DEFAULT_KEY)||'{}'),STATION_DEFAULTS,STATION_DEFAULT_ALLOWED);}
-  catch(e){return {...STATION_DEFAULTS};}
-}
-function applyStationDefaults(){
-  const d=getStationDefaults();
-  const fields={
-    'sel-dir-station':d.dir,'sel-pass-station':d.pass,'sel-grade-station':d.grade,
-    'sel-line-station':d.line,'sel-terminus-station':d.terminus,'sel-night-station':d.night,
-    'input-after-time':d.after
-  };
-  Object.entries(fields).forEach(([id,value])=>{
-    const input=document.getElementById(id);
-    if(!input)return;
-    if(input.tagName==='INPUT'||[...(input.options||[])].some(o=>o.value===value))input.value=value;
-  });
-}
-function saveStationDefaults(){
-  const val=id=>document.getElementById(id)?.value||'all';
-  const after=(document.getElementById('setting-after-time')?.value||'').trim();
-  if(after&&!/^(?:[01]?\d|2[0-3]):[0-5]\d$/.test(after)){
-    alert('ì‹œê°„ì€ 0:00~23:59 í˜•ì‹ìœ¼ë¡œ ì…ë ¥í•´ ì£¼ì„¸ìš”.');return;
-  }
-  const d={
-    dir:val('setting-station-dir'),pass:val('setting-station-pass'),
-    grade:val('setting-station-grade'),line:val('setting-station-line'),
-    terminus:val('setting-station-terminus'),night:val('setting-station-night'),after
-  };
-  try{localStorage.setItem(STATION_DEFAULT_KEY,JSON.stringify(d));}catch(e){}
-  applyStationDefaults();
-  const status=document.getElementById('station-default-status');
-  if(status){status.textContent='ì €ì¥ë˜ì—ˆìŠµë‹ˆë‹¤';setTimeout(()=>{if(status)status.textContent='';},1800);}
-}
-function resetStationDefaults(){
-  try{localStorage.removeItem(STATION_DEFAULT_KEY);}catch(e){}
-  applyStationDefaults();
-  const el=document.getElementById('my-sub-content');
-  if(el)renderSettingsSection(el);
-}
-const ROUTE_DEFAULT_KEY='nimbi_route_defaults';
-const ROUTE_DEFAULTS={sort:'duration',maxDuration:'0',grade:'all',after:'',xferMin:'3',xferMax:'60'};
-const ROUTE_DEFAULT_ALLOWED={
-  sort:['duration','depart','arrive'],maxDuration:['0','60','90','120','180','240'],
-  grade:STATION_DEFAULT_ALLOWED.grade,xferMin:['3','5','10','15','20'],xferMax:['30','45','60','90','120']
-};
-function getRouteDefaults(){
-  try{
-    const out=_safeDefaults(JSON.parse(localStorage.getItem(ROUTE_DEFAULT_KEY)||'{}'),ROUTE_DEFAULTS,ROUTE_DEFAULT_ALLOWED);
-    if(Number(out.xferMin)>=Number(out.xferMax)){out.xferMin=ROUTE_DEFAULTS.xferMin;out.xferMax=ROUTE_DEFAULTS.xferMax;}
-    return out;
-  }
-  catch(e){return {...ROUTE_DEFAULTS};}
-}
-function applyRouteDefaults(){
-  const d=getRouteDefaults();
-  const fields={
-    'sel-sort-route':d.sort,'sel-max-duration':d.maxDuration,'sel-grade-route':d.grade,
-    'input-after-route':d.after,'xfer-min':d.xferMin,'xfer-max':d.xferMax
-  };
-  Object.entries(fields).forEach(([id,value])=>{
-    const input=document.getElementById(id);
-    if(!input)return;
-    if(input.tagName==='INPUT'||[...(input.options||[])].some(o=>o.value===value))input.value=value;
-  });
-}
-function saveRouteDefaults(){
-  const val=id=>document.getElementById(id)?.value||'';
-  const after=val('setting-route-after').trim();
-  if(after&&!/^(?:[01]?\d|2[0-3]):[0-5]\d$/.test(after)){
-    alert('ì‹œê°„ì€ 0:00~23:59 í˜•ì‹ìœ¼ë¡œ ì…ë ¥í•´ ì£¼ì„¸ìš”.');return;
-  }
-  const d={
-    sort:val('setting-route-sort'),maxDuration:val('setting-route-max'),
-    grade:val('setting-route-grade'),after,
-    xferMin:val('setting-route-xfer-min'),xferMax:val('setting-route-xfer-max')
-  };
-  if(Number(d.xferMin)>=Number(d.xferMax)){
-    alert('ìµœëŒ€ í™˜ìŠ¹ ëŒ€ê¸°ëŠ” ìµœì†Œ í™˜ìŠ¹ ëŒ€ê¸°ë³´ë‹¤ ê¸¸ì–´ì•¼ í•©ë‹ˆë‹¤.');return;
-  }
-  try{localStorage.setItem(ROUTE_DEFAULT_KEY,JSON.stringify(d));}catch(e){}
-  applyRouteDefaults();
-  const status=document.getElementById('route-default-status');
-  if(status){status.textContent='ì €ì¥ë˜ì—ˆìŠµë‹ˆë‹¤';setTimeout(()=>{if(status)status.textContent='';},1800);}
-}
-function resetRouteDefaults(){
-  try{localStorage.removeItem(ROUTE_DEFAULT_KEY);}catch(e){}
-  applyRouteDefaults();
-  const el=document.getElementById('my-sub-content');
-  if(el)renderSettingsSection(el);
-}
-function _settingsOptions(items,current){
-  return items.map(([v,l])=>`<option value="${v}"${current===v?' selected':''}>${l}</option>`).join('');
-}
-function _settingsAttr(value){
-  return String(value??'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;');
-}
-function renderSettingsSection(el){
-  const modes=[
-    {id:'pc',    icon:'ğŸ–¥ï¸', name:'PC ëª¨ë“œ',    desc:'ë„“ì€ í™”ë©´ Â· í‚¤ë³´ë“œ ì¡°ì‘(+/- í™•ëŒ€, WASDÂ·ë°©í–¥í‚¤ ì´ë™)'},
-    {id:'mobile',icon:'ğŸ“±', name:'ëª¨ë°”ì¼ ëª¨ë“œ', desc:'ê¸°ë³¸ ëª¨ë“œ Â· í˜„ì¬ í™”ë©´ ê·¸ëŒ€ë¡œ'},
-    {id:'watch', icon:'âŒš', name:'ì›Œì¹˜ ëª¨ë“œ',   desc:'ìµœì†Œ ì •ë³´ë§Œ Â· ì—´ì°¨Â·ë‹¤ìŒ ì •ì°¨Â·ì§€ì—°Â·ìŠ¹ê°•ì¥'},
-  ];
-  const sd=getStationDefaults();
-  const rd=getRouteDefaults();
-  let themePref='dark';try{themePref=localStorage.getItem('nimbi_theme')||'dark';}catch(e){}
-  const prefButtons=[
-    ['window','ğŸªŸ ì°½ì¸¡'],['aisle','ğŸš¶ ë³µë„ì¸¡'],['power','âš¡ ì½˜ì„¼íŠ¸'],
-    ['front','â¬† ì•ìª½'],['rear','â¬‡ ë’¤ìª½'],['fwd','â–² ìˆœë°©í–¥'],['rev','â–½ ì—­ë°©í–¥']
-  ];
-  el.innerHTML=`<div class="settings-section"><div class="settings-card">
-    <div style="font-size:13px;font-weight:800;color:var(--text1);margin-bottom:10px">í™˜ê²½ ëª¨ë“œ</div>
-    <div class="set-modes">
-      ${modes.map(m=>`<button class="set-mode-btn${_uiMode===m.id?' on':''}" onclick="setUiMode('${m.id}')">
-        <span class="set-mode-icon">${m.icon}</span>
-        <span class="set-mode-info"><b>${m.name}</b><small>${m.desc}</small></span>
-        ${_uiMode===m.id?'<span class="set-mode-check">âœ“</span>':''}
-      </button>`).join('')}
-    </div>
-    <div style="font-size:11px;color:var(--text3);margin-top:10px;line-height:1.6">
-      ëª¨ë“œëŠ” ì´ ê¸°ê¸°ì—ë§Œ ì €ì¥ë©ë‹ˆë‹¤. ì›Œì¹˜ ëª¨ë“œëŠ” ìµœì†Œ í™”ë©´ìœ¼ë¡œ ì „í™˜ë˜ë©°, í™”ë©´ì˜ ğŸ“± ë²„íŠ¼ìœ¼ë¡œ ì–¸ì œë“  ëŒì•„ì˜¬ ìˆ˜ ìˆìŠµë‹ˆë‹¤.
-    </div>
-    <div class="settings-divider"></div>
-    <div class="settings-title">í™”ë©´ í…Œë§ˆ</div>
-    <div class="settings-chip-row" role="group" aria-label="í™”ë©´ í…Œë§ˆ ì„ íƒ">
-      ${[['light','ë¼ì´íŠ¸'],['dark','ë‹¤í¬'],['system','ì‹œìŠ¤í…œ']].map(([value,label])=>`<button class="seat-auto-chip${themePref===value?' on':''}" onclick="setNimbiTheme('${value}');renderSettingsSection(document.getElementById('my-sub-content'))">${label}</button>`).join('')}
-    </div>
-    <div class="settings-help">ì‹œìŠ¤í…œì€ ê¸°ê¸°ì˜ ë°ì€ í™”ë©´Â·ì–´ë‘ìš´ í™”ë©´ ì„¤ì •ì„ ìë™ìœ¼ë¡œ ë”°ë¦…ë‹ˆë‹¤.</div>
-    <div class="settings-divider"></div>
-    <div class="settings-title">ì² ë„ ì§€ì—­</div>
-    <div class="settings-chip-row" role="group" aria-label="ì² ë„ ì§€ì—­ ì„ íƒ">
-      ${[['south','ë‚¨í•œ'],['north','ë¶í•œ'],['all','ì „ì²´']].map(([value,label])=>`<button class="seat-auto-chip${_railRegion===value?' on':''}" onclick="setRailRegion('${value}');renderSettingsSection(document.getElementById('my-sub-content'))">${label}</button>`).join('')}
-    </div>
-    <div class="settings-help">ì„ íƒí•œ ì§€ì—­ì˜ ë…¸ì„ ë„Â·ì—­Â·í†µí•© ê²€ìƒ‰ ì •ë³´ë§Œ í‘œì‹œí•˜ë©° ì´ ê¸°ê¸°ì— ì €ì¥ë©ë‹ˆë‹¤.</div>
-    <div class="settings-divider"></div>
-    <div class="settings-title">ì „ì²  ì¶œë°œ ì•ˆë‚´</div>
-    <div class="sim-toggle-card">
-      <div class="sim-toggle-info">
-        <div class="sim-toggle-title">ì„ ë¡œ ê³µìœ  êµ¬ê°„ ê°™ì´ ë³´ê¸°</div>
-        <div class="sim-toggle-desc">ê³µìš© ì„ ë¡œ êµ¬ê°„ì˜ ì—­ ì „ê´‘íŒì—ì„œ ì„œë¡œ ë‹¤ë¥¸ ë…¸ì„ ì˜ ì—´ì°¨ë¥¼ í•œ í™”ë©´ì— í•¨ê»˜ í‘œì‹œí•©ë‹ˆë‹¤. ê° ì—´ì°¨ì˜ ë…¸ì„ Â·ë°©ë©´Â·í–‰ì„ ì§€ëŠ” ê·¸ëŒ€ë¡œ êµ¬ë¶„ë©ë‹ˆë‹¤.</div>
-      </div>
-      <button class="sim-switch${_metroSharedTrackBoardOn?' on':''}" onclick="toggleMetroSharedTrackBoard()" role="switch" aria-checked="${_metroSharedTrackBoardOn}"><span class="sim-knob"></span></button>
-    </div>
-    <div class="settings-help">ì²­ëŸ‰ë¦¬â€“í•œê°•ë¡œ, í•œê°•ë¡œâ€“êµ¬ë¡œ ë“± ì§€ì •ëœ ì‹¤ì œ ì„ ë¡œ ê³µìœ  êµ¬ê°„ì—ë§Œ ì ìš©ë©ë‹ˆë‹¤.</div>
-    <div class="settings-divider"></div>
-    <div class="settings-title">ì§€ì—° ì‹œë®¬ë ˆì´ì…˜</div>
-    <div class="sim-toggle-card">
-      <div class="sim-toggle-info">
-        <div class="sim-toggle-title">ğŸ”´ ì§€ì—° ì‹œë®¬ë ˆì´ì…˜</div>
-        <div class="sim-toggle-desc">ì˜ˆë³´ í™•ë¥ ì„ ë°”íƒ•ìœ¼ë¡œ ê° ì—´ì°¨ì— ì‹¤ì œ ì§€ì—°ì„ ë¶€ì—¬í•´ <b>ì§€ë„Â·íƒ‘ìŠ¹ ì—¬ì •Â·ì „ê´‘íŒ</b>ì˜ ìœ„ì¹˜Â·ì‹œê°ì— ë°˜ì˜í•©ë‹ˆë‹¤. ì‹œê°„í‘œ ì¡°íšŒëŠ” ì •ì‹œ ê·¸ëŒ€ë¡œì…ë‹ˆë‹¤.</div>
-      </div>
-      <button class="sim-switch${_simDelayOn?' on':''}" onclick="toggleSimDelay()" role="switch" aria-checked="${_simDelayOn}"><span class="sim-knob"></span></button>
-    </div>
-    <div class="sim-toggle-card">
-      <div class="sim-toggle-info">
-        <div class="sim-toggle-title">ğŸ« íƒ‘ìŠ¹ ì—¬ì • ì¹´ë“œ ì¶•ì†Œ</div>
-        <div class="sim-toggle-desc">í™ˆì˜ <b>íƒ‘ìŠ¹ ì—¬ì •</b> ì¹´ë“œë¥¼ ê¸°ë³¸ì ìœ¼ë¡œ ì‘ê²Œ(í•œ ì¤„ ìš”ì•½ + ì°¨ë‚´ LED) í‘œì‹œí•©ë‹ˆë‹¤.</div>
-      </div>
-      <button class="sim-switch${_tripCompact?' on':''}" onclick="toggleTripCompact()" role="switch" aria-checked="${_tripCompact}"><span class="sim-knob"></span></button>
-    </div>
-    <div class="settings-divider"></div>
-    <div class="settings-title">ğŸ§³ ë‚´ ì—¬í–‰ ì˜ˆë§¤</div>
-    <div class="sim-toggle-card">
-      <div class="sim-toggle-info">
-        <div class="sim-toggle-title">ğŸŸï¸ ë§¤ì§„ ì‹œ ë‹¤ë¥¸ ì¢Œì„ ìë™ ì˜ˆë§¤</div>
-        <div class="sim-toggle-desc">ì—¬í–‰ <b>ì¼ê´„ ì˜ˆë§¤</b> ì‹œ ì„ íƒí•œ ì¢Œì„ ë“±ê¸‰ì´ ë§¤ì§„ì´ë©´ <b>ì…ì„Â·íŠ¹ì‹¤ ë“± ì˜ˆë§¤ ê°€ëŠ¥í•œ ë‹¤ë¥¸ ë“±ê¸‰</b>ìœ¼ë¡œ ìë™ ì˜ˆë§¤í•©ë‹ˆë‹¤.</div>
-      </div>
-      <button class="sim-switch${(typeof tripAutoSeatEnabled==='function'&&tripAutoSeatEnabled())?' on':''}" onclick="toggleTripAutoSeat()" role="switch" aria-checked="${typeof tripAutoSeatEnabled==='function'&&tripAutoSeatEnabled()}"><span class="sim-knob"></span></button>
-    </div>
-    <div class="sim-toggle-card">
-      <div class="sim-toggle-info">
-        <div class="sim-toggle-title">ğŸ” ì˜ˆë§¤ ë³€ê²½ ì‹œ ì¸ì ‘ì—­ í¬í•¨</div>
-        <div class="sim-toggle-desc">ì—¬í–‰ ì¼ì •ì˜ <b>ì˜ˆë§¤ ë³€ê²½</b>ì—ì„œ ê°™ì€ êµ¬ê°„ë¿ ì•„ë‹ˆë¼ <b>ì¸ì ‘ì—­ ë°œì°© ì—´ì°¨</b>ë„ í•¨ê»˜ ë³´ì—¬ì¤ë‹ˆë‹¤.</div>
-      </div>
-      <button class="sim-switch${(typeof tripSwapAdjEnabled==='function'&&tripSwapAdjEnabled())?' on':''}" onclick="toggleTripSwapAdj()" role="switch" aria-checked="${typeof tripSwapAdjEnabled==='function'&&tripSwapAdjEnabled()}"><span class="sim-knob"></span></button>
-    </div>
-    <div class="settings-divider"></div>
-    <div class="settings-title">ì¢Œì„ ì„ íƒ ê¸°ë³¸ ì„ í˜¸</div>
-    <div class="settings-chip-row">
-      ${prefButtons.map(([v,l])=>`<button class="seat-auto-chip${_seatPrefs.has(v)?' on':''}" onclick="toggleSettingsSeatPref('${v}')">${l}</button>`).join('')}
-      <button class="seat-auto-chip pref-clear" onclick="clearSettingsSeatPrefs()">ì´ˆê¸°í™”</button>
-    </div>
-    <div class="settings-help">ì¢Œì„ ì„ íƒì„ ì—´ë©´ ì´ ì„ í˜¸ ì¡°ê±´ì´ ìë™ ë°°ì •ê³¼ ì¶”ì²œ ì¢Œì„ì— ìš°ì„  ì ìš©ë©ë‹ˆë‹¤.</div>
-    <div class="settings-divider"></div>
-    <details class="settings-fold">
-      <summary>ì‹œê°„í‘œ ê²€ìƒ‰ ê¸°ë³¸ í•„í„° <span>âŒ„</span></summary>
-      <div class="settings-fold-body"><div class="settings-filter-grid">
-      <label>ë°©í–¥<select id="setting-station-dir">${_settingsOptions([['all','ì „ì²´'],['down','í•˜í–‰'],['up','ìƒí–‰']],sd.dir)}</select></label>
-      <label>í†µê³¼ ì—´ì°¨<select id="setting-station-pass">${_settingsOptions([['all','í¬í•¨'],['stop','ì •ì°¨ë§Œ']],sd.pass)}</select></label>
-      <label>ë“±ê¸‰<select id="setting-station-grade">${_settingsOptions([['all','ì „ì²´'],['KTX','KTX'],['SRT','SRT'],['ITX-ìƒˆë§ˆì„','ITX-ìƒˆë§ˆì„'],['ITX-ì²­ì¶˜','ITX-ì²­ì¶˜'],['ë¬´ê¶í™”í˜¸','ë¬´ê¶í™”í˜¸'],['ë‚¨ë„í•´ì–‘','ë‚¨ë„í•´ì–‘'],['êµ­ì•…ì™€ì¸','êµ­ì•…ì™€ì¸']],sd.grade)}</select></label>
-      <label>ë…¸ì„ <select id="setting-station-line">${_settingsOptions([['all','ì „ì²´'],['ê²½ë¶€ì„ ','ê²½ë¶€ì„ '],['ê²½ë¶€ê³ ì†ì„ ','ê²½ë¶€ê³ ì†ì„ '],['í˜¸ë‚¨ì„ ','í˜¸ë‚¨ì„ '],['ì „ë¼ì„ ','ì „ë¼ì„ '],['ê²½ì „ì„ ','ê²½ì „ì„ '],['ì¤‘ì•™ì„ ','ì¤‘ì•™ì„ '],['ë™í•´ì„ ','ë™í•´ì„ '],['ê°•ë¦‰ì„ ','ê°•ë¦‰ì„ '],['ì¤‘ë¶€ë‚´ë¥™ì„ ','ì¤‘ë¶€ë‚´ë¥™ì„ ']],sd.line)}</select></label>
-      <label>ë‹¹ì—­ ì¢…ì°©<select id="setting-station-terminus">${_settingsOptions([['all','í¬í•¨'],['exclude','ì œì™¸']],sd.terminus)}</select></label>
-      <label>ì‹¬ì•¼ ì—´ì°¨<select id="setting-station-night">${_settingsOptions([['all','ì „ì²´'],['only','ì‹¬ì•¼ë§Œ'],['highlight','í•˜ì´ë¼ì´íŠ¸']],sd.night)}</select></label>
-      <label>ì‹œê°„ ì´í›„<input id="setting-after-time" type="text" value="${_settingsAttr(sd.after)}" placeholder="ì˜ˆ: 9:00"></label>
-    </div>
-    <div class="settings-actions">
-      <button class="btn btn-primary" onclick="saveStationDefaults()">ê¸°ë³¸ê°’ ì €ì¥</button>
-      <button class="btn settings-reset-btn" onclick="resetStationDefaults()">ì´ˆê¸°í™”</button>
-      <span id="station-default-status" class="settings-save-status"></span>
-      </div></div>
-    </details>
-    <div class="settings-divider"></div>
-    <details class="settings-fold">
-      <summary>ì¶œë„ì°© ê²€ìƒ‰ ê¸°ë³¸ í•„í„° <span>âŒ„</span></summary>
-      <div class="settings-fold-body">
-        <div class="settings-filter-grid">
-          <label>ì •ë ¬<select id="setting-route-sort">${_settingsOptions([['duration','ì†Œìš”ì‹œê°„ìˆœ'],['depart','ì¶œë°œì‹œê°ìˆœ'],['arrive','ë„ì°©ì‹œê°ìˆœ']],rd.sort)}</select></label>
-          <label>ìµœëŒ€ ì†Œìš”<select id="setting-route-max">${_settingsOptions([['0','ì œí•œì—†ìŒ'],['60','1ì‹œê°„'],['90','1ì‹œê°„ 30ë¶„'],['120','2ì‹œê°„'],['180','3ì‹œê°„'],['240','4ì‹œê°„']],rd.maxDuration)}</select></label>
-          <label>ì—´ì°¨ ë“±ê¸‰<select id="setting-route-grade">${_settingsOptions([['all','ì „ì²´'],['KTX','KTX'],['SRT','SRT'],['ITX-ìƒˆë§ˆì„','ITX-ìƒˆë§ˆì„'],['ITX-ì²­ì¶˜','ITX-ì²­ì¶˜'],['ë¬´ê¶í™”í˜¸','ë¬´ê¶í™”í˜¸'],['ë‚¨ë„í•´ì–‘','ë‚¨ë„í•´ì–‘'],['êµ­ì•…ì™€ì¸','êµ­ì•…ì™€ì¸']],rd.grade)}</select></label>
-          <label>ì‹œê°„ ì´í›„<input id="setting-route-after" type="text" value="${_settingsAttr(rd.after)}" placeholder="ì˜ˆ: 9:00"></label>
-          <label>ìµœì†Œ í™˜ìŠ¹ ëŒ€ê¸°<select id="setting-route-xfer-min">${_settingsOptions([['3','3ë¶„'],['5','5ë¶„'],['10','10ë¶„'],['15','15ë¶„'],['20','20ë¶„']],rd.xferMin)}</select></label>
-          <label>ìµœëŒ€ í™˜ìŠ¹ ëŒ€ê¸°<select id="setting-route-xfer-max">${_settingsOptions([['30','30ë¶„'],['45','45ë¶„'],['60','60ë¶„'],['90','90ë¶„'],['120','120ë¶„']],rd.xferMax)}</select></label>
-        </div>
-        <div class="settings-actions">
-          <button class="btn btn-primary" onclick="saveRouteDefaults()">ê¸°ë³¸ê°’ ì €ì¥</button>
-          <button class="btn settings-reset-btn" onclick="resetRouteDefaults()">ì´ˆê¸°í™”</button>
-          <span id="route-default-status" class="settings-save-status"></span>
-        </div>
-      </div>
-    </details>
-  </div></div>`;
-}
-
-// â”€â”€ âŒš ì›Œì¹˜ ëª¨ë“œ: ìµœì†Œ ì •ë³´ í™”ë©´ â”€â”€
-let _watchTimer=null,_watchTrainNo=null;
-function _startWatchTimer(){ _stopWatchTimer(); _watchTimer=setInterval(_renderWatchView,30000); }
-function _stopWatchTimer(){ if(_watchTimer){clearInterval(_watchTimer);_watchTimer=null;} }
-function _buildWatchView(){
-  const d=document.createElement('div'); d.id='watch-view';
-  document.body.appendChild(d);
-}
-function _watchPickTrains(nowM){
-  const rows=[];
-  ALL_TRAINS.forEach(t=>{
-    const st=getCurrentStatus(t,nowM-( _simDelayOn?_simDelay(t,nowM):0));
-    if(st&&st.status==='running')rows.push(t);
-  });
-  return rows.slice(0,60);
-}
-function _renderWatchView(){
-  const host=document.getElementById('watch-view'); if(!host)return;
-  const n=new Date(), nowM=n.getHours()*60+n.getMinutes();
-  const running=_watchPickTrains(nowM);
-  const _jn=(typeof _journeyNo!=='undefined')?_journeyNo:null; // ì„ ì–¸ ì „ í˜¸ì¶œ ëŒ€ë¹„
-  if(!_watchTrainNo&&(_jn&&running.find(t=>t.no===_jn)))_watchTrainNo=_jn;
-  if(!_watchTrainNo&&running.length)_watchTrainNo=running[0].no;
-  const t=getTrainByNo(_watchTrainNo);
-  const gl=g=>(typeof GL!=='undefined'&&GL[g])||g;
-  let card='';
-  if(t){
-    const d=_simDelayOn?_simDelay(t,nowM):0;
-    const st=getCurrentStatus(t,nowM-d)||{};
-    const timed=t.stops.filter(s=>hasTime(s.arr)||hasTime(s.dep));
-    const first=timed[0], last=timed[timed.length-1];
-    const termD=_simDelayOn?_simDelayAtStop(t,timed.length-1):0;
-    const eta=addMinToClock(last.arr||last.dep,termD);
-    let body='';
-    if(st.status==='running'){
-      const nextStn=st.atStn||st.nextStn||'';
-      const plat=(nextStn&&typeof _realPlatform==='function')?_realPlatform(t.no,nextStn):null;
-      body=`<div class="wv-row">${st.atStn?`ğŸš‰ ${_opsEsc(st.atStn)} ì •ì°¨ ì¤‘`:`â–¶ ë‹¤ìŒ ${_opsEsc(st.nextStn||'-')}`}${plat!=null?` Â· ${plat}ë²ˆ`:''}</div>
-      <div class="wv-row ${d>0?'wv-late':''}">${d>0?`ğŸ”´ ì•½ ${d}ë¶„ ì§€ì—°`:'ğŸŸ¢ ì •ì‹œ ìš´í–‰'}</div>
-      <div class="wv-row">ğŸ ${_opsEsc(last.s)} ${eta} ë„ì°©${termD>0?` (+${termD})`:''}</div>`;
-    } else if(st.status==='before'){
-      body=`<div class="wv-row">ğŸ• ì¶œë°œ ì „</div>
-      <div class="wv-row">${_opsEsc(first.s)} ${first.dep||first.arr} ì¶œë°œ ì˜ˆì •</div>`;
-    } else {
-      body=`<div class="wv-row">â˜‘ï¸ ìš´í–‰ ì¢…ë£Œ</div>
-      <div class="wv-row">${_opsEsc(first.s)} â†’ ${_opsEsc(last.s)} ${last.arr||last.dep} ì°©</div>`;
-    }
-    card=`<div class="wv-card" style="--gc:${GRADE_COLORS[t.grade]||'#888'}">
-      <div class="wv-head"><span class="wv-grade">${_opsEsc(gl(t.grade))}</span> <b>${_opsEsc(t.no)}</b> <span class="wv-dest">${_opsEsc(t.dest)}í–‰</span></div>
-      ${body}
-    </div>`;
-  } else card=`<div class="wv-card"><div class="wv-row">ì—´ì°¨ ë²ˆí˜¸ë¥¼ ì…ë ¥í•˜ì„¸ìš”</div></div>`;
-  host.innerHTML=`
-    <div class="wv-clock">${String(n.getHours()).padStart(2,'0')}:${String(n.getMinutes()).padStart(2,'0')}</div>
-    ${card}
-    <div class="wv-inrow">
-      <input class="wv-input" id="wv-no" inputmode="numeric" placeholder="ì—´ì°¨ ë²ˆí˜¸" value="${_opsEsc(_watchTrainNo||'')}" onkeydown="if(event.key==='Enter')_watchGo()">
-      <button class="wv-go" onclick="_watchGo()">ì¡°íšŒ</button>
-    </div>
-    <button class="wv-exit" onclick="setUiMode('mobile')">ğŸ“± ëª¨ë°”ì¼ ëª¨ë“œ</button>`;
-}
-function _watchGo(){
-  const el=document.getElementById('wv-no'); const v=el?String(el.value).trim():'';
-  if(!v)return;
-  const t=getTrainByNo(v);
-  if(!t){ el.value=''; el.placeholder='ì—†ëŠ” ë²ˆí˜¸'; return; }
-  _watchTrainNo=t.no; _renderWatchView();
-}
-
-// â”€â”€ ğŸ–¥ï¸ PC ëª¨ë“œ: í‚¤ë³´ë“œ ì¡°ì‘ (+/- ì¤Œ Â· WASD/ë°©í–¥í‚¤ ë…¸ì„ ë„ ì´ë™) â”€â”€
-document.addEventListener('keydown',e=>{
-  if(_uiMode!=='pc')return;
-  const tag=(e.target&&e.target.tagName)||'';
-  if(tag==='INPUT'||tag==='TEXTAREA'||tag==='SELECT'||e.target.isContentEditable)return;
-  const wrap=document.getElementById('map-svg-wrap');
-  if(e.key==='+'||e.key==='='){ if(typeof mapZoomIn==='function'){mapZoomIn();e.preventDefault();} }
-  else if(e.key==='-'||e.key==='_'){ if(typeof mapZoomOut==='function'){mapZoomOut();e.preventDefault();} }
-  else if(wrap){
-    const P=90;
-    if(e.key==='ArrowUp'||e.key==='w'||e.key==='W'){wrap.scrollTop-=P;e.preventDefault();}
-    else if(e.key==='ArrowDown'||e.key==='s'||e.key==='S'){wrap.scrollTop+=P;e.preventDefault();}
-    else if(e.key==='ArrowLeft'||e.key==='a'||e.key==='A'){wrap.scrollLeft-=P;e.preventDefault();}
-    else if(e.key==='ArrowRight'||e.key==='d'||e.key==='D'){wrap.scrollLeft+=P;e.preventDefault();}
-  }
-});
-setTimeout(()=>{try{_applyUiMode();}catch(e){}},0); // ì „ì²´ ìŠ¤í¬ë¦½íŠ¸ ë¡œë“œ í›„ ëª¨ë“œ ì ìš©
-setTimeout(()=>{try{applyStationDefaults();}catch(e){}},0);
-setTimeout(()=>{try{applyRouteDefaults();}catch(e){}},0);
-
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-// ğŸ« ì—´ì°¨ ì˜ˆë§¤ íƒ­
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-let _bookRoundTrip = false;
-let _bookPassengerCount = 1;
-
-function renderMyBookTab(){
-  const el = document.getElementById('my-result-book');
-  if(!el) return;
-  // my-result-bookìš© ë Œë”ë§ (ë§ˆì´í˜ì´ì§€ ì„œë¸ŒíŒ¨ë„)
-  _renderBookTabInto(el, "my-book-results");
-}
-
-function renderBookTab(){
-  const el = document.getElementById('result-book');
-  if(!el) return;
-  _renderBookTabInto(el);
-}
-
-// 002: ì¦ê²¨ì°¾ëŠ” êµ¬ê°„ ì›í„°ì¹˜ ì¬ì˜ˆë§¤
-function loadBookRoutes(){ try{ return JSON.parse(localStorage.getItem('nimbi_bookroutes'))||[]; }catch(e){ return []; } }
-function saveBookRouteCurrent(){
-  const f=window._bookFrom, t=window._bookTo;
-  if(!f||!t){ alert('ì¶œë°œì—­ê³¼ ë„ì°©ì—­ì„ ë¨¼ì € ì„ íƒí•´ ì£¼ì„¸ìš”.'); return; }
-  let list=loadBookRoutes();
-  const already=list.some(r=>r.from===f&&r.to===t);
-  if(already) list=list.filter(r=>!(r.from===f&&r.to===t));
-  else { list.unshift({from:f,to:t}); list=list.slice(0,8); }
-  try{ localStorage.setItem('nimbi_bookroutes',JSON.stringify(list)); }catch(e){}
-  // ì‹ ê·œ ë“±ë¡ ì‹œ ì¦ê²¨ì°¾ê¸°(êµ¬ê°„)ì—ë„ ìë™ ë“±ë¡
-  if(!already){
-    const favs=loadFavs();
-    const favId='route:'+f+':'+t;
-    if(!favs.some(x=>x.id===favId)){
-      favs.push({id:favId,type:'route',label:f+' â†’ '+t,data:{from:f,to:t},cat:'etc',addedAt:Date.now()});
-      saveFavs(favs);
-      if(document.getElementById('panel-fav')?.classList.contains('active')) renderFavs();
-    }
-  }
-  // ì¦‰ì‹œ ë°˜ì˜: í˜„ì¬ í™”ë©´(ë©”ì¸Â·ë§ˆì´í˜ì´ì§€)ì˜ êµ¬ê°„ ì €ì¥ í–‰ë§Œ ê·¸ ìë¦¬ì—ì„œ ê°±ì‹ 
-  document.querySelectorAll('.book-fav-row').forEach(el=>{ el.outerHTML=_bookRoutesRowHTML(); });
-}
-function applyBookRoute(f,t){
-  window._bookFrom=f; window._bookTo=t;
-  const fn=document.getElementById('book-from-name'), tn=document.getElementById('book-to-name');
-  if(fn)fn.textContent=f; if(tn)tn.textContent=t;
-  searchBookTrainsUI();
-}
-function _bookRoutesRowHTML(){
-  const list=loadBookRoutes();
-  const saved=window._bookFrom&&window._bookTo&&list.some(r=>r.from===window._bookFrom&&r.to===window._bookTo);
-  const chips=list.map(r=>`<button class="book-fav-chip" onclick="applyBookRoute('${r.from.replace(/'/g,"\\'")}','${r.to.replace(/'/g,"\\'")}')">${r.from}â†’${r.to}</button>`).join('');
-  return `<div class="book-fav-row">
-    <button class="book-fav-save${saved?' on':''}" onclick="saveBookRouteCurrent()">${saved?'â˜… ì €ì¥ë¨':'â˜† êµ¬ê°„ ì €ì¥'}</button>
-    ${chips||'<span class="book-fav-empty">ìì£¼ íƒ€ëŠ” êµ¬ê°„ì„ ì €ì¥í•˜ë©´ ì›í„°ì¹˜ë¡œ ì¬ì˜ˆë§¤</span>'}
-  </div>`;
-}
-
-function _renderBookTabInto(el, resultId){
-  resultId = resultId || "book-results";
-  const toLocalDateStr = d => {
-    const y=d.getFullYear(), m=String(d.getMonth()+1).padStart(2,'0'), day=String(d.getDate()).padStart(2,'0');
-    return `${y}-${m}-${day}`;
-  };
-  const today = new Date();
-  const minDate = toLocalDateStr(today);
-  const maxD = new Date(today); maxD.setMonth(maxD.getMonth()+1);
-  const maxDate = toLocalDateStr(maxD);
-  el.innerHTML = `
-    <div class="book-card">
-      <!-- í¸ë„/ì™•ë³µ í† ê¸€ -->
-      <div class="book-trip-type">
-        <button class="book-type-btn${!_bookRoundTrip?' active':''}" onclick="setBookTripType(false)">í¸ë„</button>
-        <button class="book-type-btn${_bookRoundTrip?' active':''}" onclick="setBookTripType(true)">ì™•ë³µ</button>
-      </div>
-
-      <!-- ì¶œë°œ/ë„ì°©ì—­ -->
-      <div class="book-route-row">
-        <div class="book-stn-box" onclick="openBookStnPicker('from')">
-          <div class="book-stn-label">ì¶œë°œ</div>
-          <div class="book-stn-name" id="book-from-name">ì¶œë°œì—­ ì„ íƒ</div>
-        </div>
-        <button class="book-swap-btn" onclick="swapBookStations()">â‡„</button>
-        <div class="book-stn-box" onclick="openBookStnPicker('to')">
-          <div class="book-stn-label">ë„ì°©</div>
-          <div class="book-stn-name" id="book-to-name">ë„ì°©ì—­ ì„ íƒ</div>
-        </div>
-      </div>
-
-      <!-- ë‚ ì§œ -->
-      <div class="book-date-row">
-        <div class="book-date-box">
-          <div class="book-date-label">ê°€ëŠ”ë‚ </div>
-          <input type="date" id="book-date-go" class="book-date-input" value="${minDate}" min="${minDate}" max="${maxDate}">
-        </div>
-        <div class="book-date-box" id="book-date-back-row" style="${_bookRoundTrip?'':'display:none'}">
-          <div class="book-date-label">ì˜¤ëŠ”ë‚ </div>
-          <input type="date" id="book-date-back" class="book-date-input" value="${minDate}" min="${minDate}" max="${maxDate}">
-        </div>
-      </div>
-
-      <!-- ì¸ì› -->
-      <div class="book-passenger-row" onclick="openBookPassengerPicker()">
-        <span class="book-passenger-label">ì¸ì› ì„ íƒ</span>
-        <span class="book-passenger-val" id="book-passenger-val">ì–´ë¥¸ ${_bookPassengerCount}ëª…</span>
-        <span class="book-passenger-arrow">â€º</span>
-      </div>
-
-      <!-- ì§í†µ/í™˜ìŠ¹ ì„ íƒ + ì¡°íšŒ ë²„íŠ¼ -->
-      <div style="display:flex;gap:8px;margin-bottom:0">
-        <select id="book-transfer-sel" onchange="_toggleAdjInfoBtn(this)" style="flex:1;background:var(--bg3);border:1px solid var(--border);border-radius:10px;color:var(--text1);font-family:var(--sans);font-size:14px;padding:0 12px;outline:none;cursor:pointer;color-scheme:dark">
-          <option value="direct">ì§í†µ</option>
-          <option value="transfer">í™˜ìŠ¹ í¬í•¨</option>
-          <option value="adjacent">ì¸ì ‘ì—­ í¬í•¨</option>
-        </select>
-        <button id="adj-info-btn" onclick="openAdjInfo()" title="ì¸ì ‘ì—­ ì·¨ê¸‰ ê¸°ì¤€Â·ê²€ìƒ‰" style="display:none;flex-shrink:0;width:42px;border-radius:10px;border:1px solid var(--border);background:var(--bg3);color:var(--text2);font-size:15px;font-weight:700;cursor:pointer;font-family:var(--sans)">â“˜</button>
-        <button class="book-search-btn" style="flex:2" onclick="searchBookTrainsUI()">ì—´ì°¨ ì¡°íšŒ</button>
-      </div>
-    </div>
-    ${_bookRoutesRowHTML()}
-    <div id="${resultId}"></div>`;
-
-  // ì—­ ì„ íƒ ìƒíƒœ ë³µì›
-  if(window._bookFrom) document.getElementById('book-from-name').textContent = window._bookFrom;
-  if(window._bookTo) document.getElementById('book-to-name').textContent = window._bookTo;
-}
-
-function setBookTripType(isRound){
-  _bookRoundTrip = isRound;
-  if(document.getElementById('my-result-book')) renderMyBookTab();
-  else renderBookTab();
-}
-
-function swapBookStations(){
-  const tmp = window._bookFrom;
-  window._bookFrom = window._bookTo;
-  window._bookTo = tmp;
-  if(document.getElementById('my-result-book')) renderMyBookTab();
-  else renderBookTab();
-}
-
-// ì—­ ì„ íƒ íŒì—…
-function openBookStnPicker(type){
-  document.getElementById('book-stn-picker-wrap')?.remove();
-  const wrap = document.createElement('div');
-  wrap.id = 'book-stn-picker-wrap';
-  // ì „ì²´í™”ë©´ wrapì— z-index + pointer-events ì ìš© (í„°ì¹˜ ì°¨ë‹¨ + ë¸”ëŸ¬)
-  wrap.style.cssText = 'position:fixed;inset:0;z-index:9500;display:flex;align-items:center;justify-content:center';
-  wrap.innerHTML = `
-    <div style="position:fixed;inset:0;background:rgba(0,0,0,.65);backdrop-filter:blur(3px);z-index:0" onclick="closeBookStnPicker()"></div>
-    <div style="position:relative;z-index:2;background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:20px;width:90vw;max-width:340px;box-shadow:0 8px 32px rgba(0,0,0,.6)">
-      <div style="font-size:15px;font-weight:700;margin-bottom:12px">${type==='from'?'ì¶œë°œì—­':'ë„ì°©ì—­'} ì„ íƒ</div>
-      <input type="text" id="book-stn-input" placeholder="ì—­ëª… ì…ë ¥ (ì˜ˆ: ì„œìš¸, ã……ã…‡)" autocomplete="off"
-        style="width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:6px;color:var(--text1);font-family:var(--sans);font-size:14px;padding:10px 12px;outline:none;display:block;margin-bottom:6px">
-      <div id="book-stn-list" style="max-height:240px;overflow-y:auto;border-radius:6px;background:var(--bg3)"></div>
-      <button style="margin-top:10px;width:100%;padding:9px;border-radius:8px;border:1px solid var(--border);background:transparent;color:var(--text2);font-size:13px;cursor:pointer;font-family:var(--sans)" onclick="closeBookStnPicker()">ì·¨ì†Œ</button>
-    </div>`;
-  document.body.appendChild(wrap);
-
-  const inp = document.getElementById('book-stn-input');
-  const list = document.getElementById('book-stn-list');
-  if(!inp||!list) return;
-
-  function renderList(q){
-    if(!q){list.innerHTML='';return;}
-    const validStns = type==='from'
-      ? getBookableStations()
-      : (window._bookFrom
-          ? ALL_STATIONS.filter(s=>ALL_TRAINS.some(t=>{
-              const fi=t.stops.findIndex(x=>x.s===window._bookFrom);
-              const ti=t.stops.findIndex(x=>x.s===s);
-              return fi>=0&&ti>fi&&!isPassStop(t,window._bookFrom)&&!isPassStop(t,s);
-            }))
-          : getBookableStations());
-    const hits = validStns.filter(s=>matchesQuery(s,q)).slice(0,15);
-    if(!hits.length){list.innerHTML='<div style="padding:10px 14px;color:var(--text3);font-size:13px">ê²€ìƒ‰ ê²°ê³¼ ì—†ìŒ</div>';return;}
-    list.innerHTML = hits.map(s=>{
-      let display=s;
-      if(!CHO.includes(q[0])){
-        const i=s.indexOf(q);
-        if(i>=0) display=s.slice(0,i)+`<span style="color:var(--accent)">${s.slice(i,i+q.length)}</span>`+s.slice(i+q.length);
-      }
-      return `<div data-val="${s}" style="padding:11px 14px;cursor:pointer;border-bottom:1px solid var(--border);font-size:14px"
-        onmousedown="event.preventDefault();selectBookStn('${type}','${s}')"
-        ontouchend="event.preventDefault();selectBookStn('${type}','${s}')">${display}</div>`;
-    }).join('');
-  }
-
-  inp.addEventListener('input', ()=>renderList(inp.value.trim()));
-  inp.addEventListener('keydown', e=>{
-    if(e.key==='Escape') closeBookStnPicker();
-    if(e.key==='Enter'){
-      const items=[...list.querySelectorAll('[data-val]')];
-      if(items.length===1) selectBookStn(type,items[0].dataset.val);
-    }
-  });
-
-  setTimeout(()=>inp.focus(), 80);
-}
-function closeBookStnPicker(){
-  document.getElementById('book-stn-picker-wrap')?.remove();
-}
-function selectBookStn(type, val){
-  if(type==='from') window._bookFrom=val;
-  else window._bookTo=val;
-  closeBookStnPicker();
-  renderBookTab();
-}
-
-// ì¸ì› ì„ íƒ íŒì—…
-function openBookPassengerPicker(){
-  const old = document.getElementById('book-pass-picker-wrap');
-  if(old) old.remove();
-  const wrap = document.createElement('div');
-  wrap.id = 'book-pass-picker-wrap';
-  wrap.style.cssText='position:fixed;inset:0;z-index:9600;display:flex;align-items:center;justify-content:center';
-  wrap.innerHTML = `
-    <div style="position:fixed;inset:0;background:rgba(0,0,0,.65);backdrop-filter:blur(2px);z-index:0" onclick="closeBookPassengerPicker()"></div>
-    <div style="position:relative;z-index:2;background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:24px 20px;width:88vw;max-width:300px;text-align:center;box-shadow:0 8px 32px rgba(0,0,0,.6)">
-      <div style="font-size:15px;font-weight:700;margin-bottom:20px">ì¸ì› ì„ íƒ</div>
-      <div class="booking-passenger-control" style="margin:0 0 16px">
-        <button class="booking-stepper-btn" onclick="changeBookPassenger(-1)">âˆ’</button>
-        <span id="book-passenger-num" style="font-size:26px;font-weight:700;min-width:44px;display:inline-block">${_bookPassengerCount}</span>
-        <button class="booking-stepper-btn" onclick="changeBookPassenger(1)">+</button>
-      </div>
-      <div style="font-size:13px;color:var(--text2);margin-bottom:18px">ì–´ë¥¸ ê¸°ì¤€ (ìµœëŒ€ 6ëª…)</div>
-      <button class="btn btn-primary" style="width:100%;justify-content:center;padding:12px;font-size:14px" onclick="confirmBookPassenger()">í™•ì¸</button>
-    </div>`;
-  document.body.appendChild(wrap);
-}
-function closeBookPassengerPicker(){
-  const el = document.getElementById('book-pass-picker-wrap');
-  if(el) el.remove();
-}
-function changeBookPassenger(d){
-  _bookPassengerCount = Math.max(1, Math.min(6, _bookPassengerCount+d));
-  const el = document.getElementById('book-passenger-num');
-  if(el) el.textContent = _bookPassengerCount;
-}
-function confirmBookPassenger(){
-  closeBookPassengerPicker();
-  const el = document.getElementById('book-passenger-val');
-  if(el) el.textContent = `ì–´ë¥¸ ${_bookPassengerCount}ëª…`;
-  window._bookingPassengerCount = _bookPassengerCount;
-  // ì˜ˆë§¤ íŒì—… ë‚´ ì¸ì›ë„ ë™ê¸°í™”
-  const bpc = document.getElementById('booking-passenger-count');
-  if(bpc) bpc.textContent = _bookPassengerCount;
-  window._bookingPassengerCount = _bookPassengerCount;
-  // ì„ íƒëœ ì¢Œì„ ì´ˆê¸°í™” (ì¸ì› ë°”ë€Œë©´ ì¢Œì„ ë‹¤ì‹œ ì„ íƒ)
-  window._preselectedSeats = null;
-  const disp = document.getElementById('booking-seat-display');
-  if(disp) disp.textContent = 'ìë™ ë°°ì •';
-}
-
-// ì—´ì°¨ ì¡°íšŒ
-function searchBookTrainsUI(){
-  window._activePassId=null; // ì‚¬ìš©ìê°€ ì§ì ‘ ì¡°íšŒí•˜ë©´ ì •ê¸°ê¶Œ ì˜ˆë§¤ íë¦„ í•´ì œ
-  const sel=document.getElementById('book-transfer-sel');
-  searchBookTrains(sel?.value==='transfer', sel?.value==='adjacent');
-}
-// ì¸ì ‘ì—­: ì§ì„ ê±°ë¦¬ km ì´ë‚´ì˜ ê¸°ì°¨ ì •ì°¨ì—­ (ì„œìš¸-ì²­ëŸ‰ë¦¬, ëŒ€ì „-ì„œëŒ€ì „ ê°™ì€ ê´€ê³„ìš©)
-function _nearbyTrainStations(name, km){
-  km=km||10;
-  const cur=_stnCoord(name);
-  if(!cur||typeof haversineKm!=='function')return [];
-  _modeStnSetsInit();
-  const out=[];
-  for(const s of (_trainStnSet||[])){
-    if(s===name)continue;
-    const c=_stnCoord(s);
-    if(!c)continue;
-    const d=haversineKm(cur.lat,cur.lon,c.lat,c.lon);
-    if(d<=km)out.push({n:s,d});
-  }
-  return out.sort((a,b)=>a.d-b.d);
-}
-// ì¸ì ‘ì—­ â“˜ ë²„íŠ¼: 'ì¸ì ‘ì—­ í¬í•¨' ì„ íƒ ì‹œì—ë§Œ í‘œì‹œ
-function _toggleAdjInfoBtn(sel){
-  const btn=document.getElementById('adj-info-btn');
-  if(btn)btn.style.display=(sel&&sel.value==='adjacent')?'':'none';
-}
-// ì¸ì ‘ì—­ ì·¨ê¸‰ ê¸°ì¤€ + ì—­ëª… ê²€ìƒ‰ íŒì—… (ì˜ˆë§¤ í™”ë©´ â“˜ ë²„íŠ¼)
-function openAdjInfo(){
-  const bd=document.createElement('div');
-  bd.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:9950;display:flex;align-items:center;justify-content:center;padding:24px';
-  bd.innerHTML=`<div style="background:var(--bg2);border:1px solid var(--border);border-radius:14px;max-width:360px;width:100%;max-height:80vh;display:flex;flex-direction:column;overflow:hidden">
-    <div style="padding:18px 18px 10px;flex-shrink:0">
-      <div style="font-size:15px;font-weight:800;margin-bottom:10px;color:var(--accent2)">â“˜ ì¸ì ‘ì—­ ì•ˆë‚´</div>
-      <div style="background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:10px 12px;font-size:12px;line-height:1.7;color:var(--text2)">
-        <b style="color:var(--text1)">ì·¨ê¸‰ ê¸°ì¤€</b><br>
-        Â· ì§ì„ ê±°ë¦¬ <b style="color:var(--accent2)">10km ì´ë‚´</b>ì˜ ê¸°ì°¨ ì •ì°¨ì—­<br>
-        Â· ì¡°íšŒí•œ ì—­ì— ì •ì°¨í•˜ëŠ” ì—´ì°¨ëŠ” ì œì™¸ (ê°™ì€ ë…¸ì„  ì¤‘ë³µ ë°©ì§€)<br>
-        Â· ì¸ì ‘ì—­ ì—´ì°¨ëŠ” <span style="color:var(--orange)">ì¸ì ‘ì—­</span> í‘œì‹œì™€ í•¨ê»˜ ê²°ê³¼ì— í¬í•¨ë˜ë©°, ì˜ˆë§¤ëŠ” ì‹¤ì œ ë°œì°©ì—­ ê¸°ì¤€ìœ¼ë¡œ ì§„í–‰ë©ë‹ˆë‹¤
-      </div>
-      <input id="adj-info-inp" type="text" placeholder="ì—­ ì´ë¦„ ê²€ìƒ‰ (ì´ˆì„± ê°€ëŠ¥, ì˜ˆ: ã……ã…‡)" autocomplete="off"
-        style="width:100%;box-sizing:border-box;margin-top:12px;background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:10px 14px;color:var(--text1);font-size:14px;font-family:var(--sans);outline:none">
-    </div>
-    <div id="adj-info-results" style="overflow-y:auto;padding:0 18px;flex:1;min-height:0">
-      <div style="color:var(--text3);font-size:12px;padding:6px 0 12px">ì—­ ì´ë¦„ì„ ì…ë ¥í•˜ë©´ ê·¸ ì—­ì˜ ì¸ì ‘ì—­ê³¼ ê±°ë¦¬ê°€ í‘œì‹œë©ë‹ˆë‹¤.</div>
-    </div>
-    <div style="padding:12px 18px 16px;flex-shrink:0;border-top:1px solid var(--border)">
-      <button data-act="close" style="width:100%;padding:11px;border-radius:10px;border:1px solid var(--accent);background:var(--accent);color:#fff;font-size:13px;font-weight:700;cursor:pointer;font-family:var(--sans);touch-action:manipulation">ë‹«ê¸°</button>
-    </div>
-  </div>`;
-  document.body.appendChild(bd);
-  bd.querySelector('[data-act="close"]').addEventListener('click',()=>bd.remove());
-  bd.addEventListener('click',e=>{if(e.target===bd)bd.remove();});
-  const inp=bd.querySelector('#adj-info-inp'), res=bd.querySelector('#adj-info-results');
-  inp.addEventListener('input',()=>{
-    const q=inp.value.trim();
-    if(!q){res.innerHTML='<div style="color:var(--text3);font-size:12px;padding:6px 0 12px">ì—­ ì´ë¦„ì„ ì…ë ¥í•˜ë©´ ê·¸ ì—­ì˜ ì¸ì ‘ì—­ê³¼ ê±°ë¦¬ê°€ í‘œì‹œë©ë‹ˆë‹¤.</div>';return;}
-    _modeStnSetsInit();
-    const cands=[...(_trainStnSet||[])].filter(s=>matchesQuery(s,q)).sort((a,b)=>a.length-b.length).slice(0,3);
-    if(!cands.length){res.innerHTML='<div style="color:var(--text3);font-size:12px;padding:6px 0 12px">ì¼ì¹˜í•˜ëŠ” ê¸°ì°¨ì—­ì´ ì—†ìŠµë‹ˆë‹¤.</div>';return;}
-    res.innerHTML=cands.map(stn=>{
-      const nbs=_nearbyTrainStations(stn);
-      const rows=nbs.length?nbs.map(nb=>`<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--border)33;font-size:13px">
-          <span style="flex:1;font-weight:600">${nb.n}</span>
-          <span style="font-family:var(--mono);font-size:11px;color:var(--text3)">${nb.d.toFixed(1)}km</span>
-        </div>`).join('')
-        :'<div style="color:var(--text3);font-size:12px;padding:4px 0 8px">10km ì´ë‚´ ì¸ì ‘ì—­ ì—†ìŒ</div>';
-      return `<div style="margin-bottom:12px">
-        <div style="font-size:13px;font-weight:800;padding:6px 0 2px;color:var(--accent2)">ğŸš‰ ${stn} <span style="font-weight:400;color:var(--text3);font-size:11px">ì¸ì ‘ì—­ ${nbs.length}ê³³</span></div>
-        ${rows}
-      </div>`;
-    }).join('');
-  });
-  setTimeout(()=>inp.focus(),50);
-}
-// ì¸ì ‘ì—­ ì•ˆë‚´ íŒì—… (ì½”ë ˆì¼í†¡ ìŠ¤íƒ€ì¼) â€” í™•ì¸ ì‹œ ê³„ì† ì§„í–‰
-function _bookAdjConfirm(msg,onOk){
-  const bd=document.createElement('div');
-  bd.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:9600;display:flex;align-items:center;justify-content:center;padding:24px';
-  bd.innerHTML=`<div style="background:var(--bg2);border:1px solid var(--border);border-radius:14px;max-width:340px;width:100%;padding:20px 18px">
-    <div style="font-size:15px;font-weight:800;margin-bottom:10px;color:var(--accent2)">ì´ìš© ì•ˆë‚´</div>
-    <div style="font-size:13.5px;line-height:1.7;color:var(--text1)">${msg}</div>
-    <div style="display:flex;gap:8px;margin-top:16px">
-      <button data-act="no" style="flex:1;padding:11px;border-radius:10px;border:1px solid var(--border);background:var(--bg3);color:var(--text1);font-size:13px;font-weight:700;cursor:pointer;font-family:var(--sans)">ì·¨ì†Œ</button>
-      <button data-act="ok" style="flex:1;padding:11px;border-radius:10px;border:1px solid var(--accent);background:var(--accent);color:#fff;font-size:13px;font-weight:700;cursor:pointer;font-family:var(--sans)">í™•ì¸</button>
-    </div></div>`;
-  document.body.appendChild(bd);
-  bd.querySelector('[data-act="ok"]').addEventListener('click',()=>{bd.remove();onOk();});
-  bd.querySelector('[data-act="no"]').addEventListener('click',()=>bd.remove());
-  bd.addEventListener('click',e=>{if(e.target===bd)bd.remove();});
-}
-
-function searchBookTrains(includeTransfer, includeAdj){
-  const from = window._bookFrom;
-  const to = window._bookTo;
-  const dateGo = document.getElementById('book-date-go')?.value;
-  const dateBack = _bookRoundTrip ? document.getElementById('book-date-back')?.value : null;
-  const el = document.getElementById('my-book-results') || document.getElementById('book-results');
-  if(!el) return;
-  // ê°€ëŠ”ë‚  â†’ íƒ‘ìŠ¹ì¼ ë™ê¸°í™”
-  if(dateGo){
-    const bdEl=document.getElementById('booking-date');
-    if(bdEl) bdEl.value=dateGo;
-    window._currentTravelDate=dateGo;
-  }
-
-  if(!from||!to){
-    el.innerHTML='<div class="empty"><div class="empty-icon">ğŸš‰</div><p>ì¶œë°œì—­ê³¼ ë„ì°©ì—­ì„ ì„ íƒí•´ì£¼ì„¸ìš”</p></div>';
-    return;
-  }
-  if(from===to){
-    el.innerHTML='<div class="empty"><div class="empty-icon">âš ï¸</div><p>ì¶œë°œì—­ê³¼ ë„ì°©ì—­ì´ ê°™ìŠµë‹ˆë‹¤</p></div>';
-    return;
-  }
-
-  // ì§í†µ ì—´ì°¨ íƒìƒ‰
-  const nowForFilter = new Date();
-  const nowMFilter = nowForFilter.getHours()*60+nowForFilter.getMinutes();
-  // ì˜¤ëŠ˜ ë‚ ì§œ ì˜ˆë§¤ì¼ ë•Œë§Œ í˜„ì¬ ì‹œê° ì´ì „ ì—´ì°¨ ì œì™¸
-  const isToday = (dateGo === todayLocalStr());
-  // Aâ†’B ì§í†µ ìŠ¤ìº” (ì¸ì ‘ì—­ íƒìƒ‰ì—ë„ ì¬ì‚¬ìš©)
-  const scanDirect=(A,B)=>{
-    const arr=[];
-    ALL_TRAINS.forEach(t=>{
-      const stops=t.stops;
-      const fi=stops.findIndex(s=>s.s===A);
-      const ti=stops.findIndex(s=>s.s===B);
-      if(fi<0||ti<0||fi>=ti) return;
-      if(isPassStop(t,A)||isPassStop(t,B)) return;
-      const depStop=stops[fi], arrStop=stops[ti];
-      const depT=hasTime(depStop.dep)?depStop.dep:hasTime(depStop.arr)?depStop.arr:null;
-      const arrT=hasTime(arrStop.arr)?arrStop.arr:hasTime(arrStop.dep)?arrStop.dep:null;
-      if(!depT) return;
-      if(isToday && toMin(depT)!==null && toMin(depT)<nowMFilter) return;
-      arr.push({t, depT, arrT, dur:durStr(depT, arrT)});
-    });
-    return arr;
-  };
-  const trains = scanDirect(from,to).map(e=>({...e, aFrom:from, aTo:to, adj:false}));
-
-  // ì¸ì ‘ì—­ í¬í•¨: ì¶œë°œ/ë„ì°©ì—­ ë°˜ê²½ 10km ë‚´ ê¸°ì°¨ì—­ ë°œì°© ì—´ì°¨ (ì¡°íšŒì—­ ë¯¸ì •ì°¨ ì—´ì°¨ë§Œ)
-  if(includeAdj){
-    const stopsAt=(t,stn)=>{const i=t.stops.findIndex(s=>s.s===stn);return i>=0&&!isPassStop(t,stn);};
-    const seen=new Set(trains.map(e=>e.t.no));
-    for(const nb of _nearbyTrainStations(from)){
-      scanDirect(nb.n,to).forEach(e=>{
-        if(seen.has(e.t.no)||stopsAt(e.t,from))return;
-        seen.add(e.t.no);
-        trains.push({...e, aFrom:nb.n, aTo:to, adj:true, miss:from});
-      });
-    }
-    for(const nb of _nearbyTrainStations(to)){
-      scanDirect(from,nb.n).forEach(e=>{
-        if(seen.has(e.t.no)||stopsAt(e.t,to))return;
-        seen.add(e.t.no);
-        trains.push({...e, aFrom:from, aTo:nb.n, adj:true, miss:to});
-      });
-    }
-  }
-  trains.sort((a,b)=>(toMin(a.depT)||0)-(toMin(b.depT)||0));
-
-  if(!trains.length){
-    if(includeTransfer){
-      searchBookTransfers(from, to, dateGo, el);
-    } else {
-      el.innerHTML=`<div class="empty"><div class="empty-icon">ğŸ”</div><p>${from} â†’ ${to} ${includeAdj?'ì§í†µÂ·ì¸ì ‘ì—­':'ì§í†µ'} ì—´ì°¨ê°€ ì—†ìŠµë‹ˆë‹¤.<br><small style="color:var(--text3)">í™˜ìŠ¹ í¬í•¨${includeAdj?'':' Â· ì¸ì ‘ì—­ í¬í•¨'} ì˜µì…˜ìœ¼ë¡œ ë‹¤ì‹œ ê²€ìƒ‰í•´ë³´ì„¸ìš”</small></p></div>`;
-    }
-    return;
-  }
-  const adjCount=trains.filter(e=>e.adj).length;
-
-  // inline onclick ì œê±° â†’ data ì†ì„± ì €ì¥ í›„ addEventListenerë¡œ ë“±ë¡ (iOS Safari í˜¸í™˜)
-  const rows = trains.map(({t,depT,arrT,dur,aFrom,aTo,adj,miss})=>`
-    <div class="book-train-row" data-train-no="${t.no}" data-dep="${depT}" data-arr="${arrT||''}" data-from="${aFrom}" data-to="${aTo}" data-date="${dateGo}" ${adj?`data-adj="1" data-miss="${miss}"`:''} ${adj?'style="opacity:.78"':''}>
-      <div style="flex:1;min-width:0">
-        <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px">
-          <span style="font-size:13px;font-weight:700;color:var(--c-${gcCssVar(t.grade)})">${t.grade}</span>
-          <span style="font-size:13px;color:var(--text2);font-family:var(--mono)">${t.no}</span>
-          <span style="font-size:12px;font-weight:600;color:var(--text1)">${t.dest}í–‰</span>
-          ${adj?`<span style="font-size:9.5px;font-weight:800;padding:1px 7px;border-radius:8px;background:rgba(249,115,22,.12);border:1px solid var(--orange);color:var(--orange)">ì¸ì ‘ì—­</span>`:''}
-          ${(()=>{const state=typeof _simState==='function'?_simState(t,dateGo):null;const live=state?.phase==='running'?state.current:0,est=state?.phase==='before'?state.final:0;return live>0?`<span class="book-delay-tag live">${live}ë¶„ ì§€ì—°</span>`:est>0?`<span class="book-delay-tag est">${est}ë¶„ ì§€ì—° ì˜ˆìƒ</span>`:'';})()}
-        </div>
-        <div style="display:flex;align-items:baseline;gap:6px">
-          <span style="font-size:17px;font-weight:700;font-family:var(--mono)">${depT}</span>
-          ${adj&&aFrom!==from?`<span style="font-size:10.5px;color:var(--orange);font-weight:700">${aFrom}</span>`:''}
-          <span style="color:var(--text3);font-size:12px">â†’</span>
-          <span style="font-size:17px;font-weight:700;font-family:var(--mono);color:var(--green)">${arrT||'-'}</span>
-          ${adj&&aTo!==to?`<span style="font-size:10.5px;color:var(--orange);font-weight:700">${aTo}</span>`:''}
-          <span style="font-size:11px;color:var(--text3);font-family:var(--mono)">${dur}</span>
-        </div>
-        ${adj?`<div style="font-size:10.5px;color:var(--text3);margin-top:3px">${miss}ì—­ ë¯¸ì •ì°¨ Â· ${aFrom!==from?aFrom+' ì¶œë°œ':aTo+' ë„ì°©'}</div>`:''}
-      </div>
-      <div style="display:flex;align-items:center;gap:8px;flex-shrink:0">
-        <div class="seat-avail-btn" data-no="${t.no}"
-          style="min-width:54px;height:44px;border-radius:8px;border:1.5px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:600;font-family:var(--sans);color:var(--text3);text-align:center;line-height:1.3">ì¡°íšŒ<br>ì¤‘</div>
-        <div class="book-train-chevron">â€º</div>
-      </div>
-    </div>`).join('');
-
-  const tripLabel = _bookRoundTrip ? `í¸ë„ (${dateGo})` : dateGo;
-  el.innerHTML = `
-    <div class="result-header" style="margin-top:16px">
-      <div class="result-title">${from} â†’ ${to}</div>
-      <span class="badge blue">${trains.length}í¸</span>
-      ${adjCount?`<span class="badge" style="border-color:var(--orange);color:var(--orange)">ì¸ì ‘ì—­ ${adjCount}í¸</span>`:''}
-      <span class="badge" style="background:var(--bg3)">${tripLabel}</span>
-    </div>
-    <div class="book-train-list">${rows}</div>
-    ${_bookRoundTrip&&dateBack?`<p class="hint" style="margin-top:8px">â€» ì™•ë³µ: ê°€ëŠ” ì—´ì°¨ ì˜ˆë§¤ ì™„ë£Œ í›„ ë³µí¸(${to}â†’${from}, ${dateBack}) ì¡°íšŒê°€ ìë™ìœ¼ë¡œ ì—´ë¦½ë‹ˆë‹¤</p>`:''}`;
-
-  // í™˜ìŠ¹ í¬í•¨: ì§í†µ ê²°ê³¼ ì•„ë˜ì— í™˜ìŠ¹ ê²½ë¡œë„ í•¨ê»˜ í‘œì‹œ
-  if(includeTransfer){
-    const xd=document.createElement('div');
-    el.appendChild(xd);
-    searchBookTransfers(from, to, dateGo, xd, true);
-  }
-
-  // addEventListener ë°©ì‹ìœ¼ë¡œ í´ë¦­ ë“±ë¡ (iOS Safari: overflow-y:auto ë‚´ë¶€ div onclick ë¯¸ë™ì‘ ë°©ì§€)
-  el.querySelectorAll('.book-train-row[data-train-no]:not(.book-xfer-card)').forEach(row=>{
-    row.addEventListener('click', ()=>{
-      // ë‚´ ì—¬í–‰ 'ì¼ì • ì¶”ê°€' ëª¨ë“œ: ì˜ˆë§¤ ëŒ€ì‹  ì—¬ì • ë‹´ê¸° ì°½ì„ ì—°ë‹¤
-      if(window._tripAddMode){
-        const m=window._tripAddMode;
-        const proceed=()=>openTripLegPicker(row.dataset.trainNo, row.dataset.from||from, row.dataset.to||to, row.dataset.dep||'', row.dataset.arr||'', row.dataset.date||dateGo);
-        const conf=(typeof _tripDayOverlap==='function')?_tripDayOverlap(m.tripId, m.day, row.dataset.dep, row.dataset.arr):null;
-        if(conf){
-          if(confirm(`âš ï¸ ì´ë¯¸ ë‹´ê¸´ ì¼ì •ê³¼ ì‹œê°„ì´ ê²¹ì¹©ë‹ˆë‹¤.\n\n${conf.trainNo}ë²ˆ Â· ${conf.fromStn}â†’${conf.toStn}\n${conf.depTime}~${conf.arrTime} (${m.day}ì¼ì°¨)\n\nê·¸ë˜ë„ ì´ ì—´ì°¨ë¥¼ ${m.day}ì¼ì°¨ì— ì¶”ê°€í•˜ì‹œê² ìŠµë‹ˆê¹Œ?`)) proceed();
-        } else proceed();
-        return;
-      }
-      // ì •ê¸°ê¶Œ ì˜ˆë§¤ íë¦„: ì¤‘ê°„ ìš”ê¸ˆ ì‹œíŠ¸ë¥¼ ê±´ë„ˆë›°ê³  ë°”ë¡œ ìš”ì¼Â·ë“±ê¸‰ ì„ íƒì°½ì„ ì—°ë‹¤
-      const go=()=> window._activePassId
-        ? openPassDaySelector(window._activePassId, row.dataset.trainNo, row.dataset.from||from, row.dataset.to||to, row.dataset.dep||'', row.dataset.arr||'')
-        : openBookTrainDetail(row.dataset.trainNo, row.dataset.from||from, row.dataset.to||to, row.dataset.dep||'', row.dataset.arr||'', row.dataset.date||dateGo);
-      if(row.dataset.adj){
-        const miss=row.dataset.miss, aF=row.dataset.from, aT=row.dataset.to;
-        _bookAdjConfirm(`ì¶œë°œì—­ì€ <b>${aF}ì—­</b>ì´ê³  ë„ì°©ì—­ì€ <b>${aT}ì—­</b>ì…ë‹ˆë‹¤.<br><br><b>${miss}ì—­</b>ì€ ì •ì°¨í•˜ì§€ ì•ŠìŠµë‹ˆë‹¤.`, go);
-      } else go();
-    });
-  });
-
-  // ë‚´ ì—¬í–‰ 'ì¼ì • ì¶”ê°€' ëª¨ë“œ: ì´ë¯¸ ë‹´ê¸´ ì¼ì •ê³¼ ì‹œê°„ì´ ê²¹ì¹˜ëŠ” ì—´ì°¨ëŠ” ìŒì˜ í‘œì‹œ
-  if(window._tripAddMode && typeof _tripDayOverlap==='function'){
-    const m=window._tripAddMode;
-    el.querySelectorAll('.book-train-row[data-train-no]:not(.book-xfer-card)').forEach(row=>{
-      const conf=_tripDayOverlap(m.tripId, m.day, row.dataset.dep, row.dataset.arr);
-      if(conf){ row.classList.add('trip-row-overlap'); row.setAttribute('title','ì´ë¯¸ ë‹´ê¸´ ì¼ì •ê³¼ ì‹œê°„ì´ ê²¹ì¹©ë‹ˆë‹¤'); }
-    });
-  }
-
-  // ì¡°íšŒ êµ¬ê°„ ê³µí†µ ì¬ê³ ë§Œ ë¨¼ì € ê³„ì‚°í•˜ê³  ì•ìª½ ê²°ê³¼ë¶€í„° í‘œì¶œí•œë‹¤.
-  // ì¢Œì„ ë“±ê¸‰ë³„ ìƒì„¸ ê³„ì‚°ì€ ì¢Œì„ ì„ íƒ ì‹œì ê¹Œì§€ ë¯¸ë¤„ ì´ˆê¸° ê²€ìƒ‰ì„ ê°€ë³ê²Œ ìœ ì§€í•œë‹¤.
-  _hydrateBookSeatStatuses(trains,el,dateGo,from,to);
-}
-
-function _bookSeatStatus(cong){
-  const rate=Math.max(0,Number(cong?.rate)||0),available=Math.max(0,Number(cong?.available)||0);
-  if(available<=0||rate>=1){
-    if((Number(cong?.standingAvailable)||0)>0&&cong?.standingEligible)return{label:'ì…ì„',color:'#c084fc',bg:'rgba(192,132,252,.10)'};
-    return{label:'ë§¤ì§„',color:'var(--red)',bg:'rgba(248,81,73,.08)'};
-  }
-  if(rate<=.55)return{label:'ì—¬ìœ ',color:'var(--green)',bg:'rgba(63,185,80,.08)'};
-  if(rate<=.75)return{label:'ë³´í†µ',color:'var(--accent2)',bg:'rgba(56,139,253,.08)'};
-  return{label:'í˜¼ì¡',color:'var(--orange)',bg:'rgba(249,115,22,.08)'};
-}
-function _hydrateBookSeatStatuses(trains,el,dateGo,from,to){
-  const base='min-width:54px;height:44px;border-radius:8px;border:1.5px solid;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;font-family:var(--sans)';
-  const generation=window._bookSeatHydrationGeneration=(window._bookSeatHydrationGeneration||0)+1;
-  const entries=[...el.querySelectorAll('.book-train-row[data-train-no]:not(.book-xfer-card)')].map((row,index)=>({
-    row,btn:row.querySelector('.seat-avail-btn'),result:trains[index]
-  })).filter(x=>x.btn&&x.result);
-  const byRow=new Map(entries.map(entry=>[entry.row,entry])),queue=[];
-  let scheduled=false;
-  const active=entry=>window._bookSeatHydrationGeneration===generation&&el.isConnected&&entry.btn.isConnected;
-  const processNext=()=>{
-    scheduled=false;
-    const entry=queue.shift();
-    if(!entry)return;
-    if(active(entry)){
-      const {t,aFrom,aTo}=entry.result;
-      const cong=typeof getODCongestion==='function'?getODCongestion(t,aFrom||from,aTo||to,dateGo):null;
-      if(active(entry)){
-        const meta=_bookSeatStatus(cong);
-        entry.btn.textContent=meta.label;
-        entry.btn.style.cssText=`${base};color:${meta.color};border-color:${meta.color};background:${meta.bg}`;
-        entry.btn.dataset.seatHydrated='1';
-      }
-    }
-    scheduleNext();
-  };
-  const scheduleNext=()=>{
-    if(scheduled||!queue.length||window._bookSeatHydrationGeneration!==generation)return;
-    scheduled=true;
-    if(window.requestIdleCallback)window.requestIdleCallback(processNext,{timeout:450});
-    else window.setTimeout(processNext,0);
-  };
-  const hydrate=entry=>{
-    if(entry.btn.dataset.seatHydrated==='1'||entry.btn.dataset.seatQueued==='1')return;
-    entry.btn.dataset.seatQueued='1';
-    queue.push(entry);
-    scheduleNext();
-  };
-  /*
-   * í•œ ë²ˆì˜ idle callbackì—ì„œ ì—¬ëŸ¬ í¸ì„±ì˜ ì „ì²´ OD ì¬ê³ ë¥¼ ì—°ì† ê³„ì‚°í•˜ì§€ ì•ŠëŠ”ë‹¤.
-   * ê²€ìƒ‰ì„ ë‹¤ì‹œ í•˜ê±°ë‚˜ í™”ë©´ì„ ë‹«ìœ¼ë©´ generationì´ ë°”ë€Œì–´ ì´ì „ ê²€ìƒ‰ì˜ ê³„ì‚°ë„ ì¦‰ì‹œ íê¸°ëœë‹¤.
-   */
-  if('IntersectionObserver' in window){
-    window._bookSeatObserver?.disconnect();
-    const observer=new IntersectionObserver(items=>{
-      items.forEach(item=>{
-        if(!item.isIntersecting)return;
-        const entry=byRow.get(item.target);
-        if(entry)hydrate(entry);
-        observer.unobserve(item.target);
-      });
-    },{root:null,rootMargin:'240px 0px'});
-    window._bookSeatObserver=observer;
-    entries.forEach(entry=>observer.observe(entry.row));
-    window.setTimeout(()=>{
-      if(!el.isConnected||window._bookSeatObserver!==observer)observer.disconnect();
-    },120000);
-  }else{
-    // êµ¬í˜• ë¸Œë¼ìš°ì €ëŠ” ì•ìª½ ê²°ê³¼ë§Œ ì¦‰ì‹œ ê³„ì‚°í•˜ê³  ë‚˜ë¨¸ì§€ëŠ” ì§§ì€ ê°„ê²©ìœ¼ë¡œ ë¶„ì‚°í•œë‹¤.
-    entries.forEach(entry=>hydrate(entry));
-  }
-}
-
-
-// ì—´ì°¨ ìƒì„¸ & ì˜ˆë§¤ íŒ¨ë„ (í•˜ë‹¨ ìŠ¬ë¼ì´ë“œì—…)
-function openBookTrainDetail(trainNo, from, to, depT, arrT, travelDate){
-  const t = getTrainByNo(trainNo);
-  if(!t) return;
-
-  const old = document.getElementById('book-detail-wrap');
-  if(old) old.remove();
-
-  // ë§¤ì§„ ì—¬ë¶€ íŒì • (ì˜ˆë§¤ íƒ­ ë§¤ì§„ ì—´ì°¨ ì „ìš© ì—¬ì„ ì•Œë¦¼)
-  let soldOut=false;
-  try{
-    soldOut=_bookSeatStatus(getODCongestion(t,from,to,travelDate)).label==='ë§¤ì§„';
-  }catch(e){}
-
-  const fare = calcFare(t, from, to, 'general');
-  const fareSpec = availableSeatClasses(t.grade).map(c=>{
-    const f = calcFare(t, from, to, c);
-    return `<div class="book-detail-fare-row">
-      <span>${seatClassDisplayLabel(t,c)}</span>
-      <span style="font-family:var(--mono);color:var(--accent);font-weight:600">${f.toLocaleString()}ì›</span>
-    </div>`;
-  }).join('');
-
-  const wrap = document.createElement('div');
-  wrap.id = 'book-detail-wrap';
-  // wrapì€ ìŠ¤íƒ€ì¼ ì—†ì´ ìˆœìˆ˜ ì»¨í…Œì´ë„ˆ (ìŠ¤íƒœí‚¹ ì»¨í…ìŠ¤íŠ¸ ì—†ìŒ)
-  // inline onclick ì œê±° â†’ appendChild í›„ addEventListenerë¡œ ë“±ë¡ (iOS Safari í˜¸í™˜)
-  wrap.innerHTML = `
-    <div class="book-detail-backdrop"></div>
-    <div class="book-detail-panel">
-      <div style="flex-shrink:0;padding:12px 20px 0">
-        <div class="book-detail-handle"></div>
-        <div class="book-detail-head">
-          <div>
-            <span class="book-detail-grade" style="color:var(--c-${gcCssVar(t.grade)})">${t.grade}</span>
-            <span class="book-detail-no">${t.no}</span>
-          </div>
-          <button class="my-panel-close" id="bdd-close-x">âœ•</button>
-        </div>
-        <div class="book-detail-route">
-          <div class="book-detail-stn">
-            <div class="book-detail-stn-name">${from}</div>
-            <div class="book-detail-stn-time">${depT}</div>
-          </div>
-          <div class="book-detail-dur">${durStr(depT,arrT)}</div>
-          <div class="book-detail-stn" style="text-align:right">
-            <div class="book-detail-stn-name">${to}</div>
-            <div class="book-detail-stn-time">${arrT||'-'}</div>
-          </div>
-        </div>
-      </div>
-      <div class="book-detail-scroll" style="padding:0 20px">
-        <div class="book-detail-fares">${fareSpec}</div>
-      </div>
-      <div style="flex-shrink:0;padding:8px 20px 32px;display:flex;gap:8px">
-        <button class="btn" id="bdd-detail-btn" style="flex:1;justify-content:center;font-size:13px">ì—´ì°¨ ìƒì„¸</button>
-        ${soldOut
-          ? `<button class="btn" id="bdd-watch-btn" style="flex:2;justify-content:center;font-size:14px;color:var(--red);border-color:var(--red)">ğŸ”” ì—¬ì„ ì•Œë¦¼ (ë§¤ì§„)</button>`
-          : `<button class="btn btn-primary" id="bdd-book-btn" style="flex:2;justify-content:center;font-size:14px">ğŸ« ì˜ˆë§¤í•˜ê¸°</button>`}
-      </div>
-    </div>`;
-  document.body.appendChild(wrap);
-  wrap.querySelector('.book-detail-backdrop').addEventListener('click', closeBookTrainDetail);
-  addMobileTap(document.getElementById('bdd-close-x'), closeBookTrainDetail);
-  addMobileTap(document.getElementById('bdd-detail-btn'), e=>{ e?.preventDefault();e?.stopPropagation();closeBookTrainDetail();openBookRouteDetail(trainNo,from,to,travelDate); });
-  if(soldOut){
-    addMobileTap(document.getElementById('bdd-watch-btn'), ()=>{ closeBookTrainDetail(); openSeatWatchPopup(trainNo,from,to,travelDate); });
-  }else{
-    addMobileTap(document.getElementById('bdd-book-btn'), ()=>{ closeBookTrainDetail(); _bookDetailConfirm(trainNo,from,to,depT,arrT||'',travelDate); });
-  }
-  setTimeout(()=>wrap.querySelector('.book-detail-panel').classList.add('open'), 10);
-}
-
-function _bookRouteMapHTML(t,from,to,gradeColor,travelDate,projectMinutes=0){
-  const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-  // ë¬´ì‹œê° í†µê³¼ì—­ê¹Œì§€ ì¢Œí‘œì ìœ¼ë¡œ ìœ ì§€í•´ì•¼ ì‹¤ì œ ë…¸ì„  ì„ í˜•ì´ ëŠê¸°ê±°ë‚˜ ì§ì„ í™”ë˜ì§€ ì•ŠëŠ”ë‹¤.
-  // í†µê³¼ì—­ì˜ ì Â·ì—­ëª…ì€ ì•„ë˜ ë…¸ë“œ ë‹¨ê³„ì—ì„œ ê·¸ë¦¬ì§€ ì•Šê³  ì„ ë¶„ ê³„ì‚°ì—ë§Œ ì‚¬ìš©í•œë‹¤.
-  const points=(t.stops||[]).map((s,idx)=>({s,idx,coord:_stnCoord(s.geoKey||s.s)})).filter(x=>x.coord);
-  let fromIdx=points.findIndex(x=>x.s.s===from),toIdx=points.findIndex((x,i)=>i>fromIdx&&x.s.s===to);
-  if(points.length<2||fromIdx<0||toIdx<0)return '<div class="brd-map-empty">í‘œì‹œí•  ìˆ˜ ìˆëŠ” ë…¸ì„  ì¢Œí‘œê°€ ì—†ìŠµë‹ˆë‹¤.</div>';
-  const W=620,H=380,P=48;
-  const lons=points.map(x=>x.coord.lon),lats=points.map(x=>x.coord.lat);
-  const minLon=Math.min(...lons),maxLon=Math.max(...lons),minLat=Math.min(...lats),maxLat=Math.max(...lats);
-  const dx=Math.max(.01,maxLon-minLon),dy=Math.max(.01,maxLat-minLat);
-  const scale=Math.min((W-P*2)/dx,(H-P*2)/dy);
-  const usedW=dx*scale,usedH=dy*scale,ox=(W-usedW)/2,oy=(H-usedH)/2;
-  points.forEach(p=>{p.x=ox+(p.coord.lon-minLon)*scale;p.y=oy+(maxLat-p.coord.lat)*scale;});
-  let lines='';
-  for(let i=0;i<points.length-1;i++){
-    const active=i>=fromIdx&&i<toIdx;
-    lines+=`<line x1="${points[i].x.toFixed(1)}" y1="${points[i].y.toFixed(1)}" x2="${points[i+1].x.toFixed(1)}" y2="${points[i+1].y.toFixed(1)}" class="${active?'selected':'muted'}"/>`;
-  }
-  const labelStep=Math.max(1,Math.ceil(points.length/12));
-  const nodes=points.map((p,i)=>{
-    const selected=i===fromIdx||i===toIdx,active=i>=fromIdx&&i<=toIdx;
-    const stopping=!isPassStop(t,p.s.s);
-    if(!stopping)return '';
-    const showLabel=stopping&&(selected||i===0||i===points.length-1||i%labelStep===0);
-    const anchor=p.x>W*.67?'end':p.x<W*.33?'start':'middle';
-    const tx=p.x+(anchor==='start'?8:anchor==='end'?-8:0),ty=p.y+(anchor==='middle'?-10:4);
-    return `<g class="${active?'selected':'muted'}${selected?' endpoint':''}${stopping?' stop':' pass'}"><circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="${selected?7:stopping?3.5:2.2}"><title>${esc(p.s.s)}${stopping?'':' (í†µê³¼)'}</title></circle>${showLabel?`<text x="${tx.toFixed(1)}" y="${ty.toFixed(1)}" text-anchor="${anchor}">${esc(p.s.s)}</text>`:''}</g>`;
-  }).join('');
-  let liveMarker='';
-  if(_bookRouteIsLiveServiceDate(t,travelDate||todayLocalStr())){
-    const now=new Date(),delay=typeof _liveDelayOf==='function'?_liveDelayOf(t):0;
-    const serviceNow=now.getHours()*60+now.getMinutes()+now.getSeconds()/60-delay+projectMinutes;
-    const live=getCurrentStatus(t,serviceNow);
-    if(live?.status==='running'){
-      let x=null,y=null,label='í˜„ì¬ ì—´ì°¨ ìœ„ì¹˜';
-      if(live.atStn){
-        const point=points.find(p=>p.s.s===live.atStn);
-        if(point){x=point.x;y=point.y;label=`í˜„ì¬ ìœ„ì¹˜: ${live.atStn}`;}
-      }else if(live.prevStn&&live.nextStn){
-        const aPos=points.findIndex(p=>p.s.s===live.prevStn);
-        const bPos=points.findIndex((p,i)=>i>aPos&&p.s.s===live.nextStn);
-        const a=aPos>=0?points[aPos]:null,b=bPos>=0?points[bPos]:null;
-        if(a&&b){
-          let depart=toMin(a.s.dep||a.s.arr),arrive=toMin(b.s.arr||b.s.dep),current=serviceNow;
-          if(depart!=null&&arrive!=null){
-            if(arrive<depart)arrive+=1440;
-            if(current<depart&&arrive>=1440)current+=1440;
-            const fraction=Math.max(0,Math.min(1,(current-depart)/Math.max(1,arrive-depart)));
-            // ë¬´ì‹œê° í†µê³¼ì—­ë„ ì‹¤ì œ ì„ í˜•ì˜ ê¼­ì§“ì ìœ¼ë¡œ í¬í•¨í•´ ìœ„ì¹˜ë¥¼ ë³´ê°„í•œë‹¤.
-            const path=points.slice(aPos,bPos+1),segments=[];
-            let total=0;
-            for(let i=0;i<path.length-1;i++){
-              const length=Math.hypot(path[i+1].x-path[i].x,path[i+1].y-path[i].y);
-              segments.push(length);total+=length;
-            }
-            let target=total*fraction,segment=0;
-            while(segment<segments.length-1&&target>segments[segment])target-=segments[segment++];
-            const start=path[segment],end=path[Math.min(segment+1,path.length-1)];
-            const local=segments[segment]>0?target/segments[segment]:0;
-            x=start.x+(end.x-start.x)*local;y=start.y+(end.y-start.y)*local;
-            label=`í˜„ì¬ ìœ„ì¹˜: ${live.prevStn}â€“${live.nextStn}`;
-          }
-        }
-      }
-      if(x!=null&&y!=null)liveMarker=`<g class="brd-map-live-train" style="transform:translate(${x.toFixed(1)}px,${y.toFixed(1)}px)" role="img" aria-label="${esc(label)}"><circle r="12"/><path d="M-5-7h10a3 3 0 0 1 3 3v8a3 3 0 0 1-3 3H-5a3 3 0 0 1-3-3v-8a3 3 0 0 1 3-3Zm0 3v5h10v-5Zm1 8h.1M4 4h.1M-5 10l2-3M5 10 3 7"/><title>${esc(label)}</title></g>`;
-    }
-  }
-  return `<div class="brd-route-map" style="--route-grade:${gradeColor}"><div class="brd-map-key"><span><i class="selected"></i>ìŠ¹ì°¨ êµ¬ê°„</span><span><i></i>ê·¸ ì™¸ ìš´í–‰ êµ¬ê°„</span>${liveMarker?'<span><i class="live"></i>í˜„ì¬ ìœ„ì¹˜</span>':''}</div><div class="brd-map-canvas"><svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(t.grade)} ${esc(t.no)} ì „ì²´ ìš´í–‰ êµ¬ê°„ ë…¸ì„ ë„">${lines}${nodes}${liveMarker}</svg></div><p>${esc(t.stops[0]?.s)} â†’ ${esc(t.stops[t.stops.length-1]?.s)} ì „ì²´ ìš´í–‰ êµ¬ê°„</p></div>`;
-}
-function setBookRouteDetailTab(mode){
-  const wrap=document.getElementById('book-route-detail-wrap');if(!wrap)return;
-  wrap.querySelectorAll('.brd-view-tab').forEach(btn=>{const on=btn.dataset.view===mode;btn.classList.toggle('active',on);btn.setAttribute('aria-selected',String(on));});
-  wrap.querySelector('.brd-schedule-view')?.classList.toggle('active',mode==='schedule');
-  wrap.querySelector('.brd-map-view')?.classList.toggle('active',mode==='map');
-}
-
-let _bookRouteDetailTimer=null;
-function _bookRouteTimelinePosition(t,rowStations,live,serviceNow){
-  if(!live||live.status!=='running')return {idx:-1,markerIdx:-1,top:50,between:false,station:''};
-  if(live.atStn){
-    const exact=rowStations.indexOf(live.atStn);
-    if(exact>=0)return {idx:exact,markerIdx:exact,top:50,between:false,station:live.atStn};
-  }
-  const route=t.stops||[];
-  let cursor=-1,offset=0,previousRaw=-1;
-  const timed=rowStations.map(station=>{
-    const routeIdx=route.findIndex((s,i)=>i>cursor&&s.s===station&&(hasTime(s.arr)||hasTime(s.dep))&&!isPassStop(t,s.s));
-    if(routeIdx<0)return null;
-    cursor=routeIdx;const stop=route[routeIdx],rawArr=toMin(stop.arr),rawDep=toMin(stop.dep),raw=rawArr??rawDep;
-    if(previousRaw>=0&&raw<previousRaw-60)offset+=1440;
-    previousRaw=raw;
-    return {station,arr:rawArr!=null?rawArr+offset:null,dep:rawDep!=null?rawDep+offset:null};
-  }).filter(Boolean);
-  if(timed.length>=2&&Number.isFinite(serviceNow)){
-    let current=serviceNow;
-    const first=timed[0].dep??timed[0].arr,last=timed[timed.length-1].arr??timed[timed.length-1].dep;
-    if(last>=1440&&current<first)current+=1440;
-    let prev=-1,next=-1;
-    for(let i=0;i<timed.length;i++){
-      const leave=timed[i].dep??timed[i].arr,arrive=timed[i].arr??timed[i].dep;
-      if(leave!=null&&leave<=current)prev=i;
-      if(next<0&&arrive!=null&&arrive>current)next=i;
-    }
-    if(prev>=0&&next>prev){
-      const depart=timed[prev].dep??timed[prev].arr,arrive=timed[next].arr??timed[next].dep;
-      const fraction=Math.max(0,Math.min(1,(current-depart)/Math.max(1,arrive-depart)));
-      return {idx:next,markerIdx:prev,top:50+fraction*100,between:true,station:timed[next].station};
-    }
-  }
-  let prevRoute=-1,nextRoute=-1;
-  if(live.prevStn)prevRoute=route.findIndex(s=>s.s===live.prevStn);
-  if(live.nextStn)nextRoute=route.findIndex((s,i)=>i>prevRoute&&s.s===live.nextStn);
-  if(nextRoute<0&&live.atStn)nextRoute=route.findIndex(s=>s.s===live.atStn);
-  const start=Math.max(0,nextRoute>=0?nextRoute:prevRoute+1);
-  for(let i=start;i<route.length;i++){
-    const stop=route[i];
-    if((hasTime(stop.arr)||hasTime(stop.dep))&&!isPassStop(t,stop.s)){
-      const idx=rowStations.indexOf(stop.s);
-      if(idx>=0)return {idx,markerIdx:Math.max(0,idx-1),top:100,between:true,station:stop.s};
-    }
-  }
-  return {idx:-1,markerIdx:-1,top:50,between:false,station:''};
-}
-function _scheduleBookRouteDetailTick(){
-  if(_bookRouteDetailTimer)clearTimeout(_bookRouteDetailTimer);
-  const wait=60000-(Date.now()%60000)+30;
-  _bookRouteDetailTimer=setTimeout(()=>{
-    const wrap=document.getElementById('book-route-detail-wrap');
-    if(!wrap){_bookRouteDetailTimer=null;return;}
-    updateBookRouteLive(wrap.dataset.train,wrap.dataset.from,wrap.dataset.to,wrap.dataset.date);
-    _scheduleBookRouteDetailTick();
-  },wait);
-}
-function updateBookRouteLive(trainNo,from,to,travelDate){
-  const wrap=document.getElementById('book-route-detail-wrap'),t=getTrainByNo(trainNo);
-  if(!wrap||!t||wrap.dataset.train!==String(trainNo))return;
-  const esc=typeof _opsEsc==='function'?_opsEsc:s=>String(s??'').replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
-  const today=todayLocalStr(),serviceDate=travelDate||today;
-  const liveServiceDate=_bookRouteIsLiveServiceDate(t,serviceDate);
-  let live=null,liveStopIdx=-1,liveMarkerIdx=-1,liveTop=50,liveBetween=false,liveLabel='',main='',sub='';
-  if(liveServiceDate){
-    const now=new Date(),delay=typeof _liveDelayOf==='function'?_liveDelayOf(t):0;
-    const serviceNow=now.getHours()*60+now.getMinutes()+now.getSeconds()/60-delay;
-    live=getCurrentStatus(t,serviceNow);
-    if(live?.status==='running'){
-      if(live.passStn)main=`${live.passStn}ì—­ì„ í†µê³¼ ì¤‘ì…ë‹ˆë‹¤`;
-      else if(live.atStn)main=`${live.atStn}ì—­ì— ì •ì°¨ ì¤‘ì…ë‹ˆë‹¤`;
-      else if(live.nextStn)main=`${live.nextStn}ì—­ìœ¼ë¡œ ì´ë™ ì¤‘ì…ë‹ˆë‹¤`;
-      else main='ìš´í–‰ ì¤‘ì…ë‹ˆë‹¤';
-      const eta=getNextStopEta(t,live);if(eta)sub=eta.min===0?'ê³§ ë„ì°© ì˜ˆì •':`ì•½ ${eta.min}ë¶„ ë’¤ ë„ì°© ì˜ˆì •`;
-      const rows=[...wrap.querySelectorAll('.brd-stop')];
-      const projectedNow=serviceNow+1,projectedLive=getCurrentStatus(t,projectedNow);
-      const position=_bookRouteTimelinePosition(t,rows.map(row=>row.dataset.station),projectedLive,projectedNow);
-      liveStopIdx=position.idx;liveMarkerIdx=position.markerIdx;liveTop=position.top;liveBetween=position.between;
-      liveLabel=position.station?(position.between?`${position.station} ë°©ë©´ ì´ë™ ì¤‘`:`${position.station} ì •ì°¨ ì¤‘`):'ìš´í–‰ ì¤‘';
-    }else if(live?.status==='before'){
-      main='ìš´í–‰ì„ ì¤€ë¹„ì¤‘ì¸ ì—´ì°¨ì…ë‹ˆë‹¤';if(live.etaMin!=null)sub=fmtEtaKor(live.etaMin);
-    }else main='ìš´í–‰ì´ ì¢…ë£Œëœ ì—´ì°¨ì…ë‹ˆë‹¤';
-  }else if(serviceDate>today)main='ìš´í–‰ì„ ì¤€ë¹„ì¤‘ì¸ ì—´ì°¨ì…ë‹ˆë‹¤';
-  else main='ìš´í–‰ì´ ì¢…ë£Œëœ ì—´ì°¨ì…ë‹ˆë‹¤';
-  const state=wrap.querySelector('.brd-operation-state');
-  if(state)state.innerHTML=`<b>${esc(main)}</b>${sub?`<span>${esc(sub)}</span>`:''}`;
-  const rows=[...wrap.querySelectorAll('.brd-stop')];
-  const oldMarker=wrap.querySelector('.brd-live-marker');
-  rows.forEach((row,i)=>{
-    row.classList.toggle('live',i===liveStopIdx);
-    row.classList.toggle('live-marker-row',i===liveMarkerIdx);
-    if(i===liveMarkerIdx){
-      const rail=row.querySelector('.brd-rail');
-      if(oldMarker&&oldMarker.parentElement===rail){
-        oldMarker.classList.toggle('between',liveBetween);oldMarker.style.setProperty('--brd-live-top',`${liveTop}%`);
-        oldMarker.title=liveLabel;oldMarker.setAttribute('aria-label',`í˜„ì¬ ìœ„ì¹˜: ${liveLabel}`);
-      }else{
-        oldMarker?.remove();
-        rail?.insertAdjacentHTML('beforeend',`<span class="brd-live-marker${liveBetween?' between':''}" style="--brd-live-top:${liveTop}%" title="${esc(liveLabel)}" aria-label="í˜„ì¬ ìœ„ì¹˜: ${esc(liveLabel)}"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="3" width="14" height="17" rx="4"/><path d="M8 7h8v5H8zM8 17h.01M16 17h.01M8 21l-2 2M16 21l2 2"/></svg></span>`);
-      }
-    }
-    const delayIdx=Number(row.dataset.delayIndex);
-    const pair=liveServiceDate&&delayIdx>=0&&typeof _simDelayPairAtStop==='function'?_simDelayPairAtStop(t,delayIdx):{arr:0,dep:0};
-    [['arr',pair.arr||0],['dep',pair.dep||0]].forEach(([kind,delay])=>{
-      const cell=row.querySelector(`.brd-${kind}`),scheduled=row.dataset[kind]||'';if(!cell)return;
-      const actual=scheduled&&delay>0?addMinToClock(scheduled,delay):'';
-      cell.innerHTML=scheduled?`<span>${esc(scheduled)}</span>${actual?`<small>(${esc(actual)})</small>`:''}`:'â€”';
-    });
-  });
-  if(liveMarkerIdx<0)oldMarker?.remove();
-  const map=wrap.querySelector('.brd-map-view');
-  if(map){
-    const color=(typeof GRADE_COLORS!=='undefined'&&GRADE_COLORS[t.grade])||`var(--c-${gcCssVar(t.grade)})`;
-    const probe=document.createElement('div');probe.innerHTML=_bookRouteMapHTML(t,from,to,color,travelDate,1);
-    const currentMarker=map.querySelector('.brd-map-live-train'),targetMarker=probe.querySelector('.brd-map-live-train');
-    if(currentMarker&&targetMarker){currentMarker.style.transform=targetMarker.style.transform;currentMarker.setAttribute('aria-label',targetMarker.getAttribute('aria-label')||'í˜„ì¬ ì—´ì°¨ ìœ„ì¹˜');}
-    else if(!currentMarker&&targetMarker)map.innerHTML=probe.innerHTML;
-    else if(currentMarker&&!targetMarker)currentMarker.remove();
-  }
-}
-
-// ì˜ˆë§¤ êµ¬ê°„ ê¸°ì¤€ ìš´í–‰ ì •ë³´ â€” ì „ì²´ ì •ì°¨ì—­ ì¤‘ ìŠ¹ì°¨Â·í•˜ì°¨ êµ¬ê°„ì„ ê°•ì¡°í•œë‹¤.
-function openBookRouteDetail(trainNo,from,to,travelDate){
-  const t=getTrainByNo(trainNo);if(!t)return;
-  const previous=document.getElementById('book-route-detail-wrap');
-  if(previous){previous.remove();document.body.classList.remove('app-modal-open');}
-  const allStops=(t.stops||[]).filter(s=>(hasTime(s.arr)||hasTime(s.dep))&&!isPassStop(t,s.s));
-  const fromIdx=allStops.findIndex(s=>s.s===from);
-  const toIdx=allStops.findIndex((s,i)=>i>fromIdx&&s.s===to);
-  if(fromIdx<0||toIdx<0){jumpToTrain(trainNo);return;}
-  const esc=typeof _opsEsc==='function'?_opsEsc:s=>String(s??'').replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
-  const gradeColor=(typeof GRADE_COLORS!=='undefined'&&GRADE_COLORS[t.grade])||`var(--c-${gcCssVar(t.grade)})`;
-  const dateLabel=(()=>{const m=String(travelDate||'').match(/^(\d{4})-(\d{2})-(\d{2})$/);if(!m)return esc(travelDate||todayLocalStr());const d=new Date(+m[1],+m[2]-1,+m[3]);return `${m[1]}.${m[2]}.${m[3]} (${['ì¼','ì›”','í™”','ìˆ˜','ëª©','ê¸ˆ','í† '][d.getDay()]})`;})();
-  let liveStopIdx=-1,liveMarkerIdx=-1,liveTop=50,liveBetween=false,liveLabel='',operationMain='',operationSub='';
-  const serviceDate=travelDate||todayLocalStr(),today=todayLocalStr();
-  const liveServiceDate=_bookRouteIsLiveServiceDate(t,serviceDate);
-  if(liveServiceDate){
-    const now=new Date(),liveDelay=typeof _liveDelayOf==='function'?_liveDelayOf(t):0;
-    const serviceNow=now.getHours()*60+now.getMinutes()+now.getSeconds()/60-liveDelay;
-    const live=getCurrentStatus(t,serviceNow);
-    if(live?.status==='running'){
-      if(live.passStn)operationMain=`${live.passStn}ì—­ì„ í†µê³¼ ì¤‘ì…ë‹ˆë‹¤`;
-      else if(live.atStn)operationMain=`${live.atStn}ì—­ì— ì •ì°¨ ì¤‘ì…ë‹ˆë‹¤`;
-      else if(live.nextStn)operationMain=`${live.nextStn}ì—­ìœ¼ë¡œ ì´ë™ ì¤‘ì…ë‹ˆë‹¤`;
-      else operationMain='ìš´í–‰ ì¤‘ì…ë‹ˆë‹¤';
-      const eta=getNextStopEta(t,live);
-      if(eta)operationSub=eta.min===0?'ê³§ ë„ì°© ì˜ˆì •':`ì•½ ${eta.min}ë¶„ ë’¤ ë„ì°© ì˜ˆì •`;
-      const position=_bookRouteTimelinePosition(t,allStops.map(s=>s.s),live,serviceNow);
-      liveStopIdx=position.idx;liveMarkerIdx=position.markerIdx;liveTop=position.top;liveBetween=position.between;
-      liveLabel=position.station?(position.between?`${position.station} ë°©ë©´ ì´ë™ ì¤‘`:`${position.station} ì •ì°¨ ì¤‘`):'ìš´í–‰ ì¤‘';
-    }else if(live?.status==='before'){
-      operationMain='ìš´í–‰ì„ ì¤€ë¹„ì¤‘ì¸ ì—´ì°¨ì…ë‹ˆë‹¤';
-      if(live.etaMin!=null)operationSub=fmtEtaKor(live.etaMin);
-    }else{
-      operationMain='ìš´í–‰ì´ ì¢…ë£Œëœ ì—´ì°¨ì…ë‹ˆë‹¤';
-    }
-  }else if(serviceDate>today){
-    operationMain='ìš´í–‰ì„ ì¤€ë¹„ì¤‘ì¸ ì—´ì°¨ì…ë‹ˆë‹¤';
-  }else{
-    operationMain='ìš´í–‰ì´ ì¢…ë£Œëœ ì—´ì°¨ì…ë‹ˆë‹¤';
-  }
-  const timedStops=(t.stops||[]).filter(s=>hasTime(s.arr)||hasTime(s.dep));
-  const showDelayTimes=liveServiceDate&&typeof _simDelayPairAtStop==='function';
-  const rows=allStops.map((s,i)=>{
-    const inRide=i>=fromIdx&&i<=toIdx,before=i<fromIdx,after=i>toIdx;
-    const plat=typeof _realPlatform==='function'?_realPlatform(t.no,s.s):null;
-    const badge=i===fromIdx?'<span class="brd-stop-badge board">ìŠ¹ì°¨</span>':i===toIdx?'<span class="brd-stop-badge alight">í•˜ì°¨</span>':'';
-    const arr=hasTime(s.arr)?s.arr:'',dep=hasTime(s.dep)?s.dep:'';
-    const delayIdx=timedStops.indexOf(s);
-    const delayPair=showDelayTimes&&delayIdx>=0?_simDelayPairAtStop(t,delayIdx):{arr:0,dep:0};
-    const actualArr=arr&&delayPair.arr>0?addMinToClock(arr,delayPair.arr):'';
-    const actualDep=dep&&delayPair.dep>0?addMinToClock(dep,delayPair.dep):'';
-    const timeCell=(scheduled,actual)=>scheduled
-      ?`<span>${esc(scheduled)}</span>${actual?`<small>(${esc(actual)})</small>`:''}`
-      :'â€”';
-    const liveMarker=i===liveMarkerIdx?`<span class="brd-live-marker${liveBetween?' between':''}" style="--brd-live-top:${liveTop}%" title="${esc(liveLabel)}" aria-label="í˜„ì¬ ìœ„ì¹˜: ${esc(liveLabel)}"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="3" width="14" height="17" rx="4"/><path d="M8 7h8v5H8zM8 17h.01M16 17h.01M8 21l-2 2M16 21l2 2"/></svg></span>`:'';
-    return `<div class="brd-stop${inRide?' ride':''}${before?' before':''}${after?' after':''}${i===fromIdx?' board':''}${i===toIdx?' alight':''}${i===liveStopIdx?' live':''}${i===liveMarkerIdx?' live-marker-row':''}" data-station="${esc(s.s)}" data-delay-index="${delayIdx}" data-arr="${esc(arr)}" data-dep="${esc(dep)}">
-      <div class="brd-rail"><i></i>${liveMarker}</div>
-      <div class="brd-station">${badge}<strong>${esc(s.s)}</strong>${plat!=null?`<span>${esc(plat)}ë²ˆ ìŠ¹ê°•ì¥</span>`:''}</div>
-      <time class="brd-arr">${timeCell(arr,actualArr)}</time><time class="brd-dep">${timeCell(dep,actualDep)}</time>
-    </div>`;
-  }).join('');
-  const routeMap=_bookRouteMapHTML(t,from,to,gradeColor,travelDate);
-  const wrap=document.createElement('div');wrap.id='book-route-detail-wrap';wrap.style.setProperty('--brd-grade',gradeColor);
-  wrap.innerHTML=`<div class="book-route-detail-backdrop"></div><section class="book-route-detail-sheet" role="dialog" aria-modal="true" aria-label="${esc(t.grade)} ${esc(t.no)} ìš´í–‰ ì •ë³´">
-    <header class="brd-header"><div class="brd-head-info"><small>ìš´í–‰ ì •ë³´</small><h2><span>${esc(t.grade)}</span><b>${esc(t.no)}</b></h2></div><div class="brd-head-actions"><button type="button" class="brd-close" aria-label="ë‹«ê¸°">âœ•</button></div></header>
-    <div class="brd-summary"><time>${dateLabel}</time><strong>${esc(from)} <span>${esc(allStops[fromIdx].dep||allStops[fromIdx].arr||'â€”')}</span><i>â†’</i> ${esc(to)} <span>${esc(allStops[toIdx].arr||allStops[toIdx].dep||'â€”')}</span></strong><small class="brd-operation-state"><b>${esc(operationMain)}</b>${operationSub?`<span>${esc(operationSub)}</span>`:''}</small></div>
-    <div class="brd-view-tabs" role="tablist"><button type="button" class="brd-view-tab active" data-view="schedule" role="tab" aria-selected="true" onclick="setBookRouteDetailTab('schedule')">ì‹œê°„í‘œ</button><button type="button" class="brd-view-tab" data-view="map" role="tab" aria-selected="false" onclick="setBookRouteDetailTab('map')">ì§€ë„</button></div>
-    <div class="brd-view brd-schedule-view active"><div class="brd-columns"><span>ì—­ëª…</span><span>ë„ì°©</span><span>ì¶œë°œ</span></div><div class="brd-stop-list">${rows}</div></div>
-    <div class="brd-view brd-map-view">${routeMap}</div>
-  </section>`;
-  wrap.dataset.train=String(trainNo);wrap.dataset.from=from;wrap.dataset.to=to;wrap.dataset.date=travelDate||todayLocalStr();
-  document.body.appendChild(wrap);
-  document.body.classList.add('app-modal-open');
-  const openedAt=performance.now();
-  wrap.querySelector('.book-route-detail-backdrop').addEventListener('click',e=>{
-    if(e.target===e.currentTarget&&performance.now()-openedAt>400)closeBookRouteDetail();
-  });
-  addMobileTap(wrap.querySelector('.brd-close'),closeBookRouteDetail);
-  requestAnimationFrame(()=>wrap.querySelector('.book-route-detail-sheet')?.classList.add('open'));
-  requestAnimationFrame(()=>wrap.querySelector('.brd-stop.board')?.scrollIntoView({block:'center'}));
-  requestAnimationFrame(()=>updateBookRouteLive(trainNo,from,to,travelDate));
-  _scheduleBookRouteDetailTick();
-}
-function closeBookRouteDetail(){
-  const wrap=document.getElementById('book-route-detail-wrap');if(!wrap)return;
-  if(_bookRouteDetailTimer){clearTimeout(_bookRouteDetailTimer);_bookRouteDetailTimer=null;}
-  wrap.querySelector('.book-route-detail-sheet')?.classList.remove('open');
-  document.body.classList.remove('app-modal-open');setTimeout(()=>wrap.remove(),220);
-}
-
-
-// â”€â”€ ì—´ì°¨ ì˜ˆë§¤ íƒ­ í™˜ìŠ¹ íƒìƒ‰ â”€â”€
-function searchBookTransfers(from, to, dateGo, el, append){
-  const MIN_WAIT=3, MAX_WAIT=60;
-  const nowForFilter=new Date();
-  const nowMFilter=nowForFilter.getHours()*60+nowForFilter.getMinutes();
-  const isToday=(dateGo===todayLocalStr());
-
-  function getStopT(s){ return hasTime(s.dep)?s.dep:hasTime(s.arr)?s.arr:null; }
-
-  // fromì—ì„œ ì¶œë°œí•˜ëŠ” ëª¨ë“  ë ˆê·¸
-  const legs1=[];
-  ALL_TRAINS.forEach(t=>{
-    const stops=t.stops;
-    const fi=stops.findIndex(s=>s.s===from);
-    if(fi<0||isPassStop(t,from))return;
-    const depT=getStopT(stops[fi]);
-    if(!depT)return;
-    const depM=toMin(depT);
-    if(isToday&&depM!==null&&depM<nowMFilter)return;
-    for(let i=fi+1;i<stops.length;i++){
-      const s=stops[i];
-      if(!s.arr&&!s.dep)continue;
-      if(isPassStop(t,s.s))continue;
-      const arrT=hasTime(s.arr)?s.arr:hasTime(s.dep)?s.dep:null;
-      if(!arrT)continue;
-      legs1.push({t,depStn:from,depT,depM,arrStn:s.s,arrT,arrM:toMin(arrT)});
-    }
-  });
-
-  let transfers=[];
-  legs1.forEach(l1=>{
-    if(l1.arrStn===to)return;
-    ALL_TRAINS.forEach(t2=>{
-      if(t2===l1.t)return;
-      const stops=t2.stops;
-      const xi=stops.findIndex(s=>s.s===l1.arrStn);
-      const ti=stops.findIndex(s=>s.s===to);
-      if(xi<0||ti<0||xi>=ti)return;
-      if(isPassStop(t2,l1.arrStn)||isPassStop(t2,to))return;
-      const dep2T=getStopT(stops[xi]);
-      if(!dep2T)return;
-      const dep2M=toMin(dep2T);
-      const wait=dep2M-l1.arrM;
-      if(wait<MIN_WAIT||wait>MAX_WAIT)return;
-      const arr2T=hasTime(stops[ti].arr)?stops[ti].arr:hasTime(stops[ti].dep)?stops[ti].dep:null;
-      if(!arr2T)return;
-      const totalM=toMin(arr2T)-l1.depM;
-      if(totalM<=0)return;
-      transfers.push({
-        legs:[{t:l1.t,from,to:l1.arrStn,depT:l1.depT,arrT:l1.arrT},
-              {t:t2,from:l1.arrStn,to,depT:dep2T,arrT:arr2T}],
-        totalDur:durStr(l1.depT,arr2T), totalM,
-        depM:l1.depM, arrM:toMin(arr2T)||9999
-      });
-    });
-  });
-
-  // ì¤‘ë³µ ì œê±° & ì •ë ¬ & ìµœëŒ€ 5ê±´
-  const seen=new Set();
-  transfers=transfers.filter(r=>{
-    const key=r.legs.map(l=>l.t.no+l.depT).join('|');
-    if(seen.has(key))return false; seen.add(key); return true;
-  }).sort((a,b)=>a.totalM-b.totalM).slice(0,5);
-
-  if(!transfers.length){
-    el.innerHTML=append?'':`<div class="empty"><div class="empty-icon">ğŸš«</div><p>${from} â†’ ${to} ìš´í–‰ ê°€ëŠ¥í•œ ê²½ë¡œê°€ ì—†ìŠµë‹ˆë‹¤</p></div>`;
-    return;
-  }
-
-  const cards=transfers.map(({legs,totalDur})=>{
-    const legsHtml=legs.map((l,i)=>`
-      <div class="book-xfer-leg">
-        <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px">
-          <span class="xfer-role-tag ${i===0?'lead':'follow'}">${i===0?'ì„ í–‰':'í›„í–‰'}</span>
-          <span style="font-size:12px;font-weight:700;color:var(--c-${gcCssVar(l.t.grade)})">${l.t.grade}</span>
-          <span style="font-family:var(--mono);font-size:12px;color:var(--text2)">${l.t.no}</span>
-        </div>
-        <div style="display:flex;align-items:center;gap:8px">
-          <span style="font-weight:600">${l.from}</span>
-          <span style="font-family:var(--mono);font-size:12px;color:var(--accent)">${l.depT}</span>
-          <span style="color:var(--text3)">â†’</span>
-          <span style="font-weight:600">${l.to}</span>
-          <span style="font-family:var(--mono);font-size:12px;color:var(--green)">${l.arrT||'-'}</span>
-        </div>
-      </div>
-      ${i<legs.length-1?`<div class="book-xfer-wait">ğŸ”„ í™˜ìŠ¹ Â· ëŒ€ê¸° ${toMin(legs[i+1].depT)-toMin(l.arrT)}ë¶„</div>`:''}`
-    ).join('');
-    const firstLeg=legs[0], lastLeg=legs[legs.length-1];
-    // inline onclick ì œê±° â†’ data ì†ì„± ì €ì¥ í›„ addEventListener (iOS Safari í˜¸í™˜)
-    return `<div class="book-train-row book-xfer-card"
-      data-train-no="${firstLeg.t.no}" data-dep="${firstLeg.depT}" data-arr="${firstLeg.arrT||''}"
-      data-from="${firstLeg.from}" data-to="${firstLeg.to}" data-date="${dateGo}"
-      data-no2="${lastLeg.t.no}" data-xstn="${firstLeg.to}" data-dep2="${lastLeg.depT}" data-arr2="${lastLeg.arrT||''}" data-final="${lastLeg.to}">
-      <div style="flex:1">
-        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
-          <span style="font-size:11px;font-weight:600;padding:2px 8px;border-radius:10px;background:rgba(210,153,34,.15);color:#d29922;border:1px solid rgba(210,153,34,.3)">1íšŒ í™˜ìŠ¹</span>
-          <span style="font-family:var(--mono);font-size:11px;color:var(--text2)">${firstLeg.depT} â†’ ${lastLeg.arrT||'?'} Â· ${totalDur}</span>
-        </div>
-        ${legsHtml}
-      </div>
-      <div style="display:flex;align-items:center;gap:8px;flex-shrink:0">
-        <div class="book-train-chevron">â€º</div>
-      </div>
-    </div>`;
-  }).join('');
-
-  const tripLabel=dateGo;
-  el.innerHTML=`
-    <div class="result-header" style="margin-top:16px">
-      <div class="result-title">${append?'ğŸ”„ í™˜ìŠ¹ ê²½ë¡œ':`${from} â†’ ${to} Â· í™˜ìŠ¹`}</div>
-      <span class="badge blue">${transfers.length}ê±´</span>
-      <span class="badge" style="background:var(--bg3)">${tripLabel}</span>
-    </div>
-    <div class="book-train-list">${cards}</div>`;
-
-  // í™˜ìŠ¹ ì¹´ë“œ í´ë¦­ â†’ ë‘ êµ¬ê°„ ì˜ˆë§¤ ìƒì„¸(openBookXferDetail)
-  const openXfer=row=>openBookXferDetail(
-    row.dataset.trainNo, row.dataset.no2,
-    row.dataset.from, row.dataset.xstn, row.dataset.final,
-    row.dataset.dep||'', row.dataset.arr||'',
-    row.dataset.dep2||'', row.dataset.arr2||'',
-    row.dataset.date||dateGo);
-  el.querySelectorAll('.book-train-row.book-xfer-card').forEach(row=>{
-    row.addEventListener('click', ()=>openXfer(row));
-  });
-}
-
-function _bookDetailConfirm(trainNo,from,to,depT,arrT,travelDate){
-  if(window._activePassId){
-    openPassDaySelector(window._activePassId,trainNo,from,to,depT,arrT||'');
-  } else {
-    window._bookingPassengerCount=_bookPassengerCount||1;
-    const dateBack=document.getElementById('book-date-back')?.value||'';
-    openBookingWithDate(trainNo,from,to,depT,arrT||'',travelDate,_bookRoundTrip,dateBack);
-  }
-}
-
-function closeBookTrainDetail(){
-  const el = document.getElementById('book-detail-wrap');
-  if(!el) return;
-  el.querySelector('.book-detail-panel').classList.remove('open');
-  setTimeout(()=>el.remove(), 300);
-}
-
-// ğŸ”„ í†µí•© í™˜ìŠ¹ ì˜ˆë§¤ ì‹œíŠ¸ (ì½”ë ˆì¼í†¡ ë°©ì‹) â€” ì„ í–‰Â·í›„í–‰ ë‘ êµ¬ê°„ì„ í•œ ì‹œíŠ¸ì—ì„œ
-//    ê°ê° ì¢Œì„ ë“±ê¸‰Â·ì¢Œì„Â·ìš´ì„ì„ ê³ ë¥´ê³ , í•˜ë‚˜ì˜ ì˜ˆë§¤ ë²„íŠ¼ìœ¼ë¡œ í•¨ê»˜ ì˜ˆë§¤í•œë‹¤.
-function openBookXferDetail(no1,no2,from,xStn,to,depT1,arrT1,depT2,arrT2,travelDate){
-  const t1=getTrainByNo(no1),t2=getTrainByNo(no2);
-  if(!t1||!t2)return;
-  const toLocal=d=>`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
-  const today=new Date(); const minDate=toLocal(today);
-  const maxD=new Date(today);maxD.setMonth(maxD.getMonth()+1); const maxDate=toLocal(maxD);
-  window._xfer={
-    date:(travelDate&&travelDate>=minDate)?travelDate:minDate, minDate, maxDate,
-    count:(typeof _bookPassengerCount!=='undefined'&&_bookPassengerCount)||1, discount:'none',
-    from, to, via:xStn,
-    legs:[
-      {role:'ì„ í–‰',no:no1,grade:t1.grade,from,to:xStn,depT:depT1,arrT:arrT1,cls:null,seats:null},
-      {role:'í›„í–‰',no:no2,grade:t2.grade,from:xStn,to,depT:depT2,arrT:arrT2,cls:null,seats:null},
-    ]
-  };
-  document.getElementById('book-detail-wrap')?.remove();
-  const wrap=document.createElement('div');
-  wrap.id='book-detail-wrap';
-  wrap.innerHTML=`
-    <div class="book-detail-backdrop"></div>
-    <div class="book-detail-panel">
-      <div style="flex-shrink:0;padding:12px 20px 0">
-        <div class="book-detail-handle"></div>
-        <div class="book-detail-head">
-          <div style="font-size:14px;font-weight:600">ğŸ”„ í™˜ìŠ¹ ì˜ˆë§¤ Â· ${from} â†’ ${xStn} â†’ ${to}</div>
-          <button class="my-panel-close" id="bxd-close-x">âœ•</button>
-        </div>
-      </div>
-      <div id="bxd-body" style="overflow-y:auto;flex:1;min-height:0;-webkit-overflow-scrolling:touch;padding:0 20px"></div>
-      <div style="flex-shrink:0;padding:10px 20px 28px">
-        <button class="btn btn-primary" id="bxd-confirm" disabled style="width:100%;justify-content:center;opacity:.5">ë‘ êµ¬ê°„ì˜ ì¢Œì„ ë“±ê¸‰ì„ ì„ íƒí•˜ì„¸ìš”</button>
-        <button class="alarm-popup-close" id="bxd-cancel" style="margin-top:8px">ì·¨ì†Œ</button>
-      </div>
-    </div>`;
-  document.body.appendChild(wrap);
-  wrap.querySelector('.book-detail-backdrop').addEventListener('click', closeBookTrainDetail);
-  addMobileTap(document.getElementById('bxd-close-x'), closeBookTrainDetail);
-  addMobileTap(document.getElementById('bxd-cancel'), closeBookTrainDetail);
-  addMobileTap(document.getElementById('bxd-confirm'), confirmXferBooking);
-  _renderXferBody();
-  setTimeout(()=>wrap.querySelector('.book-detail-panel').classList.add('open'),10);
-}
-function _renderXferBody(){
-  const X=window._xfer; const body=document.getElementById('bxd-body'); if(!X||!body)return;
-  const legHtml=X.legs.map((L,idx)=>{
-    const t=getTrainByNo(L.no);
-    const classes=availableSeatClasses(L.grade);
-    const dur=durMin(L.depT,L.arrT);
-    const opts=classes.map(c=>{
-      const fare=applyDiscount(calcFare(t,L.from,L.to,c),X.discount);
-      const sale=seatClassSaleMeta(t,L.from,L.to,X.date,c),disabled=!sale.eligible||sale.available<=0;
-      return `<button class="booking-seat-option${L.cls===c?' active':''}" data-leg="${idx}" data-class="${c}" ${disabled?'disabled':''}
-        style="${disabled?'opacity:.45;cursor:not-allowed':''}" title="${sale.reason||''}">
-        <span class="booking-seat-label">${sale.label}${sale.reason?`${sale.reason.startsWith('(')?' ':' Â· '}${sale.reason}`:''}</span>
-        <span class="booking-seat-fare">${fare.toLocaleString()}ì›</span></button>`;
-    }).join('');
-    const seatRow = L.cls==='standing'
-      ? `<div class="hint" style="margin:8px 0 0">ğŸš‰ ì…ì„Â·ììœ ì„ ì „ìš© ì¹¸ â€” ì¢Œì„ ì§€ì • ì—†ìŒ</div>`
-      : `<button class="btn xfer-seat-btn" data-leg="${idx}" ${L.cls?'':'disabled'} style="width:100%;justify-content:center;font-size:12.5px;margin-top:8px;gap:6px;${L.cls?'':'opacity:.4;cursor:not-allowed'}">ğŸª‘ ì¢Œì„ ì„ íƒ â€” <span style="color:var(--accent2)">${L.cls?((L.seats&&L.seats.length===X.count)?L.seats.join(', '):'ìë™ ë°°ì •'):'ë“±ê¸‰ ì„ íƒ í›„ ê°€ëŠ¥'}</span></button>`;
-    return `<div class="xfer-leg-card">
-      <div class="xfer-leg-head">
-        <span class="xfer-role-tag ${idx===0?'lead':'follow'}">${L.role}</span>
-        <span style="color:var(--c-${gcCssVar(L.grade)});font-weight:700">${L.grade} ${L.no}</span>
-        <span style="margin-left:auto;font-family:var(--mono);font-size:12.5px">${L.depT} â†’ ${L.arrT}</span>
-      </div>
-      <div class="xfer-leg-route">${L.from} â†’ ${L.to}${dur!=null?` Â· ${fmtDurKor(dur)}`:''}</div>
-      <div class="xfer-leg-actions"><button type="button" class="btn" onclick="event.stopPropagation();openJourney('${L.no}')">ì‹œê°„í‘œ</button><button type="button" class="btn ticket-action-route" onclick="event.stopPropagation();openBookRouteDetail('${L.no}','${L.from}','${L.to}','${X.date}')">ìš´í–‰ ì •ë³´</button></div>
-      <div class="booking-section-label" style="margin-top:6px">ì¢Œì„ ë“±ê¸‰ Â· ìš´ì„</div>
-      <div class="booking-seat-options">${opts}</div>
-      ${seatRow}
-    </div>`;
-  }).join(`<div class="xfer-arrow">ğŸ”„ ${X.via} í™˜ìŠ¹</div>`);
-  const legFare=L=>{ if(!L.cls)return null; const t=getTrainByNo(L.no); return applyDiscount(calcFare(t,L.from,L.to,L.cls),X.discount); };
-  const bothCls=X.legs.every(L=>L.cls);
-  const total=bothCls?X.legs.reduce((a,L)=>a+legFare(L),0)*X.count:0;
-  body.innerHTML=`
-    <div class="booking-date-section"><div class="booking-section-label">íƒ‘ìŠ¹ì¼</div>
-      <input type="date" id="bxd-date" value="${X.date}" min="${X.minDate}" max="${X.maxDate}" class="booking-date-input"></div>
-    <div class="booking-passenger-section" style="margin-bottom:8px">
-      <div class="booking-section-label">ì¸ì›</div>
-      <div class="booking-passenger-control">
-        <button class="booking-stepper-btn" id="bxd-minus">âˆ’</button>
-        <span id="bxd-count">${X.count}</span>
-        <button class="booking-stepper-btn" id="bxd-plus">+</button>
-      </div>
-      <div class="booking-section-label" style="margin-top:12px">í• ì¸ <span style="font-size:11px;color:var(--text3);font-weight:400">(ìŠ¹ì°¨ê¶Œì— í‘œì‹œ)</span></div>
-      <div class="booking-discount-options">
-        ${Object.entries(DISCOUNTS).map(([k,d])=>`<button class="booking-discount-option${X.discount===k?' active':''}" data-discount="${k}">${d.label}${d.rate?`<span class="booking-discount-rate">${Math.round(d.rate*100)}%â†“</span>`:''}</button>`).join('')}
-      </div>
-    </div>
-    ${legHtml}
-    <div class="xfer-total"><span>ì´ ìš´ì„ <span style="color:var(--text3);font-weight:400">Â· ${X.count}ëª…</span></span><b>${bothCls?total.toLocaleString()+'ì›':'êµ¬ê°„ ì„ íƒ í•„ìš”'}</b></div>`;
-  const cbtn=document.getElementById('bxd-confirm');
-  if(cbtn){cbtn.disabled=!bothCls;cbtn.style.opacity=bothCls?'1':'.5';cbtn.textContent=bothCls?'ğŸ« í™˜ìŠ¹ ì˜ˆë§¤í•˜ê¸°':'ë‘ êµ¬ê°„ì˜ ì¢Œì„ ë“±ê¸‰ì„ ì„ íƒí•˜ì„¸ìš”';}
-  body.querySelector('#bxd-date')?.addEventListener('change',e=>{X.date=e.target.value;X.legs.forEach(L=>{L.cls=null;L.seats=null;});_renderXferBody();});
-  body.querySelector('#bxd-minus')?.addEventListener('click',()=>{X.count=Math.max(1,X.count-1);X.legs.forEach(L=>L.seats=null);_renderXferBody();});
-  body.querySelector('#bxd-plus')?.addEventListener('click',()=>{X.count=Math.min(6,X.count+1);X.legs.forEach(L=>L.seats=null);_renderXferBody();});
-  body.querySelectorAll('.booking-discount-option').forEach(b=>b.addEventListener('click',()=>{X.discount=b.dataset.discount;_renderXferBody();}));
-  body.querySelectorAll('.booking-seat-option:not([disabled])').forEach(b=>b.addEventListener('click',()=>{const i=+b.dataset.leg;X.legs[i].cls=b.dataset.class;X.legs[i].seats=null;_renderXferBody();}));
-  body.querySelectorAll('.xfer-seat-btn').forEach(b=>{ if(!b.hasAttribute('disabled')) b.addEventListener('click',()=>openXferSeatSelector(+b.dataset.leg)); });
-}
-function openXferSeatSelector(legIdx){
-  const X=window._xfer; if(!X)return; const L=X.legs[legIdx]; if(!L||!L.cls)return;
-  if(L.cls==='standing'){alert('ì…ì„Â·ììœ ì„ì€ ì§€ì • ì¢Œì„ì´ ì—†ëŠ” ì „ìš© ì¹¸ì…ë‹ˆë‹¤.');return;}
-  window._bookingPassengerCount=X.count||1;
-  window._xferSeatCtx={legIdx};
-  openSeatSelector(L.no, X.date, L.cls);
-  const sw=document.getElementById('seat-selector-wrap'); if(sw)sw.style.zIndex='10001'; // í™˜ìŠ¹ ì‹œíŠ¸(9900) ìœ„ë¡œ
-}
-// ìŠ¹ì°¨ê¶Œ ìë™ ìŠ¹í•˜ì°¨ ì•ŒëŒ (ì˜ˆë§¤ ì™„ë£Œ í›„) â€” ì§í†µ/í™˜ìŠ¹ ê³µìš©
-function _autoBookAlarms(t,fromStn,toStn,depTime,arrTime){
-  try{
-    if(typeof Notification==='undefined'||Notification.permission!=='granted')return;
-    const fi=t.stops.findIndex(s=>s.s===fromStn), ti=t.stops.findIndex(s=>s.s===toStn);
-    if(fi>=0 && !hasAlarm(`board:${t.no}:${fromStn}`)){
-      const prev=t.stops.slice(0,fi).reverse().find(x=>hasTime(x.dep)||hasTime(x.arr));
-      toggleAlarmType('board',t.no,fromStn,depTime,prev?(hasTime(prev.dep)?prev.dep:prev.arr):null,true);
-    }
-    if(ti>=0 && !hasAlarm(`arr:${t.no}:${toStn}`)){
-      const prev2=t.stops.slice(0,ti).reverse().find(x=>hasTime(x.dep)||hasTime(x.arr));
-      toggleAlarmType('arr',t.no,toStn,arrTime,prev2?(hasTime(prev2.dep)?prev2.dep:prev2.arr):null,true);
-    }
-  }catch(e){console.warn('í™˜ìŠ¹ ì•ŒëŒ ì„¤ì • ì‹¤íŒ¨:',e);}
-}
-function confirmXferBooking(){
-  const X=window._xfer; if(!X)return;
-  if(!X.legs.every(L=>L.cls)){alert('ë‘ êµ¬ê°„ ëª¨ë‘ ì¢Œì„ ë“±ê¸‰ì„ ì„ íƒí•´ì£¼ì„¸ìš”.');return;}
-  const travelDate=X.date||todayLocalStr();
-  const count=X.count||1, discount=X.discount||'none';
-  for(const L of X.legs){
-    const inventoryTrain=getTrainByNo(L.no);
-    if(typeof canBookOD==='function'&&!canBookOD(inventoryTrain,L.from,L.to,count,travelDate,L.cls)){
-      const left=typeof getAvailableSeats==='function'?getAvailableSeats(inventoryTrain,L.from,L.to,travelDate,L.cls):0;
-      alert(`${L.from} â†’ ${L.to} êµ¬ê°„ì€ ${left>0?`${left}ì„ë§Œ ë‚¨ì•„`:'ë§¤ì§„ë˜ì–´'} í™˜ìŠ¹ ì˜ˆë§¤ë¥¼ ì§„í–‰í•  ìˆ˜ ì—†ìŠµë‹ˆë‹¤.`);
-      return;
-    }
-  }
-  // ì˜¤ëŠ˜ ì˜ˆë§¤ ì‹œ ì„ í–‰ ì—´ì°¨ê°€ ì´ë¯¸ ì¶œë°œí–ˆìœ¼ë©´ ì°¨ë‹¨ (ì§€ì—° ì—´ì°¨ëŠ” ì§€ì—° ì¶œë°œ ì‹œê°ê¹Œì§€ í—ˆìš©)
-  if(travelDate===todayLocalStr()){
-    const now=new Date(); const nowM=now.getHours()*60+now.getMinutes();
-    const depM=toMin(X.legs[0].depT);
-    let xd=0;
-    if(depM!==null&&typeof _simDelayOn!=='undefined'&&_simDelayOn&&typeof _simDelayAtStop==='function'){
-      const xt=getTrainByNo(X.legs[0].trainNo);
-      if(xt){ const ts=xt.stops.filter(s=>hasTime(s.arr)||hasTime(s.dep));
-        const fi=ts.findIndex(s=>s.s===X.legs[0].from); if(fi>=0)xd=_simDelayAtStop(xt,fi)||0; }
-    }
-    if(depM!==null&&depM+xd<nowM){alert(`ì´ë¯¸ ì¶œë°œí•œ ì—´ì°¨ëŠ” ì˜ˆë§¤í•  ìˆ˜ ì—†ìŠµë‹ˆë‹¤.\n\n${X.legs[0].from} ${X.legs[0].depT} ì¶œë°œ${xd>0?` (ì•½ ${xd}ë¶„ ì§€ì—°)`:''}`);return;}
-  }
-  // ê¸°ì¡´ ìŠ¹ì°¨ê¶Œê³¼ ì‹œê°„ ê²¹ì¹¨ ê²€ì‚¬ (ê° êµ¬ê°„)
-  const existing=loadTickets().filter(tk=>tk.status==='active'&&tk.travelDate===travelDate);
-  for(const L of X.legs){
-    const nd=toMin(L.depT), na=toMin(L.arrT); if(nd===null||na===null)continue;
-    const conflict=existing.find(tk=>{
-      const ed=toMin(tk.depTime), ea=toMin(tk.arrTime); if(ed===null||ea===null)return false;
-      const aS=nd,aE=na>=nd?na:na+1440, bS=ed,bE=ea>=ed?ea:ed+1440; return aS<bE&&bS<aE;
-    });
-    if(conflict){alert(`ê°™ì€ ì‹œê°„ëŒ€ì— ì´ë¯¸ ì˜ˆë§¤í•œ ìŠ¹ì°¨ê¶Œì´ ìˆìŠµë‹ˆë‹¤.\n\n${conflict.trainNo}ë²ˆ Â· ${conflict.fromStn}â†’${conflict.toStn}\n${conflict.depTime}~${conflict.arrTime}\n\ní™˜ìŠ¹ ì˜ˆë§¤ë¥¼ ì§„í–‰í•  ìˆ˜ ì—†ìŠµë‹ˆë‹¤.`);return;}
-  }
-  const grp='XF'+Date.now().toString(36)+Math.random().toString(36).slice(2,5);
-  const tickets=loadTickets(); const created=[];
-  X.legs.forEach((L,idx)=>{
-    const t=getTrainByNo(L.no);
-    const base=calcFare(t,L.from,L.to,L.cls);
-    const fare=applyDiscount(base,discount);
-    const seats=(L.seats&&L.seats.length===count)?[...L.seats]:Array.from({length:count},()=>randomSeat(L.cls,L.no));
-    const tk={
-      id:genTicketId(), trainNo:L.no,grade:t.grade,line:t.line,
-      fromStn:L.from,toStn:L.to,depTime:L.depT,arrTime:L.arrT,
-      seatClass:L.cls,seatClassLabel:seatClassDisplayLabel(t,L.cls), seats,passengerCount:count,
-      farePerPerson:fare,totalFare:fare*count, discount,discountLabel:DISCOUNTS[discount].label,baseFarePerPerson:base,
-      distanceKm:Math.round(routeDistanceKm(t,L.from,L.to)), bookedAt:Date.now(), travelDate, status:'active',
-      xferGroup:grp, xferSeq:idx+1, xferTotal:X.legs.length, xferVia:X.via, xferOrigin:X.from, xferDest:X.to
-    };
-    tickets.push(tk); created.push(tk);
-  });
-  saveTickets(tickets);
-  created.forEach(tk=>{if(typeof invalidateCongestion==='function')invalidateCongestion(tk.trainNo,tk.travelDate);});
-  created.forEach(tk=>_autoBookAlarms(getTrainByNo(tk.trainNo),tk.fromStn,tk.toStn,tk.depTime,tk.arrTime));
-  closeBookTrainDetail();
-  const totalFare=created.reduce((a,tk)=>a+tk.totalFare,0);
-  alert(`í™˜ìŠ¹ ì˜ˆë§¤ê°€ ì™„ë£Œë˜ì—ˆìŠµë‹ˆë‹¤!\n${travelDate} Â· ${X.from} â†’ ${X.via} â†’ ${X.to}\nì„ í–‰ ${created[0].grade} ${created[0].trainNo} Â· í›„í–‰ ${created[1].grade} ${created[1].trainNo}\n${count}ëª… Â· ì´ ${totalFare.toLocaleString()}ì›`);
-  window._xfer=null;
-  if(document.getElementById('panel-ticket')?.classList.contains('active'))renderTickets();
-  try{ if(typeof openMySection==='function'&&document.getElementById('my-sub-panel')?.classList.contains('open')&&document.getElementById('my-sub-title')?.textContent?.includes('ìŠ¹ì°¨ê¶Œ'))openMySection('ticket'); }catch(e){}
-}
-
-// ë‚ ì§œ ì§€ì • ì˜ˆë§¤ (ì—´ì°¨ ì˜ˆë§¤ íƒ­ì—ì„œ í˜¸ì¶œ)
-// isRound: ì™•ë³µì´ë©´ í¸ë„(ê°€ëŠ”í¸) ì˜ˆë§¤ ì™„ë£Œ í›„ ë³µí¸ ì¡°íšŒ í™”ë©´ ìë™ ì‹¤í–‰
-function openBookingWithDate(trainNo, from, to, depT, arrT, travelDate, isRound, dateBack){
-  // ì˜ˆë§¤ ì™„ë£Œ í›„ ì½œë°±: ì™•ë³µì´ë©´ ë³µí¸ ì¡°íšŒë¡œ ì´ë™
-  const wantRound=(isRound===true||isRound==='true')&&dateBack;
-  window._afterBookingCallback = wantRound ? ()=>{
-    setTimeout(()=>{
-      _bookRoundTrip=false; // ë³µí¸ì€ í¸ë„ë¡œ ì¡°íšŒ
-      window._bookFrom = to;
-      window._bookTo = from;
-      openMySection('book'); // ë§ˆì´í˜ì´ì§€ ì˜ˆë§¤ í™”ë©´ ì¬ë Œë” (ì—­Â·í¸ë„ ìƒíƒœ ë°˜ì˜)
-      setTimeout(()=>{
-        const dEl = document.getElementById('book-date-go');
-        if(dEl) dEl.value = dateBack;
-        searchBookTrains(false,false);
-        const resEl=document.getElementById('my-book-results');
-        if(resEl)resEl.insertAdjacentHTML('afterbegin',
-          `<div style="margin-top:14px;padding:10px 14px;border-radius:10px;background:rgba(56,139,253,.1);border:1px solid var(--accent);font-size:12.5px;color:var(--accent2)">ğŸ” ê°€ëŠ” ì—´ì°¨ ì˜ˆë§¤ ì™„ë£Œ â€” <b>ë³µí¸(${to} â†’ ${from} Â· ${dateBack})</b>ì„ ì„ íƒí•´ ì£¼ì„¸ìš”</div>`);
-      }, 150);
-    }, 300);
-  } : null;
-
-  // book-detail-panel ìŠ¬ë¼ì´ë“œ ë‹«í˜ í›„ ì˜ˆë§¤ì°½ ì—´ê¸°
-  setTimeout(()=>{
-    openBookingPopup(trainNo, from, to, depT, arrT, travelDate);
-    const dateInp = document.getElementById('booking-date');
-    if(dateInp && travelDate) dateInp.value = travelDate;
-    if(window._bookPassengerCount>1){
-      window._bookingPassengerCount = window._bookPassengerCount;
-      const cnt = document.getElementById('booking-passenger-count');
-      if(cnt) cnt.textContent = window._bookPassengerCount;
-    }
-  }, 50);
-}
-
-
-
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-// ğŸš‰ ì—­ ì •ë³´ íƒ­
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-let _siSubTab='near', _siCurrent=null, _siCardPlatform=null, _siMetroGuidePlatform=null, _siNearAll=[], _siNearShowClosed=false, _siNearLat=null, _siNearLon=null, _siHideTerm=false, _siUpcomingOnly=false, _siBoardTimer=null;
-// ìš´í–‰ì¼ ê¸°ì¤€(04:00~ìµì¼ 03:59) ë¶„ ë³€í™˜: 04:00=0 â€¦ 03:59=1439
-function _srvMin(m){ return ((m-240)%1440+1440)%1440; }
-
-function renderStationInfo(){
-  const el=document.getElementById('result-stationinfo');
-  if(!el)return;
-  el.innerHTML='<div id="si-content" style="padding:0 0 24px"></div>';
-  renderSIContent();
-}
-
-function setSITab(t){
-  _siSubTab=t;
-  document.querySelectorAll('.si-tab').forEach((b,i)=>b.classList.toggle('active',['near','detail'][i]===t));
-  renderSIContent();
-}
-
-function renderSIContent(){
-  const el=document.getElementById('si-content');
-  if(!el)return;
-  if(_siSubTab==='metro')_siSubTab='near'; // êµ¬ë²„ì „ ìƒíƒœ ë³µêµ¬
-  if(_siSubTab==='near') renderSINear(el);
-  else renderSIDetail(el);
-}
-
-// â”€â”€ ğŸš‡ ì „ì²  ë…¸ì„  íƒ­ (ì „ì²  ëª¨ë“œ ì „ìš©) â”€â”€
-let _metroRegion='ì „ì²´', _metroDetailId=null, _metroPatSel=null;
-// ê³„í†µì´ ì •ì°¨í•˜ëŠ” ì—­ ì§‘í•© â€” ê²Œì„ DB íƒœê·¸("ë…¸ì„ ëª…/ê³„í†µ" ë˜ëŠ” "ë…¸ì„ ëª… (ê³„í†µ)") ê¸°ì¤€
-function _metroPatStops(l,p){
-  const set=new Set();
-  if(typeof STATION_DB==='undefined')return set;
-  const tags=[l.name+'/'+p, l.name+' ('+p+')'];
-  const all=new Set((l.routes||[{stations:l.stations}]).flatMap(r=>r.stations));
-  for(const n of all){
-    const st=STATION_DB[n+'ì—­']||STATION_DB[n];
-    if(st&&st.lines&&tags.some(t=>st.lines.includes(t)))set.add(n);
-  }
-  return set;
-}
-// ê³„í†µ ìš´í–‰ êµ¬ê°„ ì‹œí€€ìŠ¤ â€” ê° routeì—ì„œ ì²« ì •ì°¨ì—­~ë§ˆì§€ë§‰ ì •ì°¨ì—­ êµ¬ê°„ë§Œ ì·¨í•˜ê³ , êµ¬ê°„ ë‚´ ë¯¸ì •ì°¨ì—­ì€ pass í‘œì‹œ
-// ê³„í†µ ì—­ì„ ê°€ì¥ ë§ì´ ë‹´ì€ routeë¶€í„° ìˆœíšŒ, ì´ë¯¸ ë‹´ì€ ì—­ì€ ê±´ë„ˆëœ€ (ê³„í†µë³„ routeê°€ ê²¹ì¹˜ëŠ” ë…¸ì„  ëŒ€ì‘)
-function _metroPatSeq(l,p){
-  const stops=_metroPatStops(l,p);
-  if(!stops.size)return null;
-  const routes=(l.routes||[{stations:l.stations}]).slice()
-    .sort((a,b)=>b.stations.filter(s=>stops.has(s)).length-a.stations.filter(s=>stops.has(s)).length);
-  const seq=[]; const seen=new Set();
-  for(const r of routes){
-    const idx=r.stations.map((s,i)=>stops.has(s)?i:-1).filter(i=>i>=0);
-    if(idx.length<2)continue; // í•´ë‹¹ routeì— ì •ì°¨ì—­ 1ê°œ(ë¶„ê¸°ì—­ ë“±)ë¿ì´ë©´ ìš´í–‰ êµ¬ê°„ ì•„ë‹˜
-    const a=idx[0], b=idx[idx.length-1];
-    const seg=[];
-    for(let i=a;i<=b;i++){
-      const n=r.stations[i];
-      if(seen.has(n))continue; // ë‹¤ë¥¸ routeì—ì„œ ì´ë¯¸ í‘œì‹œí•œ ì—­
-      seg.push({n,stop:stops.has(n)});
-    }
-    if(!seg.filter(x=>x.stop).length)continue;
-    // ë¶„ê¸°ì—­ì—ì„œ ì´ì–´ì§€ë©´ ì—°ì†, ì•„ë‹ˆë©´ êµ¬ë¶„ì„ 
-    const cont=seq.length&&seen.has(r.stations[a])&&seq[seq.length-1].n===r.stations[a];
-    if(seq.length&&!cont)seq.push({gap:true});
-    for(const x of seg){seq.push(x);seen.add(x.n);}
-    r.stations.slice(a,b+1).forEach(n=>seen.add(n));
-  }
-  return seq.filter(x=>!x.gap).length>=2?seq:null;
-}
-function setMetroPat(p){_metroPatSel=p;renderMetroLinesTab();}
-function _metroRouteGroups(l){
-  const routes=(l.routes&&l.routes.length?l.routes:[{stations:l.stations||[]}]).filter(r=>r.stations&&r.stations.length);
-  if(!routes.length)return[];
-  const primary=routes.find(r=>r.stations.length===(l.stations||[]).length&&r.stations.every((n,i)=>n===l.stations[i]))||routes[0];
-  const ordered=[primary,...routes.filter(r=>r!==primary)], mainSet=new Set(primary.stations);
-  return ordered.map((route,routeIndex)=>{
-    const junctions=routeIndex?route.stations.filter(n=>mainSet.has(n)):[];
-    const start=route.stations[0],end=route.stations[route.stations.length-1];
-    return{
-      route:routeIndex,
-      branch:routeIndex>0,
-      label:routeIndex?(junctions.length?`${junctions[0]} ë¶„ê¸° Â· ${end} ë°©ë©´`:`ë³„ë„ ìš´í–‰ê³„í†µ Â· ${start}â€“${end}`):'ë³¸ì„ ',
-      rows:route.stations.map((n,i)=>({n,stop:true,route:routeIndex,branch:routeIndex>0,routeStart:i===0,routeEnd:i===route.stations.length-1}))
-    };
-  });
-}
-function _metroRouteGroupsHTML(l,groups,live){
-  return groups.map((group,index)=>`<section class="mtl-route-group${group.branch?' branch':''}">
-    ${index?`<div class="mtl-route-group-head"><span style="background:${l.color}"></span><b>${_opsEsc(group.label)}</b></div>`:''}
-    ${live?_renderMetroLiveTimeline(l,group.rows):_metroStaticTLHTML(l,group.rows)}
-  </section>`).join('');
-}
-function renderMetroLinesTab(){
-  const el=document.getElementById('result-metrolines');
-  if(!el)return;
-  if(typeof METRO_LINES==='undefined'){el.innerHTML='<div class="empty"><div class="empty-icon">ğŸš‡</div><p>ì „ì²  ë…¸ì„  ë°ì´í„°ê°€ ì—†ìŠµë‹ˆë‹¤.</p></div>';return;}
-  if(_metroDetailId){ _renderMetroLineDetail(el,_metroDetailId); return; }
-  const regions=['ì „ì²´',...new Set(METRO_LINES.map(l=>l.region))];
-  const list=METRO_LINES.filter(l=>_metroRegion==='ì „ì²´'||l.region===_metroRegion);
-  el.innerHTML=`
-    <div style="margin:14px 2px 4px;font-size:12px;color:var(--text3)">ì „ì²  ${METRO_LINES.length}ê°œ ë…¸ì„  Â· ë…¸ì„ ì„ ëˆ„ë¥´ë©´ ì—­ ëª©ë¡ì´ í‘œì‹œë©ë‹ˆë‹¤</div>
-    <div style="display:flex;gap:6px;flex-wrap:wrap;margin:8px 0 12px">
-      ${regions.map(r=>`<button class="metro-region-chip${_metroRegion===r?' on':''}" onclick="setMetroRegion('${r}')">${r}${r!=='ì „ì²´'?` ${METRO_LINES.filter(l=>l.region===r).length}`:''}</button>`).join('')}
-    </div>
-    <div style="display:flex;flex-direction:column;gap:8px;padding-bottom:24px">${list.map(_metroCardHTML).join('')}</div>`;
-}
-// í˜„ ì‹œê°„í‘œ(METRO_SCHED) ê¸°ì¤€ ì²«Â·ë§‰ì°¨/ë°°ì°¨ ì‚°ì¶œ â€” ë…¸ì„ ëª…ë³„ ë©”ëª¨ì´ì¦ˆ
-let _metroStatCache={};
-function _metroSchedStats(name){
-  if(name in _metroStatCache) return _metroStatCache[name];
-  const ent=(typeof METRO_SCHED!=='undefined')&&METRO_SCHED[name];
-  if(!ent||!ent.t||!ent.t.length) return _metroStatCache[name]=null;
-  const srv=m=>(((m-240)%1440)+1440)%1440;                              // 04:00=0
-  const clk=sm=>{const c=(sm+240)%1440;return Math.floor(c/60)+':'+String(c%60).padStart(2,'0');};
-  const byDir={}; let minS=Infinity,maxS=-Infinity;
-  for(const f of ent.t){ const sm=srv(f[1]); if(sm<minS)minS=sm; if(sm>maxS)maxS=sm;   // ì›ì  ì¶œë°œ(ì²« ì •ì°¨ d)
-    const d=f[2]+'>'+(f.length>=6?f[5]:''); (byDir[d]=byDir[d]||[]).push(sm); }        // ë°©í–¥=ì›ì >ë‹¤ìŒì—­
-  // ì£¼ ë°©í–¥(í¸ìˆ˜ ìµœë‹¤)ì˜ ì£¼ê°„ ì—°ì† ë°°ì°¨ ê°„ê²© â†’ ëŸ¬ì‹œ=í•˜ìœ„ 15%, í‰ì‹œ=ìƒìœ„ 80% ë¶„ìœ„
-  const primary=Object.keys(byDir).sort((a,b)=>byDir[b].length-byDir[a].length)[0];
-  const deps=byDir[primary].slice().sort((a,b)=>a-b);
-  const gaps=[]; for(let i=1;i<deps.length;i++){const g=deps[i]-deps[i-1]; if(g>0&&g<=120&&deps[i-1]>=90&&deps[i-1]<=1170)gaps.push(g);}
-  gaps.sort((a,b)=>a-b);
-  const pct=p=>gaps.length?gaps[Math.min(gaps.length-1,Math.floor(p*gaps.length))]:null;
-  return _metroStatCache[name]={first:clk(minS),last:clk(maxS),hwPeak:pct(0.15),hwOff:pct(0.8)};
-}
-function _metroCardHTML(l){
-  const st=_metroSchedStats(l.name);
-  const first=(st&&st.first)||l.first, last=(st&&st.last)||l.last, hwObj=(st&&st.hwPeak!=null)?st:l;
-  return `<div class="metro-card" style="border-left:4px solid ${l.color}" onclick="openMetroLineDetail('${l.id}')">
-    <div class="metro-head">
-      <span class="metro-dot" style="background:${l.color}"></span>
-      <span class="metro-name">${l.name}</span>
-      ${l.loop?'<span class="metro-badge">ìˆœí™˜</span>':''}
-      ${l.night?'<span class="metro-badge night">ì‹¬ì•¼</span>':''}
-      <span class="metro-count">${l.n}ê°œì—­ â€º</span>
-    </div>
-    <div class="metro-route">${l.loop?`${l.from} ê¸°ì  ìˆœí™˜`:`${l.from} â†” ${l.to}`}</div>
-    <div class="metro-info">
-      <span>ì²«ì°¨ <b>${first}</b></span>
-      <span>ë§‰ì°¨ <b>${last}</b></span>
-      <span>${_metroHeadway(hwObj)}</span>
-    </div>
-  </div>`;
-}
-// ë…¸ì„  ìƒì„¸: ì—´ì°¨ ì¡°íšŒì²˜ëŸ¼ íƒ€ì„ë¼ì¸ ì‹ ì—­ ëª©ë¡
-function _renderMetroLineDetail(el,id){
-  const l=METRO_LINES.find(x=>x.id===id);
-  if(!l){_metroDetailId=null;renderMetroLinesTab();return;}
-  if(_metroPatSel&&!l.patterns.includes(_metroPatSel))_metroPatSel=null;
-  const patSeq=_metroPatSel?_metroPatSeq(l,_metroPatSel):null;
-  if(_metroPatSel&&!patSeq)_metroPatSel=null;
-  const groups=patSeq?[{route:0,branch:false,label:_metroPatSel,rows:patSeq}]:_metroRouteGroups(l);
-  const rows=groups.flatMap(group=>group.rows);
-  const stopRows=rows.filter(x=>!x.gap&&x.stop), passN=rows.filter(x=>!x.gap&&!x.stop).length;
-  const patInfo=patSeq?`<div style="margin:10px 2px 0;font-size:12px;color:var(--text2)"><b style="color:var(--text1)">${_metroPatSel}</b> Â· ${stopRows[0].n} â†” ${stopRows[stopRows.length-1].n} Â· ì •ì°¨ <b>${stopRows.length}</b>ì—­${passN?` Â· í†µê³¼ ${passN}ì—­ <span style="color:var(--text3)">(ìŒì˜)</span>`:''}</div>`:'';
-  el.innerHTML=`
-    <div style="padding:14px 0 24px">
-      <div class="mtl-detail-nav">
-        <button class="mtl-detail-list" onclick="closeMetroLineDetail()">â† ë…¸ì„  ëª©ë¡</button>
-        <button class="msch-navbtn" onclick="stepMetroLineDetail(-1)" aria-label="ì´ì „ ë…¸ì„ ">â—€</button>
-        <button class="msch-navbtn" onclick="stepMetroLineDetail(1)" aria-label="ë‹¤ìŒ ë…¸ì„ ">â–¶</button>
-      </div>
-      <div class="metro-card" style="border-left:4px solid ${l.color};cursor:default">
-        <div class="metro-head">
-          <span class="metro-dot" style="background:${l.color}"></span>
-          <span class="metro-name" style="font-size:17px">${l.name}</span>
-          ${l.loop?'<span class="metro-badge">ìˆœí™˜</span>':''}
-          ${l.night?'<span class="metro-badge night">ì‹¬ì•¼</span>':''}
-          <span class="metro-count">${l.n}ê°œì—­</span>
-        </div>
-        <div class="metro-route">${l.loop?`${l.from} ê¸°ì  ìˆœí™˜`:`${l.from} â†” ${l.to}`}</div>
-        <div class="metro-info">
-          <span>ì²«ì°¨ <b>${(()=>{const st=_metroSchedStats(l.name);return (st&&st.first)||l.first;})()}</b></span>
-          <span>ë§‰ì°¨ <b>${(()=>{const st=_metroSchedStats(l.name);return (st&&st.last)||l.last;})()}</b></span>
-          <span>${(()=>{const st=_metroSchedStats(l.name);return _metroHeadway((st&&st.hwPeak!=null)?st:l);})()}</span>
-        </div>
-        ${l.patterns.length?`<div class="metro-pats" style="margin-top:8px">ìš´í–‰ê³„í†µ <span class="metro-pat-chip${!_metroPatSel?' on':''}" onclick="setMetroPat(null)">ì „ì²´</span>${l.patterns.map(p=>`<span class="metro-pat-chip${_metroPatSel===p?' on':''}" onclick="setMetroPat('${p.replace(/'/g,"\\'")}')">${p}</span>`).join('')}</div>`:''}
-        ${patInfo}
-        <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap">
-          <button onclick="event.stopPropagation();showMetroOnMap('${l.id}')" style="padding:8px 14px;border-radius:10px;border:1px solid ${l.color};background:transparent;color:${l.color};font-size:12.5px;font-weight:700;cursor:pointer;font-family:var(--sans)">ì§€ë„í˜• ë…¸ì„ ë„</button>
-        </div>
-      </div>
-      <div class="mtl-live-head">
-        <button class="mtl-live-toggle${_metroLiveOn?' on':''}" style="--mc:${l.color}" onclick="setMetroLiveOn(${_metroLiveOn?'false':'true'})"><span class="mtl-live-sw"></span>ì‹¤ì‹œê°„ ìœ„ì¹˜ ${_metroLiveOn?'ON':'OFF'}</button>
-        ${_metroLiveOn?`<span class="mtl-live-run" style="--mc:${l.color}">ğŸš‡ <b>${_metroLineLiveTrains(l.name).length}</b>ëŒ€ ìš´í–‰ ì¤‘</span>
-        <button class="mtl-live-refresh" onclick="openMetroLineDetail('${l.id}')" title="ìƒˆë¡œê³ ì¹¨">â†»</button>`:''}
-      </div>
-      ${_metroLiveOn?`<div class="mtl-live-legend"><span class="mtl-live-lg down">â–¼ í•˜í–‰ <small>ê¸°ì â†’ì¢…ì </small></span><span class="mtl-live-lg up">â–² ìƒí–‰ <small>ì¢…ì â†’ê¸°ì </small></span></div>`:''}
-      ${_metroRouteGroupsHTML(l,groups,_metroLiveOn)}
-    </div>`;
-  if(!_metroLiveOn)_placeMetroLiveMarkers(el, l.name);
-  window.scrollTo(0,0);
-}
-function setMetroRegion(r){_metroRegion=r;_metroDetailId=null;_metroPatSel=null;renderMetroLinesTab();}
-function openMetroLineDetail(id){_metroDetailId=id;_metroPatSel=null;renderMetroLinesTab();}
-function closeMetroLineDetail(){_metroDetailId=null;_metroPatSel=null;renderMetroLinesTab();}
-function stepMetroLineDetail(dir){
-  if(typeof METRO_LINES==='undefined'||!METRO_LINES.length)return;
-  const i=METRO_LINES.findIndex(l=>l.id===_metroDetailId);
-  const ni=(i<0?0:(i+dir+METRO_LINES.length)%METRO_LINES.length);
-  openMetroLineDetail(METRO_LINES[ni].id);
-}
-function showMetroOnMap(id){
-  const l=METRO_LINES.find(x=>x.id===id);
-  if(l){_metroMapRegion=l.region;_metroMapId=id;}
-  switchTab('map');
-}
-// ì—­ ì¹´ë“œ ì „ì²  ì¹© â†’ ì „ì²  ëª¨ë“œ ë…¸ì„  ìƒì„¸ë¡œ
-function openMetroLine(id){
-  if(_appMode!=='metro') setAppMode('metro');
-  const l=(typeof METRO_LINES!=='undefined')?METRO_LINES.find(x=>x.id===id):null;
-  if(l)_metroRegion=l.region;
-  _metroDetailId=id;
-  switchTab('metrolines');
-}
-
-function siNearSearch(q){
-  if(!q){const r=document.getElementById('si-near-search-results');if(r)r.innerHTML='';return;}
-  if(typeof STATION_DB==='undefined')return;
-  const res=Object.keys(STATION_DB).filter(n=>n.includes(q)).slice(0,8);
-  const el=document.getElementById('si-near-search-results');
-  if(!el)return;
-  el.innerHTML=res.length?`<div style="display:flex;flex-wrap:wrap;gap:6px">${
-    res.map(n=>`<button onclick="openStationDetail('${n}')"
-      style="padding:6px 12px;border-radius:20px;border:1px solid var(--border);background:var(--bg3);color:var(--text1);font-size:12px;cursor:pointer;font-family:var(--sans)">${n}</button>`).join('')
-  }</div>`:'<div style="color:var(--text3);font-size:12px;padding:4px">ê²€ìƒ‰ ê²°ê³¼ ì—†ìŒ</div>';
-}
-
-// ëª¨ë“œë³„ ì—­ ì§‘í•© (ê¸°ì°¨: ì—´ì°¨ ì •ì°¨ì—­ / ì „ì² : ì „ì²  ë…¸ì„  ì—­)
-let _trainStnSet=null,_metroStnSet=null;
-function _modeStnSetsInit(){
-  if(!_trainStnSet&&typeof ALL_TRAINS!=='undefined'){
-    _trainStnSet=new Set();
-    // í•œ í¸ì´ë¼ë„ ì‹¤ì œ 'ì •ì°¨'í•˜ëŠ” ì—­ë§Œ ê¸°ì°¨ì—­ìœ¼ë¡œ ì·¨ê¸‰ â€” í†µê³¼ë§Œ í•˜ëŠ” ì—­ì€ ì œì™¸
-    ALL_TRAINS.forEach(t=>t.stops.forEach(s=>{if((hasTime(s.arr)||hasTime(s.dep))&&!isPassStop(t,s.s))_trainStnSet.add(s.s);}));
-  }
-  if(!_metroStnSet&&typeof METRO_LINES!=='undefined'){
-    _metroStnSet=new Set();
-    METRO_LINES.forEach(l=>(l.routes||[{stations:l.stations}]).forEach(r=>r.stations.forEach(n=>_metroStnSet.add(n))));
-  }
-}
-// ì „ì²  ì „ìš©ì—­: ì „ì²  ë…¸ì„ ì—ëŠ” ìˆìœ¼ë‚˜ ì–´ë–¤ ì—´ì°¨ë„ ì •ì°¨í•˜ì§€ ì•ŠëŠ” ì—­(í†µê³¼ë§Œ í¬í•¨)
-// â†’ ê¸°ì°¨ íƒ­ ì—­ ê²€ìƒ‰ì—ì„œ ì œì™¸ ëŒ€ìƒ
-function _isMetroOnly(name){
-  _modeStnSetsInit();
-  return !!(_metroStnSet&&_metroStnSet.has(name)&&_trainStnSet&&!_trainStnSet.has(name));
-}
-// ëª¨ë“œ ì „í™˜ + ê°™ì€ ì—­ ìƒì„¸ ì—´ê¸° (ì „ì² â†”ê¸°ì°¨ ë³‘í–‰ì—­ ë¹ ë¥¸ ì´ë™)
-function switchModeStation(mode,name){
-  setAppMode(mode);
-  openStationDetail(name);
-}
-function _stnBaseName(n){return String(n).replace(/\s*\/.*$/,'').trim().replace(/ì—­$/,'');}
-function renderSINear(el){
-  el.innerHTML=`<div style="margin-top:12px">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;gap:8px;flex-wrap:wrap">
-      <div style="font-size:13px;font-weight:700;color:var(--text1)">ê°€ê¹Œìš´ ${_appMode==='metro'?'ì „ì² ì—­':'ê¸°ì°¨ì—­'} TOP 5</div>
-      <div style="display:flex;align-items:center;gap:10px">
-        <button onclick="requestNearLocation()" style="font-size:11px;font-weight:600;color:var(--accent);background:transparent;border:1px solid var(--accent);border-radius:14px;padding:4px 10px;cursor:pointer;font-family:var(--sans)">ğŸ”„ ìœ„ì¹˜ ë‹¤ì‹œ ìš”ì²­</button>
-        <label style="display:flex;align-items:center;gap:4px;font-size:11px;color:var(--text3);cursor:pointer">
-          <input type="checkbox" id="si-near-closed" onchange="_siNearShowClosed=this.checked;renderSINearList()" ${_siNearShowClosed?'checked':''}>
-          íì—­ í¬í•¨
-        </label>
-      </div>
-    </div>
-    <div id="si-near-list"><div style="background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:20px;color:var(--text3);font-size:13px;text-align:center">ìœ„ì¹˜ ì •ë³´ ê°€ì ¸ì˜¤ëŠ” ì¤‘...</div></div>
-  </div>`;
-  if(!navigator.geolocation){document.getElementById('si-near-list').innerHTML='<div style="color:var(--text3);font-size:12px;padding:12px;text-align:center">ìœ„ì¹˜ ì„œë¹„ìŠ¤ ë¯¸ì§€ì›</div>';return;}
-  if(_siNearAll.length>0){renderSINearList();return;}
-  _fetchNearLocation();
-}
-// ìœ„ì¹˜ ìš”ì²­(ìµœì´ˆ/ë‹¤ì‹œ). ìºì‹œ ë¹„ìš°ê³  ì¬ìš”ì²­ â†’ ê±°ì ˆí–ˆë˜ ê²½ìš° ë‹¤ì‹œ ê¶Œí•œ íŒì—… ìœ ë„
-function requestNearLocation(){
-  _siNearAll=[]; _siNearLat=null; _siNearLon=null;
-  const l=document.getElementById('si-near-list');
-  if(l)l.innerHTML='<div style="background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:20px;color:var(--text3);font-size:13px;text-align:center">ìœ„ì¹˜ ì •ë³´ ê°€ì ¸ì˜¤ëŠ” ì¤‘...</div>';
-  _fetchNearLocation();
-}
-function _fetchNearLocation(){
-  if(!navigator.geolocation)return;
-  navigator.geolocation.getCurrentPosition(pos=>{
-    const {latitude:lat,longitude:lon}=pos.coords;
-    _siNearLat=lat; _siNearLon=lon;
-    if(typeof getNearestStations==='undefined'){const l=document.getElementById('si-near-list');if(l)l.innerHTML='<div style="color:var(--red);font-size:12px;padding:12px">ì—­ ë°ì´í„° ë¡œë“œ ì•ˆë¨</div>';return;}
-    _siNearAll=getNearestStations(lat,lon,50);
-    renderSINearList();
-  },err=>{
-    const l=document.getElementById('si-near-list');
-    const denied=err.code===1;
-    if(l)l.innerHTML=`<div style="background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:18px;text-align:center">
-      <div style="color:var(--text2);font-size:13px;font-weight:600;margin-bottom:6px">${denied?'ìœ„ì¹˜ ê¶Œí•œì´ ê±°ë¶€ë˜ì–´ ìˆìŠµë‹ˆë‹¤':'ìœ„ì¹˜ë¥¼ ê°€ì ¸ì˜¤ì§€ ëª»í–ˆìŠµë‹ˆë‹¤'}</div>
-      <div style="color:var(--text3);font-size:11px;margin-bottom:12px">${denied?'ì‹¤ìˆ˜ë¡œ ê±°ë¶€í•˜ì…¨ë‹¤ë©´ ì•„ë˜ ë²„íŠ¼ìœ¼ë¡œ ë‹¤ì‹œ ìš”ì²­í•˜ê±°ë‚˜, ë¸Œë¼ìš°ì € ì£¼ì†Œì°½ì˜ ìë¬¼ì‡ (â“˜) â†’ ê¶Œí•œì—ì„œ ìœ„ì¹˜ë¥¼ í—ˆìš©í•´ì£¼ì„¸ìš”.':err.message}</div>
-      <button onclick="requestNearLocation()" style="font-size:12px;font-weight:700;color:#fff;background:var(--accent);border:none;border-radius:10px;padding:9px 18px;cursor:pointer;font-family:var(--sans)">ğŸ“ ìœ„ì¹˜ ê¶Œí•œ ë‹¤ì‹œ ìš”ì²­</button>
-    </div>`;
-  },{timeout:8000,maximumAge:60000,enableHighAccuracy:false});
-}
-
-function renderSINearList(){
-  const list=document.getElementById('si-near-list');
-  if(!list)return;
-  let filtered=_siNearShowClosed?_siNearAll:_siNearAll.filter(s=>s.lines&&s.lines.length>0);
-  // ëª¨ë“œë³„ í•„í„°: ê¸°ì°¨ ëª¨ë“œ=ì—´ì°¨ ì •ì°¨ì—­ë§Œ, ì „ì²  ëª¨ë“œ=ì „ì²  ë…¸ì„  ì—­ë§Œ
-  _modeStnSetsInit();
-  if(_appMode==='metro'&&_metroStnSet) filtered=filtered.filter(s=>_metroStnSet.has(_stnBaseName(s.name)));
-  else if(_trainStnSet) filtered=filtered.filter(s=>_trainStnSet.has(_stnBaseName(s.name)));
-  if(!filtered.length){list.innerHTML=`<div style="color:var(--text3);font-size:13px;text-align:center;padding:8px">ì£¼ë³€ì— ìš´ì˜ ì¤‘ì¸ ${_appMode==='metro'?'ì „ì² ì—­':'ê¸°ì°¨ì—­'} ì—†ìŒ</div>`;return;}
-  const dotColors=['#3b82f6','#f97316','#a855f7','#22c55e','#ef4444'];
-  const top5=filtered.slice(0,5);
-
-  // â”€â”€ Coordinate-based mini map â”€â”€
-  let mapSVG='';
-  if(_siNearLat!==null){
-    const W=320,H=200;
-    const allLats=[_siNearLat,...top5.map(s=>s.lat)];
-    const allLons=[_siNearLon,...top5.map(s=>s.lon)];
-    let minLat=Math.min(...allLats),maxLat=Math.max(...allLats);
-    let minLon=Math.min(...allLons),maxLon=Math.max(...allLons);
-    const rLat=maxLat-minLat||0.005,rLon=maxLon-minLon||0.005;
-    const pad=0.28;
-    minLat-=rLat*pad; maxLat+=rLat*pad;
-    minLon-=rLon*pad; maxLon+=rLon*pad;
-    const toX=lon=>((lon-minLon)/(maxLon-minLon))*W;
-    const toY=lat=>((maxLat-lat)/(maxLat-minLat))*H;
-    const myX=toX(_siNearLon),myY=toY(_siNearLat);
-    const dots=top5.map((s,i)=>({x:toX(s.lon),y:toY(s.lat),c:dotColors[i],name:s.name,dist:s.dist}));
-    const label=(d,ix)=>{
-      // Avoid right-edge overflow and overlap with "ë‚˜" label
-      const lx=d.x>W*0.65?d.x-7:d.x+7;
-      const anchor=d.x>W*0.65?'end':'start';
-      const ly=d.y<18?d.y+16:d.y-7;
-      const distStr=d.dist<1?(d.dist*1000).toFixed(0)+'m':d.dist.toFixed(1)+'km';
-      return `<circle cx="${d.x.toFixed(1)}" cy="${d.y.toFixed(1)}" r="5" fill="${d.c}"/>
-        <text x="${lx.toFixed(1)}" y="${ly.toFixed(1)}" font-size="9" fill="${d.c}" font-family="sans-serif" text-anchor="${anchor}">${d.name} (${distStr})</text>`;
-    };
-    const myLy=myY<22?myY+18:myY-10;
-    mapSVG=`<div style="background:var(--bg2);border:1px solid var(--border);border-radius:10px;overflow:hidden;margin-bottom:10px">
-      <svg width="100%" viewBox="0 0 ${W} ${H}" style="display:block">
-        ${dots.map((d,i)=>label(d,i)).join('')}
-        <circle cx="${myX.toFixed(1)}" cy="${myY.toFixed(1)}" r="12" fill="#22c55e" opacity="0.18"/>
-        <circle cx="${myX.toFixed(1)}" cy="${myY.toFixed(1)}" r="5" fill="#22c55e"/>
-        <text x="${myX.toFixed(1)}" y="${myLy.toFixed(1)}" font-size="9" fill="#22c55e" font-family="sans-serif" text-anchor="middle" font-weight="bold">ë‚˜</text>
-        <text x="${(W-6).toFixed(0)}" y="${(H-6).toFixed(0)}" font-size="8" fill="rgba(180,180,180,0.4)" text-anchor="end" font-family="sans-serif">ì‹¤ì œ ì¢Œí‘œ ê¸°ë°˜</text>
-      </svg>
-    </div>`;
-  }
-
-  // â”€â”€ Station list â”€â”€
-  const stationList=filtered.slice(0,10).map((s,i)=>{
-    const color=i<5?dotColors[i]:'var(--text2)';
-    const distStr=s.dist<1?(s.dist*1000).toFixed(0)+'m':s.dist.toFixed(1)+'km';
-    const mainLines=s.lines.slice(0,3).join('Â·');
-    const extraLines=s.lines.length>3?` ì™¸ ${s.lines.length-3}ê°œ ë…¸ì„ `:'';
-    const pArr=s.platforms||[];
-    const platStr=pArr.length>0?` Â· í™ˆ 1~${Math.max(...pArr)}ë²ˆ`:'';
-    const nameEsc=s.name.replace(/'/g,"\\'");
-    return `<div style="display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--bg2);border:1px solid var(--border);border-radius:10px;margin-bottom:6px;cursor:pointer"
-      onclick="openStationDetail('${nameEsc}')">
-      <div style="min-width:48px;font-size:14px;font-weight:700;color:${color};font-family:var(--mono)">${distStr}</div>
-      <div style="flex:1">
-        <div style="font-size:15px;font-weight:700">${s.name}${s.lines.length===0?' <span style="font-size:10px;color:var(--text3)">(íì—­)</span>':''}</div>
-        <div style="font-size:11px;color:var(--text3);margin-top:2px">${mainLines}${extraLines}${platStr}</div>
-      </div>
-      <div style="font-size:18px;color:var(--text3)">â€º</div>
-    </div>`;
-  }).join('');
-
-  list.innerHTML=mapSVG+stationList;
-}
-
-function openStationDetail(name){
-  _siCurrent=railStationDataName(name); _siSubTab='detail'; _siCardPlatform=null; _siMetroGuidePlatform=null;
-  switchTab('stationinfo');
-  setTimeout(()=>renderStationInfo(),50);
-}
-
-function renderSIDetail(el){
-  const curVal=(_siCurrent||'').replace(/"/g,'&quot;');
-  el.innerHTML=`<div style="margin-top:12px">
-    <div class="autocomplete-wrap" style="margin-bottom:12px">
-      <input id="si-inp" type="text" placeholder="ì—­ ì´ë¦„ ê²€ìƒ‰ (ì´ˆì„± ê°€ëŠ¥, ì˜ˆ: ã„·ã„·ã„±)" value="${curVal}"
-        style="width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:10px 14px;color:var(--text1);font-size:14px;font-family:var(--sans);box-sizing:border-box"
-        autocomplete="off"
-        oninput="siSearch(this.value)"
-        onblur="setTimeout(()=>{const r=document.getElementById('si-results');if(r){r.style.display='none';}},160)"
-        onkeydown="siSearchKey(event)">
-      <div id="si-results" class="ac-dropdown" style="display:none"></div>
-    </div>
-    <div id="si-card"></div></div>`;
-  if(_siCurrent) renderSICard(_siCurrent);
-}
-
-function siSearch(q){
-  const el=document.getElementById('si-results');
-  if(!el)return;
-  q=(q||'').trim();
-  if(!q||typeof STATION_DB==='undefined'){el.style.display='none';el.innerHTML='';return;}
-  const qBase=q.endsWith('ì—­')?q.slice(0,-1):q;
-  const stationNames=new Set(Object.keys(STATION_DB));
-  if(typeof ALL_TRAINS!=='undefined')ALL_TRAINS.forEach(t=>(t.stops||[]).forEach(s=>{if(s.s&&(s.arr||s.dep))stationNames.add(s.s);}));
-  Object.keys(NORTH_STATION_DATA_ALIASES).forEach(n=>stationNames.add(n));
-  const uniqueNames=new Map();
-  stationNames.forEach(n=>{const base=n.endsWith('ì—­')?n.slice(0,-1):n;if(!uniqueNames.has(base)||!n.endsWith('ì—­'))uniqueNames.set(base,n);});
-  const all=[...uniqueNames.values()].filter(n=>isRailStationInRegion(n)).filter(n=>{
-    const ns=n.endsWith('ì—­')?n.slice(0,-1):n;
-    return matchesQuery(n,q)||matchesQuery(ns,q)||matchesQuery(ns,qBase);
-  });
-  all.sort((a,b)=>{
-    const aS=a.endsWith('ì—­')?a.slice(0,-1):a;
-    const bS=b.endsWith('ì—­')?b.slice(0,-1):b;
-    const aR=(aS===qBase||a===q)?0:aS.startsWith(qBase)?1:2;
-    const bR=(bS===qBase||b===q)?0:bS.startsWith(qBase)?1:2;
-    return aR!==bR?aR-bR:a.localeCompare(b,'ko');
-  });
-  const res=all.slice(0,12);
-  if(!res.length){el.style.display='none';el.innerHTML='';return;}
-  const isChoQ=q.split('').every(c=>CHO.includes(c));
-  el.innerHTML=res.map(n=>{
-    const nb=n.endsWith('ì—­')?n.slice(0,-1):n;   // ê²€ìƒ‰ í‘œì‹œëŠ” ë§¨ ì´ë¦„(â—‹â—‹)
-    let display=nb;
-    if(!isChoQ){
-      const i=nb.indexOf(qBase||q);
-      if(i>=0){const L=(qBase||q).length;display=nb.slice(0,i)+`<span style="color:var(--accent)">${nb.slice(i,i+L)}</span>`+nb.slice(i+L);}
-    }
-    const nEsc=n.replace(/\\/g,'\\\\').replace(/'/g,"\\'");
-    return `<div class="ac-item" onmousedown="event.preventDefault();siSelect('${nEsc}')">${display}</div>`;
-  }).join('');
-  el.className='ac-dropdown open';
-  el.style.display='block';
-}
-
-function siSearchKey(e){
-  const drop=document.getElementById('si-results');
-  if(!drop||drop.style.display==='none')return;
-  const items=drop.querySelectorAll('.ac-item');
-  if(!items.length)return;
-  let idx=-1;
-  items.forEach((it,i)=>{if(it.classList.contains('active'))idx=i;});
-  if(e.key==='ArrowDown'){e.preventDefault();idx=Math.min(idx+1,items.length-1);}
-  else if(e.key==='ArrowUp'){e.preventDefault();idx=Math.max(idx-1,0);}
-  else if(e.key==='Enter'){
-    e.preventDefault();
-    const t=items[Math.max(idx,0)];
-    if(t)t.dispatchEvent(new MouseEvent('mousedown'));
-    return;
-  } else if(e.key==='Escape'){drop.style.display='none';return;}
-  else return;
-  items.forEach((it,i)=>it.classList.toggle('active',i===idx));
-  if(items[idx])items[idx].scrollIntoView({block:'nearest'});
-}
-
-function siSelect(name){
-  name=railStationDataName(name);
-  _siCurrent=name; _siCardPlatform=null; _siMetroGuidePlatform=null;
-  const inp=document.getElementById('si-inp');
-  if(inp)inp.value=name.endsWith('ì—­')?name.slice(0,-1):name;   // ê²€ìƒ‰ì°½ì€ ë§¨ ì´ë¦„(â—‹â—‹)
-  const el=document.getElementById('si-results');
-  if(el){el.style.display='none';el.innerHTML='';}
-  renderSICard(name);
-}
-
-function _getPlatformInfo(stationName, platformNum){
-  if(typeof PLATFORM_DB==='undefined')return null;
-  const s=PLATFORM_DB[stationName];
-  if(!s)return null;
-  return s[String(platformNum)]||null;
-}
-
-function _gradeMatchesPlatform(trainGrade, platformGrades){
-  if(!platformGrades||platformGrades.length===0)return true;
-  for(const pg of platformGrades){
-    if(pg==='KTX'&&(trainGrade==='KTX'||trainGrade==='KTX-ì‚°ì²œ'||trainGrade==='KTX-ì´ìŒ'))return true;
-    if(pg==='SRT'&&trainGrade==='SRT')return true;
-    if(pg==='ITX-ìƒˆë§ˆì„'&&trainGrade==='ITX-ìƒˆë§ˆì„')return true;
-    if(pg==='ITX-ì²­ì¶˜'&&trainGrade==='ITX-ì²­ì¶˜')return true;
-    if(pg==='ITX-ë§ˆìŒ'&&trainGrade==='ITX-ë§ˆìŒ')return true;
-    if(pg==='ë¬´ê¶í™”í˜¸'&&(trainGrade==='ë¬´ê¶í™”í˜¸'||trainGrade==='ë¬´ê¶í˜¸í™”'))return true;
-  }
-  return false;
-}
-
-// â”€â”€ ì‹¤ì‚¬ìš© ìŠ¹ê°•ì¥ (ê²Œì„ DB ê¸°ë°˜, data/nimbi_realplat.js) â”€â”€
-// trainName: ì—­ ì ‘ë¯¸ì‚¬ ì—†ëŠ” ì—­ ì´ë¦„ (REAL_PLAT í‚¤). name: STATION_DB/PLATFORM_DB í‚¤(ì—­ í¬í•¨).
-if(typeof PLATFORM_DB!=='undefined'){
-  if(!PLATFORM_DB['ì¥ìˆ˜(ì „ë¶)ì—­']){
-    PLATFORM_DB['ì¥ìˆ˜(ì „ë¶)ì—­']={
-      1:{g:['ë¬´ê¶í™”í˜¸'],l:['ì†Œë°±ì„ ']},
-      2:{g:[],l:[]},
-      3:{g:[],l:[]},
-      4:{g:['ë¬´ê¶í™”í˜¸'],l:['ì†Œë°±ì„ ']}
-    };
-  }
-  if(!PLATFORM_DB['ë¶í‰(ì •ì„ )ì—­']){
-    PLATFORM_DB['ë¶í‰(ì •ì„ )ì—­']={
-      1:{g:['ë¬´ê¶í™”í˜¸'],l:['ì •ì„ ì„ ']},
-      2:{g:['ë¬´ê¶í™”í˜¸'],l:['ì •ì„ ì„ ']}
-    };
-  }
-}
-// ê³µí†µ ì² ë„ ê·œì¹™: js/shared/nimbi_rail_domain.js
-// ì‹¤ë°ì´í„°ê°€ ì—†ëŠ” ì •ì°¨ë§Œ íœ´ë¦¬ìŠ¤í‹±(ë“±ê¸‰Â·ë°©ë©´Â·íŠ¸ìœˆ)ìœ¼ë¡œ í´ë°±
-function _heuristicPlatform(name, trains, t){
-  if(typeof PLATFORM_DB==='undefined'||!PLATFORM_DB[name])return null;
-  const ps=Object.keys(PLATFORM_DB[name]).map(Number)
-    .filter(p=>{const i=PLATFORM_DB[name][String(p)];return i&&(i.g.length>0||i.l.length>0);})
-    .sort((a,b)=>a-b);
-  for(const p of ps){
-    if(_getFilteredTrainsForPlatform(name,trains,p).some(x=>x.no===t.no))return p;
-  }
-  return null;
-}
-// ì—´ì°¨ê°€ ì´ ì—­ì—ì„œ ì‹¤ì œ ì‚¬ìš©í•˜ëŠ” ìŠ¹ê°•ì¥ (ê²Œì„ DB ìš°ì„ , ì—†ìœ¼ë©´ íœ´ë¦¬ìŠ¤í‹±)
-function _platformForTrain(name, trainName, trains, t){
-  const r=_realPlatform(t.no, trainName);
-  if(r!=null)return r;
-  return _heuristicPlatform(name, trains, t);
-}
-// ì´ ì—­ì— ì‹¤ì œ ì •ì°¨(í†µê³¼ ì œì™¸)í•˜ëŠ” ì—´ì°¨ ëª©ë¡
-function _stationStoppingTrains(trainName){
-  trainName=railStationDataName(trainName);
-  return getRailTrainsByStation(trainName).filter(t=>{
-    const s=t.stops.find(x=>railStationDataName(x.s)===trainName);
-    return s&&(hasTime(s.dep)||hasTime(s.arr))&&!isPassStop(t,s.s);
-  });
-}
-// ì¡°íšŒì—­ì´ ì´ ì—´ì°¨ì˜ ì¢…ì°©ì—­ì¸ê°€ (ë‹¹ì—­ì¢…ì°©)
-function _isTerminusAt(t, trainName){
-  if(t.dest===trainName) return true;
-  const s=t.stops.find(x=>x.s===trainName);
-  return !!(s&&hasTime(s.arr)&&!hasTime(s.dep));
-}
-// ì—­ ì¢Œí‘œ (base ì´ë¦„ â†’ STATION_DB, ë³„ì¹­ í´ë°± í¬í•¨)
-function _siStnCoord(base){
-  return _stnCoord(base);
-}
-// ì´ ì—´ì°¨ì˜ ì¡°íšŒì—­ ê¸°ì¤€ ì§ì „/ì§í›„ ì •ì°¨ì—­ (í†µê³¼ ì œì™¸)
-function _adjStopOf(t, trainName){
-  const stops=t.stops.filter(s=>(hasTime(s.arr)||hasTime(s.dep))&&!isPassStop(t,s.s));
-  const i=stops.findIndex(s=>s.s===trainName);
-  return {prev:i>0?stops[i-1].s:null, next:(i>=0&&i<stops.length-1)?stops[i+1].s:null};
-}
-// í›„ë³´ ì—­ ì¤‘ í˜„ì¬ì—­ì—ì„œ ê°€ì¥ ê°€ê¹Œìš´ ì—­ (ì‹¤ì¢Œí‘œ) â€” ê¸‰í–‰ì´ ì†Œì—­ í†µê³¼í•´ë„ ì™„í–‰ ê¸°ì¤€ ìµœê·¼ì ‘ì—­ ì„ íƒ
-function _nearestStn(fromBase, cands){
-  const arr=[...new Set(cands.filter(Boolean))];
-  if(arr.length<=1) return arr[0]||null;
-  const cur=_siStnCoord(fromBase);
-  if(cur&&typeof haversineKm==='function'){
-    arr.sort((a,b)=>{
-      const ca=_siStnCoord(a), cb=_siStnCoord(b);
-      const da=ca?haversineKm(cur.lat,cur.lon,ca.lat,ca.lon):9e9;
-      const db=cb?haversineKm(cur.lat,cur.lon,cb.lat,cb.lon):9e9;
-      return da-db;
-    });
-  }
-  return arr[0];
-}
-
-// â”€â”€ ğŸš‡ ì „ì²  ì—­ ì‹œê°„í‘œ ë³´ë“œ (ì¸ê²Œì„ ìŠ¤ì¼€ì¤„ METRO_SCHED ê¸°ë°˜) â”€â”€
-// ë°©ë©´(ë…¸ì„ +ì¢…ì°©)ë³„ ì²«ì°¨Â·ë§‰ì°¨Â·ë‹¤ìŒ ì—´ì°¨(ì‹œê°„í‘œ) + ì—­ ì „ì²´ í˜„ì¬ ìš´í–‰ í¸ìˆ˜.
-function _metroLineColor(name){ const l=(typeof METRO_LINES!=='undefined')&&METRO_LINES.find(x=>x.name===name); return l?l.color:'#8b949e'; }
-// ë“±ê¸‰ ë°°ì§€: 1=ê¸‰í–‰, 2=íŠ¹ê¸‰ (ì¼ë°˜ì€ í‘œì‹œ ì—†ìŒ)
-function _metroClsTag(c){ return c===2?'<span class="mtb-exp mtb-exp--t">íŠ¹ê¸‰</span>':c===1?'<span class="mtb-exp">ê¸‰í–‰</span>':''; }
-// ì—­ ì „ê´‘íŒ ì™¸í˜• ë¶„ë¥˜. ìš´í–‰ ë¡œì§ì€ ë™ì¼í•˜ê³  í‘œì‹œ ì¥ì¹˜ì˜ ì„¸ëŒ€Â·í˜•íƒœë§Œ êµ¬ë¶„í•œë‹¤.
-const METRO_COMMUTER_BOARD_LINES=new Set([
-  'ê²½ë¶€ì„ ','êµ¬ì¸ì„ ','ì „ë¶ì„ ','ì¶©ì²­ì„ ','ì „ë‚¨ì„ ','êµ¬ë¯¸ì„ ','ê³ ë ¹í•˜ì–‘ì„ ',
-  'ê²½ì˜ì¤‘ì•™ì„ ','ì¥í˜¸ì›ì„ ','ì¢…ì›ì„ ','ì¶˜ì²œì„ ',
-  'ê´‘ì£¼ì§„ëª©ì„ ','í‰íƒì•ˆì„±ì„ ','í™”ì„±ì„ ','ë™ë‚¨ì„ ','ê¹€í•´ê±°ì œì„ ',
-  'ëŒ€êµ¬ë°€ì–‘ì„ ','í¬í•­ì„ '
-]);
-const METRO_BOARD_SECTION_RULES=[
-  {line:'ê²½ë¶€ì„ ',from:'ì²­ëŸ‰ë¦¬',to:'ì„œìš¸',kind:'urban'},
-  {line:'ê²½ê¸°ë¶ë¶€ì„ ',from:'ì² ì›',to:'ì˜ì •ë¶€',kind:'regional'},
-  {line:'ë…¸ì›ì„ ',from:'ì² ì›',to:'ì˜ì •ë¶€',kind:'regional'},
-  {line:'ì¢…ì›ì„ ',from:'ì²­ëŸ‰ë¦¬',to:'ìƒí¬ê³µì›',kind:'urban'},
-  {line:'í¬í•­ì„ ',from:'í¬í•­',to:'ì˜¤ì²œ',kind:'urban'}
-];
-function _metroBoardSectionContains(rule,stn){
-  const ent=(typeof METRO_SCHED!=='undefined')&&METRO_SCHED[rule.line];
-  const names=ent&&ent.s;
-  if(!names)return false;
-  const a=names.indexOf(rule.from),b=names.indexOf(rule.to),i=names.indexOf(stn);
-  return a>=0&&b>=0&&i>=Math.min(a,b)&&i<=Math.max(a,b);
-}
-function _metroBoardKind(line,stn){
-  const section=METRO_BOARD_SECTION_RULES.find(rule=>rule.line===line&&_metroBoardSectionContains(rule,stn));
-  if(section)return section.kind;
-  return METRO_COMMUTER_BOARD_LINES.has(line)?'regional':'urban';
-}
-function _metroBoardPlatforms(stn,line){
-  if(typeof PLATFORM_DB==='undefined')return [];
-  const key=PLATFORM_DB[stn]?stn:(PLATFORM_DB[stn+'ì—­']?stn+'ì—­':null); if(!key)return [];
-  return Object.keys(PLATFORM_DB[key]).map(Number).filter(Number.isFinite).filter(p=>
-    (PLATFORM_DB[key][p]?.l||[]).some(raw=>{
-      const base=String(raw).split('/')[0].split(' (')[0].trim();
-      return base===line;
-    })
-  ).sort((a,b)=>a-b);
-}
-// v6 ì‹œê°í‘œ ê¸°ë°˜: ê° í¸ì„± t[i]=[ë„ì°©ë¶„,ì¶œë°œë¶„,ì—­idx, ...] (ì •ì°¨ë§ˆë‹¤ ë„ì°©Â·ì¶œë°œ ìŒ, ë³µì› ì—†ìŒ).
-// í•œ ì—­ì„ ì§€ë‚˜ëŠ” ëª¨ë“  ì§€ì ì—ì„œ ì¶œë°œí¸ ìƒì„±. í–‰ì„ ì§€=ì§„í–‰ë°©í–¥ íšŒì°¨ì (ì™•ë³µ)Â·ë§ˆì§€ë§‰ì—­(ì§í†µ),
-// ì¶œë°œì§€=ì§„í–‰ ë°˜ëŒ€ë°©í–¥ íšŒì°¨ì Â·ì²«ì—­. atSec=ì´ ì—­ ì¶œë°œ(d), arr=ë§ˆì§€ë§‰ì—­ ë„ì°©(a).
-function _metroStationDeps(stn){
-  if(typeof METRO_SCHED==='undefined') return [];
-  const out=[];
-  for(const line in METRO_SCHED){
-    const ent=METRO_SCHED[line], names=ent.s, svcs=ent.t;
-    if(!names.includes(stn)) continue;
-    const sIdx=names.indexOf(stn), cArr=ent.c;
-    for(let si=0;si<svcs.length;si++){
-      const f=svcs[si], cls=cArr?cArr[si]:0;
-      const n=f.length/3, ix=k=>f[3*k+2];
-      for(let k=0;k<n-1;k++){
-        if(ix(k)!==sIdx) continue;
-        if(ix(k+1)===sIdx) continue;                      // ë‹¹ì—­ì¢…ì°©(ë„ì°©) ì§€ì  ìŠ¤í‚µ â€” íšŒì°¨ ì¶œë°œ ì§€ì ë§Œ ìœ ì§€
-        const nextName=names[ix(k+1)];
-        // í–‰ì„ ì§€: ì§„í–‰ë°©í–¥ íšŒì°¨ì (A>B>AÂ·ì—°ì†ì¤‘ë³µ) ê¸°ì¤€ìœ¼ë¡œ leg ë¶„í•  â€” íšŒì°¨ì  ì´ì „ê¹Œì§€, ì—†ìœ¼ë©´ ë§ˆì§€ë§‰ì—­
-        // (ê³¡ì •â†’ì´ì²œâ†’ì›í‰ ì¶œì…ê³  í¸ì„±ì€ ê³¡ì •â€ºì´ì²œ, ì´ì²œâ€ºì›í‰ ë‘ legë¡œ ë¶„í•  í‘œê¸°)
-        let dest=names[ix(n-1)], k1=n-1;
-        for(let j=k+1;j<n-1;j++){
-          if(ix(j+1)===ix(j)){ dest=names[ix(j)]; k1=j; break; }
-          if(ix(j+1)===ix(j-1)){ dest=names[ix(j)]; k1=j; break; }
-        }
-        if(dest===stn) continue;                          // ë‹¹ì—­ì¢…ì°©(ìê¸° ì—­ í–‰ì„ ì§€)ì€ ì¶œë°œí¸ì´ ì•„ë‹˜
-        // ì¶œë°œì§€: íšŒì°¨ ì¶œë°œ(ì§ì „ ë™ì¼ì—­=ë‹¹ì—­ì¢…ì°© í›„ ì¶œë°œ, ë˜ëŠ” A>B>A ì •ì =ì´ ì—­ì´ íšŒì°¨ì—­)ì´ë©´ ì´ ì—­
-        let orig, k0;
-        if(k>0 && (ix(k-1)===sIdx || ix(k-1)===ix(k+1))){ orig=stn; k0=k; }
-        else {
-          orig=names[ix(0)]; k0=0;
-          for(let j=k-1;j>0;j--){
-            if(ix(j-1)===ix(j)){ orig=names[ix(j)]; k0=j; break; }
-            if(ix(j-1)===ix(j+1)){ orig=names[ix(j)]; k0=j; break; }
-          }
-        }
-        const atMin=f[3*k+1];                             // ì´ ì—­ ì¶œë°œ(d)
-        out.push({line, next:nextName, dest, orig, cls, svc:si, atSec:atMin*60, dep:f[1], arr:f[3*(n-1)], k0, k1});
-      }
-    }
-  }
-  return out;
-}
-// ë°©ë©´ ì¶œë°œí¸ ëª©ë¡ â†’ ìš´í–‰ì¼ì´ˆ ì •ë ¬(ì¤‘ë³µ ë¶„ ì œê±°). v3 ì‹¤ì¸¡ ì‹œê°í‘œë¥¼ ê·¸ëŒ€ë¡œ ë°˜ì˜(ë³´ê°„ ì—†ìŒ).
-function _metroDirEntries(list,preserveLines=false){
-  const srvSec=s=>(((s-14400)%86400)+86400)%86400;
-  const real=list.map(o=>({sec:srvSec(o.atSec),dest:o.dest,orig:o.orig,next:o.next,cls:o.cls,svc:o.svc,line:o.line,k0:o.k0,k1:o.k1})).sort((a,b)=>a.sec-b.sec);
-  const seen=new Set();
-  const entries=real.filter(o=>{const m=Math.floor(o.sec/60),key=preserveLines?`${o.line}|${m}`:m; if(seen.has(key))return false; seen.add(key); return true;});
-  const secs=entries.map(o=>Math.floor(o.sec/60)*60);
-  return {entries, first:secs[0], last:secs[secs.length-1]};
-}
-// ë…¸ì„ ë³„ ì—­ëª…â†’ì¢Œí‘œ (METRO_LINES routes ê¸°ë°˜, ë©”ëª¨ì´ì¦ˆ)
-let _metroXYCache={};
-function _metroLineXY(lineName){
-  if(lineName in _metroXYCache) return _metroXYCache[lineName];
-  const l=(typeof METRO_LINES!=='undefined')&&METRO_LINES.find(x=>x.name===lineName);
-  const m={};
-  if(l)(l.routes||[{stations:l.stations,xy:l.xy}]).forEach(r=>{const st=r.stations||[],xy=r.xy||[];
-    st.forEach((s,i)=>{ if(xy[i]&&m[String(s).replace(/ì—­$/,'')]==null)m[String(s).replace(/ì—­$/,'')]=xy[i]; });});
-  return _metroXYCache[lineName]=m;
-}
-function _metroXYof(xm,name){ if(xm[name])return xm[name]; const a=String(name).replace(/ì—­$/,''); if(xm[a])return xm[a];
-  const h=String(name).split(' / ')[0].replace(/ì—­$/,''); return xm[h]||null; }
-// ë„ì°© ì¹´ë“œ ë°©ë©´ ì—´ ê³ ì •: ë…¸ì„  ë°°ì—´ì˜ ê¸°ì â†’ì¢…ì (í•˜í–‰)ì€ ì™¼ìª½, ì—­ìˆœ(ìƒí–‰)ì€ ì˜¤ë¥¸ìª½.
-// ìš´í–‰ í¸ìˆ˜ë‚˜ ì²«ì°¨ ì‹œê°ì´ ë‹¬ë¼ì ¸ë„ ì—´ ìœ„ì¹˜ê°€ ë’¤ë°”ë€Œì§€ ì•Šê²Œ í•œë‹¤.
-function _metroOrderDirGroups(lineName,stnName,groups){
-  const ent=(typeof METRO_SCHED!=='undefined')&&METRO_SCHED[lineName], names=ent&&ent.s;
-  if(!names||!groups||groups.length<2)return groups||[];
-  const si=names.indexOf(stnName);
-  if(si<0)return groups;
-  const score=g=>{
-    const ds=g.map(k=>names.indexOf(k)).filter(i=>i>=0).map(i=>i-si);
-    return ds.length?ds.reduce((a,b)=>a+b,0)/ds.length:0;
-  };
-  return groups.map((g,i)=>({g,i,s:score(g)})).sort((a,b)=>(b.s-a.s)||(a.i-b.i)).map(x=>x.g);
-}
-// ë¶„ê¸°ì—­ ë‹¤ë°©ë©´(3+) â†’ ì‹¤ì œ ì¢Œí‘œ ë°©í–¥ìœ¼ë¡œ 2ê°œ ë¬¼ë¦¬ ë°©ë©´(ê·¹)ìœ¼ë¡œ ë³‘í•©. ê°™ì€ ìª½ ê³„í†µì€ í•œ ì—´ë¡œ.
-function _metroDirGroups(lineName, stnName, dirCounts){
-  const keys=Object.keys(dirCounts).sort((a,b)=>dirCounts[b]-dirCounts[a]);
-  if(keys.length<=2) return _metroOrderDirGroups(lineName,stnName,keys.map(k=>[k]));
-  const xm=_metroLineXY(lineName), S=_metroXYof(xm,stnName);
-  const withXY=keys.filter(k=>_metroXYof(xm,k)), noXY=keys.filter(k=>!_metroXYof(xm,k));
-  if(!S||withXY.length<2) return _metroOrderDirGroups(lineName,stnName,[[keys[0]], keys.slice(1)]); // ì¢Œí‘œ ë¶€ì¡± ì‹œ í´ë°±
-  const vec=k=>{const p=_metroXYof(xm,k);const dx=p[0]-S[0],dy=p[1]-S[1],L=Math.hypot(dx,dy)||1;return [dx/L,dy/L];};
-  const p1=vec(withXY[0]); let p2=null,mn=2;
-  for(const k of withXY){const v=vec(k);const d=v[0]*p1[0]+v[1]*p1[1];if(d<mn){mn=d;p2=v;}}
-  const g1=[],g2=[];
-  for(const k of withXY){const v=vec(k);const d1=v[0]*p1[0]+v[1]*p1[1];const d2=p2?v[0]*p2[0]+v[1]*p2[1]:-2;(d1>=d2?g1:g2).push(k);}
-  if(noXY.length){const names=METRO_SCHED[lineName].s;const ai=g=>g.length?g.reduce((s,k)=>s+names.indexOf(k),0)/g.length:names.indexOf(stnName);
-    const a1=ai(g1),a2=ai(g2);for(const k of noXY){const ni=names.indexOf(k);(Math.abs(ni-a1)<=Math.abs(ni-a2)?g1:g2).push(k);}}
-  return _metroOrderDirGroups(lineName,stnName,[g1,g2].filter(g=>g.length));
-}
-// ì—¬ëŸ¬ ë…¸ì„ ì˜ ê¸‰í–‰Â·ì™„í–‰ ë‹¤ìŒ ì—­ì„ ì‹¤ì œ ì§€ë„ ì¢Œí‘œ ë°©í–¥ìœ¼ë¡œ ë¬¶ì–´ ê³µìš© ì„ ë¡œì˜ ë‘ ë°©ë©´ì„ ë§Œë“­ë‹ˆë‹¤.
-function _metroSharedDirGroups(sourceLines,stnName,dirCounts){
-  const keys=Object.keys(dirCounts).sort((a,b)=>dirCounts[b]-dirCounts[a]);
-  if(keys.length<=2)return keys.map(key=>[key]);
-  const vectors={};
-  for(const key of keys){
-    for(const line of sourceLines){
-      const xm=_metroLineXY(line),s=_metroXYof(xm,stnName),p=_metroXYof(xm,key);
-      if(!s||!p)continue;
-      const dx=p[0]-s[0],dy=p[1]-s[1],len=Math.hypot(dx,dy)||1;
-      vectors[key]=[dx/len,dy/len];break;
-    }
-  }
-  const withVector=keys.filter(key=>vectors[key]);
-  if(withVector.length<2)return [keys];
-  const p1=vectors[withVector[0]];
-  let p2=null,minDot=2;
-  withVector.forEach(key=>{const v=vectors[key],dot=v[0]*p1[0]+v[1]*p1[1];if(dot<minDot){minDot=dot;p2=v;}});
-  if(!p2||minDot>-.12)return [keys];
-  const groups=[[],[]];
-  keys.forEach(key=>{
-    const v=vectors[key];
-    if(!v){groups[groups[0].length<=groups[1].length?0:1].push(key);return;}
-    const d1=v[0]*p1[0]+v[1]*p1[1],d2=v[0]*p2[0]+v[1]*p2[1];
-    groups[d1>=d2?0:1].push(key);
-  });
-  return groups.filter(group=>group.length);
-}
-// ë°©ë©´ ê·¸ë£¹(ë‹¤ì¤‘ ë‹¤ìŒì—­) í¸ ë³‘í•© â€” ì§€ì„ ë³„ë¡œ ë¶„ë‚´ ì¤‘ë³µ ì œê±° í›„ í•©ì¹¨(ì„œë¡œ ë‹¤ë¥¸ ê³„í†µ ë™ì‹œê°ì€ ìœ ì§€)
-function _metroGroupEntries(dirsMap, keys, preserveLines=false){
-  let all=[]; for(const k of keys) all=all.concat(_metroDirEntries(dirsMap[k],preserveLines).entries);
-  all.sort((a,b)=>a.sec-b.sec);
-  const secs=all.map(o=>Math.floor(o.sec/60)*60);
-  return {entries:all, first:secs[0], last:secs[secs.length-1]};
-}
-let _metroBoardMode='time';   // 'time' | 'pos'(í˜„ìœ„ì¹˜)
-let _metroBoardStn=null;
-let _metroDisplayLineIndex=0;
-let _metroDisplayDirIndex=0;
-let _metroDisplayLines=[];
-let _metroDisplayLineGroups=[];
-// ê°™ì€ ë¬¼ë¦¬ ì„ ë¡œë¥¼ ì‚¬ìš©í•˜ëŠ” êµ¬ê°„.
-const METRO_SHARED_TRACK_BOARD_SECTIONS=[
-  {from:'ì²­ëŸ‰ë¦¬',to:'í•œê°•ë¡œ',lines:['ê²½ë¶€ì„ ','êµ¬ì¸ì„ ','ì‹ ë…¸ì›ì„ ']},
-  {from:'í•œê°•ë¡œ',to:'êµ¬ë¡œ',lines:['ê²½ë¶€ì„ ','êµ¬ì¸ì„ ']},
-  {from:'ì˜ì •ë¶€',to:'ë¶ìƒê³„',lines:['ì‹ ë…¸ì›ì„ ','ë…¸ì›ì„ ']},
-  {from:'ë“±ì´Œ',to:'ë‹¹ì‚°',lines:['ê°•ì„œì„ ','ì¸ì²œì¢…ë‹¨ì„ ']},
-  {from:'ê¸°í¥',to:'ì²˜ì¸',lines:['ìˆ˜ì›ì´ì²œì„ ','ì•ˆì‚°ìš©ì¸ì„ ']},
-  {from:'ëŒ€ì•¼ë¯¸',to:'ì›ì‹œ',lines:['ì•ˆì‚°ì„±ë‚¨ì„ ','ì•ˆì‚°ì•ˆì–‘ì„ ']},
-  {from:'ìˆ˜ì›',to:'ê°ˆê³¶',lines:['ê²½ë¶€ì„ ','ì¥í˜¸ì›ì„ ']},
-  {from:'ì²œì•ˆ',to:'ë‹¹ì§„',lines:['ê²½ë¶€ì„ ','ê³ ë‚¨-í•©ë• í†µê·¼']},
-  {from:'ì„œë™íƒ„',to:'ì²­ê³„',lines:['ì•ˆì–‘ë™íƒ„ì„ ','í™”ì„±ì„ ']},
-  {from:'ì ì‹¤',to:'ìˆ˜ì§„',lines:['ì¢…ì›ì„ ','ì„±ë‚¨í™”ì„±ì„ ']},
-  {from:'ì§€ì •',to:'íŒë¶€',lines:['ì¢…ì›ì„ ','ê²½ì˜ì¤‘ì•™ì„ ']}
-];
-function _metroSharedTrackSectionContains(rule,stn){
-  if(typeof METRO_LINES!=='undefined'){
-    for(const line of rule.lines){
-      const def=METRO_LINES.find(item=>item.name===line);
-      if(!def)continue;
-      for(const route of (def.routes||[{stations:def.stations}])){
-        const names=route.stations||[],a=names.indexOf(rule.from),b=names.indexOf(rule.to),p=names.indexOf(stn);
-        if(a>=0&&b>=0&&p>=Math.min(a,b)&&p<=Math.max(a,b))return true;
-      }
-    }
-  }
-  // êµ¬í˜•Â·ì¶•ì•½ ë°ì´í„° í´ë°±. ì‹¤ì œ êµ¬ê°„ íŒì •ì€ ìœ„ì˜ ë…¸ì„ ë„ ì„ í˜•ì„ ìš°ì„ í•©ë‹ˆë‹¤.
-  if(typeof METRO_SCHED==='undefined')return false;
-  for(const line of rule.lines){
-    const names=METRO_SCHED[line]&&METRO_SCHED[line].s;
-    if(!names)continue;
-    const a=names.indexOf(rule.from),b=names.indexOf(rule.to),p=names.indexOf(stn);
-    if(a>=0&&b>=0&&p>=Math.min(a,b)&&p<=Math.max(a,b))return true;
-  }
-  return false;
-}
-function _metroSharedTrackLinesAt(stn,selectedLine,availableLines){
-  const available=new Set(availableLines||[]);
-  if(!_metroSharedTrackBoardOn||!available.has(selectedLine))return [selectedLine];
-  const joined=new Set([selectedLine]);
-  let changed=true;
-  while(changed){
-    changed=false;
-    METRO_SHARED_TRACK_BOARD_SECTIONS.forEach(rule=>{
-      if(!_metroSharedTrackSectionContains(rule,stn)||!rule.lines.some(line=>joined.has(line)))return;
-      rule.lines.forEach(line=>{if(available.has(line)&&!joined.has(line)){joined.add(line);changed=true;}});
-    });
-  }
-  return (availableLines||[]).filter(line=>joined.has(line));
-}
-function _metroDisplayGroupsForStation(stn,lineOrder){
-  const groups=[],seen=new Set();
-  lineOrder.forEach(line=>{
-    const group=_metroSharedTrackLinesAt(stn,line,lineOrder);
-    const key=[...group].sort().join('|');
-    if(!seen.has(key)){seen.add(key);groups.push(group);}
-  });
-  return groups;
-}
-function _metroSharedBoardSpecs(lineDirs,renderLines,sharedDisplay){
-  if(!sharedDisplay)return renderLines.map(line=>({line,label:line,sourceLines:[line],dirs:lineDirs[line]}));
-  const dirs={};
-  renderLines.forEach(line=>Object.entries(lineDirs[line]||{}).forEach(([next,entries])=>{
-    (dirs[next]=dirs[next]||[]).push(...entries);
-  }));
-  return [{line:renderLines[0],label:renderLines.join(' Â· '),sourceLines:[...renderLines],dirs}];
-}
-function setMetroBoardMode(m,targetId){
-  _metroBoardMode=m;
-  const id=targetId||'metro-board';
-  const host=document.getElementById(id);
-  if(host&&_metroBoardStn){
-    const html=_metroStationBoardHTML(_metroBoardStn,id==='metro-display-board');
-    if(html){const tmp=document.createElement('div');tmp.innerHTML=html;host.replaceWith(tmp.firstElementChild);}
-  }
-}
-function _refreshMetroDisplayBoard(){
-  const host=document.getElementById('metro-display-board');
-  if(!host||!_metroBoardStn)return;
-  const html=_metroStationBoardHTML(_metroBoardStn,true);
-  if(html){const tmp=document.createElement('div');tmp.innerHTML=html;host.replaceWith(tmp.firstElementChild);}
-}
-function setMetroDisplayLine(step){
-  if(!_metroDisplayLineGroups.length)return;
-  _metroDisplayLineIndex=(_metroDisplayLineIndex+Number(step)+_metroDisplayLineGroups.length)%_metroDisplayLineGroups.length;
-  _metroDisplayDirIndex=0;
-  _refreshMetroDisplayBoard();
-}
-function setMetroDisplayDirection(index){
-  _metroDisplayDirIndex=Math.max(0,Number(index)||0);
-  _refreshMetroDisplayBoard();
-}
-// í¸ì„±ì˜ í˜„ì¬ ìœ„ì¹˜(í˜„ìœ„ì¹˜ ë³´ê¸°): ì •ì°¨ ì¤‘=ë„ì°©, ì—­ê°„=ì§ì „ì—­ ì¶œë°œ,
-// ë‹¤ìŒ ì—­ ë„ì°© 1ë¶„ ì „ë¶€í„°ë§Œ ì ‘ê·¼ìœ¼ë¡œ ì „í™˜í•œë‹¤.
-// í¸ì„± í˜„ìœ„ì¹˜. k0/k1 ì£¼ë©´ í•´ë‹¹ leg(ë‹¨ì¼ë°©í–¥ êµ¬ê°„)ë§Œ ê³„ì‚° â†’ íšŒì°¨ ì—´ì°¨ì˜ ìƒÂ·í•˜í–‰ì„ ì„œë¡œ ë‹¤ë¥¸ ì—´ì°¨ë¡œ ì·¨ê¸‰
-function _metroTrainPos(line, svcIdx, k0, k1, targetStn){
-  const ent=(typeof METRO_SCHED!=='undefined')&&METRO_SCHED[line]; if(!ent)return null;
-  const f=ent.t[svcIdx], names=ent.s; if(!f)return null;
-  const N=f.length/3; if(k0==null)k0=0; if(k1==null||k1>N-1)k1=N-1; if(k1<=k0)return null;
-  const n=k1-k0+1, srv=x=>(((x-240)%1440)+1440)%1440, nm=k=>names[f[3*(k0+k)+2]];
-  const startMin=((f[3*k0+1]%1440)+1440)%1440;
-  let targetIdx=-1; if(targetStn!=null){for(let i=0;i<n;i++){if(nm(i)===targetStn){targetIdx=i;break;}}}
-  const result=(state,stn,index)=>({state,stn,index,targetIdx,away:targetIdx<0?null:targetIdx-index,startMin});
-  const flat=[]; for(let i=0;i<n;i++){ flat.push(srv(f[3*(k0+i)]), srv(f[3*(k0+i)+1])); }
-  let off=0; const mono=[]; for(let i=0;i<flat.length;i++){ let v=flat[i]+off; if(i>0&&v<mono[i-1]){off+=1440;v+=1440;} mono.push(v); }
-  const absA=[],absD=[]; for(let i=0;i<n;i++){absA.push(mono[2*i]);absD.push(mono[2*i+1]);}
-  const nowc=new Date(); let now=srv(nowc.getHours()*60+nowc.getMinutes()+nowc.getSeconds()/60);
-  while(now<absA[0]-720)now+=1440; while(now>absD[n-1]+720)now-=1440;
-  if(now<absA[0]) return result('before',nm(0),0);
-  if(now>=absD[n-1]) return result('after',nm(n-1),n-1);
-  for(let i=0;i<n;i++){
-    if(now>=absA[i]&&now<=absD[i]) return result('ë„ì°©',nm(i),i);
-    if(i<n-1&&now>absD[i]&&now<absA[i+1]){
-      return now>=absA[i+1]-1 ? result('ì ‘ê·¼',nm(i+1),i+1) : result('ì¶œë°œ',nm(i),i);
-    }
-  }
-  return result('after',nm(n-1),n-1);
-}
-// í¸ì„± í˜„ìœ„ì¹˜(ë…¸ì„ ë„ ë§ˆì»¤ìš©): ìš´í–‰ ì¤‘ì´ë©´ êµ¬ê°„Â·ì§„í–‰ë¥ Â·ì§„í–‰ë°©í–¥ í–‰ì„ ì§€ ë°˜í™˜, ì•„ë‹ˆë©´ null
-function _metroTrainLivePos(line, svcIdx){
-  const ent=(typeof METRO_SCHED!=='undefined')&&METRO_SCHED[line]; if(!ent)return null;
-  const f=ent.t[svcIdx], names=ent.s; if(!f)return null;
-  const n=f.length/3, srv=x=>(((x-240)%1440)+1440)%1440, nm=k=>names[f[3*k+2]];
-  const flat=[]; for(let i=0;i<n;i++){ flat.push(srv(f[3*i]), srv(f[3*i+1])); }
-  let off=0; const mono=[]; for(let i=0;i<flat.length;i++){ let v=flat[i]+off; if(i>0&&v<mono[i-1]){off+=1440;v+=1440;} mono.push(v); }
-  const absA=[],absD=[]; for(let i=0;i<n;i++){absA.push(mono[2*i]);absD.push(mono[2*i+1]);}
-  const nowc=new Date(); let now=srv(nowc.getHours()*60+nowc.getMinutes()+nowc.getSeconds()/60);
-  while(now<absA[0]-720)now+=1440; while(now>absD[n-1]+720)now-=1440;
-  if(now<absA[0]||now>=absD[n-1]) return null;
-  let curIdx=-1, toIdx=-1, frac=0, atStation=false;
-  for(let i=0;i<n;i++){
-    if(now>=absA[i]&&now<=absD[i]){ curIdx=i; toIdx=Math.min(i+1,n-1); atStation=true; break; }
-    if(i<n-1&&now>absD[i]&&now<absA[i+1]){ curIdx=i; toIdx=i+1; frac=(now-absD[i])/Math.max(1,absA[i+1]-absD[i]); break; }
-  }
-  if(curIdx<0) return null;
-  let dest=nm(n-1);   // ì§„í–‰ë°©í–¥ íšŒì°¨ì (A>B>AÂ·ì—°ì†ì¤‘ë³µ) ì´ì „ê¹Œì§€, ì—†ìœ¼ë©´ ìµœì¢…ì—­
-  for(let j=curIdx+1;j<n-1;j++){ if(f[3*(j+1)+2]===f[3*j+2]){dest=nm(j);break;} if(f[3*(j+1)+2]===f[3*(j-1)+2]){dest=nm(j);break;} }
-  const clickClock=((f[3*curIdx+1]%1440)+1440)%1440;
-  return {fromStn:nm(curIdx), toStn:nm(toIdx), frac, atStation, dest, clickClock};
-}
-function _metroLineLiveTrains(lineName){
-  const ent=(typeof METRO_SCHED!=='undefined')&&METRO_SCHED[lineName]; if(!ent)return [];
-  const out=[]; for(let s=0;s<ent.t.length;s++){ const p=_metroTrainLivePos(lineName,s); if(p)out.push({...p,svcIdx:s,cls:ent.c?ent.c[s]:0}); }
-  return out;
-}
-let _metroHomeSnapshotCache=null;
-// í™ˆ í™”ë©´ìš© ì „ì²  ìš´í–‰ ìŠ¤ëƒ…ìƒ·. ì¥ê±°ë¦¬ì—´ì°¨ ALL_TRAINSì™€ ë¶„ë¦¬í•´ ì „ì²  ì‹œê°í‘œë§Œ ì§‘ê³„í•œë‹¤.
-function _metroHomeSnapshot(){
-  const now=new Date(),key=`${now.getFullYear()}-${now.getMonth()}-${now.getDate()}-${now.getHours()}-${now.getMinutes()}`;
-  if(_metroHomeSnapshotCache?.key===key)return _metroHomeSnapshotCache.value;
-  const stationNames=new Set(),running=[],lineCounts=new Map();
-  let before=0,done=0,express=0,limited=0,total=0;
-  const lineDefs=new Map((typeof METRO_LINES!=='undefined'?METRO_LINES:[]).map(line=>[line.name,line]));
-  for(const [line,ent] of Object.entries(typeof METRO_SCHED!=='undefined'?METRO_SCHED:{})){
-    (ent.s||[]).forEach(name=>stationNames.add(name));
-    for(let svcIdx=0;svcIdx<(ent.t||[]).length;svcIdx++){
-      const f=ent.t[svcIdx],k1=Math.floor((f?.length||0)/3)-1;if(!f||k1<1)continue;
-      total++;
-      const position=_metroTrainPos(line,svcIdx,0,k1),live=_metroTrainLivePos(line,svcIdx),cls=ent.c?.[svcIdx]||0;
-      if(position?.state==='before'){before++;continue;}
-      if(position?.state==='after'||!live){done++;continue;}
-      if(cls===1)express++;else if(cls===2)limited++;
-      lineCounts.set(line,(lineCounts.get(line)||0)+1);
-      const def=lineDefs.get(line);
-      running.push({
-        line,lineId:def?.id||'',color:def?.color||'#388bfd',svcIdx,cls,k1,
-        origin:ent.s[f[2]],dest:live.dest,fromStn:live.fromStn,toStn:live.toStn,
-        atStation:live.atStation,frac:live.frac,clickClock:live.clickClock,startClock:f[1]
-      });
-    }
-  }
-  running.sort((a,b)=>(b.cls-a.cls)||(b.startClock-a.startClock)||a.line.localeCompare(b.line,'ko'));
-  const value={running,before,done,total,express,limited,stationCount:stationNames.size,lineCount:lineDefs.size,lineCounts:[...lineCounts].sort((a,b)=>b[1]-a[1])};
-  _metroHomeSnapshotCache={key,value};
-  return value;
-}
-function _metroLiveTrainLabel(dest,cls){return cls===2?`${dest} íŠ¹ê¸‰`:cls===1?`${dest} ê¸‰í–‰`:`${dest}í–‰`;}
-function _metroLiveArrowPath(x,y,downward){
-  const F=n=>(+n).toFixed(1);
-  return downward
-    ? `M ${F(x-4)} ${F(y-4)} L ${F(x+4)} ${F(y-4)} L ${F(x)} ${F(y+4)} Z`
-    : `M ${F(x-4)} ${F(y+4)} L ${F(x+4)} ${F(y+4)} L ${F(x)} ${F(y-4)} Z`;
-}
-let _metroLiveOn=true;   // ë…¸ì„  ìƒì„¸ ì‹¤ì‹œê°„ ìœ„ì¹˜ í‘œì‹œ on/off
-function setMetroLiveOn(on){ _metroLiveOn=on; if(_metroDetailId)renderMetroLinesTab(); }
-// ë…¸ì„  ìƒì„¸ íƒ€ì„ë¼ì¸ ìœ„ì— ìš´í–‰ ì¤‘ í¸ì„± ë§ˆì»¤ë¥¼ ì‹¤ì œ ì§„í–‰ë¥  ìœ„ì¹˜ì— ë°°ì¹˜ (ë²„ìŠ¤ì•±ì‹, ìƒ/í•˜í–‰ ì¢Œìš° ë¶„ë¦¬)
-// í•˜í–‰=ê¸°ì â†’ì¢…ì (í–‰ ì•„ë˜ë¡œ), ìƒí–‰=ì¢…ì â†’ê¸°ì (í–‰ ìœ„ë¡œ)
-function _placeMetroLiveMarkers(container, lineName){
-  if(!_metroLiveOn)return;
-  const tl=container.querySelector('.mtl-tl'); if(!tl)return;
-  tl.querySelectorAll('.mtl-live').forEach(m=>m.remove());
-  const rowEls={}; tl.querySelectorAll('.mtl-row').forEach(r=>{ const nm=r.dataset.stn; if(nm&&!rowEls[nm])rowEls[nm]=r; });
-  _metroLineLiveTrains(lineName).forEach(t=>{
-    const fromEl=rowEls[t.fromStn], toEl=rowEls[t.toStn], anchor=fromEl||toEl; if(!anchor)return;
-    const aCtr=anchor.offsetTop+anchor.offsetHeight/2; let y=aCtr, downward=true;
-    if(fromEl&&toEl){ const fCtr=fromEl.offsetTop+fromEl.offsetHeight/2, tCtr=toEl.offsetTop+toEl.offsetHeight/2;
-      y=t.atStation?fCtr:fCtr+(tCtr-fCtr)*t.frac; downward=toEl.offsetTop>=fromEl.offsetTop; }  // ì•„ë˜ë¡œ=ê¸°ì â†’ì¢…ì =í•˜í–‰
-    const m=document.createElement('div');
-    m.className='mtl-live clickable'+(downward?' down':' up')+(t.atStation?' at':'')+(t.cls>0?' express':'');
-    m.style.top=y+'px';
-    m.setAttribute('role','button');m.setAttribute('tabindex','0');m.setAttribute('title','ì—´ì°¨ ì‹œê°„í‘œ ë³´ê¸°');
-    const open=()=>openMetroTrain(lineName,t.svcIdx,t.clickClock);
-    m.addEventListener('click',open);m.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();open();}});
-    m.innerHTML=`<span class="mtl-live-dest">${_opsEsc(_metroLiveTrainLabel(t.dest,t.cls))}</span>`;
-    tl.appendChild(m);
-  });
-}
-// ì‹¤ì‹œê°„ OFF: ê¸°ì¡´ ë‹¨ì¼ íƒ€ì„ë¼ì¸
-function _metroStaticTLHTML(l,rows){
-  return `<div class="mtl-tl" style="--mc:${l.color}">
-    ${(()=>{const _xm=_metroXferMap(l);return rows.map((r,i)=>{
-      if(r.gap)return `<div class="mtl-gap">${_opsEsc(r.label||'ì§€ì„  Â· ê²½ìœ  êµ¬ê°„')}</div>`;
-      const isEnd=(r.routeStart||r.routeEnd||i===0||i===rows.length-1)&&r.stop;
-      const cls=r.stop?'':' pass';
-      const xf=_xm[r.n]||[], hasTrain=_isTrainStn(r.n);
-      const xferHTML=(xf.length||hasTrain)?`<span class="mtl-xfers">${
-        xf.map(x=>`<span class="mtl-xfer" style="--xc:${x.color}" title="${x.name} í™˜ìŠ¹" onclick="event.stopPropagation();openMetroLine('${x.id}')"><i></i>${x.name}</span>`).join('')
-      }${hasTrain?`<span class="mtl-xfer train" title="ê¸°ì°¨ í™˜ìŠ¹">ğŸš†</span>`:''}</span>`:'';
-      return `<div class="mtl-row${cls}" data-stn="${String(r.n).replace(/&/g,'&amp;').replace(/"/g,'&quot;')}" onclick="openStationDetail('${r.n.replace(/'/g,"\\'")}')">
-        <span class="mtl-dot${isEnd?' end':''}"></span>
-        <span class="mtl-name${isEnd?' end':''}">${r.n}</span>
-        ${isEnd?`<span class="mtl-endtag">${r.branch?(r.routeStart?'ë¶„ê¸°':'ì§€ì„  ì¢…ì '):(r.routeStart||i===0?'ê¸°ì ':'ì¢…ì ')}</span>`:(!r.stop?`<span class="mtl-passtag">í†µê³¼</span>`:'')}
-        ${xferHTML}
-      </div>`;
-    }).join('');})()}
-  </div>`;
-}
-// ì‹¤ì‹œê°„ ON: ìƒí•˜í–‰ ë¶„ë¦¬ íƒ€ì„ë¼ì¸ (ë°°ì„ ë„ì‹). ì¢Œ=ì—­ëª… ê²Œí„°, ì¤‘ì•™=ë³µì„ , ì¢Œë ˆì¸=ìƒí–‰ ì—´ì°¨, ìš°ë ˆì¸=í•˜í–‰ ì—´ì°¨
-function _renderMetroLiveTimeline(l,rows){
-  const color=l.color, F=x=>(+x).toFixed(1), esc=s=>_opsEsc(String(s));
-  const ROWH=30, TOP=22, GUT=64, ULANE=118, GAP=16, DLANE=118, PAD=8;
-  const railU=GUT+ULANE+10, railD=railU+GAP;
-  const W=railD+10+DLANE+PAD;
-  // ì—­ë³„ y (gap ì œì™¸)
-  const stnY={}, dots=[], names=[]; let y=TOP; let firstStopI=-1,lastStopI=-1;
-  rows.forEach((r,i)=>{ if(r.gap){y+=ROWH*0.55;return;} if(r.stop){if(firstStopI<0)firstStopI=i;lastStopI=i;} });
-  rows.forEach((r,i)=>{
-    if(r.gap){ names.push(`<div class="mtl-ltl-gap" style="top:${F(y+ROWH*0.05)}px;left:${F(railU-6)}px">${esc(r.label||'ì§€ì„  ê²½ìœ ')}</div>`); y+=ROWH*0.55; return; }
-    const end=r.routeStart||r.routeEnd||i===firstStopI||i===lastStopI;
-    (stnY[r.n]=stnY[r.n]||[]).push(y);
-    dots.push({y,end,stop:r.stop});
-    const endLabel=r.branch?(r.routeStart?'ë¶„ê¸°':'ì§€ì„  ì¢…ì '):(r.routeStart||i===firstStopI?'ê¸°ì ':'ì¢…ì ');
-    names.push(`<span class="mtl-ltl-name${end?' end':''}${r.stop?'':' pass'}" style="top:${F(y)}px;width:${GUT-8}px" onclick="openStationDetail('${String(r.n).replace(/'/g,"\\'")}')">${esc(r.n)}${end?`<b class="mtl-ltl-tag">${endLabel}</b>`:''}</span>`);
-    y+=ROWH;
-  });
-  const H=y+14, yTop=dots.length?dots[0].y:TOP, yBot=dots.length?dots[dots.length-1].y:H;
-  // ë³µì„  ë ˆì¼(íƒ€ì´ ì—†ìŒ) + ì—­ ì›í‘œì‹œ
-  let svg=`<line x1="${railU}" y1="${F(yTop)}" x2="${railU}" y2="${F(yBot)}" stroke="${color}" stroke-width="3" stroke-linecap="round"/>`+
-          `<line x1="${railD}" y1="${F(yTop)}" x2="${railD}" y2="${F(yBot)}" stroke="${color}" stroke-width="3" stroke-linecap="round"/>`;
-  dots.forEach(d=>{ if(!d.stop)return;
-    svg+=`<circle cx="${railU}" cy="${F(d.y)}" r="${d.end?3.4:2.6}" fill="${d.end?'#fff':'var(--bg2)'}" stroke="${color}" stroke-width="2"/><circle cx="${railD}" cy="${F(d.y)}" r="${d.end?3.4:2.6}" fill="${d.end?'#fff':'var(--bg2)'}" stroke="${color}" stroke-width="2"/>`; });
-  // ì—´ì°¨ ë°°ì¹˜: í•˜í–‰=ì¢Œë ˆì¸(railU), ìƒí–‰=ìš°ë ˆì¸(railD), yì¶©ëŒ ë””í´ëŸ¬í„°
-  const up=[],dn=[];
-  _metroLineLiveTrains(l.name).forEach(t=>{ const fys=stnY[t.fromStn]||[], tys=stnY[t.toStn]||[]; if(!fys.length&&!tys.length)return;
-    let f=fys[0]??tys[0],tt=tys[0]??fys[0],best=Infinity;
-    for(const a of (fys.length?fys:[tt]))for(const b of (tys.length?tys:[a])){const d=Math.abs(b-a);if(d<best){best=d;f=a;tt=b;}}
-    const down=tt>=f; const ey=t.atStation?f:f+(tt-f)*(t.frac||0);
-    (down?dn:up).push({ey,dest:t.dest,at:t.atStation,cls:t.cls,svcIdx:t.svcIdx,clickClock:t.clickClock}); });
-  let chips='';
-  const lane=(arr,side,col)=>{ arr.sort((a,b)=>a.ey-b.ey); let prev=-99; const left=(side==='left'), railX=left?railU:railD, dir=left?-1:1;
-    arr.forEach(t=>{ let cy=Math.max(t.ey, prev+22); prev=cy;
-      svg+=`<path d="M ${railX} ${F(t.ey)} L ${F(railX+dir*9)} ${F(cy)}" stroke="${col}" stroke-width="1.4" opacity=".7" fill="none"/>`+
-           `<path d="${_metroLiveArrowPath(railX,t.ey,left)}" fill="${col}"/>`;
-      const style=left?`right:${F(W-(railU-11))}px;top:${F(cy)}px`:`left:${F(railD+11)}px;top:${F(cy)}px`;
-      const lineArg=String(l.name).replace(/\\/g,'\\\\').replace(/'/g,"\\'");
-      chips+=`<button type="button" class="mtl-ltl-train ${left?'down':'up'}${t.at?' at':''}${t.cls>0?' express':''}" style="${style};--tc:${col}" onclick="openMetroTrain('${lineArg}',${t.svcIdx},${t.clickClock})" title="ì—´ì°¨ ì‹œê°„í‘œ ë³´ê¸°">${esc(_metroLiveTrainLabel(t.dest,t.cls))}</button>`;
-    });
-  };
-  lane(dn,'left',color); lane(up,'right','#e8863d');
-  return `<div class="mtl-ltl" style="height:${F(H)}px;width:${W}px;--mc:${color}"><svg class="mtl-ltl-svg" width="${W}" height="${F(H)}" viewBox="0 0 ${W} ${F(H)}">${svg}</svg>${names.join('')}${chips}</div>`;
-}
-function _metroDisplayDestination(dest,cls,show=true){
-  if(!show)return '&nbsp;';
-  return `${_opsEsc(dest)}${cls===1?'<em class="mtb2-r-express">ê¸‰í–‰</em>':cls===2?'íŠ¹ê¸‰':'í–‰'}`;
-}
-function _metroRegionalPositionHTML(p){
-  if(!p||p.state==='before'){
-    return `<span class="mtb2-rloc"><span>ìš´í–‰ ì „</span></span><span class="mtb2-rstate">ì¶œë°œ ì˜ˆì •</span>`;
-  }
-  if(p.state==='after'){
-    return `<span class="mtb2-rloc"><span>ì¢…ì°©</span></span><span class="mtb2-rstate">ìš´í–‰ ì¢…ë£Œ</span>`;
-  }
-  const loc=p.away===0?'ë‹¹ì—­':_opsEsc(p.stn);
-  const away=Number.isFinite(p.away)&&p.away>0?`${p.away}ì „ì—­`:loc;
-  const locHTML=away!==loc
-    ?`<span class="mtb2-rloc mtb2-rloc--flip"><span class="mtb2-rstation">${loc}</span><span class="mtb2-raway">${away}</span></span>`
-    :`<span class="mtb2-rloc"><span class="mtb2-rstation">${loc}</span></span>`;
-  const state=p.away===0&&p.state==='ì ‘ê·¼'?'ì ‘ê·¼':p.state;
-  return `${locHTML}<span class="mtb2-rstate">${state}</span>`;
-}
-function _metroUrbanRouteHTML(line,stn,u,entries){
-  const ent=(typeof METRO_SCHED!=='undefined')&&METRO_SCHED[line];
-  if(!ent||!u)return '';
-  const f=ent.t[u.svc]; if(!f)return '';
-  const names=ent.s, seq=[];
-  for(let k=u.k0;k<=u.k1;k++){
-    const name=names[f[3*k+2]];
-    if(name&&seq[seq.length-1]!==name)seq.push(name);
-  }
-  if(!seq.length)return '';
-  let target=seq.indexOf(stn); if(target<0)target=0;
-  const start=Math.max(0,target-4);
-  const shown=seq.slice(start,target+1);
-  const denominator=Math.max(1,shown.length-1);
-  const stationHTML=shown.map((name,i)=>`<span class="mtb-urban-stop${name===stn?' current':''}" style="--stop-pos:${shown.length===1?50:(i/denominator)*100}%"><i></i><b>${_opsEsc(name)}</b></span>`).join('');
-  const srv=x=>(((x-240)%1440)+1440)%1440;
-  const nowDate=new Date();
-  const clockNow=srv(nowDate.getHours()*60+nowDate.getMinutes()+nowDate.getSeconds()/60);
-  const uniqueEntries=[...new Map((entries||[]).map(e=>[`${e.line||line}|${e.svc}|${e.k0}|${e.k1}`,e])).values()];
-  const trainPositions=uniqueEntries.map(e=>{
-    const entryLine=e.line||line;
-    const entryEnt=(typeof METRO_SCHED!=='undefined')&&METRO_SCHED[entryLine];
-    const service=entryEnt&&entryEnt.t[e.svc];
-    if(!service)return null;
-    const entryNames=entryEnt.s;
-    const raw=[];
-    let offset=0, previous=-Infinity;
-    for(let k=e.k0;k<=e.k1;k++){
-      let arr=srv(service[3*k])+offset, dep=srv(service[3*k+1])+offset;
-      while(arr<previous){offset+=1440;arr+=1440;dep+=1440;}
-      if(dep<arr)dep+=1440;
-      previous=dep;
-      raw.push({name:entryNames[service[3*k+2]],arr,dep});
-    }
-    if(!raw.length)return null;
-    let now=clockNow;
-    while(now<raw[0].arr-720)now+=1440;
-    while(now>raw[raw.length-1].dep+720)now-=1440;
-    if(now<raw[0].arr||now>raw[raw.length-1].dep)return null;
-    let trainIndex=null;
-    for(let i=0;i<raw.length;i++){
-      const here=seq.indexOf(raw[i].name);
-      if(here<0)continue;
-      if(now>=raw[i].arr&&now<=raw[i].dep){trainIndex=here;break;}
-      if(i<raw.length-1&&now>raw[i].dep&&now<raw[i+1].arr){
-        const there=seq.indexOf(raw[i+1].name);
-        if(there<0)continue;
-        const frac=(now-raw[i].dep)/Math.max(1,raw[i+1].arr-raw[i].dep);
-        trainIndex=here+(there-here)*frac;
-        break;
-      }
-    }
-    if(trainIndex==null||trainIndex<start||trainIndex>target)return null;
-    return {
-      pos:Math.max(0,Math.min(100,((trainIndex-start)/denominator)*100)),
-      line:entryLine,svc:e.svc,k0:e.k0,k1:e.k1,
-      clickClock:((service[3*e.k0+1]%1440)+1440)%1440
-    };
-  }).filter(Boolean).sort((a,b)=>a.pos-b.pos);
-  const laneEnds=[-Infinity,-Infinity,-Infinity,-Infinity];
-  const trainHTML=trainPositions.map((train,i)=>{
-    const pos=train.pos;
-    const lineArg=String(train.line||line).replace(/\\/g,'\\\\').replace(/'/g,"\\'");
-    let lane=laneEnds.findIndex(last=>pos-last>=7);
-    if(lane<0)lane=i%laneEnds.length;
-    laneEnds[lane]=pos;
-    return `<button type="button" class="mtb-urban-train" style="--train-pos:${pos}%;--train-lane:${lane*8}px" aria-label="ìš´í–‰ ì¤‘ ì—´ì°¨ ${i+1} ì‹œê°„í‘œ ë³´ê¸°" title="ì—´ì°¨ ì‹œê°„í‘œ ë³´ê¸°" onclick="event.stopPropagation();openMetroTrain('${lineArg}',${train.svc},${train.clickClock},${train.k0},${train.k1})">ğŸš‡</button>`;
-  }).join('');
-  return `<div class="mtb2-urban-route">
-    <div class="mtb-urban-track"><span class="mtb-urban-line"></span>${stationHTML}${trainHTML}</div>
-  </div>`;
-}
-function _metroStationBoardHTML(stn,displayBoard=false){
-  if(typeof METRO_SCHED==='undefined') return '';
-  _metroBoardStn=stn;
-  const viewMode=displayBoard?'pos':_metroBoardMode;
-  const deps=_metroStationDeps(stn);
-  if(!deps.length) return '';
-  const now=new Date();
-  const nowSec=now.getHours()*3600+now.getMinutes()*60+now.getSeconds();
-  const srvSec=s=>(((s-14400)%86400)+86400)%86400;      // ìš´í–‰ì¼ ê¸°ì¤€ ì´ˆ(04:00=0)
-  const nowS=srvSec(nowSec), nowMin=Math.floor(nowSec/60);
-  const running=deps.filter(o=>{const d=o.dep,a=o.arr; return (d<=a)?(nowMin>=d&&nowMin<=a):(nowMin>=d||nowMin<=a);}).length;
-  const fSrvClock=ss=>{const m=(Math.floor(ss/60)+240)%1440;return `${Math.floor(m/60)}:${String(m%60).padStart(2,'0')}`;}; // ìš´í–‰ì¼ì´ˆâ†’ì‹œê³„
-  const relTxt=rel=>{const m=Math.floor(rel/60); if(m<=0)return 'ê³§'; return m+'ë¶„';};   // ë¶„ ë‹¨ìœ„ í†µì¼(90ë¶„ ì‹)
-  // ë…¸ì„  â†’ ë°©ë©´(ë‹¤ìŒì—­) â†’ í¸ ëª©ë¡
-  const lines={};
-  deps.forEach(o=>{ (lines[o.line]=lines[o.line]||{}); (lines[o.line][o.next]=lines[o.line][o.next]||[]).push(o); });
-  const lineOrder=Object.keys(lines).sort((a,b)=>{
-    const ca=Object.values(lines[a]).reduce((s,v)=>s+v.length,0);
-    const cb=Object.values(lines[b]).reduce((s,v)=>s+v.length,0);
-    return cb-ca;
-  });
-  if(displayBoard){
-    const previousLine=(_metroDisplayLineGroups[_metroDisplayLineIndex]||[])[0]||_metroDisplayLines[_metroDisplayLineIndex]||'';
-    _metroDisplayLines=lineOrder;
-    _metroDisplayLineGroups=_metroDisplayGroupsForStation(stn,lineOrder);
-    const preservedIndex=previousLine?_metroDisplayLineGroups.findIndex(group=>group.includes(previousLine)):-1;
-    _metroDisplayLineIndex=preservedIndex>=0?preservedIndex:Math.max(0,Math.min(_metroDisplayLineIndex,_metroDisplayLineGroups.length-1));
-  }
-  const renderLines=displayBoard?(_metroDisplayLineGroups[_metroDisplayLineIndex]||[lineOrder[0]]):lineOrder;
-  const sharedDisplay=displayBoard&&renderLines.length>1;
-  let displayDirLabels=[];
-  const boardSpecs=_metroSharedBoardSpecs(lines,renderLines,sharedDisplay);
-  const blocks=boardSpecs.map(spec=>{
-    const line=spec.line,sourceLines=spec.sourceLines,dirs=spec.dirs,sharedBlock=sourceLines.length>1;
-    const color=_metroLineColor(line),boardKind=_metroBoardKind(line,stn);
-    // ë¶„ê¸°ì—­(ê³„í†µ ë‹¤ìˆ˜)ì€ ì¢Œí‘œ ê¸°ì¤€ 2ê°œ ë¬¼ë¦¬ ë°©ë©´ìœ¼ë¡œ ë³‘í•© â€” ê°™ì€ ìª½ ê³„í†µì€ í•œ ì—´ì— í†µí•©
-    const dirCounts={}; Object.keys(dirs).forEach(k=>dirCounts[k]=dirs[k].length);
-    const groups=sharedBlock?_metroSharedDirGroups(sourceLines,stn,dirCounts):_metroDirGroups(line,stn,dirCounts);
-    if(displayBoard)displayDirLabels=groups.map((grp,i)=>`${i===0?'í•˜í–‰':'ìƒí–‰'} Â· ${grp.join('Â·')} ë°©ë©´`);
-    _metroDisplayDirIndex=Math.max(0,Math.min(_metroDisplayDirIndex,groups.length-1));
-    const platformNos=_metroBoardPlatforms(stn,line);
-    const esc=x=>String(x).replace(/\\/g,'\\\\').replace(/'/g,"\\'");
-    const platformFor=o=>{
-      const occurrence=_metroPlatformOccurrence(o.line,stn,o.next);
-      if(occurrence?.p?.length)return occurrence.p.join('Â·');
-      if(!sharedBlock){
-        const groupIndex=Math.max(0,groups.findIndex(group=>group.includes(o.next)));
-        return platformNos.length?platformNos[Math.min(groupIndex,platformNos.length-1)]:'â€”';
-      }
-      const sourceDirs=lines[o.line]||{},sourceCounts={};Object.keys(sourceDirs).forEach(key=>sourceCounts[key]=sourceDirs[key].length);
-      const sourceGroups=_metroDirGroups(o.line,stn,sourceCounts);
-      const sourceIndex=Math.max(0,sourceGroups.findIndex(group=>group.includes(o.next)));
-      const sourcePlatforms=_metroBoardPlatforms(stn,o.line);
-      return sourcePlatforms.length?sourcePlatforms[Math.min(sourceIndex,sourcePlatforms.length-1)]:'â€”';
-    };
-    const cols=groups.map((grp,grpIdx)=>{
-      const label=grp.join(' â€¢ ');
-      const {entries,first,last}=_metroGroupEntries(dirs,grp,sharedBlock);
-      const toTrain=o=>({rel:o.sec-nowS,dest:o.dest,sec:o.sec,next:o.next,cls:o.cls,svc:o.svc,line:o.line,k0:o.k0,k1:o.k1,plat:platformFor(o)});
-      let trainsHtml, routeTrain=entries[0]?toTrain(entries[0]):null;
-      if(nowS>last){
-        // ì˜¤ëŠ˜ ë§‰ì°¨ ì´í›„ â†’ ìš´í–‰ ì¢…ë£Œ + ì²«ì°¨Â·í–‰ì„ ì§€ ì•ˆë‚´
-        const fd=entries[0]&&entries[0].dest; const showFd=fd&&fd!==stn;
-        trainsHtml=`<div class="mtb2-ended"><span class="mtb2-ended-t">ìš´í–‰ ì¢…ë£Œ</span>
-          <span class="mtb2-ended-first">ì²«ì°¨ ${fSrvClock(first)}${showFd?` <b>${fd}í–‰</b>`:''}</span></div>`;
-      } else {
-        const up=entries.map(toTrain)
-          .filter(u=>u.rel>=-60)     // ë‹¹ ì˜ì—…ì¼ ë‚¨ì€ ì—´ì°¨ë§Œ(ë‹¤ìŒë‚ ë¡œ ê°ì‹¸ ì–µì§€ë¡œ ì±„ìš°ì§€ ì•ŠìŒ)
-          .sort((a,b)=>a.rel-b.rel)
-          .slice(0,3);
-        routeTrain=up[0]||null;
-        trainsHtml=up.map((u,i)=>{
-          const showDest=u.dest&&u.dest!==stn;   // ìê¸°ì°¸ì¡° ë¼ë²¨ë§Œ ìˆ¨ê¹€(ì¸ì ‘ì—­ ì¢…ì°©ì€ í‘œê¸°)
-          const destHTML=displayBoard&&boardKind==='regional'
-            ?_metroDisplayDestination(u.dest,u.cls,showDest)
-            :`${_metroClsTag(u.cls)}${showDest?u.dest+'í–‰':'&nbsp;'}`;
-          const destHtml=`<span class="mtb2-dest">${destHTML}</span>`;
-          let infoHtml;
-          if(displayBoard&&boardKind==='regional'){
-            infoHtml=_metroRegionalPositionHTML(_metroTrainPos(u.line,u.svc,u.k0,u.k1,stn));
-          } else if(viewMode==='pos'){
-            const p=_metroTrainPos(u.line,u.svc,u.k0,u.k1,stn);
-            if(!p||p.state==='before'){
-              const start=p&&Number.isFinite(p.startMin)?`${Math.floor(p.startMin/60)}:${String(p.startMin%60).padStart(2,'0')} ìš´í–‰ ì‹œì‘`:'';
-              infoHtml=start?`<span class="mtb2-pos mtb2-pos--wait mtb2-pos--flip"><span>ìš´í–‰ ì „</span><span>${start}</span></span>`:'<span class="mtb2-pos mtb2-pos--wait">ìš´í–‰ ì „</span>';
-            }
-            else if(p.state==='after') infoHtml='<span class="mtb2-pos mtb2-pos--wait">ìš´í–‰ ì¢…ë£Œ</span>';
-            else if(p.away===0){
-              const txt=p.state==='ì ‘ê·¼'?'ë‹¹ì—­ ì ‘ê·¼':p.state==='ë„ì°©'?'ë‹¹ì—­ ë„ì°©':'ë‹¹ì—­ ì¶œë°œ';
-              const sc=p.state==='ë„ì°©'?'at':p.state==='ì¶œë°œ'?'dep':'app';
-              infoHtml=`<span class="mtb2-pos mtb2-pos--${sc}"><b>${txt}</b></span>`;
-            } else if(Number.isFinite(p.away)&&p.away>0){
-              const sc=p.state==='ë„ì°©'?'at':p.state==='ì¶œë°œ'?'dep':'app';
-              infoHtml=`<span class="mtb2-pos mtb2-pos--${sc} mtb2-pos--flip"><span>${_opsEsc(p.stn)} <b>${p.state}</b></span><span>${p.away}ì „ì—­ <b>${p.state}</b></span></span>`;
-            } else {
-              const sc=p.state==='ë„ì°©'?'at':p.state==='ì¶œë°œ'?'dep':'app';
-              infoHtml=`<span class="mtb2-pos mtb2-pos--${sc}">${_opsEsc(p.stn)} <b>${p.state}</b></span>`;
-            }
-          } else {
-            infoHtml=`<span class="mtb2-rel">${relTxt(u.rel)}</span><span class="mtb2-clk">${fSrvClock(u.sec)}</span>`;
-          }
-          return `<div class="mtb2-train${i===0?' mtb2-train--now':''}">
-            <span class="mtb2-seq">${i+1}</span><span class="mtb2-plat">${u.plat==='â€”'?'â€”':u.plat+'í™ˆ'}</span>${destHtml}${infoHtml}</div>`;
-        }).join('')||'<div class="mtb2-none">ìš´í–‰ ì •ë³´ ì—†ìŒ</div>';
-      }
-      const routeLine=sharedBlock?(entries.find(entry=>entry.line===line)?.line||entries[0]?.line||line):line;
-      const primaryEntries=sharedBlock?entries.filter(entry=>entry.line===routeLine):entries;
-      const primaryRouteTrain=primaryEntries[0]?toTrain(primaryEntries[0]):routeTrain;
-      const routeEntries=sharedBlock?entries:primaryEntries;
-      const routeHTML=displayBoard&&boardKind==='urban'
-        ?_metroUrbanRouteHTML(routeLine,stn,primaryRouteTrain,routeEntries)
-        :`<div class="mtb2-urban-route"><span>${_opsEsc(stn)}</span><i></i><i></i><i></i><b>${_opsEsc(grp[0]||label)}</b></div>`;
-      return `<div class="mtb2-col" data-dir="${grpIdx}">
-        <div class="mtb2-dir"><span class="mtb2-arr">â–¸</span>${label} ë°©ë©´</div>
-        <div class="mtb2-led-head"><span>ìˆœë²ˆ</span><span>íƒ€ëŠ” ê³³</span><span>í–‰ì„ ì§€</span><span>í˜„ìœ„ì¹˜</span><span>ìƒíƒœ</span></div>
-        ${trainsHtml}
-        ${routeHTML}
-        ${displayBoard&&boardKind==='urban'?'':`<div class="mtb2-fl">ì²« ${fSrvClock(first)} Â· ë§‰ ${fSrvClock(last)}</div>`}
-      </div>`;
-    }).join('');
-    const clock=`${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
-    const lineClass=displayBoard?` mtb2-line--${boardKind}`:'';
-    const openAction=displayBoard
-      ?`closeMetroStationDisplay();openMetroTimetable('${esc(stn)}','${esc(line)}')`
-      :`openMetroTimetable('${esc(stn)}','${esc(line)}')`;
-    return `<div class="mtb2-line${lineClass}" style="--mc:${color};cursor:pointer" onclick="${openAction}" role="button" title="ì „ì²´ ì‹œê°„í‘œ ë³´ê¸°">
-      <div class="mtb2-lhead"><span class="mtb2-dot"></span><b>${_opsEsc(spec.label)}</b>
-        ${displayBoard?`<span class="mtb2-device-title">${boardKind==='regional'?`${stn} ë°©ë©´ íƒ€ëŠ” ê³³ ì•ˆë‚´`:'ì´ë²ˆì—´ì°¨ ìš´í–‰ ì•ˆë‚´'}</span>
-        <time>${clock}</time>`:''}<span class="mtb2-more">ì „ì²´ ì‹œê°„í‘œ â€º</span></div>
-      <div class="mtb2-cols">${cols}</div>
-    </div>`;
-  }).join('');
-  const boardId=displayBoard?'metro-display-board':'metro-board';
-  const selectedGroup=displayBoard?(_metroDisplayLineGroups[_metroDisplayLineIndex]||[]):[];
-  const selectedLine=selectedGroup[0]||'';
-  const selectedColor=displayBoard?_metroLineColor(selectedLine):'';
-  const selectedLabel=selectedGroup.length>1?selectedGroup.join(' Â· '):selectedLine;
-  const lineNav=displayBoard?`<div class="mtb-display-line-nav" style="--mc:${selectedColor}">
-    <button onclick="event.stopPropagation();setMetroDisplayLine(-1)" aria-label="ì´ì „ ë…¸ì„ "${_metroDisplayLineGroups.length<2?' disabled':''}>â—€</button>
-    <span><i></i><b>${_opsEsc(selectedLabel)}</b><small>${_metroDisplayLineIndex+1} / ${_metroDisplayLineGroups.length}</small></span>
-    <button onclick="event.stopPropagation();setMetroDisplayLine(1)" aria-label="ë‹¤ìŒ ë…¸ì„ "${_metroDisplayLineGroups.length<2?' disabled':''}>â–¶</button>
-  </div>`:'';
-  const dirNav=displayBoard&&displayDirLabels.length>1?`<div class="mtb-display-dir-nav" style="--mc:${selectedColor}">
-    ${displayDirLabels.slice(0,2).map((label,i)=>`<button class="${_metroDisplayDirIndex===i?'on':''}" onclick="event.stopPropagation();setMetroDisplayDirection(${i})">${_opsEsc(label)}</button>`).join('')}
-  </div>`:'';
-  return `<div id="${boardId}" style="padding:12px 16px;border-bottom:1px solid var(--border)">
-    ${displayBoard?lineNav:`<div class="mtb-head"><span class="mtb-title">ğŸš‡ ì‹¤ì‹œê°„ ë„ì°©</span>
-      <span class="mtb-modetog">
-        <button class="mtb-mode${_metroBoardMode==='time'?' on':''}" onclick="setMetroBoardMode('time')">ì‹œê°„</button>
-        <button class="mtb-mode${_metroBoardMode==='pos'?' on':''}" onclick="setMetroBoardMode('pos')">í˜„ìœ„ì¹˜</button>
-      </span></div>`}
-    ${dirNav}
-    <div class="${displayBoard?'mtb-display-selected-dir mtb-display-dir-'+_metroDisplayDirIndex:''}">
-    ${blocks}
-    </div>
-    <div class="mtb-foot">ì¸ê²Œì„ ì‹œê°í‘œ ê¸°ì¤€ Â· ìš´í–‰ ${running}í¸ Â· ${viewMode==='pos'?'í¸ì„± í˜„ìœ„ì¹˜(ì—­ëª…Â·ë‚¨ì€ ì—­ ìˆ˜)':'ê³„í†µë³„ ì‹¤ì œ ì°©ë°œ ë°˜ì˜'}</div>
-  </div>`;
-}
-// ì¸ê²Œì„ Lineì€ Aâ†’Bâ†’A ì„ í˜•ì—ì„œ ê°™ì€ ì—­ì„ ë°©í–¥ë³„ occurrenceë¡œ ë”°ë¡œ ë³´ê´€í•œë‹¤.
-// ì‹¤ì œ í¸ì„±ì˜ ë‹¤ìŒ ì •ì°¨ì—­ì´ routeìƒ ì–´ëŠ occurrence ë’¤ì— ì˜¤ëŠ”ì§€ ë¹„êµí•´ ì‚¬ìš©í•  ìŠ¹ê°•ì¥ì„ ì°¾ëŠ”ë‹¤.
-function _metroPlatformOccurrence(line,stn,next){
-  const data=(typeof METRO_PLATFORM_DIRECTIONS!=='undefined'&&METRO_PLATFORM_DIRECTIONS.lines?.[line])||null;
-  const rows=data?.platforms?.[stn]||[],route=data?.route||[];
-  if(!rows.length)return null;
-  let best=null,bestGap=Infinity;
-  rows.forEach(row=>{
-    let bound=route.length;
-    for(let i=row.i+1;i<route.length;i++){if(route[i]===stn){bound=i;break;}}
-    for(let i=row.i+1;i<bound;i++){
-      if(route[i]===next&&i-row.i<bestGap){best=row;bestGap=i-row.i;break;}
-    }
-  });
-  if(best)return best;
-  // ë‹¨ë°©í–¥ ìë£Œë‚˜ ë¶ˆì™„ì „í•œ ì§€ì„ ì€ ê°€ì¥ ê°€ê¹Œìš´ ë™ì¼ ì—­ occurrenceë¥¼ ì•ˆì „í•œ í´ë°±ìœ¼ë¡œ ì‚¬ìš©í•œë‹¤.
-  rows.forEach(row=>{
-    route.forEach((name,index)=>{
-      const gap=Math.abs(index-row.i);
-      if(name===next&&gap>0&&gap<bestGap){best=row;bestGap=gap;}
-    });
-  });
-  return best||rows[0];
-}
-
-function _metroPlatformUses(stn,platform){
-  const uses=new Map(),activeLines=new Set(_metroStationDeps(stn).map(item=>item.line));
-  const lines=(typeof METRO_PLATFORM_DIRECTIONS!=='undefined'&&METRO_PLATFORM_DIRECTIONS.lines)||{};
-  Object.entries(lines).forEach(([line,data])=>{
-    if(activeLines.size&&!activeLines.has(line))return;
-    const roles=new Set();
-    (data.platforms?.[stn]||[]).forEach(row=>{
-      if((row.p||[]).includes(platform))roles.add('ì£¼');
-      if((row.a||[]).includes(platform))roles.add('ë³´ì¡°');
-    });
-    if(roles.size)uses.set(line,{line,color:_metroLineColor(line),roles:[...roles]});
-  });
-  // ìµœì‹  ì›ë³¸ì— ì—†ëŠ” ìˆ˜ë™ ì „ì²  ë…¸ì„ ì€ ê¸°ì¡´ PLATFORM_DBì˜ ë…¸ì„  ì—°ê²°ì„ ìœ ì§€í•œë‹¤.
-  if(typeof PLATFORM_DB!=='undefined'){
-    const key=PLATFORM_DB[stn]?stn:(PLATFORM_DB[stn+'ì—­']?stn+'ì—­':null);
-    const info=key&&PLATFORM_DB[key]?.[String(platform)];
-    (info?.l||[]).forEach(raw=>{
-      const line=String(raw).split('/')[0].split(' (')[0].trim();
-      if(activeLines.has(line)&&!uses.has(line))uses.set(line,{line,color:_metroLineColor(line),roles:['ì£¼']});
-    });
-  }
-  return [...uses.values()].sort((a,b)=>a.line.localeCompare(b.line,'ko'));
-}
-
-// í¸ì„± ë°°ì—´ì—ì„œ í˜„ì¬ ì—­ ì´í›„ì˜ ì‹¤ì œ ìš´í–‰ êµ¬ê°„ì„ ë³µì›í•œë‹¤. Aâ†’Bâ†’A ì„ í˜•ë„ ë‹¤ìŒ ì—­ìœ¼ë¡œ occurrenceë¥¼ êµ¬ë¶„í•œë‹¤.
-function _metroServicePath(stn,dep){
-  const ent=typeof METRO_SCHED!=='undefined'&&METRO_SCHED[dep.line],f=ent?.t?.[dep.svc];
-  if(!ent||!f)return [];
-  const n=f.length/3,at=k=>ent.s[f[3*k+2]];
-  let start=-1;
-  for(let k=Math.max(0,dep.k0||0);k<n-1;k++){
-    if(at(k)===stn&&at(k+1)===dep.next){start=k;break;}
-  }
-  if(start<0){for(let k=0;k<n-1;k++){if(at(k)===stn&&at(k+1)===dep.next){start=k;break;}}}
-  if(start<0)return [];
-  const end=Math.min(Number.isFinite(dep.k1)?dep.k1:n-1,n-1),path=[];
-  for(let k=start;k<=end;k++){const name=at(k);if(name&&path[path.length-1]!==name)path.push(name);}
-  return path;
-}
-
-function _metroStationImportance(name){
-  if(!name)return 0;
-  let score=_isTrainStn(name)?4:0;
-  if(typeof METRO_LINES!=='undefined')METRO_LINES.forEach(line=>{
-    if((line.routes||[{stations:line.stations||[]}]).some(route=>(route.stations||[]).includes(name)))score++;
-  });
-  return score;
-}
-
-// ì‹¤ì œ í–‰ì„  ì•ˆë‚´íŒì²˜ëŸ¼ ë‹¤ìŒì—­ 1ê³³Â·ì£¼ìš”ì—­ ìµœëŒ€ 3ê³³Â·ëŒ€í‘œ ìµœì¢… ì¢…ì°©ì—­ 1ê³³ì„ ìš´í–‰ ìˆœì„œëŒ€ë¡œ ê³ ë¥¸ë‹¤.
-function _metroDirectionLandmarks(stn,row){
-  if(row.terminating&&!row.deps.length)return [];
-  const paths=row.deps.map(dep=>_metroServicePath(stn,dep)).filter(path=>path.length>1).sort((a,b)=>b.length-a.length);
-  const next=[...new Set(row.deps.map(dep=>dep.next).filter(name=>name&&name!==stn))];
-  const termini=[...new Set(row.deps.map(dep=>dep.dest).filter(name=>name&&name!==stn))];
-  const out=[],seen=new Set(),push=(name,kind)=>{if(name&&!seen.has(name)&&out.length<5){seen.add(name);out.push({name,kind});}};
-  next.slice(0,1).forEach(name=>push(name,'ë‹¤ìŒì—­'));
-  const path=paths[0]||[],terminal=path[path.length-1]||termini[0]||null;
-  const middle=path.slice(2,-1).filter(name=>!seen.has(name)&&name!==terminal);
-  if(middle.length){
-    const midpoint=(path.length-1)/2;
-    const majors=middle.sort((a,b)=>{
-      const as=_metroStationImportance(a),bs=_metroStationImportance(b);
-      if(as!==bs)return bs-as;
-      return Math.abs(path.indexOf(a)-midpoint)-Math.abs(path.indexOf(b)-midpoint);
-    }).slice(0,3).sort((a,b)=>path.indexOf(a)-path.indexOf(b));
-    majors.forEach(name=>push(name,'ì£¼ìš”ì—­'));
-  }
-  push(terminal,'ì¢…ì°©ì—­');
-  return out;
-}
-
-function _metroDirectionHTML(stn,row){
-  const landmarks=_metroDirectionLandmarks(stn,row);
-  if(!landmarks.length)return '<span class="si-metro-terminal">ë‹¹ì—­ì¢…ì°©</span>';
-  return `<span class="si-metro-direction"><span>${landmarks.map(item=>_opsEsc(item.name)).join(' Â· ')}</span><em>ë°©ë©´</em></span>`;
-}
-
-// ìŠ¹ê°•ì¥ë³„Â·ë°©í–¥ë³„ ì‚¬ìš© ì •ë³´ë¥¼ ë§Œë“ ë‹¤. ë³´ì¡° í™ˆë„ ê°™ì€ ìŠ¹ê°•ì¥ ëª©ë¡ì— í¬í•¨í•˜ë˜ UIì—ì„œ ë“±ê¸‰ì„ êµ¬ë¶„í•˜ì§€ ì•ŠëŠ”ë‹¤.
-function _metroPlatformGuideRows(stn){
-  if(typeof METRO_SCHED==='undefined')return [];
-  const usage=new Map(),stationDeps=_metroStationDeps(stn);
-  const add=(line,platform,directionKey,dep,terminating=false)=>{
-    if(!Number.isFinite(Number(platform)))return;
-    const key=`${Number(platform)}|${line}|${directionKey}`;
-    const row=usage.get(key)||{platform:Number(platform),line,color:_metroLineColor(line),deps:[],terminating};
-    if(dep&&!row.deps.some(item=>item.svc===dep.svc&&item.next===dep.next&&item.dest===dep.dest))row.deps.push(dep);
-    row.terminating=row.terminating||terminating;
-    usage.set(key,row);
-  };
-  [...new Set(stationDeps.map(item=>item.line))].forEach(line=>{
-    const deps=stationDeps.filter(item=>item.line===line);
-    const raw=(typeof METRO_PLATFORM_DIRECTIONS!=='undefined'&&METRO_PLATFORM_DIRECTIONS.lines?.[line])||null;
-    const matchedOccurrences=new Set();
-    deps.forEach(dep=>{
-      const occurrence=_metroPlatformOccurrence(line,stn,dep.next);if(!occurrence)return;
-      matchedOccurrences.add(occurrence.i);
-      [...(occurrence.p||[]),...(occurrence.a||[])].forEach(platform=>add(line,platform,`raw-${occurrence.i}`,dep));
-    });
-    // ì¶œë°œí¸ì´ ì—†ëŠ” ì¢…ì°© occurrenceë„ ìŠ¹ê°•ì¥ ì•ˆë‚´ì—ì„œ ëˆ„ë½í•˜ì§€ ì•ŠëŠ”ë‹¤.
-    (raw?.platforms?.[stn]||[]).filter(occ=>!matchedOccurrences.has(occ.i)).forEach(occ=>{
-      [...(occ.p||[]),...(occ.a||[])].forEach(platform=>add(line,platform,`raw-${occ.i}`,null,true));
-    });
-    if(raw||!deps.length)return;
-    // ì›ë³¸ì— ì—†ëŠ” ìˆ˜ë™ ë…¸ì„ ì€ ê¸°ì¡´ ìŠ¹ê°•ì¥ ìˆœì„œì™€ ë°©ë©´ ê·¸ë£¹ì„ ëŒ€ì‘í•œë‹¤.
-    const dirCounts={};deps.forEach(dep=>{dirCounts[dep.next]=(dirCounts[dep.next]||0)+1;});
-    const groups=_metroDirGroups(line,stn,dirCounts),platforms=_metroBoardPlatforms(stn,line);
-    groups.forEach((group,index)=>{
-      const platform=platforms[Math.min(index,platforms.length-1)];if(platform==null)return;
-      deps.filter(dep=>group.includes(dep.next)).forEach(dep=>add(line,platform,`fallback-${index}`,dep));
-    });
-  });
-  return [...usage.values()].sort((a,b)=>a.platform-b.platform||a.line.localeCompare(b.line,'ko'));
-}
-
-// ì „ì²  íƒ­ ì „ìš© ì •ì  ìŠ¹ê°•ì¥ ì•ˆë‚´. ìŠ¹ê°•ì¥ ë²„íŠ¼ì„ ê³ ë¥´ë©´ ê·¸ í™ˆì˜ ì‹¤ì œ ë…¸ì„ Â·ë°©í–¥ë§Œ í¼ì¹œë‹¤.
-function _metroPlatformGuideHTML(stn){
-  if(typeof METRO_LINES==='undefined'||typeof METRO_SCHED==='undefined')return '';
-  const rows=_metroPlatformGuideRows(stn),platforms=[...new Set(rows.map(row=>row.platform))];
-  if(!platforms.length)return '';
-  if(_siMetroGuidePlatform===null||!platforms.includes(_siMetroGuidePlatform))_siMetroGuidePlatform=platforms[0];
-  const selected=rows.filter(row=>row.platform===_siMetroGuidePlatform);
-  const stnEsc=String(stn).replace(/\\/g,'\\\\').replace(/'/g,"\\'");
-  return `<section class="si-metro-platform-guide"><div class="si-metro-platform-heading"><b>ì „ì²  ìŠ¹ê°•ì¥ ì•ˆë‚´</b><small>ì´ ${platforms.length}ê°œ ìŠ¹ê°•ì¥</small></div>
-    <div class="si-metro-platform-tabs" role="tablist" aria-label="ì „ì²  ìŠ¹ê°•ì¥ ì„ íƒ">${platforms.map(platform=>`<button class="${platform===_siMetroGuidePlatform?'on':''}" onclick="selectSIMetroPlatform('${stnEsc}',${platform})" role="tab" aria-label="${platform}ë²ˆ ìŠ¹ê°•ì¥" aria-selected="${platform===_siMetroGuidePlatform}">${platform}</button>`).join('')}</div>
-    <div class="si-metro-platform-panel"><strong aria-label="${_siMetroGuidePlatform}ë²ˆ ìŠ¹ê°•ì¥">${_siMetroGuidePlatform}</strong><div class="si-metro-platform-services">${selected.map(row=>`<article style="--metro-line:${row.color}"><i></i><b>${_opsEsc(row.line)}</b>${_metroDirectionHTML(stn,row)}</article>`).join('')}</div></div>
-  </section>`;
-}
-
-function selectSIMetroPlatform(stn,platform){
-  _siMetroGuidePlatform=Number(platform);
-  renderSICard(_siCurrent||stn);
-}
-
-function _metroLinesForTrainPlatformHTML(stn,platform){
-  if(platform==null)return '';
-  const rows=_metroPlatformGuideRows(stn).filter(row=>row.platform===Number(platform));if(!rows.length)return '';
-  const grouped=new Map();
-  rows.forEach(row=>{
-    const item=grouped.get(row.line)||{line:row.line,color:row.color,destinations:new Set(),terminating:false};
-    row.deps.forEach(dep=>{if(dep.dest&&dep.dest!==stn)item.destinations.add(dep.dest);});
-    item.terminating=item.terminating||row.terminating;
-    grouped.set(row.line,item);
-  });
-  return `<div class="si-train-metro-uses"><strong>ğŸš‡ ì´ ìŠ¹ê°•ì¥ì„ ì“°ëŠ” ì „ì² </strong><div>${[...grouped.values()].map(item=>{
-    const directions=[...item.destinations],label=directions.length?`${directions.slice(0,4).join(' Â· ')} ë°©ë©´`:'ë‹¹ì—­ì¢…ì°©';
-    return `<span style="--metro-line:${item.color}"><i></i><b>${_opsEsc(item.line)}</b><small>(${_opsEsc(label)})</small></span>`;
-  }).join('')}</div></div>`;
-}
-function renderSICard(name){
-  const el=document.getElementById('si-card');
-  if(!el)return;
-  name=railStationDataName(name);
-  // ì§€ë„ í´ë¦­ì€ 'ì„œìš¸'(ë§¨ ì´ë¦„), ê²€ìƒ‰ì€ 'ì„œìš¸ì—­'(DB í‚¤) â†’ DB í‚¤ë¡œ ì •ê·œí™”
-  if(typeof STATION_DB!=='undefined' && !STATION_DB[name] && STATION_DB[name+'ì—­']) name=name+'ì—­';
-  const d=typeof STATION_DB!=='undefined'?STATION_DB[name]:null;
-  // ALL_TRAINS uses station names without ì—­ suffix (e.g. "ì˜ì£¼"), STATION_DB uses "ì˜ì£¼ì—­"
-  const trainName=name.endsWith('ì—­')?name.slice(0,-1):name;
-  // í†µê³¼ ì—´ì°¨ ì œì™¸ â€” ì •ì°¨ ì—´ì°¨ë§Œ (ìŠ¹ê°•ì¥ ì•ˆë‚´ ìš”ê±´)
-  const trains=_stationStoppingTrains(trainName);
-  // ì‹¤ì‚¬ìš© ìŠ¹ê°•ì¥(ê²Œì„ DB) ìš°ì„  â€” ì‹¤ì œ ì •ì°¨ ì—´ì°¨ë“¤ì´ ì“°ëŠ” í™ˆ ë²ˆí˜¸ë§Œ ë…¸ì¶œ
-  let platforms=[];
-  {
-    const set=new Set();
-    trains.forEach(t=>{const p=_platformForTrain(name,trainName,trains,t);if(p!=null)set.add(p);});
-    platforms=[...set].sort((a,b)=>a-b);
-  }
-  if(platforms.length===0&&trains.length>0&&d?.platforms?.length>0) platforms=d.platforms;
-  // Reset selected platform if it was filtered out
-  if(_siCardPlatform!==null&&!platforms.includes(_siCardPlatform)) _siCardPlatform=null;
-  if(_siCardPlatform===null&&platforms.length>0) _siCardPlatform=platforms[0];
-  const nameEsc=name.replace(/\\/g,'\\\\').replace(/'/g,"\\'");
-  // ì´ ì—­ì„ ì§€ë‚˜ëŠ” ì „ì²  ë…¸ì„  (ì§€ì„  í¬í•¨)
-  const metroLines=typeof METRO_LINES!=='undefined'
-    ?METRO_LINES.filter(l=>(l.routes||[{stations:l.stations}]).some(r=>r.stations.includes(trainName)))
-    :[];
-  el.innerHTML=`
-    <div style="background:var(--bg2);border:1px solid var(--border);border-radius:14px;overflow:hidden">
-      <div style="padding:16px;border-bottom:1px solid var(--border)">
-        <div style="display:flex;align-items:flex-start;justify-content:space-between">
-          <div style="font-size:22px;font-weight:700">${trainName}</div>
-          <div style="font-size:11px;color:var(--text2);text-align:right">${_appMode==='metro'
-            ?(metroLines.length?`${metroLines.length}ê°œ ë…¸ì„ `:'')
-            :(trains.length?`${platforms.length>0?platforms.length+'ê°œ í™ˆ<br>':''}${trains.length}í¸ ê²½ìœ `:(metroLines.length?`${metroLines.length}ê°œ ì „ì²  ë…¸ì„ `:''))}</div>
-        </div>
-        ${d?`<div id="si-addr" data-lat="${d.lat}" data-lon="${d.lon}" style="font-size:11px;color:var(--text3);margin-top:4px">ğŸ“ ${d.addr||'ì£¼ì†Œ í™•ì¸ ì¤‘â€¦'}</div>`:''}
-        ${(()=>{ // ëª¨ë“œë³„ ë¼ë²¨: ê¸°ì°¨ ëª¨ë“œ = ì—´ì°¨ ë“±ê¸‰ë§Œ (í¸ìˆ˜Â·ì•½í˜¸ ì—†ì´), ì „ì²  ëª¨ë“œ = ì „ì²  ë…¸ì„ ë§Œ
-          if(_appMode==='metro'){
-            if(!metroLines.length)return '';
-            return `<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:10px">
-              ${metroLines.map(l=>`<span onclick="openMetroLine('${l.id}')" style="cursor:pointer;padding:3px 10px;border-radius:12px;font-size:11px;font-weight:700;background:${l.color}1c;border:1px solid ${l.color};color:${l.color}">ğŸš‡ ${l.name}</span>`).join('')}
-            </div>`;
-          }
-          const grades=[...new Set(trains.map(t=>t.grade))];
-          if(!grades.length)return '';
-          const ORD=['KTX','SRT','KTX-ì‚°ì²œ','KTX-ì´ìŒ','ITX-ì²­ì¶˜','ITX-ìƒˆë§ˆì„','ITX-ë§ˆìŒ','ë¬´ê¶í™”í˜¸'];
-          grades.sort((a,b)=>{
-            const ia=ORD.indexOf(a), ib=ORD.indexOf(b);
-            return (ia<0?99:ia)-(ib<0?99:ib);
-          });
-          return `<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:10px">
-            ${grades.map(g=>{
-              const c=GC_CSS_VAR[gc(g)]||'mgh';
-              return `<span style="padding:3px 10px;border-radius:12px;font-size:11px;font-weight:600;border:1px solid var(--c-${c});color:var(--c-${c})">${g}</span>`;
-            }).join('')}
-          </div>`;
-        })()}
-      </div>
-      ${_appMode!=='metro'&&trains.length?`<div style="padding:12px 16px 4px">
-        <button class="si-board-btn" onclick="openStationBoard('${nameEsc}')">ğŸš‰ ì¶œë°œ ì•ˆë‚´ ì „ê´‘íŒ ì—´ê¸°</button>
-      </div>`:''}
-      ${_appMode==='metro'?`<div style="padding:12px 16px 4px">
-        <button class="si-board-btn" onclick="openMetroStationDisplay('${trainName.replace(/\\/g,'\\\\').replace(/'/g,"\\'")}')">ğŸš‡ ì¶œë°œ ì•ˆë‚´ ì „ê´‘íŒ ì—´ê¸°</button>
-      </div>`:''}
-      ${_appMode==='metro'?(()=>{ // ğŸš‡ ì „ì² : ë…¸ì„ (route)ë³„ ì „ì—­/ë‹¤ìŒì—­ â€” ê²½ìœ  ë…¸ì„ Â·ì§€ì„  ë¶„ê¸° ëª¨ë‘ í‘œì‹œ
-        if(typeof METRO_LINES==='undefined')return '';
-        const rows=[];
-        METRO_LINES.forEach(l=>{
-          (l.routes||[{stations:l.stations}]).forEach(r=>{
-            const i=r.stations.indexOf(trainName);
-            if(i<0)return;
-            const prev=i>0?r.stations[i-1]:null, next=i<r.stations.length-1?r.stations[i+1]:null;
-            if(!prev&&!next)return;
-            rows.push({l,dash:!!r.dash,prev,next});
-          });
-        });
-        const seen=new Set(), uniq=[];
-        rows.forEach(x=>{const k=x.l.id+'|'+(x.prev||'')+'|'+(x.next||'');if(!seen.has(k)){seen.add(k);uniq.push(x);}});
-        if(!uniq.length)return '';
-        const btn=(stn,arrow)=>stn
-          ?`<button onclick="openStationDetail('${stn.replace(/'/g,"\\'")}')" style="flex:1;min-width:0;padding:7px 10px;border-radius:9px;border:1px solid var(--border);background:var(--bg3);color:var(--text1);font-size:12px;font-weight:700;cursor:pointer;font-family:var(--sans);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:${arrow==='prev'?'left':'right'}">${arrow==='prev'?'â† '+stn:stn+' â†’'}</button>`
-          :`<span style="flex:1;min-width:0;padding:7px 10px;font-size:11px;color:var(--text3);text-align:${arrow==='prev'?'left':'right'}">${arrow==='prev'?'ê¸°ì ':'ì¢…ì '}</span>`;
-        return `<div style="padding:12px 16px;border-bottom:1px solid var(--border)">
-          <div style="font-size:12px;font-weight:700;color:var(--text2);margin-bottom:8px">ğŸš‡ ì „ì—­ Â· ë‹¤ìŒì—­</div>
-          ${uniq.map(x=>`<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
-            <span style="flex-shrink:0;display:inline-flex;align-items:center;gap:5px;width:86px;font-size:11px;font-weight:700;color:${x.l.color};overflow:hidden"><span style="width:8px;height:8px;border-radius:50%;background:${x.l.color};flex-shrink:0"></span><span style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${x.l.name}${x.dash?' Â·ì§€ì„ ':''}</span></span>
-            ${btn(x.prev,'prev')}${btn(x.next,'next')}
-          </div>`).join('')}
-        </div>`;
-      })():''}
-      ${_appMode==='metro'?_metroPlatformGuideHTML(trainName):''}
-      ${_appMode==='metro'?_metroStationBoardHTML(trainName):''}
-      ${_appMode==='metro'&&_isTrainStn(trainName)?`<div style="padding:12px 16px 4px">
-        <button class="si-board-btn" onclick="switchModeStation('train','${nameEsc}')">ğŸš† ê¸°ì°¨ ${trainName}ì—­ìœ¼ë¡œ ì „í™˜</button>
-      </div>`:''}
-      ${_appMode!=='metro'&&platforms.length>0?`
-      <div style="padding:12px 16px;border-bottom:1px solid var(--border)">
-        <div style="font-size:12px;font-weight:700;color:var(--text2);margin-bottom:8px">ğŸš‰ í™ˆ ì„ íƒ</div>
-        <div style="overflow-x:auto;-webkit-overflow-scrolling:touch;padding-bottom:2px">
-          <div style="display:flex;gap:6px;min-width:max-content">
-            ${platforms.map(p=>`
-              <button id="si-ptab-${p}" onclick="selectSICardPlatform('${nameEsc}',${p})"
-                style="padding:6px 16px;border-radius:20px;border:1px solid var(--border);font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap;font-family:var(--sans);transition:background .15s,color .15s;
-                background:${_siCardPlatform===p?'var(--accent)':'var(--bg3)'};color:${_siCardPlatform===p?'#fff':'var(--text1)'}">
-                ${p}
-              </button>`).join('')}
-          </div>
-        </div>
-      </div>`:''}
-      ${_appMode!=='metro'&&trains.length?`<div id="si-platform-trains" style="padding:14px 16px">
-        ${_siPlatformTrainsHTML(name, trains)}
-      </div>`:''}
-      ${_appMode!=='metro'&&metroLines.length?`<div style="padding:0 16px 12px">
-        <button class="si-board-btn" onclick="switchModeStation('metro','${nameEsc}')">ğŸš‡ ì „ì²  ${trainName}ì—­ìœ¼ë¡œ ì „í™˜</button>
-      </div>`:''}
-      <div class="si-network-map-action">
-        ${d&&d.lat&&d.lon?`<button type="button" aria-expanded="false" aria-controls="si-nearby-map-section" onclick="toggleStationNearbyMap(this)"><svg aria-hidden="true"><use href="#i-map"/></svg><span><strong>ì—­ ì£¼ë³€ ì§€ë„ ë³´ê¸°</strong><small>${trainName}ì—­ ì£¼ë³€ì˜ ì‹¤ì œ ì§€ë„ë¥¼ í™•ì¸í•©ë‹ˆë‹¤</small></span><i class="si-map-chevron" aria-hidden="true">âŒ„</i></button>
-        <div id="si-nearby-map-section" class="si-nearby-map-section" hidden>
-          <iframe src="https://www.openstreetmap.org/export/embed.html?bbox=${(d.lon-0.01).toFixed(5)},${(d.lat-0.008).toFixed(5)},${(d.lon+0.01).toFixed(5)},${(d.lat+0.008).toFixed(5)}&amp;layer=mapnik&amp;marker=${d.lat.toFixed(5)},${d.lon.toFixed(5)}" loading="lazy" title="${nameEsc} ì£¼ë³€ ì§€ë„"></iframe>
-          <div class="si-nearby-map-links">
-            <a href="https://map.kakao.com/link/map/${encodeURIComponent(name)},${d.lat},${d.lon}" target="_blank" rel="noopener noreferrer">ì¹´ì¹´ì˜¤ì§€ë„ì—ì„œ ì—´ê¸°</a>
-            <a href="https://map.naver.com/?lng=${d.lon}&amp;lat=${d.lat}&amp;zoom=15" target="_blank" rel="noopener noreferrer">ë„¤ì´ë²„ì§€ë„ì—ì„œ ì—´ê¸°</a>
-          </div>
-        </div>`:''}
-        <button type="button" onclick="openStationReachabilityMap('${trainName.replace(/\\/g,'\\\\').replace(/'/g,"\\'")}')"><svg aria-hidden="true"><use href="#i-map"/></svg><span><strong>ì§€ë„ì—ì„œ ì§í†µì—­ ë³´ê¸°</strong><small>${trainName}ì—­ì—ì„œ í™˜ìŠ¹ ì—†ì´ ê°ˆ ìˆ˜ ìˆëŠ” ì—­ì„ í‘œì‹œí•©ë‹ˆë‹¤</small></span><i aria-hidden="true">â€º</i></button>
-      </div>
-    </div>`;
-  if(d) siLoadAddress(name, d.lat, d.lon);
-}
-
-function toggleStationNearbyMap(button){
-  const section=document.getElementById('si-nearby-map-section');
-  if(!section)return;
-  const willOpen=section.hidden;
-  section.hidden=!willOpen;
-  if(button){
-    button.setAttribute('aria-expanded',String(willOpen));
-    button.classList.toggle('is-open',willOpen);
-  }
-}
-
-// ì¢Œí‘œ â†’ ì£¼ì†Œ (ì‚¬ìš©ì ë¸Œë¼ìš°ì €ì—ì„œ ì—­ì§€ì˜¤ì½”ë”©, localStorage ìºì‹œ, ì‹¤íŒ¨ ì‹œ ì¢Œí‘œ í‘œì‹œ)
-async function siLoadAddress(name, lat, lon){
-  const box=document.getElementById('si-addr');
-  if(!box) return;
-  let cache={}; try{ cache=JSON.parse(localStorage.getItem('nimbi_addr')||'{}'); }catch(e){}
-  const cacheKey=`${name}|${(+lat).toFixed(6)},${(+lon).toFixed(6)}`;
-  if(cache[cacheKey]){ box.innerHTML='ğŸ“ '+cache[cacheKey]; return; }
-  const coordStr=`${(+lon).toFixed(4)}Â°E, ${(+lat).toFixed(4)}Â°N`;
-  try{
-    const r=await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}&accept-language=ko&zoom=16&addressdetails=1`,{headers:{Accept:'application/json'}});
-    const j=await r.json(); const a=j.address||{};
-    const parts=[a.state||a.province, a.city||a.county||a.town||a.village, a.borough||a.city_district, a.suburb||a.neighbourhood||a.quarter, a.road].filter(Boolean);
-    const seen=new Set(); const addr=parts.filter(p=>!seen.has(p)&&seen.add(p)).slice(0,4).join(' ');
-    if(addr){ cache[cacheKey]=addr; try{ localStorage.setItem('nimbi_addr',JSON.stringify(cache)); }catch(e){} }
-    const cur=document.getElementById('si-addr');
-    if(cur && String(cur.dataset.lat)===String(lat)) cur.innerHTML='ğŸ“ '+(addr||coordStr);
-  }catch(e){
-    const cur=document.getElementById('si-addr');
-    if(cur && String(cur.dataset.lat)===String(lat)) cur.innerHTML='ğŸ“ '+coordStr;
-  }
-}
-
-function selectSICardPlatform(name, p){
-  _siCardPlatform=p;
-  document.querySelectorAll('[id^="si-ptab-"]').forEach(b=>{
-    const bp=parseInt(b.id.replace('si-ptab-',''));
-    b.style.background=bp===p?'var(--accent)':'var(--bg3)';
-    b.style.color=bp===p?'#fff':'var(--text1)';
-  });
-  const trainName=name.endsWith('ì—­')?name.slice(0,-1):name;
-  const trains=_stationStoppingTrains(trainName);
-  const el=document.getElementById('si-platform-trains');
-  if(el) el.innerHTML=_siPlatformTrainsHTML(name, trains);
-}
-
-function toggleSITerm(name){
-  _siHideTerm=!_siHideTerm;
-  const trainName=name.endsWith('ì—­')?name.slice(0,-1):name;
-  const trains=_stationStoppingTrains(trainName);
-  const el=document.getElementById('si-platform-trains');
-  if(el) el.innerHTML=_siPlatformTrainsHTML(name, trains);
-}
-
-function toggleSIUpcoming(name){
-  _siUpcomingOnly=!_siUpcomingOnly;
-  const trainName=name.endsWith('ì—­')?name.slice(0,-1):name;
-  const trains=_stationStoppingTrains(trainName);
-  const el=document.getElementById('si-platform-trains');
-  if(el) el.innerHTML=_siPlatformTrainsHTML(name, trains);
-}
-
-function searchStation(name){
-  const trainName=name.endsWith('ì—­')?name.slice(0,-1):name;
-  document.getElementById('input-station').value=trainName;
-  if(typeof nimbiOpenStationTimetable==='function')nimbiOpenStationTimetable();else switchTab('station');
-  searchByStation();
-}
-
-function _trainMatchesPlatformRoute(train, stationName, pInfo){
-  if(!pInfo.l||pInfo.l.length===0)return true;
-  const stnBase=stationName.endsWith('ì—­')?stationName.slice(0,-1):stationName;
-  const gradeWords=['ITX-ìƒˆë§ˆì„','ITXìƒˆë§ˆì„','ITX-ì²­ì¶˜','ITXì²­ì¶˜','ITX-ë§ˆìŒ','ITXë§ˆìŒ','ë¬´ê¶í™”í˜¸','ë¬´ê¶í™”','KTX','SRT'];
-  const serviceCities=new Set();
-  const uniqueLines=[...new Set(pInfo.l.map(l=>l.replace(/\/\S+$/,'').trim()))];
-  for(const svc of uniqueLines){
-    let s=svc.replace(/\([^)]*\)/g,'').trim();
-    for(const g of gradeWords) s=s.replace(new RegExp(g,'g'),'').trim();
-    s=s.replace(/[ê°€-í£]+ì„ \s*/g,'').trim();
-    s.split('-').map(c=>c.trim()).filter(c=>c&&c!==stnBase&&c!==stationName)
-      .forEach(c=>serviceCities.add(c));
-  }
-  if(serviceCities.size===0)return true;
-  const dest=train.dest.endsWith('ì—­')?train.dest.slice(0,-1):train.dest;
-  if(serviceCities.has(train.dest)||serviceCities.has(dest))return true;
-  const origin=train.stops?.[0]?.s;
-  if(origin){
-    const originBase=origin.endsWith('ì—­')?origin.slice(0,-1):origin;
-    if(serviceCities.has(origin)||serviceCities.has(originBase))return true;
-  }
-  return false;
-}
-
-// Returns direction ('down'|'up'|null) for a platform based on identical-service twins
-function _getDirectionForPlatform(stationName, platformNum){
-  if(typeof PLATFORM_DB==='undefined'||!PLATFORM_DB[stationName])return null;
-  const db=PLATFORM_DB[stationName];
-  const myInfo=db[String(platformNum)];
-  if(!myInfo||!myInfo.l||myInfo.l.length===0)return null;
-  const norm=l=>l.replace(/\/\S+$/,'').trim();
-  const myKey=[...new Set(myInfo.l.map(norm))].sort().join('|');
-  // Find platforms with identical (normalized) service lists â†’ direction twins
-  const twins=Object.keys(db).map(Number).filter(p=>{
-    if(p===platformNum)return false;
-    const info=db[String(p)];
-    if(!info||!info.l||info.l.length===0)return false;
-    return [...new Set(info.l.map(norm))].sort().join('|')===myKey;
-  });
-  if(twins.length===0)return null;
-  const group=[platformNum,...twins].sort((a,b)=>a-b);
-  const idx=group.indexOf(platformNum);
-  // Lower half â†’ í•˜í–‰(down), upper half â†’ ìƒí–‰(up)
-  return idx<Math.ceil(group.length/2)?'down':'up';
-}
-
-// Full platform train filter: grade + route + direction (terminus trains exempt from direction)
-function _getFilteredTrainsForPlatform(name, allTrains, platformNum){
-  const trainName=name.endsWith('ì—­')?name.slice(0,-1):name;
-  const pInfo=_getPlatformInfo(name,platformNum);
-  if(!pInfo)return allTrains;
-  let filtered=allTrains.filter(t=>
-    _gradeMatchesPlatform(t.grade,pInfo.g)&&
-    _trainMatchesPlatformRoute(t,name,pInfo)
-  );
-  const dirFilter=_getDirectionForPlatform(name,platformNum);
-  if(dirFilter!==null){
-    filtered=filtered.filter(t=>{
-      const stop=t.stops.find(s=>s.s===trainName);
-      const isTerminus=stop&&stop.arr&&!stop.dep; // arrives but does not depart = ë‹¹ì—­ì¢…ì°©
-      return isTerminus||t.dir===dirFilter;
-    });
-  }
-  return filtered;
-}
-
-function _extractDestinations(lines, stationName, direction=null){
-  const stnBase=stationName.endsWith('ì—­')?stationName.slice(0,-1):stationName;
-  const gradeWords=['ITX-ìƒˆë§ˆì„','ITXìƒˆë§ˆì„','ITX-ì²­ì¶˜','ITXì²­ì¶˜','ITX-ë§ˆìŒ','ITXë§ˆìŒ','ë¬´ê¶í™”í˜¸','ë¬´ê¶í™”','KTX','SRT'];
-  const citySet=new Set();
-  const deduped=[...new Set(lines.map(l=>l.replace(/\/\S+$/,'').trim()))];
-  for(const line of deduped){
-    let s=line.replace(/\([^)]*\)/g,'').trim();
-    for(const g of gradeWords) s=s.replace(new RegExp(g,'g'),'').trim();
-    s=s.replace(/[ê°€-í£]+ì„ \s*/g,'').trim();
-    if(!s.includes('-'))continue;
-    const cities=s.split('-').map(c=>c.trim()).filter(c=>c&&c!==stnBase&&c!==stationName);
-    if(!cities.length)continue;
-    if(direction==='down') citySet.add(cities[cities.length-1]); // toward last city = downbound endpoint
-    else if(direction==='up') citySet.add(cities[0]);            // toward first city = upbound endpoint
-    else cities.forEach(c=>citySet.add(c));
-  }
-  return [...citySet].slice(0,direction?3:5);
-}
-
-function _siPlatformTrainsHTML(name, trains){
-  const trainName=name.endsWith('ì—­')?name.slice(0,-1):name;
-  const nameEsc=name.replace(/\\/g,'\\\\').replace(/'/g,"\\'");
-  // ì„ íƒ í™ˆì— ì‹¤ì œ ë°°ì •ëœ ì—´ì°¨ (ê²Œì„ DB ê¸°ì¤€, ì—†ìœ¼ë©´ íœ´ë¦¬ìŠ¤í‹± í´ë°±)
-  const platTrains=_siCardPlatform!==null
-    ?trains.filter(t=>_platformForTrain(name,trainName,trains,t)===_siCardPlatform)
-    :[...trains];
-  // ë‹¹ì—­ì¢…ì°© ì œì™¸ í•„í„° (#4)
-  let filtered=_siHideTerm?platTrains.filter(t=>!_isTerminusAt(t,trainName)):platTrains;
-  // ì´í›„ ì—´ì°¨ë§Œ í•„í„° â€” ìš´í–‰ì¼(04:00~ìµì¼ 03:59) ê¸°ì¤€. 23:30ì— 0:40 ì—´ì°¨ëŠ” 'ì´í›„'ë¡œ ì·¨ê¸‰
-  let svcEnded=false, firstNext=null;
-  if(_siUpcomingOnly){
-    const nowD=new Date();
-    const nowSrv=_srvMin(nowD.getHours()*60+nowD.getMinutes());
-    const upcoming=filtered.filter(t=>{
-      const s=t.stops.find(x=>x.s===trainName);
-      const m=toMin(s?.dep||s?.arr);
-      return m!==null && _srvMin(m)>=nowSrv;
-    });
-    if(upcoming.length===0 && filtered.length>0){
-      svcEnded=true;
-      // ìµì¼(ë‹¤ìŒ ìš´í–‰ì¼) ì²«ì°¨ ì•ˆë‚´ìš©
-      const byStart=[...filtered].sort((a,b)=>{
-        const sa=a.stops.find(x=>x.s===trainName), sb=b.stops.find(x=>x.s===trainName);
-        return _srvMin(toMin(sa?.dep||sa?.arr)||0)-_srvMin(toMin(sb?.dep||sb?.arr)||0);
-      });
-      const fs=byStart[0]?.stops.find(x=>x.s===trainName);
-      firstNext=fs?(fs.dep||fs.arr):null;
-    }
-    filtered=upcoming;
-  }
-  const sorted=[...filtered].sort((a,b)=>{
-    const sa=a.stops.find(x=>x.s===trainName), sb=b.stops.find(x=>x.s===trainName);
-    const ka=toMin(sa?.dep||sa?.arr), kb=toMin(sb?.dep||sb?.arr);
-    // ì´í›„ ì—´ì°¨ë§Œ ëª¨ë“œì—ì„œëŠ” ìš´í–‰ì¼ ìˆœì„œ(04ì‹œ ê¸°ì¤€)ë¡œ ì •ë ¬í•´ ìì • ë„˜ëŠ” ì—´ì°¨ê°€ ë’¤ì— ì˜¤ë„ë¡
-    if(_siUpcomingOnly) return (ka===null?9999:_srvMin(ka))-(kb===null?9999:_srvMin(kb));
-    return (ka||9999)-(kb||9999);
-  });
-  // ë°©ë©´Â·ë°©í–¥ì€ ì‹¤ì œ ë°°ì •ëœ ì—´ì°¨ì—ì„œ ë„ì¶œ
-  const fdirs=new Set(sorted.map(t=>t.dir));
-  const dirLabel=(_siCardPlatform!==null&&fdirs.size===1)?(sorted[0].dir==='down'?'í•˜í–‰â†“':'ìƒí–‰â†‘'):'';
-  const dests=_siCardPlatform!==null?[...new Set(sorted.filter(t=>!_isTerminusAt(t,trainName)).map(t=>t.dest))].slice(0,3):[];
-  const destsStr=dests.length>0?dests.join(' â€¢ ')+' ë°©ë©´':'';
-  // ì´ì „/ë‹¤ìŒì—­ ì´ë™ (#5) â€” í™ˆ ì—´ì°¨ë“¤ì˜ ì§ì „/ì§í›„ ì •ì°¨ì—­ ì¤‘ ìµœê·¼ì ‘ì—­
-  const nextC=[], prevC=[];
-  platTrains.forEach(t=>{const a=_adjStopOf(t,trainName); if(a.next)nextC.push(a.next); if(a.prev)prevC.push(a.prev);});
-  const prevStn=_nearestStn(trainName,prevC), nextStn=_nearestStn(trainName,nextC);
-  const navBtn=(stn,arrow)=>`<button onclick="openStationDetail('${stn.replace(/'/g,"\\'")}')" style="flex:1;min-width:0;padding:8px 10px;border-radius:9px;border:1px solid var(--border);background:var(--bg3);color:var(--text1);font-size:12.5px;font-weight:700;cursor:pointer;font-family:var(--sans);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${arrow==='prev'?'â† '+stn:stn+' â†’'}</button>`;
-  const navHtml=(prevStn||nextStn)?`<div style="display:flex;gap:8px;margin-bottom:10px">${prevStn?navBtn(prevStn,'prev'):''}${nextStn?navBtn(nextStn,'next'):''}</div>`:'';
-  const termOn=_siHideTerm, upcOn=_siUpcomingOnly;
-  const chip=(on,label,fn)=>`<button onclick="${fn}('${nameEsc}')" style="padding:4px 10px;border-radius:14px;border:1px solid ${on?'var(--accent)':'var(--border)'};background:${on?'var(--accent)':'var(--bg3)'};color:${on?'#fff':'var(--text2)'};font-size:11px;font-weight:600;cursor:pointer;font-family:var(--sans);white-space:nowrap">${label}</button>`;
-  const endedHtml=svcEnded
-    ?`<div style="text-align:center;padding:18px 12px;color:var(--text2);font-size:13px;line-height:1.7">
-        ğŸŒ™ <b>ê¸ˆì¼ ìš´í–‰ì´ ì¢…ë£Œë˜ì—ˆìŠµë‹ˆë‹¤</b><br>
-        <span style="font-size:11.5px;color:var(--text3)">ìš´í–‰ì¼ ê¸°ì¤€ 04:00~ìµì¼ 03:59${firstNext?` Â· ìµì¼ ì²«ì°¨ <b style="color:var(--accent);font-family:var(--mono)">${firstNext}</b>`:''}</span>
-      </div>`:'';
-  return `
-    <div style="display:flex;align-items:center;gap:6px;margin-bottom:${_siCardPlatform?'6':'10'}px;flex-wrap:wrap">
-      <div style="font-size:12px;font-weight:700;color:var(--text2);flex:1;min-width:120px">ğŸš† ${_siCardPlatform?`${_siCardPlatform}ë²ˆ í™ˆ${dirLabel?' ('+dirLabel+')':''} ì‹œê°„í‘œ`:'ì—­ ì‹œê°„í‘œ'}</div>
-      ${chip(upcOn,'ì´í›„ ì—´ì°¨ë§Œ','toggleSIUpcoming')}
-      ${chip(termOn,'ë‹¹ì—­ì¢…ì°© ì œì™¸','toggleSITerm')}
-    </div>
-    ${_siCardPlatform!==null?_metroLinesForTrainPlatformHTML(trainName,_siCardPlatform):''}
-    ${destsStr?`<div style="font-size:10px;color:var(--accent2);margin-bottom:8px">ğŸ“ ${destsStr}</div>`:''}
-    ${navHtml}
-    ${endedHtml}
-    ${sorted.length===0&&!svcEnded?'<div style="color:var(--text3);font-size:13px;text-align:center;padding:12px">ìš´í–‰ ì—´ì°¨ ì—†ìŒ</div>':''}
-    ${(()=>{
-      const trainRow=t=>{
-        const s=t.stops.find(x=>x.s===trainName);
-        const time=s?.dep||s?.arr||'-';
-        const dir=t.dir==='down'?'í•˜í–‰â†“':'ìƒí–‰â†‘';
-        const dirC=t.dir==='down'?'var(--accent)':'var(--red)';
-        const isTerm=_isTerminusAt(t,trainName);
-        const destHtml=isTerm
-          ?`<span style="color:var(--accent2)">ë‹¹ì—­ì¢…ì°©</span>`
-          :`${t.dest}í–‰`;
-        return `<div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--border)22">
-          <div style="font-size:15px;font-weight:700;font-family:var(--mono);min-width:46px">${time}</div>
-          <div style="min-width:50px">
-            <div style="font-size:12px;font-weight:700;color:var(--c-${gcCssVar(t.grade)})">${t.grade}</div>
-            <div style="font-size:10px;color:var(--text3);font-family:var(--mono)">${t.no}</div>
-          </div>
-          <div style="flex:1;font-size:13px;font-weight:600">${destHtml}</div>
-          <div style="font-size:11px;font-weight:700;color:${dirC}">${dir}</div>
-        </div>`;
-      };
-      const shown=sorted.slice(0,20);
-      const rest=sorted.slice(20);
-      return shown.map(trainRow).join('')+
-        (rest.length>0?`<div id="si-train-extra" style="display:none">${rest.map(trainRow).join('')}</div>
-        <div onclick="document.getElementById('si-train-extra').style.display='block';this.style.display='none'"
-          style="font-size:12px;color:var(--accent);text-align:center;padding:8px 0;cursor:pointer;border:1px dashed var(--border);border-radius:8px;margin-top:4px;font-weight:600">
-          +${rest.length}í¸ ë” ë³´ê¸° â–¼
-        </div>`:'');
-    })()}
-    <button onclick="searchStation('${nameEsc}')" style="width:100%;margin-top:10px;padding:9px;border-radius:8px;border:1px solid var(--accent);background:transparent;color:var(--accent);font-size:12px;cursor:pointer;font-family:var(--sans);font-weight:600">ì „ì²´ ì‹œê°„í‘œ ë³´ê¸° â†’</button>
-  `;
-}
-
-// â”€â”€ ì—­ ì „ê´‘íŒ ê³µí†µ: ìš´í–‰ì¼ ì¢…ë£Œ ì‹œ 'ìš´í–‰ ì¢…ë£Œ â†” ë‚´ì¼ ì²« ì—´ì°¨' êµëŒ€ í‘œì‹œ â”€â”€
-function _sbEndedHTML(colsHtml, tmrRowsHtml, firstStr, kindLabel){
-  return `<div class="stn-board-ended">
-    <div class="sbe-flip sbe-a">
-      <div class="sbe-moon">ğŸŒ™</div>
-      <div class="sbe-msg">ê¸ˆì¼ ìš´í–‰ì´ ì¢…ë£Œë˜ì—ˆìŠµë‹ˆë‹¤</div>
-      <div class="sbe-sub">ìš´í–‰ì¼ ê¸°ì¤€ 04:00 ~ ìµì¼ 03:59${firstStr?` Â· ë‚´ì¼ ì²« ${kindLabel} <b>${firstStr}</b>`:''}</div>
-    </div>
-    <div class="sbe-flip sbe-b">
-      <div class="sbe-next-head">ğŸš† ë‚´ì¼ ìš´í–‰ ì˜ˆì •</div>
-      ${colsHtml}
-      ${tmrRowsHtml||'<div class="stn-board-empty">ë‚´ì¼ ìš´í–‰ ì •ë³´ ì—†ìŒ</div>'}
-    </div>
-  </div>`;
-}
-
-// â”€â”€ ì—­ ì „ê´‘íŒ (ì¶œë°œ ì•ˆë‚´ LED) â”€â”€ ì˜¤ëŠ˜(ìš´í–‰ì¼ 04:00~ìµì¼ 03:59) ì—´ì°¨ë§Œ í‘œì‹œ
-function _siDepartureBoardHTML(name, trains, limit){
-  limit=limit||6;
-  const trainName=name.endsWith('ì—­')?name.slice(0,-1):name;
-  const now=new Date();
-  const nowMin=now.getHours()*60+now.getMinutes();
-  const nowSrv=_srvMin(nowMin);
-  const clock=`${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
-  // ì—´ì°¨ë³„ ìŠ¹ê°•ì¥ ë§¤í•‘ (ê²Œì„ DB ìš°ì„ , ì—†ìœ¼ë©´ íœ´ë¦¬ìŠ¤í‹±)
-  const platOf={};
-  trains.forEach(t=>{ const p=_platformForTrain(name, trainName, trains, t); if(p!=null) platOf[t.no]=p; });
-  // ì¶œë°œíŒ í›„ë³´(ë‹¹ì—­ì¢…ì°© ì œì™¸) â€” ìš´í–‰ì¼ ê¸°ì¤€ ì‹œê°(diff = ìš´í–‰ì¼ ë¶„ ì°¨ì´)
-  const cand=trains.map(t=>{
-    const s=t.stops.find(x=>x.s===trainName);
-    if(!s) return null;
-    if(t.dest===trainName||(hasTime(s.arr)&&!hasTime(s.dep))) return null; // ë‹¹ì—­ì¢…ì°©ì€ ì¶œë°œíŒ ì œì™¸
-    const depStr=s.dep||s.arr; if(!depStr) return null;
-    const timed=t.stops.filter(x=>hasTime(x.arr)||hasTime(x.dep));
-    const si=timed.findIndex(x=>x.s===trainName);
-    const delay=si>=0?_simDelayAtStop(t,si):0;
-    const expected=delay>0?addMinToClock(depStr,delay):depStr;
-    const m=toMin(expected); if(m===null) return null;
-    const srv=_srvMin(m);
-    const diff=srv-nowSrv; // ìš´í–‰ì¼ ê¸°ì¤€ í˜„ì¬ì™€ì˜ ë¶„ ì°¨ì´ (ë‹¤ìŒ ìš´í–‰ì¼ ì—´ì°¨ëŠ” ìŒìˆ˜ â†’ ì œì™¸)
-    return {t,depStr,expected,delay,srv,diff};
-  }).filter(Boolean);
-  const depRow=(r,tmr)=>{
-    const t=r.t, plat=platOf[t.no];
-    let st, cls;
-    if(tmr){ st='ë‚´ì¼'; cls='sb-st-sched'; }
-    else if(r.diff<=0){ st='ì¶œë°œ'; cls='sb-st-board'; }
-    else if(r.diff<=5){ st=`${r.diff}ë¶„ í›„`; cls='sb-st-soon'; }
-    else { st='ì •ì‹œ'; cls='sb-st-sched'; }
-    const sdly=tmr?0:r.delay;
-    if(sdly>0){ st=`${sdly}ë¶„ ì§€ì—°`; cls='sb-st-delay'; }
-    const isTerm = t.dest===trainName || (()=>{const s=t.stops.find(x=>x.s===trainName);return s&&s.arr&&!s.dep;})();
-    const df=_delayForecast(t.line,t.grade);
-    return `<div class="stn-board-row">
-      <span class="sb-time${sdly>0?' delayed':''}">${sdly>0?`<i>${r.depStr}</i><i>${r.expected}</i>`:r.depStr}</span>
-      <span class="sb-info">
-        <span class="sb-dest">${isTerm?'ë‹¹ì—­ì¢…ì°©':t.dest+'í–‰'}</span>
-        <span class="sb-train">${t.grade} ${t.no} <span class="sb-risk" style="background:${df.color}" title="ì§€ì—° ìœ„í—˜ ${df.label}"></span></span>
-      </span>
-      <span class="sb-plat ${plat?'':'none'}">${plat||'â€“'}</span>
-      <span class="sb-status ${cls}">${st}</span>
-    </div>`;
-  };
-  const cols=`<div class="stn-board-cols"><span style="width:52px">ì‹œê°</span><span style="flex:1">ë°©ë©´ Â· ì—´ì°¨</span><span style="width:30px;text-align:center">í™ˆ</span><span style="width:56px;text-align:right">ì•ˆë‚´</span></div>`;
-  // ì˜¤ëŠ˜(í˜„ì¬ ì´í›„) ì¶œë°œ ì—´ì°¨
-  const rows=cand.filter(r=>r.diff>=-2).sort((a,b)=>a.diff-b.diff).slice(0,limit);
-  const svcEnded = rows.length===0 && cand.length>0;
-  let body;
-  if(svcEnded){
-    const tmr=[...cand].sort((a,b)=>a.srv-b.srv).slice(0,limit);
-    body=_sbEndedHTML(cols, tmr.map(r=>depRow(r,true)).join(''), tmr[0]?.depStr, 'ì¶œë°œ');
-  } else {
-    body=cols+(rows.length?rows.map(r=>depRow(r,false)).join(''):`<div class="stn-board-empty">í˜„ì¬ ì¶œë°œ ì˜ˆì • ì—´ì°¨ ì—†ìŒ</div>`);
-  }
-  return `<div class="stn-board">
-    <div class="stn-board-head">
-      <span class="stn-board-title">â–¶ ì¶œë°œ ì•ˆë‚´ Â· DEPARTURES</span>
-      <span class="stn-board-clock">${clock}</span>
-    </div>
-    ${body}
-  </div>`;
-}
-
-// â”€â”€ ë„ì°© ì•ˆë‚´ ì „ê´‘íŒ (ì¶œë°œíŒì˜ ë„ì°© ë²„ì „, ë„ì°© ì‹œê° ê¸°ì¤€) â”€â”€ ì˜¤ëŠ˜ ì—´ì°¨ë§Œ í‘œì‹œ
-function _siArrivalBoardHTML(name, trains, limit){
-  limit=limit||10;
-  const trainName=name.endsWith('ì—­')?name.slice(0,-1):name;
-  const now=new Date();
-  const nowMin=now.getHours()*60+now.getMinutes();
-  const nowSrv=_srvMin(nowMin);
-  const clock=`${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
-  const platOf={};
-  trains.forEach(t=>{ const p=_platformForTrain(name, trainName, trains, t); if(p!=null) platOf[t.no]=p; });
-  const cand=trains.map(t=>{
-    const s=t.stops.find(x=>x.s===trainName);
-    if(!s) return null;
-    const arrStr=s.arr; if(!arrStr||!hasTime(arrStr)) return null; // ë„ì°© ì‹œê° ìˆëŠ” ì—´ì°¨ë§Œ(ì¶œë°œì—­ ì œì™¸)
-    const timed=t.stops.filter(x=>hasTime(x.arr)||hasTime(x.dep));
-    const si=timed.findIndex(x=>x.s===trainName);
-    const delay=si>=0?_simDelayAtStop(t,si):0;
-    const expected=delay>0?addMinToClock(arrStr,delay):arrStr;
-    const m=toMin(expected); if(m===null) return null;
-    const srv=_srvMin(m);
-    const diff=srv-nowSrv;
-    let fromStn=null;
-    for(let i=0;i<t.stops.length;i++){ if(hasTime(t.stops[i].dep)||hasTime(t.stops[i].arr)){ fromStn=t.stops[i].s; break; } }
-    const isTerm=(t.dest===trainName)||(!hasTime(s.dep));
-    return {t,arrStr,expected,delay,srv,diff,fromStn,isTerm};
-  }).filter(Boolean);
-  const arrRow=(r,tmr)=>{
-    const t=r.t, plat=platOf[t.no];
-    let st, cls;
-    if(tmr){ st='ë‚´ì¼'; cls='sb-st-sched'; }
-    else if(r.diff<=0){ st='ë„ì°©'; cls='sb-st-board'; }
-    else if(r.diff<=5){ st=`${r.diff}ë¶„ í›„`; cls='sb-st-soon'; }
-    else { st='ì •ì‹œ'; cls='sb-st-sched'; }
-    const sdly=tmr?0:r.delay;
-    if(sdly>0){ st=`${sdly}ë¶„ ì§€ì—°`; cls='sb-st-delay'; }
-    const df=_delayForecast(t.line,t.grade);
-    return `<div class="stn-board-row">
-      <span class="sb-time${sdly>0?' delayed':''}">${sdly>0?`<i>${r.arrStr}</i><i>${r.expected}</i>`:r.arrStr}</span>
-      <span class="sb-info">
-        <span class="sb-dest">${r.isTerm?'ë‹¹ì—­ì¢…ì°©':(r.fromStn?r.fromStn+' ë°œ':t.dest+'í–‰')}</span>
-        <span class="sb-train">${t.grade} ${t.no} <span class="sb-risk" style="background:${df.color}" title="ì§€ì—° ìœ„í—˜ ${df.label}"></span></span>
-      </span>
-      <span class="sb-plat ${plat?'':'none'}">${plat||'â€“'}</span>
-      <span class="sb-status ${cls}">${st}</span>
-    </div>`;
-  };
-  const cols=`<div class="stn-board-cols"><span style="width:52px">ì‹œê°</span><span style="flex:1">ì¶œë°œì§€ Â· ì—´ì°¨</span><span style="width:30px;text-align:center">í™ˆ</span><span style="width:56px;text-align:right">ì•ˆë‚´</span></div>`;
-  const rows=cand.filter(r=>r.diff>=-2).sort((a,b)=>a.diff-b.diff).slice(0,limit);
-  const svcEnded = rows.length===0 && cand.length>0;
-  let body;
-  if(svcEnded){
-    const tmr=[...cand].sort((a,b)=>a.srv-b.srv).slice(0,limit);
-    body=_sbEndedHTML(cols, tmr.map(r=>arrRow(r,true)).join(''), tmr[0]?.arrStr, 'ë„ì°©');
-  } else {
-    body=cols+(rows.length?rows.map(r=>arrRow(r,false)).join(''):`<div class="stn-board-empty">í˜„ì¬ ë„ì°© ì˜ˆì • ì—´ì°¨ ì—†ìŒ</div>`);
-  }
-  return `<div class="stn-board">
-    <div class="stn-board-head">
-      <span class="stn-board-title">â–¼ ë„ì°© ì•ˆë‚´ Â· ARRIVALS</span>
-      <span class="stn-board-clock">${clock}</span>
-    </div>
-    ${body}
-  </div>`;
-}
-// â”€â”€ ì—­ ì‹¤ì‹œê°„ ì „ê´‘íŒ íŒì—… (ì¶œë°œ/ë„ì°© íƒ­ Â· ìë™ ê°±ì‹ ) â”€â”€
-let _siBoardMode='dep', _siBoardName=null, _siBoardTrains=null;
-function openStationBoard(name){
-  if(typeof STATION_DB!=='undefined'&&!STATION_DB[name]&&STATION_DB[name+'ì—­']) name=name+'ì—­';
-  const trainName=name.endsWith('ì—­')?name.slice(0,-1):name;
-  const old=document.getElementById('si-board-wrap'); if(old)old.remove();
-  _siBoardName=name; _siBoardTrains=_stationStoppingTrains(trainName); _siBoardMode='dep';
-  const wrap=document.createElement('div');
-  wrap.id='si-board-wrap';
-  wrap.innerHTML=`
-    <div class="rail-ticket-backdrop" onclick="closeStationBoard()"></div>
-    <div class="si-board-popup" role="dialog" aria-label="${trainName}ì—­ ì—´ì°¨ ì•ˆë‚´">
-      <div class="si-board-popup-head">
-        <span>ğŸš‰ ${trainName}ì—­</span>
-        <button class="si-board-close" onclick="closeStationBoard()" aria-label="ë‹«ê¸°">âœ•</button>
-      </div>
-      <div class="si-board-tabs">
-        <button class="si-board-tab" id="si-bt-dep" onclick="setStationBoardMode('dep')">â–¶ ì¶œë°œ</button>
-        <button class="si-board-tab" id="si-bt-arr" onclick="setStationBoardMode('arr')">â–¼ ë„ì°©</button>
-      </div>
-      <div id="si-board-live"></div>
-    </div>`;
-  document.body.appendChild(wrap);
-  _drawStationBoard();
-  if(_siBoardTimer)clearInterval(_siBoardTimer);
-  _siBoardTimer=setInterval(_drawStationBoard,15000);
-}
-function _drawStationBoard(){
-  const el=document.getElementById('si-board-live'); if(!el||!_siBoardName)return;
-  el.innerHTML=_siBoardMode==='arr'
-    ?_siArrivalBoardHTML(_siBoardName,_siBoardTrains,12)
-    :_siDepartureBoardHTML(_siBoardName,_siBoardTrains,12);
-  const dt=document.getElementById('si-bt-dep'), at=document.getElementById('si-bt-arr');
-  if(dt)dt.classList.toggle('on',_siBoardMode==='dep');
-  if(at)at.classList.toggle('on',_siBoardMode==='arr');
-}
-function setStationBoardMode(m){ _siBoardMode=m; _drawStationBoard(); }
-function closeStationBoard(){
-  const el=document.getElementById('si-board-wrap'); if(el)el.remove();
-  if(_siBoardTimer){clearInterval(_siBoardTimer);_siBoardTimer=null;}
-  _siBoardName=null; _siBoardTrains=null;
-}
-// ğŸš‡ ì „ì²  ì¶œë°œ ì•ˆë‚´ ì „ê´‘íŒ íŒì—… â€” ì—­ ìƒì„¸ì˜ ê¸°ì¡´ ì‹¤ì‹œê°„ ë„ì°© ì¹´ë“œëŠ” ìœ ì§€í•˜ê³  ë³„ë„ ë²„íŠ¼ìœ¼ë¡œ ì—½ë‹ˆë‹¤.
-let _metroDisplayTimer=null;
-function openMetroStationDisplay(stn){
-  closeMetroStationDisplay();
-  _metroBoardMode='pos';
-  _metroDisplayLineIndex=0;
-  _metroDisplayDirIndex=0;
-  _metroDisplayLines=[];
-  _metroDisplayLineGroups=[];
-  const html=_metroStationBoardHTML(stn,true);
-  if(!html)return;
-  const safe=_opsEsc(stn);
-  const wrap=document.createElement('div');
-  wrap.id='metro-display-wrap';
-  wrap.innerHTML=`
-    <div class="rail-ticket-backdrop" onclick="closeMetroStationDisplay()"></div>
-    <div class="metro-display-popup" role="dialog" aria-modal="true" aria-label="${safe}ì—­ ì¶œë°œ ì•ˆë‚´ ì „ê´‘íŒ">
-      <div class="metro-display-head">
-        <span>ğŸš‡ ${safe}ì—­ ì¶œë°œ ì•ˆë‚´ ì „ê´‘íŒ</span>
-        <button class="si-board-close" onclick="closeMetroStationDisplay()" aria-label="ë‹«ê¸°">âœ•</button>
-      </div>
-      <div class="metro-display-scroll">${html}</div>
-    </div>`;
-  document.body.appendChild(wrap);
-  _metroDisplayTimer=setInterval(_refreshMetroDisplayBoard,15000);
-}
-function closeMetroStationDisplay(){
-  const el=document.getElementById('metro-display-wrap'); if(el)el.remove();
-  if(_metroDisplayTimer){clearInterval(_metroDisplayTimer);_metroDisplayTimer=null;}
-  if(document.body.classList.contains('metro-display-paired'))closeMetroTrain();
-  document.body.classList.remove('metro-display-paired');
-}
-// ğŸš‡ ì „ì²  ì—­ ì „ì²´ ì‹œê°„í‘œ â€” ì¹´ì¹´ì˜¤ì§€í•˜ì² ì‹(ë°©ë©´ë³„ ì—´, ê°™ì€ ì‹œê°„ëŒ€ëŠ” ê°™ì€ í–‰ì— ì •ë ¬)
-let _mttExpressOnly=false, _mttStation=null, _mttLine=null, _mttRouteSvc=null, _mttRouteKey=null;
-function _mttFilterEntries(entries,expressOnly){
-  return expressOnly?entries.filter(entry=>Number(entry.cls)>0):entries;
-}
-function _mttHasExpress(entries){
-  return entries.some(entry=>Number(entry.cls)>0);
-}
-function setMetroTimetableExpressOnly(checked){
-  _mttExpressOnly=!!checked;
-  if(_mttStation&&_mttLine)openMetroTimetable(_mttStation,_mttLine,true);
-}
-function _openMetroTimetableRow(row,line,svc,clk,k0,k1){
-  const wrap=row&&row.closest?row.closest('#mtt-wrap'):null;
-  if(wrap)wrap.querySelectorAll('.mtt-row--selected').forEach(el=>el.classList.remove('mtt-row--selected'));
-  if(row&&row.classList)row.classList.add('mtt-row--selected');
-  openMetroTrain(line,svc,clk,k0,k1);
-}
-function openMetroRouteTimetable(stn,line,svc,clk,k0,k1){
-  _mttRouteSvc=Number(svc);
-  _mttRouteKey={clk:Number(clk),k0:Number(k0),k1:Number(k1)};
-  openMetroTimetable(stn,line,false);
-}
-function openMetroTimetable(stn, line, preserveFilter){
-  const old=document.getElementById('mtt-wrap'); if(old)old.remove();
-  const deps=_metroStationDeps(stn).filter(o=>o.line===line);
-  if(!deps.length) return;
-  if(!preserveFilter)_mttExpressOnly=false;
-  const hasExpress=_mttHasExpress(deps);
-  if(!hasExpress)_mttExpressOnly=false;
-  _mttStation=stn;_mttLine=line;
-  const fClk=m=>Math.floor(m/60)+':'+String(m%60).padStart(2,'0');
-  const dirs={}; deps.forEach(o=>{ (dirs[o.next]=dirs[o.next]||[]).push(o); });
-  // ë¶„ê¸°ì—­ì€ ì¢Œí‘œ ê¸°ì¤€ 2ê°œ ë¬¼ë¦¬ ë°©ë©´ìœ¼ë¡œ ë³‘í•© â€” ê°™ì€ ìª½ ê³„í†µì€ í•œ ì—´ì— í†µí•©
-  const dirCounts={}; Object.keys(dirs).forEach(k=>dirCounts[k]=dirs[k].length);
-  const groups=_metroDirGroups(line, stn, dirCounts);
-  const color=_metroLineColor(line);
-  const nowM=new Date().getHours()*60+new Date().getMinutes();
-  const nowSrv=(((nowM-240)%1440)+1440)%1440;   // ìš´í–‰ì¼ ê¸°ì¤€ ë¶„(04:00=0)
-  let nextAnchorM=Infinity;
-  // ë°©ë©´(ê·¸ë£¹)ë³„ ì‹œê°ìˆœ í¸ ëª©ë¡ (ì§€ì„ ë³„ ë¶„ë‚´ ì¤‘ë³µ ì œê±° í›„ ë³‘í•©) + ë°©ë©´ë³„ 'ë‹¤ìŒ ì—´ì°¨' í‘œì‹œ
-  const colData=groups.map(grp=>{
-    const {entries}=_metroGroupEntries(dirs, grp);
-    const rows=_mttFilterEntries(entries,_mttExpressOnly)
-      .map(o=>({m:Math.floor(o.sec/60),orig:o.orig,dest:o.dest,cls:o.cls,svc:o.svc,line:o.line,k0:o.k0,k1:o.k1}))
-      .sort((a,b)=>a.m-b.m)
-      .map(o=>({...o,clk:(o.m+240)%1440}));
-    const ni=rows.findIndex(r=>r.m>=nowSrv);   // ì´ ë°©ë©´ì˜ ë‹¤ìŒ ì—´ì°¨
-    if(ni>=0){ rows[ni].isNext=true; if(rows[ni].m<nextAnchorM)nextAnchorM=rows[ni].m; }
-    return rows;
-  });
-  const anchor={set:false};
-  // ë“±ì¥í•˜ëŠ” ìš´í–‰ì¼ 'ì‹œ' ëª©ë¡
-  const hourSet=new Set(); colData.forEach(rows=>rows.forEach(r=>hourSet.add(Math.floor(r.m/60))));
-  const hours=[...hourSet].sort((a,b)=>a-b);
-  const escL=x=>String(x).replace(/\\/g,'\\\\').replace(/'/g,"\\'");
-  const rowHTML=r=>{
-    const od=(r.orig&&r.orig!==r.dest)?`${r.orig} â€º ${r.dest}`:`${r.dest}`;
-    const cur=r.isNext?' mtt-row--next':'';
-    let idAttr=''; if(r.isNext&&!anchor.set&&r.m===nextAnchorM){ idAttr=' id="mtt-next"'; anchor.set=true; }
-    const clk=(r.svc!=null)?` onclick="_openMetroTimetableRow(this,'${escL(r.line)}',${r.svc},${r.clk},${r.k0},${r.k1})"`:'';
-    return `<div class="mtt-row${cur}${r.svc!=null?' mtt-row--tap':''}"${idAttr}${r.svc!=null?` data-svc="${r.svc}" data-clk="${r.clk}" data-k0="${r.k0}" data-k1="${r.k1}"`:''}${clk}><span class="mtt-t">${fClk(r.clk)}</span><span class="mtt-od">${od}</span>${_metroClsTag(r.cls)}</div>`;
-  };
-  const grid=hours.map(h=>{
-    const cells=colData.map(rows=>{
-      const hr=rows.filter(r=>Math.floor(r.m/60)===h);
-      return `<div class="mtt-hcell">${hr.map(rowHTML).join('')||'<div class="mtt-empty">Â·</div>'}</div>`;
-    }).join('');
-    return `<div class="mtt-hrow">${cells}</div>`;
-  }).join('');
-  const heads=groups.map(grp=>`<div class="mtt-dirhead"><span class="mtt-arr">â–¸</span>${grp.join(' â€¢ ')} ë°©ë©´</div>`).join('');
-  const wrap=document.createElement('div');
-  wrap.id='mtt-wrap';
-  wrap.innerHTML=`
-    <div class="rail-ticket-backdrop" onclick="closeMetroTimetable()"></div>
-    <div class="mtt-popup" role="dialog" aria-label="${line} ${stn} ì‹œê°„í‘œ" style="--mc:${color}">
-      <div class="mtt-head"><span><b style="color:${color}">ğŸš‡ ${line}</b> Â· ${stn}</span>
-        <button class="si-board-close" onclick="closeMetroTimetable()" aria-label="ë‹«ê¸°">âœ•</button></div>
-      ${hasExpress?`<div class="mtt-filterbar">
-        <label class="mtt-filtercheck"><input type="checkbox"${_mttExpressOnly?' checked':''} onchange="setMetroTimetableExpressOnly(this.checked)"><span>ê¸‰í–‰ë§Œ ë³´ê¸°</span></label>
-      </div>`:''}
-      <div class="mtt-scroll" style="--cols:${groups.length}">
-        <div class="mtt-headrow">${heads}</div>
-        <div class="mtt-grid">${grid}</div>
-      </div>
-      <div class="mtt-foot">ì¸ê²Œì„ ì‹œê°í‘œ ê¸°ì¤€ Â· ì‹¤ì œ ì •ì°¨ì‹œê° Â· ì¶œë°œì§€ â€º í–‰ì„ ì§€</div>
-    </div>`;
-  document.body.appendChild(wrap);
-  // ë‹¤ìŒ ì—´ì°¨ ìœ„ì¹˜ë¡œ ìë™ ìŠ¤í¬ë¡¤(ì—†ìœ¼ë©´ ë§¨ ìœ„)
-  const routeRow=_mttRouteSvc==null?null:wrap.querySelector(`.mtt-row[data-svc="${_mttRouteSvc}"][data-clk="${_mttRouteKey?.clk}"][data-k0="${_mttRouteKey?.k0}"][data-k1="${_mttRouteKey?.k1}"]`);
-  if(routeRow){wrap.querySelectorAll('.mtt-row--next').forEach(row=>row.classList.remove('mtt-row--next'));routeRow.classList.add('mtt-row--route');routeRow.scrollIntoView({block:'center'});}
-  else {const nx=wrap.querySelector('#mtt-next'),sc=wrap.querySelector('.mtt-scroll');if(nx)nx.scrollIntoView({block:'center'});else if(sc)sc.scrollTop=0;}
-}
-function closeMetroTimetable(){ const el=document.getElementById('mtt-wrap'); if(el)el.remove(); const t=document.getElementById('mtn-wrap'); if(t)t.remove(); _mttStation=null;_mttLine=null;_mttExpressOnly=false;_mttRouteSvc=null;_mttRouteKey=null; document.body.classList.remove('metro-paired'); }
-// ì™•ë³µ í¸ì„±ì„ íšŒì°¨ì (A>B>AÂ·ì—°ì†ì¤‘ë³µ) ê¸°ì¤€ ë°©í–¥ë³„ leg êµ¬ê°„ìœ¼ë¡œ ë¶„í• 
-function _metroLegRanges(idxSeq){
-  const ranges=[]; let start=0; const n=idxSeq.length;
-  for(let j=1;j<n-1;j++){
-    if(idxSeq[j-1]===idxSeq[j+1]){ ranges.push([start,j]); start=j; }        // A>B>A íšŒì°¨ì  = ì‹¤ ì¢…ì 
-    else if(idxSeq[j]===idxSeq[j+1]){ ranges.push([start,j]); start=j+1; }    // ì—°ì†ì¤‘ë³µ(íšŒì°¨ ì •ì°¨)
-  }
-  ranges.push([start,n-1]);
-  return ranges.filter(([s,e])=>e>s);
-}
-function _metroLegRangeForClick(idxSeq,dT,hlClk,legStart,legEnd){
-  const ranges=_metroLegRanges(idxSeq);
-  if(Number.isInteger(legStart)&&Number.isInteger(legEnd)){
-    // ì „ì²´ ì‹œê°„í‘œ í–‰ì€ ì‹¤ì œ ì¶œë°œì—­â†’ì¢…ì°©ì—­ legë¥¼ ì´ë¯¸ ê³„ì‚°í•´ ì „ë‹¬í•œë‹¤.
-    // íšŒì°¨Â·ì§€ì„  êµ¬ì¡°ë¥¼ ë‹¤ì‹œ ì¶”ì •í•˜ë©´ ì§ì „ ë°˜ëŒ€ ë°©í–¥ í¸ì„±ìœ¼ë¡œ ë˜ëŒì•„ê°ˆ ìˆ˜ ìˆìœ¼ë¯€ë¡œ
-    // ìœ íš¨í•œ ëª…ì‹œ ë²”ìœ„ëŠ” ëª¨ë“  ë…¸ì„ ì—ì„œ ì¶”ì •ë³´ë‹¤ ìš°ì„ í•œë‹¤.
-    if(legStart>=0&&legEnd<idxSeq.length&&legEnd>legStart)return [legStart,legEnd];
-  }
-  const norm=m=>(((m%1440)+1440)%1440);
-  let ci=0;
-  for(let i=0;i<dT.length;i++){if(norm(dT[i])===hlClk){ci=i;break;}}
-  // íšŒì°¨ì—­ì€ ì• ìš´í–‰ì˜ ì¢…ì°©ì ì´ì ë‹¤ìŒ ìš´í–‰ì˜ ì‹œë°œì ì´ë‹¤.
-  // ì „ì²´ ì‹œê°„í‘œëŠ” ì¶œë°œ í–‰ì„ ì—¬ëŠ” í™”ë©´ì´ë¯€ë¡œ ê²½ê³„ì—ì„œëŠ” ë‹¤ìŒ legë¥¼ ìš°ì„ í•œë‹¤.
-  return ranges.find(([s])=>s===ci)||ranges.find(([s,e])=>ci>=s&&ci<=e)||[0,idxSeq.length-1];
-}
-// ğŸš‡ ê°œë³„ í¸ì„± ì—­ë³„ íƒ€ì„ë¼ì¸ â€” ê¸°ì°¨ íƒ‘ìŠ¹ ì—¬ì •ê³¼ ë™ì¼í•œ ë””ìì¸, ì™•ë³µì€ ì‹¤ ì¢…ì  ê¸°ì¤€ ë°©í–¥ legë§Œ í‘œì‹œ
-function openMetroTrain(line, svcIdx, hlClk, legStart, legEnd){
-  const old=document.getElementById('mtn-wrap'); if(old)old.remove();
-  document.body.classList.remove('metro-paired','metro-display-paired');
-  const ent=(typeof METRO_SCHED!=='undefined')&&METRO_SCHED[line]; if(!ent)return;
-  const f=ent.t[svcIdx]; if(!f)return;
-  const names=ent.s, cls=ent.c?ent.c[svcIdx]:0, color=_metroLineColor(line);
-  const n=f.length/3, norm=m=>(((m%1440)+1440)%1440);
-  const fmt=m=>`${Math.floor(norm(m)/60)}:${String(norm(m)%60).padStart(2,'0')}`;
-  const idxSeq=[], aT=[], dT=[]; for(let i=0;i<n;i++){ idxSeq.push(f[3*i+2]); aT.push(f[3*i]); dT.push(f[3*i+1]); }
-  // í´ë¦­ ì§€ì  â†’ ê·¸ ì§€ì ì´ ì†í•œ ë°©í–¥ leg. íšŒì°¨ì—­ ì¶œë°œì€ ì§ì „ ì¢…ì°©í¸ì´ ì•„ë‹Œ ë‹¤ìŒ ìš´í–‰ì„ ì—½ë‹ˆë‹¤.
-  const [ls,le]=_metroLegRangeForClick(idxSeq,dT,hlClk,legStart,legEnd);
-  // í†µê³¼ì—­=ì¶œë°œ(d) í‘œì‹œ, leg ì¢…ì°©ì—­=ë„ì°©(a) í‘œì‹œ(ë°˜ëŒ€ë°©í–¥ íšŒì°¨ ì¶œë°œì‹œê° ì˜¤ê¸° ë°©ì§€)
-  const seq=[]; for(let i=ls;i<=le;i++){ const st={s:names[idxSeq[i]], a:aT[i], d:(i===le?aT[i]:dT[i]), m:(i===le?aT[i]:dT[i])}; if(!seq.length||seq[seq.length-1].s!==st.s) seq.push(st); else seq[seq.length-1]=st; }
-  const orig=seq[0].s, dest=seq[seq.length-1].s;
-  // ì‹¤ì‹œê°„ ì§„í–‰ ìœ„ì¹˜: ê¸°ì°¨ íƒ‘ìŠ¹ ì—¬ì •ê³¼ ë™ì¼ â€” ì •ì°¨ ì¤‘ì´ë©´ ê·¸ ì—­=í˜„ì¬, ì´ë™ ì¤‘ì´ë©´ ë‹¤ìŒì—­=ë‹¤ìŒ(ê°•ì¡°)
-  const srv=x=>(((x-240)%1440)+1440)%1440;
-  const flat=[]; seq.forEach(st=>{ flat.push(srv(st.a), srv(st.d)); });   // ë„ì°©Â·ì¶œë°œ êµëŒ€
-  let off=0; const mono=[]; for(let i=0;i<flat.length;i++){ let v=flat[i]+off; if(i>0&&v<mono[i-1]){ off+=1440; v+=1440; } mono.push(v); }
-  const absA=seq.map((_,i)=>mono[2*i]), absD=seq.map((_,i)=>mono[2*i+1]);
-  const nowc=new Date(); let nowAbs=srv(nowc.getHours()*60+nowc.getMinutes());
-  while(nowAbs<absA[0]-720)nowAbs+=1440; while(nowAbs>absD[absD.length-1]+720)nowAbs-=1440;
-  let phase, dwellIdx=-1, nextIdx=-1;                                     // dwellIdx: ì •ì°¨ ì¤‘ ì—­, nextIdx: ì ‘ê·¼ ì¤‘ ë‹¤ìŒì—­
-  if(nowAbs<absA[0]) phase='before';
-  else if(nowAbs>=absD[absD.length-1]) phase='done';
-  else { phase='running';
-    for(let i=0;i<seq.length;i++){ if(nowAbs>=absA[i]&&nowAbs<=absD[i]){ dwellIdx=i; break; } }
-    if(dwellIdx<0){ for(let i=0;i<seq.length;i++){ if(absA[i]>nowAbs){ nextIdx=i; break; } } }
-  }
-  const rows=seq.map((st,i)=>{
-    const isOrigin=i===0, isTerm=i===seq.length-1;
-    const passed=(phase==='done')||(phase==='running'&&nowAbs>absD[i]+1e-6);
-    const isCur=phase==='running'&&i===dwellIdx;
-    const isNext=phase==='running'&&i===nextIdx&&dwellIdx<0;
-    const clsA=['jr-stop']; if(passed&&!isCur)clsA.push('done'); if(isCur)clsA.push('cur'); if(isNext)clsA.push('next');
-    const nameCls=isOrigin?'jr-origin':isTerm?'jr-term':'';
-    const badge=isCur?'<span class="jr-badge cur">í˜„ì¬</span>':isNext?'<span class="jr-badge next">ë‹¤ìŒ</span>':'';
-    const timeTxt=isOrigin?`${fmt(st.m)} ì¶œë°œ`:isTerm?`${fmt(st.m)} ë„ì°©`:fmt(st.m);
-    return `<div class="${clsA.join(' ')}" style="--gc:${color}">
-      <div class="jr-dot"></div>
-      <div class="jr-info"><span class="jr-name ${nameCls}">${_opsEsc(st.s)}${badge}</span></div>
-      <div class="jr-time">${timeTxt}</div>
-    </div>`;
-  }).join('');
-  const statusTxt=phase==='before'?'ìš´í–‰ ì „':phase==='done'?'ìš´í–‰ ì¢…ë£Œ':'ìš´í–‰ ì¤‘';
-  const exp=cls===2?'<span class="mtb-exp mtb-exp--t">íŠ¹ê¸‰</span>':cls===1?'<span class="mtb-exp">ê¸‰í–‰</span>':'';
-  const wrap=document.createElement('div'); wrap.id='mtn-wrap';
-  wrap.innerHTML=`<div class="rail-ticket-backdrop" onclick="closeMetroTrain()"></div>
-    <div class="mtn-popup" role="dialog" aria-label="${_opsEsc(line)} ${_opsEsc(orig)}â†’${_opsEsc(dest)} ì‹œê°„í‘œ" style="--mc:${color}">
-      <div class="mtn-head"><span class="mtn-lchip" style="background:${color}">${_opsEsc(line)}</span>
-        <b>${_opsEsc(orig)}</b><span class="mtn-arrow">â–¶â–¶â–¶</span><b>${_opsEsc(dest)}</b>${exp}
-        <button class="si-board-close" onclick="closeMetroTrain()" aria-label="ë‹«ê¸°">âœ•</button></div>
-      <div class="jr-timeline mtn-tl">${rows}</div>
-      <div class="mtn-foot">ì¸ê²Œì„ ì‹œê°í‘œ ê¸°ì¤€ Â· ${seq.length}ê°œ ì—­ Â· <b style="color:${color}">${statusTxt}</b></div>
-    </div>`;
-  document.body.appendChild(wrap);
-  // ì—­ ì‹œê°„í‘œ(mtt)ì—ì„œ ì—´ë ¸ìœ¼ë©´ ë‚˜ë€íˆ/ì˜¤ë²„ë ˆì´ í˜ì–´ ë ˆì´ì•„ì›ƒ ì ìš©
-  if(document.getElementById('mtt-wrap')) document.body.classList.add('metro-paired');
-  else if(document.getElementById('metro-display-wrap')) document.body.classList.add('metro-display-paired');
-  const cur=wrap.querySelector('.jr-stop.cur')||wrap.querySelector('.jr-stop.next'); if(cur)cur.scrollIntoView({block:'center'});
-}
-function closeMetroTrain(){
-  const el=document.getElementById('mtn-wrap'); if(el)el.remove();
-  const timetable=document.getElementById('mtt-wrap');
-  if(timetable)timetable.querySelectorAll('.mtt-row--selected').forEach(row=>row.classList.remove('mtt-row--selected'));
-  document.body.classList.remove('metro-paired','metro-display-paired');
-}
-
-// ğŸ›¤ï¸ ë°°ì„ ë„(ê°„ì´): ë³µì„  íŠ¸ë™ + ìŠ¹ê°•ì¥ + ë°©í–¥ í™”ì‚´í‘œ ì—´ì°¨. ìƒí–‰(ì¢…ì â†’ê¸°ì )=ì¢Œì¸¡Â·â–², í•˜í–‰(ê¸°ì â†’ì¢…ì )=ìš°ì¸¡Â·â–¼
-let _mlNameSet=null;
-function _metroLineNameSet(){ if(_mlNameSet)return _mlNameSet; _mlNameSet=new Set((typeof METRO_LINES!=='undefined'?METRO_LINES:[]).map(l=>l.name)); return _mlNameSet; }
-// ì—­ì˜ ëª¨ë“  ìŠ¹ê°•ì¥ ì •ë³´ (PLATFORM_DB) â€” ì´ ë…¸ì„ /íƒ€ ë…¸ì„ /ê¸°ì°¨ êµ¬ë¶„ + ëŒ€í‘œìƒ‰
-// ì—­ í™ˆì˜ ì „ì²´ ë…¸ì„  ì´ë¦„ ì§‘í•©(ìŠ¹ê°•ì¥â†’ë…¸ì„  ì›ë¬¸) â€” í‰í–‰ì„± íŒì •ìš©
-function _stnLineNames(s){
-  if(s==null||typeof PLATFORM_DB==='undefined')return new Set();
-  const k=PLATFORM_DB[s]?s:(PLATFORM_DB[s+'ì—­']?s+'ì—­':null); if(!k)return new Set();
-  const set=new Set(); const pl=PLATFORM_DB[k];
-  for(const pn of Object.keys(pl))(pl[pn].l||[]).forEach(x=>set.add(String(x)));
-  return set;
-}
-function _metroLineVariant(raw,base){
-  const s=String(raw||'').trim();
-  if(s===base)return '';
-  if(s.startsWith(base+'/'))return s.slice(base.length+1).trim();
-  if(s.startsWith(base+' ('))return s.slice(base.length).replace(/^\s*\(|\)\s*$/g,'').trim();
-  return null;
-}
-// ì—­ ìŠ¹ê°•ì¥ ë¶„ë¥˜. prev/next ì£¼ì–´ì§€ë©´ íƒ€ ë…¸ì„ ì€ 'í‰í–‰(ì „Â·ë‹¤ìŒì—­ ì—°ì†)'ë§Œ ë‚¨ê¸°ê³ , í•œìª½ë§Œ=ì‹œì‘ì , ì—†ìœ¼ë©´ ì œì™¸.
-function _metroStationPlatforms(stn, curBase, prevStn, nextStn){
-  if(typeof PLATFORM_DB==='undefined')return [];
-  const key=PLATFORM_DB[stn]?stn:(PLATFORM_DB[stn+'ì—­']?stn+'ì—­':null); if(!key)return [];
-  const plats=PLATFORM_DB[key], mset=_metroLineNameSet(), out=[];
-  const sides=[]; if(prevStn!=null)sides.push(_stnLineNames(prevStn)); if(nextStn!=null)sides.push(_stnLineNames(nextStn));
-  for(const pn of Object.keys(plats)){
-    const num=Number(pn); if(isNaN(num))continue;
-    const lines=(plats[pn].l||[]).map(String);
-    const bases=[...new Set(lines.map(x=>x.split('/')[0].split(' (')[0].trim()))];
-    const metroBases=bases.filter(b=>mset.has(b));
-    const isCur=metroBases.includes(curBase);
-    // ì§€ì„  ì „ìš© ìŠ¹ê°•ì¥(ì´ ë…¸ì„  ê´€ë ¨ ì´ë¦„ì´ ëª¨ë‘ 'ì§€ì„ ') â†’ ë³¸ì„ ì—ì„œ ë¹¼ê³  ì§€ì„  ì—´ë¡œ
-    const curLines=lines.filter(l=>l.split('/')[0].split(' (')[0].trim()===curBase);
-    const variants=[...new Set(curLines.map(l=>_metroLineVariant(l,curBase)).filter(v=>v!=null&&v!==''))];
-    // ê¸°ë³¸ ë…¸ì„ ëª…ì´ ì—†ëŠ” /1Â·/2Â·â—‹â—‹ì§€ì„  ì „ìš© í™ˆì€ ë³¸ì„  í™ˆê³¼ ë³„ë„ ì„ ë¡œêµ°ìœ¼ë¡œ ìœ ì§€í•œë‹¤.
-    const branchOnly=isCur&&curLines.length>0&&!curLines.some(l=>_metroLineVariant(l,curBase)==='');
-    // í‰í–‰ì„±: íƒ€ ë…¸ì„  ìŠ¹ê°•ì¥ì€ ì „/ë‹¤ìŒì—­ê³¼ ì—°ì†ë  ë•Œë§Œ ë°°ì„ ì— í¬í•¨
-    let through=2;
-    if(!isCur&&sides.length){
-      let at=0; sides.forEach(sd=>{ if(lines.some(l=>sd.has(l)))at++; });
-      through=(at===0)?0:(at<sides.length?1:2);
-      if(through===0)continue; // í‰í–‰ ì•„ë‹˜ â†’ ì œì™¸
-    }
-    let color,kind;
-    if(isCur){ color=_metroLineColor(curBase); kind='cur'; }
-    else if(metroBases.length){ color=_metroLineColor(metroBases[0]); kind='metro'; }
-    else { color='#8b949e'; kind='train'; }
-    out.push({pn:num,isCur,color,kind,label:(metroBases[0]||lines[0]||''),shared:isCur&&metroBases.length>1,junction:through===1,through,branchOnly,variants,lines});
-  }
-  return out.sort((a,b)=>a.pn-b.pn);
-}
-// ë°°ì„ ë„ ìº”ë²„ìŠ¤ HTML ìƒì„± (íƒ­ ì¸ë¼ì¸ ê³µìš©). ë°˜í™˜: {cnt, html}
-// ìŠ¹ê°•ì¥ì€ ë²ˆí˜¸ìˆœ ê³ ì • ìŠ¬ë¡¯(1 2 3 4â€¦), ì´ ë…¸ì„  ë³µì„  íŠ¸ë™ì€ ìê¸° ìŠ¹ê°•ì¥ ìœ„ì¹˜ë¡œ íœ˜ì–´ê°(ìœ„ë¹™).
-// â”€â”€ ë„ì‹œì² ë„ ë°°ì„  ë Œë”ëŸ¬ v2: ì¤‘ì‹¬ì¶• ê³ ì • ì§ì„  ë³µì„  + ì €ì±„ë„ ìŠ¹ê°•ì¥ + BÃ©zier ë¶„ê¸°/í•©ë¥˜/íšŒì°¨ + ì§€ì„  ì™„ì „ë°°ì„  â”€â”€
-const SX={NAMEW:54,TOP:30,ROW:46,G:20,BW:12,BH:26,PO:8,SD:18};
-function _sxY(coords,ROW){ const n=coords.length; const rowH=new Array(Math.max(0,n-1)).fill(ROW);
-  if(coords&&coords.length===n&&coords.every(Boolean)&&n>=2){ const lat0=coords[0][1],kx=Math.cos(lat0*Math.PI/180)*111320,ky=110540;
-    const P=coords.map(([lo,la])=>[(lo-coords[0][0])*kx,(la-lat0)*ky]);
-    const seg=[];for(let i=0;i<n-1;i++)seg.push(Math.hypot(P[i+1][0]-P[i][0],P[i+1][1]-P[i][1]));
-    const sr=[...seg].filter(d=>d>1).sort((a,b)=>a-b),med=sr.length?sr[sr.length>>1]:1;
-    for(let i=0;i<n-1;i++)rowH[i]=Math.max(ROW,Math.min(ROW*2.1,seg[i]*(ROW/Math.max(200,med)))); }
-  const Y=new Array(n);Y[0]=SX.TOP;for(let i=1;i<n;i++)Y[i]=Y[i-1]+rowH[i-1]; return Y;
-}
-// í•œ ë¼ìš°íŠ¸(ë³¸ì„ /ì§€ì„ ) ë Œë”: ì§ì„  ë³µì„  + ìŠ¹ê°•ì¥ + ëŒ€í”¼ ìœ ì¹˜ì„  + ì¢…ë‹¨ íšŒì°¨
-function _sxRoute(names,curBase,axisX,Y,color,opts){
-  opts=opts||{}; const n=names.length,{G,BW,BH,PO,SD}=SX, up=axisX-G/2, dn=axisX+G/2, F=x=>(+x).toFixed(1);
-  let plats='',side='',minX=up-2,maxX=dn+2;
-  const box=(cx,lab,y)=>{minX=Math.min(minX,cx-BW/2);maxX=Math.max(maxX,cx+BW/2);return `<rect x="${F(cx-BW/2)}" y="${F(y-BH/2)}" width="${BW}" height="${BH}" rx="2.5" class="tsx-plat"/>`+(lab!==''&&lab!=null?`<text x="${F(cx)}" y="${F(y+3)}" class="tsx-pnum">${lab}</text>`:'');};
-  for(let i=0;i<n;i++){ const y=Y[i];
-    const pfs=_metroStationPlatforms(names[i],curBase,names[i-1],names[i+1]);
-    const cur=pfs.filter(p=>p.isCur&&!p.branchOnly); let pns=cur.map(p=>p.pn); if(!pns.length)pns=[''];
-    const P=pns.length;
-    if(P<=1){ plats+=box(axisX,pns[0],y); }
-    else if(P===2){ plats+=box(up-PO-BW/2,pns[0],y)+box(dn+PO+BW/2,pns[1],y); }
-    else { plats+=box(up-PO-BW/2,pns[0],y)+box(dn+PO+BW/2,pns[1],y);
-      const rhU=y-(Y[i-1]!=null?Y[i-1]:y-SX.ROW), rhD=(Y[i+1]!=null?Y[i+1]:y+SX.ROW)-y;
-      const SH=Math.min(13,Math.min(rhU,rhD)*0.3), TA=Math.min(20,Math.min(rhU,rhD)*0.4);
-      for(let k=2;k<P;k++){ const e=k-2; const boxCx=dn+PO+BW/2+(e+1)*(BW+SD); const tx=boxCx-BW/2-PO;
-        plats+=box(boxCx,pns[k],y);
-        side+=`<path d="M ${F(dn)} ${F(y-SH-TA)} C ${F(dn)} ${F(y-SH-TA*0.4)}, ${F(tx)} ${F(y-SH-TA*0.4)}, ${F(tx)} ${F(y-SH)} L ${F(tx)} ${F(y+SH)} C ${F(tx)} ${F(y+SH+TA*0.4)}, ${F(dn)} ${F(y+SH+TA*0.4)}, ${F(dn)} ${F(y+SH+TA)}" fill="none" stroke="${color}" stroke-width="2.4" class="tsx-siding"/>`;
-      }
-    }
-  }
-  // ì§ì„  ë³¸ì„  ë³µì„ 
-  const y0=Y[0], yN=Y[n-1];
-  let main=`<line x1="${F(up)}" y1="${F(y0)}" x2="${F(up)}" y2="${F(yN)}" stroke="${color}" stroke-width="3.4" stroke-linecap="round"/>`+
-           `<line x1="${F(dn)}" y1="${F(y0)}" x2="${F(dn)}" y2="${F(yN)}" stroke="${color}" stroke-width="3.4" stroke-linecap="round"/>`;
-  // ì¢…ë‹¨ íšŒì°¨(ìœ„/ì•„ë˜)
-  const term=(y,dir)=>{ const o=dir*15; return `<path d="M ${F(up)} ${F(y)} C ${F(up)} ${F(y+o)}, ${F(dn)} ${F(y+o)}, ${F(dn)} ${F(y)}" fill="none" stroke="${color}" stroke-width="3" stroke-linecap="round"/>`+
-      `<path d="M ${F(up)} ${F(y-dir*10)} L ${F(dn)} ${F(y)} M ${F(dn)} ${F(y-dir*10)} L ${F(up)} ${F(y)}" fill="none" stroke="${color}" stroke-width="1.7" opacity=".7"/>`; };
-  if(opts.termTop)main+=term(y0,-1);
-  if(opts.termBottom)main+=term(yN,1);
-  return {plats, tracks:side+main, up, dn, minX, maxX};
-}
-
-function _metroSchCanvasLegacy(l){
-  const color=l.color, F=x=>(+x).toFixed(1), {NAMEW,TOP,ROW,G,BW,PO}=SX;
-  const GEO=(typeof METRO_GEO!=='undefined')?METRO_GEO[l.name]:null;
-  const mCoords=(GEO&&GEO.m)||l.stations.map(()=>null);
-  const Y=_sxY(mCoords, ROW), n=l.stations.length;
-  const MAINX=96;
-  const mainIdx={}; l.stations.forEach((s,i)=>{if(mainIdx[s]==null)mainIdx[s]=i;});
-  const R=_sxRoute(l.stations, l.name, MAINX, Y, color, {termTop:!l.loop, termBottom:!l.loop});
-  let platsSVG=R.plats, tracksSVG=R.tracks, namesHTML='', labelsHTML='';
-  // ì—­ëª…(ì¢Œì¸¡ ê³ ì • ê²Œí„°)
-  l.stations.forEach((s,i)=>{ const end=(i===0||i===n-1);
-    namesHTML+=`<span class="tsx-name${end?' end':''}" style="top:${F(Y[i])}px">${_opsEsc(s)}</span>`; });
-  let curMaxX=R.maxX, H=Y[n-1]+34;
-  // â”€â”€ ì§€ì„ : ë™ì¼ ì—”ì§„ìœ¼ë¡œ ì™„ì „ ë°°ì„ (ìì²´ ì¶•) â”€â”€
-  ((GEO&&GEO.b)||[]).forEach(b=>{ if(!b.s||b.s.length<2||!b.c||b.c.some(x=>!x))return;
-    let jb=b.s.findIndex((s,i)=>mainIdx[s]!=null&&((i+1<b.s.length&&mainIdx[b.s[i+1]]==null)||(i-1>=0&&mainIdx[b.s[i-1]]==null)));
-    if(jb<0)jb=b.s.findIndex(s=>mainIdx[s]!=null); if(jb<0)jb=0;
-    const mj=mainIdx[b.s[jb]], anchorY=(mj!=null)?Y[mj]:TOP;
-    const rawY=_sxY(b.c, ROW); const shift=anchorY-rawY[jb]; let bY=rawY.map(y=>y+shift);
-    const mn=Math.min(...bY); if(mn<TOP){const d=TOP-mn;bY=bY.map(y=>y+d);}
-    const bx=curMaxX+64;
-    const BR=_sxRoute(b.s, l.name, bx, bY, color, {termTop:jb>0, termBottom:true});
-    platsSVG+=BR.plats; tracksSVG+=BR.tracks;
-    // ë¶„ê¸° ì—°ê²°ì„ (ë³¸ì„  í•˜í–‰ â†’ ì§€ì„ ) BÃ©zier
-    const jy=bY[jb], tgtY=bY[jb<b.s.length-1?jb+1:jb];
-    tracksSVG+=`<path d="M ${F(MAINX+G/2)} ${F(anchorY)} C ${F((MAINX+G/2+BR.up)/2)} ${F(anchorY)}, ${F(BR.up)} ${F(anchorY)}, ${F(BR.up)} ${F(tgtY)}" fill="none" stroke="${color}" stroke-width="3" opacity=".85"/>`;
-    labelsHTML+=`<span class="tsx-brtag" style="left:${F(bx)}px;top:${F(Math.min(...bY)-16)}px;--pc:${color}">ì§€ì„ </span>`;
-    b.s.forEach((bn,bi)=>{ if(bi===jb)return; namesHTML+=`<span class="tsx-bname" style="left:${F(BR.maxX+7)}px;top:${F(bY[bi])}px">${_opsEsc(bn)}</span>`; });
-    curMaxX=Math.max(curMaxX,BR.maxX);
-    H=Math.max(H, Math.max(...bY)+34);
-  });
-  // â”€â”€ ì°¨ëŸ‰ê¸°ì§€ ì¸ì…ì„  BÃ©zier â”€â”€
-  let depX=curMaxX+40; const depY={};
-  ((GEO&&GEO.d)||[]).forEach(d=>{ const j=d.j, y0=(Y[j]!=null?Y[j]:TOP), key=Math.round(y0/26); depY[key]=(depY[key]||0); const yy=y0+depY[key]*20; depY[key]++;
-    tracksSVG+=`<path d="M ${F(MAINX+G/2)} ${F(y0)} C ${F((MAINX+G/2+depX)/2)} ${F(y0)}, ${F(depX)} ${F(yy)}, ${F(depX+14)} ${F(yy)}" fill="none" stroke="#8b949e" stroke-width="2.2" stroke-dasharray="4 3" opacity=".85"/>`;
-    labelsHTML+=`<span class="tsx-depot" style="left:${F(depX+18)}px;top:${F(yy)}px">ğŸ­ ${_opsEsc(String(d.n).replace('ì—­ / ',' ').replace('ì£¼ë°•ì„ ',' ì£¼ë°•').replace('ì°¨ëŸ‰ì‚¬ì—…ì†Œ',' ì‚¬ì—…ì†Œ').trim())}</span>`;
-    curMaxX=Math.max(curMaxX,depX+120); H=Math.max(H,yy+26);
-  });
-  // â”€â”€ ì—´ì°¨: ì‹¤ì œ ë³¸ì„  íŠ¸ë™ ìœ„ â”€â”€
-  let cnt=0; const tr=[];
-  _metroLineLiveTrains(l.name).forEach(t=>{ const fi=mainIdx[t.fromStn],ti=mainIdx[t.toStn]; if(fi==null||ti==null)return; cnt++;
-    const down=ti>fi; const y=t.atStation?Y[fi]:Y[fi]+t.frac*(Y[ti]-Y[fi]); const x=down?MAINX+G/2:MAINX-G/2;
-    tr.push({x,y,down,dest:t.dest}); });
-  tr.sort((a,b)=>a.y-b.y); let lastY=-99;
-  tr.forEach(t=>{ const shift=(t.y-lastY<14)?1:0; lastY=t.y;
-    labelsHTML+=`<span class="tsx-arw ${t.down?'down':'up'}" style="left:${F(t.x)}px;top:${F(t.y)}px">${t.down?'â–¼':'â–²'}</span>`+
-      `<span class="tsx-tlbl" style="left:${F(t.x+(t.down?10:-10))}px;top:${F(t.y)}px;--tc:${t.down?color:'#d9782f'};transform:translate(${t.down?'0':'-100%'},-50%)">${_opsEsc(t.dest)}</span>`;
-  });
-  const CW=Math.ceil(curMaxX+16), CH=Math.ceil(H);
-  const svg=`<svg class="tsx-svg" width="${CW}" height="${CH}" viewBox="0 0 ${CW} ${CH}"><g class="tsx-platlayer">${platsSVG}</g><g class="tsx-tracklayer">${tracksSVG}</g></svg>`;
-  return {cnt, html:`<div class="tsx-canvas" style="height:${CH}px;width:${CW}px;--mc:${color}">${svg}${namesHTML}${labelsHTML}</div>`};
-}
-
-// â”€â”€ ë„ì‹œì² ë„ ë°°ì„  ë Œë”ëŸ¬ v3: ì¸ê²Œì„ s/d ì„ ë¡œ geometryë¥¼ ì¢…ë‹¨ ë°°ì„ ìœ¼ë¡œ íˆ¬ì˜ â”€â”€
-// s=ë…¸ì„  ì¤‘ì‹¬ì„  ëˆ„ì ê±°ë¦¬, d=ì¤‘ì‹¬ì„  ì¢Œìš° í¸ì°¨. ì‹¤ì œ ë¶„ê¸°Â·ê±´ë„˜ì„ Â·ëŒ€í”¼ì„ ì€ íšŒìƒ‰ ê¸°ë°˜ì„ ìœ¼ë¡œ,
-// ì¥ê±°ë¦¬ ë³¸ì„ ê³¼ ì¤‘ì‹¬ì¶• ì—°ê²°ì„ ì€ ë…¸ì„ ìƒ‰ ì ìœ  ê²½ë¡œë¡œ í‘œì‹œí•œë‹¤.
-function _sxTrackY(s, ss, Y){
-  if(!ss||!ss.length||!Y||!Y.length)return SX.TOP;
-  if(s<=ss[0])return Y[0]; const last=ss.length-1;
-  if(s>=ss[last])return Y[Math.min(last,Y.length-1)];
-  let lo=0,hi=last;
-  while(lo+1<hi){const m=(lo+hi)>>1;if(ss[m]<=s)lo=m;else hi=m;}
-  const span=Math.max(1,ss[hi]-ss[lo]), gap=Y[hi]-Y[lo], rel=s-ss[lo];
-  // ì‹¤ì œ ì—­ êµ¬ë‚´ ë¶„ê¸°ê¸°ëŠ” ìˆ˜ì‹­~ìˆ˜ë°± mì— ë¶ˆê³¼í•˜ë‹¤. ì´ë¥¼ ìˆ˜ km ì—­ê°„ ê±°ë¦¬ì™€ ê°™ì€
-  // ì¶•ì²™ìœ¼ë¡œ ì¤„ì´ë©´ ìˆ˜í‰ ê°€ì‹œì²˜ëŸ¼ ê²¹ì¹˜ë¯€ë¡œ ì–‘ìª½ ì—­ ì „í›„ êµ¬ê°„ì— í™”ë©´ ë†’ì´ë¥¼ ë” ë°°ì •í•œë‹¤.
-  const throatM=Math.min(650,span*.22), throatPx=Math.min(19,gap*.32);
-  if(rel<=throatM)return Y[lo]+(rel/throatM)*throatPx;
-  if(span-rel<=throatM)return Y[hi]-((span-rel)/throatM)*throatPx;
-  const midM=Math.max(1,span-throatM*2),midPx=Math.max(1,gap-throatPx*2);
-  return Y[lo]+throatPx+((rel-throatM)/midM)*midPx;
-}
-function _sxNormalizeStops(raw,total){
-  const ss=(raw||[]).map(Number),n=ss.length;if(!n)return ss;
-  ss[0]=0;
-  for(let i=1;i<n;i++)if(!Number.isFinite(ss[i])||ss[i]<=ss[i-1]){
-    let j=i+1;while(j<n&&(!Number.isFinite(ss[j])||ss[j]<=ss[i-1]))j++;
-    const end=j<n?ss[j]:Math.max(Number(total)||ss[i-1]+1,ss[i-1]+1);
-    for(let k=i;k<j;k++)ss[k]=ss[i-1]+(end-ss[i-1])*(k-i+1)/(j-i+1);
-  }
-  return ss;
-}
-function _sxTrackRunStats(run){
-  let minS=Infinity,maxS=-Infinity,near=0,n=0,minD=Infinity,maxD=-Infinity;
-  for(let i=0;i+1<run.length;i+=2){const s=Number(run[i]),d=Number(run[i+1]);if(!Number.isFinite(s)||!Number.isFinite(d))continue;
-    minS=Math.min(minS,s);maxS=Math.max(maxS,s);minD=Math.min(minD,d);maxD=Math.max(maxD,d);if(Math.abs(d)<=9)near++;n++;}
-  return {span:Math.max(0,maxS-minS),near:n?near/n:0,minD,maxD};
-}
-function _sxSimplePlatforms(l,track,Y,axisX,scale,routeHint,semanticRoute){
-  const F=x=>(+x).toFixed(1); let svg='',minX=axisX,maxX=axisX;
-  const box=(x,y,w,h)=>{minX=Math.min(minX,x-w/2);maxX=Math.max(maxX,x+w/2);svg+=`<rect x="${F(x-w/2)}" y="${F(y-h/2)}" width="${F(w)}" height="${F(h)}" rx="2" class="tsx-plat tsx-plat--game"/>`;};
-  const parallelMap=_sxParallelColumnMap(l,track,track.ss,routeHint,semanticRoute);
-  const addBlocks=(blocks,y,h,offset)=>{
-    blocks.forEach(b=>{
-      if(b.kind==='between'){
-        const a=b.a+offset,bb=b.b+offset,gap=(bb-a)*scale,w=Math.max(8,Math.min(12,gap-5));
-        box(axisX+((a+bb)/2)*scale,y,w,h);
-      }else{
-        const d=b.d+offset,w=10,x=axisX+d*scale+(b.side==='left'?-(w/2+5):(w/2+5));
-        box(x,y,w,h);
-      }
-    });
-  };
-  l.stations.forEach((name,i)=>{
-    const topo=_sxStationTopology(l,track,track.ss,i,routeHint,semanticRoute), y=Y[i];
-    const h=Math.min(44,36+Math.max(0,topo.platforms-2)*2);
-    addBlocks(topo.blocks,y,h,0);
-    topo.parallelGroups.forEach(g=>{const pm=parallelMap[g.key];if(pm&&g.model.observed!==false)addBlocks(g.model.blocks,y,Math.min(40,34+g.count*2),pm.offset);});
-  });
-  return {svg,minX,maxX};
-}
-function _sxPlatformModel(platforms,lineName,stationName){
-  platforms=Math.max(1,Number(platforms)||1);
-  const trackDs=Array.from({length:platforms},(_,k)=>2.5+(k-(platforms-1)/2)*5),blocks=[];
-  if(platforms===1)blocks.push({kind:'outside',d:trackDs[0],side:'right'});
-  else if(platforms===2)blocks.push({kind:'outside',d:trackDs[0],side:'left'},{kind:'outside',d:trackDs[1],side:'right'});
-  else{
-    let k=0;if(platforms%2){blocks.push({kind:'outside',d:trackDs[0],side:'left'});k=1;}
-    for(;k+1<platforms;k+=2)blocks.push({kind:'between',a:trackDs[k],b:trackDs[k+1]});
-  }
-  let mainIdx;
-  if(platforms===1)mainIdx=[0,0];
-  else if(platforms===2)mainIdx=[0,1];
-  else mainIdx=[Math.floor((platforms-1)/2),Math.ceil((platforms-1)/2)];
-  return {trackDs,blocks,mainIdx,mainDs:mainIdx.map(k=>trackDs[k])};
-}
-function _sxConsecutivePlatformGroups(items,keyFn){
-  const by={};items.forEach(p=>{const k=keyFn(p);(by[k]=by[k]||[]).push(p);});const out=[];
-  Object.keys(by).forEach(k=>{const a=by[k].sort((x,y)=>x.pn-y.pn);let g=[];
-    a.forEach(p=>{if(g.length&&p.pn>g[g.length-1].pn+1){out.push({key:k,items:g});g=[];}g.push(p);});
-    if(g.length)out.push({key:k,items:g});
-  });return out;
-}
-function _sxRouteTokens(routeHint){
-  if(!routeHint)return [];
-  return [...new Set([routeHint.label,...(routeHint.names||[])]
-    .flatMap(v=>String(v||'').split(/[\sâ†’\-_/()]+/)).map(v=>v.trim()).filter(v=>v.length>=2))];
-}
-function _sxPlatformMatchesRoute(p,routeHint){
-  if(!p||!routeHint||!p.variants?.length)return false;
-  const tokens=_sxRouteTokens(routeHint);
-  return p.variants.some(v=>tokens.some(t=>String(v).includes(t)||t.includes(String(v))));
-}
-function _sxAlignedBranchY(names,mainIdx,mainY,row){
-  row=Number(row)||44;const common=[];
-  names.forEach((n,i)=>{if(mainIdx[n]!=null)common.push(i);});
-  if(!common.length)return _sxY(names.map(()=>null),row);
-  const out=new Array(names.length),first=common[0],last=common[common.length-1];
-  common.forEach(i=>{out[i]=mainY[mainIdx[names[i]]];});
-  const upStep=first?Math.min(row,Math.max(18,(out[first]-12)/first)):row;
-  for(let i=first-1;i>=0;i--)out[i]=out[i+1]-upStep;
-  for(let i=last+1;i<names.length;i++)out[i]=out[i-1]+row;
-  for(let c=0;c+1<common.length;c++){
-    const a=common[c],b=common[c+1],span=b-a;
-    for(let i=a+1;i<b;i++)out[i]=out[a]+(out[b]-out[a])*(i-a)/span;
-  }
-  return out;
-}
-function _sxSidingIsConnected(localRuns,sidingD,stationTrackDs){
-  const onSiding=d=>Math.abs(Number(d)-sidingD)<=2.75;
-  const onStationTrack=d=>stationTrackDs.some(td=>Math.abs(Number(d)-td)<=2.75);
-  return localRuns.some(points=>{
-    for(let i=0;i+1<points.length;i++){
-      const a=points[i],b=points[i+1],longitudinal=Math.abs(b.s-a.s),lateral=Math.abs(b.d-a.d);
-      // ê°™ì€ í´ë¦¬ë¼ì¸ì— ìš°ì—°íˆ ë‘ ì„ ë¡œê°€ ë“¤ì–´ ìˆë‹¤ëŠ” ì´ìœ ë§Œìœ¼ë¡œ ì—°ê²°í•˜ì§€ ì•ŠëŠ”ë‹¤.
-      // ì—­ êµ¬ë‚´ì˜ ì§§ê³  ì—°ì†ëœ ë¶„ê¸° ì„ ë¶„ì´ ì‹¤ì œ ì–‘ ì„ ë¡œë¥¼ ì‡ëŠ” ê²½ìš°ë§Œ ì—°ê²°ë¡œ ì¸ì •í•œë‹¤.
-      if(longitudinal<2||longitudinal>220||lateral<2.5||lateral>8.5)continue;
-      if((onSiding(a.d)&&onStationTrack(b.d))||(onSiding(b.d)&&onStationTrack(a.d)))return true;
-    }
-    return false;
-  });
-}
-// ì˜ë¯¸ ë¶„ì„ ê²°ê³¼ì˜ ì‹¤ì œ ì¢Œìš° ìˆœì„œì™€ ì—°ê²° ê´€ê³„ëŠ” ìœ ì§€í•˜ë˜, ì›ë³¸ ì¢Œí‘œì˜ ë¯¸ì„¸í•œ í”ë“¤ë¦¼ì€
-// í™”ë©´ì— ì§ì ‘ íˆ¬ì˜í•˜ì§€ ì•ŠëŠ”ë‹¤. ë°°ì„ ë„ì—ëŠ” ì—­ë§ˆë‹¤ ìµœëŒ€ 6ì„ ê¹Œì§€ë§Œ ê· ë“± ê°„ê²©ìœ¼ë¡œ ì •ë¦¬í•œë‹¤.
-function _sxSimpleTopology(raw){
-  if(!raw)return raw;
-  const observed=raw.observed!==false&&Array.isArray(raw.trackDs)&&raw.trackDs.length>0;
-  const sourceDs=observed?raw.trackDs:[];
-  const fallbackCount=Math.max(1,Math.min(4,Number(raw.platforms)||2));
-  const count=Math.max(1,Math.min(6,sourceDs.length||fallbackCount));
-  const center=(count-1)/2,trackDs=Array.from({length:count},(_,i)=>2.5+(i-center)*5);
-  const sourceIndex=d=>{
-    if(!sourceDs.length)return -1;
-    let best=0,dist=Infinity;sourceDs.forEach((v,i)=>{const n=Math.abs(v-d);if(n<dist){dist=n;best=i;}});
-    return best;
-  };
-  const mappedIndex=i=>Math.max(0,Math.min(count-1,Math.round((Math.max(0,i))*(count-1)/Math.max(1,sourceDs.length-1))));
-  let mainIdx=(raw.mainDs||[]).map(d=>mappedIndex(sourceIndex(d))).slice(0,2);
-  if(mainIdx.length<2)mainIdx=count===1?[0,0]:[Math.floor((count-1)/2),Math.ceil((count-1)/2)];
-  mainIdx.sort((a,b)=>a-b);
-  const mainDs=mainIdx.map(i=>trackDs[i]);
-  const blocks=observed?(raw.blocks||[]).map(b=>{
-    if(b.kind==='between'){
-      const a=mappedIndex(sourceIndex(b.a)),c=mappedIndex(sourceIndex(b.b));
-      return a===c?null:{kind:'between',a:trackDs[Math.min(a,c)],b:trackDs[Math.max(a,c)],confidence:b.confidence};
-    }
-    const i=mappedIndex(sourceIndex(b.d));return {kind:'outside',d:trackDs[i],side:b.side,confidence:b.confidence};
-  }).filter(Boolean):_sxPlatformModel(count,'','').blocks;
-  const outside=[trackDs[0]-5,trackDs[trackDs.length-1]+5];
-  const sidings=(raw.sidings||[]).slice(0,2).map((s,i)=>({...s,d:outside[i%2]}));
-  const parallelGroups=(raw.parallelGroups||[]).filter(g=>g.model&&g.model.observed!==false).slice(0,2).map(g=>{
-    const n=Math.max(1,Math.min(4,g.model.trackDs.length||g.count||2));
-    const ds=Array.from({length:n},(_,i)=>2.5+(i-(n-1)/2)*5);
-    return {...g,model:{...g.model,trackDs:ds,mainDs:n===1?[ds[0],ds[0]]:[ds[0],ds[n-1]],blocks:_sxPlatformModel(n,'','').blocks,observed:true}};
-  });
-  const trackMeta=trackDs.map((d,index)=>{
-    const src=raw.trackMeta&&raw.trackMeta[Math.min(index,raw.trackMeta.length-1)];
-    return {index,d,type:src?.type||'unknown',confidence:src?.confidence||0,connected:src?.connected!==false,observed};
-  });
-  return {...raw,trackDs,trackMeta,mainIdx,mainDs,blocks,sidings,parallelGroups,cross:raw.cross?1:0,observed};
-}
-// ì¸ê²Œì„ ì‹¤ì¢Œí‘œì—ì„œ ë°°ì„ ì˜ ì˜ë¯¸ë§Œ ì¶”ì¶œí•œë‹¤. ì›ë³¸ í´ë¦¬ë¼ì¸ì„ ê·¸ëŒ€ë¡œ ì¶•ì†Œí•˜ì§€ ì•Šê³ 
-// ë¶€ë³¸ì„  ìˆ˜Â·ê±´ë„˜ì„ Â·íšŒì°¨/ìœ ì¹˜ì„  ì¡´ì¬ë¥¼ ê´€ì œ ë°°ì„  ê¸°í˜¸ë¡œ ë‹¤ì‹œ ê·¸ë¦°ë‹¤.
-function _sxStationTopology(l,track,ss,i,routeHint,semanticRoute){
-  const semanticTopology=semanticRoute&&semanticRoute.stations&&semanticRoute.stations[i]&&semanticRoute.stations[i].topology;
-  if(semanticTopology)return _sxSimpleTopology(semanticTopology);
-  const s=ss[i],prev=i?ss[i-1]:s,next=i+1<ss.length?ss[i+1]:s;
-  const window=Math.min(720,Math.max(260,Math.min(i?s-prev:Infinity,i+1<ss.length?next-s:Infinity)*.24));
-  const supports=new Map(),localRuns=[];let cross=0,pocket=0;
-  (track.rn||[]).forEach(run=>{
-    const st=_sxTrackRunStats(run);if(st.span<22)return;
-    let minS=Infinity,maxS=-Infinity;const ds=[],points=[];
-    for(let k=0;k+1<run.length;k+=2){const rs=Number(run[k]),d=Number(run[k+1]);minS=Math.min(minS,rs);maxS=Math.max(maxS,rs);if(Math.abs(rs-s)<=window){ds.push(d);points.push({s:rs,d});}}
-    if(maxS<s-window||minS>s+window||!ds.length)return;
-    if(points.length>1)localRuns.push(points);
-    if(st.span>=70)ds.forEach(d=>{const q=Math.round(d/5)*5;if(q<-1||q>6)supports.set(q,(supports.get(q)||0)+1);});
-    if(st.span<=520&&st.minD<=1&&st.maxD>=4&&st.maxD-st.minD<=13)cross++;
-    const whollyLocal=minS>=s-window&&maxS<=s+window;
-    if(whollyLocal&&st.span>=80&&st.span<=760&&st.minD>-1&&st.maxD<7)pocket++;
-  });
-  const allPfs=_metroStationPlatforms(l.stations[i],l.name,l.stations[i-1],l.stations[i+1]);
-  const matchedRoutePfs=routeHint?allPfs.filter(p=>p.isCur&&_sxPlatformMatchesRoute(p,routeHint)):[];
-  const routePfs=matchedRoutePfs.length?matchedRoutePfs:(routeHint?allPfs.filter(p=>p.isCur&&p.branchOnly):[]);
-  const mainPool=routePfs.length?routePfs:allPfs.filter(p=>p.isCur&&!p.branchOnly);
-  const curGroups=_sxConsecutivePlatformGroups(mainPool,()=>l.name);
-  curGroups.sort((a,b)=>b.items.length-a.items.length||a.items[0].pn-b.items[0].pn);
-  const pfs=curGroups.length?curGroups[0].items:[];
-  const platforms=Math.max(1,pfs.length||1),nums=pfs.length?pfs.map(p=>p.pn).sort((a,b)=>a-b):[1];
-  // ìŠ¹ê°•ì¥ ë²ˆí˜¸ëŠ” ì¢Œâ†’ìš° ì„ ë¡œ ìˆœì„œë¡œ ì‚¬ìš©í•˜ë©° ìƒëŒ€ì‹/ì„¬ì‹ êµ¬ì¡°ì™€ ë³¸ì„  ë²ˆí˜¸ë¥¼
-  // í•˜ë‚˜ì˜ ëª¨ë¸ì—ì„œ í•¨ê»˜ ì‚°ì¶œí•œë‹¤.
-  const model=_sxPlatformModel(platforms,l.name,l.stations[i]);
-  const {trackDs,blocks,mainIdx,mainDs}=model;
-  // ìŠ¹ê°•ì¥ì´ ì—†ëŠ” ì¸ê²Œì„ ì™¸ì¸¡ ì„ ë¡œê°€ ë°˜ë³µ ê²€ì¶œë  ë•Œë§Œ ì¶”ê°€ ìœ ì¹˜/ëŒ€í”¼ì„ ìœ¼ë¡œ ë‚¨ê¸´ë‹¤.
-  const occupiedMin=trackDs[0],occupiedMax=trackDs[trackDs.length-1];
-  let sidings=[...supports].filter(([d,n])=>n>=3&&(d<occupiedMin-2||d>occupiedMax+2)).sort((a,b)=>b[1]-a[1])
-    .map(([d])=>({d,connected:_sxSidingIsConnected(localRuns,d,trackDs)})).slice(0,2);
-  const secondaryCur=routeHint?[]:curGroups.slice(1).map((g,gi)=>({key:`${l.name}:ì£¼ìš”${gi}`,label:'',color:l.color,kind:'main',items:g.items}));
-  const mappedBranch=!routeHint&&(track.b||[]).some(b=>Array.isArray(b.names)&&b.names.includes(l.stations[i]));
-  const variantGroups=routeHint||mappedBranch?[]:_sxConsecutivePlatformGroups(allPfs.filter(p=>p.isCur&&p.branchOnly),p=>p.variants?.join('Â·')||'ê°€ì§€')
-    .map(g=>({key:`ê°€ì§€:${l.name}:${g.key}`,label:`${l.name} ${g.key}`,color:l.color,kind:'variant',routeKeys:g.items.flatMap(p=>p.variants||[]),items:g.items}));
-  const other=routeHint?[]:_sxConsecutivePlatformGroups(allPfs.filter(p=>!p.isCur&&!p.junction&&(p.kind==='metro'||p.kind==='train')),p=>p.kind==='train'?'ì¼ë°˜ì—´ì°¨ ë³‘í–‰ì„ ':(p.label||'í‰í–‰ì„ '))
-    .map(g=>({key:`í‰í–‰:${g.key}`,label:g.key,color:g.items[0].color,kind:g.items[0].kind,items:g.items}));
-  const parallelGroups=[...secondaryCur,...variantGroups,...other].map(g=>({...g,count:g.items.length,platformNums:g.items.map(p=>p.pn),model:_sxPlatformModel(g.items.length,g.label,l.stations[i])}));
-  return {trackDs,mainDs,mainIdx,blocks,sidings,parallelGroups,cross:Math.min(2,cross),pocket:pocket>0,platforms,nums};
-}
-function _sxParallelColumnMap(l,track,ss,routeHint,semanticRoute){
-  const keys={};l.stations.forEach((s,i)=>_sxStationTopology(l,track,ss,i,routeHint,semanticRoute).parallelGroups.forEach(g=>{if(g.model.observed!==false)keys[g.key]=g;}));
-  const out={};Object.keys(keys).sort().forEach((k,i)=>{const m=keys[k].model;out[k]={offset:25+i*15-m.trackDs[0],color:keys[k].color,label:keys[k].label};});
-  return out;
-}
-function _sxSchematicTrackLayer(l,track,ss,Y,axisX,scale,color,routeHint,opts,semanticRoute){
-  opts=opts||{};
-  const F=x=>(+x).toFixed(1),up=axisX,down=axisX+5*scale,y0=Y[0],yN=Y[Y.length-1];
-  let aux='',minX=up,maxX=down;
-  const topos=l.stations.map((s,i)=>_sxStationTopology(l,track,ss,i,routeHint,semanticRoute)),parallelMap=_sxParallelColumnMap(l,track,ss,routeHint,semanticRoute);
-  const routes=[`M ${F(up)} ${F(y0)}`,`M ${F(down)} ${F(y0)}`];
-  l.stations.forEach((name,i)=>{
-    const y=Y[i],topo=topos[i];
-    const half=Math.min(24,18+Math.max(0,topo.platforms-2)*1.5),throat=half+13;
-    topo.trackDs.forEach((d,ti)=>{
-      if(topo.mainIdx.includes(ti))return;
-      const x=axisX+d*scale,main=d<2.5?up:down;
-      minX=Math.min(minX,x);maxX=Math.max(maxX,x);
-      const meta=topo.trackMeta&&topo.trackMeta[ti];
-      if(meta&&meta.observed&&!meta.connected){
-        aux+=`<path d="M ${F(x)} ${F(y-half)} L ${F(x)} ${F(y+half)} M ${F(x-3)} ${F(y-half)} L ${F(x+3)} ${F(y-half)} M ${F(x-3)} ${F(y+half)} L ${F(x+3)} ${F(y+half)}" class="tsx-symbol-track tsx-symbol-detached"/>`;
-      }else{
-        aux+=`<path d="M ${F(main)} ${F(y-throat)} C ${F(main)} ${F(y-throat+6)}, ${F(x)} ${F(y-half-5)}, ${F(x)} ${F(y-half)} L ${F(x)} ${F(y+half)} C ${F(x)} ${F(y+half+5)}, ${F(main)} ${F(y+throat-6)}, ${F(main)} ${F(y+throat)}" class="tsx-symbol-track"/>`;
-      }
-    });
-    topo.sidings.forEach((siding,si)=>{
-      const d=siding.d;
-      const x=axisX+d*scale,main=d<2.5?up:down,h=half-3-si*2,t=throat+5+si*3;
-      minX=Math.min(minX,x);maxX=Math.max(maxX,x);
-      if(siding.connected){
-        aux+=`<path d="M ${F(main)} ${F(y-t)} C ${F(main)} ${F(y-t+6)}, ${F(x)} ${F(y-h-5)}, ${F(x)} ${F(y-h)} L ${F(x)} ${F(y+h)} C ${F(x)} ${F(y+h+5)}, ${F(main)} ${F(y+t-6)}, ${F(main)} ${F(y+t)}" class="tsx-symbol-track tsx-symbol-siding"/>`;
-      }else{
-        // ì¸ê²Œì„ì—ì„œ ë³¸ì„  ì—°ê²°ì´ í™•ì¸ë˜ì§€ ì•Šì€ í‰í–‰ì„ Â·ë†’ì´ê°€ ë‹¤ë¥¸ ì„ ë¡œÂ·ìœ ì¹˜ì„ ì€
-        // ë³¸ì„ ì— ì–µì§€ë¡œ ë¶™ì´ì§€ ì•Šê³  ë…ë¦½ ì„ ë¡œë¡œ ëë‚¸ë‹¤.
-        aux+=`<path d="M ${F(x)} ${F(y-h)} L ${F(x)} ${F(y+h)} M ${F(x-3)} ${F(y-h)} L ${F(x+3)} ${F(y-h)} M ${F(x-3)} ${F(y+h)} L ${F(x+3)} ${F(y+h)}" class="tsx-symbol-track tsx-symbol-detached"/>`;
-      }
-    });
-    topo.parallelGroups.forEach(g=>{
-      if(g.model.observed===false)return;
-      const pm=parallelMap[g.key];if(!pm)return;
-      const ph=Math.min(22,17+g.count),prev=topos[i-1]?.parallelGroups.some(x=>x.key===g.key),next=topos[i+1]?.parallelGroups.some(x=>x.key===g.key);
-      g.model.trackDs.forEach(d=>{
-        const x=axisX+(d+pm.offset)*scale;minX=Math.min(minX,x);maxX=Math.max(maxX,x);
-        const major=g.kind==='main'||g.kind==='variant';
-        aux+=`<path d="M ${F(x)} ${F(y-ph)} L ${F(x)} ${F(next?Y[i+1]-ph:y+ph)}" class="tsx-parallel-track${major?' tsx-parallel-track--major':''}" stroke="${g.color}"/>`;
-      });
-      if(!prev&&g.label)aux+=`<text x="${F(axisX+(g.model.trackDs[g.model.trackDs.length-1]+pm.offset)*scale+7)}" y="${F(y+3)}" class="tsx-parallel-label" fill="${g.color}">${_opsEsc(g.label)}</text>`;
-    });
-    [up,down].forEach((trunkX,dir)=>{
-      const target=axisX+topo.mainDs[dir]*scale;
-      minX=Math.min(minX,target);maxX=Math.max(maxX,target);
-      routes[dir]+=` L ${F(trunkX)} ${F(y-throat)} C ${F(trunkX)} ${F(y-throat+6)}, ${F(target)} ${F(y-half-5)}, ${F(target)} ${F(y-half)} L ${F(target)} ${F(y+half)} C ${F(target)} ${F(y+half+5)}, ${F(trunkX)} ${F(y+throat-6)}, ${F(trunkX)} ${F(y+throat)}`;
-    });
-    if(topo.cross){
-      const cy=y-throat-8;
-      aux+=`<path d="M ${F(up)} ${F(cy-8)} L ${F(down)} ${F(cy+8)}${topo.cross>1?` M ${F(down)} ${F(cy-8)} L ${F(up)} ${F(cy+8)}`:''}" class="tsx-symbol-switch"/>`;
-    }
-    if(topo.pocket){
-      const cx=(up+down)/2,dir=(i===l.stations.length-1?-1:1),a=y+dir*18,b=y+dir*35;
-      aux+=`<path d="M ${F(up)} ${F(a)} C ${F(up)} ${F(a+dir*5)}, ${F(cx)} ${F(a+dir*7)}, ${F(cx)} ${F(a+dir*12)} L ${F(cx)} ${F(b)}" class="tsx-symbol-pocket"/><path d="M ${F(cx-3)} ${F(b)} L ${F(cx+3)} ${F(b)}" class="tsx-symbol-stop"/>`;
-    }
-  });
-  if(!l.loop){
-    if(opts.termTop!==false)aux+=`<path d="M ${F(up)} ${F(y0)} C ${F(up)} ${F(y0-13)}, ${F(down)} ${F(y0-13)}, ${F(down)} ${F(y0)}" class="tsx-symbol-turnback"/>`;
-    if(opts.termBottom!==false)aux+=`<path d="M ${F(up)} ${F(yN)} C ${F(up)} ${F(yN+13)}, ${F(down)} ${F(yN+13)}, ${F(down)} ${F(yN)}" class="tsx-symbol-turnback"/>`;
-  }
-  const trunk=routes.map((d,dir)=>`<path d="${d} L ${F(dir?down:up)} ${F(yN)}" class="tsx-real-trunk" stroke="${color}"/>`).join('');
-  return {svg:`<g class="tsx-symbol-aux">${aux}</g><g class="tsx-real-trunks">${trunk}</g>`,minX,maxX,topos,parallelMap};
-}
-function _sxMetroServiceStops(lineName,svcIdx){
-  const ent=(typeof METRO_SCHED!=='undefined')&&METRO_SCHED[lineName],f=ent&&ent.t&&ent.t[svcIdx];
-  if(!ent||!Array.isArray(f))return [];
-  const out=[];for(let i=2;i<f.length;i+=3){const n=ent.s[f[i]];if(n!=null&&out[out.length-1]!==n)out.push(n);}
-  return out;
-}
-function _sxTopologyTrainLane(layer,topo,axisX,scale,down,serviceStops){
-  const routeText=(serviceStops||[]).join(' ');
-  const laneDown=topo.reference&&topo.reference.mirror?!down:down;
-  const group=topo.parallelGroups.find(g=>g.kind==='variant'&&(g.routeKeys||[]).some(k=>{
-    const parts=String(k).split(/[\sâ†’\-_()]+/).filter(x=>x.length>=2);
-    return parts.length&&parts.every(p=>routeText.includes(p));
-  }));
-  if(group&&group.model.observed!==false){
-    const pm=layer.parallelMap[group.key],d=group.model.mainDs[laneDown?1:0];
-    if(pm)return axisX+(d+pm.offset)*scale;
-  }
-  return axisX+topo.mainDs[laneDown?1:0]*scale;
-}
-function _metroSchCanvas(l){
-  const track=(typeof METRO_TRACK!=='undefined')&&METRO_TRACK[l.name];
-  if(!track||!Array.isArray(track.ss)||track.ss.length!==l.stations.length||!Array.isArray(track.rn)||!track.rn.length)
-    return _metroSchCanvasLegacy(l);
-  const color=l.color,F=x=>(+x).toFixed(1),GEO=(typeof METRO_GEO!=='undefined')?METRO_GEO[l.name]:null;
-  const semantic=(typeof NIMBI_TRACK_SEMANTIC!=='undefined')?NIMBI_TRACK_SEMANTIC.analyzeLine({
-    line:l,track,geo:GEO,schedule:(typeof METRO_SCHED!=='undefined'&&METRO_SCHED[l.name])||null,
-    platformVersion:'20260727-reference1',
-    reference:(typeof NIMBI_TRACK_REFERENCE!=='undefined'&&NIMBI_TRACK_REFERENCE.lines&&NIMBI_TRACK_REFERENCE.lines[l.name])||null,
-    referenceVersion:(typeof NIMBI_TRACK_REFERENCE!=='undefined'&&NIMBI_TRACK_REFERENCE.version)||'',
-    parallelColorResolver:name=>_metroLineColor(name),
-    platformResolver:(route,i)=>_metroStationPlatforms(route.names[i],l.name,route.names[i-1],route.names[i+1])
-  }):null;
-  const mainSemantic=semantic&&semantic.routes&&semantic.routes[0],stopS=mainSemantic?mainSemantic.ss:_sxNormalizeStops(track.ss,track.v);
-  const Y=_sxY((GEO&&GEO.m)||l.stations.map(()=>null),62), axisX=122, scale=3.2;
-  const layer=_sxSchematicTrackLayer(l,track,stopS,Y,axisX,scale,color,null,null,mainSemantic);
-  const renderTrack={...track,ss:stopS},plats=_sxSimplePlatforms(l,renderTrack,Y,axisX,scale,null,mainSemantic);
-  let namesHTML='',labelsHTML='',platSVG=plats.svg,trackSVG=layer.svg;
-  let minX=Math.min(layer.minX,plats.minX),maxX=Math.max(layer.maxX,plats.maxX),H=Y[Y.length-1]+42;
-  const geometryRight=maxX;
-  const mainIdx={}; l.stations.forEach((s,i)=>{if(mainIdx[s]==null)mainIdx[s]=i;
-    namesHTML+=`<span class="tsx-name tsx-name--game${i===0||i===l.stations.length-1?' end':''}" style="top:${F(Y[i])}px">${_opsEsc(s)}</span>`;});
-  // â”€â”€ ê°™ì€ ë…¸ì„  ì§€ì„ : ì‹¤ì œ ë¶„ê¸°ì—­ ë†’ì´ì— ë§ì¶° ë³¸ì„  ì˜†ì—ì„œ ì‹œì‘í•˜ê³  í‰í–‰í•˜ê²Œ ì§„í–‰ â”€â”€
-  const branchRoutes=[];let branchX=geometryRight+42;
-  ((track&&track.b)||[]).forEach((b,bi)=>{
-    if(!Array.isArray(b.names)||b.names.length<2||!Array.isArray(b.ss)||!Array.isArray(b.rn))return;
-    const branchSemantic=semantic&&semantic.routes&&semantic.routes[bi+1],bs=branchSemantic?branchSemantic.ss:_sxNormalizeStops(b.ss,b.v),bY=_sxAlignedBranchY(b.names,mainIdx,Y,44);
-    const hint={label:b.lbl||'',names:b.names},bl={...l,stations:b.names,loop:false},bt={...b,ss:bs};
-    const firstCommon=mainIdx[b.names[0]]!=null,lastCommon=mainIdx[b.names[b.names.length-1]]!=null;
-    const bLayer=_sxSchematicTrackLayer(bl,bt,bs,bY,axisX,scale,color,hint,{termTop:!firstCommon,termBottom:!lastCommon},branchSemantic);
-    const bPlats=_sxSimplePlatforms(bl,bt,bY,axisX,scale,hint,branchSemantic);
-    const dx=branchX-axisX;
-    platSVG+=`<g transform="translate(${F(dx)} 0)">${bPlats.svg}</g>`;
-    trackSVG+=`<g transform="translate(${F(dx)} 0)">${bLayer.svg}</g>`;
-    // ê³µí†µ êµ¬ê°„ì˜ ì§„ì…Â·ì´íƒˆ ê²½ê³„ì—ì„œë§Œ ë³¸ì„ ê³¼ ì—°ê²°í•œë‹¤. ê³µí†µì—­ ì „ë¶€ë¥¼ ê°€ë¡œì„ ìœ¼ë¡œ ë¬¶ì§€ ì•ŠëŠ”ë‹¤.
-    const junctions=[];b.names.forEach((n,j)=>{
-      if(mainIdx[n]==null)return;
-      const prevExclusive=j>0&&mainIdx[b.names[j-1]]==null,nextExclusive=j+1<b.names.length&&mainIdx[b.names[j+1]]==null;
-      if(prevExclusive||nextExclusive||j===0||j===b.names.length-1)junctions.push(j);
-    });
-    [...new Set(junctions)].forEach(j=>{
-      const my=Y[mainIdx[b.names[j]]],bx=branchX,src=axisX+5*scale;
-      trackSVG+=`<path d="M ${F(src)} ${F(my)} C ${F(src+12)} ${F(my)}, ${F(bx-12)} ${F(bY[j])}, ${F(bx)} ${F(bY[j])}" class="tsx-branch-link" stroke="${color}"/>`;
-    });
-    const firstExclusive=b.names.findIndex(n=>mainIdx[n]==null),tagAt=firstExclusive>=0?firstExclusive:0;
-    labelsHTML+=`<span class="tsx-brtag tsx-brtag--game" style="left:${F(branchX+2)}px;top:${F(Math.max(12,bY[tagAt]-11))}px;--pc:${color}">${_opsEsc(b.lbl||`${b.names[0]}â†’${b.names[b.names.length-1]}`)}</span>`;
-    b.names.forEach((n,j)=>{if(mainIdx[n]!=null)return;namesHTML+=`<span class="tsx-bname tsx-bname--game" style="left:${F(branchX+bLayer.maxX-axisX+9)}px;top:${F(bY[j])}px">${_opsEsc(n)}</span>`;});
-    const route={b,bs,bY,axisX:branchX,layer:bLayer,bl,bt,hint,exclusive:new Set(b.names.filter(n=>mainIdx[n]==null))};
-    branchRoutes.push(route);
-    maxX=Math.max(maxX,branchX+Math.max(bLayer.maxX,bPlats.maxX)-axisX+78);H=Math.max(H,Math.max(...bY)+42);
-    branchX=maxX+26;
-  });
-  // â”€â”€ ì°¨ëŸ‰ê¸°ì§€Â·ì£¼ë°•ì„ : ì¤‘ê°„ì—­ê³¼ ì¢…ì  ëª¨ë‘ í˜„ì¬ ì—­ ë†’ì´ì—ì„œ ì¸ì…, ì„ êµ° ë°”ê¹¥ì— ìœ ì¹˜ì„  í‘œì‹œ â”€â”€
-  const depotX=maxX+30,depotRows={};
-  ((GEO&&GEO.d)||[]).forEach((d,di)=>{
-    const baseY=Y[d.j]!=null?Y[d.j]:Y[0],key=Math.round(baseY/28),row=depotRows[key]||0;depotRows[key]=row+1;
-    if(d.j===Y.length-1){
-      const center=axisX+2.5*scale,fanY=baseY+64+row*34,lanes=[-30,-15,0,15,30].map(v=>center+v);
-      trackSVG+=`<g class="tsx-yard tsx-yard--terminal">${lanes.map((x,k)=>{
-        const src=k<2?axisX:axisX+5*scale;
-        return `<path d="M ${F(src)} ${F(baseY+5)} C ${F(src)} ${F(baseY+24)}, ${F(x)} ${F(baseY+27)}, ${F(x)} ${F(fanY)}"/>`;
-      }).join('')}<path d="M ${F(lanes[0])} ${F(fanY)} L ${F(lanes[lanes.length-1])} ${F(fanY)}"/></g>`;
-      labelsHTML+=`<span class="tsx-depot tsx-depot--game" style="left:${F(lanes[lanes.length-1]+12)}px;top:${F(fanY-8)}px">ğŸ­ ${_opsEsc(String(d.n).replace('ì°¨ëŸ‰ì‚¬ì—…ì†Œ','ì‚¬ì—…ì†Œ'))}</span>`;
-      minX=Math.min(minX,lanes[0]);maxX=Math.max(maxX,lanes[lanes.length-1]+130);H=Math.max(H,fanY+24);
-      return;
-    }
-    const x=depotX+row*42,y=baseY+row*18,src=axisX+5*scale;
-    trackSVG+=`<g class="tsx-yard"><path d="M ${F(src)} ${F(baseY)} C ${F(src+14)} ${F(baseY)}, ${F(x-14)} ${F(y)}, ${F(x)} ${F(y)}"/>`+
-      [0,1,2].map(k=>`<path d="M ${F(x+k*8)} ${F(y-20)} L ${F(x+k*8)} ${F(y+20)}"/>`).join('')+
-      `<path d="M ${F(x)} ${F(y-14)} L ${F(x+8)} ${F(y-7)} L ${F(x+16)} ${F(y)} M ${F(x)} ${F(y+14)} L ${F(x+8)} ${F(y+7)} L ${F(x+16)} ${F(y)}"/></g>`;
-    labelsHTML+=`<span class="tsx-depot tsx-depot--game" style="left:${F(x+27)}px;top:${F(y)}px">ğŸ­ ${_opsEsc(String(d.n).replace('ì°¨ëŸ‰ì‚¬ì—…ì†Œ','ì‚¬ì—…ì†Œ'))}</span>`;
-    maxX=Math.max(maxX,x+130);H=Math.max(H,y+38);
-  });
-  let cnt=0; const trains=[];
-  _metroLineLiveTrains(l.name).forEach(t=>{
-    const serviceStops=_sxMetroServiceStops(l.name,t.svcIdx);
-    const branch=branchRoutes.find(r=>serviceStops.some(n=>r.exclusive.has(n))&&r.b.names.includes(t.fromStn)&&r.b.names.includes(t.toStn));
-    if(branch){
-      const fi=branch.b.names.indexOf(t.fromStn),ti=branch.b.names.indexOf(t.toStn);if(fi<0||ti<0)return;cnt++;
-      const down=ti>fi,s=t.atStation?branch.bs[fi]:branch.bs[fi]+t.frac*(branch.bs[ti]-branch.bs[fi]);
-      const topo=branch.layer.topos[fi],x=_sxTopologyTrainLane(branch.layer,topo,branch.axisX,scale,down,serviceStops);
-      trains.push({x,y:_sxTrackY(s,branch.bs,branch.bY),down,dest:t.dest,id:`S${String(t.svcIdx+1).padStart(4,'0')}`});
-      return;
-    }
-    const fi=mainIdx[t.fromStn],ti=mainIdx[t.toStn];if(fi==null||ti==null)return;cnt++;
-    const down=ti>fi,s=t.atStation?stopS[fi]:stopS[fi]+t.frac*(stopS[ti]-stopS[fi]),topo=layer.topos[fi];
-    const x=_sxTopologyTrainLane(layer,topo,axisX,scale,down,serviceStops);
-    trains.push({x,y:_sxTrackY(s,stopS,Y),down,dest:t.dest,id:`S${String(t.svcIdx+1).padStart(4,'0')}`});
-  });
-  trains.sort((a,b)=>a.y-b.y); const occupied=[];
-  trains.forEach((t,i)=>{
-    let shift=0; while(occupied.some(o=>Math.abs(o.y-t.y)<18&&o.shift===shift))shift++;occupied.push({y:t.y,shift});
-    const side=t.down?1:-1,tx=t.x+side*(12+shift*38);
-    labelsHTML+=`<span class="tsx-train-arrow ${t.down?'down':'up'}" style="left:${F(t.x)}px;top:${F(t.y)}px">${t.down?'â–¼':'â–²'}</span>`+
-      `<span class="tsx-train-card" style="left:${F(tx)}px;top:${F(t.y)}px;transform:translate(${t.down?'0':'-100%'},-50%);--tc:${color}"><b>${t.id}</b><span>${_opsEsc(t.dest)}í–‰</span></span>`;
-  });
-  H=Math.ceil(H);const shiftX=Math.max(0,74-minX),CW=Math.ceil(maxX+shiftX+18);
-  // ì‹¤ì œ dê°€ ìŒìˆ˜ì¸ ì„ ë¡œê°€ ì´ë¦„ ê²Œí„°ë¥¼ ì¹¨ë²”í•˜ë©´ ì„ ë¡œÂ·ë¼ë²¨ë§Œ í•¨ê»˜ ìš°ì¸¡ ì´ë™í•œë‹¤.
-  const svg=`<svg class="tsx-svg" width="${CW}" height="${H}" viewBox="0 0 ${CW} ${H}"><g transform="translate(${F(shiftX)} 0)"><g class="tsx-platlayer">${platSVG}</g><g class="tsx-tracklayer">${trackSVG}</g></g></svg>`;
-  if(shiftX) labelsHTML=labelsHTML.replace(/left:([0-9.-]+)px/g,(m,v)=>`left:${F(Number(v)+shiftX)}px`);
-  return {cnt,html:`<div class="tsx-canvas tsx-canvas--game" style="height:${H}px;width:${CW}px;--mc:${color}">${svg}${namesHTML}${labelsHTML}</div>`};
-}
-// â”€â”€ ì§€ì—° ì˜ˆì¸¡ ëª¨ë¸ (ë…¸ì„ Â·ë“±ê¸‰ë³„ í™•ë¥ /ì˜ˆìƒ ì§€ì—°) â”€â”€
-// â”€â”€ ì§€ì—° ì˜ˆë³´/ì‹œë®¬ë ˆì´ì…˜ ì—”ì§„ì€ js/features/nimbi_delay.jsë¡œ ë¶„ë¦¬ (DELAY_MODELÂ·_delayForecastÂ·_simProfileÂ·_simDelayÂ·_simFinalDelayÂ·_liveDelayOfÂ·_simCauseSummaryÂ·_simEventLog ë“±) â”€â”€
-// íƒ‘ìŠ¹ ì—¬ì • í—¤ë”ìš© ì§€ì—° ì˜ˆë³´ ì¹©
-function _delayChipHTML(t){
-  const f=_delayForecast(t.line,t.grade);
-  return `<div class="delay-chip" style="--dc:${f.color}"><span class="delay-dot"></span><b>ì§€ì—° ì˜ˆë³´ ${f.label}</b><span class="delay-meta">í™•ë¥  ${f.prob}% Â· ì˜ˆìƒ +${f.min}~${f.max}ë¶„</span></div>`;
-}
-// ì—´ì°¨ ìƒì„¸ ë©”íƒ€ì¤„ìš© ì§€ì—° ì˜ˆë³´(ë°°ë„ˆê°€ ì•„ë‹Œ ì •ë³´ í•œ ì¤„ë¡œ)
-function _delayMetaHTML(t){
-  const f=_delayForecast(t.line,t.grade);
-  return `<div class="detail-meta" style="margin-top:2px">ì§€ì—° ì˜ˆë³´ <b style="color:${f.color}">${f.label}</b> <span style="color:var(--text3)">Â·</span> í™•ë¥  ${f.prob}% <span style="color:var(--text3)">Â·</span> ì˜ˆìƒ +${f.min}~${f.max}ë¶„</div>`;
-}
-// ì˜ˆë§¤Â·ìŠ¹ì°¨ê¶Œìš© ì½”ë ˆì¼í†¡ì‹ ì§€ì—° ì•ˆë‚´(ì˜ˆìƒ ì§€ì—°ì´ ìˆëŠ” ì—´ì°¨ë§Œ). í˜„ì¬ ìš´í–‰ ì¤‘ì´ë©´ ì‹¤ì‹œê°„ ì§€ì—°ë„ í•¨ê»˜.
-function _bookingDelayBannerHTML(t,travelDate){
-  if(travelDate&&typeof _simTicketMatchesServiceDay==='function'&&!_simTicketMatchesServiceDay(t,travelDate))return '';
-  const est=_simFinalDelay(t,travelDate); if(est<=0)return '';
-  const live=_liveDelayOf(t);
-  const liveTxt=live>0?`<br><span class="bk-delay-live">í˜„ì¬ ì•½ ${live}ë¶„ ì§€ì—° ìš´í–‰ ì¤‘</span>`:'';
-  return `<div class="booking-delay-banner">
-    <div class="bk-delay-head">âš ï¸ ì„ íƒí•˜ì‹  ì—´ì°¨ëŠ” <b>ì•½ ${est}ë¶„ ì§€ì—° ì˜ˆìƒ</b> ì—´ì°¨ì…ë‹ˆë‹¤</div>
-    <div class="bk-delay-note">ì—´ì°¨ ìš´í–‰ ì‚¬í•­ì„ í™•ì¸í•˜ê³  êµ¬ì…í•˜ì„¸ìš”. ì§€ì—°ì— ë”°ë¥¸ ë³„ë„ ë°°ìƒì€ ì—†ìŠµë‹ˆë‹¤.${liveTxt}</div>
-  </div>`;
-}
-// ì§€ì—° ì˜ˆì¸¡ íƒ­: ì§€ê¸ˆ ì§€ì—° ìš´í–‰ ì¤‘ì¸ ì—´ì°¨ ëª©ë¡
-function _delayedTrainsHTML(){
-  if(!_simDelayOn)return '';
-  const n=new Date(), nm=n.getHours()*60+n.getMinutes();
-  const rows=[];
-  ALL_TRAINS.forEach(t=>{
-    const d=_simDelay(t,nm); if(d<=0)return;
-    const st=getCurrentStatus(t, nm-d); if(!st||st.status!=='running')return;
-    const pos=st.atStn?`${st.atStn} ì •ì°¨`:(st.passStn?`${st.passStn} í†µê³¼`:(st.prevStn&&st.nextStn?`${st.prevStn}â†’${st.nextStn}`:'ìš´í–‰ ì¤‘'));
-    rows.push({t,d,pos});
-  });
-  rows.sort((a,b)=>b.d-a.d);
-  if(!rows.length)return `<div class="delayed-empty">í˜„ì¬ ì§€ì—° ìš´í–‰ ì¤‘ì¸ ì—´ì°¨ê°€ ì—†ìŠµë‹ˆë‹¤.</div>`;
-  const gl=g=>(typeof GL!=='undefined'&&GL[g])||g;
-  return `<div class="delayed-list">
-    <div class="delayed-head">ğŸ”´ ì§€ê¸ˆ ì§€ì—° ìš´í–‰ ì¤‘ <b>${rows.length}</b>í¸ <span class="delayed-sub">ëˆ„ë¥´ë©´ íƒ‘ìŠ¹ ì—¬ì •</span></div>
-    ${rows.slice(0,40).map(r=>`<button class="delayed-row" onclick="openJourney('${r.t.no}')">
-      <span class="dl-grade" style="background:${(typeof GRADE_COLORS!=='undefined'&&GRADE_COLORS[r.t.grade])||'#888'}">${_opsEsc(gl(r.t.grade))}</span>
-      <span class="dl-no">${_opsEsc(r.t.no)}</span>
-      <span class="dl-route">${_opsEsc(r.t.stops[0].s)}â†’${_opsEsc(r.t.dest)} Â· ${_opsEsc(r.pos)}</span>
-      <span class="dl-delay">+${r.d}ë¶„</span>
-    </button>`).join('')}
-    ${rows.length>40?`<div class="delayed-more">ì™¸ ${rows.length-40}í¸</div>`:''}
-  </div>`;
-}
-function toggleSimDelay(){
-  _simDelayOn=!_simDelayOn;
-  try{localStorage.setItem('nimbi_simdelay',_simDelayOn?'1':'0');}catch(e){}
-  const sc=document.getElementById('my-sub-content');
-  if(sc&&sc.querySelector('.set-modes'))renderSettingsSection(sc);
-  if(typeof renderSIContent==='function'){const el=document.getElementById('result-delay'); if(el&&document.getElementById('panel-delay')?.classList.contains('active'))renderSIDelay(el);}
-  const de=document.getElementById('result-delay'); if(de&&de.offsetParent!==null)renderSIDelay(de);
-  if(_journeyNo&&typeof _renderJourney==='function'){const b=document.getElementById('journey-body'); if(b)b._scrolledOnce=true; _renderJourney();}
-  if(_siBoardName&&typeof _drawStationBoard==='function')_drawStationBoard();
-  if(typeof updateMapTrains==='function'&&_mapCurrentLine)updateMapTrains();
-}
-function _outlookHTML(){
-  if(!_simDelayOn||typeof _simOutlook!=='function')return '';
-  const o=_simOutlook(window._olAll?10000:8); if(!o)return '';
-  const _n=new Date(), nowMin=_n.getHours()*60+_n.getMinutes();
-  // ìƒë‹¨ ëŒ€í‘œ ê¸°ìƒì€ í˜„ì¬ ì‹œê°Â·ì§€ì—­ ê¸°ì¤€ìœ¼ë¡œ ì¬ê³„ì‚°(í•˜ë£¨ peak ë‹¨ì¼ê°’ ì•„ë‹˜) â†’ ì§€ì—­ ëª¨ìˆœ í•´ì†Œ
-  const hl=(typeof _wxHeadline==='function')?_wxHeadline(nowMin):null;
-  const headWeather=hl?hl.primaryWeather:o.ctx.weather;
-  const headLabel=hl?hl.label:o.ctx.weather;
-  const wxIco={'ë§‘ìŒ':'â˜€ï¸','ì•ˆê°œ':'ğŸŒ«ï¸','ê°•í’':'ğŸ’¨','í­ì—¼':'ğŸŒ¡ï¸','ë¹„':'ğŸŒ§ï¸','í­ìš°':'â›ˆï¸','í­ì„¤':'â„ï¸','íƒœí’':'ğŸŒ€'}[headWeather]||'ğŸŒ¤ï¸';
-  const bad=headWeather!=='ë§‘ìŒ';
-  const realWx=(hl?hl.source:o.ctx.weatherSource)==='ì‹¤ì œ ì˜ˆë³´';
-  const srcLabel=hl?hl.source:(o.ctx.weatherSource==='ì‹¤ì œ ì˜ˆë³´'?'ì‹¤ì œ ì˜ˆë³´':'ë‹˜ë¹„ë ˆì¼ ì‹œë®¬ë ˆì´ì…˜ ì˜ˆë³´');
-  const infoBtn=(hl&&hl.hasRegions)?`<button type="button" class="weather-info-btn" aria-label="ì§€ì—­ë³„ ë‚ ì”¨ ìƒì„¸ ë³´ê¸°" onclick="openRegionalWeatherModal()">â“˜</button>`:'';
-  const peakWx=realWx&&bad&&o.ctx.region?`${_opsEsc(o.ctx.region)} ${String(o.ctx.hour).padStart(2,'0')}ì‹œ ì˜í–¥ ì§‘ì¤‘`:'';
-  const gl=g=>(typeof GL!=='undefined'&&GL[g])||g;
-  const rows=o.rows.map(r=>{
-    const rng=r.rangeText||`${r.est}ë¶„ ë‚´ì™¸`;
-    const gc=(typeof GRADE_COLORS!=='undefined'&&GRADE_COLORS[r.t.grade])||'#888';
-    const sev=r.est>=15?'r':r.est>=8?'o':'y';
-    return `<button class="ol-row" onclick="openJourney('${_opsEsc(r.t.no)}')"><span class="ol-grade" style="background:${gc}">${_opsEsc(gl(r.t.grade))}</span><span class="ol-no">${_opsEsc(r.t.no)}</span><span class="ol-route">${_opsEsc(r.t.stops[0].s)}<span class="ol-arr">â†’</span>${_opsEsc(r.t.dest)}</span><span class="ol-rng ol-sev-${sev}">${rng}</span>${r.cause?`<span class="ol-cz">(${_opsEsc(r.cause)})</span>`:''}</button>`;
-  }).join('');
-  return `<div class="outlook-card${bad?' bad':''}">
-    <div class="ol-head">${wxIco} ì˜¤ëŠ˜ì˜ ìš´í–‰ ì „ë§ ${infoBtn} <span class="ol-wx">${_opsEsc(headLabel)} Â· ${o.ctx.weekend?'ì£¼ë§Â·ê³µíœ´ì¼':'í‰ì¼'}</span></div>
-    ${o.rows.length?`<div class="ol-desc">${bad?`${_opsEsc(headWeather)} ì˜ˆë³´ë¥¼ ë°˜ì˜í•´ ë‹¤ìŒ ì—´ì°¨ì˜ ì§€ì—° ê°€ëŠ¥ì„±ì„ ê³„ì‚°í–ˆìŠµë‹ˆë‹¤.`:'ì‹¤ì œ ì˜ˆë³´ë¥¼ ë°˜ì˜í•œ ê²°ê³¼ ë‹¤ìŒ ì—´ì°¨ì˜ ì§€ì—° ê°€ëŠ¥ì„±ì´ ìˆìŠµë‹ˆë‹¤.'}</div>${rows}${o.total>8?`<button class="ol-allbtn" onclick="window._olAll=!window._olAll;var e=document.getElementById('result-delay');if(e)renderSIDelay(e)">${window._olAll?'ì ‘ê¸° â–²':`ì „ì²´ ${o.total}í¸ ë³´ê¸° â–¼`}</button>`:''}`
-      :`<div class="ol-desc">í˜„ì¬ ì§€ì—°ì´ ì˜ˆë³´ëœ ì—´ì°¨ê°€ ì—†ìŠµë‹ˆë‹¤. ì „ ì—´ì°¨ ì •ìƒ ìš´í–‰ì´ ì˜ˆìƒë©ë‹ˆë‹¤.</div>`}
-    <div class="ol-caveat">
-      ì˜ˆì¸¡ì€ í™•ì •ì´ ì•„ë‹ˆë©°, ê¸°ìƒ í˜¸ì „ ë“±ì— ë”°ë¼ ì •ìƒ ìš´í–‰ìœ¼ë¡œ ë³€ê²½ë  ìˆ˜ ìˆìŠµë‹ˆë‹¤.
-      <span>ìš´í–‰ ì „ê³¼ ìš´í–‰ ì¤‘ì—ë„ ê´€ì¸¡ ìƒí™©, ì—­ í†µê³¼, ëŒë°œìƒí™©ì— ë”°ë¼ ì§€ì—° ì •ë³´ì™€ ì˜ˆë³´ê°€ ë‹¬ë¼ì§ˆ ìˆ˜ ìˆìŠµë‹ˆë‹¤.</span>
-      ${realWx?'<span>ê¸°ìƒ ì˜ˆë³´ ì œê³µ: Open-Meteo Â· ì ‘ì† ì‹œ ìµœì‹  ì˜ˆë³´ í™•ì¸</span>':''}
-    </div>
-    <button class="ol-explain-btn" onclick="openDelayExplanation()">ì§€ì—°ì€ ì–´ë–»ê²Œ ì‚°ì •ë˜ë‚˜ìš”?</button>
-  </div>`;
-}
-
-// ìŠ¹ê°ìš© ì§€ì—° ì‚°ì • ì•ˆë‚´ëŠ” ë³„ë„ HTML ì¡°ê°ìœ¼ë¡œ ê´€ë¦¬í•œë‹¤.
-// í•œ ë²ˆ ë¶ˆëŸ¬ì˜¨ ë‚´ìš©ì€ íƒ­ ì¬ë Œë”ë§ ì‹œ ì¬ì‚¬ìš©í•´ ë¶ˆí•„ìš”í•œ ë„¤íŠ¸ì›Œí¬ ìš”ì²­ì„ ë§‰ëŠ”ë‹¤.
-let _delayExplanationPromise=null;
-function _loadDelayExplanation(host){
-  if(!host)return;
-  if(!_delayExplanationPromise){
-    _delayExplanationPromise=fetch('pages/nimbi_delay_explanation.html?v=2026072032')
-      .then(res=>{
-        if(!res.ok)throw new Error(`HTTP ${res.status}`);
-        return res.text();
-      })
-      .catch(err=>{
-        _delayExplanationPromise=null;
-        throw err;
-      });
-  }
-  _delayExplanationPromise
-    .then(html=>{
-      const current=document.getElementById('delay-explanation-modal-body');
-      if(!current)return;
-      const parsed=document.createElement('div');
-      parsed.innerHTML=html;
-      const content=parsed.querySelector('details > div');
-      current.innerHTML=content?content.outerHTML:html;
-    })
-    .catch(()=>{
-      const current=document.getElementById('delay-explanation-modal-body');
-      if(current)current.innerHTML='<div class="delayed-empty">ì§€ì—° ì‚°ì • ë°©ì‹ ì•ˆë‚´ë¥¼ ë¶ˆëŸ¬ì˜¤ì§€ ëª»í–ˆìŠµë‹ˆë‹¤. ì ì‹œ í›„ ë‹¤ì‹œ ì‹œë„í•´ ì£¼ì„¸ìš”.</div>';
-    });
-}
-function openDelayExplanation(){
-  document.getElementById('delay-explanation-modal')?.remove();
-  const modal=document.createElement('div');
-  modal.id='delay-explanation-modal';
-  modal.className='delay-explanation-modal';
-  modal.innerHTML=`<div class="delay-explanation-dialog" role="dialog" aria-modal="true" aria-labelledby="delay-explanation-title">
-    <div class="delay-explanation-head">
-      <b id="delay-explanation-title">ì§€ì—°ì€ ì–´ë–»ê²Œ ì‚°ì •ë˜ë‚˜ìš”?</b>
-      <button onclick="closeDelayExplanation()" aria-label="ë‹«ê¸°">âœ•</button>
-    </div>
-    <div class="delay-explanation-modal-body" id="delay-explanation-modal-body">
-      <div class="delayed-empty">ì§€ì—° ì‚°ì • ë°©ì‹ ì•ˆë‚´ë¥¼ ë¶ˆëŸ¬ì˜¤ëŠ” ì¤‘â€¦</div>
-    </div>
-  </div>`;
-  modal.addEventListener('click',e=>{if(e.target===modal)closeDelayExplanation();});
-  document.body.appendChild(modal);
-  _loadDelayExplanation(document.getElementById('delay-explanation-modal-body'));
-}
-function closeDelayExplanation(){
-  const modal=document.getElementById('delay-explanation-modal');
-  if(!modal||modal.classList.contains('closing'))return;
-  modal.classList.add('closing');
-  setTimeout(()=>modal.remove(),240);
-}
-
-// â”€â”€ â“˜ ì§€ì—­ë³„ ìš´í–‰ ë‚ ì”¨ ëª¨ë‹¬ â”€â”€
-let _wxModalReturnFocus=null, _wxModalKeyHandler=null, _wxModalPageLock=null;
-function openRegionalWeatherModal(){
-  document.getElementById('weather-modal')?.remove();
-  document.getElementById('weather-modal-backdrop')?.remove();
-  _wxModalReturnFocus=document.activeElement;
-  const n=new Date(), nowMin=n.getHours()*60+n.getMinutes();
-  const detail=(typeof _wxRegionalDetail==='function')?_wxRegionalDetail(nowMin):null;
-  const backdrop=document.createElement('div');
-  backdrop.className='weather-modal-backdrop'; backdrop.id='weather-modal-backdrop';
-  backdrop.onclick=closeRegionalWeatherModal;
-  const modal=document.createElement('div');
-  modal.className='weather-modal'; modal.id='weather-modal';
-  modal.setAttribute('role','dialog'); modal.setAttribute('aria-modal','true');
-  modal.setAttribute('aria-labelledby','weather-modal-title');
-  const clk=`${String(n.getHours()).padStart(2,'0')}:${String(n.getMinutes()).padStart(2,'0')}`;
-  const hl=detail?detail.headline:null;
-  let body;
-  if(!detail){
-    body=`<div class="wxm-summary">í˜„ì¬ ì‹¤ì œ ì§€ì—­ë³„ ì˜ˆë³´ë¥¼ ë¶ˆëŸ¬ì˜¤ì§€ ëª»í–ˆìŠµë‹ˆë‹¤. ë‹˜ë¹„ë ˆì¼ ì‹œë®¬ë ˆì´ì…˜ ì˜ˆë³´ ê¸°ì¤€ìœ¼ë¡œ ì „êµ­ ë™ì¼ ê¸°ìƒì„ ì ìš© ì¤‘ì…ë‹ˆë‹¤.</div>`;
-  } else {
-    const cards=detail.regions.map(r=>`<div class="wxm-region">
-      <div class="wxm-region-top"><span class="wxm-ico">${r.icon}</span><b>${_opsEsc(r.name)}</b><span class="wxm-w">${_opsEsc(r.weather)}</span></div>
-      <div class="wxm-region-row">ğŸ•’ ${_opsEsc(r.timeLabel)}</div>
-      ${r.changeLabel?`<div class="wxm-region-row wxm-change">ğŸ”„ ${_opsEsc(r.changeLabel)}</div>`:''}
-      <div class="wxm-region-row">ğŸš¦ ${_opsEsc(r.impact)}</div>
-      <div class="wxm-region-row wxm-tr">ğŸš† í˜„ì¬ ì˜í–¥ ì˜ˆìƒ ${r.trains}í¸</div>
-    </div>`).join('');
-    body=`<div class="wxm-summary"><b>í˜„ì¬ ëŒ€í‘œ ê¸°ìƒ</b><br>${_opsEsc(hl?hl.label:'â€”')} Â· ${_opsEsc(hl?hl.source:'')}</div>
-      <div class="wxm-region-list">${cards}</div>`;
-  }
-  modal.innerHTML=`<div class="weather-modal-header">
-      <div><div id="weather-modal-title">ì§€ì—­ë³„ ìš´í–‰ ë‚ ì”¨</div><div class="wxm-updated">í˜„ì¬ ${clk} ê¸°ì¤€</div></div>
-      <button onclick="closeRegionalWeatherModal()" aria-label="ë‹«ê¸°">âœ•</button>
-    </div>
-    <div class="weather-modal-body">${body}</div>`;
-  // ë°°ê²½ ìŠ¤í¬ë¡¤Â·í„°ì¹˜ ì°¨ë‹¨(íƒ‘ìŠ¹ ì—¬ì • ëª¨ë‹¬ê³¼ ë™ì¼ ë°©ì‹)
-  const docBody=document.body, root=document.documentElement, scrollY=window.scrollY;
-  _wxModalPageLock={scrollY,
-    body:{position:docBody.style.position,top:docBody.style.top,left:docBody.style.left,right:docBody.style.right,width:docBody.style.width,overflow:docBody.style.overflow},
-    rootOverflow:root.style.overflow};
-  docBody.classList.add('journey-modal-open'); docBody.style.top=`-${scrollY}px`; root.style.overflow='hidden';
-  backdrop.addEventListener('touchmove',e=>e.preventDefault(),{passive:false});
-  modal.addEventListener('touchmove',e=>e.stopPropagation(),{passive:true});
-  document.body.appendChild(backdrop);
-  document.body.appendChild(modal);
-  _wxModalKeyHandler=e=>{ if(e.key==='Escape')closeRegionalWeatherModal(); };
-  document.addEventListener('keydown',_wxModalKeyHandler);
-  const closeBtn=modal.querySelector('.weather-modal-header button'); if(closeBtn)closeBtn.focus();
-}
-function closeRegionalWeatherModal(){
-  const modal=document.getElementById('weather-modal');
-  const backdrop=document.getElementById('weather-modal-backdrop');
-  if(_wxModalKeyHandler){ document.removeEventListener('keydown',_wxModalKeyHandler); _wxModalKeyHandler=null; }
-  if(modal){ modal.classList.add('closing'); setTimeout(()=>modal.remove(),200); }
-  if(backdrop){ backdrop.classList.add('closing'); setTimeout(()=>backdrop.remove(),200); }
-  if(_wxModalPageLock){ const body=document.body, root=document.documentElement, lock=_wxModalPageLock;
-    body.classList.remove('journey-modal-open'); Object.assign(body.style,lock.body); root.style.overflow=lock.rootOverflow;
-    window.scrollTo(0,lock.scrollY); _wxModalPageLock=null; }
-  if(_wxModalReturnFocus&&typeof _wxModalReturnFocus.focus==='function'){ try{_wxModalReturnFocus.focus();}catch(e){} }
-  _wxModalReturnFocus=null;
-}
-
-function renderSIDelay(el){
-  const model=DELAY_MODEL;
-  el.innerHTML=`<div style="margin-top:12px">
-    ${_outlookHTML()}
-    ${_delayedTrainsHTML()}
-    <details class="fc-fold"${_simDelayOn?'':' open'}>
-    <summary>ğŸ“Š ë…¸ì„ ë³„ ì§€ì—° ì˜ˆë³´ <span class="fc-fold-sub">Mysterious Enterprise ìš´í–‰ ê¸°ë¡ ê¸°ë°˜ Â· ${model.length}ê°œ ë…¸ì„ </span></summary>
-    ${model.map(d=>{
-      const lv=d.prob<25?'low':d.prob<40?'med':'high';
-      const lc=lv==='low'?'var(--green)':lv==='med'?'var(--orange)':'var(--red)';
-      const lt=lv==='low'?'ë‚®ìŒ':lv==='med'?'ë³´í†µ':'ë†’ìŒ';
-      return `<div style="background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:14px 16px;margin-bottom:8px">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
-          <div style="font-size:13px;font-weight:700;color:${d.c}">${d.name}</div>
-          <div style="font-size:11px;font-weight:700;padding:3px 10px;border-radius:12px;background:${lc}22;color:${lc};border:1px solid ${lc}44">${lt}</div>
-        </div>
-        <div style="background:var(--bg3);border-radius:6px;height:6px;overflow:hidden;margin-bottom:6px">
-          <div style="width:${d.prob}%;height:100%;border-radius:6px;background:${lc}"></div>
-        </div>
-        <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--text3)">
-          <span>ì§€ì—° í™•ë¥  ${d.prob}%</span><span>ì˜ˆìƒ ${d.min}~${d.max}ë¶„</span>
-        </div>
-      </div>`;
-    }).join('')}
-    </details>
-  </div>`;
-}
-
-// â”€â”€ ì´ìš© ëª¨ë“œ(ê¸°ì°¨/ì „ì² ) ì´ˆê¸° ë°˜ì˜ â”€â”€
-try{
-  _applyModeTabs();
-  if(_appMode==='metro') switchTab('metrolines');
-}catch(e){}
-
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-// ğŸ›°ï¸ ê´€ì œ ëª¨ë“œ â€” ì „ ë…¸ì„  ê²°í•© ì§€ë„
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-let _allMapLineCache=null;
-function _allAsMapLine(){
-  if(_allMapLineCache)return _allMapLineCache;
-  const routes=[];
-  // ë‚¨í•œ ì „ì²´ë³´ê¸°ì™€ ë¶í•œ ê¶Œì—­ë„ëŠ” ì§€ì—­ ì„ íƒì²˜ëŸ¼ ë¶„ë¦¬í•œë‹¤.
-  for(const ml of Object.values(MAP_LINES)) if(!ml.northOnly&&!ml.combinedOnly) for(const r of ml.routes) routes.push(r);
-  return _allMapLineCache={name:'ì „ì²´ ë„¤íŠ¸ì›Œí¬',color:'#8b949e',routes};
-}
-let _allRegionsMapLineCache=null;
-function _allRegionsAsMapLine(){
-  if(_allRegionsMapLineCache)return _allRegionsMapLineCache;
-  const sharedNames=new Set(['ê²½ì˜ì„ ','ê²½ì›ì„ ','ë™í•´ì„ ']);
-  const south=[];
-  for(const ml of Object.values(MAP_LINES)) if(!ml.northOnly&&!ml.combinedOnly&&!sharedNames.has(ml.name)) south.push(...ml.routes);
-  const north=MAP_LINES.north.routes.filter(route=>!sharedNames.has(route.name));
-  const shared=['gyeongui_all','gyeongwon_all','donghae_all'].flatMap(key=>MAP_LINES[key].routes);
-  return _allRegionsMapLineCache={name:'ë‚¨ë¶ ì „ì²´ ë„¤íŠ¸ì›Œí¬',color:'#8b949e',noSpread:true,allView:true,routes:[...south,...north,...shared]};
-}
-
-// â”€â”€ ê³µìš©: ì£¼ìš”ì—­ ëª©ë¡(ì •ì°¨ í¸ìˆ˜ ìƒìœ„) â”€â”€
-let _majorStnsCache=null;
-function _majorStations(n){
-  if(!_majorStnsCache){
-    const c={};
-    ALL_TRAINS.forEach(t=>t.stops.forEach(s=>{if(hasTime(s.arr)||hasTime(s.dep))c[s.s]=(c[s.s]||0)+1;}));
-    _majorStnsCache=Object.entries(c).sort((a,b)=>b[1]-a[1]).map(x=>x[0]);
-  }
-  return _majorStnsCache.slice(0,n||24);
-}
-// ì—­ì˜ ë‹¤ìŒ ì¶œë°œ ëª©ë¡ (ê°€ê¹Œìš´ ìˆœ, countê°œ)
-function _nextDeps(stn,count){
-  const now=new Date(); const nowM=now.getHours()*60+now.getMinutes();
-  const rows=[];
-  ALL_TRAINS.forEach(t=>{
-    const s=t.stops.find(x=>x.s===stn);
-    if(!s||!hasTime(s.dep)||isPassStop(t,stn))return;
-    const m=toMin(s.dep); if(m===null)return;
-    let d=(m-nowM+1440)%1440; if(d>420)return; // 7ì‹œê°„ ì´ë‚´ë§Œ
-    rows.push({d,m,t,dep:s.dep});
-  });
-  rows.sort((a,b)=>a.d-b.d);
-  return rows.slice(0,count||6);
-}
-
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-// ğŸ–¥ï¸ í„°ë¯¸ë„ ë·° â€” ì£¼ìš”ì—­ 4ê³³ ë°œì°¨ ë³´ë“œ ë™ì‹œ ê´€ì „
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-// â”€â”€ ê³µìš© ì—­ ê²€ìƒ‰ë°” (ê¸°ì¡´ ê²€ìƒ‰ë°” ë””ìì¸Â·ì´ˆì„± ê²€ìƒ‰ í†µì¼ â€” ì•ìœ¼ë¡œ ëª¨ë“  ì—­ ê²€ìƒ‰ì€ ì´ ì»´í¬ë„ŒíŠ¸ ì‚¬ìš©) â”€â”€
-function stnSearchBoxHTML(id,value,pickFn,ph){
-  return `<div class="autocomplete-wrap" style="min-width:0">
-    <input type="text" id="${id}" class="term-sel" style="margin-bottom:0" value="${value||''}" placeholder="${ph||'ì—­ ì´ë¦„ (ì´ˆì„± ê°€ëŠ¥)'}" autocomplete="off"
-      oninput="_stnAcShow('${id}','${pickFn}')" onfocus="this.select();_stnAcShow('${id}','${pickFn}')"
-      onblur="setTimeout(()=>{const d=document.getElementById('${id}-ac');if(d)d.style.display='none';},150)">
-    <div class="ac-dropdown" id="${id}-ac"></div>
-  </div>`;
-}
-function _stnAcShow(id,pickFn){
-  _majorStations(1); // ì—­ ìºì‹œ ì¤€ë¹„
-  const inp=document.getElementById(id); if(!inp)return;
-  const q=inp.value.trim();
-  const el=document.getElementById(id+'-ac'); if(!el)return;
-  const list=(q?_majorStnsCache.filter(n=>matchesQuery(n,q)):_majorStnsCache.slice(0,10)).slice(0,10);
-  const idEsc=id.replace(/'/g,"\\'");
-  el.innerHTML=list.map(n=>{
-    const nEsc=n.replace(/'/g,"\\'");
-    return `<div class="ac-item" onmousedown="event.preventDefault();document.getElementById('${idEsc}').value='${nEsc}';document.getElementById('${idEsc}-ac').style.display='none';window['${pickFn}']('${nEsc}','${idEsc}')">${n}</div>`;
-  }).join('');
-  el.className='ac-dropdown open';
-  el.style.display=list.length?'block':'none';
-}
-let _termStns=null;
-function _termPickStn(name,id){
-  const i=+id.split('-').pop();
-  if(Number.isFinite(i)){ _termStns[i]=name; _termFill(i); }
-}
-function renderTerminalView(){
-  const el=document.getElementById('result-terminal'); if(!el)return;
-  _majorStations(1);
-  if(!_termStns){ const m=_majorStations(30); _termStns=['ì„œìš¸','ëŒ€ì „','ë‚¨ëŒ€êµ¬','ë¶€ì‚°'].filter(s=>m.includes(s)); while(_termStns.length<4)_termStns.push(m[_termStns.length]); }
-  el.innerHTML=`
-    <div style="padding:14px 16px 24px">
-      <div style="font-size:12px;color:var(--text3);margin-bottom:10px">ì£¼ìš”ì—­ ë°œì°¨ ë³´ë“œ Â· 30ì´ˆë§ˆë‹¤ ìë™ ê°±ì‹  Â· ì—­ ì´ë¦„ì„ ì§ì ‘ ê²€ìƒ‰í•´ ì–´ëŠ ì—­ì´ë“  ë³¼ ìˆ˜ ìˆìŠµë‹ˆë‹¤</div>
-      <div class="term-grid">
-        ${[0,1,2,3].map(i=>`
-        <div class="term-board" id="term-b${i}">
-          ${stnSearchBoxHTML('term-inp-'+i,_termStns[i],'_termPickStn')}
-          <div class="term-rows" id="term-rows-${i}"></div>
-        </div>`).join('')}
-      </div>
-    </div>`;
-  [0,1,2,3].forEach(_termFill);
-  clearInterval(window._termT);
-  window._termT=setInterval(()=>{
-    if(!document.getElementById('result-terminal')){clearInterval(window._termT);return;}
-    [0,1,2,3].forEach(_termFill);
-  },30000);
-}
-function _termFill(i){
-  const box=document.getElementById('term-rows-'+i); if(!box)return;
-  const rows=_nextDeps(_termStns[i],6);
-  box.innerHTML=rows.length?rows.map(r=>`
-    <div class="term-row" onclick="jumpToTrain('${r.t.no}')">
-      <span class="term-time">${r.dep}</span>
-      <span class="term-grade" style="color:var(--c-${gcCssVar(r.t.grade)})">${r.t.grade}</span>
-      <span class="term-no">${r.t.no}</span>
-      <span class="term-dest">${r.t.dest}í–‰</span>
-      <span class="term-eta">${r.d===0?'ì¶œë°œ':r.d+'ë¶„'}</span>
-    </div>`).join('')
-    :'<div style="padding:16px;text-align:center;color:var(--text3);font-size:12px">7ì‹œê°„ ë‚´ ì¶œë°œ ì—†ìŒ</div>';
-}
-
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-// ğŸŒ„ ë‹¹ì¼ì¹˜ê¸° ì¶”ì²œ â€” ì§€ê¸ˆ ì¶œë°œí•´ì„œ ë‹¤ë…€ì˜¬ ì½”ìŠ¤
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-let _dtpOrigin='ì„œìš¸';
-function _dtpPickStn(name){
-  _dtpOrigin=name; renderDaytrip();
-}
-function renderDaytrip(){
-  const el=document.getElementById('result-daytrip'); if(!el)return;
-  _majorStations(1);
-  if(!_majorStnsCache.includes(_dtpOrigin))_dtpOrigin=_majorStnsCache[0];
-  el.innerHTML=`
-    <div style="padding:14px 16px 24px">
-      <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;flex-wrap:wrap">
-        <span style="font-size:13px;font-weight:700">ì¶œë°œì—­</span>
-        <div style="width:150px">${stnSearchBoxHTML('dtp-inp',_dtpOrigin,'_dtpPickStn')}</div>
-        <span style="font-size:11.5px;color:var(--text3)">ì§€ê¸ˆ ì´í›„ ì¶œë°œ Â· ì§í†µ ì™•ë³µ ê¸°ì¤€</span>
-      </div>
-      <div id="dtp-list">${_daytripHTML(_dtpOrigin)}</div>
-    </div>`;
-}
-function _daytripHTML(origin){
-  const now=new Date(); const nowM=now.getHours()*60+now.getMinutes();
-  const out={};
-  ALL_TRAINS.forEach(t=>{
-    const i=t.stops.findIndex(s=>s.s===origin);
-    if(i<0)return; const so=t.stops[i];
-    if(!hasTime(so.dep)||isPassStop(t,origin))return;
-    const dm=toMin(so.dep); let d=(dm-nowM+1440)%1440;
-    if(d<20||d>240)return;
-    for(let j=i+1;j<t.stops.length;j++){
-      const s=t.stops[j];
-      if(!(hasTime(s.arr)||hasTime(s.dep))||isPassStop(t,s.s))continue;
-      const am=toMin(s.arr||s.dep); if(am===null)continue;
-      const arrAbs=nowM+d+(((am-dm)+1440)%1440);
-      const cur=out[s.s];
-      if(!cur||arrAbs<cur.arrAbs)out[s.s]={t,dep:so.dep,arr:s.arr||s.dep,arrAbs,stn:s.s};
-    }
-  });
-  const cards=[];
-  for(const [dest,o] of Object.entries(out)){
-    if(dest===origin)continue;
-    let best=null;
-    ALL_TRAINS.forEach(t=>{
-      const i=t.stops.findIndex(s=>s.s===dest);
-      if(i<0)return; const sd=t.stops[i];
-      if(!hasTime(sd.dep)||isPassStop(t,dest))return;
-      const j=t.stops.findIndex((s,k)=>k>i&&s.s===origin);
-      if(j<0)return; const sa=t.stops[j];
-      if(!(hasTime(sa.arr)||hasTime(sa.dep)))return;
-      const dm=toMin(sd.dep); let dAbs=nowM+(((dm-nowM)+1440)%1440);
-      if(dAbs-o.arrAbs<60)return;
-      if(dAbs-nowM>1200)return;
-      if(!best||dAbs>best.dAbs)best={t,dep:sd.dep,arr:sa.arr||sa.dep,dAbs};
-    });
-    if(!best)continue;
-    const stay=best.dAbs-o.arrAbs;
-    cards.push({dest,o,ret:best,stay});
-  }
-  cards.sort((a,b)=>b.stay-a.stay);
-  const top=cards.slice(0,8);
-  if(!top.length)return '<div class="empty"><div class="empty-icon">ğŸŒ™</div><p>ì§€ê¸ˆ ì¶œë°œí•´ ë‹¤ë…€ì˜¬ ìˆ˜ ìˆëŠ” ì§í†µ ì™•ë³µ ì½”ìŠ¤ê°€ ì—†ìŠµë‹ˆë‹¤.<br>ë‚´ì¼ ì•„ì¹¨ ë‹¤ì‹œ í™•ì¸í•´ë³´ì„¸ìš”.</p></div>';
-  const fmtStay=m=>`${Math.floor(m/60)}ì‹œê°„ ${String(m%60).padStart(2,'0')}ë¶„`;
-  return top.map(c=>`
-    <div class="dtp-card">
-      <div class="dtp-head">
-        <span class="dtp-dest">${c.dest}</span>
-        <span class="dtp-stay">ì²´ë¥˜ ${fmtStay(c.stay)}</span>
-      </div>
-      <div class="dtp-leg" onclick="jumpToTrain('${c.o.t.no}')">
-        <span class="dtp-tag go">ê°€ëŠ”í¸</span>
-        <span style="color:var(--c-${gcCssVar(c.o.t.grade)});font-weight:700">${c.o.t.grade}</span>
-        <span class="mono-sm">${c.o.t.no}</span>
-        <span class="mono-sm">${c.o.dep} â†’ ${c.o.arr}</span>
-      </div>
-      <div class="dtp-leg" onclick="jumpToTrain('${c.ret.t.no}')">
-        <span class="dtp-tag back">ì˜¤ëŠ”í¸</span>
-        <span style="color:var(--c-${gcCssVar(c.ret.t.grade)});font-weight:700">${c.ret.t.grade}</span>
-        <span class="mono-sm">${c.ret.t.no}</span>
-        <span class="mono-sm">${c.ret.dep} â†’ ${c.ret.arr}</span>
-      </div>
-    </div>`).join('');
-}
-
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-// ğŸ§© ë£¨íŠ¸ í¼ì¦ â€” ê²½ë¡œ ìˆœì„œ ë§ì¶”ê¸° (ë¬´ì œí•œ ì¶œì œ)
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-let _puzState=null;
-function _puzSolvedCount(){
-  const today=todayLocalStr(new Date());
-  let saved=null; try{saved=JSON.parse(localStorage.getItem('nimbi_puzzle'));}catch(e){}
-  return (saved&&saved.date===today&&saved.solved)||0;
-}
-function _puzNew(){
-  const cands=ALL_TRAINS.filter(t=>t.stops.filter(s=>(hasTime(s.arr)||hasTime(s.dep))&&!isPassStop(t,s.s)).length>=8);
-  const t=cands[Math.floor(Math.random()*cands.length)];
-  const stops=t.stops.filter(s=>(hasTime(s.arr)||hasTime(s.dep))&&!isPassStop(t,s.s)).map(s=>s.s);
-  const N=6, pick=[0];
-  for(let k=1;k<N-1;k++)pick.push(Math.round(k*(stops.length-1)/(N-1)));
-  pick.push(stops.length-1);
-  const answer=[...new Set(pick)].map(i=>stops[i]);
-  const shuffled=[...answer];
-  for(let i=shuffled.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[shuffled[i],shuffled[j]]=[shuffled[j],shuffled[i]];}
-  _puzState={train:t.no,grade:t.grade,dest:t.dest,answer,shuffled,sel:[],solved:false,tries:0};
-  _puzDraw();
-}
-function renderRoutePuzzle(){
-  const el=document.getElementById('result-puzzle'); if(!el)return;
-  _puzNew();
-}
-function _puzDraw(){
-  const el=document.getElementById('result-puzzle'); if(!el)return;
-  const p=_puzState;
-  const slots=p.answer.map((_,i)=>`<span class="puz-slot${p.sel[i]?' fill':''}">${p.sel[i]||(i+1)}</span>`).join('<span class="puz-arrow">â†’</span>');
-  const chips=p.shuffled.map(s=>{
-    const used=p.sel.includes(s);
-    return `<button class="puz-chip${used?' used':''}" ${used?'disabled':''} onclick="_puzPick('${s.replace(/'/g,"\\'")}')">${s}</button>`;
-  }).join('');
-  const solvedN=_puzSolvedCount();
-  el.innerHTML=`
-    <div style="padding:14px 16px 24px">
-      <div class="puz-card">
-        <div style="font-size:12px;color:var(--text3);margin-bottom:4px">ì˜¤ëŠ˜ ${solvedN}ë¬¸ì œ í•´ê²° Â· ì´ë²ˆ ë¬¸ì œ ì‹œë„ ${p.tries}íšŒ</div>
-        <div style="font-size:15px;font-weight:800;margin-bottom:10px">ğŸš† ${p.grade} <span class="mono-sm">${p.train}</span> (${p.dest}í–‰) ì—´ì°¨ê°€ ì§€ë‚˜ëŠ” ì—­ì„ <span style="color:var(--accent)">ìš´í–‰ ìˆœì„œëŒ€ë¡œ</span> ëˆŒëŸ¬ë³´ì„¸ìš”</div>
-        <div class="puz-slots">${slots}</div>
-        <div class="puz-chips">${chips}</div>
-        <div style="display:flex;gap:8px;margin-top:12px">
-          <button class="btn" style="flex:1" onclick="_puzNew()">ğŸ² ë‹¤ìŒ ë¬¸ì œ</button>
-          <button class="btn" style="flex:1" onclick="_puzState.sel=[];_puzDraw()">â†º ë‹¤ì‹œ ë°°ì—´</button>
-          ${p.sel.length===p.answer.length?`<button class="btn" style="flex:2;background:var(--accent);color:#fff;border-color:var(--accent)" onclick="_puzCheck()">ì •ë‹µ í™•ì¸</button>`:''}
-        </div>
-        <div id="puz-result" style="margin-top:10px">${p.solved?`<div class="puz-ok">âœ… ì •ë‹µ! <span style="cursor:pointer;text-decoration:underline" onclick="closeMyPage();jumpToTrain('${p.train}')">ì—´ì°¨ ë³´ê¸° â†’</span> Â· <span style="cursor:pointer;text-decoration:underline" onclick="_puzNew()">ğŸ² ë‹¤ìŒ ë¬¸ì œ</span></div>`:''}</div>
-      </div>
-    </div>`;
-}
-function _puzPick(s){ if(_puzState.sel.length<_puzState.answer.length){_puzState.sel.push(s);_puzDraw();} }
-function _puzCheck(){
-  const p=_puzState; p.tries++;
-  const ok=p.sel.join('|')===p.answer.join('|');
-  if(ok){
-    p.solved=true;
-    const today=todayLocalStr(new Date());
-    try{localStorage.setItem('nimbi_puzzle',JSON.stringify({date:today,solved:_puzSolvedCount()+1}));}catch(e){}
-  }
-  if(ok){_puzDraw();}
-  else{
-    const correct=p.sel.filter((s,i)=>s===p.answer[i]).length;
-    p.sel=[];_puzDraw();
-    const r=document.getElementById('puz-result');
-    if(r)r.innerHTML=`<div class="puz-no">âŒ ì•„ì‰¬ì›Œìš” â€” ìë¦¬ ë§ì€ ì—­ ${correct}/${p.answer.length}. ë‹¤ì‹œ ë„ì „!</div>`;
-  }
-}
-
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-// âš–ï¸ ì—´ì°¨ ë¹„êµ â€” ëŒ€í”¼Â·ì¶”ì›” ì§€ì  í™•ì¸
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-function openTrainCompare(no){
-  document.getElementById('cmp-wrap')?.remove();
-  const a=getTrainByNo(no); if(!a)return;
-  const aStops=a.stops.filter(s=>hasTime(s.arr)||hasTime(s.dep));
-  const aSet=new Map(aStops.map(s=>[s.s,toMin(s.dep||s.arr)]));
-  const sug=[];
-  ALL_TRAINS.forEach(t=>{
-    if(t.no===no||t.dir!==a.dir)return;
-    const shared=t.stops.filter(s=>(hasTime(s.arr)||hasTime(s.dep))&&aSet.has(s.s));
-    if(shared.length<4)return;
-    const f=shared[0]; const d=Math.abs((toMin(f.dep||f.arr)-aSet.get(f.s)+720+1440)%1440-720);
-    if(d>120)return;
-    sug.push({no:t.no,grade:t.grade,dest:t.dest,d,n:shared.length});
-  });
-  sug.sort((x,y)=>x.d-y.d);
-  const wrap=document.createElement('div');
-  wrap.id='cmp-wrap';
-  wrap.style.cssText='position:fixed;inset:0;z-index:9500;display:flex;align-items:center;justify-content:center';
-  wrap.innerHTML=`
-    <div class="alarm-popup-backdrop" onclick="document.getElementById('cmp-wrap').remove()"></div>
-    <div class="alarm-popup" style="max-width:480px;max-height:86vh;display:flex;flex-direction:column">
-      <div class="alarm-popup-title">âš–ï¸ ${a.grade} ${a.no} ì—´ì°¨ ë¹„êµ</div>
-      <div class="alarm-popup-sub">ê°™ì€ ë°©í–¥ ì—´ì°¨ì™€ ì—­ë³„ ì‹œê°ì„ ë¹„êµí•´ ëŒ€í”¼Â·ì¶”ì›” ì§€ì ì„ í™•ì¸í•©ë‹ˆë‹¤</div>
-      <div style="display:flex;gap:6px;margin:8px 0">
-        <input id="cmp-inp" placeholder="ë¹„êµí•  ì—´ì°¨ë²ˆí˜¸" style="flex:1;background:var(--bg3);border:1px solid var(--border);border-radius:8px;color:var(--text1);padding:8px 10px;font-family:var(--mono)">
-        <button class="btn" onclick="renderTrainCompare('${no}',document.getElementById('cmp-inp').value.trim())">ë¹„êµ</button>
-      </div>
-      ${sug.length?`<div style="font-size:11px;color:var(--text3);margin-bottom:4px">ê°€ê¹Œìš´ ì‹œê°„ëŒ€ ì¶”ì²œ</div>
-      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:6px">
-        ${sug.slice(0,6).map(s=>`<button class="seat-auto-chip" onclick="renderTrainCompare('${no}','${s.no}')">${s.grade} ${s.no}<span style="opacity:.6"> Â±${s.d}ë¶„</span></button>`).join('')}
-      </div>`:'<div style="font-size:12px;color:var(--text3)">ê°€ê¹Œìš´ ì‹œê°„ëŒ€ì˜ ê°™ì€ ë°©í–¥ ì—´ì°¨ê°€ ì—†ìŠµë‹ˆë‹¤.</div>'}
-      <div id="cmp-body" style="overflow-y:auto;min-height:0;flex:1"></div>
-      <button class="alarm-popup-close" onclick="document.getElementById('cmp-wrap').remove()">ë‹«ê¸°</button>
-    </div>`;
-  document.body.appendChild(wrap);
-  if(sug.length)renderTrainCompare(no,sug[0].no);
-}
-function renderTrainCompare(noA,noB){
-  const body=document.getElementById('cmp-body'); if(!body)return;
-  const A=getTrainByNo(noA), B=getTrainByNo(noB);
-  if(!B){body.innerHTML='<div style="color:var(--red);font-size:12px;padding:8px">ì—´ì°¨ë¥¼ ì°¾ì„ ìˆ˜ ì—†ìŠµë‹ˆë‹¤.</div>';return;}
-  const bMap=new Map(B.stops.filter(s=>hasTime(s.arr)||hasTime(s.dep)).map(s=>[s.s,s]));
-  const shared=A.stops.filter(s=>(hasTime(s.arr)||hasTime(s.dep))&&bMap.has(s.s));
-  if(shared.length<2){body.innerHTML='<div style="color:var(--text3);font-size:12px;padding:8px">ë‘ ì—´ì°¨ì˜ ê³µìœ  ì •ì°¨ì—­ì´ ë¶€ì¡±í•©ë‹ˆë‹¤.</div>';return;}
-  const wd=(x,y)=>((y-x+720+1440)%1440)-720;
-  let rows='', prevSign=0, events=[];
-  shared.forEach(sa=>{
-    const sb=bMap.get(sa.s);
-    const ta=toMin(sa.dep||sa.arr), tb=toMin(sb.dep||sb.arr);
-    const d=wd(ta,tb); const sign=d>0?1:d<0?-1:0;
-    let mark='';
-    if(prevSign!==0&&sign!==0&&sign!==prevSign){
-      const arrA=toMin(sa.arr), arrB=toMin(sb.arr);
-      let txt;
-      if(arrA!==null&&arrB!==null){
-        const firstIn = wd(arrA,arrB)>0 ? A : B;
-        const passer  = firstIn===A ? B : A;
-        txt=`${sa.s}ì—ì„œ ${firstIn.grade} ${firstIn.no} ëŒ€í”¼ â†’ ${passer.grade} ${passer.no} ì¶”ì›”`;
-      } else txt=`${sa.s} ë¶€ê·¼ì—ì„œ ìˆœì„œ êµì²´`;
-      events.push(txt);
-      mark=`<div class="cmp-event">ğŸ”€ ${txt}</div>`;
-    }
-    if(sign!==0)prevSign=sign;
-    rows+=`${mark}<div class="cmp-row">
-      <span class="cmp-stn">${sa.s}</span>
-      <span class="cmp-t">${sa.arr||'â€“'}<br>${sa.dep||'â€“'}</span>
-      <span class="cmp-t">${sb.arr||'â€“'}<br>${sb.dep||'â€“'}</span>
-      <span class="cmp-diff">${d>0?'+':''}${d}ë¶„</span>
-    </div>`;
-  });
-  body.innerHTML=`
-    <div class="cmp-summary">${events.length?events.map(e=>`<div>ğŸ”€ ${e}</div>`).join(''):'ë‘ ì—´ì°¨ì˜ ì„ í›„ ê´€ê³„ê°€ ìœ ì§€ë©ë‹ˆë‹¤ (ì¶”ì›” ì—†ìŒ)'}</div>
-    <div class="cmp-row cmp-head">
-      <span class="cmp-stn">ì—­</span>
-      <span class="cmp-t" style="color:var(--c-${gcCssVar(A.grade)})">${A.no}<br><small>ì°©/ë°œ</small></span>
-      <span class="cmp-t" style="color:var(--c-${gcCssVar(B.grade)})">${B.no}<br><small>ì°©/ë°œ</small></span>
-      <span class="cmp-diff">ì°¨ì´</span>
-    </div>
-    ${rows}`;
-}
-
-// ê³„ì •(ë¡œì»¬ í”„ë¡œí•„) ì´ˆê¸°í™” â€” ìµœì´ˆ ì‹¤í–‰ ì‹œ ê¸°ì¡´ ë°ì´í„°ë¡œ ê¸°ë³¸ ê³„ì • ìƒì„±
-try{acctInit();}catch(e){}
-
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-// ğŸ” ì—´ì°¨ ìš´ìš© íƒ­ â€” ì‹œê°„-ê±°ë¦¬ ë‹¤ì´ì–´ê·¸ë¨ + í¸ì„± ìš´ìš© íë¦„ë„
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-let _opsView='diagram';   // 'diagram' | 'rake'
-let _opsCorridor=null;    // ë‹¤ì´ì–´ê·¸ë¨ ëŒ€ìƒ MAP_LINES í‚¤
-let _opsGrades=null;      // ë“±ê¸‰ í•„í„°(Set) â€” nullì´ë©´ ì „ì²´ í‘œì‹œ
-let _opsGroup=null;       // íë¦„ë„ í¸ì„± ê·¸ë£¹ í”„ë¦¬í”½ìŠ¤
-let _opsSel=null;         // ë‹¤ì´ì–´ê·¸ë¨ì—ì„œ ì„ íƒ(ê°•ì¡°)í•œ ì—´ì°¨ ë²ˆí˜¸
-// ë‹¤ì´ì–´ê·¸ë¨ ì¬ë Œë” ì‹œ ê°€ë¡œ ìŠ¤í¬ë¡¤ ìœ„ì¹˜ ë³´ì¡´
-function _opsRerenderKeepScroll(){
-  const sc=document.querySelector('.ops-diagram-scroll'); const left=sc?sc.scrollLeft:0;
-  renderOpsTab();
-  const sc2=document.querySelector('.ops-diagram-scroll'); if(sc2)sc2.scrollLeft=left;
-}
-function _opsSelectTrain(no){ _opsSel=(_opsSel===no)?null:no; _opsRerenderKeepScroll(); }
-function _opsClearSel(){ if(_opsSel){_opsSel=null;_opsRerenderKeepScroll();} }
-// ì„ íƒ ì—´ì°¨ì™€ ë‹¤ë¥¸ ì—´ì°¨ë“¤ì˜ êµí–‰(ë°˜ëŒ€ë°©í–¥ ë§Œë‚¨)Â·ì¶”ì›”(ê°™ì€ë°©í–¥ ì¶”ì›”) ì§€ì  ì‚°ì¶œ
-function _opsMeets(sel, others, cor){
-  const interp=(pts,x)=>{ if(x<pts[0].t||x>pts[pts.length-1].t)return null;
-    for(let i=1;i<pts.length;i++){ if(x<=pts[i].t){const a=pts[i-1],b=pts[i];const f=(x-a.t)/((b.t-a.t)||1);return a.d+(b.d-a.d)*f;} }
-    return pts[pts.length-1].d; };
-  const nameAt=d=>{ let best=null,bd=1e9; for(const n of cor.names){const dd=Math.abs(cor.dm[n]-d);if(dd<bd){bd=dd;best=n;}} return best; };
-  const sMin=sel.pts[0].t, sMax=sel.pts[sel.pts.length-1].t;
-  const meets=[];
-  others.forEach(o=>{
-    if(o.t.no===sel.t.no)return;
-    const lo=Math.max(sMin,o.pts[0].t), hi=Math.min(sMax,o.pts[o.pts.length-1].t);
-    if(hi-lo<1)return;
-    let prev=null,prevX=null;
-    for(let x=lo;x<=hi;x+=1){
-      const ds=interp(sel.pts,x), dO=interp(o.pts,x);
-      if(ds==null||dO==null){prev=null;prevX=null;continue;}
-      const diff=ds-dO;
-      if(prev!=null&&prevX!=null&&((prev<0&&diff>=0)||(prev>0&&diff<=0))){
-        const mx=prevX+(x-prevX)*(Math.abs(prev)/((Math.abs(prev)+Math.abs(diff))||1));
-        const dpos=interp(sel.pts,mx);
-        meets.push({no:o.t.no,grade:o.t.grade,x:mx,d:dpos,same:o.t.dir===sel.t.dir,stn:nameAt(dpos)});
-      }
-      prev=diff;prevX=x;
-    }
-  });
-  meets.sort((a,b)=>a.x-b.x);
-  return meets;
-}
-function OPS_x(m){if(m==null)return null;return m<240?m+1440:m;} // 04:00~28:00 â†’ 240~1680 (ìì • ë„˜ê¹€ ì—°ì†)
-function _opsEsc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
-function _fmtM(m){if(m==null)return '-';m=((m%1440)+1440)%1440;return Math.floor(m/60)+':'+String(m%60).padStart(2,'0');}
-
-// ì½”ë¦¬ë„(ë…¸ì„ ) ì—­ ìˆœì„œ + ëˆ„ì  ê±°ë¦¬(ìŠ¤í‚¤ë§¤í‹± ê²½ë¡œ ê¸¸ì´)
-const _opsCorCache={};
-function _opsCorridorData(key){
-  if(_opsCorCache[key]!==undefined)return _opsCorCache[key];
-  const ml=(typeof MAP_LINES!=='undefined')?MAP_LINES[key]:null;
-  if(!ml||!ml.routes){return _opsCorCache[key]=null;}
-  const main=ml.routes.filter(r=>!r.dash).sort((a,b)=>b.stations.length-a.stations.length)[0]||ml.routes[0];
-  const sts=main.stations;
-  if(!sts||sts.length<3){return _opsCorCache[key]=null;}
-  const dist=[0];
-  for(let i=1;i<sts.length;i++)dist[i]=dist[i-1]+Math.hypot(sts[i].x-sts[i-1].x,sts[i].y-sts[i-1].y);
-  const total=dist[dist.length-1]||1;
-  const dm={},names=[];
-  sts.forEach((s,i)=>{if(!(s.n in dm)){dm[s.n]=dist[i];names.push(s.n);}});
-  return _opsCorCache[key]={key,name:ml.name,color:ml.color,names,dm,total};
-}
-// ì—´ì°¨ê°€ ì‹¤ì œë¡œ ì´ ì½”ë¦¬ë„(ë…¸ì„ )ë¥¼ ìš´í–‰í•˜ëŠ”ì§€ â€” line í•„ë“œì— ë…¸ì„ ëª…ì´ ìˆì–´ì•¼ í•¨.
-// (ì •ì°¨ì—­ ì´ë¦„ë§Œ ê²¹ì¹˜ëŠ” íƒ€ ë…¸ì„  ì—´ì°¨ ì˜¤í‘œì‹œ ë°©ì§€: ê²½ë¶€ê³ ì†ì„  KTXê°€ ê²½ë¶€ì„ ì— ëœ¨ë˜ ë¬¸ì œ)
-function _opsTrainOnCorridor(t,cor){
-  return !!(t.line&&cor&&t.line.split('Â·').some(l=>l.trim()===cor.name));
-}
-// ì—´ì°¨ì˜ ì½”ë¦¬ë„ ìƒ ì •ì°¨ì  (ì‹œê°Â·ê±°ë¦¬)
-function _opsTrainPts(t,cor){
-  const pts=[];
-  t.stops.forEach(s=>{
-    if(!(s.s in cor.dm))return;
-    const tm=hasTime(s.dep)?toMin(s.dep):(hasTime(s.arr)?toMin(s.arr):null);
-    if(tm==null)return;
-    pts.push({stn:s.s,d:cor.dm[s.s],t:OPS_x(tm),pass:isPassStop(t,s.s)});
-  });
-  return pts;
-}
-// ì½”ë¦¬ë„ í›„ë³´ ëª©ë¡ â€” ì •ì°¨ ì—´ì°¨ 3ê°œ ì´ìƒ, í¸ìˆ˜ ë‚´ë¦¼ì°¨ìˆœ
-let _opsCorridorList=null;
-function _opsCorridors(){
-  if(_opsCorridorList)return _opsCorridorList;
-  const list=[];
-  for(const key of Object.keys(MAP_LINES)){
-    const cor=_opsCorridorData(key); if(!cor)continue;
-    let nT=0; for(const t of ALL_TRAINS){if(_opsTrainOnCorridor(t,cor)&&_opsTrainPts(t,cor).length>=3)nT++;}
-    if(nT>0)list.push({key,name:cor.name,n:nT});
-  }
-  list.sort((a,b)=>b.n-a.n);
-  return _opsCorridorList=list;
-}
-function _curCorridorGrades(){
-  const cor=_opsCorridorData(_opsCorridor); if(!cor)return [];
-  return [...new Set(ALL_TRAINS.filter(t=>_opsTrainOnCorridor(t,cor)&&_opsTrainPts(t,cor).length>=3).map(t=>t.grade))];
-}
-function _opsToggleGrade(g){
-  if(_opsGrades===null)_opsGrades=new Set(_curCorridorGrades());
-  if(_opsGrades.has(g))_opsGrades.delete(g); else _opsGrades.add(g);
-  if(_opsGrades.size===0||_opsGrades.size>=_curCorridorGrades().length)_opsGrades=null;
-  renderOpsTab();
-}
-
-function renderOpsTab(){
-  const host=document.getElementById('ops-container'); if(!host)return;
-  host.innerHTML=`<div class="ops-viewtoggle">
-    <button class="ops-vt${_opsView==='diagram'?' on':''}" onclick="_opsView='diagram';renderOpsTab()">ğŸ“ˆ ìš´í–‰ ë‹¤ì´ì–´ê·¸ë¨</button>
-    <button class="ops-vt${_opsView==='rake'?' on':''}" onclick="_opsView='rake';renderOpsTab()">ğŸ” í¸ì„± ìš´ìš© íë¦„ë„</button>
-  </div><div id="ops-body"></div>`;
-  const body=document.getElementById('ops-body');
-  if(_opsView==='diagram')renderOpsDiagram(body); else renderOpsRake(body);
-}
-
-function renderOpsDiagram(host){
-  if(typeof MAP_LINES==='undefined'){host.innerHTML='<div class="empty"><div class="empty-icon">ğŸ“ˆ</div><p>ë…¸ì„  ë°ì´í„°ê°€ ì—†ìŠµë‹ˆë‹¤.</p></div>';return;}
-  const cors=_opsCorridors();
-  if(!cors.length){host.innerHTML='<div class="empty"><div class="empty-icon">ğŸ“ˆ</div><p>í‘œì‹œí•  ìš´í–‰ ë…¸ì„ ì´ ì—†ìŠµë‹ˆë‹¤.</p></div>';return;}
-  if(!_opsCorridor||!cors.some(c=>c.key===_opsCorridor))_opsCorridor=cors[0].key;
-  const cor=_opsCorridorData(_opsCorridor);
-  const trains=[]; for(const t of ALL_TRAINS){if(!_opsTrainOnCorridor(t,cor))continue;const pts=_opsTrainPts(t,cor);if(pts.length>=3)trains.push({t,pts});}
-  const gset=[...new Set(trains.map(o=>o.t.grade))];
-  const showT=trains.filter(o=>!_opsGrades||_opsGrades.has(o.t.grade));
-
-  let h=`<div class="ops-toolbar">
-    <select class="ops-sel" onchange="_opsCorridor=this.value;_opsGrades=null;renderOpsTab()">
-      ${cors.map(c=>`<option value="${c.key}"${c.key===_opsCorridor?' selected':''}>${_opsEsc(c.name)} Â· ${c.n}í¸</option>`).join('')}
-    </select>
-    <span class="ops-count">${showT.length}í¸ í‘œì‹œ</span>
-  </div>`;
-  h+=`<div class="ops-legend">${gset.map(g=>`<button class="ops-gchip${(!_opsGrades||_opsGrades.has(g))?' on':''}" style="--gc:${GRADE_COLORS[g]||'#8b949e'}" onclick="_opsToggleGrade('${_opsEsc(g)}')">${_opsEsc(g)}</button>`).join('')}</div>`;
-
-  // ì„ íƒ ì—´ì°¨(ê°•ì¡° ëŒ€ìƒ)
-  const sel=_opsSel?showT.find(o=>o.t.no===_opsSel):null;
-  if(_opsSel&&!sel)_opsSel=null;
-  let meets=[];
-  if(sel){
-    meets=_opsMeets(sel,showT,cor);
-    const cross=meets.filter(m=>!m.same), over=meets.filter(m=>m.same);
-    const selC=GRADE_COLORS[sel.t.grade]||'#8b949e';
-    const ex=meets.slice(0,6).map(m=>`<span class="ops-meet-row"><b>${_fmtM(Math.round(m.x))}</b> ${_opsEsc(m.stn)} Â· <span style="color:${m.same?'#f0883e':'#ef4444'}">${m.same?'ì¶”ì›”':'êµí–‰'}</span> ${_opsEsc(m.grade)} ${_opsEsc(m.no)}</span>`).join('');
-    h+=`<div class="ops-selbar" style="--gc:${selC}">
-      <div class="ops-selbar-head">
-        <span class="ops-selbar-title"><span class="ops-sel-chip" style="background:${selC}">${_opsEsc((typeof GL!=='undefined'&&GL[sel.t.grade])||sel.t.grade)} ${_opsEsc(sel.t.no)}</span> ${_opsEsc(sel.t.stops[0].s)}â†’${_opsEsc(sel.t.dest)}</span>
-        <button class="ops-selbar-x" onclick="_opsClearSel()">âœ• í•´ì œ</button>
-      </div>
-      <div class="ops-selbar-meta"><span style="color:#ef4444">êµí–‰ ${cross.length}</span> Â· <span style="color:#f0883e">ì¶”ì›” ${over.length}</span></div>
-      ${ex?`<div class="ops-meet-list">${ex}${meets.length>6?`<span class="ops-meet-row" style="color:var(--text3)">ì™¸ ${meets.length-6}ê±´â€¦</span>`:''}</div>`:''}
-      <div class="ops-selbar-btns"><button onclick="openJourney('${sel.t.no}')">ğŸš† íƒ‘ìŠ¹ ì—¬ì •</button><button onclick="jumpToTrain('${sel.t.no}')">ğŸ“‹ ì—´ì°¨ ìƒì„¸</button></div>
-    </div>`;
-  }
-
-  const L=66,T=26,R=16,B=10;
-  const pxPerMin=1.06, plotW=Math.round(1440*pxPerMin);
-  const plotH=Math.max(440, cor.names.length*22);
-  const H=T+plotH+B;
-  const Xp=m=>(m-240)*pxPerMin;   // í”Œë¡¯ ë‚´ë¶€ X (ì¢Œì¸¡ ì¶• ì œì™¸ â†’ ê·¸ë˜í”„ë§Œ ìŠ¤í¬ë¡¤)
-  const Y=d=>T+d/cor.total*plotH;
-  // â”€â”€ ì¢Œì¸¡ ê³ ì • ì¶•(ì—­ëª…) â€” ê°€ë¡œ ìŠ¤í¬ë¡¤ ì‹œ í•¨ê»˜ ì›€ì§ì´ì§€ ì•ŠìŒ â”€â”€
-  const ax=[];
-  ax.push(`<svg viewBox="0 0 ${L} ${H}" width="${L}" height="${H}" xmlns="http://www.w3.org/2000/svg" class="ops-axis-svg">`);
-  ax.push(`<rect x="0" y="0" width="${L}" height="${H}" fill="var(--bg)"/>`);
-  let lastYa=-99;
-  cor.names.forEach(n=>{const y=Y(cor.dm[n]);
-    if(y-lastYa>=10){ax.push(`<text x="${L-6}" y="${y+3}" fill="var(--text2)" font-size="9.5" text-anchor="end">${_opsEsc(n)}</text>`);lastYa=y;}});
-  ax.push(`<line x1="${L-0.5}" y1="${T}" x2="${L-0.5}" y2="${T+plotH}" stroke="var(--border)" stroke-width="1" opacity="0.7"/>`);
-  ax.push('</svg>');
-  // â”€â”€ ìš°ì¸¡ ìŠ¤í¬ë¡¤ í”Œë¡¯(ë‹¤ì´ì–´ê·¸ë¨ ê·¸ë˜í”„) â”€â”€
-  const Wp=plotW+R;
-  const s=[];
-  s.push(`<svg viewBox="0 0 ${Wp} ${H}" width="${Wp}" height="${H}" xmlns="http://www.w3.org/2000/svg" class="ops-diagram-svg">`);
-  s.push(`<rect x="0" y="0" width="${Wp}" height="${H}" fill="var(--bg)"${sel?' style="cursor:pointer" onclick="_opsClearSel()"':''}/>`);
-  for(let hh=4;hh<=28;hh++){const x=Xp(hh*60);
-    s.push(`<line x1="${x}" y1="${T}" x2="${x}" y2="${T+plotH}" stroke="var(--border)" stroke-width="${hh%2?0.5:1}" opacity="0.55"/>`);
-    s.push(`<text x="${x}" y="${T-7}" fill="var(--text2)" font-size="10" text-anchor="middle">${String(hh%24).padStart(2,'0')}</text>`);}
-  cor.names.forEach(n=>{const y=Y(cor.dm[n]);
-    s.push(`<line x1="0" y1="${y}" x2="${plotW}" y2="${y}" stroke="var(--border)" stroke-width="0.5" opacity="0.4"/>`);});
-  const now=new Date();let nm=now.getHours()*60+now.getMinutes();let nx=nm<240?nm+1440:nm;
-  if(nx>=240&&nx<=1680){const x=Xp(nx);s.push(`<line x1="${x}" y1="${T}" x2="${x}" y2="${T+plotH}" stroke="var(--red)" stroke-width="1.3" opacity="0.9"/>`);s.push(`<text x="${x}" y="${T+plotH+8}" fill="var(--red)" font-size="9" text-anchor="middle">ì§€ê¸ˆ</text>`);}
-  // ì„ íƒ ì‹œ ë‚˜ë¨¸ì§€ëŠ” íë¦¬ê²Œ, ì„ íƒ ì—´ì°¨ëŠ” êµµê²Œ
-  showT.forEach(o=>{
-    const c=GRADE_COLORS[o.t.grade]||'#8b949e';
-    const isSel=sel&&o.t.no===sel.t.no;
-    const op=!sel?0.85:(isSel?1:0.1);
-    const w=isSel?2.8:1.4;
-    const pl=o.pts.map(p=>`${Xp(p.t).toFixed(1)},${Y(p.d).toFixed(1)}`).join(' ');
-    s.push(`<polyline points="${pl}" fill="none" stroke="transparent" stroke-width="8" style="cursor:pointer" onclick="_opsSelectTrain('${o.t.no}')"><title>${_opsEsc(o.t.grade)} ${o.t.no} Â· ${_opsEsc(o.t.stops[0].s)}â†’${_opsEsc(o.t.dest)}</title></polyline>`);
-    s.push(`<polyline points="${pl}" fill="none" stroke="${c}" stroke-width="${w}" opacity="${op}" pointer-events="none"/>`);
-    if(!sel||isSel)o.pts.forEach(p=>{if(!p.pass)s.push(`<circle cx="${Xp(p.t).toFixed(1)}" cy="${Y(p.d).toFixed(1)}" r="${isSel?2.2:1.5}" fill="${c}" pointer-events="none"/>`);});
-  });
-  // êµí–‰/ì¶”ì›” ì§€ì  ë§ˆì»¤ (ì„ íƒ ì‹œ)
-  if(sel)meets.forEach(m=>{const x=Xp(m.x),y=Y(m.d),col=m.same?'#f0883e':'#ef4444';
-    s.push(`<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="3.4" fill="none" stroke="${col}" stroke-width="1.6"><title>${m.same?'ì¶”ì›”':'êµí–‰'} Â· ${_opsEsc(m.grade)} ${_opsEsc(m.no)} Â· ${_opsEsc(m.stn)} ${_fmtM(Math.round(m.x))}</title></circle>`);});
-  s.push('</svg>');
-  h+=`<div class="ops-diagram-wrap"><div class="ops-diagram-axis">${ax.join('')}</div><div class="ops-diagram-scroll">${s.join('')}</div></div>`;
-  h+=`<p class="ops-hint">ê°€ë¡œì¶• = ì‹œê°(04â†’28ì‹œ) Â· ì„¸ë¡œì¶• = <b>${_opsEsc(cor.name)}</b> ì—­(ê±°ë¦¬ìˆœ) Â· ì„  í•˜ë‚˜ = ì—´ì°¨ 1í¸ Â· ê¸°ìš¸ê¸°ê°€ ê¸‰í• ìˆ˜ë¡ ê³ ì† Â· <b>ì„ ì„ ëˆ„ë¥´ë©´ ê°•ì¡°</b>ë˜ê³  êµí–‰(ë¹¨ê°•)Â·ì¶”ì›”(ì£¼í™©) ì§€ì ì´ í‘œì‹œë©ë‹ˆë‹¤</p>`;
-  host.innerHTML=h;
-}
-
-// â”€â”€ í¸ì„± ìš´ìš© íë¦„ë„ â”€â”€
-let _rakeGroupsCache=null;
-// í¸ì„± ì†Œì†(ê¸°ì )ì—­ = í•˜í–‰(í™ˆâ†’ì›ë‹¨) ì—´ì°¨ì˜ ì¶œë°œì—­(boundary[0]). ëŒ€ì „â†’ë‚¨ëŒ€êµ¬ ì—´ì°¨ëŠ”
-// í•˜í–‰ origin=ëŒ€ì „ â†’ 'ëŒ€ì „ ì†Œì†'ì´ë©° ë‚¨ëŒ€êµ¬ì—ì„œ ì£¼ë°•ìœ¼ë¡œ í‘œì‹œëœë‹¤.
-function _rakeHome(seq){
-  for(const no of seq){const t=getTrainByNo(no);if(t&&t.dir==='down'&&t.boundary&&t.boundary[0])return t.boundary[0];}
-  const f=getTrainByNo(seq[0]);
-  return (f&&f.boundary&&f.boundary[0])||(f?_rotStart(f).stn:'ê¸°íƒ€');
-}
-function _rakeGroups(){
-  if(_rakeGroupsCache)return _rakeGroupsCache;
-  const byId={}; Object.values(CONFIRMED_ROTATION).forEach(r=>{byId[r.id]=r.seq;});
-  const groups={};
-  Object.entries(byId).forEach(([id,seq])=>{
-    const home=_rakeHome(seq);
-    (groups[home]=groups[home]||[]).push({id,seq,home});
-  });
-  const arr=Object.entries(groups).map(([g,rakes])=>{
-    rakes.sort((a,b)=>Math.min(...a.seq.map(Number))-Math.min(...b.seq.map(Number)));
-    const minNo=Math.min(...rakes.flatMap(r=>r.seq.map(n=>+n)));
-    return {g,rakes,minNo};
-  });
-  arr.sort((a,b)=>a.minNo-b.minNo);
-  return _rakeGroupsCache=arr;
-}
-function renderOpsRake(host){
-  if(typeof CONFIRMED_ROTATION==='undefined'){host.innerHTML='<div class="empty"><div class="empty-icon">ğŸ”</div><p>ìš´ìš© ë°ì´í„°ê°€ ì—†ìŠµë‹ˆë‹¤.</p></div>';return;}
-  const groups=_rakeGroups();
-  if(!groups.length){host.innerHTML='<div class="empty"><div class="empty-icon">ğŸ”</div><p>í™•ì • ìš´ìš©í‘œê°€ ì—†ìŠµë‹ˆë‹¤.</p></div>';return;}
-  if(!_opsGroup||!groups.some(x=>x.g===_opsGroup))_opsGroup=groups[0].g;
-  const grp=groups.find(x=>x.g===_opsGroup);
-  let h=`<div class="ops-toolbar">
-    <select class="ops-sel" onchange="_opsGroup=this.value;renderOpsTab()">
-      ${groups.map(x=>`<option value="${_opsEsc(x.g)}"${x.g===_opsGroup?' selected':''}>${_opsEsc(x.g)} ì†Œì† Â· ${x.rakes.length}í¸ì„±</option>`).join('')}
-    </select>
-    <span class="ops-count">${grp.rakes.reduce((a,r)=>a+r.seq.length,0)}í¸ ìš´í–‰</span>
-  </div>`;
-  const ruler=[];
-  for(let hh=4;hh<=28;hh+=2){const pct=(hh*60-240)/1440*100;ruler.push(`<span class="ops-tick" style="left:${pct}%">${String(hh%24).padStart(2,'0')}</span>`);}
-  h+=`<div class="ops-ruler-wrap"><div class="ops-ruler">${ruler.join('')}</div></div>`;
-  h+=`<div class="ops-rakes">`;
-  grp.rakes.forEach(rk=>{
-    const legs=rk.seq.map(no=>getTrainByNo(no)).filter(Boolean);
-    if(!legs.length)return;
-    const blocks=legs.map(t=>{
-      const st=_rotStart(t),e=_rotEnd(t);
-      let a=OPS_x(st.min),b=OPS_x(e.min);
-      if(b==null||a==null)return '';
-      if(b<a)b=1680; // ìì • ë„˜ê¹€ ë°©ì–´
-      const left=(a-240)/1440*100, w=Math.max(0.7,(b-a)/1440*100);
-      const c=GRADE_COLORS[t.grade]||'#8b949e';
-      return `<div class="ops-blk" style="left:${left}%;width:${w}%;--gc:${c}" onclick="jumpToTrain('${t.no}')" title="${_opsEsc(t.grade)} ${t.no} Â· ${_opsEsc(st.stn)} ${_fmtM(st.min)} â†’ ${_opsEsc(e.stn)} ${_fmtM(e.min)}">${w>5?`<span>${t.no}</span>`:''}</div>`;
-    }).join('');
-    const jm=rk.id.match(/\(([^)]*?)ì£¼ë°•\)/);
-    const jubakStn=jm?jm[1]:null;
-    h+=`<div class="ops-rake">
-      <div class="ops-rake-label"><b>${_opsEsc(rk.id.replace(/\(.*\)/,'').trim())}</b>${jubakStn?` <span class="ops-jubak">${_opsEsc(jubakStn)} ì£¼ë°•</span>`:''}<span class="ops-rake-n">${legs.length}íšŒ ìš´ìš©</span></div>
-      <div class="ops-rake-track">${blocks}</div>
-    </div>`;
-  });
-  h+=`</div>`;
-  h+=`<p class="ops-hint">í•œ ì¤„ = í¸ì„± 1ê°œì˜ í•˜ë£¨ ìš´ìš© Â· ë¸”ë¡ = ì—´ì°¨ 1í¸(ê°€ë¡œ ìœ„ì¹˜Â·ê¸¸ì´ = ìš´í–‰ ì‹œê°„ëŒ€) Â· ë¸”ë¡ ì‚¬ì´ ë¹ˆ êµ¬ê°„ = íšŒì°¨Â·ì£¼ë°• Â· ë¸”ë¡ì„ ëˆ„ë¥´ë©´ ì—´ì°¨ ìƒì„¸ë¡œ ì´ë™</p>`;
-  host.innerHTML=h;
-}
-
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-// ğŸ” ì „ì²  ê²½ë¡œ ê²€ìƒ‰ â€” ì¶œë°œÂ·ë„ì°©ì—­ ìµœì†Œí™˜ìŠ¹ ê²½ë¡œ ì•ˆë‚´
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-let _mrFrom='', _mrVia='', _mrTo='', _mrMode='transfer', _mrTimeMode='depart', _mrTime='', _mrTimeExplicit=false, _mrEdgeMode='normal', _mrLastJourney=null;
-let _mrTransportMode='metro',_mrTransportFilters={ktx:true,general:true,gtx:true};
-let _mrPickerDraftMode='depart', _mrPickerDraftEdge='normal';
-function setMrMode(m){_mrMode=m;document.querySelectorAll('.mr-mode-chip').forEach(c=>c.classList.toggle('on',c.dataset.mode===m));if(_mrFrom&&_mrTo)searchMetroRoute();}
-let _metroGraphCache=null;
-function _metroGraph(){
-  if(_metroGraphCache)return _metroGraphCache;
-  const adj={}, stnLines={}, stnPatterns={}, lineById={}, patterns={};
-  const lineByName={};
-  (typeof METRO_LINES!=='undefined'?METRO_LINES:[]).forEach(l=>{
-    lineById[l.id]=l; lineByName[l.name]=l;
-    (l.routes||[{stations:l.stations}]).forEach(r=>{
-      const st=r.stations||[];
-      st.forEach(s=>{(stnLines[s]=stnLines[s]||new Set()).add(l.id);});
-    });
-  });
-  // ì‹¤ì œ í¸ì„±ì˜ ì™•ë³µ ë°°ì—´ì„ íšŒì°¨ì ë³„ ë‹¨ë°©í–¥ ìš´í–‰ êµ¬ê°„ìœ¼ë¡œ ë‚˜ëˆˆë‹¤.
-  // ê°™ì€ ë…¸ì„ ì´ë¼ë„ ì„œë¡œ ë‹¤ë¥¸ êµ¬ê°„ í¸ì„±ìœ¼ë¡œ ê°ˆì•„íƒ€ë©´ ë³„ë„ patternì´ë¯€ë¡œ í™˜ìŠ¹ìœ¼ë¡œ ê³„ì‚°ëœë‹¤.
-  const patternKeyToId=new Map();
-  Object.entries(typeof METRO_SCHED!=='undefined'?METRO_SCHED:{}).forEach(([lineName,ent])=>{
-    const line=lineByName[lineName]; if(!line||!ent||!Array.isArray(ent.t))return;
-    ent.t.forEach(f=>{
-      const n=Math.floor(f.length/3), idxSeq=[];
-      for(let i=0;i<n;i++)idxSeq.push(f[3*i+2]);
-      _metroLegRanges(idxSeq).forEach(([start,end])=>{
-        const seq=[];
-        for(let i=start;i<=end;i++){
-          const station=ent.s[idxSeq[i]];
-          if(station!=null&&seq[seq.length-1]!==station)seq.push(station);
-        }
-        if(seq.length<2)return;
-        const key=`${line.id}\u0002${seq.join('\u0002')}`;
-        let pid=patternKeyToId.get(key);
-        if(!pid){
-          pid=`p${patternKeyToId.size}`;
-          patternKeyToId.set(key,pid);
-          patterns[pid]={id:pid,lid:line.id,lineName,stations:seq};
-          for(let i=0;i<seq.length;i++){
-            const station=seq[i];
-            (stnPatterns[station]=stnPatterns[station]||new Set()).add(pid);
-            (stnLines[station]=stnLines[station]||new Set()).add(line.id);
-            if(i<seq.length-1){
-              (adj[station]=adj[station]||new Map());
-              if(!adj[station].has(pid))adj[station].set(pid,new Set());
-              adj[station].get(pid).add(seq[i+1]);
-            }
-          }
-        }
-      });
-    });
-  });
-  return _metroGraphCache={adj,stnLines,stnPatterns,lineById,patterns};
-}
-function _metroStnList(){const G=_metroGraph();return Object.keys(G.stnLines).sort();}
-function _mrStnList(){
-  const names=new Set(_metroStnList());
-  if(_mrTransportMode==='integrated'&&typeof ALL_TRAINS!=='undefined')ALL_TRAINS.forEach(train=>(train.stops||[]).forEach(stop=>names.add(stop.s)));
-  return [...names].sort();
-}
-function _metroAcShow(id,pickFn){
-  const inp=document.getElementById(id); if(!inp)return;
-  const q=inp.value.trim();
-  const el=document.getElementById(id+'-ac'); if(!el)return;
-  const all=_mrStnList();
-  const list=(q?all.filter(n=>matchesQuery(n,q)):all.slice(0,12)).slice(0,12);
-  const iE=id.replace(/'/g,"\\'");
-  el.innerHTML=list.map(n=>{const nE=n.replace(/'/g,"\\'");
-    return `<div class="ac-item" onmousedown="event.preventDefault();document.getElementById('${iE}').value='${nE}';document.getElementById('${iE}-ac').style.display='none';window['${pickFn}']('${nE}')">${n}</div>`;}).join('');
-  el.className='ac-dropdown open'; el.style.display=list.length?'block':'none';
-}
-function _mrPickFrom(n){_mrFrom=n;if(_mrTo)searchMetroRoute();}
-function _mrPickVia(n){_mrVia=n;if(_mrFrom&&_mrTo)searchMetroRoute();}
-function _mrPickTo(n){_mrTo=n;if(_mrFrom)searchMetroRoute();}
-function _mrSwap(){
-  const a=document.getElementById('mr-from'), b=document.getElementById('mr-to');
-  if(a&&b){const t=a.value;a.value=b.value;b.value=t;_mrFrom=a.value.trim();_mrTo=b.value.trim();}
-  if(_mrFrom&&_mrTo)searchMetroRoute();
-}
-function _mrFocusSearch(){
-  const input=document.getElementById('mr-from');
-  if(input){input.focus();input.select();input.scrollIntoView({block:'center',behavior:'smooth'});}
-}
-function _mrDefaultTime(){
-  const d=new Date();
-  const p=n=>String(n).padStart(2,'0');
-  return `${p(d.getHours())}:${p(d.getMinutes())}`;
-}
-function setMrTimeMode(mode){
-  _mrTimeMode=mode==='arrive'?'arrive':'depart';
-  document.querySelectorAll('.mr-time-mode button').forEach(button=>button.classList.toggle('on',button.dataset.timeMode===_mrTimeMode));
-  if(_mrFrom&&_mrTo)searchMetroRoute();
-}
-function setMrEdgeMode(mode,checked){
-  const timeInput=document.getElementById('mr-time');if(timeInput)_mrTime=timeInput.value;
-  _mrEdgeMode=checked?(mode==='last'?'last':'first'):'normal';
-  document.querySelectorAll('.mr-edge-check input').forEach(input=>{input.checked=input.value===_mrEdgeMode;});
-  if(_mrFrom&&_mrTo)searchMetroRoute();
-}
-function _mrClockLabel(value){
-  const [h,m]=String(value||_mrDefaultTime()).split(':').map(Number),amp=h<12?'ì˜¤ì „':'ì˜¤í›„',hour=h%12||12;
-  return `${amp} ${String(hour).padStart(2,'0')}:${String(m||0).padStart(2,'0')}`;
-}
-function openMrTimePicker(){
-  closeMrTimePicker();
-  _mrPickerDraftMode=_mrTimeMode;_mrPickerDraftEdge=_mrEdgeMode;
-  const [h,m]=String(_mrTime||_mrDefaultTime()).split(':').map(Number),hour=h%12||12;
-  const wrap=document.createElement('div');wrap.id='mr-time-picker-wrap';wrap.className='mr-time-picker-wrap';
-  const opts=(from,to,current)=>Array.from({length:to-from+1},(_,index)=>{const value=from+index;return `<option value="${value}"${value===current?' selected':''}>${String(value).padStart(2,'0')}</option>`;}).join('');
-  wrap.innerHTML=`<div class="mr-time-picker-backdrop" onclick="closeMrTimePicker()"></div><section class="mr-time-picker" role="dialog" aria-modal="true" aria-label="ê²½ë¡œ ê²€ìƒ‰ ì‹œê° ì„ íƒ"><div class="mr-picker-tabs"><button type="button" data-picker-mode="depart" class="${_mrTimeMode==='depart'?'on':''}" onclick="setMrPickerMode('depart')">ì¶œë°œ</button><button type="button" data-picker-mode="arrive" class="${_mrTimeMode==='arrive'?'on':''}" onclick="setMrPickerMode('arrive')">ë„ì°©</button></div><div class="mr-picker-clock"><select id="mr-picker-amp" aria-label="ì˜¤ì „ ì˜¤í›„"><option value="am"${h<12?' selected':''}>ì˜¤ì „</option><option value="pm"${h>=12?' selected':''}>ì˜¤í›„</option></select><select id="mr-picker-hour" aria-label="ì‹œ">${opts(1,12,hour)}</select><span>:</span><select id="mr-picker-minute" aria-label="ë¶„">${opts(0,59,m||0)}</select></div><div class="mr-picker-edges"><label><input type="checkbox" value="first"${_mrEdgeMode==='first'?' checked':''} onchange="setMrPickerEdge('first',this.checked)"><span>ì²«ì°¨íƒ€ê¸°</span></label><label><input type="checkbox" value="last"${_mrEdgeMode==='last'?' checked':''} onchange="setMrPickerEdge('last',this.checked)"><span>ë§‰ì°¨íƒ€ê¸°</span></label></div><footer><button type="button" onclick="closeMrTimePicker()">ì·¨ì†Œ</button><button type="button" class="confirm" onclick="applyMrTimePicker()">í™•ì¸</button></footer></section>`;
-  document.body.appendChild(wrap);document.body.classList.add('mr-time-picker-open');
-}
-function setMrPickerMode(mode){
-  _mrPickerDraftMode=mode==='arrive'?'arrive':'depart';document.querySelectorAll('[data-picker-mode]').forEach(button=>button.classList.toggle('on',button.dataset.pickerMode===_mrPickerDraftMode));
-}
-function setMrPickerEdge(mode,checked){
-  _mrPickerDraftEdge=checked?(mode==='last'?'last':'first'):'normal';document.querySelectorAll('.mr-picker-edges input').forEach(input=>{input.checked=input.value===_mrPickerDraftEdge;});
-}
-function applyMrTimePicker(){
-  const amp=document.getElementById('mr-picker-amp')?.value,hour=Number(document.getElementById('mr-picker-hour')?.value||12),minute=Number(document.getElementById('mr-picker-minute')?.value||0);
-  let h=hour%12;if(amp==='pm')h+=12;_mrTime=`${String(h).padStart(2,'0')}:${String(minute).padStart(2,'0')}`;_mrTimeExplicit=true;_mrTimeMode=_mrPickerDraftMode;_mrEdgeMode=_mrPickerDraftEdge;
-  closeMrTimePicker();renderMetroRouteTab();if(_mrFrom&&_mrTo)searchMetroRoute();
-}
-function closeMrTimePicker(){const wrap=document.getElementById('mr-time-picker-wrap');if(wrap)wrap.remove();document.body.classList.remove('mr-time-picker-open');}
-function setMrTransportMode(mode){_mrTransportMode=mode==='integrated'?'integrated':'metro';renderMetroRouteTab();}
-function setMrTransportFilter(kind,checked){if(kind in _mrTransportFilters)_mrTransportFilters[kind]=!!checked;if(_mrFrom&&_mrTo)searchMetroRoute();}
-function _mrShareRoute(){
-  const text=`NIMBY Rail ì „ì²  ê²½ë¡œ: ${[_mrFrom,_mrVia,_mrTo].filter(Boolean).join(' â†’ ')}`;
-  if(navigator.share){navigator.share({title:'NIMBY Rail ì „ì²  ê²½ë¡œ',text}).catch(()=>{});return;}
-  if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(text).then(()=>alert('ê²½ë¡œ ì •ë³´ê°€ ë³µì‚¬ëìŠµë‹ˆë‹¤.')).catch(()=>{});}
-}
-function _mrPlannedRoute(from,via,to,mode,excludedPids){
-  const points=[from,via,to].filter(Boolean),segments=[];
-  for(let i=0;i<points.length-1;i++){
-    const part=_metroFindRoute(points[i],points[i+1],mode,excludedPids);
-    if(part.err)return part;
-    part.segments.forEach(segment=>{
-      const last=segments[segments.length-1];
-      if(last&&last.pid===segment.pid&&last.stns.at(-1)===segment.stns[0])last.stns.push(...segment.stns.slice(1));
-      else segments.push({...segment,stns:[...segment.stns]});
-    });
-  }
-  return {segments,stops:segments.reduce((sum,segment)=>sum+segment.stns.length-1,0),transfers:Math.max(0,segments.length-1),from,to,via};
-}
-function _mrOpenMap(kind){
-  if(!_mrLastJourney)return;
-  _metroJourneyMap=_mrLastJourney;
-  const graph=_metroGraph(),first=_mrLastJourney.segments[0],line=graph.lineById[first?.lid];
-  const regions=[...new Set(_mrLastJourney.segments.map(segment=>graph.lineById[segment.lid]?.region).filter(Boolean))];
-  if(line)_metroMapRegion=line.region;
-  _metroMapId='__all__';switchTab('map');showMapLine(regions.length>1?`metrojourney:${encodeURIComponent(regions.join('|'))}`:`metroall:${_metroMapRegion}`,null);
-}
-let _metroJourneyMap=null;
-function setMapStationAsRoutePoint(kind,station){
-  if(kind==='from')_mrFrom=station;else if(kind==='via')_mrVia=station;else _mrTo=station;
-  closeMapPopup();switchTab('metroroute');renderMetroRouteTab();
-  setTimeout(()=>document.getElementById(kind==='from'?'mr-from':kind==='via'?'mr-via':'mr-to')?.focus(),0);
-}
-// ìƒíƒœ=(ì—­,ì‹¤ì œ ë‹¨ë°©í–¥ ìš´í–‰ íŒ¨í„´) ë‹¤ìµìŠ¤íŠ¸ë¼.
-// ë…¸ì„ ëª…ì´ ê°™ì•„ë„ í¸ì„±ì´ ì´ì–´ì§€ì§€ ì•Šìœ¼ë©´ íŒ¨í„´ì„ ê°ˆì•„íƒ€ë¯€ë¡œ í™˜ìŠ¹ìœ¼ë¡œ ì²˜ë¦¬í•œë‹¤.
-function _metroFindRoute(from,to,mode,excludedPids){
-  const G=_metroGraph();
-  if(!G.stnLines[from]||!G.stnLines[to])return {err:'noStn'};
-  if(from===to)return {err:'same'};
-  if(!G.stnPatterns[from]||!G.stnPatterns[to])return {err:'nopath'};
-  // ìµœì†Œí™˜ìŠ¹: í™˜ìŠ¹ì„ í¬ê²Œ í˜ë„í‹°(ì—­ìˆ˜ëŠ” ë¶€ì°¨) / ìµœì†Œì‹œê°„: í™˜ìŠ¹â‰ˆ2ì •ê±°ì¥ ì‹œê°„(ì´ ì†Œìš” ìµœì†Œ)
-  const T=(mode==='time')?3:100;
-  const dist={}, prev={}, seen=new Set(); const pq=[];
-  const stateKey=(station,pid)=>`${station}\u0001${pid}`;
-  G.stnPatterns[from].forEach(pid=>{if(excludedPids&&excludedPids.has(pid))return;const k=stateKey(from,pid);dist[k]=0;prev[k]=null;pq.push({k,stn:from,pid,d:0});});
-  let best=null,bestD=Infinity;
-  while(pq.length){
-    let mi=0;for(let i=1;i<pq.length;i++)if(pq[i].d<pq[mi].d)mi=i;
-    const cur=pq.splice(mi,1)[0];
-    if(seen.has(cur.k))continue; seen.add(cur.k);
-    if(cur.d>=bestD)break;
-    if(cur.stn===to){best=cur.k;bestD=cur.d;break;}
-    const nbrs=G.adj[cur.stn];
-    const nextStations=excludedPids&&excludedPids.has(cur.pid)?null:nbrs&&nbrs.get(cur.pid);
-    if(nextStations)nextStations.forEach(nb=>{
-      const nk=stateKey(nb,cur.pid), nd=cur.d+1;
-      if(nd<(dist[nk]??Infinity)){dist[nk]=nd;prev[nk]=cur.k;pq.push({k:nk,stn:nb,pid:cur.pid,d:nd});}
-    });
-    (G.stnPatterns[cur.stn]||[]).forEach(pid=>{
-      if(pid===cur.pid||(excludedPids&&excludedPids.has(pid)))return;
-      const nk=stateKey(cur.stn,pid), nd=cur.d+T;
-      if(nd<(dist[nk]??Infinity)){dist[nk]=nd;prev[nk]=cur.k;pq.push({k:nk,stn:cur.stn,pid,d:nd});}
-    });
-  }
-  if(!best)return {err:'nopath'};
-  const path=[]; let k=best; while(k){path.unshift(k);k=(k in prev)?prev[k]:null;}
-  const nodes=path.map(x=>{const p=x.lastIndexOf('\u0001');return {s:x.slice(0,p),pid:x.slice(p+1)};});
-  const segs=[];
-  nodes.forEach(nd=>{
-    const last=segs[segs.length-1];
-    if(last&&last.pid===nd.pid){if(last.stns[last.stns.length-1]!==nd.s)last.stns.push(nd.s);}
-    else{
-      const pattern=G.patterns[nd.pid];
-      segs.push({pid:nd.pid,lid:pattern&&pattern.lid,stns:[nd.s]});
-    }
-  });
-  const real=segs.filter(s=>s.stns.length>=2);
-  const stops=real.reduce((a,s)=>a+s.stns.length-1,0);
-  return {segments:real,stops,transfers:Math.max(0,real.length-1),from,to};
-}
-function renderMetroRouteTab(){
-  const el=document.getElementById('result-metroroute'); if(!el)return;
-  if(typeof METRO_LINES==='undefined'){el.innerHTML='<div class="empty"><div class="empty-icon">ğŸš‡</div><p>ì „ì²  ë…¸ì„  ë°ì´í„°ê°€ ì—†ìŠµë‹ˆë‹¤.</p></div>';return;}
-  const shownTime=_mrTimeExplicit&&_mrTime?_mrTime:_mrDefaultTime();
-  el.innerHTML=`
-    <header class="mr-page-header">
-      <div><span>METRO JOURNEY PLANNER</span><h1>ì „ì²  ê²½ë¡œ</h1></div>
-      <button type="button" class="mr-guide" onclick="alert('ì¶œë°œÂ·ë„ì°© ì‹œê° ì¤‘ í•˜ë‚˜ë¥¼ ì„ íƒí•˜ê³  í•„ìš”í•˜ë©´ ê²½ìœ ì§€ë¥¼ ì¶”ê°€í•˜ì„¸ìš”. ì—´ì°¨ ìš´í–‰ì€ ìµì¼ ì˜¤ì „ 4ì‹œì— ì¢…ë£Œë©ë‹ˆë‹¤.')" aria-label="ê²½ë¡œ ê²€ìƒ‰ ì´ìš© ì•ˆë‚´">â“˜ ì´ìš© ì•ˆë‚´</button>
-    </header>
-    <div class="search-card mr-search-panel">
-      <div class="mr-transport-tabs" role="tablist" aria-label="ê¸¸ì°¾ê¸° ë²”ìœ„"><button type="button" class="${_mrTransportMode==='metro'?'on':''}" onclick="setMrTransportMode('metro')">ì „ì²  ê²½ë¡œ</button><button type="button" class="${_mrTransportMode==='integrated'?'on':''}" onclick="setMrTransportMode('integrated')">í†µí•© ê¸¸ì°¾ê¸°</button></div>
-      <div class="mr-place-stack">
-        <div class="mr-place-rail" aria-hidden="true"><i class="from"></i><span></span><i class="via"></i><span></span><i class="to"></i></div>
-        <div class="mr-field mr-place-field"><label>ì¶œë°œ</label>
-          <div class="autocomplete-wrap" style="min-width:0">
-            <input type="text" id="mr-from" class="term-sel" style="margin-bottom:0" value="${_mrFrom||''}" placeholder="ì¶œë°œì—­" autocomplete="off"
-              oninput="_metroAcShow('mr-from','_mrPickFrom')" onfocus="this.select();_metroAcShow('mr-from','_mrPickFrom')"
-              onblur="setTimeout(()=>{const d=document.getElementById('mr-from-ac');if(d)d.style.display='none';},150)"
-              onkeydown="if(event.key==='Enter'){_mrFrom=this.value.trim();searchMetroRoute();}">
-            <div class="ac-dropdown" id="mr-from-ac"></div>
-          </div>
-        </div>
-        <div class="mr-field mr-place-field"><label>ê²½ìœ  <small>ì„ íƒ</small></label><div class="autocomplete-wrap"><input type="text" id="mr-via" class="term-sel" value="${_mrVia||''}" placeholder="ê²½ìœ ì§€ ì¶”ê°€" autocomplete="off" oninput="_metroAcShow('mr-via','_mrPickVia')" onfocus="this.select();_metroAcShow('mr-via','_mrPickVia')" onblur="setTimeout(()=>{const d=document.getElementById('mr-via-ac');if(d)d.style.display='none';},150)"><div class="ac-dropdown" id="mr-via-ac"></div></div></div>
-        <div class="mr-field mr-place-field"><label>ë„ì°©</label>
-          <div class="autocomplete-wrap" style="min-width:0">
-            <input type="text" id="mr-to" class="term-sel" style="margin-bottom:0" value="${_mrTo||''}" placeholder="ë„ì°©ì—­" autocomplete="off"
-              oninput="_metroAcShow('mr-to','_mrPickTo')" onfocus="this.select();_metroAcShow('mr-to','_mrPickTo')"
-              onblur="setTimeout(()=>{const d=document.getElementById('mr-to-ac');if(d)d.style.display='none';},150)"
-              onkeydown="if(event.key==='Enter'){_mrTo=this.value.trim();searchMetroRoute();}">
-            <div class="ac-dropdown" id="mr-to-ac"></div>
-          </div>
-        </div>
-        <button class="mr-swap" onclick="_mrSwap()" title="ì¶œë°œÂ·ë„ì°© ë°”ê¾¸ê¸°" aria-label="ì¶œë°œì—­ê³¼ ë„ì°©ì—­ ë°”ê¾¸ê¸°">â‡…</button>
-      </div>
-      <div class="mr-time-row"><button type="button" class="mr-time-trigger" onclick="openMrTimePicker()"><span>${_mrTimeMode==='arrive'?'ë„ì°©':'ì¶œë°œ'}</span><b>${_mrClockLabel(shownTime)}</b>${_mrEdgeMode!=='normal'?`<em>${_mrEdgeMode==='first'?'ì²«ì°¨':'ë§‰ì°¨'}</em>`:''}<i aria-hidden="true">âŒ„</i></button><input type="time" id="mr-time" value="${shownTime}" hidden aria-label="ê²½ë¡œ ê²€ìƒ‰ ê¸°ì¤€ ì‹œê°"></div>
-      <div class="mr-transport-filters" aria-label="êµí†µìˆ˜ë‹¨ í•„í„°"><label><input type="checkbox"${_mrTransportFilters.ktx?' checked':''} onchange="setMrTransportFilter('ktx',this.checked)">KTXÂ·SRT</label><label><input type="checkbox"${_mrTransportFilters.general?' checked':''} onchange="setMrTransportFilter('general',this.checked)">ì¼ë°˜ì—´ì°¨</label><label><input type="checkbox"${_mrTransportFilters.gtx?' checked':''} onchange="setMrTransportFilter('gtx',this.checked)">GTX</label></div>
-      <div class="mr-search-foot"><div class="mr-modes" aria-label="ê²½ë¡œ ì •ë ¬"><button class="mr-mode-chip${_mrMode==='transfer'?' on':''}" data-mode="transfer" onclick="setMrMode('transfer')">ìµœì†Œ í™˜ìŠ¹</button><button class="mr-mode-chip${_mrMode==='time'?' on':''}" data-mode="time" onclick="setMrMode('time')">ìµœì†Œ ì‹œê°„</button></div><button class="btn btn-primary mr-search-button" onclick="_mrFrom=document.getElementById('mr-from').value.trim();_mrVia=document.getElementById('mr-via').value.trim();_mrTo=document.getElementById('mr-to').value.trim();_mrTime=_mrTimeExplicit?document.getElementById('mr-time').value:_mrDefaultTime();searchMetroRoute()">ê¸¸ì°¾ê¸°</button></div>
-    </div>
-    <div id="mr-result"></div>`;
-}
-// êµ¬ê°„ ì‹¤ì œ ë‹¤ìŒ ì—´ì°¨: ê°™ì€ ë‹¨ë°©í–¥ leg ì•ˆì—ì„œ boardâ†’alightë¥¼ ì‡ëŠ” í¸ ì¤‘ ê°€ì¥ ë¹ ë¥¸ ì¶œë°œ
-function _metroSegService(lineName, board, alight, afterSrv, patternId){
-  const ent=(typeof METRO_SCHED!=='undefined')&&METRO_SCHED[lineName]; if(!ent) return null;
-  const names=ent.s, svcs=ent.t, cArr=ent.c;
-  if(!names.includes(board)||!names.includes(alight))return null;
-  const srvMin=m=>(((m-240)%1440)+1440)%1440;
-  let best=null;const all=[];
-  for(let si=0;si<svcs.length;si++){ const f=svcs[si], n=f.length/3, cls=cArr?cArr[si]:0;
-    const idxSeq=[];for(let i=0;i<n;i++)idxSeq.push(f[3*i+2]);
-    for(const [start,end] of _metroLegRanges(idxSeq)){
-      let k=-1,mIdx=-1;
-      for(let i=start;i<end;i++){if(names[idxSeq[i]]===board){k=i;break;}}
-      if(k<0)continue;
-      for(let i=k+1;i<=end;i++){if(names[idxSeq[i]]===alight){mIdx=i;break;}}
-      if(mIdx<0)continue;
-      const rawDs=srvMin(f[3*k+1]);let ds=rawDs;
-      while(ds<afterSrv)ds+=1440;
-      const arrBase=srvMin(f[3*mIdx]);
-      let as=arrBase;while(as<ds)as+=1440;
-      const via=[];for(let x=k+1;x<mIdx;x++)via.push(names[idxSeq[x]]);
-      let rawAs=arrBase;while(rawAs<rawDs)rawAs+=1440;
-      const serviceKey=`${si}:${start}:${end}`;
-      if(rawAs<=1440)all.push({ds:rawDs,as:rawAs,si,k0:start,k1:end,key:serviceKey});
-      if(ds>=1440||as>1440)continue;
-      const cand={ds,as,dep:f[3*k+1]%1440,arr:f[3*mIdx]%1440,alightDep:f[3*mIdx+1]%1440,nStops:mIdx-k,via,cls,svc:si,k0:start,k1:end,key:serviceKey,dest:names[idxSeq[end]]};
-      if(!best||cand.ds<best.ds)best=cand;
-    }
-  }
-  if(best&&all.length){best.isFirst=best.key===all.reduce((a,b)=>a.ds<=b.ds?a:b).key;best.isLast=best.key===all.reduce((a,b)=>a.ds>=b.ds?a:b).key;}
-  return best;
-}
-function _metroSegServiceBefore(lineName,board,alight,beforeSrv,sortBy='arrival'){
-  const ent=(typeof METRO_SCHED!=='undefined')&&METRO_SCHED[lineName];if(!ent)return null;
-  const names=ent.s,svcs=ent.t,cArr=ent.c,srvMin=m=>(((m-240)%1440)+1440)%1440;let best=null;const all=[];
-  for(let si=0;si<svcs.length;si++){const f=svcs[si],n=f.length/3,cls=cArr?cArr[si]:0,idxSeq=[];for(let i=0;i<n;i++)idxSeq.push(f[3*i+2]);
-    for(const [start,end] of _metroLegRanges(idxSeq)){let k=-1,mIdx=-1;for(let i=start;i<end;i++)if(names[idxSeq[i]]===board){k=i;break;}if(k<0)continue;for(let i=k+1;i<=end;i++)if(names[idxSeq[i]]===alight){mIdx=i;break;}if(mIdx<0)continue;
-      const ds=srvMin(f[3*k+1]);let as=srvMin(f[3*mIdx]);while(as<ds)as+=1440;const serviceKey=`${si}:${start}:${end}`;if(as<=1440)all.push({ds,as,si,k0:start,k1:end,key:serviceKey});const boundary=sortBy==='departure'?ds:as;if(boundary>beforeSrv||as>1440)continue;
-      const via=[];for(let x=k+1;x<mIdx;x++)via.push(names[idxSeq[x]]);const cand={ds,as,dep:f[3*k+1]%1440,arr:f[3*mIdx]%1440,alightDep:f[3*mIdx+1]%1440,nStops:mIdx-k,via,cls,svc:si,k0:start,k1:end,key:serviceKey,dest:names[idxSeq[end]]};const metric=sortBy==='departure'?cand.ds:cand.as;if(!best||metric>(sortBy==='departure'?best.ds:best.as))best=cand;
-    }
-  }if(best&&all.length){best.isFirst=best.key===all.reduce((a,b)=>a.ds<=b.ds?a:b).key;best.isLast=best.key===all.reduce((a,b)=>a.ds>=b.ds?a:b).key;}return best;
-}
-// ë§‰ì°¨ ì°¾ê¸°ëŠ” ëª¨ë“  í™˜ìŠ¹ êµ¬ê°„ì˜ ë§‰ì°¨ë¥¼ ì—­ìˆœìœ¼ë¡œ ë¶™ì´ëŠ” ê²ƒì´ ì•„ë‹ˆë¼,
-// ì¶œë°œì—­ì—ì„œ ê°€ì¥ ëŠ¦ê²Œ ì¶œë°œí•˜ë©´ì„œ ëª©ì ì§€ê¹Œì§€ ì‹¤ì œë¡œ ì—°ê²°ë˜ëŠ” ì—¬ì •ì„ ì°¾ëŠ”ë‹¤.
-// ì²« êµ¬ê°„ í›„ë³´ë¥¼ ëŠ¦ì€ ìˆœì„œë¡œ ë‚®ì¶° ê°€ë©°, í›„ì† êµ¬ê°„ì€ ë„ì°© í›„ íƒˆ ìˆ˜ ìˆëŠ” ê°€ì¥ ë¹ ë¥¸ í¸ì„ ì‚¬ìš©í•œë‹¤.
-function _mrLatestDepartJourney(segments,graph,xbuf){
-  if(!segments.length)return null;
-  const firstSegment=segments[0],firstLine=graph.lineById[firstSegment.lid]||{name:'?',color:'#8b949e'};
-  let beforeSrv=1440,attempts=0;
-  while(beforeSrv>=0&&attempts++<2048){
-    const firstSvc=_metroSegServiceBefore(firstLine.name,firstSegment.stns[0],firstSegment.stns.at(-1),beforeSrv,'departure');
-    if(!firstSvc)return null;
-    const legs=[{l:firstLine,segment:firstSegment,board:firstSegment.stns[0],alight:firstSegment.stns.at(-1),...firstSvc}];
-    let afterSrv=firstSvc.as+xbuf,complete=true;
-    for(let i=1;i<segments.length;i++){
-      const segment=segments[i],line=graph.lineById[segment.lid]||{name:'?',color:'#8b949e'};
-      const svc=_metroSegService(line.name,segment.stns[0],segment.stns.at(-1),afterSrv,segment.pid);
-      if(!svc){complete=false;break;}
-      legs.push({l:line,segment,board:segment.stns[0],alight:segment.stns.at(-1),...svc});afterSrv=svc.as+xbuf;
-    }
-    if(complete)return legs;
-    beforeSrv=firstSvc.ds-1;
-  }
-  return null;
-}
-function _mrShowResolvedTime(clockMinute){
-  const clock=((Math.round(clockMinute)%1440)+1440)%1440,value=`${Math.floor(clock/60)}:${String(clock%60).padStart(2,'0')}`;
-  const label=document.querySelector('.mr-time-trigger b'),input=document.getElementById('mr-time');
-  if(label)label.textContent=_mrClockLabel(value);if(input)input.value=value;
-}
-function _mrMetroDistance(segments){
-  let km=0,last=null;
-  (segments||[]).forEach(segment=>(segment.stns||[]).forEach(name=>{const point=_stnCoord(name);if(last&&point)km+=havPt(last,point);if(point)last=point;}));
-  return km;
-}
-// ìˆ˜ë„ê¶Œ ì „ì²  êµí†µì¹´ë“œ ì„±ì¸ ìš´ì„: ê¸°ë³¸ 10km 1,550ì›, 10~50km 5kmë§ˆë‹¤ 100ì›,
-// 50km ì´ˆê³¼ 8kmë§ˆë‹¤ 100ì›. í”„ë¡œì íŠ¸ì˜ ê°€ìƒ ë…¸ì„ ì€ ì—­ê°„ ì§ì„ ê±°ë¦¬ í•©ê³„ë¥¼ ì ìš©í•œë‹¤.
-function _mrMetroFare(distanceKm){
-  const km=Math.max(0,Number(distanceKm)||0);let fare=1550;
-  if(km>10)fare+=Math.ceil((Math.min(km,50)-10)/5)*100;
-  if(km>50)fare+=Math.ceil((km-50)/8)*100;
-  return fare;
-}
-let _mrIntegratedEdgeCache=null;
-function _mrRailCategory(grade){
-  return ['KTX','KTX-ì‚°ì²œ','KTX-ì´ìŒ','SRT'].includes(grade)?'ktx':'general';
-}
-function _mrIntegratedEdges(){
-  if(_mrIntegratedEdgeCache)return _mrIntegratedEdgeCache;
-  const byFrom={},srvMin=m=>(((m-240)%1440)+1440)%1440,push=edge=>{(byFrom[edge.from]=byFrom[edge.from]||[]).push(edge);};
-  const metroLines=new Map((typeof METRO_LINES!=='undefined'?METRO_LINES:[]).map(line=>[line.name,line]));
-  Object.entries(typeof METRO_SCHED!=='undefined'?METRO_SCHED:{}).forEach(([lineName,entry])=>{
-    const line=metroLines.get(lineName)||{name:lineName,color:'#2563eb'};
-    (entry.t||[]).forEach((service,svc)=>{const count=Math.floor(service.length/3),indexes=[];for(let i=0;i<count;i++)indexes.push(service[i*3+2]);
-      _metroLegRanges(indexes).forEach(([start,end])=>{for(let i=start;i<end;i++){const j=i+1;
-        const from=entry.s[indexes[i]],to=entry.s[indexes[j]];if(!from||!to||from===to)continue;
-        const ds=srvMin(service[i*3+1]);let as=srvMin(service[j*3]);while(as<ds)as+=1440;if(as>1440)continue;
-        push({type:'metro',category:/^GTX(?:-|$)/i.test(lineName)?'gtx':'metro',from,to,ds,as,line:lineName,color:line.color||'#2563eb',svc,k0:start,k1:end,dest:entry.s[indexes[end]],via:indexes.slice(i+1,j).map(index=>entry.s[index]),key:`m:${lineName}:${svc}:${start}:${end}`});
-      }});
-    });
-  });
-  (typeof ALL_TRAINS!=='undefined'?ALL_TRAINS:[]).forEach(train=>{const calls=(train.stops||[]).map((stop,index)=>({stop,index})).filter(({stop})=>hasTime(stop.arr)||hasTime(stop.dep));
-    for(let i=0;i<calls.length-1;i++){const fromStop=calls[i].stop,j=i+1,toStop=calls[j].stop;if(!hasTime(fromStop.dep)||!hasTime(toStop.arr))continue;
-      const ds=srvMin(toMin(fromStop.dep));let as=srvMin(toMin(toStop.arr));while(as<ds)as+=1440;if(as>1440)continue;
-      push({type:'rail',category:_mrRailCategory(train.grade),from:fromStop.s,to:toStop.s,ds,as,line:train.line,grade:train.grade,color:(typeof GRADE_COLORS!=='undefined'&&GRADE_COLORS[train.grade])||'#475569',train,svc:train.no,dest:train.dest,via:[],key:`r:${train.grade}:${train.no}`});
-    }
-  });
-  Object.values(byFrom).forEach(edges=>edges.sort((a,b)=>a.ds-b.ds||a.as-b.as));
-  return _mrIntegratedEdgeCache=byFrom;
-}
-function _mrEdgeAllowed(edge){
-  if(edge.category==='gtx')return _mrTransportFilters.gtx;
-  if(edge.category==='ktx')return _mrTransportFilters.ktx;
-  if(edge.category==='general')return _mrTransportFilters.general;
-  return true;
-}
-function _mrIntegratedEarliest(from,to,afterSrv,firstEdge){
-  const edges=_mrIntegratedEdges(),best={[from]:afterSrv},prev={},queue=[];let finish=null;
-  const push=item=>{queue.push(item);let i=queue.length-1;while(i>0){const p=(i-1)>>1;if(queue[p].time<=item.time)break;queue[i]=queue[p];i=p;}queue[i]=item;};
-  const pop=()=>{const root=queue[0],last=queue.pop();if(queue.length&&last){let i=0;while(true){let child=i*2+1;if(child>=queue.length)break;if(child+1<queue.length&&queue[child+1].time<queue[child].time)child++;if(queue[child].time>=last.time)break;queue[i]=queue[child];i=child;}queue[i]=last;}return root;};
-  push({station:from,time:afterSrv});
-  while(queue.length){const cur=pop();if(cur.time!==best[cur.station])continue;if(cur.station===to){finish=cur.station;break;}
-    const options=firstEdge&&cur.station===from?[firstEdge]:(edges[cur.station]||[]);
-    for(const edge of options){if(!_mrEdgeAllowed(edge)||edge.ds<cur.time)continue;if(edge.as>1440)continue;if(edge.as<(best[edge.to]??Infinity)){best[edge.to]=edge.as;prev[edge.to]={from:cur.station,edge};push({station:edge.to,time:edge.as});}}
-  }
-  if(!finish)return null;const legs=[];let station=finish;while(station!==from){const step=prev[station];if(!step)return null;legs.unshift(step.edge);station=step.from;}return legs;
-}
-function _mrIntegratedPart(from,to,afterSrv,edgeMode,beforeSrv){
-  const outgoing=(_mrIntegratedEdges()[from]||[]).filter(_mrEdgeAllowed);
-  if(edgeMode==='last'||beforeSrv!=null){
-    const limit=beforeSrv==null?1440:beforeSrv;
-    for(const edge of [...outgoing].filter(edge=>edge.ds<=limit).sort((a,b)=>b.ds-a.ds)){const legs=_mrIntegratedEarliest(from,to,edge.ds,edge);if(legs&&legs.at(-1).as<=(beforeSrv??1440))return legs;}
-    return null;
-  }
-  return _mrIntegratedEarliest(from,to,edgeMode==='first'?0:afterSrv);
-}
-function _mrIntegratedJourney(points,selectedSrv){
-  const connectRest=(firstPart,startIndex)=>{const all=[...firstPart];let cursor=firstPart.at(-1).as+2;for(let i=startIndex;i<points.length-1;i++){const part=_mrIntegratedPart(points[i],points[i+1],cursor,'normal',i===points.length-2&&_mrTimeMode==='arrive'&&_mrEdgeMode==='normal'?selectedSrv:null);if(!part)return null;all.push(...part);cursor=part.at(-1).as+2;}return all;};
-  if(_mrEdgeMode==='last'){
-    const outgoing=(_mrIntegratedEdges()[points[0]]||[]).filter(_mrEdgeAllowed).sort((a,b)=>b.ds-a.ds);
-    for(const edge of outgoing){const first=_mrIntegratedEarliest(points[0],points[1],edge.ds,edge);if(first){const journey=connectRest(first,1);if(journey)return journey;}}
-    return null;
-  }
-  const first=_mrIntegratedPart(points[0],points[1],_mrEdgeMode==='first'?0:selectedSrv,_mrEdgeMode==='first'?'first':'normal',points.length===2&&_mrTimeMode==='arrive'&&_mrEdgeMode==='normal'?selectedSrv:null);
-  return first?connectRest(first,1):null;
-}
-function _mrIntegratedFare(legs){
-  let metroKm=0,railFare=0,hasMetro=false;
-  legs.forEach(leg=>{if(leg.type==='metro'){hasMetro=true;const seq=[leg.from,...leg.via,leg.to];for(let i=1;i<seq.length;i++)metroKm+=havPt(_stnCoord(seq[i-1]),_stnCoord(seq[i]));}else if(leg.train)railFare+=calcFare(leg.train,leg.from,leg.to,'general');});
-  return {distance:metroKm,fare:railFare+(hasMetro?_mrMetroFare(metroKm):0)};
-}
-function searchIntegratedRoute(from,via,to){
-  const out=document.getElementById('mr-result'),srvMin=m=>(((m-240)%1440)+1440)%1440,fmt=m=>{m=((Math.round(m)+240)%1440+1440)%1440;return `${Math.floor(m/60)}:${String(m%60).padStart(2,'0')}`;};
-  const clock=(_mrTimeExplicit?_mrTime:_mrDefaultTime()).split(':').map(Number),selected=srvMin(clock[0]*60+clock[1]);
-  const legs=_mrIntegratedJourney([from,via,to].filter(Boolean),selected);if(!legs?.length){out.innerHTML='<div class="mr-hint">ì„ íƒí•œ êµí†µìˆ˜ë‹¨ê³¼ ì‹œê°ìœ¼ë¡œ ì—°ê²°ë˜ëŠ” í†µí•© ê²½ë¡œë¥¼ ì°¾ì„ ìˆ˜ ì—†ìŠµë‹ˆë‹¤.</div>';return;}
-  const merged=[];legs.forEach(edge=>{const last=merged.at(-1);if(last&&last.key===edge.key&&last.to===edge.from){last.to=edge.to;last.as=edge.as;last.via.push(edge.from,...edge.via);}else merged.push({...edge,via:[...edge.via]});});
-  const money=_mrIntegratedFare(merged),total=merged.at(-1).as-merged[0].ds;
-  const rail=merged.map((leg,index)=>{const lineArg=String(leg.line).replace(/\\/g,'\\\\').replace(/'/g,"\\'");const fromArg=String(leg.from).replace(/'/g,"\\'");const click=leg.type==='metro'?`onclick="openMetroRouteTimetable('${fromArg}','${lineArg}',${leg.svc},${(leg.ds+240)%1440},${leg.k0},${leg.k1})"`:'';return `<div class="rt-node" style="--lc:${leg.color}"><div class="rt-time"><b>${fmt(leg.ds)}</b><small>ì¶œë°œ</small></div><div class="rt-rail"><span class="rt-dot rt-board"></span><span class="rt-seg"></span></div><div class="rt-info"><button class="rt-stn rt-stn-link" ${click}>${_opsEsc(leg.from)}${click?'<span class="rt-chev">â€º</span>':''}</button><div class="rt-sub"><span class="rt-lchip" style="background:${leg.color}">${_opsEsc(leg.type==='rail'?leg.grade:leg.line)}</span> ${_opsEsc(leg.dest)}í–‰</div><div class="rt-cnt">${leg.via.length+1}ê°œ ì—­ Â· ${leg.as-leg.ds}ë¶„</div></div></div><div class="rt-node${index===merged.length-1?' rt-final-arrive':''}" style="--lc:${leg.color}"><div class="rt-time"><b>${fmt(leg.as)}</b><small>ë„ì°©</small></div><div class="rt-rail"><span class="rt-dot rt-alight"></span><span class="rt-seg"></span></div><div class="rt-info"><span class="rt-stn rt-stn-link">${_opsEsc(leg.to)}</span></div></div>${index<merged.length-1?`<div class="rt-node rt-walk"><div class="rt-time"><small>í™˜ìŠ¹</small></div><div class="rt-rail"><span class="rt-seg rt-dash"></span><span class="rt-walk-ic">â†”</span></div><div class="rt-info"><div class="rt-sub rt-xfer">${_opsEsc(leg.to)}ì—­ í™˜ìŠ¹ Â· ëŒ€ê¸° ${merged[index+1].ds-leg.as}ë¶„</div></div></div>`:''}`;}).join('');
-  if(_mrEdgeMode!=='normal')_mrShowResolvedTime(merged[0].ds+240);
-  out.innerHTML=`<section class="mr-route-result"><header class="mr-result-header"><div><strong>${[from,via,to].filter(Boolean).map(_opsEsc).join(' â†’ ')}</strong><span class="badge blue">í†µí•© ê¸¸ì°¾ê¸°</span></div><div><b>ì´ ${fmtDurKor(total)}</b><small>${merged.length-1?`í™˜ìŠ¹ ${merged.length-1}íšŒ`:'ì§í†µ'} Â· ì˜ˆìƒ ${money.fare.toLocaleString()}ì›${money.distance?` Â· ì „ì²  ${money.distance.toFixed(1)}km`:''}</small></div></header><div class="rt-list"><div class="rt-card"><div class="rt-tl">${rail}</div></div></div><p class="ops-hint">ì „ì² ê³¼ ê¸°ì°¨ì˜ ì‹¤ì œ ì‹œê°„í‘œë¥¼ ì—°ê²°í•œ ê²°ê³¼ì…ë‹ˆë‹¤. ì¼ë°˜ì—´ì°¨ ìš´ì„ê³¼ ê±°ë¦¬ë¹„ë¡€ ì „ì²  ìš´ì„ì„ í•©ì‚°í–ˆìŠµë‹ˆë‹¤.</p><footer class="mr-result-actions"><button onclick="_mrShareRoute()">ê³µìœ í•˜ê¸°</button><button class="primary" onclick="_mrFocusSearch()">ë‹¤ë¥¸ ê²½ë¡œ ë³´ê¸° <span>â†’</span></button></footer></section>`;
-}
-function searchMetroRoute(excludedPids,routeAttempt=0){
-  const out=document.getElementById('mr-result'); if(!out)return;
-  const from=(_mrFrom||'').trim(), via=(_mrVia||'').trim(), to=(_mrTo||'').trim();
-  if(!from||!to){out.innerHTML='<div class="mr-hint">ì¶œë°œì—­ê³¼ ë„ì°©ì—­ì„ ëª¨ë‘ ì…ë ¥í•˜ì„¸ìš”.</div>';return;}
-  if(_mrTransportMode==='integrated')return searchIntegratedRoute(from,via,to);
-  if(!_mrTransportFilters.gtx){const graph=_metroGraph(),filtered=new Set(excludedPids||[]);Object.values(graph.patterns).forEach(pattern=>{if(/^GTX(?:-|$)/i.test(graph.lineById[pattern.lid]?.name||''))filtered.add(pattern.id);});excludedPids=filtered;}
-  const r=_mrPlannedRoute(from,via,to,_mrMode,excludedPids);
-  if(r.err==='same'){out.innerHTML='<div class="mr-hint">ì¶œë°œì—­ê³¼ ë„ì°©ì—­ì´ ê°™ìŠµë‹ˆë‹¤.</div>';return;}
-  if(r.err==='noStn'){const bad=_metroGraph().stnLines[from]?to:from;out.innerHTML=`<div class="mr-hint">ì „ì²  ë…¸ì„ ì— <b>${_opsEsc(bad)}</b> ì—­ì´ ì—†ìŠµë‹ˆë‹¤. ì—­ëª…ì„ í™•ì¸í•˜ì„¸ìš”.</div>`;return;}
-  if(r.err||!r.segments||!r.segments.length){out.innerHTML='<div class="mr-hint">ê²½ë¡œë¥¼ ì°¾ì„ ìˆ˜ ì—†ìŠµë‹ˆë‹¤.</div>';return;}
-  const G=_metroGraph();
-  const srvMin=m=>(((m-240)%1440)+1440)%1440;
-  const fmt=m=>{m=((Math.round(m))%1440+1440)%1440;return `${Math.floor(m/60)}:${String(m%60).padStart(2,'0')}`;};
-  const durFmt=m=>{const h=Math.floor(m/60);return h?`${h}ì‹œê°„ ${m%60}ë¶„`:`${m}ë¶„`;};
-  const selectedClock=(_mrTime||_mrDefaultTime()).split(':').map(Number);
-  const selectedSrv=srvMin((selectedClock[0]||0)*60+(selectedClock[1]||0));
-  const XBUF=2; // í™˜ìŠ¹ ë„ë³´ ë²„í¼(ë¶„)
-  // â”€â”€ ì‹¤ì œ ìš´í–‰ ë°ì´í„°ë¡œ êµ¬ê°„ë³„ ë‹¤ìŒ ì—´ì°¨ íƒìƒ‰ â”€â”€
-  const legs=[];let realOk=r.segments.length>0,endedAt=null,failedPid=null;
-  if(_mrEdgeMode==='last'){
-    const latestLegs=_mrLatestDepartJourney(r.segments,G,XBUF);
-    if(latestLegs)legs.push(...latestLegs);else {realOk=false;failedPid=r.segments[0]?.pid;}
-  }else if(_mrEdgeMode==='normal'&&_mrTimeMode==='arrive'){
-    let beforeSrv=selectedSrv;
-    for(let i=r.segments.length-1;i>=0;i--){const s=r.segments[i],l=G.lineById[s.lid]||{name:'?',color:'#8b949e'},svc=_metroSegServiceBefore(l.name,s.stns[0],s.stns.at(-1),beforeSrv);if(!svc){realOk=false;failedPid=s.pid;break;}legs.unshift({l,segment:s,board:s.stns[0],alight:s.stns.at(-1),...svc});beforeSrv=svc.ds-XBUF;}
-  }else{
-    let afterSrv=_mrEdgeMode==='first'?0:selectedSrv;
-    for(const s of r.segments){const l=G.lineById[s.lid]||{name:'?',color:'#8b949e'},svc=_metroSegService(l.name,s.stns[0],s.stns.at(-1),afterSrv,s.pid);if(!svc){realOk=false;failedPid=s.pid;endedAt=legs.at(-1)?.alight||from;break;}legs.push({l,segment:s,board:s.stns[0],alight:s.stns.at(-1),...svc});afterSrv=svc.as+XBUF;}
-  }
-  if(!realOk&&failedPid&&routeAttempt<8){
-    const blocked=new Set(excludedPids||[]);blocked.add(failedPid);
-    const alternative=_mrPlannedRoute(from,via,to,_mrMode,blocked);
-    if(!alternative.err&&alternative.segments?.length)return searchMetroRoute(blocked,routeAttempt+1);
-  }
-  let rail='', headDur, headMeta, foot;
-  // ëª©ì ì§€ê¹Œì§€ ì—°ê²°ë˜ì§€ ì•Šë”ë¼ë„ ì‹¤ì œë¡œ íƒˆ ìˆ˜ ìˆëŠ” ë§ˆì§€ë§‰ êµ¬ê°„ê¹Œì§€ëŠ” ê·¸ëŒ€ë¡œ ê·¸ë¦°ë‹¤.
-  legs.forEach((lg,i)=>{
-      const segMin=lg.as-lg.ds;
-      const exp=lg.cls===2?'<span class="mtb-exp mtb-exp--t">íŠ¹ê¸‰</span>':lg.cls===1?'<span class="mtb-exp">ê¸‰í–‰</span>':'';
-      const edge=lg.isFirst?'<span class="rt-edge-tag first">ì²«ì°¨</span>':lg.isLast?'<span class="rt-edge-tag last">ë§‰ì°¨</span>':'';
-      const lineArg=String(lg.l.name).replace(/\\/g,'\\\\').replace(/'/g,"\\'");
-      const boardArg=String(lg.board).replace(/\\/g,'\\\\').replace(/'/g,"\\'");
-      const alightArg=String(lg.alight).replace(/\\/g,'\\\\').replace(/'/g,"\\'");
-      const finalLeg=i===legs.length-1;
-      const cutOff=finalLeg&&!realOk;
-      rail+=`<div class="rt-node" style="--lc:${lg.l.color}">
-        <div class="rt-time"><b>${fmt(lg.dep)}</b><div class="rt-time-label"><small>ì¶œë°œ</small>${edge}</div></div>
-        <div class="rt-rail"><span class="rt-dot rt-board rt-mdot"></span><span class="rt-seg"></span></div>
-        <div class="rt-info">
-          <button type="button" class="rt-stn rt-stn-link" onclick="openMetroRouteTimetable('${boardArg}','${lineArg}',${lg.svc},${lg.dep},${lg.k0},${lg.k1})">${_opsEsc(lg.board)}<span class="rt-chev">â€º</span></button>
-          <div class="rt-sub">${exp}<span class="rt-lchip" style="background:${lg.l.color}">${_opsEsc(lg.l.name)}</span> ${_opsEsc(lg.dest)}í–‰</div>
-          <div class="rt-cnt">${lg.nStops}ê°œ ì—­ Â· ${segMin}ë¶„${lg.via.length?` <span class="rt-via-tg" onclick="this.parentElement.nextElementSibling.classList.toggle('open')">ê²½ìœ ì—­ â–¾</span>`:''}</div>
-          ${lg.via.length?`<div class="rt-via">${lg.via.map(_opsEsc).join(' Â· ')}</div>`:''}
-        </div></div>`;
-      rail+=`<div class="rt-node rt-leg-arrive${finalLeg?' rt-final-arrive':''}${cutOff?' rt-service-ended':''}" style="--lc:${lg.l.color}"><div class="rt-time"><b>${fmt(lg.arr)}</b><div class="rt-time-label"><small>${cutOff?'ìš´í–‰ ì¢…ë£Œ':'ë„ì°©'}</small></div></div><div class="rt-rail"><span class="rt-dot rt-alight"></span><span class="rt-seg"></span></div><div class="rt-info"><button type="button" class="rt-stn rt-stn-link" onclick="openMetroRouteTimetable('${alightArg}','${lineArg}',${lg.svc},${lg.alightDep},${lg.k0},${lg.k1})">${_opsEsc(lg.alight)}<span class="rt-chev">â€º</span>${cutOff?'<span class="rt-ended-tag">ì—¬ê¸°ê¹Œì§€ ìš´í–‰</span>':''}</button>${cutOff?'<div class="rt-sub">ìµì¼ ì˜¤ì „ 4ì‹œ ì „ ì—°ê²° ì—´ì°¨ê°€ ì—†ì–´ ì´í›„ êµ¬ê°„ì€ ì´ë™í•  ìˆ˜ ì—†ìŠµë‹ˆë‹¤.</div>':''}</div></div>`;
-      if(i<legs.length-1){ const wait=legs[i+1].ds-lg.as;
-        rail+=`<div class="rt-node rt-walk"><div class="rt-time"><small>í™˜ìŠ¹</small></div><div class="rt-rail"><span class="rt-seg rt-dash"></span><span class="rt-walk-ic">â†”</span></div><div class="rt-info"><div class="rt-sub rt-xfer">${_opsEsc(lg.alight)}ì—­ í™˜ìŠ¹ Â· ëŒ€ê¸° ${wait}ë¶„</div></div></div>`;
-      }
-  });
-  if(realOk){
-    const last=legs[legs.length-1];
-    const total=last.as-legs[0].ds;
-    headDur=durFmt(total);
-    const metroKm=_mrMetroDistance(r.segments),fare=_mrMetroFare(metroKm);
-    headMeta=`${r.transfers>0?`í™˜ìŠ¹ ${r.transfers}íšŒ`:'ì§í†µ'} Â· <span class="rt-mono">${fmt(legs[0].dep)}â†’${fmt(last.arr)}</span> Â· ì˜ˆìƒ ${fare.toLocaleString()}ì› Â· ${metroKm.toFixed(1)}km`;
-    foot=`ì‹¤ì œ ìš´í–‰ ì‹œê°í‘œ ê¸°ì¤€ Â· ${_mrEdgeMode==='first'?'ì²«ì°¨ ì—°ê²°':_mrEdgeMode==='last'?'ë§‰ì°¨ ì—°ê²°':_mrTimeMode==='arrive'?'ì„ íƒ ì‹œê°ê¹Œì§€ ë„ì°©':'ì„ íƒ ì‹œê° ì´í›„ ì¶œë°œ'} Â· ìµì¼ ì˜¤ì „ 4ì‹œ ì˜ì—… ì¢…ë£Œ.`;
-    if(_mrEdgeMode!=='normal')_mrShowResolvedTime(legs[0].dep);
-  } else {
-    if(!legs.length){out.innerHTML='<div class="mr-hint">ì„ íƒí•œ ì˜ì—…ì¼ì˜ ìš´í–‰ ì‹œê°í‘œë¡œ ì—°ê²°ë˜ëŠ” ê²½ë¡œë¥¼ ì°¾ì„ ìˆ˜ ì—†ìŠµë‹ˆë‹¤. ì‹œê°ì´ë‚˜ ì—­ëª…ì„ í™•ì¸í•˜ì„¸ìš”.</div>';return;}
-    headDur='ì´ë™ ê°€ëŠ¥ êµ¬ê°„';headMeta=`${fmt(legs[0].dep)} â†’ --:--`;foot='ë§‰ì°¨ ìš´í–‰ì´ ëë‚¬ìŠµë‹ˆë‹¤. í‘œì‹œëœ ë§ˆì§€ë§‰ ì—­ê¹Œì§€ë§Œ ì´ë™í•  ìˆ˜ ìˆìŠµë‹ˆë‹¤.';
-  }
-  _mrLastJourney={from,via,to,mapTo:realOk?to:legs.at(-1)?.alight||from,segments:realOk?r.segments:legs.map(l=>l.segment),legs};
-  out.innerHTML=`
-    <section class="mr-route-result${realOk?'':' partial'}">
-      <header class="mr-result-header"><div><strong>${[from,via,to].filter(Boolean).map(_opsEsc).join(' â†’ ')}</strong><span class="badge blue">${_mrMode==='time'?'ìµœì†Œ ì‹œê°„':'ìµœì†Œ í™˜ìŠ¹'}</span></div><div><b>${realOk?'ì´ ':''}${headDur}</b><small>${headMeta}</small></div></header>
-    <div class="rt-list"><div class="rt-card">
-      <div class="rt-tl">${rail}</div>
-    </div></div>
-    <p class="ops-hint">${foot}</p>
-    <footer class="mr-result-actions"><button type="button" onclick="_mrShareRoute()">ê³µìœ í•˜ê¸°</button><button type="button" onclick="_mrOpenMap('map')">ì§€ë„ì—ì„œ ë³´ê¸°</button><button type="button" class="primary" onclick="_mrFocusSearch()">ë‹¤ë¥¸ ê²½ë¡œ ë³´ê¸° <span>â†’</span></button></footer>
-    </section>`;
-}
-
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-// ğŸš† íƒ‘ìŠ¹ ì—¬ì • â€” ì‹¤ì‹œê°„ ìŠ¹ì°¨ í™”ë©´ (ê¸°ì¡´ ìœ„ì¹˜ ê³„ì‚° ì¬í™œìš©, ëª°ì…í˜•)
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-let _journeyNo=null, _journeyTimer=null, _journeyPageLock=null;
-// ì‹œê° ìˆëŠ” ì •ì°¨/í†µê³¼ì—­ì„ ìì • ë³´ì •ëœ ë¶„ìœ¼ë¡œ ë°˜í™˜
-function _journeyStops(t){
-  const raw=[];
-  t.stops.forEach(s=>{ if(hasTime(s.arr)||hasTime(s.dep))raw.push(s); });
-  if(!raw.length)return [];
-  const originStn=raw[0].s, termStn=raw[raw.length-1].s;
-  let offset=0, prevM=-1;
-  return raw.map(s=>{
-    const ra=toMin(s.arr), rd=toMin(s.dep);
-    const rm=ra??rd;
-    if(rm!==null&&prevM>=0&&rm<prevM-60)offset+=1440;
-    if(rm!==null)prevM=rm;
-    const isOrigin=s.s===originStn, isTerm=s.s===termStn;
-    return {s:s.s, arr:s.arr, dep:s.dep,
-      normArr:ra!==null?ra+offset:null, normDep:rd!==null?rd+offset:null,
-      isPass:!isOrigin&&!isTerm&&isPassStop(t,s.s), isOrigin, isTerm};
-  });
-}
-function openJourney(no){
-  const t=getTrainByNo(no); if(!t)return;
-  _journeyNo=no;
-  let ov=document.getElementById('journey-overlay');
-  if(!ov){
-    ov=document.createElement('div'); ov.id='journey-overlay'; ov.className='journey-overlay';
-    ov.innerHTML=`<div class="journey-sheet"><button class="journey-close" onclick="closeJourney()" aria-label="ë‹«ê¸°">âœ•</button><div id="journey-body"></div></div>`;
-    ov.addEventListener('pointerdown',e=>e.stopPropagation());
-    ov.addEventListener('touchstart',e=>e.stopPropagation(),{passive:true});
-    ov.addEventListener('touchmove',e=>e.stopPropagation(),{passive:true});
-    ov.addEventListener('click',e=>{ e.stopPropagation(); if(e.target===ov)closeJourney(); });
-    document.body.appendChild(ov);
-  }
-  if(!ov.classList.contains('open')){
-    const body=document.body, root=document.documentElement, scrollY=window.scrollY;
-    _journeyPageLock={
-      scrollY,
-      body:{position:body.style.position,top:body.style.top,left:body.style.left,
-        right:body.style.right,width:body.style.width,overflow:body.style.overflow},
-      rootOverflow:root.style.overflow
-    };
-    body.classList.add('journey-modal-open');
-    body.style.top=`-${scrollY}px`;
-    root.style.overflow='hidden';
-  }
-  ov.classList.add('open');
-  const jb=document.getElementById('journey-body'); if(jb)jb._scrolledOnce=false;
-  _renderJourney();
-  _scheduleJourneyTick();
-}
-// ë§¤ë¶„ 0ì´ˆì— ë§ì¶° ê°±ì‹  ìŠ¤ì¼€ì¤„ë§
-function _scheduleJourneyTick(){
-  if(_journeyTimer)clearTimeout(_journeyTimer);
-  if(!_journeyNo)return;
-  const now=new Date();
-  const ms=(60-now.getSeconds())*1000-now.getMilliseconds();
-  _journeyTimer=setTimeout(()=>{ _renderJourney(); _scheduleJourneyTick(); }, ms);
-}
-function closeJourney(){
-  const ov=document.getElementById('journey-overlay');
-  if(ov)ov.classList.remove('open');
-  if(_journeyPageLock){
-    const body=document.body, root=document.documentElement, lock=_journeyPageLock;
-    body.classList.remove('journey-modal-open');
-    Object.assign(body.style,lock.body);
-    root.style.overflow=lock.rootOverflow;
-    window.scrollTo(0,lock.scrollY);
-    _journeyPageLock=null;
-  }
-  if(_journeyTimer){clearTimeout(_journeyTimer);_journeyTimer=null;}
-  _journeyNo=null;
-}
-function _renderJourneyForecast(t,isOpen=true){
-  let rate=.5;
-  try{
-    const first=t.stops.find(s=>hasTime(s.dep)||hasTime(s.arr));
-    const dep=first?(hasTime(first.dep)?first.dep:first.arr):'';
-    if(typeof calcRealisticFillRate==='function')rate=calcRealisticFillRate(t.no,todayLocalStr(),dep,t.grade);
-  }catch(e){}
-  rate=Math.max(0,Math.min(1,rate));
-  const pct=Math.round(rate*100);
-  const level=rate>=.9?'ë§¤ìš° í˜¼ì¡':rate>=.76?'í˜¼ì¡':rate>=.58?'ë³´í†µ':'ì—¬ìœ ';
-  const cls=rate>=.9?'critical':rate>=.76?'busy':rate>=.58?'normal':'calm';
-  const insight=typeof _delayPassengerInsight==='function'?_delayPassengerInsight(t):null;
-  const forecastLogs=typeof _simEventLog==='function'?_simEventLog(t,true):[];
-  const forecastLogRows=forecastLogs.slice(0,20)
-    .map(line=>`<div class="jr-forecast-log-row">${_opsEsc(line)}</div>`).join('');
-  const delayValue=insight?.estimatedDelay?insight.delayRange:`${insight?.forecast?.prob||0}%`;
-  const delayLabel=insight?.estimatedDelay?'ì˜ˆìƒ ì§€ì—° ë²”ìœ„':'ì§€ì—° ê°€ëŠ¥ì„±';
-  return `<details class="jr-forecast-card ${cls}"${isOpen?' open':''}>
-    <summary class="jr-forecast-head">
-      <div><span class="jr-forecast-icon">â˜€ï¸</span><div><b>ì˜¤ëŠ˜ì˜ ìš´í–‰ ì˜ˆìƒ</b><small>ì¶œë°œ ì „ ì˜ˆì¸¡ Â· ìš´í–‰ ì‹œì‘ í›„ ìë™ ìˆ¨ê¹€</small></div></div>
-      <div class="jr-forecast-head-meta"><span class="jr-forecast-confidence">ì‹ ë¢°ë„ ${insight?.confidence||'-'}%</span><span class="jr-forecast-chevron">âŒ„</span></div>
-    </summary>
-    <div class="jr-forecast-grid">
-      <div class="jr-forecast-metric">
-        <span>ì˜ˆìƒ í˜¼ì¡ë„</span><b>${level}</b><em>${pct}%</em>
-        <div class="jr-forecast-bar"><i style="width:${pct}%"></i></div>
-      </div>
-      <div class="jr-forecast-metric delay">
-        <span>${delayLabel}</span><b>${insight?.forecast?.label||'ë‚®ìŒ'}</b><em>${delayValue}</em>
-        <div class="jr-forecast-bar"><i style="width:${insight?.forecast?.prob||0}%"></i></div>
-      </div>
-    </div>
-    <div class="jr-forecast-summary">ğŸ‘¤ ${_opsEsc(insight?.passengerSummary||'í˜„ì¬ ì˜ˆì¸¡ìƒ ìŠ¹ê° ì—¬ì •ì— ë¯¸ì¹˜ëŠ” ì˜í–¥ì€ ê±°ì˜ ì—†ìŠµë‹ˆë‹¤.')}</div>
-    <details class="jr-forecast-detail">
-      <summary>ì˜ˆìƒ ì§€ì—° ë¡œê·¸ ë³´ê¸° <span>â€º</span></summary>
-      <div class="jr-forecast-detail-body">
-        <div class="jr-forecast-detail-title">ìš´í–‰ ì „ ì˜ˆìƒ êµ¬ê°„ë³„ ê¸°ë¡</div>
-        <div class="jr-forecast-log">${forecastLogRows||'<div class="jr-forecast-empty">í˜„ì¬ ì˜ˆì •ëœ ì§€ì—° ì´ë²¤íŠ¸ê°€ ì—†ìŠµë‹ˆë‹¤.</div>'}</div>
-        <div class="jr-forecast-foot">ìš´í–‰ ì „ ì‹œë®¬ë ˆì´ì…˜ ê¸°ì¤€ Â· ì‹¤ì œ ìš´í–‰ ì¤‘ì—ëŠ” ê´€ì¸¡ ìƒí™©ì— ë”°ë¼ ë¡œê·¸ì™€ ì§€ì—° ì‹œê°„ì´ ë‹¤ì‹œ ê³„ì‚°ë©ë‹ˆë‹¤.</div>
-      </div>
-    </details>
-  </details>`;
-}
-function _renderJourney(){
-  const body=document.getElementById('journey-body'); if(!body||!_journeyNo)return;
-  // ìë™ ê°±ì‹  ì‹œ í˜„ì¬ ìŠ¤í¬ë¡¤ ìœ„ì¹˜ ë³´ì¡´(í˜¼ì ë§¨ ìœ„ë¡œ íŠ€ëŠ” ë¬¸ì œ ë°©ì§€)
-  const _prevSc=body.querySelector('.jr-scroll');
-  const _prevTop=_prevSc?_prevSc.scrollTop:0;
-  const _forecastEl=body.querySelector('.jr-forecast-card');
-  const _forecastOpen=_forecastEl?_forecastEl.open:true;
-  const _firstRender=!body._scrolledOnce;
-  const t=getTrainByNo(_journeyNo); if(!t)return;
-  const stops=_journeyStops(t); if(!stops.length){body.innerHTML='<div class="empty">ì‹œê° ì •ë³´ê°€ ì—†ìŠµë‹ˆë‹¤.</div>';return;}
-  const firstM=stops[0].normDep??stops[0].normArr;
-  const lastItem=stops[stops.length-1];
-  const lastM=lastItem.normArr??lastItem.normDep;
-  const now=new Date();
-  const realNowMin=now.getHours()*60+now.getMinutes()+now.getSeconds()/60;
-  const simState=typeof _simState==='function'?_simState(t):null;
-  // ì§€ì—° ì‹œë®¬ ë°˜ì˜: ì—´ì°¨ëŠ” dlyë¶„ ë’¤ì²˜ì§„ ìœ„ì¹˜ì— ìˆìŒ â†’ ìœ íš¨ì‹œê° = ì‹¤ì œì‹œê° - dly
-  const dly=simState?simState.current:_simDelay(t, realNowMin);
-  const finalD=simState?simState.final:_simFinalDelay(t);
-  let nowMin=realNowMin-dly;
-  const status=getCurrentStatus(t, nowMin);
-  let nowM=nowMin;
-  if(lastM>=1440&&nowMin<firstM){ const sh=nowMin+1440; if(nowMin<240||sh<=lastM)nowM=sh; }
-  const c=(typeof GRADE_COLORS!=='undefined'&&GRADE_COLORS[t.grade])||'#8b949e';
-  const gl=(typeof GL!=='undefined'&&GL[t.grade])||t.grade;
-  // ì§„í–‰ë¥ 
-  let prog=0, phase='before';
-  if(simState?.phase==='done'||status&&status.status==='done'){prog=100;phase='done';}
-  else if(simState?.phase==='running'||status&&status.status==='running'){prog=Math.max(1,Math.min(99,(nowM-firstM)/(lastM-firstM)*100));phase='running';}
-  else {prog=0;phase='before';}
-  // í†µê³¼ì—­ ì¸ì§€ ìœ„ì¹˜ ê³„ì‚°: ì •ì°¨ ì¤‘(dwell)Â·ë‹¤ìŒ ì‹¤ì œ ì •ì°¨ì—­(nextReal)ì„ ì§ì ‘ ì‚°ì¶œ
-  let dwellIdx=-1, nextRealIdx=-1;
-  if(phase==='running'){
-    for(let i=0;i<stops.length;i++){
-      const st=stops[i]; if(st.isPass)continue;
-      const a=st.normArr, d=st.normDep;
-      if(a!=null&&d!=null&&a!==d&&nowM>=a&&nowM<=d){dwellIdx=i;break;}
-    }
-    for(let i=0;i<stops.length;i++){
-      const st=stops[i]; if(st.isPass)continue;
-      const a=st.normArr??st.normDep;
-      if(a!=null&&a>nowM){nextRealIdx=i;break;}
-    }
-  }
-  // ìƒíƒœ ë¬¸êµ¬
-  let head='', sub='';
-  if(phase==='running'){
-    if(status&&status.passStn){head=`${_opsEsc(status.passStn)} í†µê³¼ ì¤‘`;}
-    else if(dwellIdx>=0){head=`${_opsEsc(stops[dwellIdx].s)} ì •ì°¨ ì¤‘`;}
-    else if(nextRealIdx>=0){head=`${_opsEsc(stops[nextRealIdx].s)} ë°©ë©´ ì´ë™ ì¤‘`;}
-    else head='ìš´í–‰ ì¤‘';
-    if(nextRealIdx>=0){
-      const dm=Math.round((stops[nextRealIdx].normArr??stops[nextRealIdx].normDep)-nowM);
-      sub=dm<=0?`ê³§ ${_opsEsc(stops[nextRealIdx].s)} ë„ì°©`:`ë‹¤ìŒ ì •ì°¨ ${_opsEsc(stops[nextRealIdx].s)} Â· ì•½ ${dm}ë¶„ í›„ ë„ì°©`;
-    }
-  } else if(phase==='before'){
-    head='ìš´í–‰ ì¤€ë¹„ ì¤‘';
-    sub=(status&&status.etaMin!=null)?fmtEtaKor(status.etaMin):'';
-  } else { head='ìš´í–‰ ì¢…ë£Œ'; sub=`${_opsEsc(stops[0].s)} â†’ ${_opsEsc(lastItem.s)} ìš´í–‰ ì™„ë£Œ`; }
-  // íƒ€ì„ë¼ì¸
-  const li=stops.map((st,idx)=>{
-    const leaveM=st.normDep??st.normArr;
-    const passed=(phase==='done')||(leaveM!=null&&nowM>leaveM+0.01);
-    const isCur=phase==='running'&&idx===dwellIdx;
-    const isNext=phase==='running'&&idx===nextRealIdx&&dwellIdx<0;
-    const plat=(typeof _realPlatform==='function')?_realPlatform(t.no,st.s):null;
-    const tArr=hasTime(st.arr)?st.arr:'', tDep=hasTime(st.dep)?st.dep:'';
-    // ì´ ì—­ ì‹œì ì˜ ì§€ì—°ë¶„(ìš´í–‰/ì¢…ë£Œ ì‹œ): ì§€ë‚˜ì˜¨ ì—­=ì‹¤ì œ ì§€ì—°, ë‚¨ì€ ì—­=ì§€ì—° ì˜ˆì •. ì •ì‹œë©´ 0.
-    const delayPair=(_simDelayOn&&phase!=='before'&&typeof _simDelayPairAtStop==='function')
-      ?_simDelayPairAtStop(t,idx):{arr:_simDelayAtStop(t,idx),dep:_simDelayAtStop(t,idx),shortened:false};
-    const dArr=delayPair.arr||0, dDep=delayPair.dep||0, dStop=Math.max(dArr,dDep);
-    const sA=tArr?addMinToClock(tArr,dArr):'', sD=tDep?addMinToClock(tDep,dDep):'';
-    const delayTxt=dStop>0
-      ?dArr!==dDep
-        ?` <span class="jr-time-diff">(${dArr>0?'+'+dArr:'0'} â†’ +${dDep})</span>`
-        :` <span class="jr-time-diff">(+${dStop})</span>`
-      :'';
-    const timeBase=st.isOrigin?`${sD||sA} ì¶œë°œ`:st.isTerm?`${sA||sD} ë„ì°©`:(sA&&sD&&tArr!==tDep?`${sA}â€“${sD}`:(sA||sD));
-    const timeTxt=timeBase+delayTxt;
-    const cls=['jr-stop'];
-    if(st.isPass)cls.push('pass'); if(passed&&!isCur)cls.push('done'); if(isCur)cls.push('cur'); if(isNext)cls.push('next');
-    const nameCls=st.isOrigin?'jr-origin':st.isTerm?'jr-term':'';
-    const badge=isCur?'<span class="jr-badge cur">í˜„ì¬</span>':isNext?'<span class="jr-badge next">ë‹¤ìŒ</span>':'';
-    const platTxt=(!st.isPass&&plat!=null)?`<span class="jr-plat">${plat}ë²ˆ</span>`:'';
-    return `<div class="${cls.join(' ')}" style="--gc:${c}">
-      <div class="jr-dot"></div>
-      <div class="jr-info"><span class="jr-name ${nameCls}">${_opsEsc(st.s)}${st.isPass?' <span class="jr-passtag">í†µê³¼</span>':''}${badge}</span>${platTxt}</div>
-      <div class="jr-time${dStop>0?(dStop<=2?' jr-late-y':dStop<=10?' jr-late-o':' jr-late-r'):''}">${timeTxt}</div>
-    </div>`;
-  }).join('');
-  const depT=stops[0].dep||stops[0].arr, arrT=lastItem.arr||lastItem.dep;
-  // ì¢…ì°© ë„ì°© ì§€ì—° ì˜ˆì •(ì¢…ì°©ì—­ ì‹œì  ì§€ì—°). ë‚¨ì€ ì—­ ì‹œê°ì€ íƒ€ì„ë¼ì¸ì—ì„œ ë¹¨ê°„ í…ìŠ¤íŠ¸ë¡œ í‘œì‹œ.
-  const termD=(_simDelayOn&&phase!=='before')?_simDelayAtStop(t, stops.length-1):0;
-  let arrAdj='';
-  if(_simDelayOn){
-    if(termD>0) arrAdj=` <span class="jr-eta-adj">${addMinToClock(arrT,termD)} ë„ì°© ì˜ˆì • (+${termD})</span>`;
-    else if(phase==='before'&&finalD>0) arrAdj=` <span class="jr-eta-adj">${finalD}ë¶„ ì§€ì—° ì˜ˆìƒ</span>`;
-  }
-  const _dlyLog=(_simDelayOn&&dly>0&&phase!=='before'&&typeof _simEventLog==='function')?_simEventLog(t):[];
-  const _wx=(_simDelayOn&&typeof _simDayContext==='function')?_simDayContext().weather:'ë§‘ìŒ';
-  const _rep=(_simDelayOn&&dly>0&&phase!=='before'&&typeof _simDelayReport==='function')?_simDelayReport(t):null;
-  const _repHTML=_rep?`<div class="jr-log-report">
-        ${_rep.first?`<div><span class="jr-rk">ìµœì´ˆ ì›ì¸</span>${_opsEsc(_rep.first)}${_wx!=='ë§‘ìŒ'?` Â· <span class="jr-wx">${_opsEsc(_wx)}</span>`:''}</div>`:''}
-        ${_rep.spread.length?`<div><span class="jr-rk">ì „íŒŒ ì›ì¸</span>${_opsEsc(_rep.spread.join(' Â· '))}</div>`:''}
-        <div><span class="jr-rk">íšŒë³µ ìš´ì „</span>${_rep.recovered>0?`í˜„ì¬ê¹Œì§€ ì´ ${_rep.recovered}ë¶„ íšŒë³µ`:"íšŒë³µ ì—†ìŒ"}</div>
-        <div><span class="jr-rk">ì¢…ì°© ì§€ì—°</span>${_rep.final>0?`ì•½ ${_rep.final}ë¶„ ì˜ˆìƒ`:'ì •ì‹œ ë„ì°© ì˜ˆìƒ'}</div>
-        ${_rep.affects?`<div><span class="jr-rk">ì˜í–¥ ì—´ì°¨</span>ë‹¤ìŒ íšŒì°¨ ${_opsEsc(_rep.affects)} ì—´ì°¨ ì§€ì—° ìš°ë ¤</div>`:''}
-      </div>`:'';
-  const delayBadge=(_simDelayOn&&dly>0&&phase==='running')
-    ?`<div class="jr-delay-live">ğŸ”´ í˜„ì¬ ì•½ <b>${dly}ë¶„</b> ì§€ì—° ìš´í–‰ ì¤‘</div>`
-      +((_dlyLog.length||_repHTML)?`<details class="jr-log"><summary>ì§€ì—° ê¸°ë¡ ë³´ê¸°</summary><div class="jr-log-body">`
-        +_repHTML
-        +(_dlyLog.length?`<div class="jr-log-sec">êµ¬ê°„ë³„ ê¸°ë¡</div>`+_dlyLog.slice(0,16).map(l=>`<div>${_opsEsc(l)}</div>`).join(''):'')
-        +`</div></details>`:'')
-      +`<div class="jr-delay-caveat">ì§€ì—° ì •ë³´ëŠ” ì‹¤ì œ ìš´í–‰ ìƒí™©ê³¼ ì°¨ì´ê°€ ìˆì„ ìˆ˜ ìˆìŠµë‹ˆë‹¤</div>`:'';
-  const _jrHTML=`
-    <div class="jr-header" style="--gc:${c}">
-      <div class="jr-h-top">
-        <span class="jr-grade" style="background:${c}">${_opsEsc(gl)}</span>
-        <span class="jr-no">${_opsEsc(t.no)}</span>
-        <span class="jr-dest">${_opsEsc(t.dest)}í–‰</span>
-      </div>
-      <div class="jr-route">${_opsEsc(stops[0].s)} ${depT} â†’ ${_opsEsc(lastItem.s)} ${arrT}${arrAdj}</div>
-      <div class="jr-status jr-${phase}${(_simDelayOn&&dly>0&&phase==='running')?' jr-delayed':''}">
-        <div class="jr-status-head">${head}</div>
-        ${sub?`<div class="jr-status-sub">${sub}</div>`:''}
-        ${delayBadge}
-      </div>
-      <div class="jr-progress"><div class="jr-progress-fill" style="width:${prog}%;background:${c}"></div></div>
-    </div>
-    ${phase==='before'?`<div class="jr-passenger-insights">${_renderJourneyForecast(t,_forecastOpen)}</div>`:''}
-    <div class="jr-scroll">
-      <div class="jr-timeline">${li}</div>
-      <p class="jr-foot">ë§¤ë¶„ ìë™ ê°±ì‹  Â· ì‹¤ì œ ê²Œì„ ë‚´ ì‹œê° ê¸°ì¤€</p>
-    </div>`;
-  if(body._lastJrHTML===_jrHTML) return;   // ë‚´ìš© ë™ì¼í•˜ë©´ ì¬ë Œë” ìƒëµ(ê¹œë¹¡ì„ ë°©ì§€)
-  body._lastJrHTML=_jrHTML;
-  body.innerHTML=_jrHTML;
-  const sc=body.querySelector('.jr-scroll');
-  if(sc){
-    if(_firstRender){
-      // ìµœì´ˆ 1íšŒë§Œ í˜„ì¬ ìœ„ì¹˜ë¡œ ìë™ ìŠ¤í¬ë¡¤
-      const cur=body.querySelector('.jr-stop.cur')||body.querySelector('.jr-stop.next');
-      if(cur)sc.scrollTop=Math.max(0,cur.offsetTop-sc.clientHeight/2+cur.offsetHeight/2);
-      body._scrolledOnce=true;
-    } else {
-      // ìë™ ê°±ì‹  ì‹œì—ëŠ” ì‚¬ìš©ìê°€ ë³´ë˜ ìŠ¤í¬ë¡¤ ìœ„ì¹˜ë¥¼ ê·¸ëŒ€ë¡œ ìœ ì§€
-      sc.scrollTop=_prevTop;
-    }
-  }
-}
-
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-// ğŸ§³ ë‚´ ì—¬í–‰ â€” Nì¼ì°¨ ì¼ì •ì„ ë¬¶ì–´ ì¼ê´„ ì˜ˆë§¤
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-const TRIP_KEY='nimbi_trips';
-function _tesc(s){return String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
-function _tripToast(msg){
-  const old=document.getElementById('trip-toast'); if(old)old.remove();
-  const d=document.createElement('div'); d.id='trip-toast';
-  d.style.cssText='position:fixed;left:50%;bottom:38px;transform:translateX(-50%);z-index:10050;background:var(--accent2,#2f81f7);color:#fff;padding:11px 18px;border-radius:999px;font-size:13px;font-weight:600;box-shadow:0 6px 20px rgba(0,0,0,.35);max-width:88vw;text-align:center';
-  d.textContent=msg; document.body.appendChild(d);
-  setTimeout(()=>{d.style.transition='opacity .4s';d.style.opacity='0';setTimeout(()=>d.remove(),400);},1900);
-}
-// â”€â”€ ë‚ ì§œ/ì¼ì°¨ í—¬í¼ â”€â”€
-function _addDays(dateStr,n){const d=new Date((dateStr||todayLocalStr())+'T00:00');d.setDate(d.getDate()+n);return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;}
-function _daysBetween(a,b){return Math.round((new Date(b+'T00:00')-new Date(a+'T00:00'))/86400000);}
-function _dayDate(trip,day){return _addDays(trip.startDate,day-1);}
-function _migrateTrip(tp){
-  if(!tp||typeof tp!=='object')return tp;
-  if(!Array.isArray(tp.legs))tp.legs=[];
-  if(tp.startDate&&tp.days){
-    tp.days=Math.max(1,Math.min(30,tp.days|0));
-    tp.legs.forEach(l=>{ if(!l.day)l.day=l.date?Math.max(1,_daysBetween(tp.startDate,l.date)+1):1; if(l.day>tp.days)l.day=tp.days; if(l.day<1)l.day=1; });
-    return tp;
-  }
-  const ds=tp.legs.map(l=>l.date).filter(Boolean).sort();
-  const start=ds[0]||todayLocalStr(), end=ds[ds.length-1]||start;
-  tp.startDate=start; tp.days=Math.max(1,Math.min(30,_daysBetween(start,end)+1));
-  tp.legs.forEach(l=>{ l.day=l.date?Math.max(1,Math.min(tp.days,_daysBetween(start,l.date)+1)):1; });
-  return tp;
-}
-function loadTrips(){try{return (JSON.parse(localStorage.getItem(TRIP_KEY))||[]).map(_migrateTrip);}catch(e){return[];}}
-function saveTrips(t){try{localStorage.setItem(TRIP_KEY,JSON.stringify(t));}catch(e){}}
-function genTripId(){return 'TR'+Date.now().toString(36)+Math.random().toString(36).slice(2,5);}
-
-// â”€â”€ ë°ì´í„° ì¡°ì‘ â”€â”€
-function createTrip(name,startDate,days){
-  const trips=loadTrips();
-  const trip={id:genTripId(),name:(name||'ë‚´ ì—¬í–‰').trim()||'ë‚´ ì—¬í–‰',createdAt:Date.now(),startDate:startDate||todayLocalStr(),days:Math.max(1,Math.min(30,days||1)),legs:[]};
-  trips.push(trip); saveTrips(trips); return trip.id;
-}
-function deleteTrip(id){
-  if(!confirm('ì´ ì—¬í–‰ì„ ì‚­ì œí•˜ì‹œê² ìŠµë‹ˆê¹Œ?\n(ë‹´ê¸´ ì¼ì •ë§Œ ì‚­ì œë˜ë©°, ì´ë¯¸ ì˜ˆë§¤í•œ ìŠ¹ì°¨ê¶Œì€ ìœ ì§€ë©ë‹ˆë‹¤.)'))return;
-  saveTrips(loadTrips().filter(t=>t.id!==id));
-  if(window._activeTripId===id)window._activeTripId=null;
-  renderMyTrips();
-}
-function _syncLegDates(trip){trip.legs.forEach(l=>{if(l.day>trip.days)l.day=trip.days;if(l.day<1)l.day=1;l.date=_dayDate(trip,l.day);});}
-function updateTrip(id,name,startDate,days){
-  const trips=loadTrips(); const tp=trips.find(t=>t.id===id); if(!tp)return;
-  tp.name=(name||tp.name).trim()||tp.name;
-  tp.startDate=startDate||tp.startDate;
-  tp.days=Math.max(1,Math.min(30,days||tp.days));
-  _syncLegDates(tp);
-  saveTrips(trips); renderMyTrips();
-}
-function addLegToTrip(tripId,leg){
-  const trips=loadTrips(); const tp=trips.find(t=>t.id===tripId); if(!tp)return false;
-  tp.legs.push(leg); saveTrips(trips); return true;
-}
-function removeTripLeg(tripId,legId){
-  const trips=loadTrips(); const tp=trips.find(t=>t.id===tripId); if(!tp)return;
-  tp.legs=tp.legs.filter(l=>l.id!==legId); saveTrips(trips); renderMyTrips();
-}
-function _dayLegs(trip,day){return trip.legs.filter(l=>l.day===day).sort((a,b)=>(toMin(a.depTime)||0)-(toMin(b.depTime)||0));}
-function _tripNightsLabel(trip){const d=trip.days||1;return d<=1?'ë‹¹ì¼':`${d-1}ë°• ${d}ì¼`;}
-function _tripClsLabel(c){return c==='mixed'?'ì…ì„ï¼‹ì¢Œì„':(SEAT_CLASSES[c]?.label||c);}
-function _legFare(leg){
-  const t=getTrainByNo(leg.trainNo); if(!t)return 0;
-  // ê²°í•©ê¶Œ(ì…ì„+ì¢Œì„)ìœ¼ë¡œ ì˜ˆë§¤ëœ ì¼ì •ì€ ì‹¤ì œ ìŠ¹ì°¨ê¶Œ ìš´ì„ì„ ì‚¬ìš©
-  if(leg.seatClass==='mixed'){
-    if(leg.ticketId){const tk=loadTickets().find(x=>x.id===leg.ticketId&&x.status==='active');if(tk)return tk.totalFare;}
-    return calcFare(t,leg.fromStn,leg.toStn,'general')*(leg.passengerCount||1);
-  }
-  const base=calcFare(t,leg.fromStn,leg.toStn,leg.seatClass);
-  return applyDiscount(base,leg.discount||'none')*(leg.passengerCount||1);
-}
-function _tripEstFare(trip){return trip.legs.reduce((a,l)=>a+_legFare(l),0);}
-function _legBooked(leg){
-  if(!leg.ticketId)return false;
-  const tk=loadTickets().find(t=>t.id===leg.ticketId);
-  return !!(tk&&tk.status==='active');
-}
-
-// â”€â”€ ì¼ê´„ ì˜ˆë§¤ (í‹°ì¼“ ë¡œë“œ/ì €ì¥ 1íšŒ ë°°ì¹˜, ë¶€ìˆ˜íš¨ê³¼ëŠ” ë Œë” í›„ë¡œ ì´ì—°) â”€â”€
-function _bookOneLegInto(leg, tripName, tickets){
-  const t=getTrainByNo(leg.trainNo);
-  if(!t)return {ok:false,err:'ì—´ì°¨ ì •ë³´ ì—†ìŒ'};
-  const date=leg.date, count=leg.passengerCount||1;
-  const disc=leg.discount||'none';
-  let cls=leg.seatClass, seatChanged=null, mixSegments=null;
-  if(typeof canBookOD==='function'&&!canBookOD(t,leg.fromStn,leg.toStn,count,date,cls)){
-    // ì„¤ì •: ë§¤ì§„ ì‹œ ì˜ˆë§¤ ê°€ëŠ¥í•œ ë‹¤ë¥¸ ì¢Œì„ ë“±ê¸‰ìœ¼ë¡œ ìë™ ëŒ€ì²´
-    // ìš°ì„ ìˆœìœ„: ì „ êµ¬ê°„ ë‹¤ë¥¸ ì¢Œì„ ë“±ê¸‰ > ì…ì„+ì¢Œì„ ê²°í•©ê¶Œ(ë¶€ë¶„ ì¢Œì„) > ì „ êµ¬ê°„ ì…ì„
-    const autoOn=typeof tripAutoSeatEnabled==='function'&&tripAutoSeatEnabled();
-    const soldOut=()=>{const left=typeof getAvailableSeats==='function'?getAvailableSeats(t,leg.fromStn,leg.toStn,date,cls):0;return {ok:false,err:left>0?`${left}ì„ë§Œ ë‚¨ìŒ`:'ë§¤ì§„'};};
-    if(!autoOn)return soldOut();
-    // 1) ì „ êµ¬ê°„ ì°©ì„ ê°€ëŠ¥í•œ ë‹¤ë¥¸ ì¢Œì„ ë“±ê¸‰ (ì…ì„ ì œì™¸)
-    let alt=null;
-    for(const c of availableSeatClasses(t.grade)){ if(c===cls||c==='standing')continue; if(canBookOD(t,leg.fromStn,leg.toStn,count,date,c)){ alt=c; break; } }
-    if(alt){ seatChanged={from:cls,to:alt}; cls=alt; }
-    else if(cls!=='standing'&&typeof computeMixedSegments==='function'&&computeMixedSegments(t,leg.fromStn,leg.toStn,date,count,cls)){
-      // 2) ì…ì„+ì¢Œì„ ê²°í•©ê¶Œ (ì¢Œì„ êµ¬ê°„ì€ ì•‰ê³ , ë§¤ì§„ êµ¬ê°„ë§Œ ì…ì„)
-      mixSegments=computeMixedSegments(t,leg.fromStn,leg.toStn,date,count,cls);
-      seatChanged={from:cls,to:'mixed',mixed:true};
-    }
-    else if(cls!=='standing'&&canBookOD(t,leg.fromStn,leg.toStn,count,date,'standing')){
-      // 3) ì „ êµ¬ê°„ ì…ì„
-      seatChanged={from:cls,to:'standing'}; cls='standing';
-    }
-    else return soldOut();
-  }
-  if(date===todayLocalStr()){
-    const now=new Date(), nowM=now.getHours()*60+now.getMinutes(), depM=toMin(leg.depTime);
-    if(depM!==null&&depM<nowM)return {ok:false,err:'ì´ë¯¸ ì¶œë°œ'};
-  }
-  const nd=toMin(leg.depTime), na=toMin(leg.arrTime);
-  if(nd!==null&&na!==null){
-    const aS=nd,aE=na>=nd?na:na+1440;
-    const conflict=tickets.find(tk=>{ if(tk.status!=='active'||tk.travelDate!==date)return false; const ed=toMin(tk.depTime),ea=toMin(tk.arrTime);if(ed===null||ea===null)return false; const bS=ed,bE=ea>=ed?ea:ed+1440; return aS<bE&&bS<aE; });
-    if(conflict)return {ok:false,err:`ì‹œê°„ ê²¹ì¹¨(${conflict.trainNo})`};
-  }
-  // ê²°í•©ê¶Œ(ì…ì„+ì¢Œì„) ìŠ¹ì°¨ê¶Œ
-  if(mixSegments){
-    const segments=mixSegments.map(r=>{
-      const seats=Array.from({length:count},()=>r.kind==='standing'?'ì…ì„':randomSeat(r.seatClass,leg.trainNo));
-      const b=r.baseFarePerPerson,f=applyDiscount(b,disc);
-      return {...r,seats,baseFarePerPerson:b,farePerPerson:f};
-    });
-    const farePerPerson=segments.reduce((a,s)=>a+s.farePerPerson,0);
-    const baseFarePerPerson=segments.reduce((a,s)=>a+s.baseFarePerPerson,0);
-    const topSeats=Array.from({length:count},(_,i)=>segments.map(s=>s.seats[i]).join(' / '));
-    const tk={
-      id:genTicketId(),trainNo:leg.trainNo,grade:t.grade,line:t.line,
-      fromStn:leg.fromStn,toStn:leg.toStn,depTime:leg.depTime,arrTime:leg.arrTime,
-      seatClass:'mixed',seatClassLabel:'ì…ì„ï¼‹ì¢Œì„',mixed:segments,
-      seats:topSeats,passengerCount:count,
-      farePerPerson,totalFare:farePerPerson*count,discount:disc,
-      discountLabel:DISCOUNTS[disc].label,baseFarePerPerson,
-      distanceKm:Math.round(routeDistanceKm(t,leg.fromStn,leg.toStn)),
-      bookedAt:Date.now(),travelDate:date,status:'active',tripName:tripName||''
-    };
-    tickets.push(tk);
-    return {ok:true,ticketId:tk.id,trainNo:leg.trainNo,date,t,leg,bookedClass:'mixed',seatChanged};
-  }
-  const base=calcFare(t,leg.fromStn,leg.toStn,cls);
-  const fare=applyDiscount(base,disc);
-  const seats=Array.from({length:count},()=>randomSeat(cls,leg.trainNo));
-  const tk={
-    id:genTicketId(),trainNo:leg.trainNo,grade:t.grade,line:t.line,
-    fromStn:leg.fromStn,toStn:leg.toStn,depTime:leg.depTime,arrTime:leg.arrTime,
-    seatClass:cls,seatClassLabel:SEAT_CLASSES[cls].label,seats,passengerCount:count,
-    farePerPerson:fare,totalFare:fare*count,discount:disc,
-    discountLabel:DISCOUNTS[disc].label,baseFarePerPerson:base,
-    distanceKm:Math.round(routeDistanceKm(t,leg.fromStn,leg.toStn)),
-    bookedAt:Date.now(),travelDate:date,status:'active',tripName:tripName||''
-  };
-  tickets.push(tk);
-  return {ok:true,ticketId:tk.id,trainNo:leg.trainNo,date,t,leg,bookedClass:cls,seatChanged};
-}
-function bulkBookTrip(tripId){
-  const trips=loadTrips(); const trip=trips.find(t=>t.id===tripId); if(!trip)return;
-  const tickets=loadTickets();
-  const activeIds=new Set(tickets.filter(t=>t.status==='active').map(t=>t.id));
-  const todo=trip.legs.filter(l=>!(l.ticketId&&activeIds.has(l.ticketId)));
-  if(!todo.length){alert('ì´ë¯¸ ëª¨ë“  ì¼ì •ì´ ì˜ˆë§¤ë˜ì–´ ìˆìŠµë‹ˆë‹¤.');return;}
-  const total=todo.reduce((a,l)=>a+_legFare(l),0);
-  if(!confirm(`'${trip.name}' ì—¬í–‰ì˜ ë¯¸ì˜ˆë§¤ ì¼ì • ${todo.length}ê±´ì„ ì¼ê´„ ì˜ˆë§¤í•©ë‹ˆë‹¤.\nì˜ˆìƒ ê²°ì œ ê¸ˆì•¡: ${total.toLocaleString()}ì›\n\nê³„ì†í•˜ì‹œê² ìŠµë‹ˆê¹Œ?`))return;
-  // ì§„í–‰ë¥  ì˜¤ë²„ë ˆì´ë¥¼ ë¨¼ì € ê·¸ë¦¬ê³ , ì¢Œì„ ê³„ì‚°ì´ ë¬´ê±°ìš°ë¯€ë¡œ 1ê±´ì”© ì²­í¬ ì²˜ë¦¬í•´ UI í”„ë¦¬ì§•ì„ ë°©ì§€
-  const ov=document.createElement('div'); ov.id='trip-booking-overlay';
-  ov.style.cssText='position:fixed;inset:0;z-index:10040;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.5)';
-  ov.innerHTML=`<div style="background:var(--bg1);border:1px solid var(--border);border-radius:14px;padding:22px 28px;text-align:center;min-width:210px">
-    <div style="font-size:15px;font-weight:700;color:var(--text1);margin-bottom:10px">ğŸ« ì˜ˆë§¤ ì²˜ë¦¬ ì¤‘â€¦</div>
-    <div class="trip-book-track"><div class="trip-book-fill" id="tbo-fill" style="width:0%"></div></div>
-    <div id="tbo-prog" style="font-family:var(--mono);font-size:12.5px;color:var(--text2);margin-top:8px">0 / ${todo.length}</div></div>`;
-  document.body.appendChild(ov);
-  let i=0, ok=0; const fails=[], done=[];
-  const step=()=>{
-    const leg=todo[i];
-    const r=_bookOneLegInto(leg, trip.name, tickets);
-    if(r.ok){ leg.ticketId=r.ticketId;
-      if(r.seatChanged){ leg.seatClass=r.bookedClass; leg.seatClassLabel=_tripClsLabel(r.bookedClass); }
-      ok++; done.push(r); }
-    else fails.push(`Â· ${leg.trainNo} ${leg.fromStn}â†’${leg.toStn} (${leg.day}ì¼ì°¨): ${r.err}`);
-    i++;
-    const pe=document.getElementById('tbo-prog'), fe=document.getElementById('tbo-fill');
-    if(pe)pe.textContent=`${i} / ${todo.length}`; if(fe)fe.style.width=Math.round(i/todo.length*100)+'%';
-    if(i<todo.length){ setTimeout(step,0); return; }
-    saveTickets(tickets); saveTrips(trips); _clearMixMemo();   // ì „ì²´ 1íšŒ ì €ì¥
-    ov.remove(); renderMyTrips();
-    setTimeout(()=>{
-      done.forEach(r=>{ if(typeof invalidateCongestion==='function')invalidateCongestion(r.trainNo,r.date); });
-      done.forEach(r=>{ if(typeof _autoBookAlarms==='function')_autoBookAlarms(r.t,r.leg.fromStn,r.leg.toStn,r.leg.depTime,r.leg.arrTime); });
-      const changed=done.filter(r=>r.seatChanged);
-      let msg=`ğŸ§³ ì¼ê´„ ì˜ˆë§¤ ê²°ê³¼\n\nâœ… ì„±ê³µ ${ok}ê±´`;
-      if(changed.length)msg+=`\nğŸŸï¸ ë§¤ì§„ìœ¼ë¡œ ì¢Œì„ ë“±ê¸‰ ë³€ê²½ ${changed.length}ê±´\n`+changed.map(r=>` Â· ${r.trainNo} ${_tripClsLabel(r.seatChanged.from)}â†’${_tripClsLabel(r.seatChanged.to)}`).join('\n');
-      if(fails.length)msg+=`\nâŒ ì‹¤íŒ¨ ${fails.length}ê±´\n\n`+fails.join('\n');
-      if(!fails.length&&!changed.length)msg+='\nëª¨ë“  ì¼ì •ì´ ì˜ˆë§¤ë˜ì—ˆìŠµë‹ˆë‹¤!';
-      alert(msg);
-    },0);
-  };
-  setTimeout(step,30); // ì˜¤ë²„ë ˆì´ê°€ ë¨¼ì € í˜ì¸íŠ¸ë˜ë„ë¡ ì§€ì—°
-}
-
-// â”€â”€ ë Œë” â”€â”€
-function openTrip(id){window._activeTripId=id;renderMyTrips();}
-function backToTripList(){window._activeTripId=null;renderMyTrips();}
-function renderMyTrips(){
-  const el=document.getElementById('result-mytrip'); if(!el)return;
-  const trips=loadTrips();
-  const active=window._activeTripId&&trips.find(t=>t.id===window._activeTripId);
-  el.innerHTML = active ? _tripDetailHTML(active) : _tripListHTML(trips);
-  if(active && typeof _attachTripSwipe==='function') _attachTripSwipe();
-}
-function _tripListHTML(trips){
-  const cards = trips.length ? trips.slice().sort((a,b)=>b.createdAt-a.createdAt).map(tp=>{
-    const booked=tp.legs.filter(_legBooked).length;
-    const range=tp.days>1?`${tp.startDate} ~ ${_dayDate(tp,tp.days)}`:tp.startDate;
-    return `<div class="trip-card" onclick="openTrip('${tp.id}')">
-      <div class="trip-card-top">
-        <span class="trip-card-name">ğŸ§³ ${_tesc(tp.name)}</span>
-        <span class="trip-card-nights">${_tripNightsLabel(tp)}</span>
-      </div>
-      <div class="trip-card-meta">${range}</div>
-      <div class="trip-card-foot">
-        <span class="trip-badge">ì¼ì • ${tp.legs.length}</span>
-        <span class="trip-badge ${booked===tp.legs.length&&tp.legs.length?'trip-badge-done':''}">ì˜ˆë§¤ ${booked}/${tp.legs.length}</span>
-        <span class="trip-card-fare">${_tripEstFare(tp).toLocaleString()}ì›</span>
-      </div>
-    </div>`;
-  }).join('') : `<div class="trip-empty"><div class="trip-empty-ic">ğŸ§³</div><p>ì•„ì§ ë§Œë“  ì—¬í–‰ì´ ì—†ìŠµë‹ˆë‹¤.<br>ì—¬í–‰ì„ ë§Œë“¤ê³  ë‚ ì§œë³„ë¡œ ì—´ì°¨ ì¼ì •ì„ ë‹´ì•„<br>í•œ ë²ˆì— ì˜ˆë§¤í•´ ë³´ì„¸ìš”.</p></div>`;
-  return `<div class="trip-wrap">
-    <div class="trip-intro">1ë°• 2ì¼, 3ë°• 4ì¼ ë“± <b>ë©°ì¹  ì¼ì •</b>ì¸ì§€ ì •í•˜ê³ , ë‚ ì§œ(ì¼ì°¨)ë³„ë¡œ ì—´ì°¨ë¥¼ ë‹´ì•„ <b>ì¼ê´„ ì˜ˆë§¤</b>í•  ìˆ˜ ìˆìŠµë‹ˆë‹¤.</div>
-    <button class="btn btn-primary trip-new" onclick="openTripCreateModal()">ï¼‹ ìƒˆ ì—¬í–‰ ë§Œë“¤ê¸°</button>
-    <div class="trip-list">${cards}</div>
-  </div>`;
-}
-
-// â”€â”€ ìƒì„±/ì„¤ì • ëª¨ë‹¬ (ì´ë¦„Â·ì‹œì‘ì¼Â·ì¼ìˆ˜) â”€â”€
-function _openTripFormModal(opt){
-  document.getElementById('trip-form-wrap')?.remove();
-  const today=todayLocalStr(), maxD=_addDays(today,365);
-  const wrap=document.createElement('div'); wrap.id='trip-form-wrap';
-  wrap.style.cssText='position:fixed;inset:0;z-index:9600;display:flex;align-items:center;justify-content:center;padding:16px;box-sizing:border-box';
-  wrap.innerHTML=`<div style="position:absolute;inset:0;background:rgba(0,0,0,.6)"></div>
-    <div class="alarm-popup" style="position:relative;transform:none;top:auto;left:auto;width:100%;max-width:420px">
-      <div class="alarm-popup-title">${opt.title}</div>
-      <div class="trip-form-field"><label>ì—¬í–‰ ì´ë¦„</label><input type="text" id="tf-name" class="trip-form-input" value="${_tesc(opt.name||'')}" placeholder="ì˜ˆ: ì—¬ë¦„ ë¶€ì‚° ì—¬í–‰" maxlength="30"></div>
-      <div class="trip-form-field"><label>ì‹œì‘ì¼ (1ì¼ì°¨)</label><input type="date" id="tf-start" class="trip-form-input" value="${opt.startDate||today}" min="${today}" max="${maxD}"></div>
-      <div class="trip-form-field"><label>ì—¬í–‰ ì¼ìˆ˜</label>
-        <div class="booking-passenger-control" style="justify-content:center;gap:20px">
-          <button class="booking-stepper-btn" id="tf-minus" type="button">âˆ’</button>
-          <span id="tf-days" style="min-width:96px;text-align:center"></span>
-          <button class="booking-stepper-btn" id="tf-plus" type="button">+</button>
-        </div>
-      </div>
-      <button class="btn btn-primary" id="tf-save" style="width:100%;justify-content:center;margin-top:16px">${opt.saveLabel||'ì €ì¥'}</button>
-      <button class="alarm-popup-close" id="tf-cancel">ì·¨ì†Œ</button>
-    </div>`;
-  document.body.appendChild(wrap);
-  let days=Math.max(1,Math.min(30,opt.days||1));
-  const upd=()=>{const el=document.getElementById('tf-days');if(el)el.innerHTML=`<b style="font-size:17px">${days}</b>ì¼ <span style="color:var(--text3);font-size:12px">${days<=1?'Â· ë‹¹ì¼':'Â· '+(days-1)+'ë°•'}</span>`;};
-  upd();
-  wrap.addEventListener('click',e=>{if(e.target===wrap||e.target===wrap.firstElementChild)wrap.remove();});
-  document.getElementById('tf-minus').addEventListener('click',()=>{days=Math.max(1,days-1);upd();});
-  document.getElementById('tf-plus').addEventListener('click',()=>{days=Math.min(30,days+1);upd();});
-  document.getElementById('tf-cancel').addEventListener('click',()=>wrap.remove());
-  document.getElementById('tf-save').addEventListener('click',()=>{
-    const name=document.getElementById('tf-name').value.trim()||'ë‚´ ì—¬í–‰';
-    const start=document.getElementById('tf-start').value||today;
-    const ok=opt.onSave(name,start,days);
-    if(ok!==false)wrap.remove();
-  });
-}
-function openTripCreateModal(){ _openTripFormModal({title:'ğŸ§³ ìƒˆ ì—¬í–‰ ë§Œë“¤ê¸°',saveLabel:'ë§Œë“¤ê¸°',days:2,onSave:(n,s,d)=>{const id=createTrip(n,s,d);openTrip(id);}}); }
-function openTripEditModal(id){
-  const tp=loadTrips().find(t=>t.id===id); if(!tp)return;
-  _openTripFormModal({title:'ğŸ§³ ì—¬í–‰ ì„¤ì •',saveLabel:'ì €ì¥',name:tp.name,startDate:tp.startDate,days:tp.days,onSave:(n,s,d)=>{
-    const stranded=tp.legs.filter(l=>l.day>d).length;
-    if(stranded && !confirm(`${d}ì¼ì°¨ ì´í›„ì˜ ì¼ì • ${stranded}ê±´ì´ ë§ˆì§€ë§‰ ë‚ (${d}ì¼ì°¨)ë¡œ ì´ë™ë©ë‹ˆë‹¤.\nê³„ì†í•˜ì‹œê² ìŠµë‹ˆê¹Œ?`))return false;
-    updateTrip(id,n,s,d);
-  }});
-}
-
-function _tripDetailHTML(trip){
-  const booked=trip.legs.filter(_legBooked).length;
-  const unbooked=trip.legs.length-booked;
-  const range=trip.days>1?`${trip.startDate} ~ ${_dayDate(trip,trip.days)}`:trip.startDate;
-  let body='';
-  for(let day=1; day<=trip.days; day++){
-    const legs=_dayLegs(trip,day);
-    body+=`<div class="trip-day-head">
-      <span class="trip-day-no">${day}ì¼ì°¨</span>
-      <span class="trip-day-date">${_dayDate(trip,day)}</span>
-      <button class="trip-day-add" onclick="openTripAddSearch('${trip.id}',${day})">ï¼‹ ì¼ì •</button>
-    </div>`;
-    if(legs.length) body+=`<div class="trip-day-legs">${legs.map(l=>_tripLegHTML(trip.id,l)).join('')}</div>`;
-    else body+=`<div class="trip-day-empty" onclick="openTripAddSearch('${trip.id}',${day})"><span>ï¼‹ ì²« ì¼ì •ì„ ì¶”ê°€í•´ë³´ì„¸ìš”</span></div>`;
-  }
-  return `<div class="trip-wrap trip-detail">
-    <div class="trip-detail-head">
-      <div class="trip-detail-name">ğŸ§³ ${_tesc(trip.name)}</div>
-      <div class="trip-detail-actions">
-        <button class="trip-mini-btn" onclick="openTripEditModal('${trip.id}')">âš™ ì„¤ì •</button>
-        <button class="trip-mini-btn trip-mini-danger" onclick="deleteTrip('${trip.id}')">ì‚­ì œ</button>
-      </div>
-    </div>
-    <div class="trip-detail-meta">${_tripNightsLabel(trip)} Â· ${range} Â· ì¼ì • ${trip.legs.length}ê°œ Â· ì˜ˆë§¤ ${booked}/${trip.legs.length}</div>
-    <div class="trip-actions-row">
-      <button class="trip-action-btn" onclick="openTripRoute('${trip.id}')">ğŸ—ºï¸ ì—¬í–‰ ê²½ë¡œ</button>
-      <button class="trip-action-btn" onclick="shareTrip('${trip.id}')">ğŸ”— ë§í¬ ê³µìœ </button>
-    </div>
-    ${body}
-    <div class="trip-total-bar">
-      <div><span class="trip-total-label">ì˜ˆìƒ í•©ê³„</span><span class="trip-total-fare">${_tripEstFare(trip).toLocaleString()}ì›</span></div>
-      <div class="trip-total-btns">
-        <button class="btn btn-primary trip-book-btn" onclick="bulkBookTrip('${trip.id}')"${unbooked?'':' disabled'}>ğŸ« ì¼ê´„ ì˜ˆë§¤${unbooked?` (${unbooked})`:' ì™„ë£Œ'}</button>
-      </div>
-    </div>
-  </div>`;
-}
-function _tripLegHTML(tripId,leg){
-  const booked=_legBooked(leg);
-  const gcv=(typeof gcCssVar==='function')?gcCssVar(leg.grade):'mgh';
-  const gradeChip=(typeof gradeHtml==='function')?gradeHtml(leg.grade):`<b>${_tesc(leg.grade||'')}</b>`;
-  return `<div class="trip-leg-swipe" data-leg="${leg.id}">
-    <div class="trip-leg-actions">
-      ${booked
-        ? `<button class="trip-swipe-act act-tt" onclick="openLegTimetable('${tripId}','${leg.id}')">ì‹œê°„í‘œ</button><button class="trip-swipe-act act-cancel" onclick="cancelLegBooking('${tripId}','${leg.id}')">ì˜ˆë§¤<br>ì·¨ì†Œ</button>`
-        : `<button class="trip-swipe-act act-seg" onclick="openLegSegmentEdit('${tripId}','${leg.id}')">êµ¬ê°„<br>ë³€ê²½</button><button class="trip-swipe-act act-opt" onclick="openLegTrainSwap('${tripId}','${leg.id}')">ì˜ˆë§¤<br>ë³€ê²½</button><button class="trip-swipe-act act-del" onclick="removeTripLeg('${tripId}','${leg.id}')">ì‚­ì œ</button>`}
-    </div>
-    <div class="trip-leg${booked?' trip-leg-booked':''}" style="border-left-color:var(--c-${gcv})">
-      <div class="trip-leg-main">
-        <div class="trip-leg-route"><b>${_tesc(leg.fromStn)}</b> <span class="trip-leg-time">${leg.depTime||''}</span> â†’ <b>${_tesc(leg.toStn)}</b> <span class="trip-leg-time">${leg.arrTime||''}</span></div>
-        <div class="trip-leg-sub">${gradeChip} <span style="font-family:var(--mono);color:var(--text2)">${_tesc(leg.trainNo)}</span> Â· ${_tesc(leg.seatClassLabel||'')} Â· ${leg.passengerCount||1}ëª…${leg.discount&&leg.discount!=='none'?' Â· '+_tesc(DISCOUNTS[leg.discount]?.label||''):''}</div>
-      </div>
-      <div class="trip-leg-side">
-        <div class="trip-leg-fare">${_legFare(leg).toLocaleString()}ì›</div>
-        ${booked?'<span class="trip-leg-tag">ì˜ˆë§¤ì™„ë£Œ</span>':''}
-        <span class="trip-leg-swipe-hint">â€¹ ë°€ê¸°</span>
-      </div>
-    </div>
-  </div>`;
-}
-// ì¢Œì¸¡ ìŠ¤ì™€ì´í”„ë¡œ ì•¡ì…˜ ë…¸ì¶œ
-function _attachTripSwipe(){
-  document.querySelectorAll('#result-mytrip .trip-leg-swipe').forEach(sw=>{
-    if(sw._swipeInit)return; sw._swipeInit=true;
-    const card=sw.querySelector('.trip-leg'), actions=sw.querySelector('.trip-leg-actions');
-    if(!card||!actions)return;
-    let startX=0,startY=0,cur=0,open=false,dragging=false,decided=false,horiz=false;
-    const W=()=>actions.offsetWidth||120;
-    const setX=x=>{card.style.transform=`translateX(${x}px)`;};
-    const snap=o=>{open=o;cur=o?-W():0;card.style.transition='transform .2s';setX(cur);};
-    const down=e=>{const p=e.touches?e.touches[0]:e;startX=p.clientX;startY=p.clientY;dragging=true;decided=false;horiz=false;card.style.transition='none';};
-    const move=e=>{if(!dragging)return;const p=e.touches?e.touches[0]:e;const dx=p.clientX-startX,dy=p.clientY-startY;
-      if(!decided){if(Math.abs(dx)>7||Math.abs(dy)>7){decided=true;horiz=Math.abs(dx)>Math.abs(dy);}else return;}
-      if(!horiz)return; if(e.cancelable)e.preventDefault();
-      let x=(open?-W():0)+dx; x=Math.max(-W(),Math.min(0,x)); cur=x; setX(x);};
-    const up=()=>{if(!dragging)return;dragging=false;card.style.transition='transform .2s';snap(cur<-W()/2);};
-    card.addEventListener('touchstart',down,{passive:true});
-    card.addEventListener('touchmove',move,{passive:false});
-    card.addEventListener('touchend',up); card.addEventListener('touchcancel',up);
-    card.addEventListener('mousedown',e=>{down(e);const mm=ev=>move(ev),mu=()=>{up();document.removeEventListener('mousemove',mm);document.removeEventListener('mouseup',mu);};document.addEventListener('mousemove',mm);document.addEventListener('mouseup',mu);});
-    card.addEventListener('click',e=>{if(open){e.preventDefault();e.stopPropagation();snap(false);}});
-  });
-}
-// êµ¬ê°„ ë³€ê²½: ê°™ì€ ì—´ì°¨ì˜ ì‹œê°„í‘œì—ì„œ ìŠ¹Â·í•˜ì°¨ì—­ì„ ë‹¤ì‹œ ì„ íƒ
-function openLegSegmentEdit(tripId, legId){
-  const trips=loadTrips(); const tp=trips.find(t=>t.id===tripId); if(!tp)return;
-  const leg=tp.legs.find(l=>l.id===legId); if(!leg)return;
-  if(_legBooked(leg)){alert('ì´ë¯¸ ì˜ˆë§¤ ì™„ë£Œëœ ì¼ì •ì…ë‹ˆë‹¤.\në³€ê²½í•˜ë ¤ë©´ ë¨¼ì € í•´ë‹¹ ìŠ¹ì°¨ê¶Œì„ ì·¨ì†Œí•´ì£¼ì„¸ìš”.');return;}
-  const t=getTrainByNo(leg.trainNo); if(!t){alert('ì—´ì°¨ ì •ë³´ë¥¼ ì°¾ì„ ìˆ˜ ì—†ìŠµë‹ˆë‹¤.');return;}
-  const stops=t.stops.map((s,i)=>({i,s:s.s,arr:s.arr,dep:s.dep})).filter(x=>!isPassStop(t,x.s)&&(hasTime(x.arr)||hasTime(x.dep)));
-  const depOf=x=>hasTime(x.dep)?x.dep:x.arr, arrOf=x=>hasTime(x.arr)?x.arr:x.dep;
-  let fromSel=Math.max(0,stops.findIndex(x=>x.s===leg.fromStn));
-  let toSel=stops.findIndex(x=>x.s===leg.toStn); if(toSel<0)toSel=stops.length-1;
-  document.getElementById('trip-seg-wrap')?.remove();
-  const wrap=document.createElement('div'); wrap.id='trip-seg-wrap';
-  wrap.style.cssText='position:fixed;inset:0;z-index:9600;display:flex;align-items:center;justify-content:center;padding:16px;box-sizing:border-box';
-  const rows=()=>stops.map((x,idx)=>`<div class="lse-row${idx===fromSel?' is-from':''}${idx===toSel?' is-to':''}">
-      <span class="lse-stn">${_tesc(x.s)}</span>
-      <span class="lse-time">${depOf(x)||''}</span>
-      <div class="lse-btns">
-        <button class="lse-b lse-board${idx===fromSel?' on':''}" data-role="from" data-idx="${idx}">ìŠ¹ì°¨</button>
-        <button class="lse-b lse-alight${idx===toSel?' on':''}" data-role="to" data-idx="${idx}">í•˜ì°¨</button>
-      </div>
-    </div>`).join('');
-  wrap.innerHTML=`<div style="position:absolute;inset:0;background:rgba(0,0,0,.6)"></div>
-    <div class="alarm-popup" style="position:relative;transform:none;top:auto;left:auto;max-height:86vh;overflow-y:auto;width:100%;max-width:440px">
-      <div class="alarm-popup-title">ğŸš‰ êµ¬ê°„ ë³€ê²½ Â· ${_tesc(t.grade)} ${_tesc(leg.trainNo)}</div>
-      <div class="alarm-popup-sub">ì—­ ì˜† <b>ìŠ¹ì°¨</b>Â·<b>í•˜ì°¨</b>ë¥¼ ëˆŒëŸ¬ ê°™ì€ ì—´ì°¨ì—ì„œ êµ¬ê°„ë§Œ ë³€ê²½í•©ë‹ˆë‹¤.</div>
-      <div id="lse-list" class="lse-list">${rows()}</div>
-      <button class="btn btn-primary" id="lse-apply" style="width:100%;justify-content:center;margin-top:12px">ë³€ê²½ ì ìš©</button>
-      <button class="alarm-popup-close" id="lse-cancel">ì·¨ì†Œ</button>
-    </div>`;
-  document.body.appendChild(wrap);
-  const rerender=()=>{document.getElementById('lse-list').innerHTML=rows(); bind();};
-  const bind=()=>{
-    wrap.querySelectorAll('.lse-b').forEach(b=>b.addEventListener('click',()=>{
-      const idx=+b.dataset.idx;
-      if(b.dataset.role==='from'){ fromSel=idx; if(toSel<=fromSel)toSel=Math.min(stops.length-1,fromSel+1); }
-      else { toSel=idx; if(fromSel>=toSel)fromSel=Math.max(0,toSel-1); }
-      rerender();
-    }));
-  };
-  bind();
-  wrap.addEventListener('click',e=>{if(e.target===wrap||e.target===wrap.firstElementChild)wrap.remove();});
-  document.getElementById('lse-cancel').addEventListener('click',()=>wrap.remove());
-  document.getElementById('lse-apply').addEventListener('click',()=>{
-    if(fromSel>=toSel){alert('í•˜ì°¨ì—­ì€ ìŠ¹ì°¨ì—­ë³´ë‹¤ ë’¤ì—¬ì•¼ í•©ë‹ˆë‹¤.');return;}
-    const trips2=loadTrips(); const tp2=trips2.find(x=>x.id===tripId); const lg=tp2&&tp2.legs.find(l=>l.id===legId); if(!lg){wrap.remove();return;}
-    const nf=stops[fromSel], nt=stops[toSel];
-    lg.fromStn=nf.s; lg.toStn=nt.s; lg.depTime=depOf(nf); lg.arrTime=arrOf(nt);
-    saveTrips(trips2); wrap.remove(); renderMyTrips(); _tripToast('êµ¬ê°„ì„ ë³€ê²½í–ˆìŠµë‹ˆë‹¤');
-  });
-}
-// ê°™ì€ êµ¬ê°„ ë‹¤ë¥¸ ì—´ì°¨ ëª©ë¡
-function _tripTrainsForOD(from,to,date,excludeNo,includeAdj){
-  const isToday=date===todayLocalStr(); const now=new Date(); const nowM=now.getHours()*60+now.getMinutes();
-  const scan=(A,B)=>{ const r=[]; ALL_TRAINS.forEach(t=>{ if(excludeNo&&t.no===excludeNo)return;
-    const fi=t.stops.findIndex(s=>s.s===A),ti=t.stops.findIndex(s=>s.s===B); if(fi<0||ti<0||fi>=ti)return;
-    if(isPassStop(t,A)||isPassStop(t,B))return; const ds=t.stops[fi],as=t.stops[ti];
-    const dep=hasTime(ds.dep)?ds.dep:hasTime(ds.arr)?ds.arr:null; const arrT=hasTime(as.arr)?as.arr:hasTime(as.dep)?as.dep:null;
-    if(!dep)return; if(isToday&&toMin(dep)!==null&&toMin(dep)<nowM)return; r.push({t,dep,arr:arrT}); }); return r; };
-  const out=scan(from,to).map(e=>({...e,aFrom:from,aTo:to,adj:false}));
-  if(includeAdj && typeof _nearbyTrainStations==='function'){
-    const seen=new Set(out.map(e=>e.t.no));
-    const stopsAt=(t,stn)=>{const i=t.stops.findIndex(s=>s.s===stn);return i>=0&&!isPassStop(t,stn);};
-    for(const nb of _nearbyTrainStations(from)) scan(nb.n,to).forEach(e=>{ if(seen.has(e.t.no)||stopsAt(e.t,from))return; seen.add(e.t.no); out.push({...e,aFrom:nb.n,aTo:to,adj:true,miss:from}); });
-    for(const nb of _nearbyTrainStations(to)) scan(from,nb.n).forEach(e=>{ if(seen.has(e.t.no)||stopsAt(e.t,to))return; seen.add(e.t.no); out.push({...e,aFrom:from,aTo:nb.n,adj:true,miss:to}); });
-  }
-  out.sort((a,b)=>(toMin(a.dep)||0)-(toMin(b.dep)||0));
-  return out;
-}
-// ì˜ˆë§¤ ë³€ê²½: ê°™ì€ êµ¬ê°„ì˜ ë‹¤ë¥¸ ì—´ì°¨ë¡œ êµì²´ + ì¢Œì„ ë“±ê¸‰ ë³€ê²½ (í•˜ë‹¨ ì‹œíŠ¸)
-function openLegTrainSwap(tripId, legId){
-  const chk=loadTrips().find(t=>t.id===tripId); const leg0=chk&&chk.legs.find(l=>l.id===legId);
-  if(!leg0)return;
-  if(_legBooked(leg0)){alert('ì´ë¯¸ ì˜ˆë§¤ ì™„ë£Œëœ ì¼ì •ì…ë‹ˆë‹¤.\në³€ê²½í•˜ë ¤ë©´ ë¨¼ì € í•´ë‹¹ ìŠ¹ì°¨ê¶Œì„ ì·¨ì†Œí•´ì£¼ì„¸ìš”.');return;}
-  document.getElementById('trip-swap-wrap')?.remove();
-  const wrap=document.createElement('div'); wrap.id='trip-swap-wrap';
-  wrap.style.cssText='position:fixed;inset:0;z-index:9600';
-  wrap.innerHTML=`<div style="position:absolute;inset:0;background:rgba(0,0,0,.55)"></div><div class="trip-sheet" id="trip-swap-sheet"><div id="trip-swap-body"></div></div>`;
-  document.body.appendChild(wrap);
-  requestAnimationFrame(()=>{const sh=document.getElementById('trip-swap-sheet'); if(sh)sh.classList.add('open');});
-  const close=()=>{const sh=document.getElementById('trip-swap-sheet'); if(sh)sh.classList.remove('open'); setTimeout(()=>wrap.remove(),220);};
-  wrap.addEventListener('click',e=>{if(e.target===wrap||e.target===wrap.firstElementChild)close();});
-  const gcv=g=>(typeof gcCssVar==='function')?gcCssVar(g):'mgh';
-  function render(){
-    const trips=loadTrips(); const tp=trips.find(t=>t.id===tripId); const leg=tp&&tp.legs.find(l=>l.id===legId); if(!leg){close();return;}
-    const curT=getTrainByNo(leg.trainNo);
-    const adjOn=(typeof tripSwapAdjEnabled==='function')&&tripSwapAdjEnabled();
-    const list=_tripTrainsForOD(leg.fromStn, leg.toStn, leg.date, leg.trainNo, adjOn);
-    const classes=curT?availableSeatClasses(curT.grade):[];
-    const seatBtns=classes.map(c=>`<button class="swap-seat-btn${c===leg.seatClass?' on':''}" data-cls="${c}">${SEAT_CLASSES[c].label}<span class="swap-seat-fare">${curT?applyDiscount(calcFare(curT,leg.fromStn,leg.toStn,c),leg.discount||'none').toLocaleString():'-'}ì›</span></button>`).join('');
-    const cards=list.length?list.map(({t,dep,arr,adj,aFrom,aTo,miss})=>{
-      const cls=availableSeatClasses(t.grade); const useCls=cls.includes(leg.seatClass)?leg.seatClass:cls[0];
-      const fare=applyDiscount(calcFare(t,aFrom,aTo,useCls),leg.discount||'none')*(leg.passengerCount||1);
-      const dur=(typeof durStr==='function')?durStr(dep,arr):'';
-      const conf=(typeof _tripDayOverlap==='function')?_tripDayOverlap(tripId, leg.day, dep, arr, legId):null;
-      return `<div class="trip-swap-card${conf?' trip-row-overlap':''}" data-no="${t.no}" data-dep="${dep}" data-arr="${arr||''}" data-from="${aFrom}" data-to="${aTo}" ${adj?`data-adj="1" data-miss="${miss}"`:''} style="border-left-color:var(--c-${gcv(t.grade)})">
-        <div style="flex:1;min-width:0">
-          <div class="trip-swap-top">${(typeof gradeHtml==='function')?gradeHtml(t.grade):_tesc(t.grade)} <span style="font-family:var(--mono);color:var(--text2);font-size:12px">${t.no}</span> <span style="font-size:12px;color:var(--text1);font-weight:600">${_tesc(t.dest)}í–‰</span>${adj?' <span class="swap-adj-tag">ì¸ì ‘ì—­</span>':''}</div>
-          <div class="trip-swap-time"><b>${dep}</b>${adj&&aFrom!==leg.fromStn?` <span style="color:var(--orange);font-size:10px">${_tesc(aFrom)}</span>`:''} â†’ <b style="color:var(--green)">${arr||'-'}</b>${adj&&aTo!==leg.toStn?` <span style="color:var(--orange);font-size:10px">${_tesc(aTo)}</span>`:''} <span style="font-size:11px;color:var(--text3)">${dur}</span></div>
-        </div>
-        <div class="trip-swap-fare">${fare.toLocaleString()}ì›<span class="my-menu-arrow" style="margin-left:6px">â€º</span></div>
-      </div>`;
-    }).join(''):`<div class="trip-empty" style="padding:22px 12px"><p>ê°™ì€ êµ¬ê°„ì˜ ë‹¤ë¥¸ ì—´ì°¨ê°€ ì—†ìŠµë‹ˆë‹¤.</p></div>`;
-    document.getElementById('trip-swap-body').innerHTML=`
-      <div class="trip-sheet-grip"></div>
-      <div class="trip-sheet-title">ğŸ« ì˜ˆë§¤ ë³€ê²½</div>
-      <div class="trip-sheet-sub">${_tesc(leg.fromStn)} â†’ ${_tesc(leg.toStn)} Â· ${leg.date} Â· ${leg.passengerCount||1}ëª…</div>
-      <div class="swap-seat-label">ì¢Œì„ ë“±ê¸‰ ë³€ê²½</div>
-      <div class="swap-seat-row">${seatBtns}</div>
-      <div class="swap-list-label">ë‹¤ë¥¸ ì—´ì°¨ë¡œ ë³€ê²½${adjOn?' <span class="swap-adj-note">Â· ì¸ì ‘ì—­ í¬í•¨</span>':''}</div>
-      <div class="trip-sheet-list">${cards}</div>
-      <button class="alarm-popup-close" id="trip-swap-close" style="margin:10px 14px 4px">ë‹«ê¸°</button>`;
-    document.getElementById('trip-swap-close').addEventListener('click',close);
-    document.querySelectorAll('#trip-swap-body .swap-seat-btn').forEach(b=>b.addEventListener('click',()=>{
-      const c=b.dataset.cls; const trips2=loadTrips(); const tp2=trips2.find(x=>x.id===tripId); const lg=tp2&&tp2.legs.find(l=>l.id===legId); if(!lg)return;
-      lg.seatClass=c; lg.seatClassLabel=SEAT_CLASSES[c].label; saveTrips(trips2); renderMyTrips(); render(); _tripToast(`${SEAT_CLASSES[c].label}(ìœ¼)ë¡œ ë³€ê²½`);
-    }));
-    document.querySelectorAll('#trip-swap-body .trip-swap-card[data-no]').forEach(c=>c.addEventListener('click',()=>{
-      const no=c.dataset.no, nt=getTrainByNo(no); if(!nt)return;
-      const doSwap=()=>{ const trips2=loadTrips(); const tp2=trips2.find(x=>x.id===tripId); const lg=tp2&&tp2.legs.find(l=>l.id===legId); if(!lg)return;
-        const cls=availableSeatClasses(nt.grade);
-        lg.trainNo=no; lg.grade=nt.grade; lg.line=nt.line; lg.fromStn=c.dataset.from; lg.toStn=c.dataset.to; lg.depTime=c.dataset.dep; lg.arrTime=c.dataset.arr;
-        if(!cls.includes(lg.seatClass)){ lg.seatClass=cls[0]; lg.seatClassLabel=SEAT_CLASSES[cls[0]].label; }
-        saveTrips(trips2); renderMyTrips(); _tripToast(`${nt.grade} ${no}(ìœ¼)ë¡œ ë³€ê²½í–ˆìŠµë‹ˆë‹¤`); close(); };
-      const conf=(typeof _tripDayOverlap==='function')?_tripDayOverlap(tripId, leg.day, c.dataset.dep, c.dataset.arr, legId):null;
-      const adjWarn=c.dataset.adj?`\nâ€» ì¸ì ‘ì—­(${c.dataset.miss} ë¯¸ì •ì°¨): ìŠ¹ì°¨ ${c.dataset.from} Â· í•˜ì°¨ ${c.dataset.to}`:'';
-      if(conf){ if(confirm(`âš ï¸ ì´ë¯¸ ë‹´ê¸´ ì¼ì •ê³¼ ì‹œê°„ì´ ê²¹ì¹©ë‹ˆë‹¤.\n${conf.trainNo}ë²ˆ ${conf.fromStn}â†’${conf.toStn} (${conf.depTime}~${conf.arrTime})${adjWarn}\n\nê·¸ë˜ë„ ì´ ì—´ì°¨ë¡œ ë³€ê²½í•˜ì‹œê² ìŠµë‹ˆê¹Œ?`)) doSwap(); }
-      else if(c.dataset.adj){ if(confirm(`ì¸ì ‘ì—­ ì—´ì°¨ì…ë‹ˆë‹¤.${adjWarn}\n\nì´ ì—´ì°¨ë¡œ ë³€ê²½í•˜ì‹œê² ìŠµë‹ˆê¹Œ?`)) doSwap(); }
-      else doSwap();
-    }));
-  }
-  render();
-}
-// ì‹œê°„í‘œ â†’ ì•±ì˜ ì‹¤ì œ 'íƒ‘ìŠ¹ ì—¬ì •'(ì‹¤ì‹œê°„ ìš´í–‰) í™”ë©´ì„ ê·¸ëŒ€ë¡œ ì‚¬ìš©
-function openLegTimetable(tripId, legId){
-  const trips=loadTrips(); const tp=trips.find(t=>t.id===tripId); const leg=tp&&tp.legs.find(l=>l.id===legId); if(!leg)return;
-  if(typeof openJourney==='function') openJourney(leg.trainNo);
-  else alert('íƒ‘ìŠ¹ ì—¬ì • í™”ë©´ì„ ì—´ ìˆ˜ ì—†ìŠµë‹ˆë‹¤.');
-}
-// ì˜ˆë§¤ ì·¨ì†Œ â€” ìŠ¹ì°¨ê¶Œì€ ì·¨ì†Œ ìƒíƒœë¡œ ê¸°ë¡ ë³´ê´€, ì¼ì •ì€ ë¯¸ì˜ˆë§¤ë¡œ ë³µê·€
-function cancelLegBooking(tripId, legId){
-  const trips=loadTrips(); const tp=trips.find(t=>t.id===tripId); const leg=tp&&tp.legs.find(l=>l.id===legId); if(!leg)return;
-  if(!leg.ticketId){ _tripToast('ì˜ˆë§¤ëœ ì¼ì •ì´ ì•„ë‹™ë‹ˆë‹¤'); return; }
-  const tickets=loadTickets(); const tk=tickets.find(x=>x.id===leg.ticketId);
-  if(tk){ const now=new Date(), nowM=now.getHours()*60+now.getMinutes(), depM=toMin(tk.depTime);
-    if(tk.travelDate===todayLocalStr()&&depM!==null&&depM<=nowM){ alert('ì´ë¯¸ ì¶œë°œí•œ ì—´ì°¨ëŠ” ì˜ˆë§¤ë¥¼ ì·¨ì†Œí•  ìˆ˜ ì—†ìŠµë‹ˆë‹¤.'); return; } }
-  if(!confirm('ì´ ì¼ì •ì˜ ì˜ˆë§¤ë¥¼ ì·¨ì†Œí•˜ì‹œê² ìŠµë‹ˆê¹Œ?\n\nìŠ¹ì°¨ê¶Œì€ ì·¨ì†Œ ìƒíƒœë¡œ ê¸°ë¡ì— ë³´ê´€ë˜ê³ ,\nì¼ì •ì€ ë¯¸ì˜ˆë§¤ ìƒíƒœë¡œ ëŒì•„ê°‘ë‹ˆë‹¤.'))return;
-  if(tk){ tk.status='cancelled'; tk.cancelledAt=Date.now(); saveTickets(tickets);
-    if(typeof invalidateCongestion==='function')invalidateCongestion(tk.trainNo,tk.travelDate);
-    try{ const al=loadAlarms(); saveAlarms(al.filter(a=>!(a.trainNo===tk.trainNo&&(a.stn===tk.fromStn||a.stn===tk.toStn)))); }catch(e){}
-  }
-  leg.ticketId=null; saveTrips(trips); renderMyTrips();
-  if(typeof renderTickets==='function' && document.getElementById('result-ticket')) renderTickets();
-  _tripToast('ì˜ˆë§¤ë¥¼ ì·¨ì†Œí–ˆìŠµë‹ˆë‹¤ (ê¸°ë¡ ë³´ê´€)');
-}
-// ì„¤ì •: ë§¤ì§„ ì‹œ ë‹¤ë¥¸ ì¢Œì„ ìë™ ì˜ˆë§¤ / ì˜ˆë§¤ ë³€ê²½ ì¸ì ‘ì—­ í¬í•¨
-function tripAutoSeatEnabled(){try{return localStorage.getItem('nimbi_trip_autoseat')==='1';}catch(e){return false;}}
-function toggleTripAutoSeat(){try{localStorage.setItem('nimbi_trip_autoseat',tripAutoSeatEnabled()?'0':'1');}catch(e){}_reRenderTripSettings();}
-function tripSwapAdjEnabled(){try{return localStorage.getItem('nimbi_trip_swapadj')==='1';}catch(e){return false;}}
-function toggleTripSwapAdj(){try{localStorage.setItem('nimbi_trip_swapadj',tripSwapAdjEnabled()?'0':'1');}catch(e){}_reRenderTripSettings();}
-function _reRenderTripSettings(){const el=document.getElementById('my-sub-content');if(el&&el.dataset.section==='settings'&&typeof renderSettingsSection==='function')renderSettingsSection(el);}
-
-// â”€â”€ ì¼ì • ì¶”ê°€ (íŠ¹ì • ì¼ì°¨ì— êµ¬ê°„ ì¡°íšŒ â†’ ì—´ì°¨ ë‹´ê¸°) â”€â”€
-function openTripAddSearch(tripId,day){
-  const trip=loadTrips().find(t=>t.id===tripId); if(!trip)return;
-  day=Math.max(1,Math.min(trip.days,day||1));
-  window._tripAddMode={tripId,day};
-  window._activeTripId=tripId;
-  const el=document.getElementById('result-mytrip'); if(!el)return;
-  el.innerHTML=`<div class="trip-wrap">
-    <div class="trip-add-hd">ğŸ§³ <b>${day}ì¼ì°¨</b> (${_dayDate(trip,day)}) ì¼ì • ì¶”ê°€ â€” ì—´ì°¨ë¥¼ ëˆŒëŸ¬ ë‹´ìœ¼ì„¸ìš” <span style="color:var(--text3)">(ì˜ˆë§¤ ì•„ë‹˜)</span></div>
-    <div id="trip-add-book"></div>
-  </div>`;
-  const box=document.getElementById('trip-add-book');
-  if(box && typeof _renderBookTabInto==='function') _renderBookTabInto(box, 'my-book-results');
-  const dg=document.getElementById('book-date-go'); if(dg){dg.value=_dayDate(trip,day);}
-}
-function backFromTripAdd(tripId){ window._tripAddMode=null; openTrip(tripId); }
-function openTripLegPicker(trainNo, from, to, dep, arr, date){
-  const t=getTrainByNo(trainNo); if(!t){alert('ì—´ì°¨ ì •ë³´ë¥¼ ì°¾ì„ ìˆ˜ ì—†ìŠµë‹ˆë‹¤.');return;}
-  const mode=window._tripAddMode; if(!mode||!mode.tripId){alert('ì—¬í–‰ì„ ë¨¼ì € ì„ íƒí•´ì£¼ì„¸ìš”.');return;}
-  const trip=loadTrips().find(x=>x.id===mode.tripId); if(!trip)return;
-  const dayDate=_dayDate(trip,mode.day);
-  document.getElementById('trip-leg-picker-wrap')?.remove();
-  const classes=availableSeatClasses(t.grade);
-  const pax0=Math.max(1,Math.min(6,(typeof _bookPassengerCount!=='undefined'&&_bookPassengerCount)||1));
-  window._tlp={trainNo,from,to,dep,arr,cls:null,pax:pax0};
-  const opts=classes.map(c=>`<button class="booking-seat-option" data-class="${c}"><span class="booking-seat-label">${SEAT_CLASSES[c].label}</span><span class="booking-seat-fare">${calcFare(t,from,to,c).toLocaleString()}ì›</span></button>`).join('');
-  const wrap=document.createElement('div'); wrap.id='trip-leg-picker-wrap';
-  wrap.style.cssText='position:fixed;inset:0;z-index:9600;display:flex;align-items:center;justify-content:center;padding:16px;box-sizing:border-box';
-  wrap.innerHTML=`<div style="position:absolute;inset:0;background:rgba(0,0,0,.6)"></div>
-    <div class="alarm-popup" style="position:relative;transform:none;top:auto;left:auto;max-height:88vh;overflow-y:auto;width:100%;max-width:420px">
-      <div class="alarm-popup-title">ğŸ§³ ${mode.day}ì¼ì°¨ì— ë‹´ê¸°</div>
-      <div class="alarm-popup-sub">${_tesc(t.grade)} ${_tesc(trainNo)} Â· ${_tesc(from)} ${dep} â†’ ${_tesc(to)} ${arr||''}</div>
-      <div class="alarm-popup-sub" style="color:var(--text3)">${dayDate}</div>
-      <div class="booking-section-label" style="margin-top:12px">ì¢Œì„ ë“±ê¸‰</div>
-      <div class="booking-seat-options">${opts}</div>
-      <div class="booking-section-label">ì¸ì›</div>
-      <div class="booking-passenger-control">
-        <button class="booking-stepper-btn" id="tlp-minus" type="button">âˆ’</button>
-        <span id="tlp-pax">${window._tlp.pax}</span>
-        <button class="booking-stepper-btn" id="tlp-plus" type="button">+</button>
-      </div>
-      <button class="btn btn-primary" id="tlp-add" disabled style="width:100%;justify-content:center;margin-top:14px;opacity:.4;cursor:not-allowed">ğŸ§³ ì´ ì—¬í–‰ì— ë‹´ê¸°</button>
-      <button class="alarm-popup-close" id="tlp-cancel">ì·¨ì†Œ</button>
-    </div>`;
-  document.body.appendChild(wrap);
-  wrap.addEventListener('click',e=>{if(e.target===wrap||e.target===wrap.firstElementChild)wrap.remove();});
-  wrap.querySelectorAll('.booking-seat-option').forEach(b=>b.addEventListener('click',()=>{
-    wrap.querySelectorAll('.booking-seat-option').forEach(x=>x.classList.remove('active'));
-    b.classList.add('active'); window._tlp.cls=b.dataset.class;
-    const add=document.getElementById('tlp-add'); if(add){add.disabled=false;add.style.opacity='1';add.style.cursor='pointer';}
-  }));
-  document.getElementById('tlp-minus').addEventListener('click',()=>{window._tlp.pax=Math.max(1,window._tlp.pax-1);document.getElementById('tlp-pax').textContent=window._tlp.pax;});
-  document.getElementById('tlp-plus').addEventListener('click',()=>{window._tlp.pax=Math.min(6,window._tlp.pax+1);document.getElementById('tlp-pax').textContent=window._tlp.pax;});
-  document.getElementById('tlp-cancel').addEventListener('click',()=>wrap.remove());
-  document.getElementById('tlp-add').addEventListener('click',()=>{
-    const x=window._tlp, m=window._tripAddMode; if(!x||!x.cls||!m)return;
-    const tp=loadTrips().find(z=>z.id===m.tripId); if(!tp){alert('ì—¬í–‰ì„ ì°¾ì„ ìˆ˜ ì—†ìŠµë‹ˆë‹¤.');return;}
-    const leg={id:genTripId(),trainNo:x.trainNo,grade:t.grade,line:t.line,fromStn:x.from,toStn:x.to,
-      depTime:x.dep,arrTime:x.arr,day:m.day,date:_dayDate(tp,m.day),seatClass:x.cls,seatClassLabel:SEAT_CLASSES[x.cls].label,
-      passengerCount:x.pax,discount:'none',ticketId:null};
-    addLegToTrip(m.tripId,leg);
-    wrap.remove();
-    const tp2=loadTrips().find(z=>z.id===m.tripId);
-    _tripToast(`ğŸ§³ ${m.day}ì¼ì°¨ì— ë‹´ì•˜ìŠµë‹ˆë‹¤ Â· ì¼ì • ${tp2?tp2.legs.length:''}ê°œ`);
-  });
-}
-
-// â”€â”€ ì‹œê°„ ê²¹ì¹¨ ê²€ì‚¬ (ê°™ì€ ì¼ì°¨ ë‚´) â”€â”€
-function _tripDayOverlap(tripId, day, depT, arrT, exceptLegId){
-  const nd=toMin(depT), na=toMin(arrT); if(nd===null||na===null)return null;
-  const trip=loadTrips().find(t=>t.id===tripId); if(!trip)return null;
-  const aS=nd, aE=na>=nd?na:na+1440;
-  return _dayLegs(trip,day).find(l=>{
-    if(exceptLegId&&l.id===exceptLegId)return false;
-    const ed=toMin(l.depTime),ea=toMin(l.arrTime); if(ed===null||ea===null)return false;
-    const bS=ed,bE=ea>=ed?ea:ed+1440; return aS<bE&&bS<aE;
-  })||null;
-}
-
-// â”€â”€ ì—¬í–‰ ê²½ë¡œ ë³´ê¸° (ì¼ì°¨ë³„ ì´ë™ ê²½ë¡œ ìš”ì•½) â”€â”€
-function openTripRoute(tripId){
-  const trip=loadTrips().find(t=>t.id===tripId); if(!trip)return;
-  document.getElementById('trip-route-wrap')?.remove();
-  let body='';
-  for(let day=1; day<=trip.days; day++){
-    const legs=_dayLegs(trip,day);
-    body+=`<div class="trip-route-day"><span class="trip-day-no">${day}ì¼ì°¨</span><span class="trip-day-date">${_dayDate(trip,day)}</span></div>`;
-    if(!legs.length){ body+=`<div class="trip-route-empty">ì´ë™ ì¼ì • ì—†ìŒ</div>`; continue; }
-    body+='<div class="trip-route-legs">';
-    legs.forEach(l=>{
-      body+=`<div class="trip-route-leg">
-        <div class="trip-route-line"><span class="trip-route-dot"></span><span class="trip-route-stn">${_tesc(l.fromStn)}</span><span class="trip-route-t">${l.depTime||''}</span></div>
-        <div class="trip-route-mid"><span class="trip-route-train">${_tesc(l.grade||'')} ${_tesc(l.trainNo)}</span> <span class="trip-route-linechip">${_tesc((l.line||'').split('Â·')[0]||'')}</span></div>
-        <div class="trip-route-line"><span class="trip-route-dot end"></span><span class="trip-route-stn">${_tesc(l.toStn)}</span><span class="trip-route-t">${l.arrTime||''}</span></div>
-      </div>`;
-    });
-    body+='</div>';
-  }
-  const wrap=document.createElement('div'); wrap.id='trip-route-wrap';
-  wrap.style.cssText='position:fixed;inset:0;z-index:9600;display:flex;align-items:center;justify-content:center;padding:16px;box-sizing:border-box';
-  wrap.innerHTML=`<div style="position:absolute;inset:0;background:rgba(0,0,0,.6)"></div>
-    <div class="alarm-popup" style="position:relative;transform:none;top:auto;left:auto;max-height:86vh;overflow-y:auto;width:100%;max-width:440px">
-      <div class="alarm-popup-title">ğŸ—ºï¸ ${_tesc(trip.name)} Â· ì—¬í–‰ ê²½ë¡œ</div>
-      <div class="alarm-popup-sub">${_tripNightsLabel(trip)} Â· ì¼ì • ${trip.legs.length}ê°œ</div>
-      <div class="trip-route-body">${body}</div>
-      <button class="alarm-popup-close" id="trip-route-close">ë‹«ê¸°</button>
-    </div>`;
-  document.body.appendChild(wrap);
-  wrap.addEventListener('click',e=>{if(e.target===wrap||e.target===wrap.firstElementChild)wrap.remove();});
-  document.getElementById('trip-route-close').addEventListener('click',()=>wrap.remove());
-}
-
-// â”€â”€ ë§í¬ ê³µìœ  â”€â”€
-function _tripEncode(trip){
-  const o={n:trip.name,s:trip.startDate,d:trip.days,l:trip.legs.map(l=>({no:l.trainNo,f:l.fromStn,t:l.toStn,dp:l.depTime,ar:l.arrTime,dy:l.day,sc:l.seatClass,px:l.passengerCount,dc:l.discount||'none'}))};
-  try{return btoa(unescape(encodeURIComponent(JSON.stringify(o))));}catch(e){return '';}
-}
-function _tripDecode(str){
-  try{const o=JSON.parse(decodeURIComponent(escape(atob(str))));return (o&&Array.isArray(o.l))?o:null;}catch(e){return null;}
-}
-function shareTrip(tripId){
-  const trip=loadTrips().find(t=>t.id===tripId); if(!trip)return;
-  if(!trip.legs.length){alert('ê³µìœ í•  ì¼ì •ì´ ì—†ìŠµë‹ˆë‹¤. ë¨¼ì € ì—´ì°¨ë¥¼ ë‹´ì•„ì£¼ì„¸ìš”.');return;}
-  const url=location.origin+location.pathname+'#trip='+_tripEncode(trip);
-  document.getElementById('trip-share-wrap')?.remove();
-  const wrap=document.createElement('div'); wrap.id='trip-share-wrap';
-  wrap.style.cssText='position:fixed;inset:0;z-index:9600;display:flex;align-items:center;justify-content:center;padding:16px;box-sizing:border-box';
-  wrap.innerHTML=`<div style="position:absolute;inset:0;background:rgba(0,0,0,.6)"></div>
-    <div class="alarm-popup" style="position:relative;transform:none;top:auto;left:auto;width:100%;max-width:440px">
-      <div class="alarm-popup-title">ğŸ”— ì—¬í–‰ ë§í¬ ê³µìœ </div>
-      <div class="alarm-popup-sub">${_tesc(trip.name)} Â· ì¼ì • ${trip.legs.length}ê°œ</div>
-      <p style="font-size:12px;color:var(--text3);margin:10px 0 6px">ì´ ë§í¬ë¥¼ ì—´ë©´ ìƒëŒ€ë°©ì˜ 'ë‚´ ì—¬í–‰'ì— ì´ ì¼ì •ì´ ê·¸ëŒ€ë¡œ ì¶”ê°€ë©ë‹ˆë‹¤.</p>
-      <textarea id="trip-share-url" readonly class="trip-form-input" style="height:76px;resize:none;font-family:var(--mono);font-size:11.5px" onclick="this.select()">${_tesc(url)}</textarea>
-      <button class="btn btn-primary" id="trip-share-copy" style="width:100%;justify-content:center;margin-top:12px">ğŸ“‹ ë§í¬ ë³µì‚¬</button>
-      ${navigator.share?'<button class="btn" id="trip-share-native" style="width:100%;justify-content:center;margin-top:8px">ğŸ“¤ ê³µìœ í•˜ê¸°</button>':''}
-      <button class="alarm-popup-close" id="trip-share-close">ë‹«ê¸°</button>
-    </div>`;
-  document.body.appendChild(wrap);
-  wrap.addEventListener('click',e=>{if(e.target===wrap||e.target===wrap.firstElementChild)wrap.remove();});
-  document.getElementById('trip-share-close').addEventListener('click',()=>wrap.remove());
-  document.getElementById('trip-share-copy').addEventListener('click',()=>{
-    const ta=document.getElementById('trip-share-url'); ta.select();
-    const done=()=>_tripToast('ğŸ”— ë§í¬ë¥¼ ë³µì‚¬í–ˆìŠµë‹ˆë‹¤');
-    if(navigator.clipboard&&navigator.clipboard.writeText) navigator.clipboard.writeText(url).then(done).catch(()=>{try{document.execCommand('copy');done();}catch(e){}});
-    else { try{document.execCommand('copy');done();}catch(e){} }
-  });
-  const nb=document.getElementById('trip-share-native');
-  if(nb) nb.addEventListener('click',()=>{ navigator.share({title:`[ë‚´ ì—¬í–‰] ${trip.name}`,text:`${trip.name} ì—¬í–‰ ì¼ì •ì„ ê³µìœ í•©ë‹ˆë‹¤`,url}).catch(()=>{}); });
-}
-function _maybeImportSharedTrip(){
-  const h=location.hash||''; const m=h.match(/[#&]trip=([^&]+)/); if(!m)return;
-  const o=_tripDecode(m[1]);
-  try{history.replaceState(null,'',location.pathname+location.search);}catch(e){}
-  if(!o){ alert('ê³µìœ  ë§í¬ë¥¼ ì½ì„ ìˆ˜ ì—†ìŠµë‹ˆë‹¤.'); return; }
-  if(!confirm(`ê³µìœ ëœ ì—¬í–‰ '${o.n||'ì—¬í–‰'}'ì„(ë¥¼) ë‚´ ì—¬í–‰ì— ì¶”ê°€í•˜ì‹œê² ìŠµë‹ˆê¹Œ?\n\nì¼ì • ${o.l.length}ê°œ Â· ${o.d||1}ì¼`))return;
-  const trip={id:genTripId(),name:o.n||'ê³µìœ ëœ ì—¬í–‰',createdAt:Date.now(),startDate:o.s||todayLocalStr(),days:Math.max(1,Math.min(30,o.d||1)),
-    legs:o.l.map(l=>{const t=getTrainByNo(l.no)||{};return {id:genTripId(),trainNo:l.no,grade:t.grade||'',line:t.line||'',fromStn:l.f,toStn:l.t,depTime:l.dp,arrTime:l.ar,day:l.dy||1,date:'',seatClass:l.sc||'general',seatClassLabel:(SEAT_CLASSES[l.sc]||{}).label||'',passengerCount:l.px||1,discount:l.dc||'none',ticketId:null};})};
-  _syncLegDates(trip);
-  const trips=loadTrips(); trips.push(trip); saveTrips(trips);
-  try{ openMyPage(); openMySection('mytrip'); openTrip(trip.id); }catch(e){}
-  _tripToast(`ğŸ§³ '${trip.name}' ì—¬í–‰ì„ ì¶”ê°€í–ˆìŠµë‹ˆë‹¤`);
-}
-if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',()=>{try{_maybeImportSharedTrip();}catch(e){}});
-else { try{_maybeImportSharedTrip();}catch(e){} }
+        <div class="trip-tl-name-cell"><span class="trip-tl-name current" style="color:${gradeColor}">${tl.cur?tl.cur.n×vë–òµë(š+myÕ¹Ñ1¥ÍÑ•¹•È ¥¹ÁÕĞœ° ¤ôùì(€€€½¹ÍĞÄõ¥¹À¹Ù…±Õ”¹ÑÉ¥´ ¤ì(€€€¥˜ …Ä¥íÉ•Ì¹¥¹¹•É!Q50ôœñ‘¥ØÍÑå±”ô‰½±½ÈéÙ…È ´µÑ•áĞÌ¤í™½¹ĞµÍ¥é”èÄÉÁàíÁ…‘‘¥¹œèÙÁà€À€ÄÉÁàˆû²^´ƒ²vÓ®š²vƒ²z®‚—¶Vc®¦ĞƒªŞàƒ²^·²v`ƒ²vã²‚G²^·ªÎğƒªÆÃ®š³ªÂ ƒ¶Fs².s®B§®.#®.¸ğ½‘¥ØøœíÉ•ÑÕÉ¸íô(€€€}µ½‘•MÑ¹M•ÑÍ%¹¥Ğ ¤ì(€€€½¹ÍĞ…¹‘Ìõl¸¸¸¡}ÑÉ…¥¹MÑ¹M•Ñññmt¥t¹™¥±Ñ•È¡Ìôùµ…Ñ¡•ÍEÕ•Éä¡Ì±Ä¤¤¹Í½ÉĞ ¡„±ˆ¤ôù„¹±•¹Ñ µˆ¹±•¹Ñ ¤¹Í±¥” À°Ì¤ì(€€€¥˜ ……¹‘Ì¹±•¹Ñ ¥íÉ•Ì¹¥¹¹•É!Q50ôœñ‘¥ØÍÑå±”ô‰½±½ÈéÙ…È ´µÑ•áĞÌ¤í™½¹ĞµÍ¥é”èÄÉÁàíÁ…‘‘¥¹œèÙÁà€À€ÄÉÁàˆû²vó²æc¶Vc®*PƒªâÃ²Â£²^·²vĞƒ²^²*×®.#®.¸ğ½‘¥ØøœíÉ•ÑÕÉ¸íô(€€€É•Ì¹¥¹¹•É!Q50õ…¹‘Ì¹µ…À¡ÍÑ¸ôùì(€€€€€½¹ÍĞ¹‰Ìõ}¹•…É‰åQÉ…¥¹MÑ…Ñ¥½¹Ì¡ÍÑ¸¤ì(€€€€€½¹ÍĞÉ½İÌõ¹‰Ì¹±•¹Ñ ı¹‰Ì¹µ…À¡¹ˆôù€ñ‘¥ØÍÑå±”ô‰‘¥ÍÁ±…äé™±•àí…±¥¸µ¥Ñ•µÌé•¹Ñ•Èí…ÀèáÁàíÁ…‘‘¥¹œèÙÁà€Àí‰½É‘•Èµ‰½ÑÑ½´èÅÁàÍ½±¥Ù…È ´µ‰½É‘•È¤ÌÌí™½¹ĞµÍ¥é”èÄÍÁàˆø(€€€€€€€€€€ñÍÁ…¸ÍÑå±”ô‰™±•àèÄí™½¹Ğµİ•¥¡ĞèØÀÀˆø‘í¹ˆ¹¹ôğ½ÍÁ…¸ø(€€€€€€€€€€ñÍÁ…¸ÍÑå±”ô‰™½¹Ğµ™…µ¥±äéÙ…È ´µµ½¹¼¤í™½¹ĞµÍ¥é”èÄÅÁàí½±½ÈéÙ…È ´µÑ•áĞÌ¤ˆø‘í¹ˆ¹¹Ñ½¥á• Ä¥õ­´ğ½ÍÁ…¸ø(€€€€€€€€ğ½‘¥Øù€¤¹©½¥¸ œœ¤(€€€€€€€€èœñ‘¥ØÍÑå±”ô‰½±½ÈéÙ…È ´µÑ•áĞÌ¤í™½¹ĞµÍ¥é”èÄÉÁàíÁ…‘‘¥¹œèÑÁà€À€áÁàˆøÄÁ­´ƒ²vÓ®
+Ğƒ²vã²‚G²^´ƒ²^²v0ğ½‘¥Øøœì(€€€€€É•ÑÕÉ¸€ñ‘¥ØÍÑå±”ô‰µ…É¥¸µ‰½ÑÑ½´èÄÉÁàˆø(€€€€€€€€ñ‘¥ØÍÑå±”ô‰™½¹ĞµÍ¥é”èÄÍÁàí™½¹Ğµİ•¥¡ĞèàÀÀíÁ…‘‘¥¹œèÙÁà€À€ÉÁàí½±½ÈéÙ…È ´µ…•¹ĞÈ¤ˆûÂ~j$€‘íÍÑ¹ô€ñÍÁ…¸ÍÑå±”ô‰™½¹Ğµİ•¥¡ĞèĞÀÀí½±½ÈéÙ…È ´µÑ•áĞÌ¤í™½¹ĞµÍ¥é”èÄÅÁàˆû²vã²‚G²^´€‘í¹‰Ì¹±•¹Ñ¡÷ªÎÌğ½ÍÁ…¸øğ½‘¥Øø(€€€€€€€€‘íÉ½İÍô(€€€€€€ğ½‘¥Øù€ì(€€€ô¤¹©½¥¸ œœ¤ì(€ô¤ì(€Í•ÑQ¥µ•½ÕĞ  ¤ôù¥¹À¹™½ÕÌ ¤°ÔÀ¤ì)ô(¼¼ƒ²vã²‚G²^´ƒ²V#®
+Ğƒ¶2w²^€£²öS®‚#²vó¶„ƒ²*“¶²vğ¤ƒŠPƒ¶fW²vàƒ².pƒªÎ²4ƒ²¶Z$)™Õ¹Ñ¥½¸}‰½½­‘©½¹™¥É´¡µÍœ±½¹=¬¥ì(€½¹ÍĞ‰õ‘½Õµ•¹Ğ¹É•…Ñ•±•µ•¹Ğ ‘¥Øœ¤ì(€‰¹ÍÑå±”¹ÍÍQ•áĞôÁ½Í¥Ñ¥½¸é™¥á•í¥¹Í•ĞèÀí‰…­É½Õ¹éÉ‰„ À°À°À°¸ÔÔ¤íèµ¥¹‘•àèäØÀÀí‘¥ÍÁ±…äé™±•àí…±¥¸µ¥Ñ•µÌé•¹Ñ•Èí©ÕÍÑ¥™äµ½¹Ñ•¹Ğé•¹Ñ•ÈíÁ…‘‘¥¹œèÈÑÁàœì(€‰¹¥¹¹•É!Q50õ€ñ‘¥ØÍÑå±”ô‰‰…­É½Õ¹éÙ…È ´µ‰œÈ¤í‰½É‘•ÈèÅÁàÍ½±¥Ù…È ´µ‰½É‘•È¤í‰½É‘•ÈµÉ…‘¥ÕÌèÄÑÁàíµ…àµİ¥‘Ñ èÌĞÁÁàíİ¥‘Ñ èÄÀÀ”íÁ…‘‘¥¹œèÈÁÁà€ÄáÁàˆø(€€€€ñ‘¥ØÍÑå±”ô‰™½¹ĞµÍ¥é”èÄÕÁàí™½¹Ğµİ•¥¡ĞèàÀÀíµ…É¥¸µ‰½ÑÑ½´èÄÁÁàí½±½ÈéÙ…È ´µ…•¹ĞÈ¤ˆû²vÓ²j¤ƒ²V#®
+Ğğ½‘¥Øø(€€€€ñ‘¥ØÍÑå±”ô‰™½¹ĞµÍ¥é”èÄÌ¸ÕÁàí±¥¹”µ¡•¥¡ĞèÄ¸Üí½±½ÈéÙ…È ´µÑ•áĞÄ¤ˆø‘íµÍôğ½‘¥Øø(€€€€ñ‘¥ØÍÑå±”ô‰‘¥ÍÁ±…äé™±•àí…ÀèáÁàíµ…É¥¸µÑ½ÀèÄÙÁàˆø(€€€€€€ñ‰ÕÑÑ½¸‘…Ñ„µ…Ğô‰¹¼ˆÍÑå±”ô‰™±•àèÄíÁ…‘‘¥¹œèÄÅÁàí‰½É‘•ÈµÉ…‘¥ÕÌèÄÁÁàí‰½É‘•ÈèÅÁàÍ½±¥Ù…È ´µ‰½É‘•È¤í‰…­É½Õ¹éÙ…È ´µ‰œÌ¤í½±½ÈéÙ…È ´µÑ•áĞÄ¤í™½¹ĞµÍ¥é”èÄÍÁàí™½¹Ğµİ•¥¡ĞèÜÀÀíÕÉÍ½ÈéÁ½¥¹Ñ•Èí™½¹Ğµ™…µ¥±äéÙ…È ´µÍ…¹Ì¤ˆû²Ş£²0ğ½‰ÕÑÑ½¸ø(€€€€€€ñ‰ÕÑÑ½¸‘…Ñ„µ…Ğô‰½¬ˆÍÑå±”ô‰™±•àèÄíÁ…‘‘¥¹œèÄÅÁàí‰½É‘•ÈµÉ…‘¥ÕÌèÄÁÁàí‰½É‘•ÈèÅÁàÍ½±¥Ù…È ´µ…•¹Ğ¤í‰…­É½Õ¹éÙ…È ´µ…•¹Ğ¤í½±½Èè™™˜í™½¹ĞµÍ¥é”èÄÍÁàí™½¹Ğµİ•¥¡ĞèÜÀÀíÕÉÍ½ÈéÁ½¥¹Ñ•Èí™½¹Ğµ™…µ¥±äéÙ…È ´µÍ…¹Ì¤ˆû¶fW²vàğ½‰ÕÑÑ½¸ø(€€€€ğ½‘¥Øøğ½‘¥Øù€ì(€‘½Õµ•¹Ğ¹‰½‘ä¹…ÁÁ•¹‘¡¥±¡‰¤ì(€‰¹ÅÕ•ÉåM•±•Ñ½È m‘…Ñ„µ…Ğô‰½¬‰tœ¤¹…‘‘Ù•¹Ñ1¥ÍÑ•¹•È ±¥¬œ° ¤ôùí‰¹É•µ½Ù” ¤í½¹=¬ ¤íô¤ì(€‰¹ÅÕ•ÉåM•±•Ñ½È m‘…Ñ„µ…Ğô‰¹¼‰tœ¤¹…‘‘Ù•¹Ñ1¥ÍÑ•¹•È ±¥¬œ° ¤ôù‰¹É•µ½Ù” ¤¤ì(€‰¹…‘‘Ù•¹Ñ1¥ÍÑ•¹•È ±¥¬œ±”ôùí¥˜¡”¹Ñ…É•Ğôôõ‰¥‰¹É•µ½Ù” ¤íô¤ì)ô()™Õ¹Ñ¥½¸Í•…É¡	½½­QÉ…¥¹Ì¡¥¹±Õ‘•QÉ…¹Í™•È°¥¹±Õ‘•‘¨¥ì(€½¹ÍĞ™É½´€ôİ¥¹‘½Ü¹}‰½½­É½´ì(€½¹ÍĞÑ¼€ôİ¥¹‘½Ü¹}‰½½­Q¼ì(€½¹ÍĞ‘…Ñ•¼€ô‘½Õµ•¹Ğ¹•Ñ±•µ•¹Ñ	å% ‰½½¬µ‘…Ñ”µ¼œ¤ü¹Ù…±Õ”ì(€½¹ÍĞ‘…Ñ•	…¬€ô}‰½½­I½Õ¹‘QÉ¥À€ü‘½Õµ•¹Ğ¹•Ñ±•µ•¹Ñ	å% ‰½½¬µ‘…Ñ”µ‰…¬œ¤ü¹Ù…±Õ”€è¹Õ±°ì(€½¹ÍĞ•°€ô‘½Õµ•¹Ğ¹•Ñ±•µ•¹Ñ	å% µäµ‰½½¬µÉ•ÍÕ±ÑÌœ¤ñğ‘½Õµ•¹Ğ¹•Ñ±•µ•¹Ñ	å% ‰½½¬µÉ•ÍÕ±ÑÌœ¤ì(€¥˜ …•°¤É•ÑÕÉ¸ì(€€¼¼ƒªÂ®*S®
+€ƒŠHƒ¶G²*ç²vğƒ®>gªâÃ¶fP(€¥˜¡‘…Ñ•¼¥ì(€€€½¹ÍĞ‰‘°õ‘½Õµ•¹Ğ¹•Ñ±•µ•¹Ñ	å% ‰½½­¥¹œµ‘…Ñ”œ¤ì(€€€¥˜¡‰‘°¤‰‘°¹Ù…±Õ”õ‘…Ñ•¼ì(€€€İ¥¹‘½Ü¹}ÕÉÉ•¹ÑQÉ…Ù•±…Ñ”õ‘…Ñ•¼ì(€ô((€¥˜ …™É½µñğ…Ñ¼¥ì(€€€•°¹¥¹¹•É!Q50ôœñ‘¥Ø±…ÍÌô‰•µÁÑäˆøñ‘¥Ø±…ÍÌô‰•µÁÑäµ¥½¸ˆûÂ~j$ğ½‘¥ØøñÀû²Ús®Âs²^·ªÎğƒ®>²Â§²^·²vƒ²ƒ¶w¶VÓ²ó²ã²jPğ½Àøğ½‘¥Øøœì(€€€É•ÑÕÉ¸ì(€ô(€¥˜¡™É½´ôôõÑ¼¥ì(€€€•°¹¥¹¹•É!Q50ôœñ‘¥Ø±…ÍÌô‰•µÁÑäˆøñ‘¥Ø±…ÍÌô‰•µÁÑäµ¥½¸ˆûŠjƒ¾â<ğ½‘¥ØøñÀû²Ús®Âs²^·ªÎğƒ®>²Â§²^·²vĞƒªÂg²*×®.#®.ğ½Àøğ½‘¥Øøœì(€€€É•ÑÕÉ¸ì(€ô((€€¼¼ƒ²¶Ôƒ²^Ó²Â ƒ¶C²$(€½¹ÍĞ¹½İ½É¥±Ñ•È€ô¹•Ü…Ñ” ¤ì(€½¹ÍĞ¹½İ5¥±Ñ•È€ô¹½İ½É¥±Ñ•È¹•Ñ!½ÕÉÌ ¤¨ØÀ­¹½İ½É¥±Ñ•È¹•Ñ5¥¹ÕÑ•Ì ¤ì(€€¼¼ƒ²b“®*`ƒ®
+ƒ²pƒ²b#®“²vğƒ®V3®0ƒ¶b²z°ƒ².sªÂƒ²vÓ²‚ƒ²^Ó²Â ƒ²‚s²fà(€½¹ÍĞ¥ÍQ½‘…ä€ô€¡‘…Ñ•¼€ôôôÑ½‘…å1½…±MÑÈ ¤¤ì(€€¼¼ŠIƒ²¶Ôƒ²*“²êP€£²vã²‚G²^´ƒ¶C²'²^C®>ƒ²z³²
+³²j¤¤(€½¹ÍĞÍ…¹¥É•Ğô¡±¤ôùì(€€€½¹ÍĞ…ÉÈõmtì(€€€11}QI%9L¹™½É… ¡Ğôùì(€€€€€½¹ÍĞÍÑ½ÁÌõĞ¹ÍÑ½ÁÌì(€€€€€½¹ÍĞ™¤õÍÑ½ÁÌ¹™¥¹‘%¹‘•à¡ÌôùÌ¹Ìôôõ¤ì(€€€€€½¹ÍĞÑ¤õÍÑ½ÁÌ¹™¥¹‘%¹‘•à¡ÌôùÌ¹Ìôôõ¤ì(€€€€€¥˜¡™¤ğÁññÑ¤ğÁññ™¤øõÑ¤¤É•ÑÕÉ¸ì(€€€€€¥˜¡¥ÍA…ÍÍMÑ½À¡Ğ±¥ññ¥ÍA…ÍÍMÑ½À¡Ğ±¤¤É•ÑÕÉ¸ì(€€€€€½¹ÍĞ‘•ÁMÑ½ÀõÍÑ½ÁÍm™¥t°…ÉÉMÑ½ÀõÍÑ½ÁÍmÑ¥tì(€€€€€½¹ÍĞ‘•ÁPõ¡…ÍQ¥µ”¡‘•ÁMÑ½À¹‘•À¤ı‘•ÁMÑ½À¹‘•Àé¡…ÍQ¥µ”¡‘•ÁMÑ½À¹…ÉÈ¤ı‘•ÁMÑ½À¹…ÉÈé¹Õ±°ì(€€€€€½¹ÍĞ…ÉÉPõ¡…ÍQ¥µ”¡…ÉÉMÑ½À¹…ÉÈ¤ı…ÉÉMÑ½À¹…ÉÈé¡…ÍQ¥µ”¡…ÉÉMÑ½À¹‘•À¤ı…ÉÉMÑ½À¹‘•Àé¹Õ±°ì(€€€€€¥˜ …‘•ÁP¤É•ÑÕÉ¸ì(€€€€€¥˜¡¥ÍQ½‘…ä€˜˜Ñ½5¥¸¡‘•ÁP¤„ôõ¹Õ±°€˜˜Ñ½5¥¸¡‘•ÁP¤ñ¹½İ5¥±Ñ•È¤É•ÑÕÉ¸ì(€€€€€…ÉÈ¹ÁÕÍ ¡íĞ°‘•ÁP°…ÉÉP°‘ÕÈé‘ÕÉMÑÈ¡‘•ÁP°…ÉÉP¥ô¤ì(€€€ô¤ì(€€€É•ÑÕÉ¸…ÉÈì(€ôì(€½¹ÍĞÑÉ…¥¹Ì€ôÍ…¹¥É•Ğ¡™É½´±Ñ¼¤¹µ…À¡”ôø¡ì¸¸¹”°…É½´é™É½´°…Q¼éÑ¼°…‘¨é™…±Í•ô¤¤ì((€€¼¼ƒ²vã²‚G²^´ƒ¶>³¶V èƒ²Ús®Âp¿®>²Â§²^´ƒ®ÂcªÊô€ÄÁ­´ƒ®
+ĞƒªâÃ²Â£²^´ƒ®Âs²Â¤ƒ²^Ó²Â €£²†Ã¶j3²^´ƒ®¾ã²‚W²Â ƒ²^Ó²Â£®0¤(€¥˜¡¥¹±Õ‘•‘¨¥ì(€€€½¹ÍĞÍÑ½ÁÍĞô¡Ğ±ÍÑ¸¤ôùí½¹ÍĞ¤õĞ¹ÍÑ½ÁÌ¹™¥¹‘%¹‘•à¡ÌôùÌ¹ÌôôõÍÑ¸¤íÉ•ÑÕÉ¸¤øôÀ˜˜…¥ÍA…ÍÍMÑ½À¡Ğ±ÍÑ¸¤íôì(€€€½¹ÍĞÍ••¸õ¹•ÜM•Ğ¡ÑÉ…¥¹Ì¹µ…À¡”ôù”¹Ğ¹¹¼¤¤ì(€€€™½È¡½¹ÍĞ¹ˆ½˜}¹•…É‰åQÉ…¥¹MÑ…Ñ¥½¹Ì¡™É½´¤¥ì(€€€€€Í…¹¥É•Ğ¡¹ˆ¹¸±Ñ¼¤¹™½É… ¡”ôùì(€€€€€€€¥˜¡Í••¸¹¡…Ì¡”¹Ğ¹¹¼¥ññÍÑ½ÁÍĞ¡”¹Ğ±™É½´¤¥É•ÑÕÉ¸ì(€€€€€€€Í••¸¹…‘¡”¹Ğ¹¹¼¤ì(€€€€€€€ÑÉ…¥¹Ì¹ÁÕÍ ¡ì¸¸¹”°…É½´é¹ˆ¹¸°…Q¼éÑ¼°…‘¨éÑÉÕ”°µ¥ÍÌé™É½µô¤ì(€€€€€ô¤ì(€€€ô(€€€™½È¡½¹ÍĞ¹ˆ½˜}¹•…É‰åQÉ…¥¹MÑ…Ñ¥½¹Ì¡Ñ¼¤¥ì(€€€€€Í…¹¥É•Ğ¡™É½´±¹ˆ¹¸¤¹™½É… ¡”ôùì(€€€€€€€¥˜¡Í••¸¹¡…Ì¡”¹Ğ¹¹¼¥ññÍÑ½ÁÍĞ¡”¹Ğ±Ñ¼¤¥É•ÑÕÉ¸ì(€€€€€€€Í••¸¹…‘¡”¹Ğ¹¹¼¤ì(€€€€€€€ÑÉ…¥¹Ì¹ÁÕÍ ¡ì¸¸¹”°…É½´é™É½´°…Q¼é¹ˆ¹¸°…‘¨éÑÉÕ”°µ¥ÍÌéÑ½ô¤ì(€€€€€ô¤ì(€€€ô(€ô(€ÑÉ…¥¹Ì¹Í½ÉĞ ¡„±ˆ¤ôø¡Ñ½5¥¸¡„¹‘•ÁP¥ñğÀ¤´¡Ñ½5¥¸¡ˆ¹‘•ÁP¥ñğÀ¤¤ì((€¥˜ …ÑÉ…¥¹Ì¹±•¹Ñ ¥ì(€€€¥˜¡¥¹±Õ‘•QÉ…¹Í™•È¥ì(€€€€€Í•…É¡	½½­QÉ…¹Í™•ÉÌ¡™É½´°Ñ¼°‘…Ñ•¼°•°¤ì(€€€ô•±Í”ì(€€€€€•°¹¥¹¹•É!Q50õ€ñ‘¥Ø±…ÍÌô‰•µÁÑäˆøñ‘¥Ø±…ÍÌô‰•µÁÑäµ¥½¸ˆûÂ~R4ğ½‘¥ØøñÀø‘í™É½µôƒŠH€‘íÑ½ô€‘í¥¹±Õ‘•‘¨üŸ²¶×
+ß²vã²‚G²^´œèŸ²¶Ôôƒ²^Ó²Â£ªÂ ƒ²^²*×®.#®.¸ñ‰ÈøñÍµ…±°ÍÑå±”ô‰½±½ÈéÙ…È ´µÑ•áĞÌ¤ˆû¶fc²*äƒ¶>³¶V ‘í¥¹±Õ‘•‘¨üœœèœƒ
+Üƒ²vã²‚G²^´ƒ¶>³¶V ôƒ²b×²c²ró®†pƒ®.“².pƒªÊ²'¶VÓ®ÎÓ²ã²jPğ½Íµ…±°øğ½Àøğ½‘¥Øù€ì(€€€ô(€€€É•ÑÕÉ¸ì(€ô(€½¹ÍĞ…‘©½Õ¹ĞõÑÉ…¥¹Ì¹™¥±Ñ•È¡”ôù”¹…‘¨¤¹±•¹Ñ ì((€€¼¼¥¹±¥¹”½¹±¥¬ƒ²‚sªÆÀƒŠH‘…Ñ„ƒ²7²Äƒ²‚²z”ƒ¶n…‘‘Ù•¹Ñ1¥ÍÑ•¹•Ë®†pƒ®NÇ®†t€¡¥=LM…™…É¤ƒ¶bã¶f`¤(€½¹ÍĞÉ½İÌ€ôÑÉ…¥¹Ì¹µ…À ¡íĞ±‘•ÁP±…ÉÉP±‘ÕÈ±…É½´±…Q¼±…‘¨±µ¥ÍÍô¤ôù€(€€€€ñ‘¥Ø±…ÍÌô‰‰½½¬µÑÉ…¥¸µÉ½Üˆ‘…Ñ„µÑÉ…¥¸µ¹¼ôˆ‘íĞ¹¹½ôˆ‘…Ñ„µ‘•Àôˆ‘í‘•ÁQôˆ‘…Ñ„µ…ÉÈôˆ‘í…ÉÉQñğœôˆ‘…Ñ„µ™É½´ôˆ‘í…É½µôˆ‘…Ñ„µÑ¼ôˆ‘í…Q½ôˆ‘…Ñ„µ‘…Ñ”ôˆ‘í‘…Ñ•½ôˆ€‘í…‘¨ı‘…Ñ„µ…‘¨ôˆÄˆ‘…Ñ„µµ¥ÍÌôˆ‘íµ¥ÍÍô‰€èœô€‘í…‘¨üÍÑå±”ô‰½Á…¥Ñäè¸Üàˆœèœôø(€€€€€€ñ‘¥ØÍÑå±”ô‰™±•àèÄíµ¥¸µİ¥‘Ñ èÀˆø(€€€€€€€€ñ‘¥ØÍÑå±”ô‰‘¥ÍÁ±…äé™±•àí…±¥¸µ¥Ñ•µÌé•¹Ñ•Èí…ÀèÙÁàíµ…É¥¸µ‰½ÑÑ½´èÑÁàˆø(€€€€€€€€€€ñÍÁ…¸ÍÑå±”ô‰™½¹ĞµÍ¥é”èÄÍÁàí™½¹Ğµİ•¥¡ĞèÜÀÀí½±½ÈéÙ…È ´µŒ´‘íÍÍY…È¡Ğ¹É…‘”¥ô¤ˆø‘íĞ¹É…‘•ôğ½ÍÁ…¸ø(€€€€€€€€€€ñÍÁ…¸ÍÑå±”ô‰™½¹ĞµÍ¥é”èÄÍÁàí½±½ÈéÙ…È ´µÑ•áĞÈ¤í™½¹Ğµ™…µ¥±äéÙ…È ´µµ½¹¼¤ˆø‘íĞ¹¹½ôğ½ÍÁ…¸ø(€€€€€€€€€€ñÍÁ…¸ÍÑå±”ô‰™½¹ĞµÍ¥é”èÄÉÁàí™½¹Ğµİ•¥¡ĞèØÀÀí½±½ÈéÙ…È ´µÑ•áĞÄ¤ˆø‘íĞ¹‘•ÍÑ÷¶Z$ğ½ÍÁ…¸ø(€€€€€€€€€€‘í…‘¨ı€ñÍÁ…¸ÍÑå±”ô‰™½¹ĞµÍ¥é”èä¸ÕÁàí™½¹Ğµİ•¥¡ĞèàÀÀíÁ…‘‘¥¹œèÅÁà€İÁàí‰½É‘•ÈµÉ…‘¥ÕÌèáÁàí‰…­É½Õ¹éÉ‰„ ÈĞä°ÄÄÔ°ÈÈ°¸ÄÈ¤í‰½É‘•ÈèÅÁàÍ½±¥Ù…È ´µ½É…¹”¤í½±½ÈéÙ…È ´µ½É…¹”¤ˆû²vã²‚G²^´ğ½ÍÁ…¸ù€èœô(€€€€€€€€€€‘ì  ¤ôùí½¹ÍĞÍÑ…Ñ”õÑåÁ•½˜}Í¥µMÑ…Ñ”ôôô™Õ¹Ñ¥½¸œı}Í¥µMÑ…Ñ”¡Ğ±‘…Ñ•¼¤é¹Õ±°í½¹ÍĞ±¥Ù”õÍÑ…Ñ”ü¹Á¡…Í”ôôôÉÕ¹¹¥¹œœıÍÑ…Ñ”¹ÕÉÉ•¹ĞèÀ±•ÍĞõÍÑ…Ñ”ü¹Á¡…Í”ôôô‰•™½É”œıÍÑ…Ñ”¹™¥¹…°èÀíÉ•ÑÕÉ¸±¥Ù”øÀı€ñÍÁ…¸±…ÍÌô‰‰½½¬µ‘•±…äµÑ…œ±¥Ù”ˆø‘í±¥Ù•÷®Úƒ²²^Àğ½ÍÁ…¸ù€é•ÍĞøÀı€ñÍÁ…¸±…ÍÌô‰‰½½¬µ‘•±…äµÑ…œ•ÍĞˆø‘í•ÍÑ÷®Úƒ²²^Àƒ²b#²ğ½ÍÁ…¸ù€èœœíô¤ ¥ô(€€€€€€€€ğ½‘¥Øø(€€€€€€€€ñ‘¥ØÍÑå±”ô‰‘¥ÍÁ±…äé™±•àí…±¥¸µ¥Ñ•µÌé‰…Í•±¥¹”í…ÀèÙÁàˆø(€€€€€€€€€€ñÍÁ…¸ÍÑå±”ô‰™½¹ĞµÍ¥é”èÄİÁàí™½¹Ğµİ•¥¡ĞèÜÀÀí™½¹Ğµ™…µ¥±äéÙ…È ´µµ½¹¼¤ˆø‘í‘•ÁQôğ½ÍÁ…¸ø(€€€€€€€€€€‘í…‘¨˜™…É½´„ôõ™É½´ı€ñÍÁ…¸ÍÑå±”ô‰™½¹ĞµÍ¥é”èÄÀ¸ÕÁàí½±½ÈéÙ…È ´µ½É…¹”¤í™½¹Ğµİ•¥¡ĞèÜÀÀˆø‘í…É½µôğ½ÍÁ…¸ù€èœô(€€€€€€€€€€ñÍÁ…¸ÍÑå±”ô‰½±½ÈéÙ…È ´µÑ•áĞÌ¤í™½¹ĞµÍ¥é”èÄÉÁàˆûŠHğ½ÍÁ…¸ø(€€€€€€€€€€ñÍÁ…¸ÍÑå±”ô‰™½¹ĞµÍ¥é”èÄİÁàí™½¹Ğµİ•¥¡ĞèÜÀÀí™½¹Ğµ™…µ¥±äéÙ…È ´µµ½¹¼¤í½±½ÈéÙ…È ´µÉ••¸¤ˆø‘í…ÉÉQñğœ´ôğ½ÍÁ…¸ø(€€€€€€€€€€‘í…‘¨˜™…Q¼„ôõÑ¼ı€ñÍÁ…¸ÍÑå±”ô‰™½¹ĞµÍ¥é”èÄÀ¸ÕÁàí½±½ÈéÙ…È ´µ½É…¹”¤í™½¹Ğµİ•¥¡ĞèÜÀÀˆø‘í…Q½ôğ½ÍÁ…¸ù€èœô(€€€€€€€€€€ñÍÁ…¸ÍÑå±”ô‰™½¹ĞµÍ¥é”èÄÅÁàí½±½ÈéÙ…È ´µÑ•áĞÌ¤í™½¹Ğµ™…µ¥±äéÙ…È ´µµ½¹¼¤ˆø‘í‘ÕÉôğ½ÍÁ…¸ø(€€€€€€€€ğ½‘¥Øø(€€€€€€€€‘í…‘¨ı€ñ‘¥ØÍÑå±”ô‰™½¹ĞµÍ¥é”èÄÀ¸ÕÁàí½±½ÈéÙ…È ´µÑ•áĞÌ¤íµ…É¥¸µÑ½ÀèÍÁàˆø‘íµ¥ÍÍ÷²^´ƒ®¾ã²‚W²Â ƒ
+Ü€‘í…É½´„ôõ™É½´ı…É½´¬œƒ²Ús®Âpœé…Q¼¬œƒ®>²Â¤ôğ½‘¥Øù€èœô(€€€€€€ğ½‘¥Øø(€€€€€€ñ‘¥ØÍÑå±”ô‰‘¥ÍÁ±…äé™±•àí…±¥¸µ¥Ñ•µÌé•¹Ñ•Èí…ÀèáÁàí™±•àµÍ¡É¥¹¬èÀˆø(€€€€€€€€ñ‘¥Ø±…ÍÌô‰Í•…Ğµ…Ù…¥°µ‰Ñ¸ˆ‘…Ñ„µ¹¼ôˆ‘íĞ¹¹½ôˆ(€€€€€€€€€ÍÑå±”ô‰µ¥¸µİ¥‘Ñ èÔÑÁàí¡•¥¡ĞèĞÑÁàí‰½É‘•ÈµÉ…‘¥ÕÌèáÁàí‰½É‘•ÈèÄ¸ÕÁàÍ½±¥Ù…È ´µ‰½É‘•È¤í‘¥ÍÁ±…äé™±•àí…±¥¸µ¥Ñ•µÌé•¹Ñ•Èí©ÕÍÑ¥™äµ½¹Ñ•¹Ğé•¹Ñ•Èí™½¹ĞµÍ¥é”èÄÁÁàí™½¹Ğµİ•¥¡ĞèØÀÀí™½¹Ğµ™…µ¥±äéÙ…È ´µÍ…¹Ì¤í½±½ÈéÙ…È ´µÑ•áĞÌ¤íÑ•áĞµ…±¥¸é•¹Ñ•Èí±¥¹”µ¡•¥¡ĞèÄ¸Ìˆû²†Ã¶j0ñ‰Èû²’Dğ½‘¥Øø(€€€€€€€€ñ‘¥Ø±…ÍÌô‰‰½½¬µÑÉ…¥¸µ¡•ÙÉ½¸ˆûŠèğ½‘¥Øø(€€€€€€ğ½‘¥Øø(€€€€ğ½‘¥Øù€¤¹©½¥¸ œœ¤ì((€½¹ÍĞÑÉ¥Á1…‰•°€ô}‰½½­I½Õ¹‘QÉ¥À€üƒ¶:ã®>€ ‘í‘…Ñ•½ô¥€€è‘…Ñ•¼ì(€•°¹¥¹¹•É!Q50€ô€(€€€€ñ‘¥Ø±…ÍÌô‰É•ÍÕ±Ğµ¡•…‘•ÈˆÍÑå±”ô‰µ…É¥¸µÑ½ÀèÄÙÁàˆø(€€€€€€ñ‘¥Ø±…ÍÌô‰É•ÍÕ±ĞµÑ¥Ñ±”ˆø‘í™É½µôƒŠH€‘íÑ½ôğ½‘¥Øø(€€€€€€ñÍÁ…¸±…ÍÌô‰‰…‘”‰±Õ”ˆø‘íÑÉ…¥¹Ì¹±•¹Ñ¡÷¶:àğ½ÍÁ…¸ø(€€€€€€‘í…‘©½Õ¹Ğı€ñÍÁ…¸±…ÍÌô‰‰…‘”ˆÍÑå±”ô‰‰½É‘•Èµ½±½ÈéÙ…È ´µ½É…¹”¤í½±½ÈéÙ…È ´µ½É…¹”¤ˆû²vã²‚G²^´€‘í…‘©½Õ¹Ñ÷¶:àğ½ÍÁ…¸ù€èœô(€€€€€€ñÍÁ…¸±…ÍÌô‰‰…‘”ˆÍÑå±”ô‰‰…­É½Õ¹éÙ…È ´µ‰œÌ¤ˆø‘íÑÉ¥Á1…‰•±ôğ½ÍÁ…¸ø(€€€€ğ½‘¥Øø(€€€€ñ‘¥Ø±…ÍÌô‰‰½½¬µÑÉ…¥¸µ±¥ÍĞˆø‘íÉ½İÍôğ½‘¥Øø(€€€€‘í}‰½½­I½Õ¹‘QÉ¥À˜™‘…Ñ•	…¬ı€ñÀ±…ÍÌô‰¡¥¹ĞˆÍÑå±”ô‰µ…É¥¸µÑ½ÀèáÁàˆûŠìƒ²fW®ÎÔèƒªÂ®*Pƒ²^Ó²Â ƒ²b#®ƒ²f®0ƒ¶nƒ®Î×¶:à ‘íÑ½÷ŠH‘í™É½µô°€‘í‘…Ñ•	…­ô¤ƒ²†Ã¶j3ªÂ ƒ²zC®>g²ró®†pƒ²^Ó®š÷®.#®.ğ½Àù€èœõ€ì((€€¼¼ƒ¶fc²*äƒ¶>³¶V èƒ²¶ÔƒªÊÃªÎğƒ²V®zc²^@ƒ¶fc²*äƒªÊ÷®†s®>ƒ¶V£ªî`ƒ¶Fs².p(€¥˜¡¥¹±Õ‘•QÉ…¹Í™•È¥ì(€€€½¹ÍĞáõ‘½Õµ•¹Ğ¹É•…Ñ•±•µ•¹Ğ ‘¥Øœ¤ì(€€€•°¹…ÁÁ•¹‘¡¥±¡á¤ì(€€€Í•…É¡	½½­QÉ…¹Í™•ÉÌ¡™É½´°Ñ¼°‘…Ñ•¼°á°ÑÉÕ”¤ì(€ô((€€¼¼…‘‘Ù•¹Ñ1¥ÍÑ•¹•Èƒ®Â§².w²ró®†pƒ¶Ó®š´ƒ®NÇ®†t€¡¥=LM…™…É¤è½Ù•É™±½Üµäé…ÕÑ¼ƒ®
+Ó®Ú ‘¥Ø½¹±¥¬ƒ®¾ã®>g²zDƒ®Â§² ¤(€•°¹ÅÕ•ÉåM•±•Ñ½É±° œ¹‰½½¬µÑÉ…¥¸µÉ½İm‘…Ñ„µÑÉ…¥¸µ¹½té¹½Ğ ¹‰½½¬µá™•Èµ…É¤œ¤¹™½É… ¡É½Üôùì(€€€É½Ü¹…‘‘Ù•¹Ñ1¥ÍÑ•¹•È ±¥¬œ°€ ¤ôùì(€€€€€€¼¼ƒ®
+Ğƒ²^³¶Z$€Ÿ²vó²‚Tƒ²ÚSªÂ œƒ®ª£®Npèƒ²b#®ƒ®2².€ƒ²^³²‚Tƒ®.ÓªâÀƒ²Â÷²vƒ²^Ã®.(€€€€€¥˜¡İ¥¹‘½Ü¹}ÑÉ¥Á‘‘5½‘”¥ì(€€€€€€€½¹ÍĞ´õİ¥¹‘½Ü¹}ÑÉ¥Á‘‘5½‘”ì(€€€€€€€½¹ÍĞÁÉ½••ô ¤ôù½Á•¹QÉ¥Á1•A¥­•È¡É½Ü¹‘…Ñ…Í•Ğ¹ÑÉ…¥¹9¼°É½Ü¹‘…Ñ…Í•Ğ¹™É½µññ™É½´°É½Ü¹‘…Ñ…Í•Ğ¹Ñ½ññÑ¼°É½Ü¹‘…Ñ…Í•Ğ¹‘•Áñğœœ°É½Ü¹‘…Ñ…Í•Ğ¹…ÉÉñğœœ°É½Ü¹‘…Ñ…Í•Ğ¹‘…Ñ•ññ‘…Ñ•¼¤ì(€€€€€€€½¹ÍĞ½¹˜ô¡ÑåÁ•½˜}ÑÉ¥Á…å=Ù•É±…Àôôô™Õ¹Ñ¥½¸œ¤ı}ÑÉ¥Á…å=Ù•É±…À¡´¹ÑÉ¥Á%°´¹‘…ä°É½Ü¹‘…Ñ…Í•Ğ¹‘•À°É½Ü¹‘…Ñ…Í•Ğ¹…ÉÈ¤é¹Õ±°ì(€€€€€€€¥˜¡½¹˜¥ì(€€€€€€€€€¥˜¡½¹™¥É´¡ƒŠjƒ¾â<ƒ²vÓ®¾àƒ®.ÓªâĞƒ²vó²‚WªÎğƒ².sªÂ²vĞƒªÊç²æ§®.#®.¹q¹q¸‘í½¹˜¹ÑÉ…¥¹9½÷®Ê ƒ
+Ü€‘í½¹˜¹™É½µMÑ¹÷ŠH‘í½¹˜¹Ñ½MÑ¹õq¸‘í½¹˜¹‘•ÁQ¥µ•õø‘í½¹˜¹…ÉÉQ¥µ•ô€ ‘í´¹‘…å÷²vó²Â ¥q¹q»ªŞã®zc®>ƒ²vĞƒ²^Ó²Â£®–ğ€‘í´¹‘…å÷²vó²Â£²^@ƒ²ÚSªÂ¶Vc².sªÊƒ²*×®.#ªæ0ı€¤¤ÁÉ½•• ¤ì(€€€€€€€ô•±Í”ÁÉ½•• ¤ì(€€€€€€€É•ÑÕÉ¸ì(€€€€€ô(€€€€€€¼¼ƒ²‚WªâÃªÚ0ƒ²b#®ƒ¶vC®šèƒ²’GªÂƒ²jSªâ ƒ².s¶*ã®–ğƒªÆÓ®#®nÃªÎ€ƒ®ÂS®†pƒ²jS²vó
+ß®NÇªâ$ƒ²ƒ¶w²Â÷²vƒ²^Ã®.(€€€€€½¹ÍĞ¼ô ¤ôøİ¥¹‘½Ü¹}…Ñ¥Ù•A…ÍÍ%(€€€€€€€€ü½Á•¹A…ÍÍ…åM•±•Ñ½È¡İ¥¹‘½Ü¹}…Ñ¥Ù•A…ÍÍ%°É½Ü¹‘…Ñ…Í•Ğ¹ÑÉ…¥¹9¼°É½Ü¹‘…Ñ…Í•Ğ¹™É½µññ™É½´°É½Ü¹‘…Ñ…Í•Ğ¹Ñ½ññÑ¼°É½Ü¹‘…Ñ…Í•Ğ¹‘•Áñğœœ°É½Ü¹‘…Ñ…Í•Ğ¹…ÉÉñğœœ¤(€€€€€€€€è½Á•¹	½½­QÉ…¥¹•Ñ…¥°¡É½Ü¹‘…Ñ…Í•Ğ¹ÑÉ…¥¹9¼°É½Ü¹‘…Ñ…Í•Ğ¹™É½µññ™É½´°É½Ü¹‘…Ñ…Í•Ğ¹Ñ½ññÑ¼°É½Ü¹‘…Ñ…Í•Ğ¹‘•Áñğœœ°É½Ü¹‘…Ñ…Í•Ğ¹…ÉÉñğœœ°É½Ü¹‘…Ñ…Í•Ğ¹‘…Ñ•ññ‘…Ñ•¼¤ì(€€€€€¥˜¡É½Ü¹‘…Ñ…Í•Ğ¹…‘¨¥ì(€€€€€€€½¹ÍĞµ¥ÍÌõÉ½Ü¹‘…Ñ…Í•Ğ¹µ¥ÍÌ°…õÉ½Ü¹‘…Ñ…Í•Ğ¹™É½´°…PõÉ½Ü¹‘…Ñ…Í•Ğ¹Ñ¼ì(€€€€€€€}‰½½­‘©½¹™¥É´¡ƒ²Ús®Âs²^·²v €ñˆø‘í…÷²^´ğ½ˆû²vÓªÎ€ƒ®>²Â§²^·²v €ñˆø‘í…Q÷²^´ğ½ˆû²z®.#®.¸ñ‰Èøñ‰Èøñˆø‘íµ¥ÍÍ÷²^´ğ½ˆû²v ƒ²‚W²Â£¶Vc² ƒ²V+²*×®.#®.¹€°¼¤ì(€€€€€ô•±Í”¼ ¤ì(€€€ô¤ì(€ô¤ì((€€¼¼ƒ®
+Ğƒ²^³¶Z$€Ÿ²vó²‚Tƒ²ÚSªÂ œƒ®ª£®Npèƒ²vÓ®¾àƒ®.ÓªâĞƒ²vó²‚WªÎğƒ².sªÂ²vĞƒªÊç²æc®*Pƒ²^Ó²Â£®*Pƒ²v3²bƒ¶Fs².p(€¥˜¡İ¥¹‘½Ü¹}ÑÉ¥Á‘‘5½‘”€˜˜ÑåÁ•½˜}ÑÉ¥Á…å=Ù•É±…Àôôô™Õ¹Ñ¥½¸œ¥ì(€€€½¹ÍĞ´õİ¥¹‘½Ü¹}ÑÉ¥Á‘‘5½‘”ì(€€€•°¹ÅÕ•ÉåM•±•Ñ½É±° œ¹‰½½¬µÑÉ…¥¸µÉ½İm‘…Ñ„µÑÉ…¥¸µ¹½té¹½Ğ ¹‰½½¬µá™•Èµ…É¤œ¤¹™½É… ¡É½Üôùì(€€€€€½¹ÍĞ½¹˜õ}ÑÉ¥Á…å=Ù•É±…À¡´¹ÑÉ¥Á%°´¹‘…ä°É½Ü¹‘…Ñ…Í•Ğ¹‘•À°É½Ü¹‘…Ñ…Í•Ğ¹…ÉÈ¤ì(€€€€€¥˜¡½¹˜¥ìÉ½Ü¹±…ÍÍ1¥ÍĞ¹…‘ ÑÉ¥ÀµÉ½Üµ½Ù•É±…Àœ¤ìÉ½Ü¹Í•ÑÑÑÉ¥‰ÕÑ” Ñ¥Ñ±”œ°Ÿ²vÓ®¾àƒ®.ÓªâĞƒ²vó²‚WªÎğƒ².sªÂ²vĞƒªÊç²æ§®.#®.œ¤ìô(€€€ô¤ì(€ô((€€¼¼ƒ²†Ã¶j0ƒªÖ³ªÂƒªÎ×¶Ôƒ²z³ªÎƒ®0ƒ®¢ó²‚ ƒªÎ²
+Ã¶VcªÎ€ƒ²V{²ªôƒªÊÃªÎó®Ú¶Àƒ¶Fs²Ús¶Vs®.¸(€€¼¼ƒ²Š3²tƒ®NÇªâ'®Îƒ²²àƒªÎ²
+Ã²v ƒ²Š3²tƒ²ƒ¶tƒ².s²‚Cªæ3² ƒ®¾ã®’ƒ²Ò#ªâÀƒªÊ²'²vƒªÂ®Î7ªÊ0ƒ²rƒ²¶Vs®.¸(€}¡å‘É…Ñ•	½½­M•…ÑMÑ…ÑÕÍ•Ì¡ÑÉ…¥¹Ì±•°±‘…Ñ•¼±™É½´±Ñ¼¤ì)ô()™Õ¹Ñ¥½¸}‰½½­M•…ÑMÑ…ÑÕÌ¡½¹œ¥ì(€½¹ÍĞÉ…Ñ”õ5…Ñ ¹µ…à À±9Õµ‰•È¡½¹œü¹É…Ñ”¥ñğÀ¤±…Ù…¥±…‰±”õ5…Ñ ¹µ…à À±9Õµ‰•È¡½¹œü¹…Ù…¥±…‰±”¥ñğÀ¤ì(€¥˜¡…Ù…¥±…‰±”ğôÁññÉ…Ñ”øôÄ¥ì(€€€¥˜ ¡9Õµ‰•È¡½¹œü¹ÍÑ…¹‘¥¹Ù…¥±…‰±”¥ñğÀ¤øÀ˜™½¹œü¹ÍÑ…¹‘¥¹±¥¥‰±”¥É•ÑÕÉ¹í±…‰•°èŸ²z²tœ±½±½ÈèœŒÀàÑ™Œœ±‰œèÉ‰„ ÄäÈ°ÄÌÈ°ÈÔÈ°¸ÄÀ¤ôì(€€€É•ÑÕÉ¹í±…‰•°èŸ®“²œ±½±½ÈèÙ…È ´µÉ•¤œ±‰œèÉ‰„ ÈĞà°àÄ°ÜÌ°¸Àà¤ôì(€ô(€¥˜¡É…Ñ”ğô¸ÔÔ¥É•ÑÕÉ¹í±…‰•°èŸ²^³²r€œ±½±½ÈèÙ…È ´µÉ••¸¤œ±‰œèÉ‰„ ØÌ°ÄàÔ°àÀ°¸Àà¤ôì(€¥˜¡É…Ñ”ğô¸ÜÔ¥É•ÑÕÉ¹í±…‰•°èŸ®ÎÓ¶Ôœ±½±½ÈèÙ…È ´µ…•¹ĞÈ¤œ±‰œèÉ‰„ ÔØ°ÄÌä°ÈÔÌ°¸Àà¤ôì(€É•ÑÕÉ¹í±…‰•°èŸ¶bó²z„œ±½±½ÈèÙ…È ´µ½É…¹”¤œ±‰œèÉ‰„ ÈĞä°ÄÄÔ°ÈÈ°¸Àà¤ôì)ô)™Õ¹Ñ¥½¸}¡å‘É…Ñ•	½½­M•…ÑMÑ…ÑÕÍ•Ì¡ÑÉ…¥¹Ì±•°±‘…Ñ•¼±™É½´±Ñ¼¥ì(€½¹ÍĞ‰…Í”ôµ¥¸µİ¥‘Ñ èÔÑÁàí¡•¥¡ĞèĞÑÁàí‰½É‘•ÈµÉ…‘¥ÕÌèáÁàí‰½É‘•ÈèÄ¸ÕÁàÍ½±¥í‘¥ÍÁ±…äé™±•àí…±¥¸µ¥Ñ•µÌé•¹Ñ•Èí©ÕÍÑ¥™äµ½¹Ñ•¹Ğé•¹Ñ•Èí™½¹ĞµÍ¥é”èÄÅÁàí™½¹Ğµİ•¥¡ĞèÜÀÀí™½¹Ğµ™…µ¥±äéÙ…È ´µÍ…¹Ì¤œì(€½¹ÍĞ•¹•É…Ñ¥½¸õİ¥¹‘½Ü¹}‰½½­M•…Ñ!å‘É…Ñ¥½¹•¹•É…Ñ¥½¸ô¡İ¥¹‘½Ü¹}‰½½­M•…Ñ!å‘É…Ñ¥½¹•¹•É…Ñ¥½¹ñğÀ¤¬Äì(€½¹ÍĞ•¹ÑÉ¥•Ìõl¸¸¹•°¹ÅÕ•ÉåM•±•Ñ½É±° œ¹‰½½¬µÑÉ…¥¸µÉ½İm‘…Ñ„µÑÉ…¥¸µ¹½té¹½Ğ ¹‰½½¬µá™•Èµ…É¤œ¥t¹µ…À ¡É½Ü±¥¹‘•à¤ôø¡ì(€€€É½Ü±‰Ñ¸éÉ½Ü¹ÅÕ•ÉåM•±•Ñ½È œ¹Í•…Ğµ…Ù…¥°µ‰Ñ¸œ¤±É•ÍÕ±ĞéÑÉ…¥¹Ím¥¹‘•át(€ô¤¤¹™¥±Ñ•È¡àôùà¹‰Ñ¸˜™à¹É•ÍÕ±Ğ¤ì(€½¹ÍĞ‰åI½Üõ¹•Ü5…À¡•¹ÑÉ¥•Ì¹µ…À¡•¹ÑÉäôùm•¹ÑÉä¹É½Ü±•¹ÑÉåt¤¤±ÅÕ•Õ”õmtì(€±•ĞÍ¡•‘Õ±•õ™…±Í”ì(€½¹ÍĞ…Ñ¥Ù”õ•¹ÑÉäôùİ¥¹‘½Ü¹}‰½½­M•…Ñ!å‘É…Ñ¥½¹•¹•É…Ñ¥½¸ôôõ•¹•É…Ñ¥½¸˜™•°¹¥Í½¹¹•Ñ•˜™•¹ÑÉä¹‰Ñ¸¹¥Í½¹¹•Ñ•ì(€½¹ÍĞÁÉ½•ÍÍ9•áĞô ¤ôùì(€€€Í¡•‘Õ±•õ™…±Í”ì(€€€½¹ÍĞ•¹ÑÉäõÅÕ•Õ”¹Í¡¥™Ğ ¤ì(€€€¥˜ …•¹ÑÉä¥É•ÑÕÉ¸ì(€€€¥˜¡…Ñ¥Ù”¡•¹ÑÉä¤¥ì(€€€€€½¹ÍĞíĞ±…É½´±…Q½ôõ•¹ÑÉä¹É•ÍÕ±Ğì(€€€€€½¹ÍĞ½¹œõÑåÁ•½˜•Ñ=½¹•ÍÑ¥½¸ôôô™Õ¹Ñ¥½¸œı•Ñ=½¹•ÍÑ¥½¸¡Ğ±…É½µññ™É½´±…Q½ññÑ¼±‘…Ñ•¼¤é¹Õ±°ì(€€€€€¥˜¡…Ñ¥Ù”¡•¹ÑÉä¤¥ì(€€€€€€€½¹ÍĞµ•Ñ„õ}‰½½­M•…ÑMÑ…ÑÕÌ¡½¹œ¤ì(€€€€€€€•¹ÑÉä¹‰Ñ¸¹Ñ•áÑ½¹Ñ•¹Ğõµ•Ñ„¹±…‰•°ì(€€€€€€€•¹ÑÉä¹‰Ñ¸¹ÍÑå±”¹ÍÍQ•áĞõ€‘í‰…Í•ôí½±½Èè‘íµ•Ñ„¹½±½Éôí‰½É‘•Èµ½±½Èè‘íµ•Ñ„¹½±½Éôí‰…­É½Õ¹è‘íµ•Ñ„¹‰õ€ì(€€€€€€€•¹ÑÉä¹‰Ñ¸¹‘…Ñ…Í•Ğ¹Í•…Ñ!å‘É…Ñ•ôœÄœì(€€€€€ô(€€€ô(€€€Í¡•‘Õ±•9•áĞ ¤ì(€ôì(€½¹ÍĞÍ¡•‘Õ±•9•áĞô ¤ôùì(€€€¥˜¡Í¡•‘Õ±•‘ñğ…ÅÕ•Õ”¹±•¹Ñ¡ññİ¥¹‘½Ü¹}‰½½­M•…Ñ!å‘É…Ñ¥½¹•¹•É…Ñ¥½¸„ôõ•¹•É…Ñ¥½¸¥É•ÑÕÉ¸ì(€€€Í¡•‘Õ±•õÑÉÕ”ì(€€€¥˜¡İ¥¹‘½Ü¹É•ÅÕ•ÍÑ%‘±•…±±‰…¬¥İ¥¹‘½Ü¹É•ÅÕ•ÍÑ%‘±•…±±‰…¬¡ÁÉ½•ÍÍ9•áĞ±íÑ¥µ•½ÕĞèĞÔÁô¤ì(€€€•±Í”İ¥¹‘½Ü¹Í•ÑQ¥µ•½ÕĞ¡ÁÉ½•ÍÍ9•áĞ°À¤ì(€ôì(€½¹ÍĞ¡å‘É…Ñ”õ•¹ÑÉäôùì(€€€¥˜¡•¹ÑÉä¹‰Ñ¸¹‘…Ñ…Í•Ğ¹Í•…Ñ!å‘É…Ñ•ôôôœÄññ•¹ÑÉä¹‰Ñ¸¹‘…Ñ…Í•Ğ¹Í•…ÑEÕ•Õ•ôôôœÄœ¥É•ÑÕÉ¸ì(€€€•¹ÑÉä¹‰Ñ¸¹‘…Ñ…Í•Ğ¹Í•…ÑEÕ•Õ•ôœÄœì(€€€ÅÕ•Õ”¹ÁÕÍ ¡•¹ÑÉä¤ì(€€€Í¡•‘Õ±•9•áĞ ¤ì(€ôì(€€¼¨(€€€¨ƒ¶Vpƒ®Ê#²v`¥‘±”…±±‰…¯²^C²pƒ²^³®~°ƒ¶:ã²Ç²v`ƒ²‚²ÊĞ=ƒ²z³ªÎƒ®–ğƒ²^Ã²4ƒªÎ²
+Ã¶Vc² ƒ²V+®*S®.¸(€€€¨ƒªÊ²'²vƒ®.“².pƒ¶VcªÆÃ®
+`ƒ¶fS®¦Ó²vƒ®.¯²ró®¦Ğ•¹•É…Ñ¥½»²vĞƒ®ÂS®3²ZĞƒ²vÓ²‚ƒªÊ²'²v`ƒªÎ²
+Ã®>ƒ²š'².pƒ¶>CªâÃ®Bs®.¸(€€€¨¼(€¥˜ %¹Ñ•ÉÍ•Ñ¥½¹=‰Í•ÉÙ•Èœ¥¸İ¥¹‘½Ü¥ì(€€€İ¥¹‘½Ü¹}‰½½­M•…Ñ=‰Í•ÉÙ•Èü¹‘¥Í½¹¹•Ğ ¤ì(€€€½¹ÍĞ½‰Í•ÉÙ•Èõ¹•Ü%¹Ñ•ÉÍ•Ñ¥½¹=‰Í•ÉÙ•È¡¥Ñ•µÌôùì(€€€€€¥Ñ•µÌ¹™½É… ¡¥Ñ•´ôùì(€€€€€€€¥˜ …¥Ñ•´¹¥Í%¹Ñ•ÉÍ•Ñ¥¹œ¥É•ÑÕÉ¸ì(€€€€€€€½¹ÍĞ•¹ÑÉäõ‰åI½Ü¹•Ğ¡¥Ñ•´¹Ñ…É•Ğ¤ì(€€€€€€€¥˜¡•¹ÑÉä¥¡å‘É…Ñ”¡•¹ÑÉä¤ì(€€€€€€€½‰Í•ÉÙ•È¹Õ¹½‰Í•ÉÙ”¡¥Ñ•´¹Ñ…É•Ğ¤ì(€€€€€ô¤ì(€€€ô±íÉ½½Ğé¹Õ±°±É½½Ñ5…É¥¸èœÈĞÁÁà€ÁÁàô¤ì(€€€İ¥¹‘½Ü¹}‰½½­M•…Ñ=‰Í•ÉÙ•Èõ½‰Í•ÉÙ•Èì(€€€•¹ÑÉ¥•Ì¹™½É… ¡•¹ÑÉäôù½‰Í•ÉÙ•È¹½‰Í•ÉÙ”¡•¹ÑÉä¹É½Ü¤¤ì(€€€İ¥¹‘½Ü¹Í•ÑQ¥µ•½ÕĞ  ¤ôùì(€€€€€¥˜ …•°¹¥Í½¹¹•Ñ•‘ññİ¥¹‘½Ü¹}‰½½­M•…Ñ=‰Í•ÉÙ•È„ôõ½‰Í•ÉÙ•È¥½‰Í•ÉÙ•È¹‘¥Í½¹¹•Ğ ¤ì(€€€ô°ÄÈÀÀÀÀ¤ì(€õ•±Í•ì(€€€€¼¼ƒªÖ³¶bTƒ®â3®vó²jÃ²‚®*Pƒ²V{²ªôƒªÊÃªÎó®0ƒ²š'².pƒªÎ²
+Ã¶VcªÎ€ƒ®
+c®¢ã²®*Pƒ²Ÿ²v ƒªÂªÊ§²ró®†pƒ®Ú²
+Ã¶Vs®.¸(€€€•¹ÑÉ¥•Ì¹™½É… ¡•¹ÑÉäôù¡å‘É…Ñ”¡•¹ÑÉä¤¤ì(€ô)ô(((¼¼ƒ²^Ó²Â ƒ²²à€˜ƒ²b#®ƒ¶2£®@€£¶Vc®. ƒ²*³®vó²vÓ®Ns²^¤)™Õ¹Ñ¥½¸½Á•¹	½½­QÉ…¥¹•Ñ…¥°¡ÑÉ…¥¹9¼°™É½´°Ñ¼°‘•ÁP°…ÉÉP°ÑÉ…Ù•±…Ñ”¥ì(€½¹ÍĞĞ€ô•ÑQÉ…¥¹	å9¼¡ÑÉ…¥¹9¼¤ì(€¥˜ …Ğ¤É•ÑÕÉ¸ì((€½¹ÍĞ½±€ô‘½Õµ•¹Ğ¹•Ñ±•µ•¹Ñ	å% ‰½½¬µ‘•Ñ…¥°µİÉ…Àœ¤ì(€¥˜¡½±¤½±¹É•µ½Ù” ¤ì((€€¼¼ƒ®“²ƒ²^³®Ú ƒ¶2C²‚T€£²b#®ƒ¶´ƒ®“²ƒ²^Ó²Â ƒ²‚²j¤ƒ²^³²tƒ²V3®šğ¤(€±•ĞÍ½±‘=ÕĞõ™…±Í”ì(€ÑÉåì(€€€Í½±‘=ÕĞõ}‰½½­M•…ÑMÑ…ÑÕÌ¡•Ñ=½¹•ÍÑ¥½¸¡Ğ±™É½´±Ñ¼±ÑÉ…Ù•±…Ñ”¤¤¹±…‰•°ôôôŸ®“²œì(€õ…Ñ ¡”¥íô((€½¹ÍĞ™…É”€ô…±…É”¡Ğ°™É½´°Ñ¼°€•¹•É…°œ¤ì(€½¹ÍĞ™…É•MÁ•Œ€ô…Ù…¥±…‰±•M•…Ñ±…ÍÍ•Ì¡Ğ¹É…‘”¤¹µ…À¡Œôùì(€€€½¹ÍĞ˜€ô…±…É”¡Ğ°™É½´°Ñ¼°Œ¤ì(€€€É•ÑÕÉ¸€ñ‘¥Ø±…ÍÌô‰‰½½¬µ‘•Ñ…¥°µ™…É”µÉ½Üˆø(€€€€€€ñÍÁ…¸ø‘íÍ•…Ñ±…ÍÍ¥ÍÁ±…å1…‰•°¡Ğ±Œ¥ôğ½ÍÁ…¸ø(€€€€€€ñÍÁ…¸ÍÑå±”ô‰™½¹Ğµ™…µ¥±äéÙ…È ´µµ½¹¼¤í½±½ÈéÙ…È ´µ…•¹Ğ¤í™½¹Ğµİ•¥¡ĞèØÀÀˆø‘í˜¹Ñ½1½…±•MÑÉ¥¹œ ¥÷²n@ğ½ÍÁ…¸ø(€€€€ğ½‘¥Øù€ì(€ô¤¹©½¥¸ œœ¤ì((€½¹ÍĞİÉ…À€ô‘½Õµ•¹Ğ¹É•…Ñ•±•µ•¹Ğ ‘¥Øœ¤ì(€İÉ…À¹¥€ô€‰½½¬µ‘•Ñ…¥°µİÉ…Àœì(€€¼¼İÉ…Ã²v ƒ²*“¶²vğƒ²^²vĞƒ²"s²"`ƒ²î£¶3²vÓ® €£²*“¶s¶
+äƒ²î£¶7²*“¶*àƒ²^²v0¤(€€¼¼¥¹±¥¹”½¹±¥¬ƒ²‚sªÆÀƒŠH…ÁÁ•¹‘¡¥±ƒ¶n…‘‘Ù•¹Ñ1¥ÍÑ•¹•Ë®†pƒ®NÇ®†t€¡¥=LM…™…É¤ƒ¶bã¶f`¤(€İÉ…À¹¥¹¹•É!Q50€ô€(€€€€ñ‘¥Ø±…ÍÌô‰‰½½¬µ‘•Ñ…¥°µ‰…­‘É½Àˆøğ½‘¥Øø(€€€€ñ‘¥Ø±…ÍÌô‰‰½½¬µ‘•Ñ…¥°µÁ…¹•°ˆø(€€€€€€ñ‘¥ØÍÑå±”ô‰™±•àµÍ¡É¥¹¬èÀíÁ…‘‘¥¹œèÄÉÁà€ÈÁÁà€Àˆø(€€€€€€€€ñ‘¥Ø±…ÍÌô‰‰½½¬µ‘•Ñ…¥°µ¡…¹‘±”ˆøğ½‘¥Øø(€€€€€€€€ñ‘¥Ø±…ÍÌô‰‰½½¬µ‘•Ñ…¥°µ¡•…ˆø(€€€€€€€€€€ñ‘¥Øø(€€€€€€€€€€€€ñÍÁ…¸±…ÍÌô‰‰½½¬µ‘•Ñ…¥°µÉ…‘”ˆÍÑå±”ô‰½±½ÈéÙ…È ´µŒ´‘íÍÍY…È¡Ğ¹É…‘”¥ô¤ˆø‘íĞ¹É…‘•ôğ½ÍÁ…¸ø(€€€€€€€€€€€€ñÍÁ…¸±…ÍÌô‰‰½½¬µ‘•Ñ…¥°µ¹¼ˆø‘íĞ¹¹½ôğ½ÍÁ…¸ø(€€€€€€€€€€ğ½‘¥Øø(€€€€€€€€€€ñ‰ÕÑÑ½¸±…ÍÌô‰µäµÁ…¹•°µ±½Í”ˆ¥ô‰‰‘µ±½Í”µàˆûŠrTğ½‰ÕÑÑ½¸ø(€€€€€€€€ğ½‘¥Øø(€€€€€€€€ñ‘¥Ø±…ÍÌô‰‰½½¬µ‘•Ñ…¥°µÉ½ÕÑ”ˆø(€€€€€€€€€€ñ‘¥Ø±…ÍÌô‰‰½½¬µ‘•Ñ…¥°µÍÑ¸ˆø(€€€€€€€€€€€€ñ‘¥Ø±…ÍÌô‰‰½½¬µ‘•Ñ…¥°µÍÑ¸µ¹…µ”ˆø‘í™É½µôğ½‘¥Øø(€€€€€€€€€€€€ñ‘¥Ø±…ÍÌô‰‰½½¬µ‘•Ñ…¥°µÍÑ¸µÑ¥µ”ˆø‘í‘•ÁQôğ½‘¥Øø(€€€€€€€€€€ğ½‘¥Øø(€€€€€€€€€€ñ‘¥Ø±…ÍÌô‰‰½½¬µ‘•Ñ…¥°µ‘ÕÈˆø‘í‘ÕÉMÑÈ¡‘•ÁP±…ÉÉP¥ôğ½‘¥Øø(€€€€€€€€€€ñ‘¥Ø±…ÍÌô‰‰½½¬µ‘•Ñ…¥°µÍÑ¸ˆÍÑå±”ô‰Ñ•áĞµ…±¥¸éÉ¥¡Ğˆø(€€€€€€€€€€€€ñ‘¥Ø±…ÍÌô‰‰½½¬µ‘•Ñ…¥°µÍÑ¸µ¹…µ”ˆø‘íÑ½ôğ½‘¥Øø(€€€€€€€€€€€€ñ‘¥Ø±…ÍÌô‰‰½½¬µ‘•Ñ…¥°µÍÑ¸µÑ¥µ”ˆø‘í…ÉÉQñğœ´ôğ½‘¥Øø(€€€€€€€€€€ğ½‘¥Øø(€€€€€€€€ğ½‘¥Øø(€€€€€€ğ½‘¥Øø(€€€€€€ñ‘¥Ø±…ÍÌô‰‰½½¬µ‘•Ñ…¥°µÍÉ½±°ˆÍÑå±”ô‰Á…‘‘¥¹œèÀ€ÈÁÁàˆø(€€€€€€€€ñ‘¥Ø±…ÍÌô‰‰½½¬µ‘•Ñ…¥°µ™…É•Ìˆø‘í™…É•MÁ•ôğ½‘¥Øø(€€€€€€ğ½‘¥Øø(€€€€€€ñ‘¥ØÍÑå±”ô‰™±•àµÍ¡É¥¹¬èÀíÁ…‘‘¥¹œèáÁà€ÈÁÁà€ÌÉÁàí‘¥ÍÁ±…äé™±•àí…ÀèáÁàˆø(€€€€€€€€ñ‰ÕÑÑ½¸±…ÍÌô‰‰Ñ¸ˆ¥ô‰‰‘µ‘•Ñ…¥°µ‰Ñ¸ˆÍÑå±”ô‰™±•àèÄí©ÕÍÑ¥™äµ½¹Ñ•¹Ğé•¹Ñ•Èí™½¹ĞµÍ¥é”èÄÍÁàˆû²^Ó²Â ƒ²²àğ½‰ÕÑÑ½¸ø(€€€€€€€€‘íÍ½±‘=ÕĞ(€€€€€€€€€€ü€ñ‰ÕÑÑ½¸±…ÍÌô‰‰Ñ¸ˆ¥ô‰‰‘µİ…Ñ µ‰Ñ¸ˆÍÑå±”ô‰™±•àèÈí©ÕÍÑ¥™äµ½¹Ñ•¹Ğé•¹Ñ•Èí™½¹ĞµÍ¥é”èÄÑÁàí½±½ÈéÙ…È ´µÉ•¤í‰½É‘•Èµ½±½ÈéÙ…È ´µÉ•¤ˆûÂ~RPƒ²^³²tƒ²V3®šğ€£®“²¤ğ½‰ÕÑÑ½¸ù€(€€€€€€€€€€è€ñ‰ÕÑÑ½¸±…ÍÌô‰‰Ñ¸‰Ñ¸µÁÉ¥µ…Éäˆ¥ô‰‰‘µ‰½½¬µ‰Ñ¸ˆÍÑå±”ô‰™±•àèÈí©ÕÍÑ¥™äµ½¹Ñ•¹Ğé•¹Ñ•Èí™½¹ĞµÍ¥é”èÄÑÁàˆûÂ~:¬ƒ²b#®“¶VcªâÀğ½‰ÕÑÑ½¸ùô(€€€€€€ğ½‘¥Øø(€€€€ğ½‘¥Øù€ì(€‘½Õµ•¹Ğ¹‰½‘ä¹…ÁÁ•¹‘¡¥±¡İÉ…À¤ì(€İÉ…À¹ÅÕ•ÉåM•±•Ñ½È œ¹‰½½¬µ‘•Ñ…¥°µ‰…­‘É½Àœ¤¹…‘‘Ù•¹Ñ1¥ÍÑ•¹•È ±¥¬œ°±½Í•	½½­QÉ…¥¹•Ñ…¥°¤ì(€…‘‘5½‰¥±•Q…À¡‘½Õµ•¹Ğ¹•Ñ±•µ•¹Ñ	å% ‰‘µ±½Í”µàœ¤°±½Í•	½½­QÉ…¥¹•Ñ…¥°¤ì(€…‘‘5½‰¥±•Q…À¡‘½Õµ•¹Ğ¹•Ñ±•µ•¹Ñ	å% ‰‘µ‘•Ñ…¥°µ‰Ñ¸œ¤°”ôùì”ü¹ÁÉ•Ù•¹Ñ•™…Õ±Ğ ¤í”ü¹ÍÑ½ÁAÉ½Á……Ñ¥½¸ ¤í±½Í•	½½­QÉ…¥¹•Ñ…¥° ¤í½Á•¹	½½­I½ÕÑ••Ñ…¥°¡ÑÉ…¥¹9¼±™É½´±Ñ¼±ÑÉ…Ù•±…Ñ”¤ìô¤ì(€¥˜¡Í½±‘=ÕĞ¥ì(€€€…‘‘5½‰¥±•Q…À¡‘½Õµ•¹Ğ¹•Ñ±•µ•¹Ñ	å% ‰‘µİ…Ñ µ‰Ñ¸œ¤°€ ¤ôùì±½Í•	½½­QÉ…¥¹•Ñ…¥° ¤ì½Á•¹M•…Ñ]…Ñ¡A½ÁÕÀ¡ÑÉ…¥¹9¼±™É½´±Ñ¼±ÑÉ…Ù•±…Ñ”¤ìô¤ì(€õ•±Í•ì(€€€…‘‘5½‰¥±•Q…À¡‘½Õµ•¹Ğ¹•Ñ±•µ•¹Ñ	å% ‰‘µ‰½½¬µ‰Ñ¸œ¤°€ ¤ôùì±½Í•	½½­QÉ…¥¹•Ñ…¥° ¤ì}‰½½­•Ñ…¥±½¹™¥É´¡ÑÉ…¥¹9¼±™É½´±Ñ¼±‘•ÁP±…ÉÉQñğœœ±ÑÉ…Ù•±…Ñ”¤ìô¤ì(€ô(€Í•ÑQ¥µ•½ÕĞ  ¤ôùİÉ…À¹ÅÕ•ÉåM•±•Ñ½È œ¹‰½½¬µ‘•Ñ…¥°µÁ…¹•°œ¤¹±…ÍÍ1¥ÍĞ¹…‘ ½Á•¸œ¤°€ÄÀ¤ì)ô()™Õ¹Ñ¥½¸}‰½½­I½ÕÑ•5…Á!Q50¡Ğ±™É½´±Ñ¼±É…‘•½±½È±ÑÉ…Ù•±…Ñ”±ÁÉ½©•Ñ5¥¹ÕÑ•ÌôÀ¥ì(€½¹ÍĞ•ÍŒõÌôùMÑÉ¥¹œ¡Ìüüœœ¤¹É•Á±…” ½l˜ğøˆt½œ±Œôø¡ìœ˜œèœ™…µÀìœ°œğœèœ™±Ğìœ°œøœèœ™Ğìœ°œˆœèœ™ÅÕ½Ğìœ°ˆœˆèœ˜ŒÌäìõmt¤¤ì(€€¼¼ƒ®²Ó².sªÂƒ¶×ªÎó²^·ªæ3² ƒ²Š3¶Fs²‚C²ró®†pƒ²rƒ²¶VÓ²Vğƒ².“²‚pƒ®ã²€ƒ²ƒ¶bW²vĞƒ®+ªâÃªÆÃ®
+`ƒ²²ƒ¶fS®Bc² ƒ²V+®*S®.¸(€€¼¼ƒ¶×ªÎó²^·²v`ƒ²‚C
+ß²^·®ª²v ƒ²V®z`ƒ®ã®Npƒ®.£ªÎ²^C²pƒªŞã®š³² ƒ²V+ªÎ€ƒ²ƒ®ÚƒªÎ²
+Ã²^C®0ƒ²
+³²j§¶Vs®.¸(€½¹ÍĞÁ½¥¹ÑÌô¡Ğ¹ÍÑ½ÁÍññmt¤¹µ…À ¡Ì±¥‘à¤ôø¡íÌ±¥‘à±½½Éé}ÍÑ¹½½É¡Ì¹•½-•åññÌ¹Ì¥ô¤¤¹™¥±Ñ•È¡àôùà¹½½É¤ì(€±•Ğ™É½µ%‘àõÁ½¥¹ÑÌ¹™¥¹‘%¹‘•à¡àôùà¹Ì¹Ìôôõ™É½´¤±Ñ½%‘àõÁ½¥¹ÑÌ¹™¥¹‘%¹‘•à ¡à±¤¤ôù¤ù™É½µ%‘à˜™à¹Ì¹ÌôôõÑ¼¤ì(€¥˜¡Á½¥¹ÑÌ¹±•¹Ñ ğÉññ™É½µ%‘àğÁññÑ½%‘àğÀ¥É•ÑÕÉ¸€œñ‘¥Ø±…ÍÌô‰‰Éµµ…Àµ•µÁÑäˆû¶Fs².s¶V€ƒ²"`ƒ²z#®*Pƒ®ã²€ƒ²Š3¶FsªÂ ƒ²^²*×®.#®.¸ğ½‘¥Øøœì(€½¹ÍĞ\ôØÈÀ± ôÌàÀ±@ôĞàì(€½¹ÍĞ±½¹ÌõÁ½¥¹ÑÌ¹µ…À¡àôùà¹½½É¹±½¸¤±±…ÑÌõÁ½¥¹ÑÌ¹µ…À¡àôùà¹½½É¹±…Ğ¤ì(€½¹ÍĞµ¥¹1½¸õ5…Ñ ¹µ¥¸ ¸¸¹±½¹Ì¤±µ…á1½¸õ5…Ñ ¹µ…à ¸¸¹±½¹Ì¤±µ¥¹1…Ğõ5…Ñ ¹µ¥¸ ¸¸¹±…ÑÌ¤±µ…á1…Ğõ5…Ñ ¹µ…à ¸¸¹±…ÑÌ¤ì(€½¹ÍĞ‘àõ5…Ñ ¹µ…à ¸ÀÄ±µ…á1½¸µµ¥¹1½¸¤±‘äõ5…Ñ ¹µ…à ¸ÀÄ±µ…á1…Ğµµ¥¹1…Ğ¤ì(€½¹ÍĞÍ…±”õ5…Ñ ¹µ¥¸ ¡\µ@¨È¤½‘à°¡ µ@¨È¤½‘ä¤ì(€½¹ÍĞÕÍ•‘\õ‘à©Í…±”±ÕÍ•‘ õ‘ä©Í…±”±½àô¡\µÕÍ•‘\¤¼È±½äô¡ µÕÍ•‘ ¤¼Èì(€Á½¥¹ÑÌ¹™½É… ¡ÀôùíÀ¹àõ½à¬¡À¹½½É¹±½¸µµ¥¹1½¸¤©Í…±”íÀ¹äõ½ä¬¡µ…á1…ĞµÀ¹½½É¹±…Ğ¤©Í…±”íô¤ì(€±•Ğ±¥¹•Ìôœœì(€™½È¡±•Ğ¤ôÀí¤ñÁ½¥¹ÑÌ¹±•¹Ñ ´Äí¤¬¬¥ì(€€€½¹ÍĞ…Ñ¥Ù”õ¤øõ™É½µ%‘à˜™¤ñÑ½%‘àì(€€€±¥¹•Ì¬õ€ñ±¥¹”àÄôˆ‘íÁ½¥¹ÑÍm¥t¹à¹Ñ½¥á• Ä¥ôˆäÄôˆ‘íÁ½¥¹ÑÍm¥t¹ä¹Ñ½¥á• Ä¥ôˆàÈôˆ‘íÁ½¥¹ÑÍm¤¬Åt¹à¹Ñ½¥á• Ä¥ôˆäÈôˆ‘íÁ½¥¹ÑÍm¤¬Åt¹ä¹Ñ½¥á• Ä¥ôˆ±…ÍÌôˆ‘í…Ñ¥Ù”üÍ•±•Ñ•œèµÕÑ•ôˆ¼ù€ì(€ô(€½¹ÍĞ±…‰•±MÑ•Àõ5…Ñ ¹µ…à Ä±5…Ñ ¹•¥°¡Á½¥¹ÑÌ¹±•¹Ñ ¼ÄÈ¤¤ì(€½¹ÍĞ¹½‘•ÌõÁ½¥¹ÑÌ¹µ…À ¡À±¤¤ôùì(€€€½¹ÍĞÍ•±•Ñ•õ¤ôôõ™É½µ%‘áññ¤ôôõÑ½%‘à±…Ñ¥Ù”õ¤øõ™É½µ%‘à˜™¤ğõÑ½%‘àì(€€€½¹ÍĞÍÑ½ÁÁ¥¹œô…¥ÍA…ÍÍMÑ½À¡Ğ±À¹Ì¹Ì¤ì(€€€¥˜ …ÍÑ½ÁÁ¥¹œ¥É•ÑÕÉ¸€œœì(€€€½¹ÍĞÍ¡½İ1…‰•°õÍÑ½ÁÁ¥¹œ˜˜¡Í•±•Ñ•‘ññ¤ôôôÁññ¤ôôõÁ½¥¹ÑÌ¹±•¹Ñ ´Åññ¤•±…‰•±MÑ•ÀôôôÀ¤ì(€€€½¹ÍĞ…¹¡½ÈõÀ¹àù\¨¸ØÜü•¹œéÀ¹àñ\¨¸ÌÌüÍÑ…ÉĞœèµ¥‘‘±”œì(€€€½¹ÍĞÑàõÀ¹à¬¡…¹¡½ÈôôôÍÑ…ÉĞœüàé…¹¡½Èôôô•¹œü´àèÀ¤±ÑäõÀ¹ä¬¡…¹¡½Èôôôµ¥‘‘±”œü´ÄÀèĞ¤ì(€€€É•ÑÕÉ¸€ñœ±…ÍÌôˆ‘í…Ñ¥Ù”üÍ•±•Ñ•œèµÕÑ•ô‘íÍ•±•Ñ•üœ•¹‘Á½¥¹Ğœèœô‘íÍÑ½ÁÁ¥¹œüœÍÑ½ÀœèœÁ…ÍÌôˆøñ¥É±”àôˆ‘íÀ¹à¹Ñ½¥á• Ä¥ôˆäôˆ‘íÀ¹ä¹Ñ½¥á• Ä¥ôˆÈôˆ‘íÍ•±•Ñ•üÜéÍÑ½ÁÁ¥¹œüÌ¸ÔèÈ¸ÉôˆøñÑ¥Ñ±”ø‘í•ÍŒ¡À¹Ì¹Ì¥ô‘íÍÑ½ÁÁ¥¹œüœœèœ€£¶×ªÎğ¤ôğ½Ñ¥Ñ±”øğ½¥É±”ø‘íÍ¡½İ1…‰•°ı€ñÑ•áĞàôˆ‘íÑà¹Ñ½¥á• Ä¥ôˆäôˆ‘íÑä¹Ñ½¥á• Ä¥ôˆÑ•áĞµ…¹¡½Èôˆ‘í…¹¡½Éôˆø‘í•ÍŒ¡À¹Ì¹Ì¥ôğ½Ñ•áĞù€èœôğ½œù€ì(€ô¤¹©½¥¸ œœ¤ì(€±•Ğ±¥Ù•5…É­•Èôœœì(€¥˜¡}‰½½­I½ÕÑ•%Í1¥Ù•M•ÉÙ¥•…Ñ”¡Ğ±ÑÉ…Ù•±…Ñ•ññÑ½‘…å1½…±MÑÈ ¤¤¥ì(€€€½¹ÍĞ¹½Üõ¹•Ü…Ñ” ¤±‘•±…äõÑåÁ•½˜}±¥Ù••±…å=˜ôôô™Õ¹Ñ¥½¸œı}±¥Ù••±…å=˜¡Ğ¤èÀì(€€€½¹ÍĞÍ•ÉÙ¥•9½Üõ¹½Ü¹•Ñ!½ÕÉÌ ¤¨ØÀ­¹½Ü¹•Ñ5¥¹ÕÑ•Ì ¤­¹½Ü¹•ÑM•½¹‘Ì ¤¼ØÀµ‘•±…ä­ÁÉ½©•Ñ5¥¹ÕÑ•Ìì(€€€½¹ÍĞ±¥Ù”õ•ÑÕÉÉ•¹ÑMÑ…ÑÕÌ¡Ğ±Í•ÉÙ¥•9½Ü¤ì(€€€¥˜¡±¥Ù”ü¹ÍÑ…ÑÕÌôôôÉÕ¹¹¥¹œœ¥ì(€€€€€±•Ğàõ¹Õ±°±äõ¹Õ±°±±…‰•°ôŸ¶b²z°ƒ²^Ó²Â ƒ²r²æ`œì(€€€€€¥˜¡±¥Ù”¹…ÑMÑ¸¥ì(€€€€€€€½¹ÍĞÁ½¥¹ĞõÁ½¥¹ÑÌ¹™¥¹¡ÀôùÀ¹Ì¹Ìôôõ±¥Ù”¹…ÑMÑ¸¤ì(€€€€€€€¥˜¡Á½¥¹Ğ¥íàõÁ½¥¹Ğ¹àíäõÁ½¥¹Ğ¹äí±…‰•°õƒ¶b²z°ƒ²r²æ`è€‘í±¥Ù”¹…ÑMÑ¹õ€íô(€€€€€õ•±Í”¥˜¡±¥Ù”¹ÁÉ•ÙMÑ¸˜™±¥Ù”¹¹•áÑMÑ¸¥ì(€€€€€€€½¹ÍĞ…A½ÌõÁ½¥¹ÑÌ¹™¥¹‘%¹‘•à¡ÀôùÀ¹Ì¹Ìôôõ±¥Ù”¹ÁÉ•ÙMÑ¸¤ì(€€€€€€€½¹ÍĞ‰A½ÌõÁ½¥¹ÑÌ¹™¥¹‘%¹‘•à ¡À±¤¤ôù¤ù…A½Ì˜™À¹Ì¹Ìôôõ±¥Ù”¹¹•áÑMÑ¸¤ì(€€€€€€€½¹ÍĞ„õ…A½ÌøôÀıÁ½¥¹ÑÍm…A½Íté¹Õ±°±ˆõ‰A½ÌøôÀıÁ½¥¹ÑÍm‰A½Íté¹Õ±°ì(€€€€€€€¥˜¡„˜™ˆ¥ì(€€€€€€€€€±•Ğ‘•Á…ÉĞõÑ½5¥¸¡„¹Ì¹‘•Áññ„¹Ì¹…ÉÈ¤±…ÉÉ¥Ù”õÑ½5¥¸¡ˆ¹Ì¹…ÉÉññˆ¹Ì¹‘•À¤±ÕÉÉ•¹ĞõÍ•ÉÙ¥•9½Üì(€€€€€€€€€¥˜¡‘•Á…ÉĞ„õ¹Õ±°˜™…ÉÉ¥Ù”„õ¹Õ±°¥ì(€€€€€€€€€€€¥˜¡…ÉÉ¥Ù”ñ‘•Á…ÉĞ¥…ÉÉ¥Ù”¬ôÄĞĞÀì(€€€€€€€€€€€¥˜¡ÕÉÉ•¹Ğñ‘•Á…ÉĞ˜™…ÉÉ¥Ù”øôÄĞĞÀ¥ÕÉÉ•¹Ğ¬ôÄĞĞÀì(€€€€€€€€€€€½¹ÍĞ™É…Ñ¥½¸õ5…Ñ ¹µ…à À±5…Ñ ¹µ¥¸ Ä°¡ÕÉÉ•¹Ğµ‘•Á…ÉĞ¤½5…Ñ ¹µ…à Ä±…ÉÉ¥Ù”µ‘•Á…ÉĞ¤¤¤ì(€€€€€€€€€€€€¼¼ƒ®²Ó².sªÂƒ¶×ªÎó²^·®>ƒ².“²‚pƒ²ƒ¶bW²v`ƒªò·²O²‚C²ró®†pƒ¶>³¶V£¶VĞƒ²r²æc®–ğƒ®ÎÓªÂ¶Vs®.¸(€€€€€€€€€€€½¹ÍĞÁ…Ñ õÁ½¥¹ÑÌ¹Í±¥”¡…A½Ì±‰A½Ì¬Ä¤±Í•µ•¹ÑÌõmtì(€€€€€€€€€€€±•ĞÑ½Ñ…°ôÀì(€€€€€€€€€€€™½È¡±•Ğ¤ôÀí¤ñÁ…Ñ ¹±•¹Ñ ´Äí¤¬¬¥ì(€€€€€€€€€€€€€½¹ÍĞ±•¹Ñ õ5…Ñ ¹¡åÁ½Ğ¡Á…Ñ¡m¤¬Åt¹àµÁ…Ñ¡m¥t¹à±Á…Ñ¡m¤¬Åt¹äµÁ…Ñ¡m¥t¹ä¤ì(€€€€€€€€€€€€€Í•µ•¹ÑÌ¹ÁÕÍ ¡±•¹Ñ ¤íÑ½Ñ…°¬õ±•¹Ñ ì(€€€€€€€€€€€ô(€€€€€€€€€€€±•ĞÑ…É•ĞõÑ½Ñ…°©™É…Ñ¥½¸±Í•µ•¹ĞôÀì(€€€€€€€€€€€İ¡¥±”¡Í•µ•¹ĞñÍ•µ•¹ÑÌ¹±•¹Ñ ´Ä˜™Ñ…É•ĞùÍ•µ•¹ÑÍmÍ•µ•¹Ñt¥Ñ…É•Ğ´õÍ•µ•¹ÑÍmÍ•µ•¹Ğ¬­tì(€€€€€€€€€€€½¹ÍĞÍÑ…ÉĞõÁ…Ñ¡mÍ•µ•¹Ñt±•¹õÁ…Ñ¡m5…Ñ ¹µ¥¸¡Í•µ•¹Ğ¬Ä±Á…Ñ ¹±•¹Ñ ´Ä¥tì(€€€€€€€€€€€½¹ÍĞ±½…°õÍ•µ•¹ÑÍmÍ•µ•¹ÑtøÀıÑ…É•Ğ½Í•µ•¹ÑÍmÍ•µ•¹ÑtèÀì(€€€€€€€€€€€àõÍÑ…ÉĞ¹à¬¡•¹¹àµÍÑ…ÉĞ¹à¤©±½…°íäõÍÑ…ÉĞ¹ä¬¡•¹¹äµÍÑ…ÉĞ¹ä¤©±½…°ì(€€€€€€€€€€€±…‰•°õƒ¶b²z°ƒ²r²æ`è€‘í±¥Ù”¹ÁÉ•ÙMÑ¹÷ŠL‘í±¥Ù”¹¹•áÑMÑ¹õ€ì(€€€€€€€€€ô(€€€€€€€ô(€€€€€ô(€€€€€¥˜¡à„õ¹Õ±°˜™ä„õ¹Õ±°¥±¥Ù•5…É­•Èõ€ñœ±…ÍÌô‰‰Éµµ…Àµ±¥Ù”µÑÉ…¥¸ˆÍÑå±”ô‰ÑÉ…¹Í™½É´éÑÉ…¹Í±…Ñ” ‘íà¹Ñ½¥á• Ä¥õÁà°‘íä¹Ñ½¥á• Ä¥õÁà¤ˆÉ½±”ô‰¥µœˆ…É¥„µ±…‰•°ôˆ‘í•ÍŒ¡±…‰•°¥ôˆøñ¥É±”ÈôˆÄÈˆ¼øñÁ…Ñ ô‰4´Ô´İ ÄÁ„Ì€Ì€À€À€Ä€Ì€ÍØá„Ì€Ì€À€À€Ä´Ì€Í ´Õ„Ì€Ì€À€À€Ä´Ì´ÍØ´á„Ì€Ì€À€À€Ä€Ì´Íi´À€ÍØÕ ÄÁØ´Õi´Ä€á ¸Å4Ğ€Ñ ¸Å4´Ô€ÄÁ°È´Í4Ô€ÄÀ€Ì€Üˆ¼øñÑ¥Ñ±”ø‘í•ÍŒ¡±…‰•°¥ôğ½Ñ¥Ñ±”øğ½œù€ì(€€€ô(€ô(€É•ÑÕÉ¸€ñ‘¥Ø±…ÍÌô‰‰ÉµÉ½ÕÑ”µµ…ÀˆÍÑå±”ôˆ´µÉ½ÕÑ”µÉ…‘”è‘íÉ…‘•½±½Éôˆøñ‘¥Ø±…ÍÌô‰‰Éµµ…Àµ­•äˆøñÍÁ…¸øñ¤±…ÍÌô‰Í•±•Ñ•ˆøğ½¤û²*ç²Â ƒªÖ³ªÂğ½ÍÁ…¸øñÍÁ…¸øñ¤øğ½¤ûªŞàƒ²fàƒ²jÓ¶Z$ƒªÖ³ªÂğ½ÍÁ…¸ø‘í±¥Ù•5…É­•ÈüœñÍÁ…¸øñ¤±…ÍÌô‰±¥Ù”ˆøğ½¤û¶b²z°ƒ²r²æ`ğ½ÍÁ…¸øœèœôğ½‘¥Øøñ‘¥Ø±…ÍÌô‰‰Éµµ…Àµ…¹Ù…ÌˆøñÍÙœÙ¥•İ	½àôˆÀ€À€‘í]ô€‘í!ôˆÉ½±”ô‰¥µœˆ…É¥„µ±…‰•°ôˆ‘í•ÍŒ¡Ğ¹É…‘”¥ô€‘í•ÍŒ¡Ğ¹¹¼¥ôƒ²‚²ÊĞƒ²jÓ¶Z$ƒªÖ³ªÂƒ®ã²ƒ®>ˆø‘í±¥¹•Íô‘í¹½‘•Íô‘í±¥Ù•5…É­•Éôğ½ÍÙœøğ½‘¥ØøñÀø‘í•ÍŒ¡Ğ¹ÍÑ½ÁÍlÁtü¹Ì¥ôƒŠH€‘í•ÍŒ¡Ğ¹ÍÑ½ÁÍmĞ¹ÍÑ½ÁÌ¹±•¹Ñ ´Åtü¹Ì¥ôƒ²‚²ÊĞƒ²jÓ¶Z$ƒªÖ³ªÂğ½Àøğ½‘¥Øù€ì)ô)™Õ¹Ñ¥½¸Í•Ñ	½½­I½ÕÑ••Ñ…¥±Q…ˆ¡µ½‘”¥ì(€½¹ÍĞİÉ…Àõ‘½Õµ•¹Ğ¹•Ñ±•µ•¹Ñ	å% ‰½½¬µÉ½ÕÑ”µ‘•Ñ…¥°µİÉ…Àœ¤í¥˜ …İÉ…À¥É•ÑÕÉ¸ì(€İÉ…À¹ÅÕ•ÉåM•±•Ñ½É±° œ¹‰ÉµÙ¥•ÜµÑ…ˆœ¤¹™½É… ¡‰Ñ¸ôùí½¹ÍĞ½¸õ‰Ñ¸¹‘…Ñ…Í•Ğ¹Ù¥•Üôôõµ½‘”í‰Ñ¸¹±…ÍÍ1¥ÍĞ¹Ñ½±” …Ñ¥Ù”œ±½¸¤í‰Ñ¸¹Í•ÑÑÑÉ¥‰ÕÑ” …É¥„µÍ•±•Ñ•œ±MÑÉ¥¹œ¡½¸¤¤íô¤ì(€İÉ…À¹ÅÕ•ÉåM•±•Ñ½È œ¹‰ÉµÍ¡•‘Õ±”µÙ¥•Üœ¤ü¹±…ÍÍ1¥ÍĞ¹Ñ½±” …Ñ¥Ù”œ±µ½‘”ôôôÍ¡•‘Õ±”œ¤ì(€İÉ…À¹ÅÕ•ÉåM•±•Ñ½È œ¹‰Éµµ…ÀµÙ¥•Üœ¤ü¹±…ÍÍ1¥ÍĞ¹Ñ½±” …Ñ¥Ù”œ±µ½‘”ôôôµ…Àœ¤ì)ô()±•Ğ}‰½½­I½ÕÑ••Ñ…¥±Q¥µ•Èõ¹Õ±°ì)™Õ¹Ñ¥½¸}‰½½­I½ÕÑ•Q¥µ•±¥¹•A½Í¥Ñ¥½¸¡Ğ±É½İMÑ…Ñ¥½¹Ì±±¥Ù”±Í•ÉÙ¥•9½Ü¥ì(€¥˜ …±¥Ù•ññ±¥Ù”¹ÍÑ…ÑÕÌ„ôôÉÕ¹¹¥¹œœ¥É•ÑÕÉ¸í¥‘àè´Ä±µ…É­•É%‘àè´Ä±Ñ½ÀèÔÀ±‰•Ñİ••¸é™…±Í”±ÍÑ…Ñ¥½¸èœôì(€¥˜¡±¥Ù”¹…ÑMÑ¸¥ì(€€€½¹ÍĞ•á…ĞõÉ½İMÑ…Ñ¥½¹Ì¹¥¹‘•á=˜¡±¥Ù”¹…ÑMÑ¸¤ì(€€€¥˜¡•á…ĞøôÀ¥É•ÑÕÉ¸í¥‘àé•á…Ğ±µ…É­•É%‘àé•á…Ğ±Ñ½ÀèÔÀ±‰•Ñİ••¸é™…±Í”±ÍÑ…Ñ¥½¸é±¥Ù”¹…ÑMÑ¹ôì(€ô(€½¹ÍĞÉ½ÕÑ”õĞ¹ÍÑ½ÁÍññmtì(€±•ĞÕÉÍ½Èô´Ä±½™™Í•ĞôÀ±ÁÉ•Ù¥½ÕÍI…Üô´Äì(€½¹ÍĞÑ¥µ•õÉ½İMÑ…Ñ¥½¹Ì¹µ…À¡ÍÑ…Ñ¥½¸ôùì(€€€½¹ÍĞÉ½ÕÑ•%‘àõÉ½ÕÑ”¹™¥¹‘%¹‘•à ¡Ì±¤¤ôù¤ùÕÉÍ½È˜™Ì¹ÌôôõÍÑ…Ñ¥½¸˜˜¡¡…ÍQ¥µ”¡Ì¹…ÉÈ¥ññ¡…ÍQ¥µ”¡Ì¹‘•À¤¤˜˜…¥ÍA…ÍÍMÑ½À¡Ğ±Ì¹Ì¤¤ì(€€€¥˜¡É½ÕÑ•%‘àğÀ¥É•ÑÕÉ¸¹Õ±°ì(€€€ÕÉÍ½ÈõÉ½ÕÑ•%‘àí½¹ÍĞÍÑ½ÀõÉ½ÕÑ•mÉ½ÕÑ•%‘át±É…İÉÈõÑ½5¥¸¡ÍÑ½À¹…ÉÈ¤±É…İ•ÀõÑ½5¥¸¡ÍÑ½À¹‘•À¤±É…ÜõÉ…İÉÈüıÉ…İ•Àì(€€€¥˜¡ÁÉ•Ù¥½ÕÍI…ÜøôÀ˜™É…ÜñÁÉ•Ù¥½ÕÍI…Ü´ØÀ¥½™™Í•Ğ¬ôÄĞĞÀì(€€€ÁÉ•Ù¥½ÕÍI…ÜõÉ…Üì(€€€É•ÑÕÉ¸íÍÑ…Ñ¥½¸±…ÉÈéÉ…İÉÈ„õ¹Õ±°ıÉ…İÉÈ­½™™Í•Ğé¹Õ±°±‘•ÀéÉ…İ•À„õ¹Õ±°ıÉ…İ•À­½™™Í•Ğé¹Õ±±ôì(€ô¤¹™¥±Ñ•È¡	½½±•…¸¤ì(€¥˜¡Ñ¥µ•¹±•¹Ñ øôÈ˜™9Õµ‰•È¹¥Í¥¹¥Ñ”¡Í•ÉÙ¥•9½Ü¤¥ì(€€€±•ĞÕÉÉ•¹ĞõÍ•ÉÙ¥•9½Üì(€€€½¹ÍĞ™¥ÉÍĞõÑ¥µ•‘lÁt¹‘•ÀüıÑ¥µ•‘lÁt¹…ÉÈ±±…ÍĞõÑ¥µ•‘mÑ¥µ•¹±•¹Ñ ´Åt¹…ÉÈüıÑ¥µ•‘mÑ¥µ•¹±•¹Ñ ´Åt¹‘•Àì(€€€¥˜¡±…ÍĞøôÄĞĞÀ˜™ÕÉÉ•¹Ğñ™¥ÉÍĞ¥ÕÉÉ•¹Ğ¬ôÄĞĞÀì(€€€±•ĞÁÉ•Øô´Ä±¹•áĞô´Äì(€€€™½È¡±•Ğ¤ôÀí¤ñÑ¥µ•¹±•¹Ñ í¤¬¬¥ì(€€€€€½¹ÍĞ±•…Ù”õÑ¥µ•‘m¥t¹‘•ÀüıÑ¥µ•‘m¥t¹…ÉÈ±…ÉÉ¥Ù”õÑ¥µ•‘m¥t¹…ÉÈüıÑ¥µ•‘m¥t¹‘•Àì(€€€€€¥˜¡±•…Ù”„õ¹Õ±°˜™±•…Ù”ğõÕÉÉ•¹Ğ¥ÁÉ•Øõ¤ì(€€€€€¥˜¡¹•áĞğÀ˜™…ÉÉ¥Ù”„õ¹Õ±°˜™…ÉÉ¥Ù”ùÕÉÉ•¹Ğ¥¹•áĞõ¤ì(€€€ô(€€€¥˜¡ÁÉ•ØøôÀ˜™¹•áĞùÁÉ•Ø¥ì(€€€€€½¹ÍĞ‘•Á…ÉĞõÑ¥µ•‘mÁÉ•Ùt¹‘•ÀüıÑ¥µ•‘mÁÉ•Ùt¹…ÉÈ±…ÉÉ¥Ù”õÑ¥µ•‘m¹•áÑt¹…ÉÈüıÑ¥µ•‘m¹•áÑt¹‘•Àì(€€€€€½¹ÍĞ™É…Ñ¥½¸õ5…Ñ ¹µ…à À±5…Ñ ¹µ¥¸ Ä°¡ÕÉÉ•¹Ğµ‘•Á…ÉĞ¤½5…Ñ ¹µ…à Ä±…ÉÉ¥Ù”µ‘•Á…ÉĞ¤¤¤ì(€€€€€É•ÑÕÉ¸í¥‘àé¹•áĞ±µ…É­•É%‘àéÁÉ•Ø±Ñ½ÀèÔÀ­™É…Ñ¥½¸¨ÄÀÀ±‰•Ñİ••¸éÑÉÕ”±ÍÑ…Ñ¥½¸éÑ¥µ•‘m¹•áÑt¹ÍÑ…Ñ¥½¹ôì(€€€ô(€ô(€±•ĞÁÉ•ÙI½ÕÑ”ô´Ä±¹•áÑI½ÕÑ”ô´Äì(€¥˜¡±¥Ù”¹ÁÉ•ÙMÑ¸¥ÁÉ•ÙI½ÕÑ”õÉ½ÕÑ”¹™¥¹‘%¹‘•à¡ÌôùÌ¹Ìôôõ±¥Ù”¹ÁÉ•ÙMÑ¸¤ì(€¥˜¡±¥Ù”¹¹•áÑMÑ¸¥¹•áÑI½ÕÑ”õÉ½ÕÑ”¹™¥¹‘%¹‘•à ¡Ì±¤¤ôù¤ùÁÉ•ÙI½ÕÑ”˜™Ì¹Ìôôõ±¥Ù”¹¹•áÑMÑ¸¤ì(€¥˜¡¹•áÑI½ÕÑ”ğÀ˜™±¥Ù”¹…ÑMÑ¸¥¹•áÑI½ÕÑ”õÉ½ÕÑ”¹™¥¹‘%¹‘•à¡ÌôùÌ¹Ìôôõ±¥Ù”¹…ÑMÑ¸¤ì(€½¹ÍĞÍÑ…ÉĞõ5…Ñ ¹µ…à À±¹•áÑI½ÕÑ”øôÀı¹•áÑI½ÕÑ”éÁÉ•ÙI½ÕÑ”¬Ä¤ì(€™½È¡±•Ğ¤õÍÑ…ÉĞí¤ñÉ½ÕÑ”¹±•¹Ñ í¤¬¬¥ì(€€€½¹ÍĞÍÑ½ÀõÉ½ÕÑ•m¥tì(€€€¥˜ ¡¡…ÍQ¥µ”¡ÍÑ½À¹…ÉÈ¥ññ¡…ÍQ¥µ”¡ÍÑ½À¹‘•À¤¤˜˜…¥ÍA…ÍÍMÑ½À¡Ğ±ÍÑ½À¹Ì¤¥ì(€€€€€½¹ÍĞ¥‘àõÉ½İMÑ…Ñ¥½¹Ì¹¥¹‘•á=˜¡ÍÑ½À¹Ì¤ì(€€€€€¥˜¡¥‘àøôÀ¥É•ÑÕÉ¸í¥‘à±µ…É­•É%‘àé5…Ñ ¹µ…à À±¥‘à´Ä¤±Ñ½ÀèÄÀÀ±‰•Ñİ••¸éÑÉÕ”±ÍÑ…Ñ¥½¸éÍÑ½À¹Íôì(€€€ô(€ô(€É•ÑÕÉ¸í¥‘àè´Ä±µ…É­•É%‘àè´Ä±Ñ½ÀèÔÀ±‰•Ñİ••¸é™…±Í”±ÍÑ…Ñ¥½¸èœôì)ô)™Õ¹Ñ¥½¸}Í¡•‘Õ±•	½½­I½ÕÑ••Ñ…¥±Q¥¬ ¥ì(€¥˜¡}‰½½­I½ÕÑ••Ñ…¥±Q¥µ•È¥±•…ÉQ¥µ•½ÕĞ¡}‰½½­I½ÕÑ••Ñ…¥±Q¥µ•È¤ì(€½¹ÍĞİ…¥ĞôØÀÀÀÀ´¡…Ñ”¹¹½Ü ¤”ØÀÀÀÀ¤¬ÌÀì(€}‰½½­I½ÕÑ••Ñ…¥±Q¥µ•ÈõÍ•ÑQ¥µ•½ÕĞ  ¤ôùì(€€€½¹ÍĞİÉ…Àõ‘½Õµ•¹Ğ¹•Ñ±•µ•¹Ñ	å% ‰½½¬µÉ½ÕÑ”µ‘•Ñ…¥°µİÉ…Àœ¤ì(€€€¥˜ …İÉ…À¥í}‰½½­I½ÕÑ••Ñ…¥±Q¥µ•Èõ¹Õ±°íÉ•ÑÕÉ¸íô(€€€ÕÁ‘…Ñ•	½½­I½ÕÑ•1¥Ù”¡İÉ…À¹‘…Ñ…Í•Ğ¹ÑÉ…¥¸±İÉ…À¹‘…Ñ…Í•Ğ¹™É½´±İÉ…À¹‘…Ñ…Í•Ğ¹Ñ¼±İÉ…À¹‘…Ñ…Í•Ğ¹‘…Ñ”¤ì(€€€}Í¡•‘Õ±•	½½­I½ÕÑ••Ñ…¥±Q¥¬ ¤ì(€ô±İ…¥Ğ¤ì)ô)™Õ¹Ñ¥½¸ÕÁ‘…Ñ•	½½­I½ÕÑ•1¥Ù”¡ÑÉ…¥¹9¼±™É½´±Ñ¼±ÑÉ…Ù•±…Ñ”¥ì(€½¹ÍĞİÉ…Àõ‘½Õµ•¹Ğ¹•Ñ±•µ•¹Ñ	å% ‰½½¬µÉ½ÕÑ”µ‘•Ñ…¥°µİÉ…Àœ¤±Ğõ•ÑQÉ…¥¹	å9¼¡ÑÉ…¥¹9¼¤ì(€¥˜ …İÉ…Áñğ…ÑññİÉ…À¹‘…Ñ…Í•Ğ¹ÑÉ…¥¸„ôõMÑÉ¥¹œ¡ÑÉ…¥¹9¼¤¥É•ÑÕÉ¸ì(€½¹ÍĞ•ÍŒõÑåÁ•½˜}½ÁÍÍŒôôô™Õ¹Ñ¥½¸œı}½ÁÍÍŒéÌôùMÑÉ¥¹œ¡Ìüüœœ¤¹É•Á±…” ½l˜ğùt½œ±Œôø¡ìœ˜œèœ™…µÀìœ°œğœèœ™±Ğìœ°œøœèœ™Ğìõmt¤¤ì(€½¹ÍĞÑ½‘…äõÑ½‘…å1½…±MÑÈ ¤±Í•ÉÙ¥•…Ñ”õÑÉ…Ù•±…Ñ•ññÑ½‘…äì(€½¹ÍĞ±¥Ù•M•ÉÙ¥•…Ñ”õ}‰½½­I½ÕÑ•%Í1¥Ù•M•ÉÙ¥•…Ñ”¡Ğ±Í•ÉÙ¥•…Ñ”¤ì(€±•Ğ±¥Ù”õ¹Õ±°±±¥Ù•MÑ½Á%‘àô´Ä±±¥Ù•5…É­•É%‘àô´Ä±±¥Ù•Q½ÀôÔÀ±±¥Ù•	•Ñİ••¸õ™…±Í”±±¥Ù•1…‰•°ôœœ±µ…¥¸ôœœ±ÍÕˆôœœì(€¥˜¡±¥Ù•M•ÉÙ¥•…Ñ”¥ì(€€€½¹ÍĞ¹½Üõ¹•Ü…Ñ” ¤±‘•±…äõÑåÁ•½˜}±¥Ù••±…å=˜ôôô™Õ¹Ñ¥½¸œı}±¥Ù••±…å=˜¡Ğ¤èÀì(€€€½¹ÍĞÍ•ÉÙ¥•9½Üõ¹½Ü¹•Ñ!½ÕÉÌ ¤¨ØÀ­¹½Ü¹•Ñ5¥¹ÕÑ•Ì ¤­¹½Ü¹•ÑM•½¹‘Ì ¤¼ØÀµ‘•±…äì(€€€±¥Ù”õ•ÑÕÉÉ•¹ÑMÑ…ÑÕÌ¡Ğ±Í•ÉÙ¥•9½Ü¤ì(€€€¥˜¡±¥Ù”ü¹ÍÑ…ÑÕÌôôôÉÕ¹¹¥¹œœ¥ì(€€€€€¥˜¡±¥Ù”¹Á…ÍÍMÑ¸¥µ…¥¸õ€‘í±¥Ù”¹Á…ÍÍMÑ¹÷²^·²vƒ¶×ªÎğƒ²’G²z®.#®.‘€ì(€€€€€•±Í”¥˜¡±¥Ù”¹…ÑMÑ¸¥µ…¥¸õ€‘í±¥Ù”¹…ÑMÑ¹÷²^·²^@ƒ²‚W²Â ƒ²’G²z®.#®.‘€ì(€€€€€•±Í”¥˜¡±¥Ù”¹¹•áÑMÑ¸¥µ…¥¸õ€‘í±¥Ù”¹¹•áÑMÑ¹÷²^·²ró®†pƒ²vÓ®>dƒ²’G²z®.#®.‘€ì(€€€€€•±Í”µ…¥¸ôŸ²jÓ¶Z$ƒ²’G²z®.#®.œì(€€€€€½¹ÍĞ•Ñ„õ•Ñ9•áÑMÑ½ÁÑ„¡Ğ±±¥Ù”¤í¥˜¡•Ñ„¥ÍÕˆõ•Ñ„¹µ¥¸ôôôÀüŸªÎœƒ®>²Â¤ƒ²b#²‚Tœéƒ²Vô€‘í•Ñ„¹µ¥¹÷®Úƒ®Jƒ®>²Â¤ƒ²b#²‚U€ì(€€€€€½¹ÍĞÉ½İÌõl¸¸¹İÉ…À¹ÅÕ•ÉåM•±•Ñ½É±° œ¹‰ÉµÍÑ½Àœ¥tì(€€€€€½¹ÍĞÁÉ½©•Ñ•‘9½ÜõÍ•ÉÙ¥•9½Ü¬Ä±ÁÉ½©•Ñ•‘1¥Ù”õ•ÑÕÉÉ•¹ÑMÑ…ÑÕÌ¡Ğ±ÁÉ½©•Ñ•‘9½Ü¤ì(€€€€€½¹ÍĞÁ½Í¥Ñ¥½¸õ}‰½½­I½ÕÑ•Q¥µ•±¥¹•A½Í¥Ñ¥½¸¡Ğ±É½İÌ¹µ…À¡É½ÜôùÉ½Ü¹‘…Ñ…Í•Ğ¹ÍÑ…Ñ¥½¸¤±ÁÉ½©•Ñ•‘1¥Ù”±ÁÉ½©•Ñ•‘9½Ü¤ì(€€€€€±¥Ù•MÑ½Á%‘àõÁ½Í¥Ñ¥½¸¹¥‘àí±¥Ù•5…É­•É%‘àõÁ½Í¥Ñ¥½¸¹µ…É­•É%‘àí±¥Ù•Q½ÀõÁ½Í¥Ñ¥½¸¹Ñ½Àí±¥Ù•	•Ñİ••¸õÁ½Í¥Ñ¥½¸¹‰•Ñİ••¸ì(€€€€€±¥Ù•1…‰•°õÁ½Í¥Ñ¥½¸¹ÍÑ…Ñ¥½¸ü¡Á½Í¥Ñ¥½¸¹‰•Ñİ••¸ı€‘íÁ½Í¥Ñ¥½¸¹ÍÑ…Ñ¥½¹ôƒ®Â§®¦Ğƒ²vÓ®>dƒ²’E€é€‘íÁ½Í¥Ñ¥½¸¹ÍÑ…Ñ¥½¹ôƒ²‚W²Â ƒ²’E€¤èŸ²jÓ¶Z$ƒ²’Dœì(€€€õ•±Í”¥˜¡±¥Ù”ü¹ÍÑ…ÑÕÌôôô‰•™½É”œ¥ì(€€€€€µ…¥¸ôŸ²jÓ¶Z'²vƒ²’®æ²’G²vàƒ²^Ó²Â£²z®.#®.œí¥˜¡±¥Ù”¹•Ñ…5¥¸„õ¹Õ±°¥ÍÕˆõ™µÑÑ…-½È¡±¥Ù”¹•Ñ…5¥¸¤ì(€€€õ•±Í”µ…¥¸ôŸ²jÓ¶Z'²vĞƒ²Š®3®Bpƒ²^Ó²Â£²z®.#®.œì(€õ•±Í”¥˜¡Í•ÉÙ¥•…Ñ”ùÑ½‘…ä¥µ…¥¸ôŸ²jÓ¶Z'²vƒ²’®æ²’G²vàƒ²^Ó²Â£²z®.#®.œì(€•±Í”µ…¥¸ôŸ²jÓ¶Z'²vĞƒ²Š®3®Bpƒ²^Ó²Â£²z®.#®.œì(€½¹ÍĞÍÑ…Ñ”õİÉ…À¹ÅÕ•ÉåM•±•Ñ½È œ¹‰Éµ½Á•É…Ñ¥½¸µÍÑ…Ñ”œ¤ì(€¥˜¡ÍÑ…Ñ”¥ÍÑ…Ñ”¹¥¹¹•É!Q50õ€ñˆø‘í•ÍŒ¡µ…¥¸¥ôğ½ˆø‘íÍÕˆı€ñÍÁ…¸ø‘í•ÍŒ¡ÍÕˆ¥ôğ½ÍÁ…¸ù€èœõ€ì(€½¹ÍĞÉ½İÌõl¸¸¹İÉ…À¹ÅÕ•ÉåM•±•Ñ½É±° œ¹‰ÉµÍÑ½Àœ¥tì(€½¹ÍĞ½±‘5…É­•ÈõİÉ…À¹ÅÕ•ÉåM•±•Ñ½È œ¹‰Éµ±¥Ù”µµ…É­•Èœ¤ì(€É½İÌ¹™½É…  ¡É½Ü±¤¤ôùì(€€€É½Ü¹±…ÍÍ1¥ÍĞ¹Ñ½±” ±¥Ù”œ±¤ôôõ±¥Ù•MÑ½Á%‘à¤ì(€€€É½Ü¹±…ÍÍ1¥ÍĞ¹Ñ½±” ±¥Ù”µµ…É­•ÈµÉ½Üœ±¤ôôõ±¥Ù•5…É­•É%‘à¤ì(€€€¥˜¡¤ôôõ±¥Ù•5…É­•É%‘à¥ì(€€€€€½¹ÍĞÉ…¥°õÉ½Ü¹ÅÕ•ÉåM•±•Ñ½È œ¹‰ÉµÉ…¥°œ¤ì(€€€€€¥˜¡½±‘5…É­•È˜™½±‘5…É­•È¹Á…É•¹Ñ±•µ•¹ĞôôõÉ…¥°¥ì(€€€€€€€½±‘5…É­•È¹±…ÍÍ1¥ÍĞ¹Ñ½±” ‰•Ñİ••¸œ±±¥Ù•	•Ñİ••¸¤í½±‘5…É­•È¹ÍÑå±”¹Í•ÑAÉ½Á•ÉÑä œ´µ‰Éµ±¥Ù”µÑ½Àœ±€‘í±¥Ù•Q½Áô•€¤ì(€€€€€€€½±‘5…É­•È¹Ñ¥Ñ±”õ±¥Ù•1…‰•°í½±‘5…É­•È¹Í•ÑÑÑÉ¥‰ÕÑ” …É¥„µ±…‰•°œ±ƒ¶b²z°ƒ²r²æ`è€‘í±¥Ù•1…‰•±õ€¤ì(€€€€€õ•±Í•ì(€€€€€€€½±‘5…É­•Èü¹É•µ½Ù” ¤ì(€€€€€€€É…¥°ü¹¥¹Í•ÉÑ‘©…•¹Ñ!Q50 ‰•™½É••¹œ±€ñÍÁ…¸±…ÍÌô‰‰Éµ±¥Ù”µµ…É­•È‘í±¥Ù•	•Ñİ••¸üœ‰•Ñİ••¸œèœôˆÍÑå±”ôˆ´µ‰Éµ±¥Ù”µÑ½Àè‘í±¥Ù•Q½Áô”ˆÑ¥Ñ±”ôˆ‘í•ÍŒ¡±¥Ù•1…‰•°¥ôˆ…É¥„µ±…‰•°ô‹¶b²z°ƒ²r²æ`è€‘í•ÍŒ¡±¥Ù•1…‰•°¥ôˆøñÍÙœÙ¥•İ	½àôˆÀ€À€ÈĞ€ÈĞˆ…É¥„µ¡¥‘‘•¸ô‰ÑÉÕ”ˆøñÉ•ĞàôˆÔˆäôˆÌˆİ¥‘Ñ ôˆÄĞˆ¡•¥¡ĞôˆÄÜˆÉàôˆĞˆ¼øñÁ…Ñ ô‰4à€İ áØÕ áé4à€Äİ ¸ÀÅ4ÄØ€Äİ ¸ÀÅ4à€ÈÅ°´È€É4ÄØ€ÈÅ°È€Èˆ¼øğ½ÍÙœøğ½ÍÁ…¸ù€¤ì(€€€€€ô(€€€ô(€€€½¹ÍĞ‘•±…å%‘àõ9Õµ‰•È¡É½Ü¹‘…Ñ…Í•Ğ¹‘•±…å%¹‘•à¤ì(€€€½¹ÍĞÁ…¥Èõ±¥Ù•M•ÉÙ¥•…Ñ”˜™‘•±…å%‘àøôÀ˜™ÑåÁ•½˜}Í¥µ•±…åA…¥ÉÑMÑ½Àôôô™Õ¹Ñ¥½¸œı}Í¥µ•±…åA…¥ÉÑMÑ½À¡Ğ±‘•±…å%‘à¤éí…ÉÈèÀ±‘•ÀèÁôì(€€€ml…ÉÈœ±Á…¥È¹…ÉÉñğÁt±l‘•Àœ±Á…¥È¹‘•ÁñğÁut¹™½É…  ¡m­¥¹±‘•±…åt¤ôùì(€€€€€½¹ÍĞ•±°õÉ½Ü¹ÅÕ•ÉåM•±•Ñ½È¡€¹‰É´‘í­¥¹‘õ€¤±Í¡•‘Õ±•õÉ½Ü¹‘…Ñ…Í•Ñm­¥¹‘uñğœœí¥˜ …•±°¥É•ÑÕÉ¸ì(€€€€€½¹ÍĞ…ÑÕ…°õÍ¡•‘Õ±•˜™‘•±…äøÀı…‘‘5¥¹Q½±½¬¡Í¡•‘Õ±•±‘•±…ä¤èœœì(€€€€€•±°¹¥¹¹•É!Q50õÍ¡•‘Õ±•ı€ñÍÁ…¸ø‘í•ÍŒ¡Í¡•‘Õ±•¥ôğ½ÍÁ…¸ø‘í…ÑÕ…°ı€ñÍµ…±°ø ‘í•ÍŒ¡…ÑÕ…°¥ô¤ğ½Íµ…±°ù€èœõ€èŸŠPœì(€€€ô¤ì(€ô¤ì(€¥˜¡±¥Ù•5…É­•É%‘àğÀ¥½±‘5…É­•Èü¹É•µ½Ù” ¤ì(€½¹ÍĞµ…ÀõİÉ…À¹ÅÕ•ÉåM•±•Ñ½È œ¹‰Éµµ…ÀµÙ¥•Üœ¤ì(€¥˜¡µ…À¥ì(€€€½¹ÍĞ½±½Èô¡ÑåÁ•½˜I}=1=IL„ôôÕ¹‘•™¥¹•œ˜™I}=1=IMmĞ¹É…‘•t¥ññÙ…È ´µŒ´‘íÍÍY…È¡Ğ¹É…‘”¥ô¥€ì(€€€½¹ÍĞÁÉ½‰”õ‘½Õµ•¹Ğ¹É•…Ñ•±•µ•¹Ğ ‘¥Øœ¤íÁÉ½‰”¹¥¹¹•É!Q50õ}‰½½­I½ÕÑ•5…Á!Q50¡Ğ±™É½´±Ñ¼±½±½È±ÑÉ…Ù•±…Ñ”°Ä¤ì(€€€½¹ÍĞÕÉÉ•¹Ñ5…É­•Èõµ…À¹ÅÕ•ÉåM•±•Ñ½È œ¹‰Éµµ…Àµ±¥Ù”µÑÉ…¥¸œ¤±Ñ…É•Ñ5…É­•ÈõÁÉ½‰”¹ÅÕ•ÉåM•±•Ñ½È œ¹‰Éµµ…Àµ±¥Ù”µÑÉ…¥¸œ¤ì(€€€¥˜¡ÕÉÉ•¹Ñ5…É­•È˜™Ñ…É•Ñ5…É­•È¥íÕÉÉ•¹Ñ5…É­•È¹ÍÑå±”¹ÑÉ…¹Í™½É´õÑ…É•Ñ5…É­•È¹ÍÑå±”¹ÑÉ…¹Í™½É´íÕÉÉ•¹Ñ5…É­•È¹Í•ÑÑÑÉ¥‰ÕÑ” …É¥„µ±…‰•°œ±Ñ…É•Ñ5…É­•È¹•ÑÑÑÉ¥‰ÕÑ” …É¥„µ±…‰•°œ¥ñğŸ¶b²z°ƒ²^Ó²Â ƒ²r²æ`œ¤íô(€€€•±Í”¥˜ …ÕÉÉ•¹Ñ5…É­•È˜™Ñ…É•Ñ5…É­•È¥µ…À¹¥¹¹•É!Q50õÁÉ½‰”¹¥¹¹•É!Q50ì(€€€•±Í”¥˜¡ÕÉÉ•¹Ñ5…É­•È˜˜…Ñ…É•Ñ5…É­•È¥ÕÉÉ•¹Ñ5…É­•È¹É•µ½Ù” ¤ì(€ô)ô((¼¼ƒ²b#®ƒªÖ³ªÂƒªâÃ²’ ƒ²jÓ¶Z$ƒ²‚W®ÎĞƒŠPƒ²‚²ÊĞƒ²‚W²Â£²^´ƒ²’Dƒ²*ç²Â£
+ß¶Vc²Â ƒªÖ³ªÂ²vƒªÂW²†Ã¶Vs®.¸)™Õ¹Ñ¥½¸½Á•¹	½½­I½ÕÑ••Ñ…¥°¡ÑÉ…¥¹9¼±™É½´±Ñ¼±ÑÉ…Ù•±…Ñ”¥ì(€½¹ÍĞĞõ•ÑQÉ…¥¹	å9¼¡ÑÉ…¥¹9¼¤í¥˜ …Ğ¥É•ÑÕÉ¸ì(€½¹ÍĞÁÉ•Ù¥½ÕÌõ‘½Õµ•¹Ğ¹•Ñ±•µ•¹Ñ	å% ‰½½¬µÉ½ÕÑ”µ‘•Ñ…¥°µİÉ…Àœ¤ì(€¥˜¡ÁÉ•Ù¥½ÕÌ¥íÁÉ•Ù¥½ÕÌ¹É•µ½Ù” ¤í‘½Õµ•¹Ğ¹‰½‘ä¹±…ÍÍ1¥ÍĞ¹É•µ½Ù” …ÁÀµµ½‘…°µ½Á•¸œ¤íô(€½¹ÍĞ…±±MÑ½ÁÌô¡Ğ¹ÍÑ½ÁÍññmt¤¹™¥±Ñ•È¡Ìôø¡¡…ÍQ¥µ”¡Ì¹…ÉÈ¥ññ¡…ÍQ¥µ”¡Ì¹‘•À¤¤˜˜…¥ÍA…ÍÍMÑ½À¡Ğ±Ì¹Ì¤¤ì(€½¹ÍĞ™É½µ%‘àõ…±±MÑ½ÁÌ¹™¥¹‘%¹‘•à¡ÌôùÌ¹Ìôôõ™É½´¤ì(€½¹ÍĞÑ½%‘àõ…±±MÑ½ÁÌ¹™¥¹‘%¹‘•à ¡Ì±¤¤ôù¤ù™É½µ%‘à˜™Ì¹ÌôôõÑ¼¤ì(€¥˜¡™É½µ%‘àğÁññÑ½%‘àğÀ¥í©ÕµÁQ½QÉ…¥¸¡ÑÉ…¥¹9¼¤íÉ•ÑÕÉ¸íô(€½¹ÍĞ•ÍŒõÑåÁ•½˜}½ÁÍÍŒôôô™Õ¹Ñ¥½¸œı}½ÁÍÍŒéÌôùMÑÉ¥¹œ¡Ìüüœœ¤¹É•Á±…” ½l˜ğùt½œ±Œôø¡ìœ˜œèœ™…µÀìœ°œğœèœ™±Ğìœ°œøœèœ™Ğìõmt¤¤ì(€½¹ÍĞÉ…‘•½±½Èô¡ÑåÁ•½˜I}=1=IL„ôôÕ¹‘•™¥¹•œ˜™I}=1=IMmĞ¹É…‘•t¥ññÙ…È ´µŒ´‘íÍÍY…È¡Ğ¹É…‘”¥ô¥€ì(€½¹ÍĞ‘…Ñ•1…‰•°ô  ¤ôùí½¹ÍĞ´õMÑÉ¥¹œ¡ÑÉ…Ù•±…Ñ•ñğœœ¤¹µ…Ñ  ½x¡q‘ìÑô¤´¡q‘ìÉô¤´¡q‘ìÉô¤¼¤í¥˜ …´¥É•ÑÕÉ¸•ÍŒ¡ÑÉ…Ù•±…Ñ•ññÑ½‘…å1½…±MÑÈ ¤¤í½¹ÍĞõ¹•Ü…Ñ” ­µlÅt°­µlÉt´Ä°­µlÍt¤íÉ•ÑÕÉ¸€‘íµlÅuô¸‘íµlÉuô¸‘íµlÍuô€ ‘ílŸ²vğœ°Ÿ²nPœ°Ÿ¶fPœ°Ÿ²"`œ°Ÿ®ª¤œ°Ÿªâ œ°Ÿ¶€um¹•Ñ…ä ¥uô¥€íô¤ ¤ì(€±•Ğ±¥Ù•MÑ½Á%‘àô´Ä±±¥Ù•5…É­•É%‘àô´Ä±±¥Ù•Q½ÀôÔÀ±±¥Ù•	•Ñİ••¸õ™…±Í”±±¥Ù•1…‰•°ôœœ±½Á•É…Ñ¥½¹5…¥¸ôœœ±½Á•É…Ñ¥½¹MÕˆôœœì(€½¹ÍĞÍ•ÉÙ¥•…Ñ”õÑÉ…Ù•±…Ñ•ññÑ½‘…å1½…±MÑÈ ¤±Ñ½‘…äõÑ½‘…å1½…±MÑÈ ¤ì(€½¹ÍĞ±¥Ù•M•ÉÙ¥•…Ñ”õ}‰½½­I½ÕÑ•%Í1¥Ù•M•ÉÙ¥•…Ñ”¡Ğ±Í•ÉÙ¥•…Ñ”¤ì(€¥˜¡±¥Ù•M•ÉÙ¥•…Ñ”¥ì(€€€½¹ÍĞ¹½Üõ¹•Ü…Ñ” ¤±±¥Ù••±…äõÑåÁ•½˜}±¥Ù••±…å=˜ôôô™Õ¹Ñ¥½¸œı}±¥Ù••±…å=˜¡Ğ¤èÀì(€€€½¹ÍĞÍ•ÉÙ¥•9½Üõ¹½Ü¹•Ñ!½ÕÉÌ ¤¨ØÀ­¹½Ü¹•Ñ5¥¹ÕÑ•Ì ¤­¹½Ü¹•ÑM•½¹‘Ì ¤¼ØÀµ±¥Ù••±…äì(€€€½¹ÍĞ±¥Ù”õ•ÑÕÉÉ•¹ÑMÑ…ÑÕÌ¡Ğ±Í•ÉÙ¥•9½Ü¤ì(€€€¥˜¡±¥Ù”ü¹ÍÑ…ÑÕÌôôôÉÕ¹¹¥¹œœ¥ì(€€€€€¥˜¡±¥Ù”¹Á…ÍÍMÑ¸¥½Á•É…Ñ¥½¹5…¥¸õ€‘í±¥Ù”¹Á…ÍÍMÑ¹÷²^·²vƒ¶×ªÎğƒ²’G²z®.#®.‘€ì(€€€€€•±Í”¥˜¡±¥Ù”¹…ÑMÑ¸¥½Á•É…Ñ¥½¹5…¥¸õ€‘í±¥Ù”¹…ÑMÑ¹÷²^·²^@ƒ²‚W²Â ƒ²’G²z®.#®.‘€ì(€€€€€•±Í”¥˜¡±¥Ù”¹¹•áÑMÑ¸¥½Á•É…Ñ¥½¹5…¥¸õ€‘í±¥Ù”¹¹•áÑMÑ¹÷²^·²ró®†pƒ²vÓ®>dƒ²’G²z®.#®.‘€ì(€€€€€•±Í”½Á•É…Ñ¥½¹5…¥¸ôŸ²jÓ¶Z$ƒ²’G²z®.#®.œì(€€€€€½¹ÍĞ•Ñ„õ•Ñ9•áÑMÑ½ÁÑ„¡Ğ±±¥Ù”¤ì(€€€€€¥˜¡•Ñ„¥½Á•É…Ñ¥½¹MÕˆõ•Ñ„¹µ¥¸ôôôÀüŸªÎœƒ®>²Â¤ƒ²b#²‚Tœéƒ²Vô€‘í•Ñ„¹µ¥¹÷®Úƒ®Jƒ®>²Â¤ƒ²b#²‚U€ì(€€€€€½¹ÍĞÁ½Í¥Ñ¥½¸õ}‰½½­I½ÕÑ•Q¥µ•±¥¹•A½Í¥Ñ¥½¸¡Ğ±…±±MÑ½ÁÌ¹µ…À¡ÌôùÌ¹Ì¤±±¥Ù”±Í•ÉÙ¥•9½Ü¤ì(€€€€€±¥Ù•MÑ½Á%‘àõÁ½Í¥Ñ¥½¸¹¥‘àí±¥Ù•5…É­•É%‘àõÁ½Í¥Ñ¥½¸¹µ…É­•É%‘àí±¥Ù•Q½ÀõÁ½Í¥Ñ¥½¸¹Ñ½Àí±¥Ù•	•Ñİ••¸õÁ½Í¥Ñ¥½¸¹‰•Ñİ••¸ì(€€€€€±¥Ù•1…‰•°õÁ½Í¥Ñ¥½¸¹ÍÑ…Ñ¥½¸ü¡Á½Í¥Ñ¥½¸¹‰•Ñİ••¸ı€‘íÁ½Í¥Ñ¥½¸¹ÍÑ…Ñ¥½¹ôƒ®Â§®¦Ğƒ²vÓ®>dƒ²’E€é€‘íÁ½Í¥Ñ¥½¸¹ÍÑ…Ñ¥½¹ôƒ²‚W²Â ƒ²’E€¤èŸ²jÓ¶Z$ƒ²’Dœì(€€€õ•±Í”¥˜¡±¥Ù”ü¹ÍÑ…ÑÕÌôôô‰•™½É”œ¥ì(€€€€€½Á•É…Ñ¥½¹5…¥¸ôŸ²jÓ¶Z'²vƒ²’®æ²’G²vàƒ²^Ó²Â£²z®.#®.œì(€€€€€¥˜¡±¥Ù”¹•Ñ…5¥¸„õ¹Õ±°¥½Á•É…Ñ¥½¹MÕˆõ™µÑÑ…-½È¡±¥Ù”¹•Ñ…5¥¸¤ì(€€€õ•±Í•ì(€€€€€½Á•É…Ñ¥½¹5…¥¸ôŸ²jÓ¶Z'²vĞƒ²Š®3®Bpƒ²^Ó²Â£²z®.#®.œì(€€€ô(€õ•±Í”¥˜¡Í•ÉÙ¥•…Ñ”ùÑ½‘…ä¥ì(€€€½Á•É…Ñ¥½¹5…¥¸ôŸ²jÓ¶Z'²vƒ²’®æ²’G²vàƒ²^Ó²Â£²z®.#®.œì(€õ•±Í•ì(€€€½Á•É…Ñ¥½¹5…¥¸ôŸ²jÓ¶Z'²vĞƒ²Š®3®Bpƒ²^Ó²Â£²z®.#®.œì(€ô(€½¹ÍĞÑ¥µ•‘MÑ½ÁÌô¡Ğ¹ÍÑ½ÁÍññmt¤¹™¥±Ñ•È¡Ìôù¡…ÍQ¥µ”¡Ì¹…ÉÈ¥ññ¡…ÍQ¥µ”¡Ì¹‘•À¤¤ì(€½¹ÍĞÍ¡½İ•±…åQ¥µ•Ìõ±¥Ù•M•ÉÙ¥•…Ñ”˜™ÑåÁ•½˜}Í¥µ•±…åA…¥ÉÑMÑ½Àôôô™Õ¹Ñ¥½¸œì(€½¹ÍĞÉ½İÌõ…±±MÑ½ÁÌ¹µ…À ¡Ì±¤¤ôùì(€€€½¹ÍĞ¥¹I¥‘”õ¤øõ™É½µ%‘à˜™¤ğõÑ½%‘à±‰•™½É”õ¤ñ™É½µ%‘à±…™Ñ•Èõ¤ùÑ½%‘àì(€€€½¹ÍĞÁ±…ĞõÑåÁ•½˜}É•…±A±…Ñ™½É´ôôô™Õ¹Ñ¥½¸œı}É•…±A±…Ñ™½É´¡Ğ¹¹¼±Ì¹Ì¤é¹Õ±°ì(€€€½¹ÍĞ‰…‘”õ¤ôôõ™É½µ%‘àüœñÍÁ…¸±…ÍÌô‰‰ÉµÍÑ½Àµ‰…‘”‰½…Éˆû²*ç²Â ğ½ÍÁ…¸øœé¤ôôõÑ½%‘àüœñÍÁ…¸±…ÍÌô‰‰ÉµÍÑ½Àµ‰…‘”…±¥¡Ğˆû¶Vc²Â ğ½ÍÁ…¸øœèœœì(€€€½¹ÍĞ…ÉÈõ¡…ÍQ¥µ”¡Ì¹…ÉÈ¤ıÌ¹…ÉÈèœœ±‘•Àõ¡…ÍQ¥µ”¡Ì¹‘•À¤ıÌ¹‘•Àèœœì(€€€½¹ÍĞ‘•±…å%‘àõÑ¥µ•‘MÑ½ÁÌ¹¥¹‘•á=˜¡Ì¤ì(€€€½¹ÍĞ‘•±…åA…¥ÈõÍ¡½İ•±…åQ¥µ•Ì˜™‘•±…å%‘àøôÀı}Í¥µ•±…åA…¥ÉÑMÑ½À¡Ğ±‘•±…å%‘à¤éí…ÉÈèÀ±‘•ÀèÁôì(€€€½¹ÍĞ…ÑÕ…±ÉÈõ…ÉÈ˜™‘•±…åA…¥È¹…ÉÈøÀı…‘‘5¥¹Q½±½¬¡…ÉÈ±‘•±…åA…¥È¹…ÉÈ¤èœœì(€€€½¹ÍĞ…ÑÕ…±•Àõ‘•À˜™‘•±…åA…¥È¹‘•ÀøÀı…‘‘5¥¹Q½±½¬¡‘•À±‘•±…åA…¥È¹‘•À¤èœœì(€€€½¹ÍĞÑ¥µ••±°ô¡Í¡•‘Õ±•±…ÑÕ…°¤ôùÍ¡•‘Õ±•(€€€€€€ı€ñÍÁ…¸ø‘í•ÍŒ¡Í¡•‘Õ±•¥ôğ½ÍÁ…¸ø‘í…ÑÕ…°ı€ñÍµ…±°ø ‘í•ÍŒ¡…ÑÕ…°¥ô¤ğ½Íµ…±°ù€èœõ€(€€€€€€èŸŠPœì(€€€½¹ÍĞ±¥Ù•5…É­•Èõ¤ôôõ±¥Ù•5…É­•É%‘àı€ñÍÁ…¸±…ÍÌô‰‰Éµ±¥Ù”µµ…É­•È‘í±¥Ù•	•Ñİ••¸üœ‰•Ñİ••¸œèœôˆÍÑå±”ôˆ´µ‰Éµ±¥Ù”µÑ½Àè‘í±¥Ù•Q½Áô”ˆÑ¥Ñ±”ôˆ‘í•ÍŒ¡±¥Ù•1…‰•°¥ôˆ…É¥„µ±…‰•°ô‹¶b²z°ƒ²r²æ`è€‘í•ÍŒ¡±¥Ù•1…‰•°¥ôˆøñÍÙœÙ¥•İ	½àôˆÀ€À€ÈĞ€ÈĞˆ…É¥„µ¡¥‘‘•¸ô‰ÑÉÕ”ˆøñÉ•ĞàôˆÔˆäôˆÌˆİ¥‘Ñ ôˆÄĞˆ¡•¥¡ĞôˆÄÜˆÉàôˆĞˆ¼øñÁ…Ñ ô‰4à€İ áØÕ áé4à€Äİ ¸ÀÅ4ÄØ€Äİ ¸ÀÅ4à€ÈÅ°´È€É4ÄØ€ÈÅ°È€Èˆ¼øğ½ÍÙœøğ½ÍÁ…¸ù€èœœì(€€€É•ÑÕÉ¸€ñ‘¥Ø±…ÍÌô‰‰ÉµÍÑ½À‘í¥¹I¥‘”üœÉ¥‘”œèœô‘í‰•™½É”üœ‰•™½É”œèœô‘í…™Ñ•Èüœ…™Ñ•Èœèœô‘í¤ôôõ™É½µ%‘àüœ‰½…Éœèœô‘í¤ôôõÑ½%‘àüœ…±¥¡Ğœèœô‘í¤ôôõ±¥Ù•MÑ½Á%‘àüœ±¥Ù”œèœô‘í¤ôôõ±¥Ù•5…É­•É%‘àüœ±¥Ù”µµ…É­•ÈµÉ½Üœèœôˆ‘…Ñ„µÍÑ…Ñ¥½¸ôˆ‘í•ÍŒ¡Ì¹Ì¥ôˆ‘…Ñ„µ‘•±…äµ¥¹‘•àôˆ‘í‘•±…å%‘áôˆ‘…Ñ„µ…ÉÈôˆ‘í•ÍŒ¡…ÉÈ¥ôˆ‘…Ñ„µ‘•Àôˆ‘í•ÍŒ¡‘•À¥ôˆø(€€€€€€ñ‘¥Ø±…ÍÌô‰‰ÉµÉ…¥°ˆøñ¤øğ½¤ø‘í±¥Ù•5…É­•Éôğ½‘¥Øø(€€€€€€ñ‘¥Ø±…ÍÌô‰‰ÉµÍÑ…Ñ¥½¸ˆø‘í‰…‘•ôñÍÑÉ½¹œø‘í•ÍŒ¡Ì¹Ì¥ôğ½ÍÑÉ½¹œø‘íÁ±…Ğ„õ¹Õ±°ı€ñÍÁ…¸ø‘í•ÍŒ¡Á±…Ğ¥÷®Ê ƒ²*çªÂW²z”ğ½ÍÁ…¸ù€èœôğ½‘¥Øø(€€€€€€ñÑ¥µ”±…ÍÌô‰‰Éµ…ÉÈˆø‘íÑ¥µ••±°¡…ÉÈ±…ÑÕ…±ÉÈ¥ôğ½Ñ¥µ”øñÑ¥µ”±…ÍÌô‰‰Éµ‘•Àˆø‘íÑ¥µ••±°¡‘•À±…ÑÕ…±•À¥ôğ½Ñ¥µ”ø(€€€€ğ½‘¥Øù€ì(€ô¤¹©½¥¸ œœ¤ì(€½¹ÍĞÉ½ÕÑ•5…Àõ}‰½½­I½ÕÑ•5…Á!Q50¡Ğ±™É½´±Ñ¼±É…‘•½±½È±ÑÉ…Ù•±…Ñ”¤ì(€½¹ÍĞİÉ…Àõ‘½Õµ•¹Ğ¹É•…Ñ•±•µ•¹Ğ ‘¥Øœ¤íİÉ…À¹¥ô‰½½¬µÉ½ÕÑ”µ‘•Ñ…¥°µİÉ…ÀœíİÉ…À¹ÍÑå±”¹Í•ÑAÉ½Á•ÉÑä œ´µ‰ÉµÉ…‘”œ±É…‘•½±½È¤ì(€İÉ…À¹¥¹¹•É!Q50õ€ñ‘¥Ø±…ÍÌô‰‰½½¬µÉ½ÕÑ”µ‘•Ñ…¥°µ‰…­‘É½Àˆøğ½‘¥ØøñÍ•Ñ¥½¸±…ÍÌô‰‰½½¬µÉ½ÕÑ”µ‘•Ñ…¥°µÍ¡••ĞˆÉ½±”ô‰‘¥…±½œˆ…É¥„µµ½‘…°ô‰ÑÉÕ”ˆ…É¥„µ±…‰•°ôˆ‘í•ÍŒ¡Ğ¹É…‘”¥ô€‘í•ÍŒ¡Ğ¹¹¼¥ôƒ²jÓ¶Z$ƒ²‚W®ÎĞˆø(€€€€ñ¡•…‘•È±…ÍÌô‰‰Éµ¡•…‘•Èˆøñ‘¥Ø±…ÍÌô‰‰Éµ¡•…µ¥¹™¼ˆøñÍµ…±°û²jÓ¶Z$ƒ²‚W®ÎĞğ½Íµ…±°øñ ÈøñÍÁ…¸ø‘í•ÍŒ¡Ğ¹É…‘”¥ôğ½ÍÁ…¸øñˆø‘í•ÍŒ¡Ğ¹¹¼¥ôğ½ˆøğ½ Èøğ½‘¥Øøñ‘¥Ø±…ÍÌô‰‰Éµ¡•…µ…Ñ¥½¹Ìˆøñ‰ÕÑÑ½¸ÑåÁ”ô‰‰ÕÑÑ½¸ˆ±…ÍÌô‰‰Éµ±½Í”ˆ…É¥„µ±…‰•°ô‹®.¯ªâÀˆûŠrTğ½‰ÕÑÑ½¸øğ½‘¥Øøğ½¡•…‘•Èø(€€€€ñ‘¥Ø±…ÍÌô‰‰ÉµÍÕµµ…ÉäˆøñÑ¥µ”ø‘í‘…Ñ•1…‰•±ôğ½Ñ¥µ”øñÍÑÉ½¹œø‘í•ÍŒ¡™É½´¥ô€ñÍÁ…¸ø‘í•ÍŒ¡…±±MÑ½ÁÍm™É½µ%‘át¹‘•Áññ…±±MÑ½ÁÍm™É½µ%‘át¹…ÉÉñğŸŠPœ¥ôğ½ÍÁ…¸øñ¤ûŠHğ½¤ø€‘í•ÍŒ¡Ñ¼¥ô€ñÍÁ…¸ø‘í•ÍŒ¡…±±MÑ½ÁÍmÑ½%‘át¹…ÉÉññ…±±MÑ½ÁÍmÑ½%‘át¹‘•ÁñğŸŠPœ¥ôğ½ÍÁ…¸øğ½ÍÑÉ½¹œøñÍµ…±°±…ÍÌô‰‰Éµ½Á•É…Ñ¥½¸µÍÑ…Ñ”ˆøñˆø‘í•ÍŒ¡½Á•É…Ñ¥½¹5…¥¸¥ôğ½ˆø‘í½Á•É…Ñ¥½¹MÕˆı€ñÍÁ…¸ø‘í•ÍŒ¡½Á•É…Ñ¥½¹MÕˆ¥ôğ½ÍÁ…¸ù€èœôğ½Íµ…±°øğ½‘¥Øø(€€€€ñ‘¥Ø±…ÍÌô‰‰ÉµÙ¥•ÜµÑ…‰ÌˆÉ½±”ô‰Ñ…‰±¥ÍĞˆøñ‰ÕÑÑ½¸ÑåÁ”ô‰‰ÕÑÑ½¸ˆ±…ÍÌô‰‰ÉµÙ¥•ÜµÑ…ˆ…Ñ¥Ù”ˆ‘…Ñ„µÙ¥•Üô‰Í¡•‘Õ±”ˆÉ½±”ô‰Ñ…ˆˆ…É¥„µÍ•±•Ñ•ô‰ÑÉÕ”ˆ½¹±¥¬ô‰Í•Ñ	½½­I½ÕÑ••Ñ…¥±Q…ˆ Í¡•‘Õ±”œ¤ˆû².sªÂ¶Fpğ½‰ÕÑÑ½¸øñ‰ÕÑÑ½¸ÑåÁ”ô‰‰ÕÑÑ½¸ˆ±…ÍÌô‰‰ÉµÙ¥•ÜµÑ…ˆˆ‘…Ñ„µÙ¥•Üô‰µ…ÀˆÉ½±”ô‰Ñ…ˆˆ…É¥„µÍ•±•Ñ•ô‰™…±Í”ˆ½¹±¥¬ô‰Í•Ñ	½½­I½ÕÑ••Ñ…¥±Q…ˆ µ…Àœ¤ˆû²®>ğ½‰ÕÑÑ½¸øğ½‘¥Øø(€€€€ñ‘¥Ø±…ÍÌô‰‰ÉµÙ¥•Ü‰ÉµÍ¡•‘Õ±”µÙ¥•Ü…Ñ¥Ù”ˆøñ‘¥Ø±…ÍÌô‰‰Éµ½±Õµ¹ÌˆøñÍÁ…¸û²^·®ªğ½ÍÁ…¸øñÍÁ…¸û®>²Â¤ğ½ÍÁ…¸øñÍÁ…¸û²Ús®Âpğ½ÍÁ…¸øğ½‘¥Øøñ‘¥Ø±…ÍÌô‰‰ÉµÍÑ½Àµ±¥ÍĞˆø‘íÉ½İÍôğ½‘¥Øøğ½‘¥Øø(€€€€ñ‘¥Ø±…ÍÌô‰‰ÉµÙ¥•Ü‰Éµµ…ÀµÙ¥•Üˆø‘íÉ½ÕÑ•5…Áôğ½‘¥Øø(€€ğ½Í•Ñ¥½¸ù€ì(€İÉ…À¹‘…Ñ…Í•Ğ¹ÑÉ…¥¸õMÑÉ¥¹œ¡ÑÉ…¥¹9¼¤íİÉ…À¹‘…Ñ…Í•Ğ¹™É½´õ™É½´íİÉ…À¹‘…Ñ…Í•Ğ¹Ñ¼õÑ¼íİÉ…À¹‘…Ñ…Í•Ğ¹‘…Ñ”õÑÉ…Ù•±…Ñ•ññÑ½‘…å1½…±MÑÈ ¤ì(€‘½Õµ•¹Ğ¹‰½‘ä¹…ÁÁ•¹‘¡¥±¡İÉ…À¤ì(€‘½Õµ•¹Ğ¹‰½‘ä¹±…ÍÍ1¥ÍĞ¹…‘ …ÁÀµµ½‘…°µ½Á•¸œ¤ì(€½¹ÍĞ½Á•¹•‘ĞõÁ•É™½Éµ…¹”¹¹½Ü ¤ì(€İÉ…À¹ÅÕ•ÉåM•±•Ñ½È œ¹‰½½¬µÉ½ÕÑ”µ‘•Ñ…¥°µ‰…­‘É½Àœ¤¹…‘‘Ù•¹Ñ1¥ÍÑ•¹•È ±¥¬œ±”ôùì(€€€¥˜¡”¹Ñ…É•Ğôôõ”¹ÕÉÉ•¹ÑQ…É•Ğ˜™Á•É™½Éµ…¹”¹¹½Ü ¤µ½Á•¹•‘ĞøĞÀÀ¥±½Í•	½½­I½ÕÑ••Ñ…¥° ¤ì(€ô¤ì(€…‘‘5½‰¥±•Q…À¡İÉ…À¹ÅÕ•ÉåM•±•Ñ½È œ¹‰Éµ±½Í”œ¤±±½Í•	½½­I½ÕÑ••Ñ…¥°¤ì(€É•ÅÕ•ÍÑ¹¥µ…Ñ¥½¹É…µ”  ¤ôùİÉ…À¹ÅÕ•ÉåM•±•Ñ½È œ¹‰½½¬µÉ½ÕÑ”µ‘•Ñ…¥°µÍ¡••Ğœ¤ü¹±…ÍÍ1¥ÍĞ¹…‘ ½Á•¸œ¤¤ì(€É•ÅÕ•ÍÑ¹¥µ…Ñ¥½¹É…µ”  ¤ôùİÉ…À¹ÅÕ•ÉåM•±•Ñ½È œ¹‰ÉµÍÑ½À¹‰½…Éœ¤ü¹ÍÉ½±±%¹Ñ½Y¥•Ü¡í‰±½¬è•¹Ñ•Èô¤¤ì(€É•ÅÕ•ÍÑ¹¥µ…Ñ¥½¹É…µ”  ¤ôùÕÁ‘…Ñ•	½½­I½ÕÑ•1¥Ù”¡ÑÉ…¥¹9¼±™É½´±Ñ¼±ÑÉ…Ù•±…Ñ”¤¤ì(€}Í¡•‘Õ±•	½½­I½ÕÑ••Ñ…¥±Q¥¬ ¤ì)ô)™Õ¹Ñ¥½¸±½Í•	½½­I½ÕÑ••Ñ…¥° ¥ì(€½¹ÍĞİÉ…Àõ‘½Õµ•¹Ğ¹•Ñ±•µ•¹Ñ	å% ‰½½¬µÉ½ÕÑ”µ‘•Ñ…¥°µİÉ…Àœ¤í¥˜ …İÉ…À¥É•ÑÕÉ¸ì(€¥˜¡}‰½½­I½ÕÑ••Ñ…¥±Q¥µ•È¥í±•…ÉQ¥µ•½ÕĞ¡}‰½½­I½ÕÑ••Ñ…¥±Q¥µ•È¤í}‰½½­I½ÕÑ••Ñ…¥±Q¥µ•Èõ¹Õ±°íô(€İÉ…À¹ÅÕ•ÉåM•±•Ñ½È œ¹‰½½¬µÉ½ÕÑ”µ‘•Ñ…¥°µÍ¡••Ğœ¤ü¹±…ÍÍ1¥ÍĞ¹É•µ½Ù” ½Á•¸œ¤ì(€‘½Õµ•¹Ğ¹‰½‘ä¹±…ÍÍ1¥ÍĞ¹É•µ½Ù” …ÁÀµµ½‘…°µ½Á•¸œ¤íÍ•ÑQ¥µ•½ÕĞ  ¤ôùİÉ…À¹É•µ½Ù” ¤°ÈÈÀ¤ì)ô(((¼¼ƒŠRŠR ƒ²^Ó²Â ƒ²b#®ƒ¶´ƒ¶fc²*äƒ¶C²$ƒŠRŠR )™Õ¹Ñ¥½¸Í•…É¡	½½­QÉ…¹Í™•ÉÌ¡™É½´°Ñ¼°‘…Ñ•¼°•°°…ÁÁ•¹¥ì(€½¹ÍĞ5%9}]%PôÌ°5a}]%PôØÀì(€½¹ÍĞ¹½İ½É¥±Ñ•Èõ¹•Ü…Ñ” ¤ì(€½¹ÍĞ¹½İ5¥±Ñ•Èõ¹½İ½É¥±Ñ•È¹•Ñ!½ÕÉÌ ¤¨ØÀ­¹½İ½É¥±Ñ•È¹•Ñ5¥¹ÕÑ•Ì ¤ì(€½¹ÍĞ¥ÍQ½‘…äô¡‘…Ñ•¼ôôõÑ½‘…å1½…±MÑÈ ¤¤ì((€™Õ¹Ñ¥½¸•ÑMÑ½ÁP¡Ì¥ìÉ•ÑÕÉ¸¡…ÍQ¥µ”¡Ì¹‘•À¤ıÌ¹‘•Àé¡…ÍQ¥µ”¡Ì¹…ÉÈ¤ıÌ¹…ÉÈé¹Õ±°ìô((€€¼¼™É½·²^C²pƒ²Ús®Âs¶Vc®*Pƒ®ª£®N€ƒ®‚#ªŞà(€½¹ÍĞ±•ÌÄõmtì(€11}QI%9L¹™½É… ¡Ğôùì(€€€½¹ÍĞÍÑ½ÁÌõĞ¹ÍÑ½ÁÌì(€€€½¹ÍĞ™¤õÍÑ½ÁÌ¹™¥¹‘%¹‘•à¡ÌôùÌ¹Ìôôõ™É½´¤ì(€€€¥˜¡™¤ğÁññ¥ÍA…ÍÍMÑ½À¡Ğ±™É½´¤¥É•ÑÕÉ¸ì(€€€½¹ÍĞ‘•ÁPõ•ÑMÑ½ÁP¡ÍÑ½ÁÍm™¥t¤ì(€€€¥˜ …‘•ÁP¥É•ÑÕÉ¸ì(€€€½¹ÍĞ‘•Á4õÑ½5¥¸¡‘•ÁP¤ì(€€€¥˜¡¥ÍQ½‘…ä˜™‘•Á4„ôõ¹Õ±°˜™‘•Á4ñ¹½İ5¥±Ñ•È¥É•ÑÕÉ¸ì(€€€™½È¡±•Ğ¤õ™¤¬Äí¤ñÍÑ½ÁÌ¹±•¹Ñ í¤¬¬¥ì(€€€€€½¹ÍĞÌõÍÑ½ÁÍm¥tì(€€€€€¥˜ …Ì¹…ÉÈ˜˜…Ì¹‘•À¥½¹Ñ¥¹Õ”ì(€€€€€¥˜¡¥ÍA…ÍÍMÑ½À¡Ğ±Ì¹Ì¤¥½¹Ñ¥¹Õ”ì(€€€€€½¹ÍĞ…ÉÉPõ¡…ÍQ¥µ”¡Ì¹…ÉÈ¤ıÌ¹…ÉÈé¡…ÍQ¥µ”¡Ì¹‘•À¤ıÌ¹‘•Àé¹Õ±°ì(€€€€€¥˜ ……ÉÉP¥½¹Ñ¥¹Õ”ì(€€€€€±•ÌÄ¹ÁÕÍ ¡íĞ±‘•ÁMÑ¸é™É½´±‘•ÁP±‘•Á4±…ÉÉMÑ¸éÌ¹Ì±…ÉÉP±…ÉÉ4éÑ½5¥¸¡…ÉÉP¥ô¤ì(€€€ô(€ô¤ì((€±•ĞÑÉ…¹Í™•ÉÌõmtì(€±•ÌÄ¹™½É… ¡°Äôùì(€€€¥˜¡°Ä¹…ÉÉMÑ¸ôôõÑ¼¥É•ÑÕÉ¸ì(€€€11}QI%9L¹™½É… ¡ĞÈôùì(€€€€€¥˜¡ĞÈôôõ°Ä¹Ğ¥É•ÑÕÉ¸ì(€€€€€½¹ÍĞÍÑ½ÁÌõĞÈ¹ÍÑ½ÁÌì(€€€€€½¹ÍĞá¤õÍÑ½ÁÌ¹™¥¹‘%¹‘•à¡ÌôùÌ¹Ìôôõ°Ä¹…ÉÉMÑ¸¤ì(€€€€€½¹ÍĞÑ¤õÍÑ½ÁÌ¹™¥¹‘%¹‘•à¡ÌôùÌ¹ÌôôõÑ¼¤ì(€€€€€¥˜¡á¤ğÁññÑ¤ğÁññá¤øõÑ¤¥É•ÑÕÉ¸ì(€€€€€¥˜¡¥ÍA…ÍÍMÑ½À¡ĞÈ±°Ä¹…ÉÉMÑ¸¥ññ¥ÍA…ÍÍMÑ½À¡ĞÈ±Ñ¼¤¥É•ÑÕÉ¸ì(€€€€€½¹ÍĞ‘•ÀÉPõ•ÑMÑ½ÁP¡ÍÑ½ÁÍmá¥t¤ì(€€€€€¥˜ …‘•ÀÉP¥É•ÑÕÉ¸ì(€€€€€½¹ÍĞ‘•ÀÉ4õÑ½5¥¸¡‘•ÀÉP¤ì(€€€€€½¹ÍĞİ…¥Ğõ‘•ÀÉ4µ°Ä¹…ÉÉ4ì(€€€€€¥˜¡İ…¥Ğñ5%9}]%Qññİ…¥Ğù5a}]%P¥É•ÑÕÉ¸ì(€€€€€½¹ÍĞ…ÉÈÉPõ¡…ÍQ¥µ”¡ÍÑ½ÁÍmÑ¥t¹…ÉÈ¤ıÍÑ½ÁÍmÑ¥t¹…ÉÈé¡…ÍQ¥µ”¡ÍÑ½ÁÍmÑ¥t¹‘•À¤ıÍÑ½ÁÍmÑ¥t¹‘•Àé¹Õ±°ì(€€€€€¥˜ ……ÉÈÉP¥É•ÑÕÉ¸ì(€€€€€½¹ÍĞÑ½Ñ…±4õÑ½5¥¸¡…ÉÈÉP¤µ°Ä¹‘•Á4ì(€€€€€¥˜¡Ñ½Ñ…±4ğôÀ¥É•ÑÕÉ¸ì(€€€€€ÑÉ…¹Í™•ÉÌ¹ÁÕÍ ¡ì(€€€€€€€±•ÌémíĞé°Ä¹Ğ±™É½´±Ñ¼é°Ä¹…ÉÉMÑ¸±‘•ÁPé°Ä¹‘•ÁP±…ÉÉPé°Ä¹…ÉÉQô°(€€€€€€€€€€€€€íĞéĞÈ±™É½´é°Ä¹…ÉÉMÑ¸±Ñ¼±‘•ÁPé‘•ÀÉP±…ÉÉPé…ÉÈÉQõt°(€€€€€€€Ñ½Ñ…±ÕÈé‘ÕÉMÑÈ¡°Ä¹‘•ÁP±…ÉÈÉP¤°Ñ½Ñ…±4°(€€€€€€€‘•Á4é°Ä¹‘•Á4°…ÉÉ4éÑ½5¥¸¡…ÉÈÉP¥ñğääää(€€€€€ô¤ì(€€€ô¤ì(€ô¤ì((€€¼¼ƒ²’G®ÎÔƒ²‚sªÆÀ€˜ƒ²‚W®‚°€˜ƒ²Ös®2 €×ªÆĞ(€½¹ÍĞÍ••¸õ¹•ÜM•Ğ ¤ì(€ÑÉ…¹Í™•ÉÌõÑÉ…¹Í™•ÉÌ¹™¥±Ñ•È¡Èôùì(€€€½¹ÍĞ­•äõÈ¹±•Ì¹µ…À¡°ôù°¹Ğ¹¹¼­°¹‘•ÁP¤¹©½¥¸ ğœ¤ì(€€€¥˜¡Í••¸¹¡…Ì¡­•ä¤¥É•ÑÕÉ¸™…±Í”ìÍ••¸¹…‘¡­•ä¤ìÉ•ÑÕÉ¸ÑÉÕ”ì(€ô¤¹Í½ÉĞ ¡„±ˆ¤ôù„¹Ñ½Ñ…±4µˆ¹Ñ½Ñ…±4¤¹Í±¥” À°Ô¤ì((€¥˜ …ÑÉ…¹Í™•ÉÌ¹±•¹Ñ ¥ì(€€€•°¹¥¹¹•É!Q50õ…ÁÁ•¹üœœé€ñ‘¥Ø±…ÍÌô‰•µÁÑäˆøñ‘¥Ø±…ÍÌô‰•µÁÑäµ¥½¸ˆûÂ~j¬ğ½‘¥ØøñÀø‘í™É½µôƒŠH€‘íÑ½ôƒ²jÓ¶Z$ƒªÂ®*—¶VpƒªÊ÷®†sªÂ ƒ²^²*×®.#®.ğ½Àøğ½‘¥Øù€ì(€€€É•ÑÕÉ¸ì(€ô((€½¹ÍĞ…É‘ÌõÑÉ…¹Í™•ÉÌ¹µ…À ¡í±•Ì±Ñ½Ñ…±ÕÉô¤ôùì(€€€½¹ÍĞ±•Í!Ñµ°õ±•Ì¹µ…À ¡°±¤¤ôù€(€€€€€€ñ‘¥Ø±…ÍÌô‰‰½½¬µá™•Èµ±•œˆø(€€€€€€€€ñ‘¥ØÍÑå±”ô‰‘¥ÍÁ±…äé™±•àí…±¥¸µ¥Ñ•µÌé•¹Ñ•Èí…ÀèÙÁàíµ…É¥¸µ‰½ÑÑ½´èÑÁàˆø(€€€€€€€€€€ñÍÁ…¸±…ÍÌô‰á™•ÈµÉ½±”µÑ…œ€‘í¤ôôôÀü±•…œè™½±±½Üôˆø‘í¤ôôôÀüŸ²ƒ¶Z$œèŸ¶n¶Z$ôğ½ÍÁ…¸ø(€€€€€€€€€€ñÍÁ…¸ÍÑå±”ô‰™½¹ĞµÍ¥é”èÄÉÁàí™½¹Ğµİ•¥¡ĞèÜÀÀí½±½ÈéÙ…È ´µŒ´‘íÍÍY…È¡°¹Ğ¹É…‘”¥ô¤ˆø‘í°¹Ğ¹É…‘•ôğ½ÍÁ…¸ø(€€€€€€€€€€ñÍÁ…¸ÍÑå±”ô‰™½¹Ğµ™…µ¥±äéÙ…È ´µµ½¹¼¤í™½¹ĞµÍ¥é”èÄÉÁàí½±½ÈéÙ…È ´µÑ•áĞÈ¤ˆø‘í°¹Ğ¹¹½ôğ½ÍÁ…¸ø(€€€€€€€€ğ½‘¥Øø(€€€€€€€€ñ‘¥ØÍÑå±”ô‰‘¥ÍÁ±…äé™±•àí…±¥¸µ¥Ñ•µÌé•¹Ñ•Èí…ÀèáÁàˆø(€€€€€€€€€€ñÍÁ…¸ÍÑå±”ô‰™½¹Ğµİ•¥¡ĞèØÀÀˆø‘í°¹™É½µôğ½ÍÁ…¸ø(€€€€€€€€€€ñÍÁ…¸ÍÑå±”ô‰™½¹Ğµ™…µ¥±äéÙ…È ´µµ½¹¼¤í™½¹ĞµÍ¥é”èÄÉÁàí½±½ÈéÙ…È ´µ…•¹Ğ¤ˆø‘í°¹‘•ÁQôğ½ÍÁ…¸ø(€€€€€€€€€€ñÍÁ…¸ÍÑå±”ô‰½±½ÈéÙ…È ´µÑ•áĞÌ¤ˆûŠHğ½ÍÁ…¸ø(€€€€€€€€€€ñÍÁ…¸ÍÑå±”ô‰™½¹Ğµİ•¥¡ĞèØÀÀˆø‘í°¹Ñ½ôğ½ÍÁ…¸ø(€€€€€€€€€€ñÍÁ…¸ÍÑå±”ô‰™½¹Ğµ™…µ¥±äéÙ…È ´µµ½¹¼¤í™½¹ĞµÍ¥é”èÄÉÁàí½±½ÈéÙ…È ´µÉ••¸¤ˆø‘í°¹…ÉÉQñğœ´ôğ½ÍÁ…¸ø(€€€€€€€€ğ½‘¥Øø(€€€€€€ğ½‘¥Øø(€€€€€€‘í¤ñ±•Ì¹±•¹Ñ ´Äı€ñ‘¥Ø±…ÍÌô‰‰½½¬µá™•Èµİ…¥ĞˆûÂ~Rƒ¶fc²*äƒ
+Üƒ®2ªâÀ€‘íÑ½5¥¸¡±•Ím¤¬Åt¹‘•ÁP¤µÑ½5¥¸¡°¹…ÉÉP¥÷®Úğ½‘¥Øù€èœõ€(€€€€¤¹©½¥¸ œœ¤ì(€€€½¹ÍĞ™¥ÉÍÑ1•œõ±•ÍlÁt°±…ÍÑ1•œõ±•Ím±•Ì¹±•¹Ñ ´Åtì(€€€€¼¼¥¹±¥¹”½¹±¥¬ƒ²‚sªÆÀƒŠH‘…Ñ„ƒ²7²Äƒ²‚²z”ƒ¶n…‘‘Ù•¹Ñ1¥ÍÑ•¹•È€¡¥=LM…™…É¤ƒ¶bã¶f`¤(€€€É•ÑÕÉ¸€ñ‘¥Ø±…ÍÌô‰‰½½¬µÑÉ…¥¸µÉ½Ü‰½½¬µá™•Èµ…Éˆ(€€€€€‘…Ñ„µÑÉ…¥¸µ¹¼ôˆ‘í™¥ÉÍÑ1•œ¹Ğ¹¹½ôˆ‘…Ñ„µ‘•Àôˆ‘í™¥ÉÍÑ1•œ¹‘•ÁQôˆ‘…Ñ„µ…ÉÈôˆ‘í™¥ÉÍÑ1•œ¹…ÉÉQñğœôˆ(€€€€€‘…Ñ„µ™É½´ôˆ‘í™¥ÉÍÑ1•œ¹™É½µôˆ‘…Ñ„µÑ¼ôˆ‘í™¥ÉÍÑ1•œ¹Ñ½ôˆ‘…Ñ„µ‘…Ñ”ôˆ‘í‘…Ñ•½ôˆ(€€€€€‘…Ñ„µ¹¼Èôˆ‘í±…ÍÑ1•œ¹Ğ¹¹½ôˆ‘…Ñ„µáÍÑ¸ôˆ‘í™¥ÉÍÑ1•œ¹Ñ½ôˆ‘…Ñ„µ‘•ÀÈôˆ‘í±…ÍÑ1•œ¹‘•ÁQôˆ‘…Ñ„µ…ÉÈÈôˆ‘í±…ÍÑ1•œ¹…ÉÉQñğœôˆ‘…Ñ„µ™¥¹…°ôˆ‘í±…ÍÑ1•œ¹Ñ½ôˆø(€€€€€€ñ‘¥ØÍÑå±”ô‰™±•àèÄˆø(€€€€€€€€ñ‘¥ØÍÑå±”ô‰‘¥ÍÁ±…äé™±•àí…±¥¸µ¥Ñ•µÌé•¹Ñ•Èí…ÀèáÁàíµ…É¥¸µ‰½ÑÑ½´èáÁàˆø(€€€€€€€€€€ñÍÁ…¸ÍÑå±”ô‰™½¹ĞµÍ¥é”èÄÅÁàí™½¹Ğµİ•¥¡ĞèØÀÀíÁ…‘‘¥¹œèÉÁà€áÁàí‰½É‘•ÈµÉ…‘¥ÕÌèÄÁÁàí‰…­É½Õ¹éÉ‰„ ÈÄÀ°ÄÔÌ°ÌĞ°¸ÄÔ¤í½±½ÈèÈääÈÈí‰½É‘•ÈèÅÁàÍ½±¥É‰„ ÈÄÀ°ÄÔÌ°ÌĞ°¸Ì¤ˆøÇ¶j0ƒ¶fc²*äğ½ÍÁ…¸ø(€€€€€€€€€€ñÍÁ…¸ÍÑå±”ô‰™½¹Ğµ™…µ¥±äéÙ…È ´µµ½¹¼¤í™½¹ĞµÍ¥é”èÄÅÁàí½±½ÈéÙ…È ´µÑ•áĞÈ¤ˆø‘í™¥ÉÍÑ1•œ¹‘•ÁQôƒŠH€‘í±…ÍÑ1•œ¹…ÉÉQñğœüôƒ
+Ü€‘íÑ½Ñ…±ÕÉôğ½ÍÁ…¸ø(€€€€€€€€ğ½‘¥Øø(€€€€€€€€‘í±•Í!Ñµ±ô(€€€€€€ğ½‘¥Øø(€€€€€€ñ‘¥ØÍÑå±”ô‰‘¥ÍÁ±…äé™±•àí…±¥¸µ¥Ñ•µÌé•¹Ñ•Èí…ÀèáÁàí™±•àµÍ¡É¥¹¬èÀˆø(€€€€€€€€ñ‘¥Ø±…ÍÌô‰‰½½¬µÑÉ…¥¸µ¡•ÙÉ½¸ˆûŠèğ½‘¥Øø(€€€€€€ğ½‘¥Øø(€€€€ğ½‘¥Øù€ì(€ô¤¹©½¥¸ œœ¤ì((€½¹ÍĞÑÉ¥Á1…‰•°õ‘…Ñ•¼ì(€•°¹¥¹¹•É!Q50õ€(€€€€ñ‘¥Ø±…ÍÌô‰É•ÍÕ±Ğµ¡•…‘•ÈˆÍÑå±”ô‰µ…É¥¸µÑ½ÀèÄÙÁàˆø(€€€€€€ñ‘¥Ø±…ÍÌô‰É•ÍÕ±ĞµÑ¥Ñ±”ˆø‘í…ÁÁ•¹üŸÂ~Rƒ¶fc²*äƒªÊ÷®†pœé€‘í™É½µôƒŠH€‘íÑ½ôƒ
+Üƒ¶fc²*åôğ½‘¥Øø(€€€€€€ñÍÁ…¸±…ÍÌô‰‰…‘”‰±Õ”ˆø‘íÑÉ…¹Í™•ÉÌ¹±•¹Ñ¡÷ªÆĞğ½ÍÁ…¸ø(€€€€€€ñÍÁ…¸±…ÍÌô‰‰…‘”ˆÍÑå±”ô‰‰…­É½Õ¹éÙ…È ´µ‰œÌ¤ˆø‘íÑÉ¥Á1…‰•±ôğ½ÍÁ…¸ø(€€€€ğ½‘¥Øø(€€€€ñ‘¥Ø±…ÍÌô‰‰½½¬µÑÉ…¥¸µ±¥ÍĞˆø‘í…É‘Íôğ½‘¥Øù€ì((€€¼¼ƒ¶fc²*äƒ²æÓ®Npƒ¶Ó®š´ƒŠHƒ®F@ƒªÖ³ªÂƒ²b#®ƒ²²à¡½Á•¹	½½­a™•É•Ñ…¥°¤(€½¹ÍĞ½Á•¹a™•ÈõÉ½Üôù½Á•¹	½½­a™•É•Ñ…¥° (€€€É½Ü¹‘…Ñ…Í•Ğ¹ÑÉ…¥¹9¼°É½Ü¹‘…Ñ…Í•Ğ¹¹¼È°(€€€É½Ü¹‘…Ñ…Í•Ğ¹™É½´°É½Ü¹‘…Ñ…Í•Ğ¹áÍÑ¸°É½Ü¹‘…Ñ…Í•Ğ¹™¥¹…°°(€€€É½Ü¹‘…Ñ…Í•Ğ¹‘•Áñğœœ°É½Ü¹‘…Ñ…Í•Ğ¹…ÉÉñğœœ°(€€€É½Ü¹‘…Ñ…Í•Ğ¹‘•ÀÉñğœœ°É½Ü¹‘…Ñ…Í•Ğ¹…ÉÈÉñğœœ°(€€€É½Ü¹‘…Ñ…Í•Ğ¹‘…Ñ•ññ‘…Ñ•¼¤ì(€•°¹ÅÕ•ÉåM•±•Ñ½É±° œ¹‰½½¬µÑÉ…¥¸µÉ½Ü¹‰½½¬µá™•Èµ…Éœ¤¹™½É… ¡É½Üôùì(€€€É½Ü¹…‘‘Ù•¹Ñ1¥ÍÑ•¹•È ±¥¬œ°€ ¤ôù½Á•¹a™•È¡É½Ü¤¤ì(€ô¤ì)ô()™Õ¹Ñ¥½¸}‰½½­•Ñ…¥±½¹™¥É´¡ÑÉ…¥¹9¼±™É½´±Ñ¼±‘•ÁP±…ÉÉP±ÑÉ…Ù•±…Ñ”¥ì(€¥˜¡İ¥¹‘½Ü¹}…Ñ¥Ù•A…ÍÍ%¥ì(€€€½Á•¹A…ÍÍ…åM•±•Ñ½È¡İ¥¹‘½Ü¹}…Ñ¥Ù•A…ÍÍ%±ÑÉ…¥¹9¼±™É½´±Ñ¼±‘•ÁP±…ÉÉQñğœœ¤ì(€ô•±Í”ì(€€€İ¥¹‘½Ü¹}‰½½­¥¹A…ÍÍ•¹•É½Õ¹Ğõ}‰½½­A…ÍÍ•¹•É½Õ¹ÑñğÄì(€€€½¹ÍĞ‘…Ñ•	…¬õ‘½Õµ•¹Ğ¹•Ñ±•µ•¹Ñ	å% ‰½½¬µ‘…Ñ”µ‰…¬œ¤ü¹Ù…±Õ•ñğœœì(€€€½Á•¹	½½­¥¹]¥Ñ¡…Ñ”¡ÑÉ…¥¹9¼±™É½´±Ñ¼±‘•ÁP±…ÉÉQñğœœ±ÑÉ…Ù•±…Ñ”±}‰½½­I½Õ¹‘QÉ¥À±‘…Ñ•	…¬¤ì(€ô)ô()™Õ¹Ñ¥½¸±½Í•	½½­QÉ…¥¹•Ñ…¥° ¥ì(€½¹ÍĞ•°€ô‘½Õµ•¹Ğ¹•Ñ±•µ•¹Ñ	å% ‰½½¬µ‘•Ñ…¥°µİÉ…Àœ¤ì(€¥˜ …•°¤É•ÑÕÉ¸ì(€•°¹ÅÕ•ÉåM•±•Ñ½È œ¹‰½½¬µ‘•Ñ…¥°µÁ…¹•°œ¤¹±…ÍÍ1¥ÍĞ¹É•µ½Ù” ½Á•¸œ¤ì(€Í•ÑQ¥µ•½ÕĞ  ¤ôù•°¹É•µ½Ù” ¤°€ÌÀÀ¤ì)ô((¼¼ƒÂ~Rƒ¶×¶V¤ƒ¶fc²*äƒ²b#®ƒ².s¶*à€£²öS®‚#²vó¶„ƒ®Â§².t¤ƒŠPƒ²ƒ¶Z'
+ß¶n¶Z$ƒ®F@ƒªÖ³ªÂ²vƒ¶Vpƒ².s¶*ã²^C²p(¼¼€€€ƒªÂªÂƒ²Š3²tƒ®NÇªâ'
+ß²Š3²w
+ß²jÓ²z²vƒªÎƒ®–ÓªÎ€°ƒ¶Vc®
+c²v`ƒ²b#®ƒ®Ê¶*ó²ró®†pƒ¶V£ªî`ƒ²b#®“¶Vs®.¸)™Õ¹Ñ¥½¸½Á•¹	½½­a™•É•Ñ…¥°¡¹¼Ä±¹¼È±™É½´±áMÑ¸±Ñ¼±‘•ÁPÄ±…ÉÉPÄ±‘•ÁPÈ±…ÉÉPÈ±ÑÉ…Ù•±…Ñ”¥ì(€½¹ÍĞĞÄõ•ÑQÉ…¥¹	å9¼¡¹¼Ä¤±ĞÈõ•ÑQÉ…¥¹	å9¼¡¹¼È¤ì(€¥˜ …ĞÅñğ…ĞÈ¥É•ÑÕÉ¸ì(€½¹ÍĞÑ½1½…°õôù€‘í¹•ÑÕ±±e•…È ¥ô´‘íMÑÉ¥¹œ¡¹•Ñ5½¹Ñ  ¤¬Ä¤¹Á…‘MÑ…ÉĞ È°œÀœ¥ô´‘íMÑÉ¥¹œ¡¹•Ñ…Ñ” ¤¤¹Á…‘MÑ…ÉĞ È°œÀœ¥õ€ì(€½¹ÍĞÑ½‘…äõ¹•Ü…Ñ” ¤ì½¹ÍĞµ¥¹…Ñ”õÑ½1½…°¡Ñ½‘…ä¤ì(€½¹ÍĞµ…áõ¹•Ü…Ñ”¡Ñ½‘…ä¤íµ…á¹Í•Ñ5½¹Ñ ¡µ…á¹•Ñ5½¹Ñ  ¤¬Ä¤ì½¹ÍĞµ…á…Ñ”õÑ½1½…°¡µ…á¤ì(€İ¥¹‘½Ü¹}á™•Èõì(€€€‘…Ñ”è¡ÑÉ…Ù•±…Ñ”˜™ÑÉ…Ù•±…Ñ”øõµ¥¹…Ñ”¤ıÑÉ…Ù•±…Ñ”éµ¥¹…Ñ”°µ¥¹…Ñ”°µ…á…Ñ”°(€€€½Õ¹Ğè¡ÑåÁ•½˜}‰½½­A…ÍÍ•¹•É½Õ¹Ğ„ôôÕ¹‘•™¥¹•œ˜™}‰½½­A…ÍÍ•¹•É½Õ¹Ğ¥ñğÄ°‘¥Í½Õ¹Ğè¹½¹”œ°(€€€™É½´°Ñ¼°Ù¥„éáMÑ¸°(€€€±•Ìél(€€€€€íÉ½±”èŸ²ƒ¶Z$œ±¹¼é¹¼Ä±É…‘”éĞÄ¹É…‘”±™É½´±Ñ¼éáMÑ¸±‘•ÁPé‘•ÁPÄ±…ÉÉPé…ÉÉPÄ±±Ìé¹Õ±°±Í•…ÑÌé¹Õ±±ô°(€€€€€íÉ½±”èŸ¶n¶Z$œ±¹¼é¹¼È±É…‘”éĞÈ¹É…‘”±™É½´éáMÑ¸±Ñ¼±‘•ÁPé‘•ÁPÈ±…ÉÉPé…ÉÉPÈ±±Ìé¹Õ±°±Í•…ÑÌé¹Õ±±ô°(€€€t(€ôì(€‘½Õµ•¹Ğ¹•Ñ±•µ•¹Ñ	å% ‰½½¬µ‘•Ñ…¥°µİÉ…Àœ¤ü¹É•µ½Ù” ¤ì(€½¹ÍĞİÉ…Àõ‘½Õµ•¹Ğ¹É•…Ñ•±•µ•¹Ğ ‘¥Øœ¤ì(€İÉ…À¹¥ô‰½½¬µ‘•Ñ…¥°µİÉ…Àœì(€İÉ…À¹¥¹¹•É!Q50õ€(€€€€ñ‘¥Ø±…ÍÌô‰‰½½¬µ‘•Ñ…¥°µ‰…­‘É½Àˆøğ½‘¥Øø(€€€€ñ‘¥Ø±…ÍÌô‰‰½½¬µ‘•Ñ…¥°µÁ…¹•°ˆø(€€€€€€ñ‘¥ØÍÑå±”ô‰™±•àµÍ¡É¥¹¬èÀíÁ…‘‘¥¹œèÄÉÁà€ÈÁÁà€Àˆø(€€€€€€€€ñ‘¥Ø±…ÍÌô‰‰½½¬µ‘•Ñ…¥°µ¡…¹‘±”ˆøğ½‘¥Øø(€€€€€€€€ñ‘¥Ø±…ÍÌô‰‰½½¬µ‘•Ñ…¥°µ¡•…ˆø(€€€€€€€€€€ñ‘¥ØÍÑå±”ô‰™½¹ĞµÍ¥é”èÄÑÁàí™½¹Ğµİ•¥¡ĞèØÀÀˆûÂ~Rƒ¶fc²*äƒ²b#®ƒ
+Ü€‘í™É½µôƒŠH€‘íáMÑ¹ôƒŠH€‘íÑ½ôğ½‘¥Øø(€€€€€€€€€€ñ‰ÕÑÑ½¸±…ÍÌô‰µäµÁ…¹•°µ±½Í”ˆ¥ô‰‰áµ±½Í”µàˆûŠrTğ½‰ÕÑÑ½¸ø(€€€€€€€€ğ½‘¥Øø(€€€€€€ğ½‘¥Øø(€€€€€€ñ‘¥Ø¥ô‰‰áµ‰½‘äˆÍÑå±”ô‰½Ù•É™±½Üµäé…ÕÑ¼í™±•àèÄíµ¥¸µ¡•¥¡ĞèÀìµİ•‰­¥Ğµ½Ù•É™±½ÜµÍÉ½±±¥¹œéÑ½Õ íÁ…‘‘¥¹œèÀ€ÈÁÁàˆøğ½‘¥Øø(€€€€€€ñ‘¥ØÍÑå±”ô‰™±•àµÍ¡É¥¹¬èÀíÁ…‘‘¥¹œèÄÁÁà€ÈÁÁà€ÈáÁàˆø(€€€€€€€€ñ‰ÕÑÑ½¸±…ÍÌô‰‰Ñ¸‰Ñ¸µÁÉ¥µ…Éäˆ¥ô‰‰áµ½¹™¥É´ˆ‘¥Í…‰±•ÍÑå±”ô‰İ¥‘Ñ èÄÀÀ”í©ÕÍÑ¥™äµ½¹Ñ•¹Ğé•¹Ñ•Èí½Á…¥Ñäè¸Ôˆû®F@ƒªÖ³ªÂ²v`ƒ²Š3²tƒ®NÇªâ'²vƒ²ƒ¶w¶Vc²ã²jPğ½‰ÕÑÑ½¸ø(€€€€€€€€ñ‰ÕÑÑ½¸±…ÍÌô‰…±…É´µÁ½ÁÕÀµ±½Í”ˆ¥ô‰‰áµ…¹•°ˆÍÑå±”ô‰µ…É¥¸µÑ½ÀèáÁàˆû²Ş£²0ğ½‰ÕÑÑ½¸ø(€€€€€€ğ½‘¥Øø(€€€€ğ½‘¥Øù€ì(€‘½Õµ•¹Ğ¹‰½‘ä¹…ÁÁ•¹‘¡¥±¡İÉ…À¤ì(€İÉ…À¹ÅÕ•ÉåM•±•Ñ½È œ¹‰½½¬µ‘•Ñ…¥°µ‰…­‘É½Àœ¤¹…‘‘Ù•¹Ñ1¥ÍÑ•¹•È ±¥¬œ°±½Í•	½½­QÉ…¥¹•Ñ…¥°¤ì(€…‘‘5½‰¥±•Q…À¡‘½Õµ•¹Ğ¹•Ñ±•µ•¹Ñ	å% ‰áµ±½Í”µàœ¤°±½Í•	½½­QÉ…¥¹•Ñ…¥°¤ì(€…‘‘5½‰¥±•Q…À¡‘½Õµ•¹Ğ¹•Ñ±•µ•¹Ñ	å% ‰áµ…¹•°œ¤°±½Í•	½½­QÉ…¥¹•Ñ…¥°¤ì(€…‘‘5½‰¥±•Q…À¡‘½Õµ•¹Ğ¹•Ñ±•µ•¹Ñ	å% ‰áµ½¹™¥É´œ¤°½¹™¥Éµa™•É	½½­¥¹œ¤ì(€}É•¹‘•Éa™•É	½‘ä ¤ì(€Í•ÑQ¥µ•½ÕĞ  ¤ôùİÉ…À¹ÅÕ•ÉåM•±•Ñ½È œ¹‰½½¬µ‘•Ñ…¥°µÁ…¹•°œ¤¹±…ÍÍ1¥ÍĞ¹…‘ ½Á•¸œ¤°ÄÀ¤ì)ô)™Õ¹Ñ¥½¸}É•¹‘•Éa™•É	½‘ä ¥ì(€½¹ÍĞ`õİ¥¹‘½Ü¹}á™•Èì½¹ÍĞ‰½‘äõ‘½Õµ•¹Ğ¹•Ñ±•µ•¹Ñ	å% ‰áµ‰½‘äœ¤ì¥˜ …añğ…‰½‘ä¥É•ÑÕÉ¸ì(€½¹ÍĞ±•!Ñµ°õ`¹±•Ì¹µ…À ¡0±¥‘à¤ôùì(€€€½¹ÍĞĞõ•ÑQÉ…¥¹	å9¼¡0¹¹¼¤ì(€€€½¹ÍĞ±…ÍÍ•Ìõ…Ù…¥±…‰±•M•…Ñ±…ÍÍ•Ì¡0¹É…‘”¤ì(€€€½¹ÍĞ‘ÕÈõ‘ÕÉ5¥¸¡0¹‘•ÁP±0¹…ÉÉP¤ì(€€€½¹ÍĞ½ÁÑÌõ±…ÍÍ•Ì¹µ…À¡Œôùì(€€€€€½¹ÍĞ™…É”õ…ÁÁ±å¥Í½Õ¹Ğ¡…±…É”¡Ğ±0¹™É½´±0¹Ñ¼±Œ¤±`¹‘¥Í½Õ¹Ğ¤ì(€€€€€½¹ÍĞÍ…±”õÍ•…Ñ±…ÍÍM…±•5•Ñ„¡Ğ±0¹™É½´±0¹Ñ¼±`¹‘…Ñ”±Œ¤±‘¥Í…‰±•ô…Í…±”¹•±¥¥‰±•ññÍ…±”¹…Ù…¥±…‰±”ğôÀì(€€€€€É•ÑÕÉ¸€ñ‰ÕÑÑ½¸±…ÍÌô‰‰½½­¥¹œµÍ•…Ğµ½ÁÑ¥½¸‘í0¹±ÌôôõŒüœ…Ñ¥Ù”œèœôˆ‘…Ñ„µ±•œôˆ‘í¥‘áôˆ‘…Ñ„µ±…ÍÌôˆ‘íôˆ€‘í‘¥Í…‰±•ü‘¥Í…‰±•œèœô(€€€€€€€ÍÑå±”ôˆ‘í‘¥Í…‰±•ü½Á…¥Ñäè¸ĞÔíÕÉÍ½Èé¹½Ğµ…±±½İ•œèœôˆÑ¥Ñ±”ôˆ‘íÍ…±”¹É•…Í½¹ñğœôˆø(€€€€€€€€ñÍÁ…¸±…ÍÌô‰‰½½­¥¹œµÍ•…Ğµ±…‰•°ˆø‘íÍ…±”¹±…‰•±ô‘íÍ…±”¹É•…Í½¸ı€‘íÍ…±”¹É•…Í½¸¹ÍÑ…ÉÑÍ]¥Ñ  œ œ¤üœ€œèœƒ
+Ü€ô‘íÍ…±”¹É•…Í½¹õ€èœôğ½ÍÁ…¸ø(€€€€€€€€ñÍÁ…¸±…ÍÌô‰‰½½­¥¹œµÍ•…Ğµ™…É”ˆø‘í™…É”¹Ñ½1½…±•MÑÉ¥¹œ ¥÷²n@ğ½ÍÁ…¸øğ½‰ÕÑÑ½¸ù€ì(€€€ô¤¹©½¥¸ œœ¤ì(€€€½¹ÍĞÍ•…ÑI½Ü€ô0¹±ÌôôôÍÑ…¹‘¥¹œœ(€€€€€€ü€ñ‘¥Ø±…ÍÌô‰¡¥¹ĞˆÍÑå±”ô‰µ…É¥¸èáÁà€À€ÀˆûÂ~j$ƒ²z²w
+ß²zC²rƒ²tƒ²‚²j¤ƒ²æàƒŠPƒ²Š3²tƒ²²‚Tƒ²^²v0ğ½‘¥Øù€(€€€€€€è€ñ‰ÕÑÑ½¸±…ÍÌô‰‰Ñ¸á™•ÈµÍ•…Ğµ‰Ñ¸ˆ‘…Ñ„µ±•œôˆ‘í¥‘áôˆ€‘í0¹±Ìüœœè‘¥Í…‰±•ôÍÑå±”ô‰İ¥‘Ñ èÄÀÀ”í©ÕÍÑ¥™äµ½¹Ñ•¹Ğé•¹Ñ•Èí™½¹ĞµÍ¥é”èÄÈ¸ÕÁàíµ…É¥¸µÑ½ÀèáÁàí…ÀèÙÁàì‘í0¹±Ìüœœè½Á…¥Ñäè¸ĞíÕÉÍ½Èé¹½Ğµ…±±½İ•ôˆûÂ~ªDƒ²Š3²tƒ²ƒ¶tƒŠP€ñÍÁ…¸ÍÑå±”ô‰½±½ÈéÙ…È ´µ…•¹ĞÈ¤ˆø‘í0¹±Ìü ¡0¹Í•…ÑÌ˜™0¹Í•…ÑÌ¹±•¹Ñ ôôõ`¹½Õ¹Ğ¤ı0¹Í•…ÑÌ¹©½¥¸ œ°€œ¤èŸ²zC®>dƒ®ÂÃ²‚Tœ¤èŸ®NÇªâ$ƒ²ƒ¶tƒ¶nƒªÂ®*”ôğ½ÍÁ…¸øğ½‰ÕÑÑ½¸ù€ì(€€€É•ÑÕÉ¸€ñ‘¥Ø±…ÍÌô‰á™•Èµ±•œµ…Éˆø(€€€€€€ñ‘¥Ø±…ÍÌô‰á™•Èµ±•œµ¡•…ˆø(€€€€€€€€ñÍÁ…¸±…ÍÌô‰á™•ÈµÉ½±”µÑ…œ€‘í¥‘àôôôÀü±•…œè™½±±½Üôˆø‘í0¹É½±•ôğ½ÍÁ…¸ø(€€€€€€€€ñÍÁ…¸ÍÑå±”ô‰½±½ÈéÙ…È ´µŒ´‘íÍÍY…È¡0¹É…‘”¥ô¤í™½¹Ğµİ•¥¡ĞèÜÀÀˆø‘í0¹É…‘•ô€‘í0¹¹½ôğ½ÍÁ…¸ø(€€€€€€€€ñÍÁ…¸ÍÑå±”ô‰µ…É¥¸µ±•™Ğé…ÕÑ¼í™½¹Ğµ™…µ¥±äéÙ…È ´µµ½¹¼¤í™½¹ĞµÍ¥é”èÄÈ¸ÕÁàˆø‘í0¹‘•ÁQôƒŠH€‘í0¹…ÉÉQôğ½ÍÁ…¸ø(€€€€€€ğ½‘¥Øø(€€€€€€ñ‘¥Ø±…ÍÌô‰á™•Èµ±•œµÉ½ÕÑ”ˆø‘í0¹™É½µôƒŠH€‘í0¹Ñ½ô‘í‘ÕÈ„õ¹Õ±°ı€ƒ
+Ü€‘í™µÑÕÉ-½È¡‘ÕÈ¥õ€èœôğ½‘¥Øø(€€€€€€ñ‘¥Ø±…ÍÌô‰á™•Èµ±•œµ…Ñ¥½¹Ìˆøñ‰ÕÑÑ½¸ÑåÁ”ô‰‰ÕÑÑ½¸ˆ±…ÍÌô‰‰Ñ¸ˆ½¹±¥¬ô‰•Ù•¹Ğ¹ÍÑ½ÁAÉ½Á……Ñ¥½¸ ¤í½Á•¹)½ÕÉ¹•ä œ‘í0¹¹½ôœ¤ˆû².sªÂ¶Fpğ½‰ÕÑÑ½¸øñ‰ÕÑÑ½¸ÑåÁ”ô‰‰ÕÑÑ½¸ˆ±…ÍÌô‰‰Ñ¸Ñ¥­•Ğµ…Ñ¥½¸µÉ½ÕÑ”ˆ½¹±¥¬ô‰•Ù•¹Ğ¹ÍÑ½ÁAÉ½Á……Ñ¥½¸ ¤í½Á•¹	½½­I½ÕÑ••Ñ…¥° œ‘í0¹¹½ôœ°œ‘í0¹™É½µôœ°œ‘í0¹Ñ½ôœ°œ‘í`¹‘…Ñ•ôœ¤ˆû²jÓ¶Z$ƒ²‚W®ÎĞğ½‰ÕÑÑ½¸øğ½‘¥Øø(€€€€€€ñ‘¥Ø±…ÍÌô‰‰½½­¥¹œµÍ•Ñ¥½¸µ±…‰•°ˆÍÑå±”ô‰µ…É¥¸µÑ½ÀèÙÁàˆû²Š3²tƒ®NÇªâ$ƒ
+Üƒ²jÓ²zğ½‘¥Øø(€€€€€€ñ‘¥Ø±…ÍÌô‰‰½½­¥¹œµÍ•…Ğµ½ÁÑ¥½¹Ìˆø‘í½ÁÑÍôğ½‘¥Øø(€€€€€€‘íÍ•…ÑI½İô(€€€€ğ½‘¥Øù€ì(€ô¤¹©½¥¸¡€ñ‘¥Ø±…ÍÌô‰á™•Èµ…ÉÉ½ÜˆûÂ~R€‘í`¹Ù¥…ôƒ¶fc²*äğ½‘¥Øù€¤ì(€½¹ÍĞ±•…É”õ0ôùì¥˜ …0¹±Ì¥É•ÑÕÉ¸¹Õ±°ì½¹ÍĞĞõ•ÑQÉ…¥¹	å9¼¡0¹¹¼¤ìÉ•ÑÕÉ¸…ÁÁ±å¥Í½Õ¹Ğ¡…±…É”¡Ğ±0¹™É½´±0¹Ñ¼±0¹±Ì¤±`¹‘¥Í½Õ¹Ğ¤ìôì(€½¹ÍĞ‰½Ñ¡±Ìõ`¹±•Ì¹•Ù•Éä¡0ôù0¹±Ì¤ì(€½¹ÍĞÑ½Ñ…°õ‰½Ñ¡±Ìı`¹±•Ì¹É•‘Õ” ¡„±0¤ôù„­±•…É”¡0¤°À¤©`¹½Õ¹ĞèÀì(€‰½‘ä¹¥¹¹•É!Q50õ€(€€€€ñ‘¥Ø±…ÍÌô‰‰½½­¥¹œµ‘…Ñ”µÍ•Ñ¥½¸ˆøñ‘¥Ø±…ÍÌô‰‰½½­¥¹œµÍ•Ñ¥½¸µ±…‰•°ˆû¶G²*ç²vğğ½‘¥Øø(€€€€€€ñ¥¹ÁÕĞÑåÁ”ô‰‘…Ñ”ˆ¥ô‰‰áµ‘…Ñ”ˆÙ…±Õ”ôˆ‘í`¹‘…Ñ•ôˆµ¥¸ôˆ‘í`¹µ¥¹…Ñ•ôˆµ…àôˆ‘í`¹µ…á…Ñ•ôˆ±…ÍÌô‰‰½½­¥¹œµ‘…Ñ”µ¥¹ÁÕĞˆøğ½‘¥Øø(€€€€ñ‘¥Ø±…ÍÌô‰‰½½­¥¹œµÁ…ÍÍ•¹•ÈµÍ•Ñ¥½¸ˆÍÑå±”ô‰µ…É¥¸µ‰½ÑÑ½´èáÁàˆø(€€€€€€ñ‘¥Ø±…ÍÌô‰‰½½­¥¹œµÍ•Ñ¥½¸µ±…‰•°ˆû²vã²n@ğ½‘¥Øø(€€€€€€ñ‘¥Ø±…ÍÌô‰‰½½­¥¹œµÁ…ÍÍ•¹•Èµ½¹ÑÉ½°ˆø(€€€€€€€€ñ‰ÕÑÑ½¸±…ÍÌô‰‰½½­¥¹œµÍÑ•ÁÁ•Èµ‰Ñ¸ˆ¥ô‰‰áµµ¥¹ÕÌˆûŠ"Hğ½‰ÕÑÑ½¸ø(€€€€€€€€ñÍÁ…¸¥ô‰‰áµ½Õ¹Ğˆø‘í`¹½Õ¹Ñôğ½ÍÁ…¸ø(€€€€€€€€ñ‰ÕÑÑ½¸±…ÍÌô‰‰½½­¥¹œµÍÑ•ÁÁ•Èµ‰Ñ¸ˆ¥ô‰‰áµÁ±ÕÌˆø¬ğ½‰ÕÑÑ½¸ø(€€€€€€ğ½‘¥Øø(€€€€€€ñ‘¥Ø±…ÍÌô‰‰½½­¥¹œµÍ•Ñ¥½¸µ±…‰•°ˆÍÑå±”ô‰µ…É¥¸µÑ½ÀèÄÉÁàˆû¶Vƒ²và€ñÍÁ…¸ÍÑå±”ô‰™½¹ĞµÍ¥é”èÄÅÁàí½±½ÈéÙ…È ´µÑ•áĞÌ¤í™½¹Ğµİ•¥¡ĞèĞÀÀˆø£²*ç²Â£ªÚ3²^@ƒ¶Fs².p¤ğ½ÍÁ…¸øğ½‘¥Øø(€€€€€€ñ‘¥Ø±…ÍÌô‰‰½½­¥¹œµ‘¥Í½Õ¹Ğµ½ÁÑ¥½¹Ìˆø(€€€€€€€€‘í=‰©•Ğ¹•¹ÑÉ¥•Ì¡%M=U9QL¤¹µ…À ¡m¬±‘t¤ôù€ñ‰ÕÑÑ½¸±…ÍÌô‰‰½½­¥¹œµ‘¥Í½Õ¹Ğµ½ÁÑ¥½¸‘í`¹‘¥Í½Õ¹Ğôôõ¬üœ…Ñ¥Ù”œèœôˆ‘…Ñ„µ‘¥Í½Õ¹Ğôˆ‘í­ôˆø‘í¹±…‰•±ô‘í¹É…Ñ”ı€ñÍÁ…¸±…ÍÌô‰‰½½­¥¹œµ‘¥Í½Õ¹ĞµÉ…Ñ”ˆø‘í5…Ñ ¹É½Õ¹¡¹É…Ñ”¨ÄÀÀ¥ô—ŠLğ½ÍÁ…¸ù€èœôğ½‰ÕÑÑ½¸ù€¤¹©½¥¸ œœ¥ô(€€€€€€ğ½‘¥Øø(€€€€ğ½‘¥Øø(€€€€‘í±•!Ñµ±ô(€€€€ñ‘¥Ø±…ÍÌô‰á™•ÈµÑ½Ñ…°ˆøñÍÁ…¸û²Òtƒ²jÓ²z€ñÍÁ…¸ÍÑå±”ô‰½±½ÈéÙ…È ´µÑ•áĞÌ¤í™½¹Ğµİ•¥¡ĞèĞÀÀˆû
+Ü€‘í`¹½Õ¹Ñ÷®ªğ½ÍÁ…¸øğ½ÍÁ…¸øñˆø‘í‰½Ñ¡±ÌıÑ½Ñ…°¹Ñ½1½…±•MÑÉ¥¹œ ¤¬Ÿ²n@œèŸªÖ³ªÂƒ²ƒ¶tƒ¶V²jPôğ½ˆøğ½‘¥Øù€ì(€½¹ÍĞ‰Ñ¸õ‘½Õµ•¹Ğ¹•Ñ±•µ•¹Ñ	å% ‰áµ½¹™¥É´œ¤ì(€¥˜¡‰Ñ¸¥í‰Ñ¸¹‘¥Í…‰±•ô…‰½Ñ¡±Ìí‰Ñ¸¹ÍÑå±”¹½Á…¥Ñäõ‰½Ñ¡±ÌüœÄœèœ¸Ôœí‰Ñ¸¹Ñ•áÑ½¹Ñ•¹Ğõ‰½Ñ¡±ÌüŸÂ~:¬ƒ¶fc²*äƒ²b#®“¶VcªâÀœèŸ®F@ƒªÖ³ªÂ²v`ƒ²Š3²tƒ®NÇªâ'²vƒ²ƒ¶w¶Vc²ã²jPœíô(€‰½‘ä¹ÅÕ•ÉåM•±•Ñ½È œ‰áµ‘…Ñ”œ¤ü¹…‘‘Ù•¹Ñ1¥ÍÑ•¹•È ¡…¹”œ±”ôùí`¹‘…Ñ”õ”¹Ñ…É•Ğ¹Ù…±Õ”í`¹±•Ì¹™½É… ¡0ôùí0¹±Ìõ¹Õ±°í0¹Í•…ÑÌõ¹Õ±°íô¤í}É•¹‘•Éa™•É	½‘ä ¤íô¤ì(€‰½‘ä¹ÅÕ•ÉåM•±•Ñ½È œ‰áµµ¥¹ÕÌœ¤ü¹…‘‘Ù•¹Ñ1¥ÍÑ•¹•È ±¥¬œ° ¤ôùí`¹½Õ¹Ğõ5…Ñ ¹µ…à Ä±`¹½Õ¹Ğ´Ä¤í`¹±•Ì¹™½É… ¡0ôù0¹Í•…ÑÌõ¹Õ±°¤í}É•¹‘•Éa™•É	½‘ä ¤íô¤ì(€‰½‘ä¹ÅÕ•ÉåM•±•Ñ½È œ‰áµÁ±ÕÌœ¤ü¹…‘‘Ù•¹Ñ1¥ÍÑ•¹•È ±¥¬œ° ¤ôùí`¹½Õ¹Ğõ5…Ñ ¹µ¥¸ Ø±`¹½Õ¹Ğ¬Ä¤í`¹±•Ì¹™½É… ¡0ôù0¹Í•…ÑÌõ¹Õ±°¤í}É•¹‘•Éa™•É	½‘ä ¤íô¤ì(€‰½‘ä¹ÅÕ•ÉåM•±•Ñ½É±° œ¹‰½½­¥¹œµ‘¥Í½Õ¹Ğµ½ÁÑ¥½¸œ¤¹™½É… ¡ˆôùˆ¹…‘‘Ù•¹Ñ1¥ÍÑ•¹•È ±¥¬œ° ¤ôùí`¹‘¥Í½Õ¹Ğõˆ¹‘…Ñ…Í•Ğ¹‘¥Í½Õ¹Ğí}É•¹‘•Éa™•É	½‘ä ¤íô¤¤ì(€‰½‘ä¹ÅÕ•ÉåM•±•Ñ½É±° œ¹‰½½­¥¹œµÍ•…Ğµ½ÁÑ¥½¸é¹½Ğ¡m‘¥Í…‰±•‘t¤œ¤¹™½É… ¡ˆôùˆ¹…‘‘Ù•¹Ñ1¥ÍÑ•¹•È ±¥¬œ° ¤ôùí½¹ÍĞ¤ô­ˆ¹‘…Ñ…Í•Ğ¹±•œí`¹±•Ím¥t¹±Ìõˆ¹‘…Ñ…Í•Ğ¹±…ÍÌí`¹±•Ím¥t¹Í•…ÑÌõ¹Õ±°í}É•¹‘•Éa™•É	½‘ä ¤íô¤¤ì(€‰½‘ä¹ÅÕ•ÉåM•±•Ñ½É±° œ¹á™•ÈµÍ•…Ğµ‰Ñ¸œ¤¹™½É… ¡ˆôùì¥˜ …ˆ¹¡…ÍÑÑÉ¥‰ÕÑ” ‘¥Í…‰±•œ¤¤ˆ¹…‘‘Ù•¹Ñ1¥ÍÑ•¹•È ±¥¬œ° ¤ôù½Á•¹a™•ÉM•…ÑM•±•Ñ½È ­ˆ¹‘…Ñ…Í•Ğ¹±•œ¤¤ìô¤ì)ô)™Õ¹Ñ¥½¸½Á•¹a™•ÉM•…ÑM•±•Ñ½È¡±•%‘à¥ì(€½¹ÍĞ`õİ¥¹‘½Ü¹}á™•Èì¥˜ …`¥É•ÑÕÉ¸ì½¹ÍĞ0õ`¹±•Ím±•%‘átì¥˜ …1ñğ…0¹±Ì¥É•ÑÕÉ¸ì(€¥˜¡0¹±ÌôôôÍÑ…¹‘¥¹œœ¥í…±•ÉĞ Ÿ²z²w
+ß²zC²rƒ²w²v ƒ²²‚Tƒ²Š3²w²vĞƒ²^®*Pƒ²‚²j¤ƒ²æã²z®.#®.¸œ¤íÉ•ÑÕÉ¸íô(€İ¥¹‘½Ü¹}‰½½­¥¹A…ÍÍ•¹•É½Õ¹Ğõ`¹½Õ¹ÑñğÄì(€İ¥¹‘½Ü¹}á™•ÉM•…ÑÑàõí±•%‘áôì(€½Á•¹M•…ÑM•±•Ñ½È¡0¹¹¼°`¹‘…Ñ”°0¹±Ì¤ì(€½¹ÍĞÍÜõ‘½Õµ•¹Ğ¹•Ñ±•µ•¹Ñ	å% Í•…ĞµÍ•±•Ñ½ÈµİÉ…Àœ¤ì¥˜¡ÍÜ¥ÍÜ¹ÍÑå±”¹é%¹‘•àôœÄÀÀÀÄœì€¼¼ƒ¶fc²*äƒ².s¶*à ääÀÀ¤ƒ²r®†p)ô(¼¼ƒ²*ç²Â£ªÚ0ƒ²zC®>dƒ²*ç¶Vc²Â ƒ²V3®z0€£²b#®ƒ²f®0ƒ¶n¤ƒŠPƒ²¶Ô¿¶fc²*äƒªÎ×²j¤)™Õ¹Ñ¥½¸}…ÕÑ½	½½­±…ÉµÌ¡Ğ±™É½µMÑ¸±Ñ½MÑ¸±‘•ÁQ¥µ”±…ÉÉQ¥µ”¥ì(€ÑÉåì(€€€¥˜¡ÑåÁ•½˜9½Ñ¥™¥…Ñ¥½¸ôôôÕ¹‘•™¥¹•ññ9½Ñ¥™¥…Ñ¥½¸¹Á•Éµ¥ÍÍ¥½¸„ôôÉ…¹Ñ•œ¥É•ÑÕÉ¸ì(€€€½¹ÍĞ™¤õĞ¹ÍÑ½ÁÌ¹™¥¹‘%¹‘•à¡ÌôùÌ¹Ìôôõ™É½µMÑ¸¤°Ñ¤õĞ¹ÍÑ½ÁÌ¹™¥¹‘%¹‘•à¡ÌôùÌ¹ÌôôõÑ½MÑ¸¤ì(€€€¥˜¡™¤øôÀ€˜˜€…¡…Í±…É´¡‰½…Éè‘íĞ¹¹½ôè‘í™É½µMÑ¹õ€¤¥ì(€€€€€½¹ÍĞÁÉ•ØõĞ¹ÍÑ½ÁÌ¹Í±¥” À±™¤¤¹É•Ù•ÉÍ” ¤¹™¥¹¡àôù¡…ÍQ¥µ”¡à¹‘•À¥ññ¡…ÍQ¥µ”¡à¹…ÉÈ¤¤ì(€€€€€Ñ½±•±…ÉµQåÁ” ‰½…Éœ±Ğ¹¹¼±™É½µMÑ¸±‘•ÁQ¥µ”±ÁÉ•Øü¡¡…ÍQ¥µ”¡ÁÉ•Ø¹‘•À¤ıÁÉ•Ø¹‘•ÀéÁÉ•Ø¹…ÉÈ¤é¹Õ±°±ÑÉÕ”¤ì(€€€ô(€€€¥˜¡Ñ¤øôÀ€˜˜€…¡…Í±…É´¡…ÉÈè‘íĞ¹¹½ôè‘íÑ½MÑ¹õ€¤¥ì(€€€€€½¹ÍĞÁÉ•ØÈõĞ¹ÍÑ½ÁÌ¹Í±¥” À±Ñ¤¤¹É•Ù•ÉÍ” ¤¹™¥¹¡àôù¡…ÍQ¥µ”¡à¹‘•À¥ññ¡…ÍQ¥µ”¡à¹…ÉÈ¤¤ì(€€€€€Ñ½±•±…ÉµQåÁ” …ÉÈœ±Ğ¹¹¼±Ñ½MÑ¸±…ÉÉQ¥µ”±ÁÉ•ØÈü¡¡…ÍQ¥µ”¡ÁÉ•ØÈ¹‘•À¤ıÁÉ•ØÈ¹‘•ÀéÁÉ•ØÈ¹…ÉÈ¤é¹Õ±°±ÑÉÕ”¤ì(€€€ô(€õ…Ñ ¡”¥í½¹Í½±”¹İ…É¸ Ÿ¶fc²*äƒ²V3®z0ƒ²“²‚Tƒ².“¶2 èœ±”¤íô)ô)™Õ¹Ñ¥½¸½¹™¥Éµa™•É	½½­¥¹œ ¥ì(€½¹ÍĞ`õİ¥¹‘½Ü¹}á™•Èì¥˜ …`¥É•ÑÕÉ¸ì(€¥˜ …`¹±•Ì¹•Ù•Éä¡0ôù0¹±Ì¤¥í…±•ÉĞ Ÿ®F@ƒªÖ³ªÂƒ®ª£®F@ƒ²Š3²tƒ®NÇªâ'²vƒ²ƒ¶w¶VÓ²ó²ã²jP¸œ¤íÉ•ÑÕÉ¸íô(€½¹ÍĞÑÉ…Ù•±…Ñ”õ`¹‘…Ñ•ññÑ½‘…å1½…±MÑÈ ¤ì(€½¹ÍĞ½Õ¹Ğõ`¹½Õ¹ÑñğÄ°‘¥Í½Õ¹Ğõ`¹‘¥Í½Õ¹Ññğ¹½¹”œì(€™½È¡½¹ÍĞ0½˜`¹±•Ì¥ì(€€€½¹ÍĞ¥¹Ù•¹Ñ½ÉåQÉ…¥¸õ•ÑQÉ…¥¹	å9¼¡0¹¹¼¤ì(€€€¥˜¡ÑåÁ•½˜…¹	½½­=ôôô™Õ¹Ñ¥½¸œ˜˜……¹	½½­=¡¥¹Ù•¹Ñ½ÉåQÉ…¥¸±0¹™É½´±0¹Ñ¼±½Õ¹Ğ±ÑÉ…Ù•±…Ñ”±0¹±Ì¤¥ì(€€€€€½¹ÍĞ±•™ĞõÑåÁ•½˜•ÑÙ…¥±…‰±•M•…ÑÌôôô™Õ¹Ñ¥½¸œı•ÑÙ…¥±…‰±•M•…ÑÌ¡¥¹Ù•¹Ñ½ÉåQÉ…¥¸±0¹™É½´±0¹Ñ¼±ÑÉ…Ù•±…Ñ”±0¹±Ì¤èÀì(€€€€€…±•ÉĞ¡€‘í0¹™É½µôƒŠH€‘í0¹Ñ½ôƒªÖ³ªÂ²v €‘í±•™ĞøÀı€‘í±•™Ñ÷²w®0ƒ®
+£²V€èŸ®“²®Bc²ZĞôƒ¶fc²*äƒ²b#®“®–ğƒ²¶Z'¶V€ƒ²"`ƒ²^²*×®.#®.¹€¤ì(€€€€€É•ÑÕÉ¸ì(€€€ô(€ô(€€¼¼ƒ²b“®*`ƒ²b#®ƒ².pƒ²ƒ¶Z$ƒ²^Ó²Â£ªÂ ƒ²vÓ®¾àƒ²Ús®Âs¶Z#²ró®¦Ğƒ²Â£®. €£²²^Àƒ²^Ó²Â£®*Pƒ²²^Àƒ²Ús®Âpƒ².sªÂªæ3² ƒ¶^#²j¤¤(€¥˜¡ÑÉ…Ù•±…Ñ”ôôõÑ½‘…å1½…±MÑÈ ¤¥ì(€€€½¹ÍĞ¹½Üõ¹•Ü…Ñ” ¤ì½¹ÍĞ¹½İ4õ¹½Ü¹•Ñ!½ÕÉÌ ¤¨ØÀ­¹½Ü¹•Ñ5¥¹ÕÑ•Ì ¤ì(€€€½¹ÍĞ‘•Á4õÑ½5¥¸¡`¹±•ÍlÁt¹‘•ÁP¤ì(€€€±•ĞáôÀì(€€€¥˜¡‘•Á4„ôõ¹Õ±°˜™ÑåÁ•½˜}Í¥µ•±…å=¸„ôôÕ¹‘•™¥¹•œ˜™}Í¥µ•±…å=¸˜™ÑåÁ•½˜}Í¥µ•±…åÑMÑ½Àôôô™Õ¹Ñ¥½¸œ¥ì(€€€€€½¹ÍĞáĞõ•ÑQÉ…¥¹	å9¼¡`¹±•ÍlÁt¹ÑÉ…¥¹9¼¤ì(€€€€€¥˜¡áĞ¥ì½¹ÍĞÑÌõáĞ¹ÍÑ½ÁÌ¹™¥±Ñ•È¡Ìôù¡…ÍQ¥µ”¡Ì¹…ÉÈ¥ññ¡…ÍQ¥µ”¡Ì¹‘•À¤¤ì(€€€€€€€½¹ÍĞ™¤õÑÌ¹™¥¹‘%¹‘•à¡ÌôùÌ¹Ìôôõ`¹±•ÍlÁt¹™É½´¤ì¥˜¡™¤øôÀ¥áõ}Í¥µ•±…åÑMÑ½À¡áĞ±™¤¥ñğÀìô(€€€ô(€€€¥˜¡‘•Á4„ôõ¹Õ±°˜™‘•Á4­áñ¹½İ4¥í…±•ÉĞ¡ƒ²vÓ®¾àƒ²Ús®Âs¶Vpƒ²^Ó²Â£®*Pƒ²b#®“¶V€ƒ²"`ƒ²^²*×®.#®.¹q¹q¸‘í`¹±•ÍlÁt¹™É½µô€‘í`¹±•ÍlÁt¹‘•ÁQôƒ²Ús®Âp‘íáøÀı€€£²Vô€‘íá‘÷®Úƒ²²^À¥€èœõ€¤íÉ•ÑÕÉ¸íô(€ô(€€¼¼ƒªâÃ²†Ğƒ²*ç²Â£ªÚ3ªÎğƒ².sªÂƒªÊç²æ ƒªÊ²
+°€£ªÂƒªÖ³ªÂ¤(€½¹ÍĞ•á¥ÍÑ¥¹œõ±½…‘Q¥­•ÑÌ ¤¹™¥±Ñ•È¡Ñ¬ôùÑ¬¹ÍÑ…ÑÕÌôôô…Ñ¥Ù”œ˜™Ñ¬¹ÑÉ…Ù•±…Ñ”ôôõÑÉ…Ù•±…Ñ”¤ì(€™½È¡½¹ÍĞ0½˜`¹±•Ì¥ì(€€€½¹ÍĞ¹õÑ½5¥¸¡0¹‘•ÁP¤°¹„õÑ½5¥¸¡0¹…ÉÉP¤ì¥˜¡¹ôôõ¹Õ±±ññ¹„ôôõ¹Õ±°¥½¹Ñ¥¹Õ”ì(€€€½¹ÍĞ½¹™±¥Ğõ•á¥ÍÑ¥¹œ¹™¥¹¡Ñ¬ôùì(€€€€€½¹ÍĞ•õÑ½5¥¸¡Ñ¬¹‘•ÁQ¥µ”¤°•„õÑ½5¥¸¡Ñ¬¹…ÉÉQ¥µ”¤ì¥˜¡•ôôõ¹Õ±±ññ•„ôôõ¹Õ±°¥É•ÑÕÉ¸™…±Í”ì(€€€€€½¹ÍĞ…Lõ¹±…õ¹„øõ¹ı¹„é¹„¬ÄĞĞÀ°‰Lõ•±‰õ•„øõ•ı•„é•¬ÄĞĞÀìÉ•ÑÕÉ¸…Lñ‰˜™‰Lñ…ì(€€€ô¤ì(€€€¥˜¡½¹™±¥Ğ¥í…±•ÉĞ¡ƒªÂg²v ƒ².sªÂ®2²^@ƒ²vÓ®¾àƒ²b#®“¶Vpƒ²*ç²Â£ªÚ3²vĞƒ²z#²*×®.#®.¹q¹q¸‘í½¹™±¥Ğ¹ÑÉ…¥¹9½÷®Ê ƒ
+Ü€‘í½¹™±¥Ğ¹™É½µMÑ¹÷ŠH‘í½¹™±¥Ğ¹Ñ½MÑ¹õq¸‘í½¹™±¥Ğ¹‘•ÁQ¥µ•õø‘í½¹™±¥Ğ¹…ÉÉQ¥µ•õq¹q»¶fc²*äƒ²b#®“®–ğƒ²¶Z'¶V€ƒ²"`ƒ²^²*×®.#®.¹€¤íÉ•ÑÕÉ¸íô(€ô(€½¹ÍĞÉÀôaœ­…Ñ”¹¹½Ü ¤¹Ñ½MÑÉ¥¹œ ÌØ¤­5…Ñ ¹É…¹‘½´ ¤¹Ñ½MÑÉ¥¹œ ÌØ¤¹Í±¥” È°Ô¤ì(€½¹ÍĞÑ¥­•ÑÌõ±½…‘Q¥­•ÑÌ ¤ì½¹ÍĞÉ•…Ñ•õmtì(€`¹±•Ì¹™½É…  ¡0±¥‘à¤ôùì(€€€½¹ÍĞĞõ•ÑQÉ…¥¹	å9¼¡0¹¹¼¤ì(€€€½¹ÍĞ‰…Í”õ…±…É”¡Ğ±0¹™É½´±0¹Ñ¼±0¹±Ì¤ì(€€€½¹ÍĞ™…É”õ…ÁÁ±å¥Í½Õ¹Ğ¡‰…Í”±‘¥Í½Õ¹Ğ¤ì(€€€½¹ÍĞÍ•…ÑÌô¡0¹Í•…ÑÌ˜™0¹Í•…ÑÌ¹±•¹Ñ ôôõ½Õ¹Ğ¤ıl¸¸¹0¹Í•…ÑÍtéÉÉ…ä¹™É½´¡í±•¹Ñ é½Õ¹Ñô° ¤ôùÉ…¹‘½µM•…Ğ¡0¹±Ì±0¹¹¼¤¤ì(€€€½¹ÍĞÑ¬õì(€€€€€¥é•¹Q¥­•Ñ% ¤°ÑÉ…¥¹9¼é0¹¹¼±É…‘”éĞ¹É…‘”±±¥¹”éĞ¹±¥¹”°(€€€€€™É½µMÑ¸é0¹™É½´±Ñ½MÑ¸é0¹Ñ¼±‘•ÁQ¥µ”é0¹‘•ÁP±…ÉÉQ¥µ”é0¹…ÉÉP°(€€€€€Í•…Ñ±…ÍÌé0¹±Ì±Í•…Ñ±…ÍÍ1…‰•°éÍ•…Ñ±…ÍÍ¥ÍÁ±…å1…‰•°¡Ğ±0¹±Ì¤°Í•…ÑÌ±Á…ÍÍ•¹•É½Õ¹Ğé½Õ¹Ğ°(€€€€€™…É•A•ÉA•ÉÍ½¸é™…É”±Ñ½Ñ…±…É”é™…É”©½Õ¹Ğ°‘¥Í½Õ¹Ğ±‘¥Í½Õ¹Ñ1…‰•°é%M=U9QMm‘¥Í½Õ¹Ñt¹±…‰•°±‰…Í•…É•A•ÉA•ÉÍ½¸é‰…Í”°(€€€€€‘¥ÍÑ…¹•-´é5…Ñ ¹É½Õ¹¡É½ÕÑ•¥ÍÑ…¹•-´¡Ğ±0¹™É½´±0¹Ñ¼¤¤°‰½½­•‘Ğé…Ñ”¹¹½Ü ¤°ÑÉ…Ù•±…Ñ”°ÍÑ…ÑÕÌè…Ñ¥Ù”œ°(€€€€€á™•ÉÉ½ÕÀéÉÀ°á™•ÉM•Äé¥‘à¬Ä°á™•ÉQ½Ñ…°é`¹±•Ì¹±•¹Ñ °á™•ÉY¥„é`¹Ù¥„°á™•É=É¥¥¸é`¹™É½´°á™•É•ÍĞé`¹Ñ¼(€€€ôì(€€€Ñ¥­•ÑÌ¹ÁÕÍ ¡Ñ¬¤ìÉ•…Ñ•¹ÁÕÍ ¡Ñ¬¤ì(€ô¤ì(€Í…Ù•Q¥­•ÑÌ¡Ñ¥­•ÑÌ¤ì(€É•…Ñ•¹™½É… ¡Ñ¬ôùí¥˜¡ÑåÁ•½˜¥¹Ù…±¥‘…Ñ•½¹•ÍÑ¥½¸ôôô™Õ¹Ñ¥½¸œ¥¥¹Ù…±¥‘…Ñ•½¹•ÍÑ¥½¸¡Ñ¬¹ÑÉ…¥¹9¼±Ñ¬¹ÑÉ…Ù•±…Ñ”¤íô¤ì(€É•…Ñ•¹™½É… ¡Ñ¬ôù}…ÕÑ½	½½­±…ÉµÌ¡•ÑQÉ…¥¹	å9¼¡Ñ¬¹ÑÉ…¥¹9¼¤±Ñ¬¹™É½µMÑ¸±Ñ¬¹Ñ½MÑ¸±Ñ¬¹‘•ÁQ¥µ”±Ñ¬¹…ÉÉQ¥µ”¤¤ì(€±½Í•	½½­QÉ…¥¹•Ñ…¥° ¤ì(€½¹ÍĞÑ½Ñ…±…É”õÉ•…Ñ•¹É•‘Õ” ¡„±Ñ¬¤ôù„­Ñ¬¹Ñ½Ñ…±…É”°À¤ì(€…±•ÉĞ¡ƒ¶fc²*äƒ²b#®“ªÂ ƒ²f®3®Bc²^#²*×®.#®.…q¸‘íÑÉ…Ù•±…Ñ•ôƒ
+Ü€‘í`¹™É½µôƒŠH€‘í`¹Ù¥…ôƒŠH€‘í`¹Ñ½õq»²ƒ¶Z$€‘íÉ•…Ñ•‘lÁt¹É…‘•ô€‘íÉ•…Ñ•‘lÁt¹ÑÉ…¥¹9½ôƒ
+Üƒ¶n¶Z$€‘íÉ•…Ñ•‘lÅt¹É…‘•ô€‘íÉ•…Ñ•‘lÅt¹ÑÉ…¥¹9½õq¸‘í½Õ¹Ñ÷®ªƒ
+Üƒ²Òt€‘íÑ½Ñ…±…É”¹Ñ½1½…±•MÑÉ¥¹œ ¥÷²nA€¤ì(€İ¥¹‘½Ü¹}á™•Èõ¹Õ±°ì(€¥˜¡‘½Õµ•¹Ğ¹•Ñ±•µ•¹Ñ	å% Á…¹•°µÑ¥­•Ğœ¤ü¹±…ÍÍ1¥ÍĞ¹½¹Ñ…¥¹Ì …Ñ¥Ù”œ¤¥É•¹‘•ÉQ¥­•ÑÌ ¤ì(€ÑÉåì¥˜¡ÑåÁ•½˜½Á•¹5åM•Ñ¥½¸ôôô™Õ¹Ñ¥½¸œ˜™‘½Õµ•¹Ğ¹•Ñ±•µ•¹Ñ	å% µäµÍÕˆµÁ…¹•°œ¤ü¹±…ÍÍ1¥ÍĞ¹½¹Ñ…¥¹Ì ½Á•¸œ¤˜™‘½Õµ•¹Ğ¹•Ñ±•µ•¹Ñ	å% µäµÍÕˆµÑ¥Ñ±”œ¤ü¹Ñ•áÑ½¹Ñ•¹Ğü¹¥¹±Õ‘•Ì Ÿ²*ç²Â£ªÚ0œ¤¥½Á•¹5åM•Ñ¥½¸ Ñ¥­•Ğœ¤ìõ…Ñ ¡”¥íô)ô((¼¼ƒ®
+ƒ²pƒ²²‚Tƒ²b#®€£²^Ó²Â ƒ²b#®ƒ¶·²^C²pƒ¶bã²Úp¤(¼¼¥ÍI½Õ¹èƒ²fW®Î×²vÓ®¦Ğƒ¶:ã®>£ªÂ®*S¶:à¤ƒ²b#®ƒ²f®0ƒ¶nƒ®Î×¶:àƒ²†Ã¶j0ƒ¶fS®¦Ğƒ²zC®>dƒ².“¶Z$)™Õ¹Ñ¥½¸½Á•¹	½½­¥¹]¥Ñ¡…Ñ”¡ÑÉ…¥¹9¼°™É½´°Ñ¼°‘•ÁP°…ÉÉP°ÑÉ…Ù•±…Ñ”°¥ÍI½Õ¹°‘…Ñ•	…¬¥ì(€€¼¼ƒ²b#®ƒ²f®0ƒ¶nƒ²ös®ÂÄèƒ²fW®Î×²vÓ®¦Ğƒ®Î×¶:àƒ²†Ã¶j3®†pƒ²vÓ®>d(€½¹ÍĞİ…¹ÑI½Õ¹ô¡¥ÍI½Õ¹ôôõÑÉÕ•ññ¥ÍI½Õ¹ôôôÑÉÕ”œ¤˜™‘…Ñ•	…¬ì(€İ¥¹‘½Ü¹}…™Ñ•É	½½­¥¹…±±‰…¬€ôİ…¹ÑI½Õ¹€ü€ ¤ôùì(€€€Í•ÑQ¥µ•½ÕĞ  ¤ôùì(€€€€€}‰½½­I½Õ¹‘QÉ¥Àõ™…±Í”ì€¼¼ƒ®Î×¶:ã²v ƒ¶:ã®>®†pƒ²†Ã¶j0(€€€€€İ¥¹‘½Ü¹}‰½½­É½´€ôÑ¼ì(€€€€€İ¥¹‘½Ü¹}‰½½­Q¼€ô™É½´ì(€€€€€½Á•¹5åM•Ñ¥½¸ ‰½½¬œ¤ì€¼¼ƒ®#²vÓ¶:c²vÓ² ƒ²b#®ƒ¶fS®¦Ğƒ²z³®‚3®6P€£²^·
+ß¶:ã®>ƒ²¶pƒ®Âc²b¤(€€€€€Í•ÑQ¥µ•½ÕĞ  ¤ôùì(€€€€€€€½¹ÍĞ‘°€ô‘½Õµ•¹Ğ¹•Ñ±•µ•¹Ñ	å% ‰½½¬µ‘…Ñ”µ¼œ¤ì(€€€€€€€¥˜¡‘°¤‘°¹Ù…±Õ”€ô‘…Ñ•	…¬ì(€€€€€€€Í•…É¡	½½­QÉ…¥¹Ì¡™…±Í”±™…±Í”¤ì(€€€€€€€½¹ÍĞÉ•Í°õ‘½Õµ•¹Ğ¹•Ñ±•µ•¹Ñ	å% µäµ‰½½¬µÉ•ÍÕ±ÑÌœ¤ì(€€€€€€€¥˜¡É•Í°¥É•Í°¹¥¹Í•ÉÑ‘©…•¹Ñ!Q50 …™Ñ•É‰•¥¸œ°(€€€€€€€€€€ñ‘¥ØÍÑå±”ô‰µ…É¥¸µÑ½ÀèÄÑÁàíÁ…‘‘¥¹œèÄÁÁà€ÄÑÁàí‰½É‘•ÈµÉ…‘¥ÕÌèÄÁÁàí‰…­É½Õ¹éÉ‰„ ÔØ°ÄÌä°ÈÔÌ°¸Ä¤í‰½É‘•ÈèÅÁàÍ½±¥Ù…È ´µ…•¹Ğ¤í™½¹ĞµÍ¥é”èÄÈ¸ÕÁàí½±½ÈéÙ…È ´µ…•¹ĞÈ¤ˆûÂ~RƒªÂ®*Pƒ²^Ó²Â ƒ²b#®ƒ²f®0ƒŠP€ñˆû®Î×¶:à ‘íÑ½ôƒŠH€‘í™É½µôƒ
+Ü€‘í‘…Ñ•	…­ô¤ğ½ˆû²vƒ²ƒ¶w¶VĞƒ²ó²ã²jPğ½‘¥Øù€¤ì(€€€€€ô°€ÄÔÀ¤ì(€€€ô°€ÌÀÀ¤ì(€ô€è¹Õ±°ì((€€¼¼‰½½¬µ‘•Ñ…¥°µÁ…¹•°ƒ²*³®vó²vÓ®Npƒ®.¯¶z`ƒ¶nƒ²b#®“²Âôƒ²^ÓªâÀ(€Í•ÑQ¥µ•½ÕĞ  ¤ôùì(€€€½Á•¹	½½­¥¹A½ÁÕÀ¡ÑÉ…¥¹9¼°™É½´°Ñ¼°‘•ÁP°…ÉÉP°ÑÉ…Ù•±…Ñ”¤ì(€€€½¹ÍĞ‘…Ñ•%¹À€ô‘½Õµ•¹Ğ¹•Ñ±•µ•¹Ñ	å% ‰½½­¥¹œµ‘…Ñ”œ¤ì(€€€¥˜¡‘…Ñ•%¹À€˜˜ÑÉ…Ù•±…Ñ”¤‘…Ñ•%¹À¹Ù…±Õ”€ôÑÉ…Ù•±…Ñ”ì(€€€¥˜¡İ¥¹‘½Ü¹}‰½½­A…ÍÍ•¹•É½Õ¹ĞøÄ¥ì(€€€€€İ¥¹‘½Ü¹}‰½½­¥¹A…ÍÍ•¹•É½Õ¹Ğ€ôİ¥¹‘½Ü¹}‰½½­A…ÍÍ•¹•É½Õ¹Ğì(€€€€€½¹ÍĞ¹Ğ€ô‘½Õµ•¹Ğ¹•Ñ±•µ•¹Ñ	å% ‰½½­¥¹œµÁ…ÍÍ•¹•Èµ½Õ¹Ğœ¤ì(€€€€€¥˜¡¹Ğ¤¹Ğ¹Ñ•áÑ½¹Ñ•¹Ğ€ôİ¥¹‘½Ü¹}‰½½­A…ÍÍ•¹•É½Õ¹Ğì(€€€ô(€ô°€ÔÀ¤ì)ô((((¼¼ƒŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠV@(¼¼ƒÂ~j$ƒ²^´ƒ²‚W®ÎĞƒ¶´(¼¼ƒŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠV@)±•Ğ}Í¥MÕ‰Q…ˆô¹•…Èœ°}Í¥ÕÉÉ•¹Ğõ¹Õ±°°}Í¥…É‘A±…Ñ™½É´õ¹Õ±°°}Í¥5•ÑÉ½Õ¥‘•A±…Ñ™½É´õ¹Õ±°°}Í¥9•…É±°õmt°}Í¥9•…ÉM¡½İ±½Í•õ™…±Í”°}Í¥9•…É1…Ğõ¹Õ±°°}Í¥9•…É1½¸õ¹Õ±°°}Í¥!¥‘•Q•É´õ™…±Í”°}Í¥UÁ½µ¥¹=¹±äõ™…±Í”°}Í¥	½…É‘Q¥µ•Èõ¹Õ±°ì(¼¼ƒ²jÓ¶Z'²vğƒªâÃ²’  ÀĞèÀÁû²v×²vğ€ÀÌèÔä¤ƒ®Úƒ®Î¶f`è€ÀĞèÀÀôÀƒŠ˜€ÀÌèÔäôÄĞÌä)™Õ¹Ñ¥½¸}ÍÉÙ5¥¸¡´¥ìÉ•ÑÕÉ¸€ ¡´´ÈĞÀ¤”ÄĞĞÀ¬ÄĞĞÀ¤”ÄĞĞÀìô()™Õ¹Ñ¥½¸É•¹‘•ÉMÑ…Ñ¥½¹%¹™¼ ¥ì(€½¹ÍĞ•°õ‘½Õµ•¹Ğ¹•Ñ±•µ•¹Ñ	å% É•ÍÕ±ĞµÍÑ…Ñ¥½¹¥¹™¼œ¤ì(€¥˜ …•°¥É•ÑÕÉ¸ì(€•°¹¥¹¹•É!Q50ôœñ‘¥Ø¥ô‰Í¤µ½¹Ñ•¹ĞˆÍÑå±”ô‰Á…‘‘¥¹œèÀ€À€ÈÑÁàˆøğ½‘¥Øøœì(€É•¹‘•ÉM%½¹Ñ•¹Ğ ¤ì)ô()™Õ¹Ñ¥½¸Í•ÑM%Q…ˆ¡Ğ¥ì(€}Í¥MÕ‰Q…ˆõĞì(€‘½Õµ•¹Ğ¹ÅÕ•ÉåM•±•Ñ½É±° œ¹Í¤µÑ…ˆœ¤¹™½É…  ¡ˆ±¤¤ôùˆ¹±…ÍÍ1¥ÍĞ¹Ñ½±” …Ñ¥Ù”œ±l¹•…Èœ°‘•Ñ…¥°um¥tôôõĞ¤¤ì(€É•¹‘•ÉM%½¹Ñ•¹Ğ ¤ì)ô()™Õ¹Ñ¥½¸É•¹‘•ÉM%½¹Ñ•¹Ğ ¥ì(€½¹ÍĞ•°õ‘½Õµ•¹Ğ¹•Ñ±•µ•¹Ñ	å% Í¤µ½¹Ñ•¹Ğœ¤ì(€¥˜ …•°¥É•ÑÕÉ¸ì(€¥˜¡}Í¥MÕ‰Q…ˆôôôµ•ÑÉ¼œ¥}Í¥MÕ‰Q…ˆô¹•…Èœì€¼¼ƒªÖ³®Ê²‚ƒ²¶pƒ®Î×ªÖ°(€¥˜¡}Í¥MÕ‰Q…ˆôôô¹•…Èœ¤É•¹‘•ÉM%9•…È¡•°¤ì(€•±Í”É•¹‘•ÉM%•Ñ…¥°¡•°¤ì)ô((¼¼ƒŠRŠR ƒÂ~jƒ²‚²Ê€ƒ®ã²€ƒ¶´€£²‚²Ê€ƒ®ª£®Npƒ²‚²j¤¤ƒŠRŠR )±•Ğ}µ•ÑÉ½I•¥½¸ôŸ²‚²ÊĞœ°}µ•ÑÉ½•Ñ…¥±%õ¹Õ±°°}µ•ÑÉ½A…ÑM•°õ¹Õ±°ì(¼¼ƒªÎ¶×²vĞƒ²‚W²Â£¶Vc®*Pƒ²^´ƒ²G¶V¤ƒŠPƒªÊ3²zƒ¶sªŞà ‹®ã²ƒ®ª¿ªÎ¶Ôˆƒ®bC®*P€‹®ã²ƒ®ª€£ªÎ¶Ô¤ˆ¤ƒªâÃ²’ )™Õ¹Ñ¥½¸}µ•ÑÉ½A…ÑMÑ½ÁÌ¡°±À¥ì(€½¹ÍĞÍ•Ğõ¹•ÜM•Ğ ¤ì(€¥˜¡ÑåÁ•½˜MQQ%=9}ôôôÕ¹‘•™¥¹•œ¥É•ÑÕÉ¸Í•Ğì(€½¹ÍĞÑ…Ìõm°¹¹…µ”¬œ¼œ­À°°¹¹…µ”¬œ€ œ­À¬œ¤tì(€½¹ÍĞ…±°õ¹•ÜM•Ğ ¡°¹É½ÕÑ•ÍññmíÍÑ…Ñ¥½¹Ìé°¹ÍÑ…Ñ¥½¹Íõt¤¹™±…Ñ5…À¡ÈôùÈ¹ÍÑ…Ñ¥½¹Ì¤¤ì(€™½È¡½¹ÍĞ¸½˜…±°¥ì(€€€½¹ÍĞÍĞõMQQ%=9}	m¸¬Ÿ²^´uññMQQ%=9}	m¹tì(€€€¥˜¡ÍĞ˜™ÍĞ¹±¥¹•Ì˜™Ñ…Ì¹Í½µ”¡ĞôùÍĞ¹±¥¹•Ì¹¥¹±Õ‘•Ì¡Ğ¤¤¥Í•Ğ¹…‘¡¸¤ì(€ô(€É•ÑÕÉ¸Í•Ğì)ô(¼¼ƒªÎ¶Ôƒ²jÓ¶Z$ƒªÖ³ªÂƒ².s¶²*ƒŠPƒªÂÉ½ÕÑ—²^C²pƒ²Ê¬ƒ²‚W²Â£²^µû®#²®$ƒ²‚W²Â£²^´ƒªÖ³ªÂ®0ƒ²Ş£¶VcªÎ€°ƒªÖ³ªÂƒ®
+Ğƒ®¾ã²‚W²Â£²^·²v Á…ÍÌƒ¶Fs².p(¼¼ƒªÎ¶Ôƒ²^·²vƒªÂ²z”ƒ®;²vĞƒ®.Ó²v É½ÕÑ—®Ú¶Àƒ²"s¶j0°ƒ²vÓ®¾àƒ®.Ó²v ƒ²^·²v ƒªÆÓ®#®r €£ªÎ¶×®ÎÉ½ÕÑ—ªÂ ƒªÊç²æc®*Pƒ®ã²€ƒ®2²vD¤)™Õ¹Ñ¥½¸}µ•ÑÉ½A…ÑM•Ä¡°±À¥ì(€½¹ÍĞÍÑ½ÁÌõ}µ•ÑÉ½A…ÑMÑ½ÁÌ¡°±À¤ì(€¥˜ …ÍÑ½ÁÌ¹Í¥é”¥É•ÑÕÉ¸¹Õ±°ì(€½¹ÍĞÉ½ÕÑ•Ìô¡°¹É½ÕÑ•ÍññmíÍÑ…Ñ¥½¹Ìé°¹ÍÑ…Ñ¥½¹Íõt¤¹Í±¥” ¤(€€€€¹Í½ÉĞ ¡„±ˆ¤ôùˆ¹ÍÑ…Ñ¥½¹Ì¹™¥±Ñ•È¡ÌôùÍÑ½ÁÌ¹¡…Ì¡Ì¤¤¹±•¹Ñ µ„¹ÍÑ…Ñ¥½¹Ì¹™¥±Ñ•È¡ÌôùÍÑ½ÁÌ¹¡…Ì¡Ì¤¤¹±•¹Ñ ¤ì(€½¹ÍĞÍ•Äõmtì½¹ÍĞÍ••¸õ¹•ÜM•Ğ ¤ì(€™½È¡½¹ÍĞÈ½˜É½ÕÑ•Ì¥ì(€€€½¹ÍĞ¥‘àõÈ¹ÍÑ…Ñ¥½¹Ì¹µ…À ¡Ì±¤¤ôùÍÑ½ÁÌ¹¡…Ì¡Ì¤ı¤è´Ä¤¹™¥±Ñ•È¡¤ôù¤øôÀ¤ì(€€€¥˜¡¥‘à¹±•¹Ñ ğÈ¥½¹Ñ¥¹Õ”ì€¼¼ƒ¶VÓ®.äÉ½ÕÑ—²^@ƒ²‚W²Â£²^´€ÇªÂp£®ÚªâÃ²^´ƒ®NÄ§®şC²vÓ®¦Ğƒ²jÓ¶Z$ƒªÖ³ªÂƒ²V®.`(€€€½¹ÍĞ„õ¥‘álÁt°ˆõ¥‘ám¥‘à¹±•¹Ñ ´Åtì(€€€½¹ÍĞÍ•œõmtì(€€€™½È¡±•Ğ¤õ„í¤ğõˆí¤¬¬¥ì(€€€€€½¹ÍĞ¸õÈ¹ÍÑ…Ñ¥½¹Ím¥tì(€€€€€¥˜¡Í••¸¹¡…Ì¡¸¤¥½¹Ñ¥¹Õ”ì€¼¼ƒ®.“®–àÉ½ÕÑ—²^C²pƒ²vÓ®¾àƒ¶Fs².s¶Vpƒ²^´(€€€€€Í•œ¹ÁÕÍ ¡í¸±ÍÑ½ÀéÍÑ½ÁÌ¹¡…Ì¡¸¥ô¤ì(€€€ô(€€€¥˜ …Í•œ¹™¥±Ñ•È¡àôùà¹ÍÑ½À¤¹±•¹Ñ ¥½¹Ñ¥¹Õ”ì(€€€€¼¼ƒ®ÚªâÃ²^·²^C²pƒ²vÓ²ZÓ²®¦Ğƒ²^Ã²4°ƒ²V®.#®¦ĞƒªÖ³®Ú²€(€€€½¹ÍĞ½¹ĞõÍ•Ä¹±•¹Ñ ˜™Í••¸¹¡…Ì¡È¹ÍÑ…Ñ¥½¹Ím…t¤˜™Í•ÅmÍ•Ä¹±•¹Ñ ´Åt¹¸ôôõÈ¹ÍÑ…Ñ¥½¹Ím…tì(€€€¥˜¡Í•Ä¹±•¹Ñ ˜˜…½¹Ğ¥Í•Ä¹ÁÕÍ ¡í…ÀéÑÉÕ•ô¤ì(€€€™½È¡½¹ÍĞà½˜Í•œ¥íÍ•Ä¹ÁÕÍ ¡à¤íÍ••¸¹…‘¡à¹¸¤íô(€€€È¹ÍÑ…Ñ¥½¹Ì¹Í±¥”¡„±ˆ¬Ä¤¹™½É… ¡¸ôùÍ••¸¹…‘¡¸¤¤ì(€ô(€É•ÑÕÉ¸Í•Ä¹™¥±Ñ•È¡àôø…à¹…À¤¹±•¹Ñ øôÈıÍ•Äé¹Õ±°ì)ô)™Õ¹Ñ¥½¸Í•Ñ5•ÑÉ½A…Ğ¡À¥í}µ•ÑÉ½A…ÑM•°õÀíÉ•¹‘•É5•ÑÉ½1¥¹•ÍQ…ˆ ¤íô)™Õ¹Ñ¥½¸}µ•ÑÉ½I½ÕÑ•É½ÕÁÌ¡°¥ì(€½¹ÍĞÉ½ÕÑ•Ìô¡°¹É½ÕÑ•Ì˜™°¹É½ÕÑ•Ì¹±•¹Ñ ı°¹É½ÕÑ•ÌémíÍÑ…Ñ¥½¹Ìé°¹ÍÑ…Ñ¥½¹Íññmuõt¤¹™¥±Ñ•È¡ÈôùÈ¹ÍÑ…Ñ¥½¹Ì˜™È¹ÍÑ…Ñ¥½¹Ì¹±•¹Ñ ¤ì(€¥˜ …É½ÕÑ•Ì¹±•¹Ñ ¥É•ÑÕÉ¹mtì(€½¹ÍĞÁÉ¥µ…ÉäõÉ½ÕÑ•Ì¹™¥¹¡ÈôùÈ¹ÍÑ…Ñ¥½¹Ì¹±•¹Ñ ôôô¡°¹ÍÑ…Ñ¥½¹Íññmt¤¹±•¹Ñ ˜™È¹ÍÑ…Ñ¥½¹Ì¹•Ù•Éä ¡¸±¤¤ôù¸ôôõ°¹ÍÑ…Ñ¥½¹Ím¥t¤¥ññÉ½ÕÑ•ÍlÁtì(€½¹ÍĞ½É‘•É•õmÁÉ¥µ…Éä°¸¸¹É½ÕÑ•Ì¹™¥±Ñ•È¡ÈôùÈ„ôõÁÉ¥µ…Éä¥t°µ…¥¹M•Ğõ¹•ÜM•Ğ¡ÁÉ¥µ…Éä¹ÍÑ…Ñ¥½¹Ì¤ì(€É•ÑÕÉ¸½É‘•É•¹µ…À ¡É½ÕÑ”±É½ÕÑ•%¹‘•à¤ôùì(€€€½¹ÍĞ©Õ¹Ñ¥½¹ÌõÉ½ÕÑ•%¹‘•àıÉ½ÕÑ”¹ÍÑ…Ñ¥½¹Ì¹™¥±Ñ•È¡¸ôùµ…¥¹M•Ğ¹¡…Ì¡¸¤¤émtì(€€€½¹ÍĞÍÑ…ÉĞõÉ½ÕÑ”¹ÍÑ…Ñ¥½¹ÍlÁt±•¹õÉ½ÕÑ”¹ÍÑ…Ñ¥½¹ÍmÉ½ÕÑ”¹ÍÑ…Ñ¥½¹Ì¹±•¹Ñ ´Åtì(€€€É•ÑÕÉ¹ì(€€€€€É½ÕÑ”éÉ½ÕÑ•%¹‘•à°(€€€€€‰É…¹ éÉ½ÕÑ•%¹‘•àøÀ°(€€€€€±…‰•°éÉ½ÕÑ•%¹‘•àü¡©Õ¹Ñ¥½¹Ì¹±•¹Ñ ı€‘í©Õ¹Ñ¥½¹ÍlÁuôƒ®ÚªâÀƒ
+Ü€‘í•¹‘ôƒ®Â§®¦Ñ€éƒ®Î®>ƒ²jÓ¶Z'ªÎ¶Ôƒ
+Ü€‘íÍÑ…ÉÑ÷ŠL‘í•¹‘õ€¤èŸ®Îã²€œ°(€€€€€É½İÌéÉ½ÕÑ”¹ÍÑ…Ñ¥½¹Ì¹µ…À ¡¸±¤¤ôø¡í¸±ÍÑ½ÀéÑÉÕ”±É½ÕÑ”éÉ½ÕÑ•%¹‘•à±‰É…¹ éÉ½ÕÑ•%¹‘•àøÀ±É½ÕÑ•MÑ…ÉĞé¤ôôôÀ±É½ÕÑ•¹é¤ôôõÉ½ÕÑ”¹ÍÑ…Ñ¥½¹Ì¹±•¹Ñ ´Åô¤¤(€€€ôì(€ô¤ì)ô)™Õ¹Ñ¥½¸}µ•ÑÉ½I½ÕÑ•É½ÕÁÍ!Q50¡°±É½ÕÁÌ±±¥Ù”¥ì(€É•ÑÕÉ¸É½ÕÁÌ¹µ…À ¡É½ÕÀ±¥¹‘•à¤ôù€ñÍ•Ñ¥½¸±…ÍÌô‰µÑ°µÉ½ÕÑ”µÉ½ÕÀ‘íÉ½ÕÀ¹‰É…¹ üœ‰É…¹ œèœôˆø(€€€€‘í¥¹‘•àı€ñ‘¥Ø±…ÍÌô‰µÑ°µÉ½ÕÑ”µÉ½ÕÀµ¡•…ˆøñÍÁ…¸ÍÑå±”ô‰‰…­É½Õ¹è‘í°¹½±½Éôˆøğ½ÍÁ…¸øñˆø‘í}½ÁÍÍŒ¡É½ÕÀ¹±…‰•°¥ôğ½ˆøğ½‘¥Øù€èœô(€€€€‘í±¥Ù”ı}É•¹‘•É5•ÑÉ½1¥Ù•Q¥µ•±¥¹”¡°±É½ÕÀ¹É½İÌ¤é}µ•ÑÉ½MÑ…Ñ¥Q1!Q50¡°±É½ÕÀ¹É½İÌ¥ô(€€ğ½Í•Ñ¥½¸ù€¤¹©½¥¸ œœ¤ì)ô)™Õ¹Ñ¥½¸É•¹‘•É5•ÑÉ½1¥¹•ÍQ…ˆ ¥ì(€½¹ÍĞ•°õ‘½Õµ•¹Ğ¹•Ñ±•µ•¹Ñ	å% É•ÍÕ±Ğµµ•ÑÉ½±¥¹•Ìœ¤ì(€¥˜ …•°¥É•ÑÕÉ¸ì(€¥˜¡ÑåÁ•½˜5QI=}1%9LôôôÕ¹‘•™¥¹•œ¥í•°¹¥¹¹•É!Q50ôœñ‘¥Ø±…ÍÌô‰•µÁÑäˆøñ‘¥Ø±…ÍÌô‰•µÁÑäµ¥½¸ˆûÂ~jğ½‘¥ØøñÀû²‚²Ê€ƒ®ã²€ƒ®6Ã²vÓ¶ÃªÂ ƒ²^²*×®.#®.¸ğ½Àøğ½‘¥ØøœíÉ•ÑÕÉ¸íô(€¥˜¡}µ•ÑÉ½•Ñ…¥±%¥ì}É•¹‘•É5•ÑÉ½1¥¹••Ñ…¥°¡•°±}µ•ÑÉ½•Ñ…¥±%¤ìÉ•ÑÕÉ¸ìô(€½¹ÍĞÉ•¥½¹ÌõlŸ²‚²ÊĞœ°¸¸¹¹•ÜM•Ğ¡5QI=}1%9L¹µ…À¡°ôù°¹É•¥½¸¤¥tì(€½¹ÍĞ±¥ÍĞõ5QI=}1%9L¹™¥±Ñ•È¡°ôù}µ•ÑÉ½I•¥½¸ôôôŸ²‚²ÊĞññ°¹É•¥½¸ôôõ}µ•ÑÉ½I•¥½¸¤ì(€•°¹¥¹¹•É!Q50õ€(€€€€ñ‘¥ØÍÑå±”ô‰µ…É¥¸èÄÑÁà€ÉÁà€ÑÁàí™½¹ĞµÍ¥é”èÄÉÁàí½±½ÈéÙ…È ´µÑ•áĞÌ¤ˆû²‚²Ê€€‘í5QI=}1%9L¹±•¹Ñ¡÷ªÂpƒ®ã²€ƒ
+Üƒ®ã²ƒ²vƒ®"®–Ó®¦Ğƒ²^´ƒ®ª§®†w²vĞƒ¶Fs².s®B§®.#®.ğ½‘¥Øø(€€€€ñ‘¥ØÍÑå±”ô‰‘¥ÍÁ±…äé™±•àí…ÀèÙÁàí™±•àµİÉ…ÀéİÉ…Àíµ…É¥¸èáÁà€À€ÄÉÁàˆø(€€€€€€‘íÉ•¥½¹Ì¹µ…À¡Èôù€ñ‰ÕÑÑ½¸±…ÍÌô‰µ•ÑÉ¼µÉ•¥½¸µ¡¥À‘í}µ•ÑÉ½I•¥½¸ôôõÈüœ½¸œèœôˆ½¹±¥¬ô‰Í•Ñ5•ÑÉ½I•¥½¸ œ‘íÉôœ¤ˆø‘íÉô‘íÈ„ôôŸ²‚²ÊĞœı€€‘í5QI=}1%9L¹™¥±Ñ•È¡°ôù°¹É•¥½¸ôôõÈ¤¹±•¹Ñ¡õ€èœôğ½‰ÕÑÑ½¸ù€¤¹©½¥¸ œœ¥ô(€€€€ğ½‘¥Øø(€€€€ñ‘¥ØÍÑå±”ô‰‘¥ÍÁ±…äé™±•àí™±•àµ‘¥É•Ñ¥½¸é½±Õµ¸í…ÀèáÁàíÁ…‘‘¥¹œµ‰½ÑÑ½´èÈÑÁàˆø‘í±¥ÍĞ¹µ…À¡}µ•ÑÉ½…É‘!Q50¤¹©½¥¸ œœ¥ôğ½‘¥Øù€ì)ô(¼¼ƒ¶bƒ².sªÂ¶Fp¡5QI=}M!¤ƒªâÃ²’ ƒ²Ê¯
+ß®'²Â ¿®ÂÃ²Â ƒ²
+Ã²ÚpƒŠPƒ®ã²ƒ®ª®Îƒ®¦S®ª£²vÓ²š )±•Ğ}µ•ÑÉ½MÑ…Ñ…¡”õíôì)™Õ¹Ñ¥½¸}µ•ÑÉ½M¡•‘MÑ…ÑÌ¡¹…µ”¥ì(€¥˜¡¹…µ”¥¸}µ•ÑÉ½MÑ…Ñ…¡”¤É•ÑÕÉ¸}µ•ÑÉ½MÑ…Ñ…¡•m¹…µ•tì(€½¹ÍĞ•¹Ğô¡ÑåÁ•½˜5QI=}M!„ôôÕ¹‘•™¥¹•œ¤˜™5QI=}M!m¹…µ•tì(€¥˜ …•¹Ññğ…•¹Ğ¹Ññğ…•¹Ğ¹Ğ¹±•¹Ñ ¤É•ÑÕÉ¸}µ•ÑÉ½MÑ…Ñ…¡•m¹…µ•tõ¹Õ±°ì(€½¹ÍĞÍÉØõ´ôø  ¡´´ÈĞÀ¤”ÄĞĞÀ¤¬ÄĞĞÀ¤”ÄĞĞÀì€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€¼¼€ÀĞèÀÀôÀ(€½¹ÍĞ±¬õÍ´ôùí½¹ÍĞŒô¡Í´¬ÈĞÀ¤”ÄĞĞÀíÉ•ÑÕÉ¸5…Ñ ¹™±½½È¡Œ¼ØÀ¤¬œèœ­MÑÉ¥¹œ¡Œ”ØÀ¤¹Á…‘MÑ…ÉĞ È°œÀœ¤íôì(€½¹ÍĞ‰å¥Èõíôì±•Ğµ¥¹Lõ%¹™¥¹¥Ñä±µ…áLôµ%¹™¥¹¥Ñäì(€™½È¡½¹ÍĞ˜½˜•¹Ğ¹Ğ¥ì½¹ÍĞÍ´õÍÉØ¡™lÅt¤ì¥˜¡Í´ñµ¥¹L¥µ¥¹LõÍ´ì¥˜¡Í´ùµ…áL¥µ…áLõÍ´ì€€€¼¼ƒ²nC²‚@ƒ²Ús®Âp£²Ê¬ƒ²‚W²Â ¤(€€€½¹ÍĞõ™lÉt¬œøœ¬¡˜¹±•¹Ñ øôØı™lÕtèœœ¤ì€¡‰å¥Ém‘tõ‰å¥Ém‘uññmt¤¹ÁÕÍ ¡Í´¤ìô€€€€€€€€¼¼ƒ®Â§¶Z”÷²nC²‚@û®.“²v3²^´(€€¼¼ƒ²ğƒ®Â§¶Z”£¶:ã²"`ƒ²Ös®.§²v`ƒ²óªÂƒ²^Ã²4ƒ®ÂÃ²Â ƒªÂªÊ¤ƒŠHƒ®~³².p÷¶Vc²r€ÄÔ”°ƒ¶>'².p÷²²r€àÀ”ƒ®Ú²r(€½¹ÍĞÁÉ¥µ…Éäõ=‰©•Ğ¹­•åÌ¡‰å¥È¤¹Í½ÉĞ ¡„±ˆ¤ôù‰å¥Ém‰t¹±•¹Ñ µ‰å¥Ém…t¹±•¹Ñ ¥lÁtì(€½¹ÍĞ‘•ÁÌõ‰å¥ÉmÁÉ¥µ…Éåt¹Í±¥” ¤¹Í½ÉĞ ¡„±ˆ¤ôù„µˆ¤ì(€½¹ÍĞ…ÁÌõmtì™½È¡±•Ğ¤ôÄí¤ñ‘•ÁÌ¹±•¹Ñ í¤¬¬¥í½¹ÍĞœõ‘•ÁÍm¥tµ‘•ÁÍm¤´Åtì¥˜¡œøÀ˜™œğôÄÈÀ˜™‘•ÁÍm¤´ÅtøôäÀ˜™‘•ÁÍm¤´ÅtğôÄÄÜÀ¥…ÁÌ¹ÁÕÍ ¡œ¤íô(€…ÁÌ¹Í½ÉĞ ¡„±ˆ¤ôù„µˆ¤ì(€½¹ÍĞÁĞõÀôù…ÁÌ¹±•¹Ñ ı…ÁÍm5…Ñ ¹µ¥¸¡…ÁÌ¹±•¹Ñ ´Ä±5…Ñ ¹™±½½È¡À©…ÁÌ¹±•¹Ñ ¤¥té¹Õ±°ì(€É•ÑÕÉ¸}µ•ÑÉ½MÑ…Ñ…¡•m¹…µ•tõí™¥ÉÍĞé±¬¡µ¥¹L¤±±…ÍĞé±¬¡µ…áL¤±¡İA•…¬éÁĞ À¸ÄÔ¤±¡İ=™˜éÁĞ À¸à¥ôì)ô)™Õ¹Ñ¥½¸}µ•ÑÉ½…É‘!Q50¡°¥ì(€½¹ÍĞÍĞõ}µ•ÑÉ½M¡•‘MÑ…ÑÌ¡°¹¹…µ”¤ì(€½¹ÍĞ™¥ÉÍĞô¡ÍĞ˜™ÍĞ¹™¥ÉÍĞ¥ññ°¹™¥ÉÍĞ°±…ÍĞô¡ÍĞ˜™ÍĞ¹±…ÍĞ¥ññ°¹±…ÍĞ°¡İ=‰¨ô¡ÍĞ˜™ÍĞ¹¡İA•…¬„õ¹Õ±°¤ıÍĞé°ì(€É•ÑÕÉ¸€ñ‘¥Ø±…ÍÌô‰µ•ÑÉ¼µ…ÉˆÍÑå±”ô‰‰½É‘•Èµ±•™ĞèÑÁàÍ½±¥€‘í°¹½±½Éôˆ½¹±¥¬ô‰½Á•¹5•ÑÉ½1¥¹••Ñ…¥° œ‘í°¹¥‘ôœ¤ˆø(€€€€ñ‘¥Ø±…ÍÌô‰µ•ÑÉ¼µ¡•…ˆø(€€€€€€ñÍÁ…¸±…ÍÌô‰µ•ÑÉ¼µ‘½ĞˆÍÑå±”ô‰‰…­É½Õ¹è‘í°¹½±½Éôˆøğ½ÍÁ…¸ø(€€€€€€ñÍÁ…¸±…ÍÌô‰µ•ÑÉ¼µ¹…µ”ˆø‘í°¹¹…µ•ôğ½ÍÁ…¸ø(€€€€€€‘í°¹±½½ÀüœñÍÁ…¸±…ÍÌô‰µ•ÑÉ¼µ‰…‘”ˆû²"s¶f`ğ½ÍÁ…¸øœèœô(€€€€€€‘í°¹¹¥¡ĞüœñÍÁ…¸±…ÍÌô‰µ•ÑÉ¼µ‰…‘”¹¥¡Ğˆû².³²Vğğ½ÍÁ…¸øœèœô(€€€€€€ñÍÁ…¸±…ÍÌô‰µ•ÑÉ¼µ½Õ¹Ğˆø‘í°¹¹÷ªÂs²^´ƒŠèğ½ÍÁ…¸ø(€€€€ğ½‘¥Øø(€€€€ñ‘¥Ø±…ÍÌô‰µ•ÑÉ¼µÉ½ÕÑ”ˆø‘í°¹±½½Àı€‘í°¹™É½µôƒªâÃ²‚@ƒ²"s¶fa€é€‘í°¹™É½µôƒŠP€‘í°¹Ñ½õôğ½‘¥Øø(€€€€ñ‘¥Ø±…ÍÌô‰µ•ÑÉ¼µ¥¹™¼ˆø(€€€€€€ñÍÁ…¸û²Ê¯²Â €ñˆø‘í™¥ÉÍÑôğ½ˆøğ½ÍÁ…¸ø(€€€€€€ñÍÁ…¸û®'²Â €ñˆø‘í±…ÍÑôğ½ˆøğ½ÍÁ…¸ø(€€€€€€ñÍÁ…¸ø‘í}µ•ÑÉ½!•…‘İ…ä¡¡İ=‰¨¥ôğ½ÍÁ…¸ø(€€€€ğ½‘¥Øø(€€ğ½‘¥Øù€ì)ô(¼¼ƒ®ã²€ƒ²²àèƒ²^Ó²Â ƒ²†Ã¶j3²Êc®~ğƒ¶²z®vó²vàƒ².tƒ²^´ƒ®ª§®†t)™Õ¹Ñ¥½¸}É•¹‘•É5•ÑÉ½1¥¹••Ñ…¥°¡•°±¥¥ì(€½¹ÍĞ°õ5QI=}1%9L¹™¥¹¡àôùà¹¥ôôõ¥¤ì(€¥˜ …°¥í}µ•ÑÉ½•Ñ…¥±%õ¹Õ±°íÉ•¹‘•É5•ÑÉ½1¥¹•ÍQ…ˆ ¤íÉ•ÑÕÉ¸íô(€¥˜¡}µ•ÑÉ½A…ÑM•°˜˜…°¹Á…ÑÑ•É¹Ì¹¥¹±Õ‘•Ì¡}µ•ÑÉ½A…ÑM•°¤¥}µ•ÑÉ½A…ÑM•°õ¹Õ±°ì(€½¹ÍĞÁ…ÑM•Äõ}µ•ÑÉ½A…ÑM•°ı}µ•ÑÉ½A…ÑM•Ä¡°±}µ•ÑÉ½A…ÑM•°¤é¹Õ±°ì(€¥˜¡}µ•ÑÉ½A…ÑM•°˜˜…Á…ÑM•Ä¥}µ•ÑÉ½A…ÑM•°õ¹Õ±°ì(€½¹ÍĞÉ½ÕÁÌõÁ…ÑM•ÄımíÉ½ÕÑ”èÀ±‰É…¹ é™…±Í”±±…‰•°é}µ•ÑÉ½A…ÑM•°±É½İÌéÁ…ÑM•Åõté}µ•ÑÉ½I½ÕÑ•É½ÕÁÌ¡°¤ì(€½¹ÍĞÉ½İÌõÉ½ÕÁÌ¹™±…Ñ5…À¡É½ÕÀôùÉ½ÕÀ¹É½İÌ¤ì(€½¹ÍĞÍÑ½ÁI½İÌõÉ½İÌ¹™¥±Ñ•È¡àôø…à¹…À˜™à¹ÍÑ½À¤°Á…ÍÍ8õÉ½İÌ¹™¥±Ñ•È¡àôø…à¹…À˜˜…à¹ÍÑ½À¤¹±•¹Ñ ì(€½¹ÍĞÁ…Ñ%¹™¼õÁ…ÑM•Äı€ñ‘¥ØÍÑå±”ô‰µ…É¥¸èÄÁÁà€ÉÁà€Àí™½¹ĞµÍ¥é”èÄÉÁàí½±½ÈéÙ…È ´µÑ•áĞÈ¤ˆøñˆÍÑå±”ô‰½±½ÈéÙ…È ´µÑ•áĞÄ¤ˆø‘í}µ•ÑÉ½A…ÑM•±ôğ½ˆøƒ
+Ü€‘íÍÑ½ÁI½İÍlÁt¹¹ôƒŠP€‘íÍÑ½ÁI½İÍmÍÑ½ÁI½İÌ¹±•¹Ñ ´Åt¹¹ôƒ
+Üƒ²‚W²Â €ñˆø‘íÍÑ½ÁI½İÌ¹±•¹Ñ¡ôğ½ˆû²^´‘íÁ…ÍÍ8ı€ƒ
+Üƒ¶×ªÎğ€‘íÁ…ÍÍ9÷²^´€ñÍÁ…¸ÍÑå±”ô‰½±½ÈéÙ…È ´µÑ•áĞÌ¤ˆø£²v3²b¤ğ½ÍÁ…¸ù€èœôğ½‘¥Øù€èœœì(€•°¹¥¹¹•É!Q50õ€(€€€€ñ‘¥ØÍÑå±”ô‰Á…‘‘¥¹œèÄÑÁà€À€ÈÑÁàˆø(€€€€€€ñ‘¥Ø±…ÍÌô‰µÑ°µ‘•Ñ…¥°µ¹…Øˆø(€€€€€€€€ñ‰ÕÑÑ½¸±…ÍÌô‰µÑ°µ‘•Ñ…¥°µ±¥ÍĞˆ½¹±¥¬ô‰±½Í•5•ÑÉ½1¥¹••Ñ…¥° ¤ˆûŠ@ƒ®ã²€ƒ®ª§®†tğ½‰ÕÑÑ½¸ø(€€€€€€€€ñ‰ÕÑÑ½¸±…ÍÌô‰µÍ µ¹…Ù‰Ñ¸ˆ½¹±¥¬ô‰ÍÑ•Á5•ÑÉ½1¥¹••Ñ…¥° ´Ä¤ˆ…É¥„µ±…‰•°ô‹²vÓ²‚ƒ®ã²€ˆûŠ^ ğ½‰ÕÑÑ½¸ø(€€€€€€€€ñ‰ÕÑÑ½¸±…ÍÌô‰µÍ µ¹…Ù‰Ñ¸ˆ½¹±¥¬ô‰ÍÑ•Á5•ÑÉ½1¥¹••Ñ…¥° Ä¤ˆ…É¥„µ±…‰•°ô‹®.“²v0ƒ®ã²€ˆûŠZØğ½‰ÕÑÑ½¸ø(€€€€€€ğ½‘¥Øø(€€€€€€ñ‘¥Ø±…ÍÌô‰µ•ÑÉ¼µ…ÉˆÍÑå±”ô‰‰½É‘•Èµ±•™ĞèÑÁàÍ½±¥€‘í°¹½±½ÉôíÕÉÍ½Èé‘•™…Õ±Ğˆø(€€€€€€€€ñ‘¥Ø±…ÍÌô‰µ•ÑÉ¼µ¡•…ˆø(€€€€€€€€€€ñÍÁ…¸±…ÍÌô‰µ•ÑÉ¼µ‘½ĞˆÍÑå±”ô‰‰…­É½Õ¹è‘í°¹½±½Éôˆøğ½ÍÁ…¸ø(€€€€€€€€€€ñÍÁ…¸±…ÍÌô‰µ•ÑÉ¼µ¹…µ”ˆÍÑå±”ô‰™½¹ĞµÍ¥é”èÄİÁàˆø‘í°¹¹…µ•ôğ½ÍÁ…¸ø(€€€€€€€€€€‘í°¹±½½ÀüœñÍÁ…¸±…ÍÌô‰µ•ÑÉ¼µ‰…‘”ˆû²"s¶f`ğ½ÍÁ…¸øœèœô(€€€€€€€€€€‘í°¹¹¥¡ĞüœñÍÁ…¸±…ÍÌô‰µ•ÑÉ¼µ‰…‘”¹¥¡Ğˆû².³²Vğğ½ÍÁ…¸øœèœô(€€€€€€€€€€ñÍÁ…¸±…ÍÌô‰µ•ÑÉ¼µ½Õ¹Ğˆø‘í°¹¹÷ªÂs²^´ğ½ÍÁ…¸ø(€€€€€€€€ğ½‘¥Øø(€€€€€€€€ñ‘¥Ø±…ÍÌô‰µ•ÑÉ¼µÉ½ÕÑ”ˆø‘í°¹±½½Àı€‘í°¹™É½µôƒªâÃ²‚@ƒ²"s¶fa€é€‘í°¹™É½µôƒŠP€‘í°¹Ñ½õôğ½‘¥Øø(€€€€€€€€ñ‘¥Ø±…ÍÌô‰µ•ÑÉ¼µ¥¹™¼ˆø(€€€€€€€€€€ñÍÁ…¸û²Ê¯²Â €ñˆø‘ì  ¤ôùí½¹ÍĞÍĞõ}µ•ÑÉ½M¡•‘MÑ…ÑÌ¡°¹¹…µ”¤íÉ•ÑÕÉ¸€¡ÍĞ˜™ÍĞ¹™¥ÉÍĞ¥ññ°¹™¥ÉÍĞíô¤ ¥ôğ½ˆøğ½ÍÁ…¸ø(€€€€€€€€€€ñÍÁ…¸û®'²Â €ñˆø‘ì  ¤ôùí½¹ÍĞÍĞõ}µ•ÑÉ½M¡•‘MÑ…ÑÌ¡°¹¹…µ”¤íÉ•ÑÕÉ¸€¡ÍĞ˜™ÍĞ¹±…ÍĞ¥ññ°¹±…ÍĞíô¤ ¥ôğ½ˆøğ½ÍÁ…¸ø(€€€€€€€€€€ñÍÁ…¸ø‘ì  ¤ôùí½¹ÍĞÍĞõ}µ•ÑÉ½M¡•‘MÑ…ÑÌ¡°¹¹…µ”¤íÉ•ÑÕÉ¸}µ•ÑÉ½!•…‘İ…ä ¡ÍĞ˜™ÍĞ¹¡İA•…¬„õ¹Õ±°¤ıÍĞé°¤íô¤ ¥ôğ½ÍÁ…¸ø(€€€€€€€€ğ½‘¥Øø(€€€€€€€€‘í°¹Á…ÑÑ•É¹Ì¹±•¹Ñ ı€ñ‘¥Ø±…ÍÌô‰µ•ÑÉ¼µÁ…ÑÌˆÍÑå±”ô‰µ…É¥¸µÑ½ÀèáÁàˆû²jÓ¶Z'ªÎ¶Ô€ñÍÁ…¸±…ÍÌô‰µ•ÑÉ¼µÁ…Ğµ¡¥À‘ì…}µ•ÑÉ½A…ÑM•°üœ½¸œèœôˆ½¹±¥¬ô‰Í•Ñ5•ÑÉ½A…Ğ¡¹Õ±°¤ˆû²‚²ÊĞğ½ÍÁ…¸ø‘í°¹Á…ÑÑ•É¹Ì¹µ…À¡Àôù€ñÍÁ…¸±…ÍÌô‰µ•ÑÉ¼µÁ…Ğµ¡¥À‘í}µ•ÑÉ½A…ÑM•°ôôõÀüœ½¸œèœôˆ½¹±¥¬ô‰Í•Ñ5•ÑÉ½A…Ğ œ‘íÀ¹É•Á±…” ¼œ½œ°‰qpœˆ¥ôœ¤ˆø‘íÁôğ½ÍÁ…¸ù€¤¹©½¥¸ œœ¥ôğ½‘¥Øù€èœô(€€€€€€€€‘íÁ…Ñ%¹™½ô(€€€€€€€€ñ‘¥ØÍÑå±”ô‰µ…É¥¸µÑ½ÀèÄÁÁàí‘¥ÍÁ±…äé™±•àí…ÀèáÁàí™±•àµİÉ…ÀéİÉ…Àˆø(€€€€€€€€€€ñ‰ÕÑÑ½¸½¹±¥¬ô‰•Ù•¹Ğ¹ÍÑ½ÁAÉ½Á……Ñ¥½¸ ¤íÍ¡½İ5•ÑÉ½=¹5…À œ‘í°¹¥‘ôœ¤ˆÍÑå±”ô‰Á…‘‘¥¹œèáÁà€ÄÑÁàí‰½É‘•ÈµÉ…‘¥ÕÌèÄÁÁàí‰½É‘•ÈèÅÁàÍ½±¥€‘í°¹½±½Éôí‰…­É½Õ¹éÑÉ…¹ÍÁ…É•¹Ğí½±½Èè‘í°¹½±½Éôí™½¹ĞµÍ¥é”èÄÈ¸ÕÁàí™½¹Ğµİ•¥¡ĞèÜÀÀíÕÉÍ½ÈéÁ½¥¹Ñ•Èí™½¹Ğµ™…µ¥±äéÙ…È ´µÍ…¹Ì¤ˆû²®>¶bTƒ®ã²ƒ®>ğ½‰ÕÑÑ½¸ø(€€€€€€€€ğ½‘¥Øø(€€€€€€ğ½‘¥Øø(€€€€€€ñ‘¥Ø±…ÍÌô‰µÑ°µ±¥Ù”µ¡•…ˆø(€€€€€€€€ñ‰ÕÑÑ½¸±…ÍÌô‰µÑ°µ±¥Ù”µÑ½±”‘í}µ•ÑÉ½1¥Ù•=¸üœ½¸œèœôˆÍÑå±”ôˆ´µµŒè‘í°¹½±½Éôˆ½¹±¥¬ô‰Í•Ñ5•ÑÉ½1¥Ù•=¸ ‘í}µ•ÑÉ½1¥Ù•=¸ü™…±Í”œèÑÉÕ”ô¤ˆøñÍÁ…¸±…ÍÌô‰µÑ°µ±¥Ù”µÍÜˆøğ½ÍÁ…¸û².“².sªÂƒ²r²æ`€‘í}µ•ÑÉ½1¥Ù•=¸ü=8œè=ôğ½‰ÕÑÑ½¸ø(€€€€€€€€‘í}µ•ÑÉ½1¥Ù•=¸ı€ñÍÁ…¸±…ÍÌô‰µÑ°µ±¥Ù”µÉÕ¸ˆÍÑå±”ôˆ´µµŒè‘í°¹½±½ÉôˆûÂ~j€ñˆø‘í}µ•ÑÉ½1¥¹•1¥Ù•QÉ…¥¹Ì¡°¹¹…µ”¤¹±•¹Ñ¡ôğ½ˆû®2 ƒ²jÓ¶Z$ƒ²’Dğ½ÍÁ…¸ø(€€€€€€€€ñ‰ÕÑÑ½¸±…ÍÌô‰µÑ°µ±¥Ù”µÉ•™É•Í ˆ½¹±¥¬ô‰½Á•¹5•ÑÉ½1¥¹••Ñ…¥° œ‘í°¹¥‘ôœ¤ˆÑ¥Ñ±”ô‹²#®†sªÎƒ²æ ˆûŠìğ½‰ÕÑÑ½¸ù€èœô(€€€€€€ğ½‘¥Øø(€€€€€€‘í}µ•ÑÉ½1¥Ù•=¸ı€ñ‘¥Ø±…ÍÌô‰µÑ°µ±¥Ù”µ±••¹ˆøñÍÁ…¸±…ÍÌô‰µÑ°µ±¥Ù”µ±œ‘½İ¸ˆûŠZğƒ¶Vc¶Z$€ñÍµ…±°ûªâÃ²‚CŠK²Š²‚@ğ½Íµ…±°øğ½ÍÁ…¸øñÍÁ…¸±…ÍÌô‰µÑ°µ±¥Ù”µ±œÕÀˆûŠZÈƒ²¶Z$€ñÍµ…±°û²Š²‚CŠKªâÃ²‚@ğ½Íµ…±°øğ½ÍÁ…¸øğ½‘¥Øù€èœô(€€€€€€‘í}µ•ÑÉ½I½ÕÑ•É½ÕÁÍ!Q50¡°±É½ÕÁÌ±}µ•ÑÉ½1¥Ù•=¸¥ô(€€€€ğ½‘¥Øù€ì(€¥˜ …}µ•ÑÉ½1¥Ù•=¸¥}Á±…•5•ÑÉ½1¥Ù•5…É­•ÉÌ¡•°°°¹¹…µ”¤ì(€İ¥¹‘½Ü¹ÍÉ½±±Q¼ À°À¤ì)ô)™Õ¹Ñ¥½¸Í•Ñ5•ÑÉ½I•¥½¸¡È¥í}µ•ÑÉ½I•¥½¸õÈí}µ•ÑÉ½•Ñ…¥±%õ¹Õ±°í}µ•ÑÉ½A…ÑM•°õ¹Õ±°íÉ•¹‘•É5•ÑÉ½1¥¹•ÍQ…ˆ ¤íô)™Õ¹Ñ¥½¸½Á•¹5•ÑÉ½1¥¹••Ñ…¥°¡¥¥í}µ•ÑÉ½•Ñ…¥±%õ¥í}µ•ÑÉ½A…ÑM•°õ¹Õ±°íÉ•¹‘•É5•ÑÉ½1¥¹•ÍQ…ˆ ¤íô)™Õ¹Ñ¥½¸±½Í•5•ÑÉ½1¥¹••Ñ…¥° ¥í}µ•ÑÉ½•Ñ…¥±%õ¹Õ±°í}µ•ÑÉ½A…ÑM•°õ¹Õ±°íÉ•¹‘•É5•ÑÉ½1¥¹•ÍQ…ˆ ¤íô)™Õ¹Ñ¥½¸ÍÑ•Á5•ÑÉ½1¥¹••Ñ…¥°¡‘¥È¥ì(€¥˜¡ÑåÁ•½˜5QI=}1%9LôôôÕ¹‘•™¥¹•ñğ…5QI=}1%9L¹±•¹Ñ ¥É•ÑÕÉ¸ì(€½¹ÍĞ¤õ5QI=}1%9L¹™¥¹‘%¹‘•à¡°ôù°¹¥ôôõ}µ•ÑÉ½•Ñ…¥±%¤ì(€½¹ÍĞ¹¤ô¡¤ğÀüÀè¡¤­‘¥È­5QI=}1%9L¹±•¹Ñ ¤•5QI=}1%9L¹±•¹Ñ ¤ì(€½Á•¹5•ÑÉ½1¥¹••Ñ…¥°¡5QI=}1%9Mm¹¥t¹¥¤ì)ô)™Õ¹Ñ¥½¸Í¡½İ5•ÑÉ½=¹5…À¡¥¥ì(€½¹ÍĞ°õ5QI=}1%9L¹™¥¹¡àôùà¹¥ôôõ¥¤ì(€¥˜¡°¥í}µ•ÑÉ½5…ÁI•¥½¸õ°¹É•¥½¸í}µ•ÑÉ½5…Á%õ¥íô(€Íİ¥Ñ¡Q…ˆ µ…Àœ¤ì)ô(¼¼ƒ²^´ƒ²æÓ®Npƒ²‚²Ê€ƒ²æ¤ƒŠHƒ²‚²Ê€ƒ®ª£®Npƒ®ã²€ƒ²²ã®†p)™Õ¹Ñ¥½¸½Á•¹5•ÑÉ½1¥¹”¡¥¥ì(€¥˜¡}…ÁÁ5½‘”„ôôµ•ÑÉ¼œ¤Í•ÑÁÁ5½‘” µ•ÑÉ¼œ¤ì(€½¹ÍĞ°ô¡ÑåÁ•½˜5QI=}1%9L„ôôÕ¹‘•™¥¹•œ¤ı5QI=}1%9L¹™¥¹¡àôùà¹¥ôôõ¥¤é¹Õ±°ì(€¥˜¡°¥}µ•ÑÉ½I•¥½¸õ°¹É•¥½¸ì(€}µ•ÑÉ½•Ñ…¥±%õ¥ì(€Íİ¥Ñ¡Q…ˆ µ•ÑÉ½±¥¹•Ìœ¤ì)ô()™Õ¹Ñ¥½¸Í¥9•…ÉM•…É ¡Ä¥ì(€¥˜ …Ä¥í½¹ÍĞÈõ‘½Õµ•¹Ğ¹•Ñ±•µ•¹Ñ	å% Í¤µ¹•…ÈµÍ•…É µÉ•ÍÕ±ÑÌœ¤í¥˜¡È¥È¹¥¹¹•É!Q50ôœœíÉ•ÑÕÉ¸íô(€¥˜¡ÑåÁ•½˜MQQ%=9}ôôôÕ¹‘•™¥¹•œ¥É•ÑÕÉ¸ì(€½¹ÍĞÉ•Ìõ=‰©•Ğ¹­•åÌ¡MQQ%=9}¤¹™¥±Ñ•È¡¸ôù¸¹¥¹±Õ‘•Ì¡Ä¤¤¹Í±¥” À°à¤ì(€½¹ÍĞ•°õ‘½Õµ•¹Ğ¹•Ñ±•µ•¹Ñ	å% Í¤µ¹•…ÈµÍ•…É µÉ•ÍÕ±ÑÌœ¤ì(€¥˜ …•°¥É•ÑÕÉ¸ì(€•°¹¥¹¹•É!Q50õÉ•Ì¹±•¹Ñ ı€ñ‘¥ØÍÑå±”ô‰‘¥ÍÁ±…äé™±•àí™±•àµİÉ…ÀéİÉ…Àí…ÀèÙÁàˆø‘ì(€€€É•Ì¹µ…À¡¸ôù€ñ‰ÕÑÑ½¸½¹±¥¬ô‰½Á•¹MÑ…Ñ¥½¹•Ñ…¥° œ‘í¹ôœ¤ˆ(€€€€€ÍÑå±”ô‰Á…‘‘¥¹œèÙÁà€ÄÉÁàí‰½É‘•ÈµÉ…‘¥ÕÌèÈÁÁàí‰½É‘•ÈèÅÁàÍ½±¥Ù…È ´µ‰½É‘•È¤í‰…­É½Õ¹éÙ…È ´µ‰œÌ¤í½±½ÈéÙ…È ´µÑ•áĞÄ¤í™½¹ĞµÍ¥é”èÄÉÁàíÕÉÍ½ÈéÁ½¥¹Ñ•Èí™½¹Ğµ™…µ¥±äéÙ…È ´µÍ…¹Ì¤ˆø‘í¹ôğ½‰ÕÑÑ½¸ù€¤¹©½¥¸ œœ¤(€ôğ½‘¥Øù€èœñ‘¥ØÍÑå±”ô‰½±½ÈéÙ…È ´µÑ•áĞÌ¤í™½¹ĞµÍ¥é”èÄÉÁàíÁ…‘‘¥¹œèÑÁàˆûªÊ²$ƒªÊÃªÎğƒ²^²v0ğ½‘¥Øøœì)ô((¼¼ƒ®ª£®Ns®Îƒ²^´ƒ²G¶V¤€£ªâÃ²Â èƒ²^Ó²Â ƒ²‚W²Â£²^´€¼ƒ²‚²Ê€èƒ²‚²Ê€ƒ®ã²€ƒ²^´¤)±•Ğ}ÑÉ…¥¹MÑ¹M•Ğõ¹Õ±°±}µ•ÑÉ½MÑ¹M•Ğõ¹Õ±°ì)™Õ¹Ñ¥½¸}µ½‘•MÑ¹M•ÑÍ%¹¥Ğ ¥ì(€¥˜ …}ÑÉ…¥¹MÑ¹M•Ğ˜™ÑåÁ•½˜11}QI%9L„ôôÕ¹‘•™¥¹•œ¥ì(€€€}ÑÉ…¥¹MÑ¹M•Ğõ¹•ÜM•Ğ ¤ì(€€€€¼¼ƒ¶Vpƒ¶:ã²vÓ®vó®>ƒ².“²‚p€Ÿ²‚W²Â Ÿ¶Vc®*Pƒ²^·®0ƒªâÃ²Â£²^·²ró®†pƒ²Ş£ªâ$ƒŠPƒ¶×ªÎó®0ƒ¶Vc®*Pƒ²^·²v ƒ²‚s²fà(€€€11}QI%9L¹™½É… ¡ĞôùĞ¹ÍÑ½ÁÌ¹™½É… ¡Ìôùí¥˜ ¡¡…ÍQ¥µ”¡Ì¹…ÉÈ¥ññ¡…ÍQ¥µ”¡Ì¹‘•À¤¤˜˜…¥ÍA…ÍÍMÑ½À¡Ğ±Ì¹Ì¤¥}ÑÉ…¥¹MÑ¹M•Ğ¹…‘¡Ì¹Ì¤íô¤¤ì(€ô(€¥˜ …}µ•ÑÉ½MÑ¹M•Ğ˜™ÑåÁ•½˜5QI=}1%9L„ôôÕ¹‘•™¥¹•œ¥ì(€€€}µ•ÑÉ½MÑ¹M•Ğõ¹•ÜM•Ğ ¤ì(€€€5QI=}1%9L¹™½É… ¡°ôø¡°¹É½ÕÑ•ÍññmíÍÑ…Ñ¥½¹Ìé°¹ÍÑ…Ñ¥½¹Íõt¤¹™½É… ¡ÈôùÈ¹ÍÑ…Ñ¥½¹Ì¹™½É… ¡¸ôù}µ•ÑÉ½MÑ¹M•Ğ¹…‘¡¸¤¤¤¤ì(€ô)ô(¼¼ƒ²‚²Ê€ƒ²‚²j§²^´èƒ²‚²Ê€ƒ®ã²ƒ²^C®*Pƒ²z#²ró®
+`ƒ²ZÓ®Zƒ²^Ó²Â£®>ƒ²‚W²Â£¶Vc² ƒ²V+®*Pƒ²^´£¶×ªÎó®0ƒ¶>³¶V ¤(¼¼ƒŠHƒªâÃ²Â ƒ¶´ƒ²^´ƒªÊ²'²^C²pƒ²‚s²fàƒ®2²)™Õ¹Ñ¥½¸}¥Í5•ÑÉ½=¹±ä¡¹…µ”¥ì(€}µ½‘•MÑ¹M•ÑÍ%¹¥Ğ ¤ì(€É•ÑÕÉ¸€„„¡}µ•ÑÉ½MÑ¹M•Ğ˜™}µ•ÑÉ½MÑ¹M•Ğ¹¡…Ì¡¹…µ”¤˜™}ÑÉ…¥¹MÑ¹M•Ğ˜˜…}ÑÉ…¥¹MÑ¹M•Ğ¹¡…Ì¡¹…µ”¤¤ì)ô(¼¼ƒ®ª£®Npƒ²‚¶f`€¬ƒªÂg²v ƒ²^´ƒ²²àƒ²^ÓªâÀ€£²‚²ÊƒŠSªâÃ²Â ƒ®ÎG¶Z'²^´ƒ®æƒ®–àƒ²vÓ®>d¤)™Õ¹Ñ¥½¸Íİ¥Ñ¡5½‘•MÑ…Ñ¥½¸¡µ½‘”±¹…µ”¥ì(€Í•ÑÁÁ5½‘”¡µ½‘”¤ì(€½Á•¹MÑ…Ñ¥½¹•Ñ…¥°¡¹…µ”¤ì)ô)™Õ¹Ñ¥½¸}ÍÑ¹	…Í•9…µ”¡¸¥íÉ•ÑÕÉ¸MÑÉ¥¹œ¡¸¤¹É•Á±…” ½qÌ©p¼¸¨¼°œœ¤¹ÑÉ¥´ ¤¹É•Á±…” ¿²^´¼°œœ¤íô)™Õ¹Ñ¥½¸É•¹‘•ÉM%9•…È¡•°¥ì(€•°¹¥¹¹•É!Q50õ€ñ‘¥ØÍÑå±”ô‰µ…É¥¸µÑ½ÀèÄÉÁàˆø(€€€€ñ‘¥ØÍÑå±”ô‰‘¥ÍÁ±…äé™±•àí…±¥¸µ¥Ñ•µÌé•¹Ñ•Èí©ÕÍÑ¥™äµ½¹Ñ•¹ĞéÍÁ…”µ‰•Ñİ••¸íµ…É¥¸µ‰½ÑÑ½´èÄÁÁàí…ÀèáÁàí™±•àµİÉ…ÀéİÉ…Àˆø(€€€€€€ñ‘¥ØÍÑå±”ô‰™½¹ĞµÍ¥é”èÄÍÁàí™½¹Ğµİ•¥¡ĞèÜÀÀí½±½ÈéÙ…È ´µÑ•áĞÄ¤ˆûªÂªæ3²jĞ€‘í}…ÁÁ5½‘”ôôôµ•ÑÉ¼œüŸ²‚²Êƒ²^´œèŸªâÃ²Â£²^´ôQ=@€Ôğ½‘¥Øø(€€€€€€ñ‘¥ØÍÑå±”ô‰‘¥ÍÁ±…äé™±•àí…±¥¸µ¥Ñ•µÌé•¹Ñ•Èí…ÀèÄÁÁàˆø(€€€€€€€€ñ‰ÕÑÑ½¸½¹±¥¬ô‰É•ÅÕ•ÍÑ9•…É1½…Ñ¥½¸ ¤ˆÍÑå±”ô‰™½¹ĞµÍ¥é”èÄÅÁàí™½¹Ğµİ•¥¡ĞèØÀÀí½±½ÈéÙ…È ´µ…•¹Ğ¤í‰…­É½Õ¹éÑÉ…¹ÍÁ…É•¹Ğí‰½É‘•ÈèÅÁàÍ½±¥Ù…È ´µ…•¹Ğ¤í‰½É‘•ÈµÉ…‘¥ÕÌèÄÑÁàíÁ…‘‘¥¹œèÑÁà€ÄÁÁàíÕÉÍ½ÈéÁ½¥¹Ñ•Èí™½¹Ğµ™…µ¥±äéÙ…È ´µÍ…¹Ì¤ˆûÂ~Rƒ²r²æ`ƒ®.“².pƒ²jS²Ê´ğ½‰ÕÑÑ½¸ø(€€€€€€€€ñ±…‰•°ÍÑå±”ô‰‘¥ÍÁ±…äé™±•àí…±¥¸µ¥Ñ•µÌé•¹Ñ•Èí…ÀèÑÁàí™½¹ĞµÍ¥é”èÄÅÁàí½±½ÈéÙ…È ´µÑ•áĞÌ¤íÕÉÍ½ÈéÁ½¥¹Ñ•Èˆø(€€€€€€€€€€ñ¥¹ÁÕĞÑåÁ”ô‰¡•­‰½àˆ¥ô‰Í¤µ¹•…Èµ±½Í•ˆ½¹¡…¹”ô‰}Í¥9•…ÉM¡½İ±½Í•õÑ¡¥Ì¹¡•­•íÉ•¹‘•ÉM%9•…É1¥ÍĞ ¤ˆ€‘í}Í¥9•…ÉM¡½İ±½Í•ü¡•­•œèœôø(€€€€€€€€€ƒ¶>C²^´ƒ¶>³¶V (€€€€€€€€ğ½±…‰•°ø(€€€€€€ğ½‘¥Øø(€€€€ğ½‘¥Øø(€€€€ñ‘¥Ø¥ô‰Í¤µ¹•…Èµ±¥ÍĞˆøñ‘¥ØÍÑå±”ô‰‰…­É½Õ¹éÙ…È ´µ‰œÌ¤í‰½É‘•ÈèÅÁàÍ½±¥Ù…È ´µ‰½É‘•È¤í‰½É‘•ÈµÉ…‘¥ÕÌèÄÁÁàíÁ…‘‘¥¹œèÈÁÁàí½±½ÈéÙ…È ´µÑ•áĞÌ¤í™½¹ĞµÍ¥é”èÄÍÁàíÑ•áĞµ…±¥¸é•¹Ñ•Èˆû²r²æ`ƒ²‚W®ÎĞƒªÂ²‚ã²b“®*Pƒ²’D¸¸¸ğ½‘¥Øøğ½‘¥Øø(€€ğ½‘¥Øù€ì(€¥˜ …¹…Ù¥…Ñ½È¹•½±½…Ñ¥½¸¥í‘½Õµ•¹Ğ¹•Ñ±•µ•¹Ñ	å% Í¤µ¹•…Èµ±¥ÍĞœ¤¹¥¹¹•É!Q50ôœñ‘¥ØÍÑå±”ô‰½±½ÈéÙ…È ´µÑ•áĞÌ¤í™½¹ĞµÍ¥é”èÄÉÁàíÁ…‘‘¥¹œèÄÉÁàíÑ•áĞµ…±¥¸é•¹Ñ•Èˆû²r²æ`ƒ²s®æ²*ƒ®¾ã²²n@ğ½‘¥ØøœíÉ•ÑÕÉ¸íô(€¥˜¡}Í¥9•…É±°¹±•¹Ñ øÀ¥íÉ•¹‘•ÉM%9•…É1¥ÍĞ ¤íÉ•ÑÕÉ¸íô(€}™•Ñ¡9•…É1½…Ñ¥½¸ ¤ì)ô(¼¼ƒ²r²æ`ƒ²jS²Ê´£²Ös²Ò ¿®.“².p¤¸ƒ²êC².pƒ®æ²jÃªÎ€ƒ²z³²jS²Ê´ƒŠHƒªÆÃ²‚#¶Z#®6`ƒªÊ÷²jÀƒ®.“².pƒªÚ3¶Vpƒ¶2w²^ƒ²rƒ®>)™Õ¹Ñ¥½¸É•ÅÕ•ÍÑ9•…É1½…Ñ¥½¸ ¥ì(€}Í¥9•…É±°õmtì}Í¥9•…É1…Ğõ¹Õ±°ì}Í¥9•…É1½¸õ¹Õ±°ì(€½¹ÍĞ°õ‘½Õµ•¹Ğ¹•Ñ±•µ•¹Ñ	å% Í¤µ¹•…Èµ±¥ÍĞœ¤ì(€¥˜¡°¥°¹¥¹¹•É!Q50ôœñ‘¥ØÍÑå±”ô‰‰…­É½Õ¹éÙ…È ´µ‰œÌ¤í‰½É‘•ÈèÅÁàÍ½±¥Ù…È ´µ‰½É‘•È¤í‰½É‘•ÈµÉ…‘¥ÕÌèÄÁÁàíÁ…‘‘¥¹œèÈÁÁàí½±½ÈéÙ…È ´µÑ•áĞÌ¤í™½¹ĞµÍ¥é”èÄÍÁàíÑ•áĞµ…±¥¸é•¹Ñ•Èˆû²r²æ`ƒ²‚W®ÎĞƒªÂ²‚ã²b“®*Pƒ²’D¸¸¸ğ½‘¥Øøœì(€}™•Ñ¡9•…É1½…Ñ¥½¸ ¤ì)ô)™Õ¹Ñ¥½¸}™•Ñ¡9•…É1½…Ñ¥½¸ ¥ì(€¥˜ …¹…Ù¥…Ñ½È¹•½±½…Ñ¥½¸¥É•ÑÕÉ¸ì(€¹…Ù¥…Ñ½È¹•½±½…Ñ¥½¸¹•ÑÕÉÉ•¹ÑA½Í¥Ñ¥½¸¡Á½Ìôùì(€€€½¹ÍĞí±…Ñ¥ÑÕ‘”é±…Ğ±±½¹¥ÑÕ‘”é±½¹ôõÁ½Ì¹½½É‘Ìì(€€€}Í¥9•…É1…Ğõ±…Ğì}Í¥9•…É1½¸õ±½¸ì(€€€¥˜¡ÑåÁ•½˜•Ñ9•…É•ÍÑMÑ…Ñ¥½¹ÌôôôÕ¹‘•™¥¹•œ¥í½¹ÍĞ°õ‘½Õµ•¹Ğ¹•Ñ±•µ•¹Ñ	å% Í¤µ¹•…Èµ±¥ÍĞœ¤í¥˜¡°¥°¹¥¹¹•É!Q50ôœñ‘¥ØÍÑå±”ô‰½±½ÈéÙ…È ´µÉ•¤í™½¹ĞµÍ¥é”èÄÉÁàíÁ…‘‘¥¹œèÄÉÁàˆû²^´ƒ®6Ã²vÓ¶Àƒ®†s®Npƒ²V#®B ğ½‘¥ØøœíÉ•ÑÕÉ¸íô(€€€}Í¥9•…É±°õ•Ñ9•…É•ÍÑMÑ…Ñ¥½¹Ì¡±…Ğ±±½¸°ÔÀ¤ì(€€€É•¹‘•ÉM%9•…É1¥ÍĞ ¤ì(€ô±•ÉÈôùì(€€€½¹ÍĞ°õ‘½Õµ•¹Ğ¹•Ñ±•µ•¹Ñ	å% Í¤µ¹•…Èµ±¥ÍĞœ¤ì(€€€½¹ÍĞ‘•¹¥•õ•ÉÈ¹½‘”ôôôÄì(€€€¥˜¡°¥°¹¥¹¹•É!Q50õ€ñ‘¥ØÍÑå±”ô‰‰…­É½Õ¹éÙ…È ´µ‰œÌ¤í‰½É‘•ÈèÅÁàÍ½±¥Ù…È ´µ‰½É‘•È¤í‰½É‘•ÈµÉ…‘¥ÕÌèÄÁÁàíÁ…‘‘¥¹œèÄáÁàíÑ•áĞµ…±¥¸é•¹Ñ•Èˆø(€€€€€€ñ‘¥ØÍÑå±”ô‰½±½ÈéÙ…È ´µÑ•áĞÈ¤í™½¹ĞµÍ¥é”èÄÍÁàí™½¹Ğµİ•¥¡ĞèØÀÀíµ…É¥¸µ‰½ÑÑ½´èÙÁàˆø‘í‘•¹¥•üŸ²r²æ`ƒªÚ3¶Vs²vĞƒªÆÃ®Ú®Bc²ZĞƒ²z#²*×®.#®.œèŸ²r²æc®–ğƒªÂ²‚ã²b“² ƒ®ªï¶Z#²*×®.#®.ôğ½‘¥Øø(€€€€€€ñ‘¥ØÍÑå±”ô‰½±½ÈéÙ…È ´µÑ•áĞÌ¤í™½¹ĞµÍ¥é”èÄÅÁàíµ…É¥¸µ‰½ÑÑ½´èÄÉÁàˆø‘í‘•¹¥•üŸ².“²"c®†pƒªÆÃ®Ú¶Vc²£®.“®¦Ğƒ²V®z`ƒ®Ê¶*ó²ró®†pƒ®.“².pƒ²jS²Ê·¶VcªÆÃ®
+`°ƒ®â3®vó²jÃ²‚ ƒ²ó²3²Â÷²v`ƒ²zC®²ó²€£ŠN`¤ƒŠHƒªÚ3¶Vs²^C²pƒ²r²æc®–ğƒ¶^#²j§¶VÓ²ó²ã²jP¸œé•ÉÈ¹µ•ÍÍ…•ôğ½‘¥Øø(€€€€€€ñ‰ÕÑÑ½¸½¹±¥¬ô‰É•ÅÕ•ÍÑ9•…É1½…Ñ¥½¸ ¤ˆÍÑå±”ô‰™½¹ĞµÍ¥é”èÄÉÁàí™½¹Ğµİ•¥¡ĞèÜÀÀí½±½Èè™™˜í‰…­É½Õ¹éÙ…È ´µ…•¹Ğ¤í‰½É‘•Èé¹½¹”í‰½É‘•ÈµÉ…‘¥ÕÌèÄÁÁàíÁ…‘‘¥¹œèåÁà€ÄáÁàíÕÉÍ½ÈéÁ½¥¹Ñ•Èí™½¹Ğµ™…µ¥±äéÙ…È ´µÍ…¹Ì¤ˆûÂ~N4ƒ²r²æ`ƒªÚ3¶Vpƒ®.“².pƒ²jS²Ê´ğ½‰ÕÑÑ½¸ø(€€€€ğ½‘¥Øù€ì(€ô±íÑ¥µ•½ÕĞèàÀÀÀ±µ…á¥µÕµ”èØÀÀÀÀ±•¹…‰±•!¥¡ÕÉ…äé™…±Í•ô¤ì)ô()™Õ¹Ñ¥½¸É•¹‘•ÉM%9•…É1¥ÍĞ ¥ì(€½¹ÍĞ±¥ÍĞõ‘½Õµ•¹Ğ¹•Ñ±•µ•¹Ñ	å% Í¤µ¹•…Èµ±¥ÍĞœ¤ì(€¥˜ …±¥ÍĞ¥É•ÑÕÉ¸ì(€±•Ğ™¥±Ñ•É•õ}Í¥9•…ÉM¡½İ±½Í•ı}Í¥9•…É±°é}Í¥9•…É±°¹™¥±Ñ•È¡ÌôùÌ¹±¥¹•Ì˜™Ì¹±¥¹•Ì¹±•¹Ñ øÀ¤ì(€€¼¼ƒ®ª£®Ns®Îƒ¶V¶ÀèƒªâÃ²Â ƒ®ª£®Np÷²^Ó²Â ƒ²‚W²Â£²^·®0°ƒ²‚²Ê€ƒ®ª£®Np÷²‚²Ê€ƒ®ã²€ƒ²^·®0(€}µ½‘•MÑ¹M•ÑÍ%¹¥Ğ ¤ì(€¥˜¡}…ÁÁ5½‘”ôôôµ•ÑÉ¼œ˜™}µ•ÑÉ½MÑ¹M•Ğ¤™¥±Ñ•É•õ™¥±Ñ•É•¹™¥±Ñ•È¡Ìôù}µ•ÑÉ½MÑ¹M•Ğ¹¡…Ì¡}ÍÑ¹	…Í•9…µ”¡Ì¹¹…µ”¤¤¤ì(€•±Í”¥˜¡}ÑÉ…¥¹MÑ¹M•Ğ¤™¥±Ñ•É•õ™¥±Ñ•É•¹™¥±Ñ•È¡Ìôù}ÑÉ…¥¹MÑ¹M•Ğ¹¡…Ì¡}ÍÑ¹	…Í•9…µ”¡Ì¹¹…µ”¤¤¤ì(€¥˜ …™¥±Ñ•É•¹±•¹Ñ ¥í±¥ÍĞ¹¥¹¹•É!Q50õ€ñ‘¥ØÍÑå±”ô‰½±½ÈéÙ…È ´µÑ•áĞÌ¤í™½¹ĞµÍ¥é”èÄÍÁàíÑ•áĞµ…±¥¸é•¹Ñ•ÈíÁ…‘‘¥¹œèáÁàˆû²ó®Î²^@ƒ²jÓ²bƒ²’G²và€‘í}…ÁÁ5½‘”ôôôµ•ÑÉ¼œüŸ²‚²Êƒ²^´œèŸªâÃ²Â£²^´ôƒ²^²v0ğ½‘¥Øù€íÉ•ÑÕÉ¸íô(€½¹ÍĞ‘½Ñ½±½ÉÌõlœŒÍˆàÉ˜Øœ°œ˜äÜÌÄØœ°œ„àÔÕ˜Üœ°œŒÈÉŒÔÕ”œ°œ•˜ĞĞĞĞtì(€½¹ÍĞÑ½ÀÔõ™¥±Ñ•É•¹Í±¥” À°Ô¤ì((€€¼¼ƒŠRŠR ½½É‘¥¹…Ñ”µ‰…Í•µ¥¹¤µ…ÀƒŠRŠR (€±•Ğµ…ÁMYôœœì(€¥˜¡}Í¥9•…É1…Ğ„ôõ¹Õ±°¥ì(€€€½¹ÍĞ\ôÌÈÀ± ôÈÀÀì(€€€½¹ÍĞ…±±1…ÑÌõm}Í¥9•…É1…Ğ°¸¸¹Ñ½ÀÔ¹µ…À¡ÌôùÌ¹±…Ğ¥tì(€€€½¹ÍĞ…±±1½¹Ìõm}Í¥9•…É1½¸°¸¸¹Ñ½ÀÔ¹µ…À¡ÌôùÌ¹±½¸¥tì(€€€±•Ğµ¥¹1…Ğõ5…Ñ ¹µ¥¸ ¸¸¹…±±1…ÑÌ¤±µ…á1…Ğõ5…Ñ ¹µ…à ¸¸¹…±±1…ÑÌ¤ì(€€€±•Ğµ¥¹1½¸õ5…Ñ ¹µ¥¸ ¸¸¹…±±1½¹Ì¤±µ…á1½¸õ5…Ñ ¹µ…à ¸¸¹…±±1½¹Ì¤ì(€€€½¹ÍĞÉ1…Ğõµ…á1…Ğµµ¥¹1…ÑñğÀ¸ÀÀÔ±É1½¸õµ…á1½¸µµ¥¹1½¹ñğÀ¸ÀÀÔì(€€€½¹ÍĞÁ…ôÀ¸Èàì(€€€µ¥¹1…Ğ´õÉ1…Ğ©Á…ìµ…á1…Ğ¬õÉ1…Ğ©Á…ì(€€€µ¥¹1½¸´õÉ1½¸©Á…ìµ…á1½¸¬õÉ1½¸©Á…ì(€€€½¹ÍĞÑ½`õ±½¸ôø ¡±½¸µµ¥¹1½¸¤¼¡µ…á1½¸µµ¥¹1½¸¤¤©\ì(€€€½¹ÍĞÑ½dõ±…Ğôø ¡µ…á1…Ğµ±…Ğ¤¼¡µ…á1…Ğµµ¥¹1…Ğ¤¤© ì(€€€½¹ÍĞµå`õÑ½`¡}Í¥9•…É1½¸¤±µådõÑ½d¡}Í¥9•…É1…Ğ¤ì(€€€½¹ÍĞ‘½ÑÌõÑ½ÀÔ¹µ…À ¡Ì±¤¤ôø¡íàéÑ½`¡Ì¹±½¸¤±äéÑ½d¡Ì¹±…Ğ¤±Œé‘½Ñ½±½ÉÍm¥t±¹…µ”éÌ¹¹…µ”±‘¥ÍĞéÌ¹‘¥ÍÑô¤¤ì(€€€½¹ÍĞ±…‰•°ô¡±¥à¤ôùì(€€€€€€¼¼Ù½¥É¥¡Ğµ•‘”½Ù•É™±½Ü…¹½Ù•É±…Àİ¥Ñ €‹®
+`ˆ±…‰•°(€€€€€½¹ÍĞ±àõ¹àù\¨À¸ØÔı¹à´Üé¹à¬Üì(€€€€€½¹ÍĞ…¹¡½Èõ¹àù\¨À¸ØÔü•¹œèÍÑ…ÉĞœì(€€€€€½¹ÍĞ±äõ¹äğÄàı¹ä¬ÄØé¹ä´Üì(€€€€€½¹ÍĞ‘¥ÍÑMÑÈõ¹‘¥ÍĞğÄü¡¹‘¥ÍĞ¨ÄÀÀÀ¤¹Ñ½¥á• À¤¬´œé¹‘¥ÍĞ¹Ñ½¥á• Ä¤¬­´œì(€€€€€É•ÑÕÉ¸€ñ¥É±”àôˆ‘í¹à¹Ñ½¥á• Ä¥ôˆäôˆ‘í¹ä¹Ñ½¥á• Ä¥ôˆÈôˆÔˆ™¥±°ôˆ‘í¹ôˆ¼ø(€€€€€€€€ñÑ•áĞàôˆ‘í±à¹Ñ½¥á• Ä¥ôˆäôˆ‘í±ä¹Ñ½¥á• Ä¥ôˆ™½¹ĞµÍ¥é”ôˆäˆ™¥±°ôˆ‘í¹ôˆ™½¹Ğµ™…µ¥±äô‰Í…¹ÌµÍ•É¥˜ˆÑ•áĞµ…¹¡½Èôˆ‘í…¹¡½Éôˆø‘í¹¹…µ•ô€ ‘í‘¥ÍÑMÑÉô¤ğ½Ñ•áĞù€ì(€€€ôì(€€€½¹ÍĞµå1äõµådğÈÈıµåd¬Äàéµåd´ÄÀì(€€€µ…ÁMYõ€ñ‘¥ØÍÑå±”ô‰‰…­É½Õ¹éÙ…È ´µ‰œÈ¤í‰½É‘•ÈèÅÁàÍ½±¥Ù…È ´µ‰½É‘•È¤í‰½É‘•ÈµÉ…‘¥ÕÌèÄÁÁàí½Ù•É™±½Üé¡¥‘‘•¸íµ…É¥¸µ‰½ÑÑ½´èÄÁÁàˆø(€€€€€€ñÍÙœİ¥‘Ñ ôˆÄÀÀ”ˆÙ¥•İ	½àôˆÀ€À€‘í]ô€‘í!ôˆÍÑå±”ô‰‘¥ÍÁ±…äé‰±½¬ˆø(€€€€€€€€‘í‘½ÑÌ¹µ…À ¡±¤¤ôù±…‰•°¡±¤¤¤¹©½¥¸ œœ¥ô(€€€€€€€€ñ¥É±”àôˆ‘íµå`¹Ñ½¥á• Ä¥ôˆäôˆ‘íµåd¹Ñ½¥á• Ä¥ôˆÈôˆÄÈˆ™¥±°ôˆŒÈÉŒÔÕ”ˆ½Á…¥ÑäôˆÀ¸Äàˆ¼ø(€€€€€€€€ñ¥É±”àôˆ‘íµå`¹Ñ½¥á• Ä¥ôˆäôˆ‘íµåd¹Ñ½¥á• Ä¥ôˆÈôˆÔˆ™¥±°ôˆŒÈÉŒÔÕ”ˆ¼ø(€€€€€€€€ñÑ•áĞàôˆ‘íµå`¹Ñ½¥á• Ä¥ôˆäôˆ‘íµå1ä¹Ñ½¥á• Ä¥ôˆ™½¹ĞµÍ¥é”ôˆäˆ™¥±°ôˆŒÈÉŒÔÕ”ˆ™½¹Ğµ™…µ¥±äô‰Í…¹ÌµÍ•É¥˜ˆÑ•áĞµ…¹¡½Èô‰µ¥‘‘±”ˆ™½¹Ğµİ•¥¡Ğô‰‰½±ˆû®
+`ğ½Ñ•áĞø(€€€€€€€€ñÑ•áĞàôˆ‘ì¡\´Ø¤¹Ñ½¥á• À¥ôˆäôˆ‘ì¡ ´Ø¤¹Ñ½¥á• À¥ôˆ™½¹ĞµÍ¥é”ôˆàˆ™¥±°ô‰É‰„ ÄàÀ°ÄàÀ°ÄàÀ°À¸Ğ¤ˆÑ•áĞµ…¹¡½Èô‰•¹ˆ™½¹Ğµ™…µ¥±äô‰Í…¹ÌµÍ•É¥˜ˆû².“²‚pƒ²Š3¶FpƒªâÃ®Â`ğ½Ñ•áĞø(€€€€€€ğ½ÍÙœø(€€€€ğ½‘¥Øù€ì(€ô((€€¼¼ƒŠRŠR MÑ…Ñ¥½¸±¥ÍĞƒŠRŠR (€½¹ÍĞÍÑ…Ñ¥½¹1¥ÍĞõ™¥±Ñ•É•¹Í±¥” À°ÄÀ¤¹µ…À ¡Ì±¤¤ôùì(€€€½¹ÍĞ½±½Èõ¤ğÔı‘½Ñ½±½ÉÍm¥tèÙ…È ´µÑ•áĞÈ¤œì(€€€½¹ÍĞ‘¥ÍÑMÑÈõÌ¹‘¥ÍĞğÄü¡Ì¹‘¥ÍĞ¨ÄÀÀÀ¤¹Ñ½¥á• À¤¬´œéÌ¹‘¥ÍĞ¹Ñ½¥á• Ä¤¬­´œì(€€€½¹ÍĞµ…¥¹1¥¹•ÌõÌ¹±¥¹•Ì¹Í±¥” À°Ì¤¹©½¥¸ Ÿ
+Üœ¤ì(€€€½¹ÍĞ•áÑÉ…1¥¹•ÌõÌ¹±¥¹•Ì¹±•¹Ñ øÌı€ƒ²fà€‘íÌ¹±¥¹•Ì¹±•¹Ñ ´Í÷ªÂpƒ®ã²€èœœì(€€€½¹ÍĞÁÉÈõÌ¹Á±…Ñ™½ÉµÍññmtì(€€€½¹ÍĞÁ±…ÑMÑÈõÁÉÈ¹±•¹Ñ øÀı€ƒ
+Üƒ¶f €Åø‘í5…Ñ ¹µ…à ¸¸¹ÁÉÈ¥÷®Ê!€èœœì(€€€½¹ÍĞ¹…µ•ÍŒõÌ¹¹…µ”¹É•Á±…” ¼œ½œ°‰qpœˆ¤ì(€€€É•ÑÕÉ¸€ñ‘¥ØÍÑå±”ô‰‘¥ÍÁ±…äé™±•àí…±¥¸µ¥Ñ•µÌé•¹Ñ•Èí…ÀèÄÁÁàíÁ…‘‘¥¹œèÄÁÁà€ÄÉÁàí‰…­É½Õ¹éÙ…È ´µ‰œÈ¤í‰½É‘•ÈèÅÁàÍ½±¥Ù…È ´µ‰½É‘•È¤í‰½É‘•ÈµÉ…‘¥ÕÌèÄÁÁàíµ…É¥¸µ‰½ÑÑ½´èÙÁàíÕÉÍ½ÈéÁ½¥¹Ñ•Èˆ(€€€€€½¹±¥¬ô‰½Á•¹MÑ…Ñ¥½¹•Ñ…¥° œ‘í¹…µ•Íôœ¤ˆø(€€€€€€ñ‘¥ØÍÑå±”ô‰µ¥¸µİ¥‘Ñ èĞáÁàí™½¹ĞµÍ¥é”èÄÑÁàí™½¹Ğµİ•¥¡ĞèÜÀÀí½±½Èè‘í½±½Éôí™½¹Ğµ™…µ¥±äéÙ…È ´µµ½¹¼¤ˆø‘í‘¥ÍÑMÑÉôğ½‘¥Øø(€€€€€€ñ‘¥ØÍÑå±”ô‰™±•àèÄˆø(€€€€€€€€ñ‘¥ØÍÑå±”ô‰™½¹ĞµÍ¥é”èÄÕÁàí™½¹Ğµİ•¥¡ĞèÜÀÀˆø‘íÌ¹¹…µ•ô‘íÌ¹±¥¹•Ì¹±•¹Ñ ôôôÀüœ€ñÍÁ…¸ÍÑå±”ô‰™½¹ĞµÍ¥é”èÄÁÁàí½±½ÈéÙ…È ´µÑ•áĞÌ¤ˆø£¶>C²^´¤ğ½ÍÁ…¸øœèœôğ½‘¥Øø(€€€€€€€€ñ‘¥ØÍÑå±”ô‰™½¹ĞµÍ¥é”èÄÅÁàí½±½ÈéÙ…È ´µÑ•áĞÌ¤íµ…É¥¸µÑ½ÀèÉÁàˆø‘íµ…¥¹1¥¹•Íô‘í•áÑÉ…1¥¹•Íô‘íÁ±…ÑMÑÉôğ½‘¥Øø(€€€€€€ğ½‘¥Øø(€€€€€€ñ‘¥ØÍÑå±”ô‰™½¹ĞµÍ¥é”èÄáÁàí½±½ÈéÙ…È ´µÑ•áĞÌ¤ˆûŠèğ½‘¥Øø(€€€€ğ½‘¥Øù€ì(€ô¤¹©½¥¸ œœ¤ì((€±¥ÍĞ¹¥¹¹•É!Q50õµ…ÁMY­ÍÑ…Ñ¥½¹1¥ÍĞì)ô()™Õ¹Ñ¥½¸½Á•¹MÑ…Ñ¥½¹•Ñ…¥°¡¹…µ”¥ì(€}Í¥ÕÉÉ•¹ĞõÉ…¥±MÑ…Ñ¥½¹…Ñ…9…µ”¡¹…µ”¤ì}Í¥MÕ‰Q…ˆô‘•Ñ…¥°œì}Í¥…É‘A±…Ñ™½É´õ¹Õ±°ì}Í¥5•ÑÉ½Õ¥‘•A±…Ñ™½É´õ¹Õ±°ì(€Íİ¥Ñ¡Q…ˆ ÍÑ…Ñ¥½¹¥¹™¼œ¤ì(€Í•ÑQ¥µ•½ÕĞ  ¤ôùÉ•¹‘•ÉMÑ…Ñ¥½¹%¹™¼ ¤°ÔÀ¤ì)ô()™Õ¹Ñ¥½¸É•¹‘•ÉM%•Ñ…¥°¡•°¥ì(€½¹ÍĞÕÉY…°ô¡}Í¥ÕÉÉ•¹Ññğœœ¤¹É•Á±…” ¼ˆ½œ°œ™ÅÕ½Ğìœ¤ì(€•°¹¥¹¹•É!Q50õ€ñ‘¥ØÍÑå±”ô‰µ…É¥¸µÑ½ÀèÄÉÁàˆø(€€€€ñ‘¥Ø±…ÍÌô‰…ÕÑ½½µÁ±•Ñ”µİÉ…ÀˆÍÑå±”ô‰µ…É¥¸µ‰½ÑÑ½´èÄÉÁàˆø(€€€€€€ñ¥¹ÁÕĞ¥ô‰Í¤µ¥¹ÀˆÑåÁ”ô‰Ñ•áĞˆÁ±…•¡½±‘•Èô‹²^´ƒ²vÓ®šƒªÊ²$€£²Ò#²ÄƒªÂ®*”°ƒ²b èƒßßÄ¤ˆÙ…±Õ”ôˆ‘íÕÉY…±ôˆ(€€€€€€€ÍÑå±”ô‰İ¥‘Ñ èÄÀÀ”í‰…­É½Õ¹éÙ…È ´µ‰œÌ¤í‰½É‘•ÈèÅÁàÍ½±¥Ù…È ´µ‰½É‘•È¤í‰½É‘•ÈµÉ…‘¥ÕÌèÄÁÁàíÁ…‘‘¥¹œèÄÁÁà€ÄÑÁàí½±½ÈéÙ…È ´µÑ•áĞÄ¤í™½¹ĞµÍ¥é”èÄÑÁàí™½¹Ğµ™…µ¥±äéÙ…È ´µÍ…¹Ì¤í‰½àµÍ¥é¥¹œé‰½É‘•Èµ‰½àˆ(€€€€€€€…ÕÑ½½µÁ±•Ñ”ô‰½™˜ˆ(€€€€€€€½¹¥¹ÁÕĞô‰Í¥M•…É ¡Ñ¡¥Ì¹Ù…±Õ”¤ˆ(€€€€€€€½¹‰±ÕÈô‰Í•ÑQ¥µ•½ÕĞ  ¤ôùí½¹ÍĞÈõ‘½Õµ•¹Ğ¹•Ñ±•µ•¹Ñ	å% Í¤µÉ•ÍÕ±ÑÌœ¤í¥˜¡È¥íÈ¹ÍÑå±”¹‘¥ÍÁ±…äô¹½¹”œíõô°ÄØÀ¤ˆ(€€€€€€€½¹­•å‘½İ¸ô‰Í¥M•…É¡-•ä¡•Ù•¹Ğ¤ˆø(€€€€€€ñ‘¥Ø¥ô‰Í¤µÉ•ÍÕ±ÑÌˆ±…ÍÌô‰…Œµ‘É½Á‘½İ¸ˆÍÑå±”ô‰‘¥ÍÁ±…äé¹½¹”ˆøğ½‘¥Øø(€€€€ğ½‘¥Øø(€€€€ñ‘¥Ø¥ô‰Í¤µ…Éˆøğ½‘¥Øøğ½‘¥Øù€ì(€¥˜¡}Í¥ÕÉÉ•¹Ğ¤É•¹‘•ÉM%…É¡}Í¥ÕÉÉ•¹Ğ¤ì)ô()™Õ¹Ñ¥½¸Í¥M•…É ¡Ä¥ì(€½¹ÍĞ•°õ‘½Õµ•¹Ğ¹•Ñ±•µ•¹Ñ	å% Í¤µÉ•ÍÕ±ÑÌœ¤ì(€¥˜ …•°¥É•ÑÕÉ¸ì(€Äô¡Åñğœœ¤¹ÑÉ¥´ ¤ì(€¥˜ …ÅññÑåÁ•½˜MQQ%=9}ôôôÕ¹‘•™¥¹•œ¥í•°¹ÍÑå±”¹‘¥ÍÁ±…äô¹½¹”œí•°¹¥¹¹•É!Q50ôœœíÉ•ÑÕÉ¸íô(€½¹ÍĞÅ	…Í”õÄ¹•¹‘Í]¥Ñ  Ÿ²^´œ¤ıÄ¹Í±¥” À°´Ä¤éÄì(€½¹ÍĞÍÑ…Ñ¥½¹9…µ•Ìõ¹•ÜM•Ğ¡=‰©•Ğ¹­•åÌ¡MQQ%=9}¤¤ì(€¥˜¡ÑåÁ•½˜11}QI%9L„ôôÕ¹‘•™¥¹•œ¥11}QI%9L¹™½É… ¡Ğôø¡Ğ¹ÍÑ½ÁÍññmt¤¹™½É… ¡Ìôùí¥˜¡Ì¹Ì˜˜¡Ì¹…ÉÉññÌ¹‘•À¤¥ÍÑ…Ñ¥½¹9…µ•Ì¹…‘¡Ì¹Ì¤íô¤¤ì(€=‰©•Ğ¹­•åÌ¡9=IQ!}MQQ%=9}Q}1%ML¤¹™½É… ¡¸ôùÍÑ…Ñ¥½¹9…µ•Ì¹…‘¡¸¤¤ì(€½¹ÍĞÕ¹¥ÅÕ•9…µ•Ìõ¹•Ü5…À ¤ì(€ÍÑ…Ñ¥½¹9…µ•Ì¹™½É… ¡¸ôùí½¹ÍĞ‰…Í”õ¸¹•¹‘Í]¥Ñ  Ÿ²^´œ¤ı¸¹Í±¥” À°´Ä¤é¸í¥˜ …Õ¹¥ÅÕ•9…µ•Ì¹¡…Ì¡‰…Í”¥ñğ…¸¹•¹‘Í]¥Ñ  Ÿ²^´œ¤¥Õ¹¥ÅÕ•9…µ•Ì¹Í•Ğ¡‰…Í”±¸¤íô¤ì(€½¹ÍĞ…±°õl¸¸¹Õ¹¥ÅÕ•9…µ•Ì¹Ù…±Õ•Ì ¥t¹™¥±Ñ•È¡¸ôù¥ÍI…¥±MÑ…Ñ¥½¹%¹I•¥½¸¡¸¤¤¹™¥±Ñ•È¡¸ôùì(€€€½¹ÍĞ¹Ìõ¸¹•¹‘Í]¥Ñ  Ÿ²^´œ¤ı¸¹Í±¥” À°´Ä¤é¸ì(€€€É•ÑÕÉ¸µ…Ñ¡•ÍEÕ•Éä¡¸±Ä¥ññµ…Ñ¡•ÍEÕ•Éä¡¹Ì±Ä¥ññµ…Ñ¡•ÍEÕ•Éä¡¹Ì±Å	…Í”¤ì(€ô¤ì(€…±°¹Í½ÉĞ ¡„±ˆ¤ôùì(€€€½¹ÍĞ…Lõ„¹•¹‘Í]¥Ñ  Ÿ²^´œ¤ı„¹Í±¥” À°´Ä¤é„ì(€€€½¹ÍĞ‰Lõˆ¹•¹‘Í]¥Ñ  Ÿ²^´œ¤ıˆ¹Í±¥” À°´Ä¤éˆì(€€€½¹ÍĞ…Hô¡…LôôõÅ	…Í•ññ„ôôõÄ¤üÀé…L¹ÍÑ…ÉÑÍ]¥Ñ ¡Å	…Í”¤üÄèÈì(€€€½¹ÍĞ‰Hô¡‰LôôõÅ	…Í•ññˆôôõÄ¤üÀé‰L¹ÍÑ…ÉÑÍ]¥Ñ ¡Å	…Í”¤üÄèÈì(€€€É•ÑÕÉ¸…H„ôõ‰Hı…Hµ‰Hé„¹±½…±•½µÁ…É”¡ˆ°­¼œ¤ì(€ô¤ì(€½¹ÍĞÉ•Ìõ…±°¹Í±¥” À°ÄÈ¤ì(€¥˜ …É•Ì¹±•¹Ñ ¥í•°¹ÍÑå±”¹‘¥ÍÁ±…äô¹½¹”œí•°¹¥¹¹•É!Q50ôœœíÉ•ÑÕÉ¸íô(€½¹ÍĞ¥Í¡½DõÄ¹ÍÁ±¥Ğ œœ¤¹•Ù•Éä¡Œôù!<¹¥¹±Õ‘•Ì¡Œ¤¤ì(€•°¹¥¹¹•É!Q50õÉ•Ì¹µ…À¡¸ôùì(€€€½¹ÍĞ¹ˆõ¸¹•¹‘Í]¥Ñ  Ÿ²^´œ¤ı¸¹Í±¥” À°´Ä¤é¸ì€€€¼¼ƒªÊ²$ƒ¶Fs².s®*Pƒ® ƒ²vÓ®š£Š^/Š^,¤(€€€±•Ğ‘¥ÍÁ±…äõ¹ˆì(€€€¥˜ …¥Í¡½D¥ì(€€€€€½¹ÍĞ¤õ¹ˆ¹¥¹‘•á=˜¡Å	…Í•ññÄ¤ì(€€€€€¥˜¡¤øôÀ¥í½¹ÍĞ0ô¡Å	…Í•ññÄ¤¹±•¹Ñ í‘¥ÍÁ±…äõ¹ˆ¹Í±¥” À±¤¤­€ñÍÁ…¸ÍÑå±”ô‰½±½ÈéÙ…È ´µ…•¹Ğ¤ˆø‘í¹ˆ¹Í±¥”¡¤±¤­0¥ôğ½ÍÁ…¸ù€­¹ˆ¹Í±¥”¡¤­0¤íô(€€€ô(€€€½¹ÍĞ¹ÍŒõ¸¹É•Á±…” ½qp½œ°qqqpœ¤¹É•Á±…” ¼œ½œ°‰qpœˆ¤ì(€€€É•ÑÕÉ¸€ñ‘¥Ø±…ÍÌô‰…Œµ¥Ñ•´ˆ½¹µ½ÕÍ•‘½İ¸ô‰•Ù•¹Ğ¹ÁÉ•Ù•¹Ñ•™…Õ±Ğ ¤íÍ¥M•±•Ğ œ‘í¹Íôœ¤ˆø‘í‘¥ÍÁ±…åôğ½‘¥Øù€ì(€ô¤¹©½¥¸ œœ¤ì(€•°¹±…ÍÍ9…µ”ô…Œµ‘É½Á‘½İ¸½Á•¸œì(€•°¹ÍÑå±”¹‘¥ÍÁ±…äô‰±½¬œì)ô()™Õ¹Ñ¥½¸Í¥M•…É¡-•ä¡”¥ì(€½¹ÍĞ‘É½Àõ‘½Õµ•¹Ğ¹•Ñ±•µ•¹Ñ	å% Í¤µÉ•ÍÕ±ÑÌœ¤ì(€¥˜ …‘É½Áññ‘É½À¹ÍÑå±”¹‘¥ÍÁ±…äôôô¹½¹”œ¥É•ÑÕÉ¸ì(€½¹ÍĞ¥Ñ•µÌõ‘É½À¹ÅÕ•ÉåM•±•Ñ½É±° œ¹…Œµ¥Ñ•´œ¤ì(€¥˜ …¥Ñ•µÌ¹±•¹Ñ ¥É•ÑÕÉ¸ì(€±•Ğ¥‘àô´Äì(€¥Ñ•µÌ¹™½É…  ¡¥Ğ±¤¤ôùí¥˜¡¥Ğ¹±…ÍÍ1¥ÍĞ¹½¹Ñ…¥¹Ì …Ñ¥Ù”œ¤¥¥‘àõ¤íô¤ì(€¥˜¡”¹­•äôôôÉÉ½İ½İ¸œ¥í”¹ÁÉ•Ù•¹Ñ•™…Õ±Ğ ¤í¥‘àõ5…Ñ ¹µ¥¸¡¥‘à¬Ä±¥Ñ•µÌ¹±•¹Ñ ´Ä¤íô(€•±Í”¥˜¡”¹­•äôôôÉÉ½İUÀœ¥í”¹ÁÉ•Ù•¹Ñ•™…Õ±Ğ ¤í¥‘àõ5…Ñ ¹µ…à¡¥‘à´Ä°À¤íô(€•±Í”¥˜¡”¹­•äôôô¹Ñ•Èœ¥ì(€€€”¹ÁÉ•Ù•¹Ñ•™…Õ±Ğ ¤ì(€€€½¹ÍĞĞõ¥Ñ•µÍm5…Ñ ¹µ…à¡¥‘à°À¥tì(€€€¥˜¡Ğ¥Ğ¹‘¥ÍÁ…Ñ¡Ù•¹Ğ¡¹•Ü5½ÕÍ•Ù•¹Ğ µ½ÕÍ•‘½İ¸œ¤¤ì(€€€É•ÑÕÉ¸ì(€ô•±Í”¥˜¡”¹­•äôôôÍ…Á”œ¥í‘É½À¹ÍÑå±”¹‘¥ÍÁ±…äô¹½¹”œíÉ•ÑÕÉ¸íô(€•±Í”É•ÑÕÉ¸ì(€¥Ñ•µÌ¹™½É…  ¡¥Ğ±¤¤ôù¥Ğ¹±…ÍÍ1¥ÍĞ¹Ñ½±” …Ñ¥Ù”œ±¤ôôõ¥‘à¤¤ì(€¥˜¡¥Ñ•µÍm¥‘át¥¥Ñ•µÍm¥‘át¹ÍÉ½±±%¹Ñ½Y¥•Ü¡í‰±½¬è¹•…É•ÍĞô¤ì)ô()™Õ¹Ñ¥½¸Í¥M•±•Ğ¡¹…µ”¥ì(€¹…µ”õÉ…¥±MÑ…Ñ¥½¹…Ñ…9…µ”¡¹…µ”¤ì(€}Í¥ÕÉÉ•¹Ğõ¹…µ”ì}Í¥…É‘A±…Ñ™½É´õ¹Õ±°ì}Í¥5•ÑÉ½Õ¥‘•A±…Ñ™½É´õ¹Õ±°ì(€½¹ÍĞ¥¹Àõ‘½Õµ•¹Ğ¹•Ñ±•µ•¹Ñ	å% Í¤µ¥¹Àœ¤ì(€¥˜¡¥¹À¥¥¹À¹Ù…±Õ”õ¹…µ”¹•¹‘Í]¥Ñ  Ÿ²^´œ¤ı¹…µ”¹Í±¥” À°´Ä¤é¹…µ”ì€€€¼¼ƒªÊ²'²Â÷²v ƒ® ƒ²vÓ®š£Š^/Š^,¤(€½¹ÍĞ•°õ‘½Õµ•¹Ğ¹•Ñ±•µ•¹Ñ	å% Í¤µÉ•ÍÕ±ÑÌœ¤ì(€¥˜¡•°¥í•°¹ÍÑå±”¹‘¥ÍÁ±…äô¹½¹”œí•°¹¥¹¹•É!Q50ôœœíô(€É•¹‘•ÉM%…É¡¹…µ”¤ì)ô()™Õ¹Ñ¥½¸}•ÑA±…Ñ™½Éµ%¹™¼¡ÍÑ…Ñ¥½¹9…µ”°Á±…Ñ™½Éµ9Õ´¥ì(€¥˜¡ÑåÁ•½˜A1Q=I5}ôôôÕ¹‘•™¥¹•œ¥É•ÑÕÉ¸¹Õ±°ì(€½¹ÍĞÌõA1Q=I5}	mÍÑ…Ñ¥½¹9…µ•tì(€¥˜ …Ì¥É•ÑÕÉ¸¹Õ±°ì(€É•ÑÕÉ¸ÍmMÑÉ¥¹œ¡Á±…Ñ™½Éµ9Õ´¥uññ¹Õ±°ì)ô()™Õ¹Ñ¥½¸}É…‘•5…Ñ¡•ÍA±…Ñ™½É´¡ÑÉ…¥¹É…‘”°Á±…Ñ™½ÉµÉ…‘•Ì¥ì(€¥˜ …Á±…Ñ™½ÉµÉ…‘•ÍññÁ±…Ñ™½ÉµÉ…‘•Ì¹±•¹Ñ ôôôÀ¥É•ÑÕÉ¸ÑÉÕ”ì(€™½È¡½¹ÍĞÁœ½˜Á±…Ñ™½ÉµÉ…‘•Ì¥ì(€€€¥˜¡Áœôôô-Q`œ˜˜¡ÑÉ…¥¹É…‘”ôôô-Q`ññÑÉ…¥¹É…‘”ôôô-Q`·²
+Ã²ÊpññÑÉ…¥¹É…‘”ôôô-Q`·²vÓ²v0œ¤¥É•ÑÕÉ¸ÑÉÕ”ì(€€€¥˜¡ÁœôôôMIPœ˜™ÑÉ…¥¹É…‘”ôôôMIPœ¥É•ÑÕÉ¸ÑÉÕ”ì(€€€¥˜¡Áœôôô%Q`·²#®#²vœ˜™ÑÉ…¥¹É…‘”ôôô%Q`·²#®#²vœ¥É•ÑÕÉ¸ÑÉÕ”ì(€€€¥˜¡Áœôôô%Q`·²Ê·²Ú`œ˜™ÑÉ…¥¹É…‘”ôôô%Q`·²Ê·²Ú`œ¥É•ÑÕÉ¸ÑÉÕ”ì(€€€¥˜¡Áœôôô%Q`·®#²v0œ˜™ÑÉ…¥¹É…‘”ôôô%Q`·®#²v0œ¥É•ÑÕÉ¸ÑÉÕ”ì(€€€¥˜¡ÁœôôôŸ®²ÓªÚ¶fS¶bàœ˜˜¡ÑÉ…¥¹É…‘”ôôôŸ®²ÓªÚ¶fS¶bàññÑÉ…¥¹É…‘”ôôôŸ®²ÓªÚ¶bã¶fPœ¤¥É•ÑÕÉ¸ÑÉÕ”ì(€ô(€É•ÑÕÉ¸™…±Í”ì)ô((¼¼ƒŠRŠR ƒ².“²
+³²j¤ƒ²*çªÂW²z”€£ªÊ3²zƒªâÃ®Â`°‘…Ñ„½¹¥µ‰¥}É•…±Á±…Ğ¹©Ì¤ƒŠRŠR (¼¼ÑÉ…¥¹9…µ”èƒ²^´ƒ²‚G®¾ã²
+°ƒ²^®*Pƒ²^´ƒ²vÓ®š€¡I1}A1Pƒ¶
+¤¸¹…µ”èMQQ%=9}½A1Q=I5}ƒ¶
+£²^´ƒ¶>³¶V ¤¸)¥˜¡ÑåÁ•½˜A1Q=I5}„ôôÕ¹‘•™¥¹•œ¥ì(€¥˜ …A1Q=I5}	lŸ²z—²"`£²‚®Ú§²^´t¥ì(€€€A1Q=I5}	lŸ²z—²"`£²‚®Ú§²^´tõì(€€€€€€ÄéíœélŸ®²ÓªÚ¶fS¶bàt±°élŸ²3®ÂÇ²€uô°(€€€€€€Èéíœémt±°émuô°(€€€€€€Ìéíœémt±°émuô°(€€€€€€ĞéíœélŸ®²ÓªÚ¶fS¶bàt±°élŸ²3®ÂÇ²€uô(€€€ôì(€ô(€¥˜ …A1Q=I5}	lŸ®Ú¶>$£²‚W²€§²^´t¥ì(€€€A1Q=I5}	lŸ®Ú¶>$£²‚W²€§²^´tõì(€€€€€€ÄéíœélŸ®²ÓªÚ¶fS¶bàt±°élŸ²‚W²ƒ²€uô°(€€€€€€ÈéíœélŸ®²ÓªÚ¶fS¶bàt±°élŸ²‚W²ƒ²€uô(€€€ôì(€ô)ô(¼¼ƒªÎ×¶Ôƒ²Êƒ®>ƒªŞs²ædè©Ì½Í¡…É•½¹¥µ‰¥}É…¥±}‘½µ…¥¸¹©Ì(¼¼ƒ².“®6Ã²vÓ¶ÃªÂ ƒ²^®*Pƒ²‚W²Â£®0ƒ¶rÓ®š³²*“¶.Ä£®NÇªâ'
+ß®Â§®¦Ó
+ß¶*ã²r §²ró®†pƒ¶>Ó®ÂÄ)™Õ¹Ñ¥½¸}¡•ÕÉ¥ÍÑ¥A±…Ñ™½É´¡¹…µ”°ÑÉ…¥¹Ì°Ğ¥ì(€¥˜¡ÑåÁ•½˜A1Q=I5}ôôôÕ¹‘•™¥¹•ñğ…A1Q=I5}	m¹…µ•t¥É•ÑÕÉ¸¹Õ±°ì(€½¹ÍĞÁÌõ=‰©•Ğ¹­•åÌ¡A1Q=I5}	m¹…µ•t¤¹µ…À¡9Õµ‰•È¤(€€€€¹™¥±Ñ•È¡Àôùí½¹ÍĞ¤õA1Q=I5}	m¹…µ•umMÑÉ¥¹œ¡À¥tíÉ•ÑÕÉ¸¤˜˜¡¤¹œ¹±•¹Ñ øÁññ¤¹°¹±•¹Ñ øÀ¤íô¤(€€€€¹Í½ÉĞ ¡„±ˆ¤ôù„µˆ¤ì(€™½È¡½¹ÍĞÀ½˜ÁÌ¥ì(€€€¥˜¡}•Ñ¥±Ñ•É•‘QÉ…¥¹Í½ÉA±…Ñ™½É´¡¹…µ”±ÑÉ…¥¹Ì±À¤¹Í½µ”¡àôùà¹¹¼ôôõĞ¹¹¼¤¥É•ÑÕÉ¸Àì(€ô(€É•ÑÕÉ¸¹Õ±°ì)ô(¼¼ƒ²^Ó²Â£ªÂ ƒ²vĞƒ²^·²^C²pƒ².“²‚pƒ²
+³²j§¶Vc®*Pƒ²*çªÂW²z”€£ªÊ3²zƒ²jÃ²€°ƒ²^²ró®¦Ğƒ¶rÓ®š³²*“¶.Ä¤)™Õ¹Ñ¥½¸}Á±…Ñ™½Éµ½ÉQÉ…¥¸¡¹…µ”°ÑÉ…¥¹9…µ”°ÑÉ…¥¹Ì°Ğ¥ì(€½¹ÍĞÈõ}É•…±A±…Ñ™½É´¡Ğ¹¹¼°ÑÉ…¥¹9…µ”¤ì(€¥˜¡È„õ¹Õ±°¥É•ÑÕÉ¸Èì(€É•ÑÕÉ¸}¡•ÕÉ¥ÍÑ¥A±…Ñ™½É´¡¹…µ”°ÑÉ…¥¹Ì°Ğ¤ì)ô(¼¼ƒ²vĞƒ²^·²^@ƒ².“²‚pƒ²‚W²Â £¶×ªÎğƒ²‚s²fà§¶Vc®*Pƒ²^Ó²Â ƒ®ª§®†t)™Õ¹Ñ¥½¸}ÍÑ…Ñ¥½¹MÑ½ÁÁ¥¹QÉ…¥¹Ì¡ÑÉ…¥¹9…µ”¥ì(€ÑÉ…¥¹9…µ”õÉ…¥±MÑ…Ñ¥½¹…Ñ…9…µ”¡ÑÉ…¥¹9…µ”¤ì(€É•ÑÕÉ¸•ÑI…¥±QÉ…¥¹Í	åMÑ…Ñ¥½¸¡ÑÉ…¥¹9…µ”¤¹™¥±Ñ•È¡Ğôùì(€€€½¹ÍĞÌõĞ¹ÍÑ½ÁÌ¹™¥¹¡àôùÉ…¥±MÑ…Ñ¥½¹…Ñ…9…µ”¡à¹Ì¤ôôõÑÉ…¥¹9…µ”¤ì(€€€É•ÑÕÉ¸Ì˜˜¡¡…ÍQ¥µ”¡Ì¹‘•À¥ññ¡…ÍQ¥µ”¡Ì¹…ÉÈ¤¤˜˜…¥ÍA…ÍÍMÑ½À¡Ğ±Ì¹Ì¤ì(€ô¤ì)ô(¼¼ƒ²†Ã¶j3²^·²vĞƒ²vĞƒ²^Ó²Â£²v`ƒ²Š²Â§²^·²vãªÂ €£®.ç²^·²Š²Â¤¤)™Õ¹Ñ¥½¸}¥ÍQ•Éµ¥¹ÕÍĞ¡Ğ°ÑÉ…¥¹9…µ”¥ì(€¥˜¡Ğ¹‘•ÍĞôôõÑÉ…¥¹9…µ”¤É•ÑÕÉ¸ÑÉÕ”ì(€½¹ÍĞÌõĞ¹ÍÑ½ÁÌ¹™¥¹¡àôùà¹ÌôôõÑÉ…¥¹9…µ”¤ì(€É•ÑÕÉ¸€„„¡Ì˜™¡…ÍQ¥µ”¡Ì¹…ÉÈ¤˜˜…¡…ÍQ¥µ”¡Ì¹‘•À¤¤ì)ô(¼¼ƒ²^´ƒ²Š3¶Fp€¡‰…Í”ƒ²vÓ®šƒŠHMQQ%=9}°ƒ®Î²æ´ƒ¶>Ó®ÂÄƒ¶>³¶V ¤)™Õ¹Ñ¥½¸}Í¥MÑ¹½½É¡‰…Í”¥ì(€É•ÑÕÉ¸}ÍÑ¹½½É¡‰…Í”¤ì)ô(¼¼ƒ²vĞƒ²^Ó²Â£²v`ƒ²†Ã¶j3²^´ƒªâÃ²’ ƒ²²‚¿²¶nƒ²‚W²Â£²^´€£¶×ªÎğƒ²‚s²fà¤)™Õ¹Ñ¥½¸}…‘©MÑ½Á=˜¡Ğ°ÑÉ…¥¹9…µ”¥ì(€½¹ÍĞÍÑ½ÁÌõĞ¹ÍÑ½ÁÌ¹™¥±Ñ•È¡Ìôø¡¡…ÍQ¥µ”¡Ì¹…ÉÈ¥ññ¡…ÍQ¥µ”¡Ì¹‘•À¤¤˜˜…¥ÍA…ÍÍMÑ½À¡Ğ±Ì¹Ì¤¤ì(€½¹ÍĞ¤õÍÑ½ÁÌ¹™¥¹‘%¹‘•à¡ÌôùÌ¹ÌôôõÑÉ…¥¹9…µ”¤ì(€É•ÑÕÉ¸íÁÉ•Øé¤øÀıÍÑ½ÁÍm¤´Åt¹Ìé¹Õ±°°¹•áĞè¡¤øôÀ˜™¤ñÍÑ½ÁÌ¹±•¹Ñ ´Ä¤ıÍÑ½ÁÍm¤¬Åt¹Ìé¹Õ±±ôì)ô(¼¼ƒ¶n®ÎĞƒ²^´ƒ²’Dƒ¶b²z³²^·²^C²pƒªÂ²z”ƒªÂªæ3²jĞƒ²^´€£².“²Š3¶Fp¤ƒŠPƒªâ'¶Z'²vĞƒ²3²^´ƒ¶×ªÎó¶VÓ®>ƒ²f¶Z$ƒªâÃ²’ ƒ²ÖsªŞó²‚G²^´ƒ²ƒ¶t)™Õ¹Ñ¥½¸}¹•…É•ÍÑMÑ¸¡™É½µ	…Í”°…¹‘Ì¥ì(€½¹ÍĞ…ÉÈõl¸¸¹¹•ÜM•Ğ¡…¹‘Ì¹™¥±Ñ•È¡	½½±•…¸¤¥tì(€¥˜¡…ÉÈ¹±•¹Ñ ğôÄ¤É•ÑÕÉ¸…ÉÉlÁuññ¹Õ±°ì(€½¹ÍĞÕÈõ}Í¥MÑ¹½½É¡™É½µ	…Í”¤ì(€¥˜¡ÕÈ˜™ÑåÁ•½˜¡…Ù•ÉÍ¥¹•-´ôôô™Õ¹Ñ¥½¸œ¥ì(€€€…ÉÈ¹Í½ÉĞ ¡„±ˆ¤ôùì(€€€€€½¹ÍĞ„õ}Í¥MÑ¹½½É¡„¤°ˆõ}Í¥MÑ¹½½É¡ˆ¤ì(€€€€€½¹ÍĞ‘„õ„ı¡…Ù•ÉÍ¥¹•-´¡ÕÈ¹±…Ğ±ÕÈ¹±½¸±„¹±…Ğ±„¹±½¸¤èå”äì(€€€€€½¹ÍĞ‘ˆõˆı¡…Ù•ÉÍ¥¹•-´¡ÕÈ¹±…Ğ±ÕÈ¹±½¸±ˆ¹±…Ğ±ˆ¹±½¸¤èå”äì(€€€€€É•ÑÕÉ¸‘„µ‘ˆì(€€€ô¤ì(€ô(€É•ÑÕÉ¸…ÉÉlÁtì)ô((¼¼ƒŠRŠR ƒÂ~jƒ²‚²Ê€ƒ²^´ƒ².sªÂ¶Fpƒ®ÎÓ®Np€£²vãªÊ3²zƒ²*“²ò²’5QI=}M!ƒªâÃ®Â`¤ƒŠRŠR (¼¼ƒ®Â§®¦Ğ£®ã²€¯²Š²Â¤§®Îƒ²Ê¯²Â£
+ß®'²Â£
+ß®.“²v0ƒ²^Ó²Â £².sªÂ¶Fp¤€¬ƒ²^´ƒ²‚²ÊĞƒ¶b²z°ƒ²jÓ¶Z$ƒ¶:ã²"`¸)™Õ¹Ñ¥½¸}µ•ÑÉ½1¥¹•½±½È¡¹…µ”¥ì½¹ÍĞ°ô¡ÑåÁ•½˜5QI=}1%9L„ôôÕ¹‘•™¥¹•œ¤˜™5QI=}1%9L¹™¥¹¡àôùà¹¹…µ”ôôõ¹…µ”¤ìÉ•ÑÕÉ¸°ı°¹½±½ÈèœŒáˆäĞå”œìô(¼¼ƒ®NÇªâ$ƒ®ÂÃ² è€Ä÷ªâ'¶Z$°€È÷¶*çªâ$€£²vó®Âc²v ƒ¶Fs².pƒ²^²v0¤)™Õ¹Ñ¥½¸}µ•ÑÉ½±ÍQ…œ¡Œ¥ìÉ•ÑÕÉ¸ŒôôôÈüœñÍÁ…¸±…ÍÌô‰µÑˆµ•áÀµÑˆµ•áÀ´µĞˆû¶*çªâ$ğ½ÍÁ…¸øœéŒôôôÄüœñÍÁ…¸±…ÍÌô‰µÑˆµ•áÀˆûªâ'¶Z$ğ½ÍÁ…¸øœèœœìô(¼¼ƒ²^´ƒ²‚ªÒG¶2@ƒ²fã¶bTƒ®Ú®–`¸ƒ²jÓ¶Z$ƒ®†s²²v ƒ®>g²vó¶VcªÎ€ƒ¶Fs².pƒ²z—²æc²v`ƒ²ã®2
+ß¶bW¶s®0ƒªÖ³®Ú¶Vs®.¸)½¹ÍĞ5QI=}=55UQI}	=I}1%9Lõ¹•ÜM•Ğ¡l(€€ŸªÊ÷®Ú²€œ°ŸªÖ³²vã²€œ°Ÿ²‚®Ú²€œ°Ÿ²Ú§²Ê·²€œ°Ÿ²‚®
+£²€œ°ŸªÖ³®¾ã²€œ°ŸªÎƒ®‚ç¶Vc²ZG²€œ°(€€ŸªÊ÷²vc²’G²Vg²€œ°Ÿ²z—¶bã²nC²€œ°Ÿ²Š²nC²€œ°Ÿ²Úc²Ês²€œ°(€€ŸªÒG²ó²®ª§²€œ°Ÿ¶>'¶w²V#²Ç²€œ°Ÿ¶fS²Ç²€œ°Ÿ®>g®
+£²€œ°Ÿªæ¶VÓªÆÃ²‚s²€œ°(€€Ÿ®2ªÖ³®Â²ZG²€œ°Ÿ¶>³¶V·²€œ)t¤ì)½¹ÍĞ5QI=}	=I}MQ%=9}IU1Lõl(€í±¥¹”èŸªÊ÷®Ú²€œ±™É½´èŸ²Ê·®~'®š°œ±Ñ¼èŸ²s²jàœ±­¥¹èÕÉ‰…¸ô°(€í±¥¹”èŸªÊ÷ªâÃ®Ú®Ú²€œ±™É½´èŸ²Êƒ²n@œ±Ñ¼èŸ²vc²‚W®Ú œ±­¥¹èÉ•¥½¹…°ô°(€í±¥¹”èŸ®ã²nC²€œ±™É½´èŸ²Êƒ²n@œ±Ñ¼èŸ²vc²‚W®Ú œ±­¥¹èÉ•¥½¹…°ô°(€í±¥¹”èŸ²Š²nC²€œ±™É½´èŸ²Ê·®~'®š°œ±Ñ¼èŸ²¶v³ªÎ×²n@œ±­¥¹èÕÉ‰…¸ô°(€í±¥¹”èŸ¶>³¶V·²€œ±™É½´èŸ¶>³¶V´œ±Ñ¼èŸ²b“²Êpœ±­¥¹èÕÉ‰…¸ô)tì)™Õ¹Ñ¥½¸}µ•ÑÉ½	½…É‘M•Ñ¥½¹½¹Ñ…¥¹Ì¡ÉÕ±”±ÍÑ¸¥ì(€½¹ÍĞ•¹Ğô¡ÑåÁ•½˜5QI=}M!„ôôÕ¹‘•™¥¹•œ¤˜™5QI=}M!mÉÕ±”¹±¥¹•tì(€½¹ÍĞ¹…µ•Ìõ•¹Ğ˜™•¹Ğ¹Ìì(€¥˜ …¹…µ•Ì¥É•ÑÕÉ¸™…±Í”ì(€½¹ÍĞ„õ¹…µ•Ì¹¥¹‘•á=˜¡ÉÕ±”¹™É½´¤±ˆõ¹…µ•Ì¹¥¹‘•á=˜¡ÉÕ±”¹Ñ¼¤±¤õ¹…µ•Ì¹¥¹‘•á=˜¡ÍÑ¸¤ì(€É•ÑÕÉ¸„øôÀ˜™ˆøôÀ˜™¤øõ5…Ñ ¹µ¥¸¡„±ˆ¤˜™¤ğõ5…Ñ ¹µ…à¡„±ˆ¤ì)ô)™Õ¹Ñ¥½¸}µ•ÑÉ½	½…É‘-¥¹¡±¥¹”±ÍÑ¸¥ì(€½¹ÍĞÍ•Ñ¥½¸õ5QI=}	=I}MQ%=9}IU1L¹™¥¹¡ÉÕ±”ôùÉÕ±”¹±¥¹”ôôõ±¥¹”˜™}µ•ÑÉ½	½…É‘M•Ñ¥½¹½¹Ñ…¥¹Ì¡ÉÕ±”±ÍÑ¸¤¤ì(€¥˜¡Í•Ñ¥½¸¥É•ÑÕÉ¸Í•Ñ¥½¸¹­¥¹ì(€É•ÑÕÉ¸5QI=}=55UQI}	=I}1%9L¹¡…Ì¡±¥¹”¤üÉ•¥½¹…°œèÕÉ‰…¸œì)ô)™Õ¹Ñ¥½¸}µ•ÑÉ½	½…É‘A±…Ñ™½ÉµÌ¡ÍÑ¸±±¥¹”¥ì(€¥˜¡ÑåÁ•½˜A1Q=I5}ôôôÕ¹‘•™¥¹•œ¥É•ÑÕÉ¸mtì(€½¹ÍĞ­•äõA1Q=I5}	mÍÑ¹tıÍÑ¸è¡A1Q=I5}	mÍÑ¸¬Ÿ²^´tıÍÑ¸¬Ÿ²^´œé¹Õ±°¤ì¥˜ …­•ä¥É•ÑÕÉ¸mtì(€É•ÑÕÉ¸=‰©•Ğ¹­•åÌ¡A1Q=I5}	m­•åt¤¹µ…À¡9Õµ‰•È¤¹™¥±Ñ•È¡9Õµ‰•È¹¥Í¥¹¥Ñ”¤¹™¥±Ñ•È¡Àôø(€€€€¡A1Q=I5}	m­•åumÁtü¹±ññmt¤¹Í½µ”¡É…Üôùì(€€€€€½¹ÍĞ‰…Í”õMÑÉ¥¹œ¡É…Ü¤¹ÍÁ±¥Ğ œ¼œ¥lÁt¹ÍÁ±¥Ğ œ€ œ¥lÁt¹ÑÉ¥´ ¤ì(€€€€€É•ÑÕÉ¸‰…Í”ôôõ±¥¹”ì(€€€ô¤(€€¤¹Í½ÉĞ ¡„±ˆ¤ôù„µˆ¤ì)ô(¼¼ØØƒ².sªÂ¶FpƒªâÃ®Â`èƒªÂƒ¶:ã²ÄÑm¥tõo®>²Â§®Ú³²Ús®Âs®Ú³²^µ¥‘à°€¸¸¹t€£²‚W²Â£®#®.ƒ®>²Â§
+ß²Ús®Âpƒ²24°ƒ®Î×²n@ƒ²^²v0¤¸(¼¼ƒ¶Vpƒ²^·²vƒ²®
+c®*Pƒ®ª£®N€ƒ²²‚C²^C²pƒ²Ús®Âs¶:àƒ²w²Ä¸ƒ¶Z'²ƒ² ÷²¶Z'®Â§¶Z”ƒ¶j3²Â£²‚@£²fW®ÎÔ§
+ß®#²®'²^´£²¶Ô¤°(¼¼ƒ²Ús®Âs² ÷²¶Z$ƒ®Âc®2®Â§¶Z”ƒ¶j3²Â£²‚C
+ß²Ê¯²^´¸…ÑM•Œ÷²vĞƒ²^´ƒ²Ús®Âp¡¤°…ÉÈ÷®#²®'²^´ƒ®>²Â¤¡„¤¸)™Õ¹Ñ¥½¸}µ•ÑÉ½MÑ…Ñ¥½¹•ÁÌ¡ÍÑ¸¥ì(€¥˜¡ÑåÁ•½˜5QI=}M!ôôôÕ¹‘•™¥¹•œ¤É•ÑÕÉ¸mtì(€½¹ÍĞ½ÕĞõmtì(€™½È¡½¹ÍĞ±¥¹”¥¸5QI=}M!¥ì(€€€½¹ÍĞ•¹Ğõ5QI=}M!m±¥¹•t°¹…µ•Ìõ•¹Ğ¹Ì°ÍÙÌõ•¹Ğ¹Ğì(€€€¥˜ …¹…µ•Ì¹¥¹±Õ‘•Ì¡ÍÑ¸¤¤½¹Ñ¥¹Õ”ì(€€€½¹ÍĞÍ%‘àõ¹…µ•Ì¹¥¹‘•á=˜¡ÍÑ¸¤°ÉÈõ•¹Ğ¹Œì(€€€™½È¡±•ĞÍ¤ôÀíÍ¤ñÍÙÌ¹±•¹Ñ íÍ¤¬¬¥ì(€€€€€½¹ÍĞ˜õÍÙÍmÍ¥t°±ÌõÉÈıÉÉmÍ¥tèÀì(€€€€€½¹ÍĞ¸õ˜¹±•¹Ñ ¼Ì°¥àõ¬ôù™lÌ©¬¬Étì(€€€€€™½È¡±•Ğ¬ôÀí¬ñ¸´Äí¬¬¬¥ì(€€€€€€€¥˜¡¥à¡¬¤„ôõÍ%‘à¤½¹Ñ¥¹Õ”ì(€€€€€€€¥˜¡¥à¡¬¬Ä¤ôôõÍ%‘à¤½¹Ñ¥¹Õ”ì€€€€€€€€€€€€€€€€€€€€€€¼¼ƒ®.ç²^·²Š²Â¤£®>²Â¤¤ƒ²²‚@ƒ²*“¶
+ÔƒŠPƒ¶j3²Â ƒ²Ús®Âpƒ²²‚C®0ƒ²rƒ² (€€€€€€€½¹ÍĞ¹•áÑ9…µ”õ¹…µ•Ím¥à¡¬¬Ä¥tì(€€€€€€€€¼¼ƒ¶Z'²ƒ² èƒ²¶Z'®Â§¶Z”ƒ¶j3²Â£²‚@¡ùù
+ß²^Ã²7²’G®ÎÔ¤ƒªâÃ²’²ró®†p±•œƒ®Ú¶V€ƒŠPƒ¶j3²Â£²‚@ƒ²vÓ²‚ªæ3² °ƒ²^²ró®¦Ğƒ®#²®'²^´(€€€€€€€€¼¼€£ªÎ‡²‚WŠK²vÓ²ÊsŠK²nC¶>$ƒ²Ús²zªÎ€ƒ¶:ã²Ç²v ƒªÎ‡²‚WŠë²vÓ²Êp°ƒ²vÓ²ÊsŠë²nC¶>$ƒ®F@±•Ÿ®†pƒ®Ú¶V€ƒ¶FsªâÀ¤(€€€€€€€±•Ğ‘•ÍĞõ¹…µ•Ím¥à¡¸´Ä¥t°¬Äõ¸´Äì(€€€€€€€™½È¡±•Ğ¨õ¬¬Äí¨ñ¸´Äí¨¬¬¥ì(€€€€€€€€€¥˜¡¥à¡¨¬Ä¤ôôõ¥à¡¨¤¥ì‘•ÍĞõ¹…µ•Ím¥à¡¨¥tì¬Äõ¨ì‰É•…¬ìô(€€€€€€€€€¥˜¡¥à¡¨¬Ä¤ôôõ¥à¡¨´Ä¤¥ì‘•ÍĞõ¹…µ•Ím¥à¡¨¥tì¬Äõ¨ì‰É•…¬ìô(€€€€€€€ô(€€€€€€€¥˜¡‘•ÍĞôôõÍÑ¸¤½¹Ñ¥¹Õ”ì€€€€€€€€€€€€€€€€€€€€€€€€€€¼¼ƒ®.ç²^·²Š²Â¤£²zCªâÀƒ²^´ƒ¶Z'²ƒ² §²v ƒ²Ús®Âs¶:ã²vĞƒ²V®.`(€€€€€€€€¼¼ƒ²Ús®Âs² èƒ¶j3²Â ƒ²Ús®Âp£²²‚ƒ®>g²vó²^´÷®.ç²^·²Š²Â¤ƒ¶nƒ²Ús®Âp°ƒ®bC®*Pùùƒ²‚W²‚@÷²vĞƒ²^·²vĞƒ¶j3²Â£²^´§²vÓ®¦Ğƒ²vĞƒ²^´(€€€€€€€±•Ğ½É¥œ°¬Àì(€€€€€€€¥˜¡¬øÀ€˜˜€¡¥à¡¬´Ä¤ôôõÍ%‘àñğ¥à¡¬´Ä¤ôôõ¥à¡¬¬Ä¤¤¥ì½É¥œõÍÑ¸ì¬Àõ¬ìô(€€€€€€€•±Í”ì(€€€€€€€€€½É¥œõ¹…µ•Ím¥à À¥tì¬ÀôÀì(€€€€€€€€€™½È¡±•Ğ¨õ¬´Äí¨øÀí¨´´¥ì(€€€€€€€€€€€¥˜¡¥à¡¨´Ä¤ôôõ¥à¡¨¤¥ì½É¥œõ¹…µ•Ím¥à¡¨¥tì¬Àõ¨ì‰É•…¬ìô(€€€€€€€€€€€¥˜¡¥à¡¨´Ä¤ôôõ¥à¡¨¬Ä¤¥ì½É¥œõ¹…µ•Ím¥à¡¨¥tì¬Àõ¨ì‰É•…¬ìô(€€€€€€€€€ô(€€€€€€€ô(€€€€€€€½¹ÍĞ…Ñ5¥¸õ™lÌ©¬¬Åtì€€€€€€€€€€€€€€€€€€€€€€€€€€€€€¼¼ƒ²vĞƒ²^´ƒ²Ús®Âp¡¤(€€€€€€€½ÕĞ¹ÁÕÍ ¡í±¥¹”°¹•áĞé¹•áÑ9…µ”°‘•ÍĞ°½É¥œ°±Ì°ÍÙŒéÍ¤°…ÑM•Œé…Ñ5¥¸¨ØÀ°‘•Àé™lÅt°…ÉÈé™lÌ¨¡¸´Ä¥t°¬À°¬Åô¤ì(€€€€€ô(€€€ô(€ô(€É•ÑÕÉ¸½ÕĞì)ô(¼¼ƒ®Â§®¦Ğƒ²Ús®Âs¶:àƒ®ª§®†tƒŠHƒ²jÓ¶Z'²vó²Ò ƒ²‚W®‚°£²’G®ÎÔƒ®Úƒ²‚sªÆÀ¤¸ØÌƒ².“²â„ƒ².sªÂ¶Fs®–ğƒªŞã®2®†pƒ®Âc²b£®ÎÓªÂƒ²^²v0¤¸)™Õ¹Ñ¥½¸}µ•ÑÉ½¥É¹ÑÉ¥•Ì¡±¥ÍĞ±ÁÉ•Í•ÉÙ•1¥¹•Ìõ™…±Í”¥ì(€½¹ÍĞÍÉÙM•ŒõÌôø  ¡Ì´ÄĞĞÀÀ¤”àØĞÀÀ¤¬àØĞÀÀ¤”àØĞÀÀì(€½¹ÍĞÉ•…°õ±¥ÍĞ¹µ…À¡¼ôø¡íÍ•ŒéÍÉÙM•Œ¡¼¹…ÑM•Œ¤±‘•ÍĞé¼¹‘•ÍĞ±½É¥œé¼¹½É¥œ±¹•áĞé¼¹¹•áĞ±±Ìé¼¹±Ì±ÍÙŒé¼¹ÍÙŒ±±¥¹”é¼¹±¥¹”±¬Àé¼¹¬À±¬Äé¼¹¬Åô¤¤¹Í½ÉĞ ¡„±ˆ¤ôù„¹Í•Œµˆ¹Í•Œ¤ì(€½¹ÍĞÍ••¸õ¹•ÜM•Ğ ¤ì(€½¹ÍĞ•¹ÑÉ¥•ÌõÉ•…°¹™¥±Ñ•È¡¼ôùí½¹ÍĞ´õ5…Ñ ¹™±½½È¡¼¹Í•Œ¼ØÀ¤±­•äõÁÉ•Í•ÉÙ•1¥¹•Ìı€‘í¼¹±¥¹•õğ‘íµõ€é´ì¥˜¡Í••¸¹¡…Ì¡­•ä¤¥É•ÑÕÉ¸™…±Í”ìÍ••¸¹…‘¡­•ä¤ìÉ•ÑÕÉ¸ÑÉÕ”íô¤ì(€½¹ÍĞÍ•Ìõ•¹ÑÉ¥•Ì¹µ…À¡¼ôù5…Ñ ¹™±½½È¡¼¹Í•Œ¼ØÀ¤¨ØÀ¤ì(€É•ÑÕÉ¸í•¹ÑÉ¥•Ì°™¥ÉÍĞéÍ•ÍlÁt°±…ÍĞéÍ•ÍmÍ•Ì¹±•¹Ñ ´Åuôì)ô(¼¼ƒ®ã²ƒ®Îƒ²^·®ªŠK²Š3¶Fp€¡5QI=}1%9LÉ½ÕÑ•ÌƒªâÃ®Â`°ƒ®¦S®ª£²vÓ²š ¤)±•Ğ}µ•ÑÉ½ae…¡”õíôì)™Õ¹Ñ¥½¸}µ•ÑÉ½1¥¹•ad¡±¥¹•9…µ”¥ì(€¥˜¡±¥¹•9…µ”¥¸}µ•ÑÉ½ae…¡”¤É•ÑÕÉ¸}µ•ÑÉ½ae…¡•m±¥¹•9…µ•tì(€½¹ÍĞ°ô¡ÑåÁ•½˜5QI=}1%9L„ôôÕ¹‘•™¥¹•œ¤˜™5QI=}1%9L¹™¥¹¡àôùà¹¹…µ”ôôõ±¥¹•9…µ”¤ì(€½¹ÍĞ´õíôì(€¥˜¡°¤¡°¹É½ÕÑ•ÍññmíÍÑ…Ñ¥½¹Ìé°¹ÍÑ…Ñ¥½¹Ì±áäé°¹áåõt¤¹™½É… ¡Èôùí½¹ÍĞÍĞõÈ¹ÍÑ…Ñ¥½¹Íññmt±áäõÈ¹áåññmtì(€€€ÍĞ¹™½É…  ¡Ì±¤¤ôùì¥˜¡áåm¥t˜™µmMÑÉ¥¹œ¡Ì¤¹É•Á±…” ¿²^´¼°œœ¥tôõ¹Õ±°¥µmMÑÉ¥¹œ¡Ì¤¹É•Á±…” ¿²^´¼°œœ¥tõáåm¥tìô¤íô¤ì(€É•ÑÕÉ¸}µ•ÑÉ½ae…¡•m±¥¹•9…µ•tõ´ì)ô)™Õ¹Ñ¥½¸}µ•ÑÉ½ae½˜¡á´±¹…µ”¥ì¥˜¡áµm¹…µ•t¥É•ÑÕÉ¸áµm¹…µ•tì½¹ÍĞ„õMÑÉ¥¹œ¡¹…µ”¤¹É•Á±…” ¿²^´¼°œœ¤ì¥˜¡áµm…t¥É•ÑÕÉ¸áµm…tì(€½¹ÍĞ õMÑÉ¥¹œ¡¹…µ”¤¹ÍÁ±¥Ğ œ€¼€œ¥lÁt¹É•Á±…” ¿²^´¼°œœ¤ìÉ•ÑÕÉ¸áµm¡uññ¹Õ±°ìô(¼¼ƒ®>²Â¤ƒ²æÓ®Npƒ®Â§®¦Ğƒ²^ĞƒªÎƒ²‚Tèƒ®ã²€ƒ®ÂÃ²^Ó²v`ƒªâÃ²‚CŠK²Š²‚@£¶Vc¶Z$§²v ƒ²fó²ªô°ƒ²^·²"p£²¶Z$§²v ƒ²b“®–ã²ªô¸(¼¼ƒ²jÓ¶Z$ƒ¶:ã²"c®
+`ƒ²Ê¯²Â ƒ².sªÂ²vĞƒ®.³®vó²‚ã®>ƒ²^Ğƒ²r²æcªÂ ƒ®J“®ÂS®3² ƒ²V+ªÊ0ƒ¶Vs®.¸)™Õ¹Ñ¥½¸}µ•ÑÉ½=É‘•É¥ÉÉ½ÕÁÌ¡±¥¹•9…µ”±ÍÑ¹9…µ”±É½ÕÁÌ¥ì(€½¹ÍĞ•¹Ğô¡ÑåÁ•½˜5QI=}M!„ôôÕ¹‘•™¥¹•œ¤˜™5QI=}M!m±¥¹•9…µ•t°¹…µ•Ìõ•¹Ğ˜™•¹Ğ¹Ìì(€¥˜ …¹…µ•Íñğ…É½ÕÁÍññÉ½ÕÁÌ¹±•¹Ñ ğÈ¥É•ÑÕÉ¸É½ÕÁÍññmtì(€½¹ÍĞÍ¤õ¹…µ•Ì¹¥¹‘•á=˜¡ÍÑ¹9…µ”¤ì(€¥˜¡Í¤ğÀ¥É•ÑÕÉ¸É½ÕÁÌì(€½¹ÍĞÍ½É”õœôùì(€€€½¹ÍĞ‘Ìõœ¹µ…À¡¬ôù¹…µ•Ì¹¥¹‘•á=˜¡¬¤¤¹™¥±Ñ•È¡¤ôù¤øôÀ¤¹µ…À¡¤ôù¤µÍ¤¤ì(€€€É•ÑÕÉ¸‘Ì¹±•¹Ñ ı‘Ì¹É•‘Õ” ¡„±ˆ¤ôù„­ˆ°À¤½‘Ì¹±•¹Ñ èÀì(€ôì(€É•ÑÕÉ¸É½ÕÁÌ¹µ…À ¡œ±¤¤ôø¡íœ±¤±ÌéÍ½É”¡œ¥ô¤¤¹Í½ÉĞ ¡„±ˆ¤ôø¡ˆ¹Ìµ„¹Ì¥ñğ¡„¹¤µˆ¹¤¤¤¹µ…À¡àôùà¹œ¤ì)ô(¼¼ƒ®ÚªâÃ²^´ƒ®.“®Â§®¦Ğ Ì¬¤ƒŠHƒ².“²‚pƒ²Š3¶Fpƒ®Â§¶Z—²ró®†p€ËªÂpƒ®²ó®š°ƒ®Â§®¦Ğ£ªŞä§²ró®†pƒ®ÎG¶V¤¸ƒªÂg²v ƒ²ªôƒªÎ¶×²v ƒ¶Vpƒ²^Ó®†p¸)™Õ¹Ñ¥½¸}µ•ÑÉ½¥ÉÉ½ÕÁÌ¡±¥¹•9…µ”°ÍÑ¹9…µ”°‘¥É½Õ¹ÑÌ¥ì(€½¹ÍĞ­•åÌõ=‰©•Ğ¹­•åÌ¡‘¥É½Õ¹ÑÌ¤¹Í½ÉĞ ¡„±ˆ¤ôù‘¥É½Õ¹ÑÍm‰tµ‘¥É½Õ¹ÑÍm…t¤ì(€¥˜¡­•åÌ¹±•¹Ñ ğôÈ¤É•ÑÕÉ¸}µ•ÑÉ½=É‘•É¥ÉÉ½ÕÁÌ¡±¥¹•9…µ”±ÍÑ¹9…µ”±­•åÌ¹µ…À¡¬ôùm­t¤¤ì(€½¹ÍĞá´õ}µ•ÑÉ½1¥¹•ad¡±¥¹•9…µ”¤°Lõ}µ•ÑÉ½ae½˜¡á´±ÍÑ¹9…µ”¤ì(€½¹ÍĞİ¥Ñ¡adõ­•åÌ¹™¥±Ñ•È¡¬ôù}µ•ÑÉ½ae½˜¡á´±¬¤¤°¹½adõ­•åÌ¹™¥±Ñ•È¡¬ôø…}µ•ÑÉ½ae½˜¡á´±¬¤¤ì(€¥˜ …Mññİ¥Ñ¡ad¹±•¹Ñ ğÈ¤É•ÑÕÉ¸}µ•ÑÉ½=É‘•É¥ÉÉ½ÕÁÌ¡±¥¹•9…µ”±ÍÑ¹9…µ”±mm­•åÍlÁut°­•åÌ¹Í±¥” Ä¥t¤ì€¼¼ƒ²Š3¶Fpƒ®Ú²†Äƒ².pƒ¶>Ó®ÂÄ(€½¹ÍĞÙ•Œõ¬ôùí½¹ÍĞÀõ}µ•ÑÉ½ae½˜¡á´±¬¤í½¹ÍĞ‘àõÁlÁtµMlÁt±‘äõÁlÅtµMlÅt±0õ5…Ñ ¹¡åÁ½Ğ¡‘à±‘ä¥ñğÄíÉ•ÑÕÉ¸m‘à½0±‘ä½1tíôì(€½¹ÍĞÀÄõÙ•Œ¡İ¥Ñ¡aelÁt¤ì±•ĞÀÈõ¹Õ±°±µ¸ôÈì(€™½È¡½¹ÍĞ¬½˜İ¥Ñ¡ad¥í½¹ÍĞØõÙ•Œ¡¬¤í½¹ÍĞõÙlÁt©ÀÅlÁt­ÙlÅt©ÀÅlÅtí¥˜¡ñµ¸¥íµ¸õíÀÈõØíõô(€½¹ÍĞœÄõmt±œÈõmtì(€™½È¡½¹ÍĞ¬½˜İ¥Ñ¡ad¥í½¹ÍĞØõÙ•Œ¡¬¤í½¹ÍĞÄõÙlÁt©ÀÅlÁt­ÙlÅt©ÀÅlÅtí½¹ÍĞÈõÀÈıÙlÁt©ÀÉlÁt­ÙlÅt©ÀÉlÅtè´Èì¡ÄøõÈıœÄéœÈ¤¹ÁÕÍ ¡¬¤íô(€¥˜¡¹½ad¹±•¹Ñ ¥í½¹ÍĞ¹…µ•Ìõ5QI=}M!m±¥¹•9…µ•t¹Ìí½¹ÍĞ…¤õœôùœ¹±•¹Ñ ıœ¹É•‘Õ” ¡Ì±¬¤ôùÌ­¹…µ•Ì¹¥¹‘•á=˜¡¬¤°À¤½œ¹±•¹Ñ é¹…µ•Ì¹¥¹‘•á=˜¡ÍÑ¹9…µ”¤ì(€€€½¹ÍĞ„Äõ…¤¡œÄ¤±„Èõ…¤¡œÈ¤í™½È¡½¹ÍĞ¬½˜¹½ad¥í½¹ÍĞ¹¤õ¹…µ•Ì¹¥¹‘•á=˜¡¬¤ì¡5…Ñ ¹…‰Ì¡¹¤µ„Ä¤ğõ5…Ñ ¹…‰Ì¡¹¤µ„È¤ıœÄéœÈ¤¹ÁÕÍ ¡¬¤íõô(€É•ÑÕÉ¸}µ•ÑÉ½=É‘•É¥ÉÉ½ÕÁÌ¡±¥¹•9…µ”±ÍÑ¹9…µ”±mœÄ±œÉt¹™¥±Ñ•È¡œôùœ¹±•¹Ñ ¤¤ì)ô(¼¼ƒ²^³®~°ƒ®ã²ƒ²v`ƒªâ'¶Z'
+ß²f¶Z$ƒ®.“²v0ƒ²^·²vƒ².“²‚pƒ²®>ƒ²Š3¶Fpƒ®Â§¶Z—²ró®†pƒ®²Û²ZĞƒªÎ×²j¤ƒ²ƒ®†s²v`ƒ®F@ƒ®Â§®¦Ó²vƒ®3®N·®.#®.¸)™Õ¹Ñ¥½¸}µ•ÑÉ½M¡…É•‘¥ÉÉ½ÕÁÌ¡Í½ÕÉ•1¥¹•Ì±ÍÑ¹9…µ”±‘¥É½Õ¹ÑÌ¥ì(€½¹ÍĞ­•åÌõ=‰©•Ğ¹­•åÌ¡‘¥É½Õ¹ÑÌ¤¹Í½ÉĞ ¡„±ˆ¤ôù‘¥É½Õ¹ÑÍm‰tµ‘¥É½Õ¹ÑÍm…t¤ì(€¥˜¡­•åÌ¹±•¹Ñ ğôÈ¥É•ÑÕÉ¸­•åÌ¹µ…À¡­•äôùm­•åt¤ì(€½¹ÍĞÙ•Ñ½ÉÌõíôì(€™½È¡½¹ÍĞ­•ä½˜­•åÌ¥ì(€€€™½È¡½¹ÍĞ±¥¹”½˜Í½ÕÉ•1¥¹•Ì¥ì(€€€€€½¹ÍĞá´õ}µ•ÑÉ½1¥¹•ad¡±¥¹”¤±Ìõ}µ•ÑÉ½ae½˜¡á´±ÍÑ¹9…µ”¤±Àõ}µ•ÑÉ½ae½˜¡á´±­•ä¤ì(€€€€€¥˜ …Íñğ…À¥½¹Ñ¥¹Õ”ì(€€€€€½¹ÍĞ‘àõÁlÁtµÍlÁt±‘äõÁlÅtµÍlÅt±±•¸õ5…Ñ ¹¡åÁ½Ğ¡‘à±‘ä¥ñğÄì(€€€€€Ù•Ñ½ÉÍm­•åtõm‘à½±•¸±‘ä½±•¹tí‰É•…¬ì(€€€ô(€ô(€½¹ÍĞİ¥Ñ¡Y•Ñ½Èõ­•åÌ¹™¥±Ñ•È¡­•äôùÙ•Ñ½ÉÍm­•åt¤ì(€¥˜¡İ¥Ñ¡Y•Ñ½È¹±•¹Ñ ğÈ¥É•ÑÕÉ¸m­•åÍtì(€½¹ÍĞÀÄõÙ•Ñ½ÉÍmİ¥Ñ¡Y•Ñ½ÉlÁutì(€±•ĞÀÈõ¹Õ±°±µ¥¹½ĞôÈì(€İ¥Ñ¡Y•Ñ½È¹™½É… ¡­•äôùí½¹ÍĞØõÙ•Ñ½ÉÍm­•åt±‘½ĞõÙlÁt©ÀÅlÁt­ÙlÅt©ÀÅlÅtí¥˜¡‘½Ğñµ¥¹½Ğ¥íµ¥¹½Ğõ‘½ĞíÀÈõØíõô¤ì(€¥˜ …ÀÉññµ¥¹½Ğø´¸ÄÈ¥É•ÑÕÉ¸m­•åÍtì(€½¹ÍĞÉ½ÕÁÌõmmt±mutì(€­•åÌ¹™½É… ¡­•äôùì(€€€½¹ÍĞØõÙ•Ñ½ÉÍm­•åtì(€€€¥˜ …Ø¥íÉ½ÕÁÍmÉ½ÕÁÍlÁt¹±•¹Ñ ğõÉ½ÕÁÍlÅt¹±•¹Ñ üÀèÅt¹ÁÕÍ ¡­•ä¤íÉ•ÑÕÉ¸íô(€€€½¹ÍĞÄõÙlÁt©ÀÅlÁt­ÙlÅt©ÀÅlÅt±ÈõÙlÁt©ÀÉlÁt­ÙlÅt©ÀÉlÅtì(€€€É½ÕÁÍmÄøõÈüÀèÅt¹ÁÕÍ ¡­•ä¤ì(€ô¤ì(€É•ÑÕÉ¸É½ÕÁÌ¹™¥±Ñ•È¡É½ÕÀôùÉ½ÕÀ¹±•¹Ñ ¤ì)ô(¼¼ƒ®Â§®¦ĞƒªŞã®ä£®.“²’Dƒ®.“²v3²^´¤ƒ¶:àƒ®ÎG¶V¤ƒŠPƒ²²ƒ®Î®†pƒ®Ú®
+Ğƒ²’G®ÎÔƒ²‚sªÆÀƒ¶nƒ¶V§²æ £²s®†pƒ®.“®–àƒªÎ¶Ôƒ®>g².sªÂ²v ƒ²rƒ² ¤)™Õ¹Ñ¥½¸}µ•ÑÉ½É½ÕÁ¹ÑÉ¥•Ì¡‘¥ÉÍ5…À°­•åÌ°ÁÉ•Í•ÉÙ•1¥¹•Ìõ™…±Í”¥ì(€±•Ğ…±°õmtì™½È¡½¹ÍĞ¬½˜­•åÌ¤…±°õ…±°¹½¹…Ğ¡}µ•ÑÉ½¥É¹ÑÉ¥•Ì¡‘¥ÉÍ5…Ám­t±ÁÉ•Í•ÉÙ•1¥¹•Ì¤¹•¹ÑÉ¥•Ì¤ì(€…±°¹Í½ÉĞ ¡„±ˆ¤ôù„¹Í•Œµˆ¹Í•Œ¤ì(€½¹ÍĞÍ•Ìõ…±°¹µ…À¡¼ôù5…Ñ ¹™±½½È¡¼¹Í•Œ¼ØÀ¤¨ØÀ¤ì(€É•ÑÕÉ¸í•¹ÑÉ¥•Ìé…±°°™¥ÉÍĞéÍ•ÍlÁt°±…ÍĞéÍ•ÍmÍ•Ì¹±•¹Ñ ´Åuôì)ô)±•Ğ}µ•ÑÉ½	½…É‘5½‘”ôÑ¥µ”œì€€€¼¼€Ñ¥µ”œğ€Á½Ìœ£¶b²r²æ`¤)±•Ğ}µ•ÑÉ½	½…É‘MÑ¸õ¹Õ±°ì)±•Ğ}µ•ÑÉ½¥ÍÁ±…å1¥¹•%¹‘•àôÀì)±•Ğ}µ•ÑÉ½¥ÍÁ±…å¥É%¹‘•àôÀì)±•Ğ}µ•ÑÉ½¥ÍÁ±…å1¥¹•Ìõmtì)±•Ğ}µ•ÑÉ½¥ÍÁ±…å1¥¹•É½ÕÁÌõmtì(¼¼ƒªÂg²v ƒ®²ó®š°ƒ²ƒ®†s®–ğƒ²
+³²j§¶Vc®*PƒªÖ³ªÂ¸)½¹ÍĞ5QI=}M!I}QI-}	=I}MQ%=9Lõl(€í™É½´èŸ²Ê·®~'®š°œ±Ñ¼èŸ¶VsªÂW®†pœ±±¥¹•ÌélŸªÊ÷®Ú²€œ°ŸªÖ³²vã²€œ°Ÿ².ƒ®ã²nC²€uô°(€í™É½´èŸ¶VsªÂW®†pœ±Ñ¼èŸªÖ³®†pœ±±¥¹•ÌélŸªÊ÷®Ú²€œ°ŸªÖ³²vã²€uô°(€í™É½´èŸ²vc²‚W®Ú œ±Ñ¼èŸ®Ú²ªÎœ±±¥¹•ÌélŸ².ƒ®ã²nC²€œ°Ÿ®ã²nC²€uô°(€í™É½´èŸ®NÇ²Ò0œ±Ñ¼èŸ®.ç²
+Àœ±±¥¹•ÌélŸªÂW²s²€œ°Ÿ²vã²Ês²Š®.£²€uô°(€í™É½´èŸªâÃ¶v”œ±Ñ¼èŸ²Êc²vàœ±±¥¹•ÌélŸ²"c²nC²vÓ²Ês²€œ°Ÿ²V#²
+Ã²j§²vã²€uô°(€í™É½´èŸ®2²Vó®¾àœ±Ñ¼èŸ²nC².pœ±±¥¹•ÌélŸ²V#²
+Ã²Ç®
+£²€œ°Ÿ²V#²
+Ã²V#²ZG²€uô°(€í™É½´èŸ²"c²n@œ±Ñ¼èŸªÂ#ªÎØœ±±¥¹•ÌélŸªÊ÷®Ú²€œ°Ÿ²z—¶bã²nC²€uô°(€í™É½´èŸ²Ês²V œ±Ñ¼èŸ®.ç²œ±±¥¹•ÌélŸªÊ÷®Ú²€œ°ŸªÎƒ®
+ ·¶V§®6Tƒ¶×ªŞğuô°(€í™É½´èŸ²s®>g¶œ±Ñ¼èŸ²Ê·ªÎœ±±¥¹•ÌélŸ²V#²ZG®>g¶²€œ°Ÿ¶fS²Ç²€uô°(€í™É½´èŸ²zƒ².œ±Ñ¼èŸ²"c²œ±±¥¹•ÌélŸ²Š²nC²€œ°Ÿ²Ç®
+£¶fS²Ç²€uô°(€í™É½´èŸ²²‚Tœ±Ñ¼èŸ¶2C®Ú œ±±¥¹•ÌélŸ²Š²nC²€œ°ŸªÊ÷²vc²’G²Vg²€uô)tì)™Õ¹Ñ¥½¸}µ•ÑÉ½M¡…É•‘QÉ…­M•Ñ¥½¹½¹Ñ…¥¹Ì¡ÉÕ±”±ÍÑ¸¥ì(€¥˜¡ÑåÁ•½˜5QI=}1%9L„ôôÕ¹‘•™¥¹•œ¥ì(€€€™½È¡½¹ÍĞ±¥¹”½˜ÉÕ±”¹±¥¹•Ì¥ì(€€€€€½¹ÍĞ‘•˜õ5QI=}1%9L¹™¥¹¡¥Ñ•´ôù¥Ñ•´¹¹…µ”ôôõ±¥¹”¤ì(€€€€€¥˜ …‘•˜¥½¹Ñ¥¹Õ”ì(€€€€€™½È¡½¹ÍĞÉ½ÕÑ”½˜€¡‘•˜¹É½ÕÑ•ÍññmíÍÑ…Ñ¥½¹Ìé‘•˜¹ÍÑ…Ñ¥½¹Íõt¤¥ì(€€€€€€€½¹ÍĞ¹…µ•ÌõÉ½ÕÑ”¹ÍÑ…Ñ¥½¹Íññmt±„õ¹…µ•Ì¹¥¹‘•á=˜¡ÉÕ±”¹™É½´¤±ˆõ¹…µ•Ì¹¥¹‘•á=˜¡ÉÕ±”¹Ñ¼¤±Àõ¹…µ•Ì¹¥¹‘•á=˜¡ÍÑ¸¤ì(€€€€€€€¥˜¡„øôÀ˜™ˆøôÀ˜™Àøõ5…Ñ ¹µ¥¸¡„±ˆ¤˜™Àğõ5…Ñ ¹µ…à¡„±ˆ¤¥É•ÑÕÉ¸ÑÉÕ”ì(€€€€€ô(€€€ô(€ô(€€¼¼ƒªÖ³¶bW
+ß²ÚW²Vôƒ®6Ã²vÓ¶Àƒ¶>Ó®ÂÄ¸ƒ².“²‚pƒªÖ³ªÂƒ¶2C²‚W²v ƒ²r²v`ƒ®ã²ƒ®>ƒ²ƒ¶bW²vƒ²jÃ²ƒ¶V§®.#®.¸(€¥˜¡ÑåÁ•½˜5QI=}M!ôôôÕ¹‘•™¥¹•œ¥É•ÑÕÉ¸™…±Í”ì(€™½È¡½¹ÍĞ±¥¹”½˜ÉÕ±”¹±¥¹•Ì¥ì(€€€½¹ÍĞ¹…µ•Ìõ5QI=}M!m±¥¹•t˜™5QI=}M!m±¥¹•t¹Ìì(€€€¥˜ …¹…µ•Ì¥½¹Ñ¥¹Õ”ì(€€€½¹ÍĞ„õ¹…µ•Ì¹¥¹‘•á=˜¡ÉÕ±”¹™É½´¤±ˆõ¹…µ•Ì¹¥¹‘•á=˜¡ÉÕ±”¹Ñ¼¤±Àõ¹…µ•Ì¹¥¹‘•á=˜¡ÍÑ¸¤ì(€€€¥˜¡„øôÀ˜™ˆøôÀ˜™Àøõ5…Ñ ¹µ¥¸¡„±ˆ¤˜™Àğõ5…Ñ ¹µ…à¡„±ˆ¤¥É•ÑÕÉ¸ÑÉÕ”ì(€ô(€É•ÑÕÉ¸™…±Í”ì)ô)™Õ¹Ñ¥½¸}µ•ÑÉ½M¡…É•‘QÉ…­1¥¹•ÍĞ¡ÍÑ¸±Í•±•Ñ•‘1¥¹”±…Ù…¥±…‰±•1¥¹•Ì¥ì(€½¹ÍĞ…Ù…¥±…‰±”õ¹•ÜM•Ğ¡…Ù…¥±…‰±•1¥¹•Íññmt¤ì(€¥˜ …}µ•ÑÉ½M¡…É•‘QÉ…­	½…É‘=¹ñğ……Ù…¥±…‰±”¹¡…Ì¡Í•±•Ñ•‘1¥¹”¤¥É•ÑÕÉ¸mÍ•±•Ñ•‘1¥¹•tì(€½¹ÍĞ©½¥¹•õ¹•ÜM•Ğ¡mÍ•±•Ñ•‘1¥¹•t¤ì(€±•Ğ¡…¹•õÑÉÕ”ì(€İ¡¥±”¡¡…¹•¥ì(€€€¡…¹•õ™…±Í”ì(€€€5QI=}M!I}QI-}	=I}MQ%=9L¹™½É… ¡ÉÕ±”ôùì(€€€€€¥˜ …}µ•ÑÉ½M¡…É•‘QÉ…­M•Ñ¥½¹½¹Ñ…¥¹Ì¡ÉÕ±”±ÍÑ¸¥ñğ…ÉÕ±”¹±¥¹•Ì¹Í½µ”¡±¥¹”ôù©½¥¹•¹¡…Ì¡±¥¹”¤¤¥É•ÑÕÉ¸ì(€€€€€ÉÕ±”¹±¥¹•Ì¹™½É… ¡±¥¹”ôùí¥˜¡…Ù…¥±…‰±”¹¡…Ì¡±¥¹”¤˜˜…©½¥¹•¹¡…Ì¡±¥¹”¤¥í©½¥¹•¹…‘¡±¥¹”¤í¡…¹•õÑÉÕ”íõô¤ì(€€€ô¤ì(€ô(€É•ÑÕÉ¸€¡…Ù…¥±…‰±•1¥¹•Íññmt¤¹™¥±Ñ•È¡±¥¹”ôù©½¥¹•¹¡…Ì¡±¥¹”¤¤ì)ô)™Õ¹Ñ¥½¸}µ•ÑÉ½¥ÍÁ±…åÉ½ÕÁÍ½ÉMÑ…Ñ¥½¸¡ÍÑ¸±±¥¹•=É‘•È¥ì(€½¹ÍĞÉ½ÕÁÌõmt±Í••¸õ¹•ÜM•Ğ ¤ì(€±¥¹•=É‘•È¹™½É… ¡±¥¹”ôùì(€€€½¹ÍĞÉ½ÕÀõ}µ•ÑÉ½M¡…É•‘QÉ…­1¥¹•ÍĞ¡ÍÑ¸±±¥¹”±±¥¹•=É‘•È¤ì(€€€½¹ÍĞ­•äõl¸¸¹É½ÕÁt¹Í½ÉĞ ¤¹©½¥¸ ğœ¤ì(€€€¥˜ …Í••¸¹¡…Ì¡­•ä¤¥íÍ••¸¹…‘¡­•ä¤íÉ½ÕÁÌ¹ÁÕÍ ¡É½ÕÀ¤íô(€ô¤ì(€É•ÑÕÉ¸É½ÕÁÌì)ô)™Õ¹Ñ¥½¸}µ•ÑÉ½M¡…É•‘	½…É‘MÁ•Ì¡±¥¹•¥ÉÌ±É•¹‘•É1¥¹•Ì±Í¡…É•‘¥ÍÁ±…ä¥ì(€¥˜ …Í¡…É•‘¥ÍÁ±…ä¥É•ÑÕÉ¸É•¹‘•É1¥¹•Ì¹µ…À¡±¥¹”ôø¡í±¥¹”±±…‰•°é±¥¹”±Í½ÕÉ•1¥¹•Ìém±¥¹•t±‘¥ÉÌé±¥¹•¥ÉÍm±¥¹•uô¤¤ì(€½¹ÍĞ‘¥ÉÌõíôì(€É•¹‘•É1¥¹•Ì¹™½É… ¡±¥¹”ôù=‰©•Ğ¹•¹ÑÉ¥•Ì¡±¥¹•¥ÉÍm±¥¹•uññíô¤¹™½É…  ¡m¹•áĞ±•¹ÑÉ¥•Ít¤ôùì(€€€€¡‘¥ÉÍm¹•áÑtõ‘¥ÉÍm¹•áÑuññmt¤¹ÁÕÍ  ¸¸¹•¹ÑÉ¥•Ì¤ì(€ô¤¤ì(€É•ÑÕÉ¸mí±¥¹”éÉ•¹‘•É1¥¹•ÍlÁt±±…‰•°éÉ•¹‘•É1¥¹•Ì¹©½¥¸ œƒ
+Ü€œ¤±Í½ÕÉ•1¥¹•Ìél¸¸¹É•¹‘•É1¥¹•Ít±‘¥ÉÍõtì)ô)™Õ¹Ñ¥½¸Í•Ñ5•ÑÉ½	½…É‘5½‘”¡´±Ñ…É•Ñ%¥ì(€}µ•ÑÉ½	½…É‘5½‘”õ´ì(€½¹ÍĞ¥õÑ…É•Ñ%‘ñğµ•ÑÉ¼µ‰½…Éœì(€½¹ÍĞ¡½ÍĞõ‘½Õµ•¹Ğ¹•Ñ±•µ•¹Ñ	å%¡¥¤ì(€¥˜¡¡½ÍĞ˜™}µ•ÑÉ½	½…É‘MÑ¸¥ì(€€€½¹ÍĞ¡Ñµ°õ}µ•ÑÉ½MÑ…Ñ¥½¹	½…É‘!Q50¡}µ•ÑÉ½	½…É‘MÑ¸±¥ôôôµ•ÑÉ¼µ‘¥ÍÁ±…äµ‰½…Éœ¤ì(€€€¥˜¡¡Ñµ°¥í½¹ÍĞÑµÀõ‘½Õµ•¹Ğ¹É•…Ñ•±•µ•¹Ğ ‘¥Øœ¤íÑµÀ¹¥¹¹•É!Q50õ¡Ñµ°í¡½ÍĞ¹É•Á±…•]¥Ñ ¡ÑµÀ¹™¥ÉÍÑ±•µ•¹Ñ¡¥±¤íô(€ô)ô)™Õ¹Ñ¥½¸}É•™É•Í¡5•ÑÉ½¥ÍÁ±…å	½…É ¥ì(€½¹ÍĞ¡½ÍĞõ‘½Õµ•¹Ğ¹•Ñ±•µ•¹Ñ	å% µ•ÑÉ¼µ‘¥ÍÁ±…äµ‰½…Éœ¤ì(€¥˜ …¡½ÍÑñğ…}µ•ÑÉ½	½…É‘MÑ¸¥É•ÑÕÉ¸ì(€½¹ÍĞ¡Ñµ°õ}µ•ÑÉ½MÑ…Ñ¥½¹	½…É‘!Q50¡}µ•ÑÉ½	½…É‘MÑ¸±ÑÉÕ”¤ì(€¥˜¡¡Ñµ°¥í½¹ÍĞÑµÀõ‘½Õµ•¹Ğ¹É•…Ñ•±•µ•¹Ğ ‘¥Øœ¤íÑµÀ¹¥¹¹•É!Q50õ¡Ñµ°í¡½ÍĞ¹É•Á±…•]¥Ñ ¡ÑµÀ¹™¥ÉÍÑ±•µ•¹Ñ¡¥±¤íô)ô)™Õ¹Ñ¥½¸Í•Ñ5•ÑÉ½¥ÍÁ±…å1¥¹”¡ÍÑ•À¥ì(€¥˜ …}µ•ÑÉ½¥ÍÁ±…å1¥¹•É½ÕÁÌ¹±•¹Ñ ¥É•ÑÕÉ¸ì(€}µ•ÑÉ½¥ÍÁ±…å1¥¹•%¹‘•àô¡}µ•ÑÉ½¥ÍÁ±…å1¥¹•%¹‘•à­9Õµ‰•È¡ÍÑ•À¤­}µ•ÑÉ½¥ÍÁ±…å1¥¹•É½ÕÁÌ¹±•¹Ñ ¤•}µ•ÑÉ½¥ÍÁ±…å1¥¹•É½ÕÁÌ¹±•¹Ñ ì(€}µ•ÑÉ½¥ÍÁ±…å¥É%¹‘•àôÀì(€}É•™É•Í¡5•ÑÉ½¥ÍÁ±…å	½…É ¤ì)ô)™Õ¹Ñ¥½¸Í•Ñ5•ÑÉ½¥ÍÁ±…å¥É•Ñ¥½¸¡¥¹‘•à¥ì(€}µ•ÑÉ½¥ÍÁ±…å¥É%¹‘•àõ5…Ñ ¹µ…à À±9Õµ‰•È¡¥¹‘•à¥ñğÀ¤ì(€}É•™É•Í¡5•ÑÉ½¥ÍÁ±…å	½…É ¤ì)ô(¼¼ƒ¶:ã²Ç²v`ƒ¶b²z°ƒ²r²æ`£¶b²r²æ`ƒ®ÎÓªâÀ¤èƒ²‚W²Â ƒ²’D÷®>²Â¤°ƒ²^·ªÂ÷²²‚²^´ƒ²Ús®Âp°(¼¼ƒ®.“²v0ƒ²^´ƒ®>²Â¤€Ç®Úƒ²‚®Ú¶Ã®0ƒ²‚GªŞó²ró®†pƒ²‚¶fc¶Vs®.¸(¼¼ƒ¶:ã²Äƒ¶b²r²æ`¸¬À½¬Äƒ²ó®¦Ğƒ¶VÓ®.ä±•œ£®.£²vó®Â§¶Z”ƒªÖ³ªÂ§®0ƒªÎ²
+ÀƒŠHƒ¶j3²Â ƒ²^Ó²Â£²v`ƒ²
+ß¶Vc¶Z'²vƒ²s®†pƒ®.“®–àƒ²^Ó²Â£®†pƒ²Ş£ªâ$)™Õ¹Ñ¥½¸}µ•ÑÉ½QÉ…¥¹A½Ì¡±¥¹”°ÍÙ%‘à°¬À°¬Ä°Ñ…É•ÑMÑ¸¥ì(€½¹ÍĞ•¹Ğô¡ÑåÁ•½˜5QI=}M!„ôôÕ¹‘•™¥¹•œ¤˜™5QI=}M!m±¥¹•tì¥˜ …•¹Ğ¥É•ÑÕÉ¸¹Õ±°ì(€½¹ÍĞ˜õ•¹Ğ¹ÑmÍÙ%‘át°¹…µ•Ìõ•¹Ğ¹Ìì¥˜ …˜¥É•ÑÕÉ¸¹Õ±°ì(€½¹ÍĞ8õ˜¹±•¹Ñ ¼Ìì¥˜¡¬Àôõ¹Õ±°¥¬ÀôÀì¥˜¡¬Äôõ¹Õ±±ññ¬Äù8´Ä¥¬Äõ8´Äì¥˜¡¬Äğõ¬À¥É•ÑÕÉ¸¹Õ±°ì(€½¹ÍĞ¸õ¬Äµ¬À¬Ä°ÍÉØõàôø  ¡à´ÈĞÀ¤”ÄĞĞÀ¤¬ÄĞĞÀ¤”ÄĞĞÀ°¹´õ¬ôù¹…µ•Ím™lÌ¨¡¬À­¬¤¬Éutì(€½¹ÍĞÍÑ…ÉÑ5¥¸ô ¡™lÌ©¬À¬Åt”ÄĞĞÀ¤¬ÄĞĞÀ¤”ÄĞĞÀì(€±•ĞÑ…É•Ñ%‘àô´Äì¥˜¡Ñ…É•ÑMÑ¸„õ¹Õ±°¥í™½È¡±•Ğ¤ôÀí¤ñ¸í¤¬¬¥í¥˜¡¹´¡¤¤ôôõÑ…É•ÑMÑ¸¥íÑ…É•Ñ%‘àõ¤í‰É•…¬íõõô(€½¹ÍĞÉ•ÍÕ±Ğô¡ÍÑ…Ñ”±ÍÑ¸±¥¹‘•à¤ôø¡íÍÑ…Ñ”±ÍÑ¸±¥¹‘•à±Ñ…É•Ñ%‘à±…İ…äéÑ…É•Ñ%‘àğÀı¹Õ±°éÑ…É•Ñ%‘àµ¥¹‘•à±ÍÑ…ÉÑ5¥¹ô¤ì(€½¹ÍĞ™±…Ğõmtì™½È¡±•Ğ¤ôÀí¤ñ¸í¤¬¬¥ì™±…Ğ¹ÁÕÍ ¡ÍÉØ¡™lÌ¨¡¬À­¤¥t¤°ÍÉØ¡™lÌ¨¡¬À­¤¤¬Åt¤¤ìô(€±•Ğ½™˜ôÀì½¹ÍĞµ½¹¼õmtì™½È¡±•Ğ¤ôÀí¤ñ™±…Ğ¹±•¹Ñ í¤¬¬¥ì±•ĞØõ™±…Ñm¥t­½™˜ì¥˜¡¤øÀ˜™Øñµ½¹½m¤´Åt¥í½™˜¬ôÄĞĞÀíØ¬ôÄĞĞÀíôµ½¹¼¹ÁÕÍ ¡Ø¤ìô(€½¹ÍĞ…‰Íõmt±…‰Íõmtì™½È¡±•Ğ¤ôÀí¤ñ¸í¤¬¬¥í…‰Í¹ÁÕÍ ¡µ½¹½lÈ©¥t¤í…‰Í¹ÁÕÍ ¡µ½¹½lÈ©¤¬Åt¤íô(€½¹ÍĞ¹½İŒõ¹•Ü…Ñ” ¤ì±•Ğ¹½ÜõÍÉØ¡¹½İŒ¹•Ñ!½ÕÉÌ ¤¨ØÀ­¹½İŒ¹•Ñ5¥¹ÕÑ•Ì ¤­¹½İŒ¹•ÑM•½¹‘Ì ¤¼ØÀ¤ì(€İ¡¥±”¡¹½Üñ…‰ÍlÁt´ÜÈÀ¥¹½Ü¬ôÄĞĞÀìİ¡¥±”¡¹½Üù…‰Ím¸´Åt¬ÜÈÀ¥¹½Ü´ôÄĞĞÀì(€¥˜¡¹½Üñ…‰ÍlÁt¤É•ÑÕÉ¸É•ÍÕ±Ğ ‰•™½É”œ±¹´ À¤°À¤ì(€¥˜¡¹½Üøõ…‰Ím¸´Åt¤É•ÑÕÉ¸É•ÍÕ±Ğ …™Ñ•Èœ±¹´¡¸´Ä¤±¸´Ä¤ì(€™½È¡±•Ğ¤ôÀí¤ñ¸í¤¬¬¥ì(€€€¥˜¡¹½Üøõ…‰Ím¥t˜™¹½Üğõ…‰Ím¥t¤É•ÑÕÉ¸É•ÍÕ±Ğ Ÿ®>²Â¤œ±¹´¡¤¤±¤¤ì(€€€¥˜¡¤ñ¸´Ä˜™¹½Üù…‰Ím¥t˜™¹½Üñ…‰Ím¤¬Åt¥ì(€€€€€É•ÑÕÉ¸¹½Üøõ…‰Ím¤¬Åt´Ä€üÉ•ÍÕ±Ğ Ÿ²‚GªŞğœ±¹´¡¤¬Ä¤±¤¬Ä¤€èÉ•ÍÕ±Ğ Ÿ²Ús®Âpœ±¹´¡¤¤±¤¤ì(€€€ô(€ô(€É•ÑÕÉ¸É•ÍÕ±Ğ …™Ñ•Èœ±¹´¡¸´Ä¤±¸´Ä¤ì)ô(¼¼ƒ¶:ã²Äƒ¶b²r²æ`£®ã²ƒ®>ƒ®#²î“²j¤¤èƒ²jÓ¶Z$ƒ²’G²vÓ®¦ĞƒªÖ³ªÂ
+ß²¶Z'®–ƒ
+ß²¶Z'®Â§¶Z”ƒ¶Z'²ƒ² ƒ®Âc¶f`°ƒ²V®.#®¦Ğ¹Õ±°)™Õ¹Ñ¥½¸}µ•ÑÉ½QÉ…¥¹1¥Ù•A½Ì¡±¥¹”°ÍÙ%‘à¥ì(€½¹ÍĞ•¹Ğô¡ÑåÁ•½˜5QI=}M!„ôôÕ¹‘•™¥¹•œ¤˜™5QI=}M!m±¥¹•tì¥˜ …•¹Ğ¥É•ÑÕÉ¸¹Õ±°ì(€½¹ÍĞ˜õ•¹Ğ¹ÑmÍÙ%‘át°¹…µ•Ìõ•¹Ğ¹Ìì¥˜ …˜¥É•ÑÕÉ¸¹Õ±°ì(€½¹ÍĞ¸õ˜¹±•¹Ñ ¼Ì°ÍÉØõàôø  ¡à´ÈĞÀ¤”ÄĞĞÀ¤¬ÄĞĞÀ¤”ÄĞĞÀ°¹´õ¬ôù¹…µ•Ím™lÌ©¬¬Éutì(€½¹ÍĞ™±…Ğõmtì™½È¡±•Ğ¤ôÀí¤ñ¸í¤¬¬¥ì™±…Ğ¹ÁÕÍ ¡ÍÉØ¡™lÌ©¥t¤°ÍÉØ¡™lÌ©¤¬Åt¤¤ìô(€±•Ğ½™˜ôÀì½¹ÍĞµ½¹¼õmtì™½È¡±•Ğ¤ôÀí¤ñ™±…Ğ¹±•¹Ñ í¤¬¬¥ì±•ĞØõ™±…Ñm¥t­½™˜ì¥˜¡¤øÀ˜™Øñµ½¹½m¤´Åt¥í½™˜¬ôÄĞĞÀíØ¬ôÄĞĞÀíôµ½¹¼¹ÁÕÍ ¡Ø¤ìô(€½¹ÍĞ…‰Íõmt±…‰Íõmtì™½È¡±•Ğ¤ôÀí¤ñ¸í¤¬¬¥í…‰Í¹ÁÕÍ ¡µ½¹½lÈ©¥t¤í…‰Í¹ÁÕÍ ¡µ½¹½lÈ©¤¬Åt¤íô(€½¹ÍĞ¹½İŒõ¹•Ü…Ñ” ¤ì±•Ğ¹½ÜõÍÉØ¡¹½İŒ¹•Ñ!½ÕÉÌ ¤¨ØÀ­¹½İŒ¹•Ñ5¥¹ÕÑ•Ì ¤­¹½İŒ¹•ÑM•½¹‘Ì ¤¼ØÀ¤ì(€İ¡¥±”¡¹½Üñ…‰ÍlÁt´ÜÈÀ¥¹½Ü¬ôÄĞĞÀìİ¡¥±”¡¹½Üù…‰Ím¸´Åt¬ÜÈÀ¥¹½Ü´ôÄĞĞÀì(€¥˜¡¹½Üñ…‰ÍlÁuññ¹½Üøõ…‰Ím¸´Åt¤É•ÑÕÉ¸¹Õ±°ì(€±•ĞÕÉ%‘àô´Ä°Ñ½%‘àô´Ä°™É…ŒôÀ°…ÑMÑ…Ñ¥½¸õ™…±Í”ì(€™½È¡±•Ğ¤ôÀí¤ñ¸í¤¬¬¥ì(€€€¥˜¡¹½Üøõ…‰Ím¥t˜™¹½Üğõ…‰Ím¥t¥ìÕÉ%‘àõ¤ìÑ½%‘àõ5…Ñ ¹µ¥¸¡¤¬Ä±¸´Ä¤ì…ÑMÑ…Ñ¥½¸õÑÉÕ”ì‰É•…¬ìô(€€€¥˜¡¤ñ¸´Ä˜™¹½Üù…‰Ím¥t˜™¹½Üñ…‰Ím¤¬Åt¥ìÕÉ%‘àõ¤ìÑ½%‘àõ¤¬Äì™É…Œô¡¹½Üµ…‰Ím¥t¤½5…Ñ ¹µ…à Ä±…‰Ím¤¬Åtµ…‰Ím¥t¤ì‰É•…¬ìô(€ô(€¥˜¡ÕÉ%‘àğÀ¤É•ÑÕÉ¸¹Õ±°ì(€±•Ğ‘•ÍĞõ¹´¡¸´Ä¤ì€€€¼¼ƒ²¶Z'®Â§¶Z”ƒ¶j3²Â£²‚@¡ùù
+ß²^Ã²7²’G®ÎÔ¤ƒ²vÓ²‚ªæ3² °ƒ²^²ró®¦Ğƒ²Ös²Š²^´(€™½È¡±•Ğ¨õÕÉ%‘à¬Äí¨ñ¸´Äí¨¬¬¥ì¥˜¡™lÌ¨¡¨¬Ä¤¬Étôôõ™lÌ©¨¬Ét¥í‘•ÍĞõ¹´¡¨¤í‰É•…¬íô¥˜¡™lÌ¨¡¨¬Ä¤¬Étôôõ™lÌ¨¡¨´Ä¤¬Ét¥í‘•ÍĞõ¹´¡¨¤í‰É•…¬íôô(€½¹ÍĞ±¥­±½¬ô ¡™lÌ©ÕÉ%‘à¬Åt”ÄĞĞÀ¤¬ÄĞĞÀ¤”ÄĞĞÀì(€É•ÑÕÉ¸í™É½µMÑ¸é¹´¡ÕÉ%‘à¤°Ñ½MÑ¸é¹´¡Ñ½%‘à¤°™É…Œ°…ÑMÑ…Ñ¥½¸°‘•ÍĞ°±¥­±½­ôì)ô)™Õ¹Ñ¥½¸}µ•ÑÉ½1¥¹•1¥Ù•QÉ…¥¹Ì¡±¥¹•9…µ”¥ì(€½¹ÍĞ•¹Ğô¡ÑåÁ•½˜5QI=}M!„ôôÕ¹‘•™¥¹•œ¤˜™5QI=}M!m±¥¹•9…µ•tì¥˜ …•¹Ğ¥É•ÑÕÉ¸mtì(€½¹ÍĞ½ÕĞõmtì™½È¡±•ĞÌôÀíÌñ•¹Ğ¹Ğ¹±•¹Ñ íÌ¬¬¥ì½¹ÍĞÀõ}µ•ÑÉ½QÉ…¥¹1¥Ù•A½Ì¡±¥¹•9…µ”±Ì¤ì¥˜¡À¥½ÕĞ¹ÁÕÍ ¡ì¸¸¹À±ÍÙ%‘àéÌ±±Ìé•¹Ğ¹Œı•¹Ğ¹mÍtèÁô¤ìô(€É•ÑÕÉ¸½ÕĞì)ô)±•Ğ}µ•ÑÉ½!½µ•M¹…ÁÍ¡½Ñ…¡”õ¹Õ±°ì(¼¼ƒ¶f ƒ¶fS®¦Ó²j¤ƒ²‚²Ê€ƒ²jÓ¶Z$ƒ²*“®²Ü¸ƒ²z—ªÆÃ®š³²^Ó²Â 11}QI%9O²f ƒ®Ú®š³¶VĞƒ²‚²Ê€ƒ².sªÂ¶Fs®0ƒ²GªÎ¶Vs®.¸)™Õ¹Ñ¥½¸}µ•ÑÉ½!½µ•M¹…ÁÍ¡½Ğ ¥ì(€½¹ÍĞ¹½Üõ¹•Ü…Ñ” ¤±­•äõ€‘í¹½Ü¹•ÑÕ±±e•…È ¥ô´‘í¹½Ü¹•Ñ5½¹Ñ  ¥ô´‘í¹½Ü¹•Ñ…Ñ” ¥ô´‘í¹½Ü¹•Ñ!½ÕÉÌ ¥ô´‘í¹½Ü¹•Ñ5¥¹ÕÑ•Ì ¥õ€ì(€¥˜¡}µ•ÑÉ½!½µ•M¹…ÁÍ¡½Ñ…¡”ü¹­•äôôõ­•ä¥É•ÑÕÉ¸}µ•ÑÉ½!½µ•M¹…ÁÍ¡½Ñ…¡”¹Ù…±Õ”ì(€½¹ÍĞÍÑ…Ñ¥½¹9…µ•Ìõ¹•ÜM•Ğ ¤±ÉÕ¹¹¥¹œõmt±±¥¹•½Õ¹ÑÌõ¹•Ü5…À ¤ì(€±•Ğ‰•™½É”ôÀ±‘½¹”ôÀ±•áÁÉ•ÍÌôÀ±±¥µ¥Ñ•ôÀ±Ñ½Ñ…°ôÀì(€½¹ÍĞ±¥¹••™Ìõ¹•Ü5…À ¡ÑåÁ•½˜5QI=}1%9L„ôôÕ¹‘•™¥¹•œı5QI=}1%9Lémt¤¹µ…À¡±¥¹”ôùm±¥¹”¹¹…µ”±±¥¹•t¤¤ì(€™½È¡½¹ÍĞm±¥¹”±•¹Ñt½˜=‰©•Ğ¹•¹ÑÉ¥•Ì¡ÑåÁ•½˜5QI=}M!„ôôÕ¹‘•™¥¹•œı5QI=}M!éíô¤¥ì(€€€€¡•¹Ğ¹Íññmt¤¹™½É… ¡¹…µ”ôùÍÑ…Ñ¥½¹9…µ•Ì¹…‘¡¹…µ”¤¤ì(€€€™½È¡±•ĞÍÙ%‘àôÀíÍÙ%‘àğ¡•¹Ğ¹Ñññmt¤¹±•¹Ñ íÍÙ%‘à¬¬¥ì(€€€€€½¹ÍĞ˜õ•¹Ğ¹ÑmÍÙ%‘át±¬Äõ5…Ñ ¹™±½½È ¡˜ü¹±•¹Ñ¡ñğÀ¤¼Ì¤´Äí¥˜ …™ññ¬ÄğÄ¥½¹Ñ¥¹Õ”ì(€€€€€Ñ½Ñ…°¬¬ì(€€€€€½¹ÍĞÁ½Í¥Ñ¥½¸õ}µ•ÑÉ½QÉ…¥¹A½Ì¡±¥¹”±ÍÙ%‘à°À±¬Ä¤±±¥Ù”õ}µ•ÑÉ½QÉ…¥¹1¥Ù•A½Ì¡±¥¹”±ÍÙ%‘à¤±±Ìõ•¹Ğ¹Œü¹mÍÙ%‘áuñğÀì(€€€€€¥˜¡Á½Í¥Ñ¥½¸ü¹ÍÑ…Ñ”ôôô‰•™½É”œ¥í‰•™½É”¬¬í½¹Ñ¥¹Õ”íô(€€€€€¥˜¡Á½Í¥Ñ¥½¸ü¹ÍÑ…Ñ”ôôô…™Ñ•Èñğ…±¥Ù”¥í‘½¹”¬¬í½¹Ñ¥¹Õ”íô(€€€€€¥˜¡±ÌôôôÄ¥•áÁÉ•ÍÌ¬¬í•±Í”¥˜¡±ÌôôôÈ¥±¥µ¥Ñ•¬¬ì(€€€€€±¥¹•½Õ¹ÑÌ¹Í•Ğ¡±¥¹”°¡±¥¹•½Õ¹ÑÌ¹•Ğ¡±¥¹”¥ñğÀ¤¬Ä¤ì(€€€€€½¹ÍĞ‘•˜õ±¥¹••™Ì¹•Ğ¡±¥¹”¤ì(€€€€€ÉÕ¹¹¥¹œ¹ÁÕÍ ¡ì(€€€€€€€±¥¹”±±¥¹•%é‘•˜ü¹¥‘ñğœœ±½±½Èé‘•˜ü¹½±½ÉñğœŒÌàá‰™œ±ÍÙ%‘à±±Ì±¬Ä°(€€€€€€€½É¥¥¸é•¹Ğ¹Ím™lÉut±‘•ÍĞé±¥Ù”¹‘•ÍĞ±™É½µMÑ¸é±¥Ù”¹™É½µMÑ¸±Ñ½MÑ¸é±¥Ù”¹Ñ½MÑ¸°(€€€€€€€…ÑMÑ…Ñ¥½¸é±¥Ù”¹…ÑMÑ…Ñ¥½¸±™É…Œé±¥Ù”¹™É…Œ±±¥­±½¬é±¥Ù”¹±¥­±½¬±ÍÑ…ÉÑ±½¬é™lÅt(€€€€€ô¤ì(€€€ô(€ô(€ÉÕ¹¹¥¹œ¹Í½ÉĞ ¡„±ˆ¤ôø¡ˆ¹±Ìµ„¹±Ì¥ñğ¡ˆ¹ÍÑ…ÉÑ±½¬µ„¹ÍÑ…ÉÑ±½¬¥ññ„¹±¥¹”¹±½…±•½µÁ…É”¡ˆ¹±¥¹”°­¼œ¤¤ì(€½¹ÍĞÙ…±Õ”õíÉÕ¹¹¥¹œ±‰•™½É”±‘½¹”±Ñ½Ñ…°±•áÁÉ•ÍÌ±±¥µ¥Ñ•±ÍÑ…Ñ¥½¹½Õ¹ĞéÍÑ…Ñ¥½¹9…µ•Ì¹Í¥é”±±¥¹•½Õ¹Ğé±¥¹••™Ì¹Í¥é”±±¥¹•½Õ¹ÑÌél¸¸¹±¥¹•½Õ¹ÑÍt¹Í½ÉĞ ¡„±ˆ¤ôù‰lÅtµ…lÅt¥ôì(€}µ•ÑÉ½!½µ•M¹…ÁÍ¡½Ñ…¡”õí­•ä±Ù…±Õ•ôì(€É•ÑÕÉ¸Ù…±Õ”ì)ô)™Õ¹Ñ¥½¸}µ•ÑÉ½1¥Ù•QÉ…¥¹1…‰•°¡‘•ÍĞ±±Ì¥íÉ•ÑÕÉ¸±ÌôôôÈı€‘í‘•ÍÑôƒ¶*çªâ%€é±ÌôôôÄı€‘í‘•ÍÑôƒªâ'¶Z%€é€‘í‘•ÍÑ÷¶Z%€íô)™Õ¹Ñ¥½¸}µ•ÑÉ½1¥Ù•ÉÉ½İA…Ñ ¡à±ä±‘½İ¹İ…É¥ì(€½¹ÍĞõ¸ôø ­¸¤¹Ñ½¥á• Ä¤ì(€É•ÑÕÉ¸‘½İ¹İ…É(€€€€ü4€‘í¡à´Ğ¥ô€‘í¡ä´Ğ¥ô0€‘í¡à¬Ğ¥ô€‘í¡ä´Ğ¥ô0€‘í¡à¥ô€‘í¡ä¬Ğ¥ôi€(€€€€è4€‘í¡à´Ğ¥ô€‘í¡ä¬Ğ¥ô0€‘í¡à¬Ğ¥ô€‘í¡ä¬Ğ¥ô0€‘í¡à¥ô€‘í¡ä´Ğ¥ôi€ì)ô)±•Ğ}µ•ÑÉ½1¥Ù•=¸õÑÉÕ”ì€€€¼¼ƒ®ã²€ƒ²²àƒ².“².sªÂƒ²r²æ`ƒ¶Fs².p½¸½½™˜)™Õ¹Ñ¥½¸Í•Ñ5•ÑÉ½1¥Ù•=¸¡½¸¥ì}µ•ÑÉ½1¥Ù•=¸õ½¸ì¥˜¡}µ•ÑÉ½•Ñ…¥±%¥É•¹‘•É5•ÑÉ½1¥¹•ÍQ…ˆ ¤ìô(¼¼ƒ®ã²€ƒ²²àƒ¶²z®vó²vàƒ²r²^@ƒ²jÓ¶Z$ƒ²’Dƒ¶:ã²Äƒ®#²î“®–ğƒ².“²‚pƒ²¶Z'®–€ƒ²r²æc²^@ƒ®ÂÃ²æ`€£®Ê²*“²VÇ².t°ƒ²¿¶Vc¶Z$ƒ²Š3²jÀƒ®Ú®š°¤(¼¼ƒ¶Vc¶Z$÷ªâÃ²‚CŠK²Š²‚@£¶Z$ƒ²V®zc®†p¤°ƒ²¶Z$÷²Š²‚CŠKªâÃ²‚@£¶Z$ƒ²r®†p¤)™Õ¹Ñ¥½¸}Á±…•5•ÑÉ½1¥Ù•5…É­•ÉÌ¡½¹Ñ…¥¹•È°±¥¹•9…µ”¥ì(€¥˜ …}µ•ÑÉ½1¥Ù•=¸¥É•ÑÕÉ¸ì(€½¹ÍĞÑ°õ½¹Ñ…¥¹•È¹ÅÕ•ÉåM•±•Ñ½È œ¹µÑ°µÑ°œ¤ì¥˜ …Ñ°¥É•ÑÕÉ¸ì(€Ñ°¹ÅÕ•ÉåM•±•Ñ½É±° œ¹µÑ°µ±¥Ù”œ¤¹™½É… ¡´ôù´¹É•µ½Ù” ¤¤ì(€½¹ÍĞÉ½İ±ÌõíôìÑ°¹ÅÕ•ÉåM•±•Ñ½É±° œ¹µÑ°µÉ½Üœ¤¹™½É… ¡Èôùì½¹ÍĞ¹´õÈ¹‘…Ñ…Í•Ğ¹ÍÑ¸ì¥˜¡¹´˜˜…É½İ±Ím¹µt¥É½İ±Ím¹µtõÈìô¤ì(€}µ•ÑÉ½1¥¹•1¥Ù•QÉ…¥¹Ì¡±¥¹•9…µ”¤¹™½É… ¡Ğôùì(€€€½¹ÍĞ™É½µ°õÉ½İ±ÍmĞ¹™É½µMÑ¹t°Ñ½°õÉ½İ±ÍmĞ¹Ñ½MÑ¹t°…¹¡½Èõ™É½µ±ññÑ½°ì¥˜ ……¹¡½È¥É•ÑÕÉ¸ì(€€€½¹ÍĞ…ÑÈõ…¹¡½È¹½™™Í•ÑQ½À­…¹¡½È¹½™™Í•Ñ!•¥¡Ğ¼Èì±•Ğäõ…ÑÈ°‘½İ¹İ…ÉõÑÉÕ”ì(€€€¥˜¡™É½µ°˜™Ñ½°¥ì½¹ÍĞ™ÑÈõ™É½µ°¹½™™Í•ÑQ½À­™É½µ°¹½™™Í•Ñ!•¥¡Ğ¼È°ÑÑÈõÑ½°¹½™™Í•ÑQ½À­Ñ½°¹½™™Í•Ñ!•¥¡Ğ¼Èì(€€€€€äõĞ¹…ÑMÑ…Ñ¥½¸ı™ÑÈé™ÑÈ¬¡ÑÑÈµ™ÑÈ¤©Ğ¹™É…Œì‘½İ¹İ…ÉõÑ½°¹½™™Í•ÑQ½Àøõ™É½µ°¹½™™Í•ÑQ½Àìô€€¼¼ƒ²V®zc®†p÷ªâÃ²‚CŠK²Š²‚@÷¶Vc¶Z$(€€€½¹ÍĞ´õ‘½Õµ•¹Ğ¹É•…Ñ•±•µ•¹Ğ ‘¥Øœ¤ì(€€€´¹±…ÍÍ9…µ”ôµÑ°µ±¥Ù”±¥­…‰±”œ¬¡‘½İ¹İ…Éüœ‘½İ¸œèœÕÀœ¤¬¡Ğ¹…ÑMÑ…Ñ¥½¸üœ…Ğœèœœ¤¬¡Ğ¹±ÌøÀüœ•áÁÉ•ÍÌœèœœ¤ì(€€€´¹ÍÑå±”¹Ñ½Àõä¬Áàœì(€€€´¹Í•ÑÑÑÉ¥‰ÕÑ” É½±”œ°‰ÕÑÑ½¸œ¤í´¹Í•ÑÑÑÉ¥‰ÕÑ” Ñ…‰¥¹‘•àœ°œÀœ¤í´¹Í•ÑÑÑÉ¥‰ÕÑ” Ñ¥Ñ±”œ°Ÿ²^Ó²Â ƒ².sªÂ¶Fpƒ®ÎÓªâÀœ¤ì(€€€½¹ÍĞ½Á•¸ô ¤ôù½Á•¹5•ÑÉ½QÉ…¥¸¡±¥¹•9…µ”±Ğ¹ÍÙ%‘à±Ğ¹±¥­±½¬¤ì(€€€´¹…‘‘Ù•¹Ñ1¥ÍÑ•¹•È ±¥¬œ±½Á•¸¤í´¹…‘‘Ù•¹Ñ1¥ÍÑ•¹•È ­•å‘½İ¸œ±”ôùí¥˜¡”¹­•äôôô¹Ñ•Èññ”¹­•äôôôœ€œ¥í”¹ÁÉ•Ù•¹Ñ•™…Õ±Ğ ¤í½Á•¸ ¤íõô¤ì(€€€´¹¥¹¹•É!Q50õ€ñÍÁ…¸±…ÍÌô‰µÑ°µ±¥Ù”µ‘•ÍĞˆø‘í}½ÁÍÍŒ¡}µ•ÑÉ½1¥Ù•QÉ…¥¹1…‰•°¡Ğ¹‘•ÍĞ±Ğ¹±Ì¤¥ôğ½ÍÁ…¸ù€ì(€€€Ñ°¹…ÁÁ•¹‘¡¥±¡´¤ì(€ô¤ì)ô(¼¼ƒ².“².sªÂ=èƒªâÃ²†Ğƒ®.£²vğƒ¶²z®vó²và)™Õ¹Ñ¥½¸}µ•ÑÉ½MÑ…Ñ¥Q1!Q50¡°±É½İÌ¥ì(€É•ÑÕÉ¸€ñ‘¥Ø±…ÍÌô‰µÑ°µÑ°ˆÍÑå±”ôˆ´µµŒè‘í°¹½±½Éôˆø(€€€€‘ì  ¤ôùí½¹ÍĞ}á´õ}µ•ÑÉ½a™•É5…À¡°¤íÉ•ÑÕÉ¸É½İÌ¹µ…À ¡È±¤¤ôùì(€€€€€¥˜¡È¹…À¥É•ÑÕÉ¸€ñ‘¥Ø±…ÍÌô‰µÑ°µ…Àˆø‘í}½ÁÍÍŒ¡È¹±…‰•±ñğŸ²²€ƒ
+ÜƒªÊ÷²r€ƒªÖ³ªÂœ¥ôğ½‘¥Øù€ì(€€€€€½¹ÍĞ¥Í¹ô¡È¹É½ÕÑ•MÑ…ÉÑññÈ¹É½ÕÑ•¹‘ññ¤ôôôÁññ¤ôôõÉ½İÌ¹±•¹Ñ ´Ä¤˜™È¹ÍÑ½Àì(€€€€€½¹ÍĞ±ÌõÈ¹ÍÑ½ÀüœœèœÁ…ÍÌœì(€€€€€½¹ÍĞá˜õ}áµmÈ¹¹uññmt°¡…ÍQÉ…¥¸õ}¥ÍQÉ…¥¹MÑ¸¡È¹¸¤ì(€€€€€½¹ÍĞá™•É!Q50ô¡á˜¹±•¹Ñ¡ññ¡…ÍQÉ…¥¸¤ı€ñÍÁ…¸±…ÍÌô‰µÑ°µá™•ÉÌˆø‘ì(€€€€€€€á˜¹µ…À¡àôù€ñÍÁ…¸±…ÍÌô‰µÑ°µá™•ÈˆÍÑå±”ôˆ´µáŒè‘íà¹½±½ÉôˆÑ¥Ñ±”ôˆ‘íà¹¹…µ•ôƒ¶fc²*äˆ½¹±¥¬ô‰•Ù•¹Ğ¹ÍÑ½ÁAÉ½Á……Ñ¥½¸ ¤í½Á•¹5•ÑÉ½1¥¹” œ‘íà¹¥‘ôœ¤ˆøñ¤øğ½¤ø‘íà¹¹…µ•ôğ½ÍÁ…¸ù€¤¹©½¥¸ œœ¤(€€€€€ô‘í¡…ÍQÉ…¥¸ı€ñÍÁ…¸±…ÍÌô‰µÑ°µá™•ÈÑÉ…¥¸ˆÑ¥Ñ±”ô‹ªâÃ²Â ƒ¶fc²*äˆûÂ~jğ½ÍÁ…¸ù€èœôğ½ÍÁ…¸ù€èœœì(€€€€€É•ÑÕÉ¸€ñ‘¥Ø±…ÍÌô‰µÑ°µÉ½Ü‘í±Íôˆ‘…Ñ„µÍÑ¸ôˆ‘íMÑÉ¥¹œ¡È¹¸¤¹É•Á±…” ¼˜½œ°œ™…µÀìœ¤¹É•Á±…” ¼ˆ½œ°œ™ÅÕ½Ğìœ¥ôˆ½¹±¥¬ô‰½Á•¹MÑ…Ñ¥½¹•Ñ…¥° œ‘íÈ¹¸¹É•Á±…” ¼œ½œ°‰qpœˆ¥ôœ¤ˆø(€€€€€€€€ñÍÁ…¸±…ÍÌô‰µÑ°µ‘½Ğ‘í¥Í¹üœ•¹œèœôˆøğ½ÍÁ…¸ø(€€€€€€€€ñÍÁ…¸±…ÍÌô‰µÑ°µ¹…µ”‘í¥Í¹üœ•¹œèœôˆø‘íÈ¹¹ôğ½ÍÁ…¸ø(€€€€€€€€‘í¥Í¹ı€ñÍÁ…¸±…ÍÌô‰µÑ°µ•¹‘Ñ…œˆø‘íÈ¹‰É…¹ ü¡È¹É½ÕÑ•MÑ…ÉĞüŸ®ÚªâÀœèŸ²²€ƒ²Š²‚@œ¤è¡È¹É½ÕÑ•MÑ…ÉÑññ¤ôôôÀüŸªâÃ²‚@œèŸ²Š²‚@œ¥ôğ½ÍÁ…¸ù€è …È¹ÍÑ½Àı€ñÍÁ…¸±…ÍÌô‰µÑ°µÁ…ÍÍÑ…œˆû¶×ªÎğğ½ÍÁ…¸ù€èœœ¥ô(€€€€€€€€‘íá™•É!Q51ô(€€€€€€ğ½‘¥Øù€ì(€€€ô¤¹©½¥¸ œœ¤íô¤ ¥ô(€€ğ½‘¥Øù€ì)ô(¼¼ƒ².“².sªÂ=8èƒ²¶Vc¶Z$ƒ®Ú®š°ƒ¶²z®vó²và€£®ÂÃ²ƒ®>².t¤¸ƒ²Š0÷²^·®ªƒªÊ3¶À°ƒ²’G²Vd÷®Î×²€°ƒ²Š3®‚#²và÷²¶Z$ƒ²^Ó²Â °ƒ²jÃ®‚#²và÷¶Vc¶Z$ƒ²^Ó²Â )™Õ¹Ñ¥½¸}É•¹‘•É5•ÑÉ½1¥Ù•Q¥µ•±¥¹”¡°±É½İÌ¥ì(€½¹ÍĞ½±½Èõ°¹½±½È°õàôø ­à¤¹Ñ½¥á• Ä¤°•ÍŒõÌôù}½ÁÍÍŒ¡MÑÉ¥¹œ¡Ì¤¤ì(€½¹ÍĞI=] ôÌÀ°Q=@ôÈÈ°UPôØĞ°U19ôÄÄà°@ôÄØ°19ôÄÄà°Aôàì(€½¹ÍĞÉ…¥±TõUP­U19¬ÄÀ°É…¥±õÉ…¥±T­@ì(€½¹ÍĞ\õÉ…¥±¬ÄÀ­19­Aì(€€¼¼ƒ²^·®Îä€¡…Àƒ²‚s²fà¤(€½¹ÍĞÍÑ¹dõíô°‘½ÑÌõmt°¹…µ•Ìõmtì±•ĞäõQ=@ì±•Ğ™¥ÉÍÑMÑ½Á$ô´Ä±±…ÍÑMÑ½Á$ô´Äì(€É½İÌ¹™½É…  ¡È±¤¤ôùì¥˜¡È¹…À¥íä¬õI=] ¨À¸ÔÔíÉ•ÑÕÉ¸íô¥˜¡È¹ÍÑ½À¥í¥˜¡™¥ÉÍÑMÑ½Á$ğÀ¥™¥ÉÍÑMÑ½Á$õ¤í±…ÍÑMÑ½Á$õ¤íôô¤ì(€É½İÌ¹™½É…  ¡È±¤¤ôùì(€€€¥˜¡È¹…À¥ì¹…µ•Ì¹ÁÕÍ ¡€ñ‘¥Ø±…ÍÌô‰µÑ°µ±Ñ°µ…ÀˆÍÑå±”ô‰Ñ½Àè‘í¡ä­I=] ¨À¸ÀÔ¥õÁàí±•™Ğè‘í¡É…¥±T´Ø¥õÁàˆø‘í•ÍŒ¡È¹±…‰•±ñğŸ²²€ƒªÊ÷²r€œ¥ôğ½‘¥Øù€¤ìä¬õI=] ¨À¸ÔÔìÉ•ÑÕÉ¸ìô(€€€½¹ÍĞ•¹õÈ¹É½ÕÑ•MÑ…ÉÑññÈ¹É½ÕÑ•¹‘ññ¤ôôõ™¥ÉÍÑMÑ½Á%ññ¤ôôõ±…ÍÑMÑ½Á$ì(€€€€¡ÍÑ¹emÈ¹¹tõÍÑ¹emÈ¹¹uññmt¤¹ÁÕÍ ¡ä¤ì(€€€‘½ÑÌ¹ÁÕÍ ¡íä±•¹±ÍÑ½ÀéÈ¹ÍÑ½Áô¤ì(€€€½¹ÍĞ•¹‘1…‰•°õÈ¹‰É…¹ ü¡È¹É½ÕÑ•MÑ…ÉĞüŸ®ÚªâÀœèŸ²²€ƒ²Š²‚@œ¤è¡È¹É½ÕÑ•MÑ…ÉÑññ¤ôôõ™¥ÉÍÑMÑ½Á$üŸªâÃ²‚@œèŸ²Š²‚@œ¤ì(€€€¹…µ•Ì¹ÁÕÍ ¡€ñÍÁ…¸±…ÍÌô‰µÑ°µ±Ñ°µ¹…µ”‘í•¹üœ•¹œèœô‘íÈ¹ÍÑ½ÀüœœèœÁ…ÍÌôˆÍÑå±”ô‰Ñ½Àè‘í¡ä¥õÁàíİ¥‘Ñ è‘íUP´áõÁàˆ½¹±¥¬ô‰½Á•¹MÑ…Ñ¥½¹•Ñ…¥° œ‘íMÑÉ¥¹œ¡È¹¸¤¹É•Á±…” ¼œ½œ°‰qpœˆ¥ôœ¤ˆø‘í•ÍŒ¡È¹¸¥ô‘í•¹ı€ñˆ±…ÍÌô‰µÑ°µ±Ñ°µÑ…œˆø‘í•¹‘1…‰•±ôğ½ˆù€èœôğ½ÍÁ…¸ù€¤ì(€€€ä¬õI=] ì(€ô¤ì(€½¹ÍĞ õä¬ÄĞ°åQ½Àõ‘½ÑÌ¹±•¹Ñ ı‘½ÑÍlÁt¹äéQ=@°å	½Ğõ‘½ÑÌ¹±•¹Ñ ı‘½ÑÍm‘½ÑÌ¹±•¹Ñ ´Åt¹äé ì(€€¼¼ƒ®Î×²€ƒ®‚#²vğ£¶²vĞƒ²^²v0¤€¬ƒ²^´ƒ²nC¶Fs².p(€±•ĞÍÙœõ€ñ±¥¹”àÄôˆ‘íÉ…¥±UôˆäÄôˆ‘í¡åQ½À¥ôˆàÈôˆ‘íÉ…¥±UôˆäÈôˆ‘í¡å	½Ğ¥ôˆÍÑÉ½­”ôˆ‘í½±½ÉôˆÍÑÉ½­”µİ¥‘Ñ ôˆÌˆÍÑÉ½­”µ±¥¹•…Àô‰É½Õ¹ˆ¼ù€¬(€€€€€€€€€€ñ±¥¹”àÄôˆ‘íÉ…¥±ôˆäÄôˆ‘í¡åQ½À¥ôˆàÈôˆ‘íÉ…¥±ôˆäÈôˆ‘í¡å	½Ğ¥ôˆÍÑÉ½­”ôˆ‘í½±½ÉôˆÍÑÉ½­”µİ¥‘Ñ ôˆÌˆÍÑÉ½­”µ±¥¹•…Àô‰É½Õ¹ˆ¼ù€ì(€‘½ÑÌ¹™½É… ¡ôùì¥˜ …¹ÍÑ½À¥É•ÑÕÉ¸ì(€€€ÍÙœ¬õ€ñ¥É±”àôˆ‘íÉ…¥±Uôˆäôˆ‘í¡¹ä¥ôˆÈôˆ‘í¹•¹üÌ¸ĞèÈ¸Ùôˆ™¥±°ôˆ‘í¹•¹üœ™™˜œèÙ…È ´µ‰œÈ¤ôˆÍÑÉ½­”ôˆ‘í½±½ÉôˆÍÑÉ½­”µİ¥‘Ñ ôˆÈˆ¼øñ¥É±”àôˆ‘íÉ…¥±ôˆäôˆ‘í¡¹ä¥ôˆÈôˆ‘í¹•¹üÌ¸ĞèÈ¸Ùôˆ™¥±°ôˆ‘í¹•¹üœ™™˜œèÙ…È ´µ‰œÈ¤ôˆÍÑÉ½­”ôˆ‘í½±½ÉôˆÍÑÉ½­”µİ¥‘Ñ ôˆÈˆ¼ù€ìô¤ì(€€¼¼ƒ²^Ó²Â ƒ®ÂÃ²æ`èƒ¶Vc¶Z$÷²Š3®‚#²và¡É…¥±T¤°ƒ²¶Z$÷²jÃ®‚#²và¡É…¥±¤°ç²Ú§®>0ƒ®RS¶Ó®~³¶À(€½¹ÍĞÕÀõmt±‘¸õmtì(€}µ•ÑÉ½1¥¹•1¥Ù•QÉ…¥¹Ì¡°¹¹…µ”¤¹™½É… ¡Ğôùì½¹ÍĞ™åÌõÍÑ¹emĞ¹™É½µMÑ¹uññmt°ÑåÌõÍÑ¹emĞ¹Ñ½MÑ¹uññmtì¥˜ …™åÌ¹±•¹Ñ ˜˜…ÑåÌ¹±•¹Ñ ¥É•ÑÕÉ¸ì(€€€±•Ğ˜õ™åÍlÁtüıÑåÍlÁt±ÑĞõÑåÍlÁtüı™åÍlÁt±‰•ÍĞõ%¹™¥¹¥Ñäì(€€€™½È¡½¹ÍĞ„½˜€¡™åÌ¹±•¹Ñ ı™åÌémÑÑt¤¥™½È¡½¹ÍĞˆ½˜€¡ÑåÌ¹±•¹Ñ ıÑåÌém…t¤¥í½¹ÍĞõ5…Ñ ¹…‰Ì¡ˆµ„¤í¥˜¡ñ‰•ÍĞ¥í‰•ÍĞõí˜õ„íÑĞõˆíõô(€€€½¹ÍĞ‘½İ¸õÑĞøõ˜ì½¹ÍĞ•äõĞ¹…ÑMÑ…Ñ¥½¸ı˜é˜¬¡ÑĞµ˜¤¨¡Ğ¹™É…ñğÀ¤ì(€€€€¡‘½İ¸ı‘¸éÕÀ¤¹ÁÕÍ ¡í•ä±‘•ÍĞéĞ¹‘•ÍĞ±…ĞéĞ¹…ÑMÑ…Ñ¥½¸±±ÌéĞ¹±Ì±ÍÙ%‘àéĞ¹ÍÙ%‘à±±¥­±½¬éĞ¹±¥­±½­ô¤ìô¤ì(€±•Ğ¡¥ÁÌôœœì(€½¹ÍĞ±…¹”ô¡…ÉÈ±Í¥‘”±½°¤ôùì…ÉÈ¹Í½ÉĞ ¡„±ˆ¤ôù„¹•äµˆ¹•ä¤ì±•ĞÁÉ•Øô´ääì½¹ÍĞ±•™Ğô¡Í¥‘”ôôô±•™Ğœ¤°É…¥±`õ±•™ĞıÉ…¥±TéÉ…¥±°‘¥Èõ±•™Ğü´ÄèÄì(€€€…ÉÈ¹™½É… ¡Ğôùì±•Ğäõ5…Ñ ¹µ…à¡Ğ¹•ä°ÁÉ•Ø¬ÈÈ¤ìÁÉ•Øõäì(€€€€€ÍÙœ¬õ€ñÁ…Ñ ô‰4€‘íÉ…¥±aô€‘í¡Ğ¹•ä¥ô0€‘í¡É…¥±`­‘¥È¨ä¥ô€‘í¡ä¥ôˆÍÑÉ½­”ôˆ‘í½±ôˆÍÑÉ½­”µİ¥‘Ñ ôˆÄ¸Ğˆ½Á…¥Ñäôˆ¸Üˆ™¥±°ô‰¹½¹”ˆ¼ù€¬(€€€€€€€€€€€ñÁ…Ñ ôˆ‘í}µ•ÑÉ½1¥Ù•ÉÉ½İA…Ñ ¡É…¥±`±Ğ¹•ä±±•™Ğ¥ôˆ™¥±°ôˆ‘í½±ôˆ¼ù€ì(€€€€€½¹ÍĞÍÑå±”õ±•™ĞıÉ¥¡Ğè‘í¡\´¡É…¥±T´ÄÄ¤¥õÁàíÑ½Àè‘í¡ä¥õÁá€é±•™Ğè‘í¡É…¥±¬ÄÄ¥õÁàíÑ½Àè‘í¡ä¥õÁá€ì(€€€€€½¹ÍĞ±¥¹•ÉœõMÑÉ¥¹œ¡°¹¹…µ”¤¹É•Á±…” ½qp½œ°qqqpœ¤¹É•Á±…” ¼œ½œ°‰qpœˆ¤ì(€€€€€¡¥ÁÌ¬õ€ñ‰ÕÑÑ½¸ÑåÁ”ô‰‰ÕÑÑ½¸ˆ±…ÍÌô‰µÑ°µ±Ñ°µÑÉ…¥¸€‘í±•™Ğü‘½İ¸œèÕÀô‘íĞ¹…Ğüœ…Ğœèœô‘íĞ¹±ÌøÀüœ•áÁÉ•ÍÌœèœôˆÍÑå±”ôˆ‘íÍÑå±•ôì´µÑŒè‘í½±ôˆ½¹±¥¬ô‰½Á•¹5•ÑÉ½QÉ…¥¸ œ‘í±¥¹•Éôœ°‘íĞ¹ÍÙ%‘áô°‘íĞ¹±¥­±½­ô¤ˆÑ¥Ñ±”ô‹²^Ó²Â ƒ².sªÂ¶Fpƒ®ÎÓªâÀˆø‘í•ÍŒ¡}µ•ÑÉ½1¥Ù•QÉ…¥¹1…‰•°¡Ğ¹‘•ÍĞ±Ğ¹±Ì¤¥ôğ½‰ÕÑÑ½¸ù€ì(€€€ô¤ì(€ôì(€±…¹”¡‘¸°±•™Ğœ±½±½È¤ì±…¹”¡ÕÀ°É¥¡Ğœ°œ”ààØÍœ¤ì(€É•ÑÕÉ¸€ñ‘¥Ø±…ÍÌô‰µÑ°µ±Ñ°ˆÍÑå±”ô‰¡•¥¡Ğè‘í¡ ¥õÁàíİ¥‘Ñ è‘í]õÁàì´µµŒè‘í½±½ÉôˆøñÍÙœ±…ÍÌô‰µÑ°µ±Ñ°µÍÙœˆİ¥‘Ñ ôˆ‘í]ôˆ¡•¥¡Ğôˆ‘í¡ ¥ôˆÙ¥•İ	½àôˆÀ€À€‘í]ô€‘í¡ ¥ôˆø‘íÍÙôğ½ÍÙœø‘í¹…µ•Ì¹©½¥¸ œœ¥ô‘í¡¥ÁÍôğ½‘¥Øù€ì)ô)™Õ¹Ñ¥½¸}µ•ÑÉ½¥ÍÁ±…å•ÍÑ¥¹…Ñ¥½¸¡‘•ÍĞ±±Ì±Í¡½ÜõÑÉÕ”¥ì(€¥˜ …Í¡½Ü¥É•ÑÕÉ¸€œ™¹‰ÍÀìœì(€É•ÑÕÉ¸€‘í}½ÁÍÍŒ¡‘•ÍĞ¥ô‘í±ÌôôôÄüœñ•´±…ÍÌô‰µÑˆÈµÈµ•áÁÉ•ÍÌˆûªâ'¶Z$ğ½•´øœé±ÌôôôÈüŸ¶*çªâ$œèŸ¶Z$õ€ì)ô)™Õ¹Ñ¥½¸}µ•ÑÉ½I•¥½¹…±A½Í¥Ñ¥½¹!Q50¡À¥ì(€¥˜ …ÁññÀ¹ÍÑ…Ñ”ôôô‰•™½É”œ¥ì(€€€É•ÑÕÉ¸€ñÍÁ…¸±…ÍÌô‰µÑˆÈµÉ±½ŒˆøñÍÁ…¸û²jÓ¶Z$ƒ²‚ğ½ÍÁ…¸øğ½ÍÁ…¸øñÍÁ…¸±…ÍÌô‰µÑˆÈµÉÍÑ…Ñ”ˆû²Ús®Âpƒ²b#²‚Tğ½ÍÁ…¸ù€ì(€ô(€¥˜¡À¹ÍÑ…Ñ”ôôô…™Ñ•Èœ¥ì(€€€É•ÑÕÉ¸€ñÍÁ…¸±…ÍÌô‰µÑˆÈµÉ±½ŒˆøñÍÁ…¸û²Š²Â¤ğ½ÍÁ…¸øğ½ÍÁ…¸øñÍÁ…¸±…ÍÌô‰µÑˆÈµÉÍÑ…Ñ”ˆû²jÓ¶Z$ƒ²Š®0ğ½ÍÁ…¸ù€ì(€ô(€½¹ÍĞ±½ŒõÀ¹…İ…äôôôÀüŸ®.ç²^´œé}½ÁÍÍŒ¡À¹ÍÑ¸¤ì(€½¹ÍĞ…İ…äõ9Õµ‰•È¹¥Í¥¹¥Ñ”¡À¹…İ…ä¤˜™À¹…İ…äøÀı€‘íÀ¹…İ…å÷²‚²^µ€é±½Œì(€½¹ÍĞ±½!Q50õ…İ…ä„ôõ±½Œ(€€€€ı€ñÍÁ…¸±…ÍÌô‰µÑˆÈµÉ±½ŒµÑˆÈµÉ±½Œ´µ™±¥ÀˆøñÍÁ…¸±…ÍÌô‰µÑˆÈµÉÍÑ…Ñ¥½¸ˆø‘í±½ôğ½ÍÁ…¸øñÍÁ…¸±…ÍÌô‰µÑˆÈµÉ…İ…äˆø‘í…İ…åôğ½ÍÁ…¸øğ½ÍÁ…¸ù€(€€€€é€ñÍÁ…¸±…ÍÌô‰µÑˆÈµÉ±½ŒˆøñÍÁ…¸±…ÍÌô‰µÑˆÈµÉÍÑ…Ñ¥½¸ˆø‘í±½ôğ½ÍÁ…¸øğ½ÍÁ…¸ù€ì(€½¹ÍĞÍÑ…Ñ”õÀ¹…İ…äôôôÀ˜™À¹ÍÑ…Ñ”ôôôŸ²‚GªŞğœüŸ²‚GªŞğœéÀ¹ÍÑ…Ñ”ì(€É•ÑÕÉ¸€‘í±½!Q51ôñÍÁ…¸±…ÍÌô‰µÑˆÈµÉÍÑ…Ñ”ˆø‘íÍÑ…Ñ•ôğ½ÍÁ…¸ù€ì)ô)™Õ¹Ñ¥½¸}µ•ÑÉ½UÉ‰…¹I½ÕÑ•!Q50¡±¥¹”±ÍÑ¸±Ô±•¹ÑÉ¥•Ì¥ì(€½¹ÍĞ•¹Ğô¡ÑåÁ•½˜5QI=}M!„ôôÕ¹‘•™¥¹•œ¤˜™5QI=}M!m±¥¹•tì(€¥˜ …•¹Ññğ…Ô¥É•ÑÕÉ¸€œœì(€½¹ÍĞ˜õ•¹Ğ¹ÑmÔ¹ÍÙtì¥˜ …˜¥É•ÑÕÉ¸€œœì(€½¹ÍĞ¹…µ•Ìõ•¹Ğ¹Ì°Í•Äõmtì(€™½È¡±•Ğ¬õÔ¹¬Àí¬ğõÔ¹¬Äí¬¬¬¥ì(€€€½¹ÍĞ¹…µ”õ¹…µ•Ím™lÌ©¬¬Éutì(€€€¥˜¡¹…µ”˜™Í•ÅmÍ•Ä¹±•¹Ñ ´Åt„ôõ¹…µ”¥Í•Ä¹ÁÕÍ ¡¹…µ”¤ì(€ô(€¥˜ …Í•Ä¹±•¹Ñ ¥É•ÑÕÉ¸€œœì(€±•ĞÑ…É•ĞõÍ•Ä¹¥¹‘•á=˜¡ÍÑ¸¤ì¥˜¡Ñ…É•ĞğÀ¥Ñ…É•ĞôÀì(€½¹ÍĞÍÑ…ÉĞõ5…Ñ ¹µ…à À±Ñ…É•Ğ´Ğ¤ì(€½¹ÍĞÍ¡½İ¸õÍ•Ä¹Í±¥”¡ÍÑ…ÉĞ±Ñ…É•Ğ¬Ä¤ì(€½¹ÍĞ‘•¹½µ¥¹…Ñ½Èõ5…Ñ ¹µ…à Ä±Í¡½İ¸¹±•¹Ñ ´Ä¤ì(€½¹ÍĞÍÑ…Ñ¥½¹!Q50õÍ¡½İ¸¹µ…À ¡¹…µ”±¤¤ôù€ñÍÁ…¸±…ÍÌô‰µÑˆµÕÉ‰…¸µÍÑ½À‘í¹…µ”ôôõÍÑ¸üœÕÉÉ•¹ĞœèœôˆÍÑå±”ôˆ´µÍÑ½ÀµÁ½Ìè‘íÍ¡½İ¸¹±•¹Ñ ôôôÄüÔÀè¡¤½‘•¹½µ¥¹…Ñ½È¤¨ÄÀÁô”ˆøñ¤øğ½¤øñˆø‘í}½ÁÍÍŒ¡¹…µ”¥ôğ½ˆøğ½ÍÁ…¸ù€¤¹©½¥¸ œœ¤ì(€½¹ÍĞÍÉØõàôø  ¡à´ÈĞÀ¤”ÄĞĞÀ¤¬ÄĞĞÀ¤”ÄĞĞÀì(€½¹ÍĞ¹½İ…Ñ”õ¹•Ü…Ñ” ¤ì(€½¹ÍĞ±½­9½ÜõÍÉØ¡¹½İ…Ñ”¹•Ñ!½ÕÉÌ ¤¨ØÀ­¹½İ…Ñ”¹•Ñ5¥¹ÕÑ•Ì ¤­¹½İ…Ñ”¹•ÑM•½¹‘Ì ¤¼ØÀ¤ì(€½¹ÍĞÕ¹¥ÅÕ•¹ÑÉ¥•Ìõl¸¸¹¹•Ü5…À ¡•¹ÑÉ¥•Íññmt¤¹µ…À¡”ôùm€‘í”¹±¥¹•ññ±¥¹•õğ‘í”¹ÍÙõğ‘í”¹¬Áõğ‘í”¹¬Åõ€±•t¤¤¹Ù…±Õ•Ì ¥tì(€½¹ÍĞÑÉ…¥¹A½Í¥Ñ¥½¹ÌõÕ¹¥ÅÕ•¹ÑÉ¥•Ì¹µ…À¡”ôùì(€€€½¹ÍĞ•¹ÑÉå1¥¹”õ”¹±¥¹•ññ±¥¹”ì(€€€½¹ÍĞ•¹ÑÉå¹Ğô¡ÑåÁ•½˜5QI=}M!„ôôÕ¹‘•™¥¹•œ¤˜™5QI=}M!m•¹ÑÉå1¥¹•tì(€€€½¹ÍĞÍ•ÉÙ¥”õ•¹ÑÉå¹Ğ˜™•¹ÑÉå¹Ğ¹Ñm”¹ÍÙtì(€€€¥˜ …Í•ÉÙ¥”¥É•ÑÕÉ¸¹Õ±°ì(€€€½¹ÍĞ•¹ÑÉå9…µ•Ìõ•¹ÑÉå¹Ğ¹Ìì(€€€½¹ÍĞÉ…Üõmtì(€€€±•Ğ½™™Í•ĞôÀ°ÁÉ•Ù¥½ÕÌôµ%¹™¥¹¥Ñäì(€€€™½È¡±•Ğ¬õ”¹¬Àí¬ğõ”¹¬Äí¬¬¬¥ì(€€€€€±•Ğ…ÉÈõÍÉØ¡Í•ÉÙ¥•lÌ©­t¤­½™™Í•Ğ°‘•ÀõÍÉØ¡Í•ÉÙ¥•lÌ©¬¬Åt¤­½™™Í•Ğì(€€€€€İ¡¥±”¡…ÉÈñÁÉ•Ù¥½ÕÌ¥í½™™Í•Ğ¬ôÄĞĞÀí…ÉÈ¬ôÄĞĞÀí‘•À¬ôÄĞĞÀíô(€€€€€¥˜¡‘•Àñ…ÉÈ¥‘•À¬ôÄĞĞÀì(€€€€€ÁÉ•Ù¥½ÕÌõ‘•Àì(€€€€€É…Ü¹ÁÕÍ ¡í¹…µ”é•¹ÑÉå9…µ•ÍmÍ•ÉÙ¥•lÌ©¬¬Éut±…ÉÈ±‘•Áô¤ì(€€€ô(€€€¥˜ …É…Ü¹±•¹Ñ ¥É•ÑÕÉ¸¹Õ±°ì(€€€±•Ğ¹½Üõ±½­9½Üì(€€€İ¡¥±”¡¹½ÜñÉ…İlÁt¹…ÉÈ´ÜÈÀ¥¹½Ü¬ôÄĞĞÀì(€€€İ¡¥±”¡¹½ÜùÉ…İmÉ…Ü¹±•¹Ñ ´Åt¹‘•À¬ÜÈÀ¥¹½Ü´ôÄĞĞÀì(€€€¥˜¡¹½ÜñÉ…İlÁt¹…ÉÉññ¹½ÜùÉ…İmÉ…Ü¹±•¹Ñ ´Åt¹‘•À¥É•ÑÕÉ¸¹Õ±°ì(€€€±•ĞÑÉ…¥¹%¹‘•àõ¹Õ±°ì(€€€™½È¡±•Ğ¤ôÀí¤ñÉ…Ü¹±•¹Ñ í¤¬¬¥ì(€€€€€½¹ÍĞ¡•É”õÍ•Ä¹¥¹‘•á=˜¡É…İm¥t¹¹…µ”¤ì(€€€€€¥˜¡¡•É”ğÀ¥½¹Ñ¥¹Õ”ì(€€€€€¥˜¡¹½ÜøõÉ…İm¥t¹…ÉÈ˜™¹½ÜğõÉ…İm¥t¹‘•À¥íÑÉ…¥¹%¹‘•àõ¡•É”í‰É•…¬íô(€€€€€¥˜¡¤ñÉ…Ü¹±•¹Ñ ´Ä˜™¹½ÜùÉ…İm¥t¹‘•À˜™¹½ÜñÉ…İm¤¬Åt¹…ÉÈ¥ì(€€€€€€€½¹ÍĞÑ¡•É”õÍ•Ä¹¥¹‘•á=˜¡É…İm¤¬Åt¹¹…µ”¤ì(€€€€€€€¥˜¡Ñ¡•É”ğÀ¥½¹Ñ¥¹Õ”ì(€€€€€€€½¹ÍĞ™É…Œô¡¹½ÜµÉ…İm¥t¹‘•À¤½5…Ñ ¹µ…à Ä±É…İm¤¬Åt¹…ÉÈµÉ…İm¥t¹‘•À¤ì(€€€€€€€ÑÉ…¥¹%¹‘•àõ¡•É”¬¡Ñ¡•É”µ¡•É”¤©™É…Œì(€€€€€€€‰É•…¬ì(€€€€€ô(€€€ô(€€€¥˜¡ÑÉ…¥¹%¹‘•àôõ¹Õ±±ññÑÉ…¥¹%¹‘•àñÍÑ…ÉÑññÑÉ…¥¹%¹‘•àùÑ…É•Ğ¥É•ÑÕÉ¸¹Õ±°ì(€€€É•ÑÕÉ¸ì(€€€€€Á½Ìé5…Ñ ¹µ…à À±5…Ñ ¹µ¥¸ ÄÀÀ° ¡ÑÉ…¥¹%¹‘•àµÍÑ…ÉĞ¤½‘•¹½µ¥¹…Ñ½È¤¨ÄÀÀ¤¤°(€€€€€±¥¹”é•¹ÑÉå1¥¹”±ÍÙŒé”¹ÍÙŒ±¬Àé”¹¬À±¬Äé”¹¬Ä°(€€€€€±¥­±½¬è ¡Í•ÉÙ¥•lÌ©”¹¬À¬Åt”ÄĞĞÀ¤¬ÄĞĞÀ¤”ÄĞĞÀ(€€€ôì(€ô¤¹™¥±Ñ•È¡	½½±•…¸¤¹Í½ÉĞ ¡„±ˆ¤ôù„¹Á½Ìµˆ¹Á½Ì¤ì(€½¹ÍĞ±…¹•¹‘Ìõlµ%¹™¥¹¥Ñä°µ%¹™¥¹¥Ñä°µ%¹™¥¹¥Ñä°µ%¹™¥¹¥Ñåtì(€½¹ÍĞÑÉ…¥¹!Q50õÑÉ…¥¹A½Í¥Ñ¥½¹Ì¹µ…À ¡ÑÉ…¥¸±¤¤ôùì(€€€½¹ÍĞÁ½ÌõÑÉ…¥¸¹Á½Ìì(€€€½¹ÍĞ±¥¹•ÉœõMÑÉ¥¹œ¡ÑÉ…¥¸¹±¥¹•ññ±¥¹”¤¹É•Á±…” ½qp½œ°qqqpœ¤¹É•Á±…” ¼œ½œ°‰qpœˆ¤ì(€€€±•Ğ±…¹”õ±…¹•¹‘Ì¹™¥¹‘%¹‘•à¡±…ÍĞôùÁ½Ìµ±…ÍĞøôÜ¤ì(€€€¥˜¡±…¹”ğÀ¥±…¹”õ¤•±…¹•¹‘Ì¹±•¹Ñ ì(€€€±…¹•¹‘Ím±…¹•tõÁ½Ìì(€€€É•ÑÕÉ¸€ñ‰ÕÑÑ½¸ÑåÁ”ô‰‰ÕÑÑ½¸ˆ±…ÍÌô‰µÑˆµÕÉ‰…¸µÑÉ…¥¸ˆÍÑå±”ôˆ´µÑÉ…¥¸µÁ½Ìè‘íÁ½Íô”ì´µÑÉ…¥¸µ±…¹”è‘í±…¹”¨áõÁàˆ…É¥„µ±…‰•°ô‹²jÓ¶Z$ƒ²’Dƒ²^Ó²Â €‘í¤¬Åôƒ².sªÂ¶Fpƒ®ÎÓªâÀˆÑ¥Ñ±”ô‹²^Ó²Â ƒ².sªÂ¶Fpƒ®ÎÓªâÀˆ½¹±¥¬ô‰•Ù•¹Ğ¹ÍÑ½ÁAÉ½Á……Ñ¥½¸ ¤í½Á•¹5•ÑÉ½QÉ…¥¸ œ‘í±¥¹•Éôœ°‘íÑÉ…¥¸¹ÍÙô°‘íÑÉ…¥¸¹±¥­±½­ô°‘íÑÉ…¥¸¹¬Áô°‘íÑÉ…¥¸¹¬Åô¤ˆûÂ~jğ½‰ÕÑÑ½¸ù€ì(€ô¤¹©½¥¸ œœ¤ì(€É•ÑÕÉ¸€ñ‘¥Ø±…ÍÌô‰µÑˆÈµÕÉ‰…¸µÉ½ÕÑ”ˆø(€€€€ñ‘¥Ø±…ÍÌô‰µÑˆµÕÉ‰…¸µÑÉ…¬ˆøñÍÁ…¸±…ÍÌô‰µÑˆµÕÉ‰…¸µ±¥¹”ˆøğ½ÍÁ…¸ø‘íÍÑ…Ñ¥½¹!Q51ô‘íÑÉ…¥¹!Q51ôğ½‘¥Øø(€€ğ½‘¥Øù€ì)ô)™Õ¹Ñ¥½¸}µ•ÑÉ½MÑ…Ñ¥½¹	½…É‘!Q50¡ÍÑ¸±‘¥ÍÁ±…å	½…Éõ™…±Í”¥ì(€¥˜¡ÑåÁ•½˜5QI=}M!ôôôÕ¹‘•™¥¹•œ¤É•ÑÕÉ¸€œœì(€}µ•ÑÉ½	½…É‘MÑ¸õÍÑ¸ì(€½¹ÍĞÙ¥•İ5½‘”õ‘¥ÍÁ±…å	½…ÉüÁ½Ìœé}µ•ÑÉ½	½…É‘5½‘”ì(€½¹ÍĞ‘•ÁÌõ}µ•ÑÉ½MÑ…Ñ¥½¹•ÁÌ¡ÍÑ¸¤ì(€¥˜ …‘•ÁÌ¹±•¹Ñ ¤É•ÑÕÉ¸€œœì(€½¹ÍĞ¹½Üõ¹•Ü…Ñ” ¤ì(€½¹ÍĞ¹½İM•Œõ¹½Ü¹•Ñ!½ÕÉÌ ¤¨ÌØÀÀ­¹½Ü¹•Ñ5¥¹ÕÑ•Ì ¤¨ØÀ­¹½Ü¹•ÑM•½¹‘Ì ¤ì(€½¹ÍĞÍÉÙM•ŒõÌôø  ¡Ì´ÄĞĞÀÀ¤”àØĞÀÀ¤¬àØĞÀÀ¤”àØĞÀÀì€€€€€€¼¼ƒ²jÓ¶Z'²vğƒªâÃ²’ ƒ²Ò  ÀĞèÀÀôÀ¤(€½¹ÍĞ¹½İLõÍÉÙM•Œ¡¹½İM•Œ¤°¹½İ5¥¸õ5…Ñ ¹™±½½È¡¹½İM•Œ¼ØÀ¤ì(€½¹ÍĞÉÕ¹¹¥¹œõ‘•ÁÌ¹™¥±Ñ•È¡¼ôùí½¹ÍĞõ¼¹‘•À±„õ¼¹…ÉÈìÉ•ÑÕÉ¸€¡ğõ„¤ü¡¹½İ5¥¸øõ˜™¹½İ5¥¸ğõ„¤è¡¹½İ5¥¸øõ‘ññ¹½İ5¥¸ğõ„¤íô¤¹±•¹Ñ ì(€½¹ÍĞ™MÉÙ±½¬õÍÌôùí½¹ÍĞ´ô¡5…Ñ ¹™±½½È¡ÍÌ¼ØÀ¤¬ÈĞÀ¤”ÄĞĞÀíÉ•ÑÕÉ¸€‘í5…Ñ ¹™±½½È¡´¼ØÀ¥ôè‘íMÑÉ¥¹œ¡´”ØÀ¤¹Á…‘MÑ…ÉĞ È°œÀœ¥õ€íôì€¼¼ƒ²jÓ¶Z'²vó²Ò#ŠK².sªÎ(€½¹ÍĞÉ•±QáĞõÉ•°ôùí½¹ÍĞ´õ5…Ñ ¹™±½½È¡É•°¼ØÀ¤ì¥˜¡´ğôÀ¥É•ÑÕÉ¸€ŸªÎœœìÉ•ÑÕÉ¸´¬Ÿ®Úœíôì€€€¼¼ƒ®Úƒ®.£²rƒ¶×²vğ äÃ®Úƒ².t¤(€€¼¼ƒ®ã²€ƒŠHƒ®Â§®¦Ğ£®.“²v3²^´¤ƒŠHƒ¶:àƒ®ª§®†t(€½¹ÍĞ±¥¹•Ìõíôì(€‘•ÁÌ¹™½É… ¡¼ôùì€¡±¥¹•Ím¼¹±¥¹•tõ±¥¹•Ím¼¹±¥¹•uññíô¤ì€¡±¥¹•Ím¼¹±¥¹•um¼¹¹•áÑtõ±¥¹•Ím¼¹±¥¹•um¼¹¹•áÑuññmt¤¹ÁÕÍ ¡¼¤ìô¤ì(€½¹ÍĞ±¥¹•=É‘•Èõ=‰©•Ğ¹­•åÌ¡±¥¹•Ì¤¹Í½ÉĞ ¡„±ˆ¤ôùì(€€€½¹ÍĞ„õ=‰©•Ğ¹Ù…±Õ•Ì¡±¥¹•Ím…t¤¹É•‘Õ” ¡Ì±Ø¤ôùÌ­Ø¹±•¹Ñ °À¤ì(€€€½¹ÍĞˆõ=‰©•Ğ¹Ù…±Õ•Ì¡±¥¹•Ím‰t¤¹É•‘Õ” ¡Ì±Ø¤ôùÌ­Ø¹±•¹Ñ °À¤ì(€€€É•ÑÕÉ¸ˆµ„ì(€ô¤ì(€¥˜¡‘¥ÍÁ±…å	½…É¥ì(€€€½¹ÍĞÁÉ•Ù¥½ÕÍ1¥¹”ô¡}µ•ÑÉ½¥ÍÁ±…å1¥¹•É½ÕÁÍm}µ•ÑÉ½¥ÍÁ±…å1¥¹•%¹‘•áuññmt¥lÁuññ}µ•ÑÉ½¥ÍÁ±…å1¥¹•Ím}µ•ÑÉ½¥ÍÁ±…å1¥¹•%¹‘•áuñğœœì(€€€}µ•ÑÉ½¥ÍÁ±…å1¥¹•Ìõ±¥¹•=É‘•Èì(€€€}µ•ÑÉ½¥ÍÁ±…å1¥¹•É½ÕÁÌõ}µ•ÑÉ½¥ÍÁ±…åÉ½ÕÁÍ½ÉMÑ…Ñ¥½¸¡ÍÑ¸±±¥¹•=É‘•È¤ì(€€€½¹ÍĞÁÉ•Í•ÉÙ•‘%¹‘•àõÁÉ•Ù¥½ÕÍ1¥¹”ı}µ•ÑÉ½¥ÍÁ±…å1¥¹•É½ÕÁÌ¹™¥¹‘%¹‘•à¡É½ÕÀôùÉ½ÕÀ¹¥¹±Õ‘•Ì¡ÁÉ•Ù¥½ÕÍ1¥¹”¤¤è´Äì(€€€}µ•ÑÉ½¥ÍÁ±…å1¥¹•%¹‘•àõÁÉ•Í•ÉÙ•‘%¹‘•àøôÀıÁÉ•Í•ÉÙ•‘%¹‘•àé5…Ñ ¹µ…à À±5…Ñ ¹µ¥¸¡}µ•ÑÉ½¥ÍÁ±…å1¥¹•%¹‘•à±}µ•ÑÉ½¥ÍÁ±…å1¥¹•É½ÕÁÌ¹±•¹Ñ ´Ä¤¤ì(€ô(€½¹ÍĞÉ•¹‘•É1¥¹•Ìõ‘¥ÍÁ±…å	½…Éü¡}µ•ÑÉ½¥ÍÁ±…å1¥¹•É½ÕÁÍm}µ•ÑÉ½¥ÍÁ±…å1¥¹•%¹‘•áuññm±¥¹•=É‘•ÉlÁut¤é±¥¹•=É‘•Èì(€½¹ÍĞÍ¡…É•‘¥ÍÁ±…äõ‘¥ÍÁ±…å	½…É˜™É•¹‘•É1¥¹•Ì¹±•¹Ñ øÄì(€±•Ğ‘¥ÍÁ±…å¥É1…‰•±Ìõmtì(€½¹ÍĞ‰½…É‘MÁ•Ìõ}µ•ÑÉ½M¡…É•‘	½…É‘MÁ•Ì¡±¥¹•Ì±É•¹‘•É1¥¹•Ì±Í¡…É•‘¥ÍÁ±…ä¤ì(€½¹ÍĞ‰±½­Ìõ‰½…É‘MÁ•Ì¹µ…À¡ÍÁ•Œôùì(€€€½¹ÍĞ±¥¹”õÍÁ•Œ¹±¥¹”±Í½ÕÉ•1¥¹•ÌõÍÁ•Œ¹Í½ÕÉ•1¥¹•Ì±‘¥ÉÌõÍÁ•Œ¹‘¥ÉÌ±Í¡…É•‘	±½¬õÍ½ÕÉ•1¥¹•Ì¹±•¹Ñ øÄì(€€€½¹ÍĞ½±½Èõ}µ•ÑÉ½1¥¹•½±½È¡±¥¹”¤±‰½…É‘-¥¹õ}µ•ÑÉ½	½…É‘-¥¹¡±¥¹”±ÍÑ¸¤ì(€€€€¼¼ƒ®ÚªâÃ²^´£ªÎ¶Ôƒ®.“²"`§²v ƒ²Š3¶FpƒªâÃ²’ €ËªÂpƒ®²ó®š°ƒ®Â§®¦Ó²ró®†pƒ®ÎG¶V¤ƒŠPƒªÂg²v ƒ²ªôƒªÎ¶×²v ƒ¶Vpƒ²^Ó²^@ƒ¶×¶V¤(€€€½¹ÍĞ‘¥É½Õ¹ÑÌõíôì=‰©•Ğ¹­•åÌ¡‘¥ÉÌ¤¹™½É… ¡¬ôù‘¥É½Õ¹ÑÍm­tõ‘¥ÉÍm­t¹±•¹Ñ ¤ì(€€€½¹ÍĞÉ½ÕÁÌõÍ¡…É•‘	±½¬ı}µ•ÑÉ½M¡…É•‘¥ÉÉ½ÕÁÌ¡Í½ÕÉ•1¥¹•Ì±ÍÑ¸±‘¥É½Õ¹ÑÌ¤é}µ•ÑÉ½¥ÉÉ½ÕÁÌ¡±¥¹”±ÍÑ¸±‘¥É½Õ¹ÑÌ¤ì(€€€¥˜¡‘¥ÍÁ±…å	½…É¥‘¥ÍÁ±…å¥É1…‰•±ÌõÉ½ÕÁÌ¹µ…À ¡ÉÀ±¤¤ôù€‘í¤ôôôÀüŸ¶Vc¶Z$œèŸ²¶Z$ôƒ
+Ü€‘íÉÀ¹©½¥¸ Ÿ
+Üœ¥ôƒ®Â§®¦Ñ€¤ì(€€€}µ•ÑÉ½¥ÍÁ±…å¥É%¹‘•àõ5…Ñ ¹µ…à À±5…Ñ ¹µ¥¸¡}µ•ÑÉ½¥ÍÁ±…å¥É%¹‘•à±É½ÕÁÌ¹±•¹Ñ ´Ä¤¤ì(€€€½¹ÍĞÁ±…Ñ™½Éµ9½Ìõ}µ•ÑÉ½	½…É‘A±…Ñ™½ÉµÌ¡ÍÑ¸±±¥¹”¤ì(€€€½¹ÍĞ•ÍŒõàôùMÑÉ¥¹œ¡à¤¹É•Á±…” ½qp½œ°qqqpœ¤¹É•Á±…” ¼œ½œ°‰qpœˆ¤ì(€€€½¹ÍĞÁ±…Ñ™½Éµ½Èõ¼ôùì(€€€€€½¹ÍĞ½ÕÉÉ•¹”õ}µ•ÑÉ½A±…Ñ™½Éµ=ÕÉÉ•¹”¡¼¹±¥¹”±ÍÑ¸±¼¹¹•áĞ¤ì(€€€€€¥˜¡½ÕÉÉ•¹”ü¹Àü¹±•¹Ñ ¥É•ÑÕÉ¸½ÕÉÉ•¹”¹À¹©½¥¸ Ÿ
+Üœ¤ì(€€€€€¥˜ …Í¡…É•‘	±½¬¥ì(€€€€€€€½¹ÍĞÉ½ÕÁ%¹‘•àõ5…Ñ ¹µ…à À±É½ÕÁÌ¹™¥¹‘%¹‘•à¡É½ÕÀôùÉ½ÕÀ¹¥¹±Õ‘•Ì¡¼¹¹•áĞ¤¤¤ì(€€€€€€€É•ÑÕÉ¸Á±…Ñ™½Éµ9½Ì¹±•¹Ñ ıÁ±…Ñ™½Éµ9½Ím5…Ñ ¹µ¥¸¡É½ÕÁ%¹‘•à±Á±…Ñ™½Éµ9½Ì¹±•¹Ñ ´Ä¥tèŸŠPœì(€€€€€ô(€€€€€½¹ÍĞÍ½ÕÉ•¥ÉÌõ±¥¹•Ím¼¹±¥¹•uññíô±Í½ÕÉ•½Õ¹ÑÌõíôí=‰©•Ğ¹­•åÌ¡Í½ÕÉ•¥ÉÌ¤¹™½É… ¡­•äôùÍ½ÕÉ•½Õ¹ÑÍm­•åtõÍ½ÕÉ•¥ÉÍm­•åt¹±•¹Ñ ¤ì(€€€€€½¹ÍĞÍ½ÕÉ•É½ÕÁÌõ}µ•ÑÉ½¥ÉÉ½ÕÁÌ¡¼¹±¥¹”±ÍÑ¸±Í½ÕÉ•½Õ¹ÑÌ¤ì(€€€€€½¹ÍĞÍ½ÕÉ•%¹‘•àõ5…Ñ ¹µ…à À±Í½ÕÉ•É½ÕÁÌ¹™¥¹‘%¹‘•à¡É½ÕÀôùÉ½ÕÀ¹¥¹±Õ‘•Ì¡¼¹¹•áĞ¤¤¤ì(€€€€€½¹ÍĞÍ½ÕÉ•A±…Ñ™½ÉµÌõ}µ•ÑÉ½	½…É‘A±…Ñ™½ÉµÌ¡ÍÑ¸±¼¹±¥¹”¤ì(€€€€€É•ÑÕÉ¸Í½ÕÉ•A±…Ñ™½ÉµÌ¹±•¹Ñ ıÍ½ÕÉ•A±…Ñ™½ÉµÍm5…Ñ ¹µ¥¸¡Í½ÕÉ•%¹‘•à±Í½ÕÉ•A±…Ñ™½ÉµÌ¹±•¹Ñ ´Ä¥tèŸŠPœì(€€€ôì(€€€½¹ÍĞ½±ÌõÉ½ÕÁÌ¹µ…À ¡ÉÀ±ÉÁ%‘à¤ôùì(€€€€€½¹ÍĞ±…‰•°õÉÀ¹©½¥¸ œƒŠˆ€œ¤ì(€€€€€½¹ÍĞí•¹ÑÉ¥•Ì±™¥ÉÍĞ±±…ÍÑôõ}µ•ÑÉ½É½ÕÁ¹ÑÉ¥•Ì¡‘¥ÉÌ±ÉÀ±Í¡…É•‘	±½¬¤ì(€€€€€½¹ÍĞÑ½QÉ…¥¸õ¼ôø¡íÉ•°é¼¹Í•Œµ¹½İL±‘•ÍĞé¼¹‘•ÍĞ±Í•Œé¼¹Í•Œ±¹•áĞé¼¹¹•áĞ±±Ìé¼¹±Ì±ÍÙŒé¼¹ÍÙŒ±±¥¹”é¼¹±¥¹”±¬Àé¼¹¬À±¬Äé¼¹¬Ä±Á±…ĞéÁ±…Ñ™½Éµ½È¡¼¥ô¤ì(€€€€€±•ĞÑÉ…¥¹Í!Ñµ°°É½ÕÑ•QÉ…¥¸õ•¹ÑÉ¥•ÍlÁtıÑ½QÉ…¥¸¡•¹ÑÉ¥•ÍlÁt¤é¹Õ±°ì(€€€€€¥˜¡¹½İLù±…ÍĞ¥ì(€€€€€€€€¼¼ƒ²b“®*`ƒ®'²Â ƒ²vÓ¶nƒŠHƒ²jÓ¶Z$ƒ²Š®0€¬ƒ²Ê¯²Â£
+ß¶Z'²ƒ² ƒ²V#®
+Ğ(€€€€€€€½¹ÍĞ™õ•¹ÑÉ¥•ÍlÁt˜™•¹ÑÉ¥•ÍlÁt¹‘•ÍĞì½¹ÍĞÍ¡½İõ™˜™™„ôõÍÑ¸ì(€€€€€€€ÑÉ…¥¹Í!Ñµ°õ€ñ‘¥Ø±…ÍÌô‰µÑˆÈµ•¹‘•ˆøñÍÁ…¸±…ÍÌô‰µÑˆÈµ•¹‘•µĞˆû²jÓ¶Z$ƒ²Š®0ğ½ÍÁ…¸ø(€€€€€€€€€€ñÍÁ…¸±…ÍÌô‰µÑˆÈµ•¹‘•µ™¥ÉÍĞˆû²Ê¯²Â €‘í™MÉÙ±½¬¡™¥ÉÍĞ¥ô‘íÍ¡½İı€€ñˆø‘í™‘÷¶Z$ğ½ˆù€èœôğ½ÍÁ…¸øğ½‘¥Øù€ì(€€€€€ô•±Í”ì(€€€€€€€½¹ÍĞÕÀõ•¹ÑÉ¥•Ì¹µ…À¡Ñ½QÉ…¥¸¤(€€€€€€€€€€¹™¥±Ñ•È¡ÔôùÔ¹É•°øô´ØÀ¤€€€€€¼¼ƒ®.äƒ²b²^²vğƒ®
+£²v ƒ²^Ó²Â£®0£®.“²v3®
+ƒ®†pƒªÂC².àƒ²Z×²®†pƒ²Æ²jÃ² ƒ²V+²v0¤(€€€€€€€€€€¹Í½ÉĞ ¡„±ˆ¤ôù„¹É•°µˆ¹É•°¤(€€€€€€€€€€¹Í±¥” À°Ì¤ì(€€€€€€€É½ÕÑ•QÉ…¥¸õÕÁlÁuññ¹Õ±°ì(€€€€€€€ÑÉ…¥¹Í!Ñµ°õÕÀ¹µ…À ¡Ô±¤¤ôùì(€€€€€€€€€½¹ÍĞÍ¡½İ•ÍĞõÔ¹‘•ÍĞ˜™Ô¹‘•ÍĞ„ôõÍÑ¸ì€€€¼¼ƒ²zCªâÃ²Âã²†Àƒ®vó®Ê£®0ƒ²"£ªæ £²vã²‚G²^´ƒ²Š²Â§²v ƒ¶FsªâÀ¤(€€€€€€€€€½¹ÍĞ‘•ÍÑ!Q50õ‘¥ÍÁ±…å	½…É˜™‰½…É‘-¥¹ôôôÉ•¥½¹…°œ(€€€€€€€€€€€€ı}µ•ÑÉ½¥ÍÁ±…å•ÍÑ¥¹…Ñ¥½¸¡Ô¹‘•ÍĞ±Ô¹±Ì±Í¡½İ•ÍĞ¤(€€€€€€€€€€€€é€‘í}µ•ÑÉ½±ÍQ…œ¡Ô¹±Ì¥ô‘íÍ¡½İ•ÍĞıÔ¹‘•ÍĞ¬Ÿ¶Z$œèœ™¹‰ÍÀìõ€ì(€€€€€€€€€½¹ÍĞ‘•ÍÑ!Ñµ°õ€ñÍÁ…¸±…ÍÌô‰µÑˆÈµ‘•ÍĞˆø‘í‘•ÍÑ!Q51ôğ½ÍÁ…¸ù€ì(€€€€€€€€€±•Ğ¥¹™½!Ñµ°ì(€€€€€€€€€¥˜¡‘¥ÍÁ±…å	½…É˜™‰½…É‘-¥¹ôôôÉ•¥½¹…°œ¥ì(€€€€€€€€€€€¥¹™½!Ñµ°õ}µ•ÑÉ½I•¥½¹…±A½Í¥Ñ¥½¹!Q50¡}µ•ÑÉ½QÉ…¥¹A½Ì¡Ô¹±¥¹”±Ô¹ÍÙŒ±Ô¹¬À±Ô¹¬Ä±ÍÑ¸¤¤ì(€€€€€€€€€ô•±Í”¥˜¡Ù¥•İ5½‘”ôôôÁ½Ìœ¥ì(€€€€€€€€€€€½¹ÍĞÀõ}µ•ÑÉ½QÉ…¥¹A½Ì¡Ô¹±¥¹”±Ô¹ÍÙŒ±Ô¹¬À±Ô¹¬Ä±ÍÑ¸¤ì(€€€€€€€€€€€¥˜ …ÁññÀ¹ÍÑ…Ñ”ôôô‰•™½É”œ¥ì(€€€€€€€€€€€€€½¹ÍĞÍÑ…ÉĞõÀ˜™9Õµ‰•È¹¥Í¥¹¥Ñ”¡À¹ÍÑ…ÉÑ5¥¸¤ı€‘í5…Ñ ¹™±½½È¡À¹ÍÑ…ÉÑ5¥¸¼ØÀ¥ôè‘íMÑÉ¥¹œ¡À¹ÍÑ…ÉÑ5¥¸”ØÀ¤¹Á…‘MÑ…ÉĞ È°œÀœ¥ôƒ²jÓ¶Z$ƒ².s²zE€èœœì(€€€€€€€€€€€€€¥¹™½!Ñµ°õÍÑ…ÉĞı€ñÍÁ…¸±…ÍÌô‰µÑˆÈµÁ½ÌµÑˆÈµÁ½Ì´µİ…¥ĞµÑˆÈµÁ½Ì´µ™±¥ÀˆøñÍÁ…¸û²jÓ¶Z$ƒ²‚ğ½ÍÁ…¸øñÍÁ…¸ø‘íÍÑ…ÉÑôğ½ÍÁ…¸øğ½ÍÁ…¸ù€èœñÍÁ…¸±…ÍÌô‰µÑˆÈµÁ½ÌµÑˆÈµÁ½Ì´µİ…¥Ğˆû²jÓ¶Z$ƒ²‚ğ½ÍÁ…¸øœì(€€€€€€€€€€€ô(€€€€€€€€€€€•±Í”¥˜¡À¹ÍÑ…Ñ”ôôô…™Ñ•Èœ¤¥¹™½!Ñµ°ôœñÍÁ…¸±…ÍÌô‰µÑˆÈµÁ½ÌµÑˆÈµÁ½Ì´µİ…¥Ğˆû²jÓ¶Z$ƒ²Š®0ğ½ÍÁ…¸øœì(€€€€€€€€€€€•±Í”¥˜¡À¹…İ…äôôôÀ¥ì(€€€€€€€€€€€€€½¹ÍĞÑáĞõÀ¹ÍÑ…Ñ”ôôôŸ²‚GªŞğœüŸ®.ç²^´ƒ²‚GªŞğœéÀ¹ÍÑ…Ñ”ôôôŸ®>²Â¤œüŸ®.ç²^´ƒ®>²Â¤œèŸ®.ç²^´ƒ²Ús®Âpœì(€€€€€€€€€€€€€½¹ÍĞÍŒõÀ¹ÍÑ…Ñ”ôôôŸ®>²Â¤œü…ĞœéÀ¹ÍÑ…Ñ”ôôôŸ²Ús®Âpœü‘•Àœè…ÁÀœì(€€€€€€€€€€€€€¥¹™½!Ñµ°õ€ñÍÁ…¸±…ÍÌô‰µÑˆÈµÁ½ÌµÑˆÈµÁ½Ì´´‘íÍôˆøñˆø‘íÑáÑôğ½ˆøğ½ÍÁ…¸ù€ì(€€€€€€€€€€€ô•±Í”¥˜¡9Õµ‰•È¹¥Í¥¹¥Ñ”¡À¹…İ…ä¤˜™À¹…İ…äøÀ¥ì(€€€€€€€€€€€€€½¹ÍĞÍŒõÀ¹ÍÑ…Ñ”ôôôŸ®>²Â¤œü…ĞœéÀ¹ÍÑ…Ñ”ôôôŸ²Ús®Âpœü‘•Àœè…ÁÀœì(€€€€€€€€€€€€€¥¹™½!Ñµ°õ€ñÍÁ…¸±…ÍÌô‰µÑˆÈµÁ½ÌµÑˆÈµÁ½Ì´´‘íÍôµÑˆÈµÁ½Ì´µ™±¥ÀˆøñÍÁ…¸ø‘í}½ÁÍÍŒ¡À¹ÍÑ¸¥ô€ñˆø‘íÀ¹ÍÑ…Ñ•ôğ½ˆøğ½ÍÁ…¸øñÍÁ…¸ø‘íÀ¹…İ…å÷²‚²^´€ñˆø‘íÀ¹ÍÑ…Ñ•ôğ½ˆøğ½ÍÁ…¸øğ½ÍÁ…¸ù€ì(€€€€€€€€€€€ô•±Í”ì(€€€€€€€€€€€€€½¹ÍĞÍŒõÀ¹ÍÑ…Ñ”ôôôŸ®>²Â¤œü…ĞœéÀ¹ÍÑ…Ñ”ôôôŸ²Ús®Âpœü‘•Àœè…ÁÀœì(€€€€€€€€€€€€€¥¹™½!Ñµ°õ€ñÍÁ…¸±…ÍÌô‰µÑˆÈµÁ½ÌµÑˆÈµÁ½Ì´´‘íÍôˆø‘í}½ÁÍÍŒ¡À¹ÍÑ¸¥ô€ñˆø‘íÀ¹ÍÑ…Ñ•ôğ½ˆøğ½ÍÁ…¸ù€ì(€€€€€€€€€€€ô(€€€€€€€€€ô•±Í”ì(€€€€€€€€€€€¥¹™½!Ñµ°õ€ñÍÁ…¸±…ÍÌô‰µÑˆÈµÉ•°ˆø‘íÉ•±QáĞ¡Ô¹É•°¥ôğ½ÍÁ…¸øñÍÁ…¸±…ÍÌô‰µÑˆÈµ±¬ˆø‘í™MÉÙ±½¬¡Ô¹Í•Œ¥ôğ½ÍÁ…¸ù€ì(€€€€€€€€€ô(€€€€€€€€€É•ÑÕÉ¸€ñ‘¥Ø±…ÍÌô‰µÑˆÈµÑÉ…¥¸‘í¤ôôôÀüœµÑˆÈµÑÉ…¥¸´µ¹½Üœèœôˆø(€€€€€€€€€€€€ñÍÁ…¸±…ÍÌô‰µÑˆÈµÍ•Äˆø‘í¤¬Åôğ½ÍÁ…¸øñÍÁ…¸±…ÍÌô‰µÑˆÈµÁ±…Ğˆø‘íÔ¹Á±…ĞôôôŸŠPœüŸŠPœéÔ¹Á±…Ğ¬Ÿ¶f ôğ½ÍÁ…¸ø‘í‘•ÍÑ!Ñµ±ô‘í¥¹™½!Ñµ±ôğ½‘¥Øù€ì(€€€€€€€ô¤¹©½¥¸ œœ¥ñğœñ‘¥Ø±…ÍÌô‰µÑˆÈµ¹½¹”ˆû²jÓ¶Z$ƒ²‚W®ÎĞƒ²^²v0ğ½‘¥Øøœì(€€€€€ô(€€€€€½¹ÍĞÉ½ÕÑ•1¥¹”õÍ¡…É•‘	±½¬ü¡•¹ÑÉ¥•Ì¹™¥¹¡•¹ÑÉäôù•¹ÑÉä¹±¥¹”ôôõ±¥¹”¤ü¹±¥¹•ññ•¹ÑÉ¥•ÍlÁtü¹±¥¹•ññ±¥¹”¤é±¥¹”ì(€€€€€½¹ÍĞÁÉ¥µ…Éå¹ÑÉ¥•ÌõÍ¡…É•‘	±½¬ı•¹ÑÉ¥•Ì¹™¥±Ñ•È¡•¹ÑÉäôù•¹ÑÉä¹±¥¹”ôôõÉ½ÕÑ•1¥¹”¤é•¹ÑÉ¥•Ìì(€€€€€½¹ÍĞÁÉ¥µ…ÉåI½ÕÑ•QÉ…¥¸õÁÉ¥µ…Éå¹ÑÉ¥•ÍlÁtıÑ½QÉ…¥¸¡ÁÉ¥µ…Éå¹ÑÉ¥•ÍlÁt¤éÉ½ÕÑ•QÉ…¥¸ì(€€€€€½¹ÍĞÉ½ÕÑ•¹ÑÉ¥•ÌõÍ¡…É•‘	±½¬ı•¹ÑÉ¥•ÌéÁÉ¥µ…Éå¹ÑÉ¥•Ìì(€€€€€½¹ÍĞÉ½ÕÑ•!Q50õ‘¥ÍÁ±…å	½…É˜™‰½…É‘-¥¹ôôôÕÉ‰…¸œ(€€€€€€€€ı}µ•ÑÉ½UÉ‰…¹I½ÕÑ•!Q50¡É½ÕÑ•1¥¹”±ÍÑ¸±ÁÉ¥µ…ÉåI½ÕÑ•QÉ…¥¸±É½ÕÑ•¹ÑÉ¥•Ì¤(€€€€€€€€é€ñ‘¥Ø±…ÍÌô‰µÑˆÈµÕÉ‰…¸µÉ½ÕÑ”ˆøñÍÁ…¸ø‘í}½ÁÍÍŒ¡ÍÑ¸¥ôğ½ÍÁ…¸øñ¤øğ½¤øñ¤øğ½¤øñ¤øğ½¤øñˆø‘í}½ÁÍÍŒ¡ÉÁlÁuññ±…‰•°¥ôğ½ˆøğ½‘¥Øù€ì(€€€€€É•ÑÕÉ¸€ñ‘¥Ø±…ÍÌô‰µÑˆÈµ½°ˆ‘…Ñ„µ‘¥Èôˆ‘íÉÁ%‘áôˆø(€€€€€€€€ñ‘¥Ø±…ÍÌô‰µÑˆÈµ‘¥ÈˆøñÍÁ…¸±…ÍÌô‰µÑˆÈµ…ÉÈˆûŠZàğ½ÍÁ…¸ø‘í±…‰•±ôƒ®Â§®¦Ğğ½‘¥Øø(€€€€€€€€ñ‘¥Ø±…ÍÌô‰µÑˆÈµ±•µ¡•…ˆøñÍÁ…¸û²"s®Ê ğ½ÍÁ…¸øñÍÁ…¸û¶®*PƒªÎÌğ½ÍÁ…¸øñÍÁ…¸û¶Z'²ƒ² ğ½ÍÁ…¸øñÍÁ…¸û¶b²r²æ`ğ½ÍÁ…¸øñÍÁ…¸û²¶pğ½ÍÁ…¸øğ½‘¥Øø(€€€€€€€€‘íÑÉ…¥¹Í!Ñµ±ô(€€€€€€€€‘íÉ½ÕÑ•!Q51ô(€€€€€€€€‘í‘¥ÍÁ±…å	½…É˜™‰½…É‘-¥¹ôôôÕÉ‰…¸œüœœé€ñ‘¥Ø±…ÍÌô‰µÑˆÈµ™°ˆû²Ê¬€‘í™MÉÙ±½¬¡™¥ÉÍĞ¥ôƒ
+Üƒ®$€‘í™MÉÙ±½¬¡±…ÍĞ¥ôğ½‘¥Øùô(€€€€€€ğ½‘¥Øù€ì(€€€ô¤¹©½¥¸ œœ¤ì(€€€½¹ÍĞ±½¬õ€‘íMÑÉ¥¹œ¡¹½Ü¹•Ñ!½ÕÉÌ ¤¤¹Á…‘MÑ…ÉĞ È°œÀœ¥ôè‘íMÑÉ¥¹œ¡¹½Ü¹•Ñ5¥¹ÕÑ•Ì ¤¤¹Á…‘MÑ…ÉĞ È°œÀœ¥õ€ì(€€€½¹ÍĞ±¥¹•±…ÍÌõ‘¥ÍÁ±…å	½…Éı€µÑˆÈµ±¥¹”´´‘í‰½…É‘-¥¹‘õ€èœœì(€€€½¹ÍĞ½Á•¹Ñ¥½¸õ‘¥ÍÁ±…å	½…É(€€€€€€ı±½Í•5•ÑÉ½MÑ…Ñ¥½¹¥ÍÁ±…ä ¤í½Á•¹5•ÑÉ½Q¥µ•Ñ…‰±” œ‘í•ÍŒ¡ÍÑ¸¥ôœ°œ‘í•ÍŒ¡±¥¹”¥ôœ¥€(€€€€€€é½Á•¹5•ÑÉ½Q¥µ•Ñ…‰±” œ‘í•ÍŒ¡ÍÑ¸¥ôœ°œ‘í•ÍŒ¡±¥¹”¥ôœ¥€ì(€€€É•ÑÕÉ¸€ñ‘¥Ø±…ÍÌô‰µÑˆÈµ±¥¹”‘í±¥¹•±…ÍÍôˆÍÑå±”ôˆ´µµŒè‘í½±½ÉôíÕÉÍ½ÈéÁ½¥¹Ñ•Èˆ½¹±¥¬ôˆ‘í½Á•¹Ñ¥½¹ôˆÉ½±”ô‰‰ÕÑÑ½¸ˆÑ¥Ñ±”ô‹²‚²ÊĞƒ².sªÂ¶Fpƒ®ÎÓªâÀˆø(€€€€€€ñ‘¥Ø±…ÍÌô‰µÑˆÈµ±¡•…ˆøñÍÁ…¸±…ÍÌô‰µÑˆÈµ‘½Ğˆøğ½ÍÁ…¸øñˆø‘í}½ÁÍÍŒ¡ÍÁ•Œ¹±…‰•°¥ôğ½ˆø(€€€€€€€€‘í‘¥ÍÁ±…å	½…Éı€ñÍÁ…¸±…ÍÌô‰µÑˆÈµ‘•Ù¥”µÑ¥Ñ±”ˆø‘í‰½…É‘-¥¹ôôôÉ•¥½¹…°œı€‘íÍÑ¹ôƒ®Â§®¦Ğƒ¶®*PƒªÎÌƒ²V#®
+Ñ€èŸ²vÓ®Ê#²^Ó²Â ƒ²jÓ¶Z$ƒ²V#®
+Ğôğ½ÍÁ…¸ø(€€€€€€€€ñÑ¥µ”ø‘í±½­ôğ½Ñ¥µ”ù€èœôñÍÁ…¸±…ÍÌô‰µÑˆÈµµ½É”ˆû²‚²ÊĞƒ².sªÂ¶FpƒŠèğ½ÍÁ…¸øğ½‘¥Øø(€€€€€€ñ‘¥Ø±…ÍÌô‰µÑˆÈµ½±Ìˆø‘í½±Íôğ½‘¥Øø(€€€€ğ½‘¥Øù€ì(€ô¤¹©½¥¸ œœ¤ì(€½¹ÍĞ‰½…É‘%õ‘¥ÍÁ±…å	½…Éüµ•ÑÉ¼µ‘¥ÍÁ±…äµ‰½…Éœèµ•ÑÉ¼µ‰½…Éœì(€½¹ÍĞÍ•±•Ñ•‘É½ÕÀõ‘¥ÍÁ±…å	½…Éü¡}µ•ÑÉ½¥ÍÁ±…å1¥¹•É½ÕÁÍm}µ•ÑÉ½¥ÍÁ±…å1¥¹•%¹‘•áuññmt¤émtì(€½¹ÍĞÍ•±•Ñ•‘1¥¹”õÍ•±•Ñ•‘É½ÕÁlÁuñğœœì(€½¹ÍĞÍ•±•Ñ•‘½±½Èõ‘¥ÍÁ±…å	½…Éı}µ•ÑÉ½1¥¹•½±½È¡Í•±•Ñ•‘1¥¹”¤èœœì(€½¹ÍĞÍ•±•Ñ•‘1…‰•°õÍ•±•Ñ•‘É½ÕÀ¹±•¹Ñ øÄıÍ•±•Ñ•‘É½ÕÀ¹©½¥¸ œƒ
+Ü€œ¤éÍ•±•Ñ•‘1¥¹”ì(€½¹ÍĞ±¥¹•9…Øõ‘¥ÍÁ±…å	½…Éı€ñ‘¥Ø±…ÍÌô‰µÑˆµ‘¥ÍÁ±…äµ±¥¹”µ¹…ØˆÍÑå±”ôˆ´µµŒè‘íÍ•±•Ñ•‘½±½Éôˆø(€€€€ñ‰ÕÑÑ½¸½¹±¥¬ô‰•Ù•¹Ğ¹ÍÑ½ÁAÉ½Á……Ñ¥½¸ ¤íÍ•Ñ5•ÑÉ½¥ÍÁ±…å1¥¹” ´Ä¤ˆ…É¥„µ±…‰•°ô‹²vÓ²‚ƒ®ã²€ˆ‘í}µ•ÑÉ½¥ÍÁ±…å1¥¹•É½ÕÁÌ¹±•¹Ñ ğÈüœ‘¥Í…‰±•œèœôûŠ^ ğ½‰ÕÑÑ½¸ø(€€€€ñÍÁ…¸øñ¤øğ½¤øñˆø‘í}½ÁÍÍŒ¡Í•±•Ñ•‘1…‰•°¥ôğ½ˆøñÍµ…±°ø‘í}µ•ÑÉ½¥ÍÁ±…å1¥¹•%¹‘•à¬Åô€¼€‘í}µ•ÑÉ½¥ÍÁ±…å1¥¹•É½ÕÁÌ¹±•¹Ñ¡ôğ½Íµ…±°øğ½ÍÁ…¸ø(€€€€ñ‰ÕÑÑ½¸½¹±¥¬ô‰•Ù•¹Ğ¹ÍÑ½ÁAÉ½Á……Ñ¥½¸ ¤íÍ•Ñ5•ÑÉ½¥ÍÁ±…å1¥¹” Ä¤ˆ…É¥„µ±…‰•°ô‹®.“²v0ƒ®ã²€ˆ‘í}µ•ÑÉ½¥ÍÁ±…å1¥¹•É½ÕÁÌ¹±•¹Ñ ğÈüœ‘¥Í…‰±•œèœôûŠZØğ½‰ÕÑÑ½¸ø(€€ğ½‘¥Øù€èœœì(€½¹ÍĞ‘¥É9…Øõ‘¥ÍÁ±…å	½…É˜™‘¥ÍÁ±…å¥É1…‰•±Ì¹±•¹Ñ øÄı€ñ‘¥Ø±…ÍÌô‰µÑˆµ‘¥ÍÁ±…äµ‘¥Èµ¹…ØˆÍÑå±”ôˆ´µµŒè‘íÍ•±•Ñ•‘½±½Éôˆø(€€€€‘í‘¥ÍÁ±…å¥É1…‰•±Ì¹Í±¥” À°È¤¹µ…À ¡±…‰•°±¤¤ôù€ñ‰ÕÑÑ½¸±…ÍÌôˆ‘í}µ•ÑÉ½¥ÍÁ±…å¥É%¹‘•àôôõ¤ü½¸œèœôˆ½¹±¥¬ô‰•Ù•¹Ğ¹ÍÑ½ÁAÉ½Á……Ñ¥½¸ ¤íÍ•Ñ5•ÑÉ½¥ÍÁ±…å¥É•Ñ¥½¸ ‘í¥ô¤ˆø‘í}½ÁÍÍŒ¡±…‰•°¥ôğ½‰ÕÑÑ½¸ù€¤¹©½¥¸ œœ¥ô(€€ğ½‘¥Øù€èœœì(€É•ÑÕÉ¸€ñ‘¥Ø¥ôˆ‘í‰½…É‘%‘ôˆÍÑå±”ô‰Á…‘‘¥¹œèÄÉÁà€ÄÙÁàí‰½É‘•Èµ‰½ÑÑ½´èÅÁàÍ½±¥Ù…È ´µ‰½É‘•È¤ˆø(€€€€‘í‘¥ÍÁ±…å	½…Éı±¥¹•9…Øé€ñ‘¥Ø±…ÍÌô‰µÑˆµ¡•…ˆøñÍÁ…¸±…ÍÌô‰µÑˆµÑ¥Ñ±”ˆûÂ~jƒ².“².sªÂƒ®>²Â¤ğ½ÍÁ…¸ø(€€€€€€ñÍÁ…¸±…ÍÌô‰µÑˆµµ½‘•Ñ½œˆø(€€€€€€€€ñ‰ÕÑÑ½¸±…ÍÌô‰µÑˆµµ½‘”‘í}µ•ÑÉ½	½…É‘5½‘”ôôôÑ¥µ”œüœ½¸œèœôˆ½¹±¥¬ô‰Í•Ñ5•ÑÉ½	½…É‘5½‘” Ñ¥µ”œ¤ˆû².sªÂğ½‰ÕÑÑ½¸ø(€€€€€€€€ñ‰ÕÑÑ½¸±…ÍÌô‰µÑˆµµ½‘”‘í}µ•ÑÉ½	½…É‘5½‘”ôôôÁ½Ìœüœ½¸œèœôˆ½¹±¥¬ô‰Í•Ñ5•ÑÉ½	½…É‘5½‘” Á½Ìœ¤ˆû¶b²r²æ`ğ½‰ÕÑÑ½¸ø(€€€€€€ğ½ÍÁ…¸øğ½‘¥Øùô(€€€€‘í‘¥É9…Ùô(€€€€ñ‘¥Ø±…ÍÌôˆ‘í‘¥ÍÁ±…å	½…ÉüµÑˆµ‘¥ÍÁ±…äµÍ•±•Ñ•µ‘¥ÈµÑˆµ‘¥ÍÁ±…äµ‘¥È´œ­}µ•ÑÉ½¥ÍÁ±…å¥É%¹‘•àèœôˆø(€€€€‘í‰±½­Íô(€€€€ğ½‘¥Øø(€€€€ñ‘¥Ø±…ÍÌô‰µÑˆµ™½½Ğˆû²vãªÊ3²zƒ².sªÂ¶FpƒªâÃ²’ ƒ
+Üƒ²jÓ¶Z$€‘íÉÕ¹¹¥¹÷¶:àƒ
+Ü€‘íÙ¥•İ5½‘”ôôôÁ½ÌœüŸ¶:ã²Äƒ¶b²r²æ`£²^·®ª
+ß®
+£²v ƒ²^´ƒ²"`¤œèŸªÎ¶×®Îƒ².“²‚pƒ²Â§®Âpƒ®Âc²bôğ½‘¥Øø(€€ğ½‘¥Øù€ì)ô(¼¼ƒ²vãªÊ3²z1¥¹—²v ŠIŠIƒ²ƒ¶bW²^C²pƒªÂg²v ƒ²^·²vƒ®Â§¶Z—®Î½ÕÉÉ•¹—®†pƒ®RÃ®†pƒ®ÎÓªÒ¶Vs®.¸(¼¼ƒ².“²‚pƒ¶:ã²Ç²v`ƒ®.“²v0ƒ²‚W²Â£²^·²vĞÉ½ÕÑ—²ƒ²ZÓ®*@½ÕÉÉ•¹”ƒ®J“²^@ƒ²b“®*S² ƒ®æªÖC¶VĞƒ²
+³²j§¶V€ƒ²*çªÂW²z—²vƒ²Âû®*S®.¸)™Õ¹Ñ¥½¸}µ•ÑÉ½A±…Ñ™½Éµ=ÕÉÉ•¹”¡±¥¹”±ÍÑ¸±¹•áĞ¥ì(€½¹ÍĞ‘…Ñ„ô¡ÑåÁ•½˜5QI=}A1Q=I5}%IQ%=9L„ôôÕ¹‘•™¥¹•œ˜™5QI=}A1Q=I5}%IQ%=9L¹±¥¹•Ìü¹m±¥¹•t¥ññ¹Õ±°ì(€½¹ÍĞÉ½İÌõ‘…Ñ„ü¹Á±…Ñ™½ÉµÌü¹mÍÑ¹uññmt±É½ÕÑ”õ‘…Ñ„ü¹É½ÕÑ•ññmtì(€¥˜ …É½İÌ¹±•¹Ñ ¥É•ÑÕÉ¸¹Õ±°ì(€±•Ğ‰•ÍĞõ¹Õ±°±‰•ÍÑ…Àõ%¹™¥¹¥Ñäì(€É½İÌ¹™½É… ¡É½Üôùì(€€€±•Ğ‰½Õ¹õÉ½ÕÑ”¹±•¹Ñ ì(€€€™½È¡±•Ğ¤õÉ½Ü¹¤¬Äí¤ñÉ½ÕÑ”¹±•¹Ñ í¤¬¬¥í¥˜¡É½ÕÑ•m¥tôôõÍÑ¸¥í‰½Õ¹õ¤í‰É•…¬íõô(€€€™½È¡±•Ğ¤õÉ½Ü¹¤¬Äí¤ñ‰½Õ¹í¤¬¬¥ì(€€€€€¥˜¡É½ÕÑ•m¥tôôõ¹•áĞ˜™¤µÉ½Ü¹¤ñ‰•ÍÑ…À¥í‰•ÍĞõÉ½Üí‰•ÍÑ…Àõ¤µÉ½Ü¹¤í‰É•…¬íô(€€€ô(€ô¤ì(€¥˜¡‰•ÍĞ¥É•ÑÕÉ¸‰•ÍĞì(€€¼¼ƒ®.£®Â§¶Z”ƒ²zC®3®
+`ƒ®Ú#²f²‚¶Vpƒ²²ƒ²v ƒªÂ²z”ƒªÂªæ3²jĞƒ®>g²vğƒ²^´½ÕÉÉ•¹—®–ğƒ²V#²‚¶Vpƒ¶>Ó®ÂÇ²ró®†pƒ²
+³²j§¶Vs®.¸(€É½İÌ¹™½É… ¡É½Üôùì(€€€É½ÕÑ”¹™½É…  ¡¹…µ”±¥¹‘•à¤ôùì(€€€€€½¹ÍĞ…Àõ5…Ñ ¹…‰Ì¡¥¹‘•àµÉ½Ü¹¤¤ì(€€€€€¥˜¡¹…µ”ôôõ¹•áĞ˜™…ÀøÀ˜™…Àñ‰•ÍÑ…À¥í‰•ÍĞõÉ½Üí‰•ÍÑ…Àõ…Àíô(€€€ô¤ì(€ô¤ì(€É•ÑÕÉ¸‰•ÍÑññÉ½İÍlÁtì)ô()™Õ¹Ñ¥½¸}µ•ÑÉ½A±…Ñ™½ÉµUÍ•Ì¡ÍÑ¸±Á±…Ñ™½É´¥ì(€½¹ÍĞÕÍ•Ìõ¹•Ü5…À ¤±…Ñ¥Ù•1¥¹•Ìõ¹•ÜM•Ğ¡}µ•ÑÉ½MÑ…Ñ¥½¹•ÁÌ¡ÍÑ¸¤¹µ…À¡¥Ñ•´ôù¥Ñ•´¹±¥¹”¤¤ì(€½¹ÍĞ±¥¹•Ìô¡ÑåÁ•½˜5QI=}A1Q=I5}%IQ%=9L„ôôÕ¹‘•™¥¹•œ˜™5QI=}A1Q=I5}%IQ%=9L¹±¥¹•Ì¥ññíôì(€=‰©•Ğ¹•¹ÑÉ¥•Ì¡±¥¹•Ì¤¹™½É…  ¡m±¥¹”±‘…Ñ…t¤ôùì(€€€¥˜¡…Ñ¥Ù•1¥¹•Ì¹Í¥é”˜˜……Ñ¥Ù•1¥¹•Ì¹¡…Ì¡±¥¹”¤¥É•ÑÕÉ¸ì(€€€½¹ÍĞÉ½±•Ìõ¹•ÜM•Ğ ¤ì(€€€€¡‘…Ñ„¹Á±…Ñ™½ÉµÌü¹mÍÑ¹uññmt¤¹™½É… ¡É½Üôùì(€€€€€¥˜ ¡É½Ü¹Áññmt¤¹¥¹±Õ‘•Ì¡Á±…Ñ™½É´¤¥É½±•Ì¹…‘ Ÿ²ğœ¤ì(€€€€€¥˜ ¡É½Ü¹…ññmt¤¹¥¹±Õ‘•Ì¡Á±…Ñ™½É´¤¥É½±•Ì¹…‘ Ÿ®ÎÓ²†Àœ¤ì(€€€ô¤ì(€€€¥˜¡É½±•Ì¹Í¥é”¥ÕÍ•Ì¹Í•Ğ¡±¥¹”±í±¥¹”±½±½Èé}µ•ÑÉ½1¥¹•½±½È¡±¥¹”¤±É½±•Ìél¸¸¹É½±•Íuô¤ì(€ô¤ì(€€¼¼ƒ²Ös².€ƒ²nC®Îã²^@ƒ²^®*Pƒ²"c®>dƒ²‚²Ê€ƒ®ã²ƒ²v ƒªâÃ²†ĞA1Q=I5}²v`ƒ®ã²€ƒ²^ÃªÊÃ²vƒ²rƒ²¶Vs®.¸(€¥˜¡ÑåÁ•½˜A1Q=I5}„ôôÕ¹‘•™¥¹•œ¥ì(€€€½¹ÍĞ­•äõA1Q=I5}	mÍÑ¹tıÍÑ¸è¡A1Q=I5}	mÍÑ¸¬Ÿ²^´tıÍÑ¸¬Ÿ²^´œé¹Õ±°¤ì(€€€½¹ÍĞ¥¹™¼õ­•ä˜™A1Q=I5}	m­•åtü¹mMÑÉ¥¹œ¡Á±…Ñ™½É´¥tì(€€€€¡¥¹™¼ü¹±ññmt¤¹™½É… ¡É…Üôùì(€€€€€½¹ÍĞ±¥¹”õMÑÉ¥¹œ¡É…Ü¤¹ÍÁ±¥Ğ œ¼œ¥lÁt¹ÍÁ±¥Ğ œ€ œ¥lÁt¹ÑÉ¥´ ¤ì(€€€€€¥˜¡…Ñ¥Ù•1¥¹•Ì¹¡…Ì¡±¥¹”¤˜˜…ÕÍ•Ì¹¡…Ì¡±¥¹”¤¥ÕÍ•Ì¹Í•Ğ¡±¥¹”±í±¥¹”±½±½Èé}µ•ÑÉ½1¥¹•½±½È¡±¥¹”¤±É½±•ÌélŸ²ğuô¤ì(€€€ô¤ì(€ô(€É•ÑÕÉ¸l¸¸¹ÕÍ•Ì¹Ù…±Õ•Ì ¥t¹Í½ÉĞ ¡„±ˆ¤ôù„¹±¥¹”¹±½…±•½µÁ…É”¡ˆ¹±¥¹”°­¼œ¤¤ì)ô((¼¼ƒ¶:ã²Äƒ®ÂÃ²^Ó²^C²pƒ¶b²z°ƒ²^´ƒ²vÓ¶n²v`ƒ².“²‚pƒ²jÓ¶Z$ƒªÖ³ªÂ²vƒ®Î×²nC¶Vs®.¸ŠIŠIƒ²ƒ¶bW®>ƒ®.“²v0ƒ²^·²ró®†p½ÕÉÉ•¹—®–ğƒªÖ³®Ú¶Vs®.¸)™Õ¹Ñ¥½¸}µ•ÑÉ½M•ÉÙ¥•A…Ñ ¡ÍÑ¸±‘•À¥ì(€½¹ÍĞ•¹ĞõÑåÁ•½˜5QI=}M!„ôôÕ¹‘•™¥¹•œ˜™5QI=}M!m‘•À¹±¥¹•t±˜õ•¹Ğü¹Ğü¹m‘•À¹ÍÙtì(€¥˜ …•¹Ññğ…˜¥É•ÑÕÉ¸mtì(€½¹ÍĞ¸õ˜¹±•¹Ñ ¼Ì±…Ğõ¬ôù•¹Ğ¹Ím™lÌ©¬¬Éutì(€±•ĞÍÑ…ÉĞô´Äì(€™½È¡±•Ğ¬õ5…Ñ ¹µ…à À±‘•À¹¬ÁñğÀ¤í¬ñ¸´Äí¬¬¬¥ì(€€€¥˜¡…Ğ¡¬¤ôôõÍÑ¸˜™…Ğ¡¬¬Ä¤ôôõ‘•À¹¹•áĞ¥íÍÑ…ÉĞõ¬í‰É•…¬íô(€ô(€¥˜¡ÍÑ…ÉĞğÀ¥í™½È¡±•Ğ¬ôÀí¬ñ¸´Äí¬¬¬¥í¥˜¡…Ğ¡¬¤ôôõÍÑ¸˜™…Ğ¡¬¬Ä¤ôôõ‘•À¹¹•áĞ¥íÍÑ…ÉĞõ¬í‰É•…¬íõõô(€¥˜¡ÍÑ…ÉĞğÀ¥É•ÑÕÉ¸mtì(€½¹ÍĞ•¹õ5…Ñ ¹µ¥¸¡9Õµ‰•È¹¥Í¥¹¥Ñ”¡‘•À¹¬Ä¤ı‘•À¹¬Äé¸´Ä±¸´Ä¤±Á…Ñ õmtì(€™½È¡±•Ğ¬õÍÑ…ÉĞí¬ğõ•¹í¬¬¬¥í½¹ÍĞ¹…µ”õ…Ğ¡¬¤í¥˜¡¹…µ”˜™Á…Ñ¡mÁ…Ñ ¹±•¹Ñ ´Åt„ôõ¹…µ”¥Á…Ñ ¹ÁÕÍ ¡¹…µ”¤íô(€É•ÑÕÉ¸Á…Ñ ì)ô()™Õ¹Ñ¥½¸}µ•ÑÉ½MÑ…Ñ¥½¹%µÁ½ÉÑ…¹”¡¹…µ”¥ì(€¥˜ …¹…µ”¥É•ÑÕÉ¸€Àì(€±•ĞÍ½É”õ}¥ÍQÉ…¥¹MÑ¸¡¹…µ”¤üĞèÀì(€¥˜¡ÑåÁ•½˜5QI=}1%9L„ôôÕ¹‘•™¥¹•œ¥5QI=}1%9L¹™½É… ¡±¥¹”ôùì(€€€¥˜ ¡±¥¹”¹É½ÕÑ•ÍññmíÍÑ…Ñ¥½¹Ìé±¥¹”¹ÍÑ…Ñ¥½¹Íññmuõt¤¹Í½µ”¡É½ÕÑ”ôø¡É½ÕÑ”¹ÍÑ…Ñ¥½¹Íññmt¤¹¥¹±Õ‘•Ì¡¹…µ”¤¤¥Í½É”¬¬ì(€ô¤ì(€É•ÑÕÉ¸Í½É”ì)ô((¼¼ƒ².“²‚pƒ¶Z'²€ƒ²V#®
+Ó¶2C²Êc®~ğƒ®.“²v3²^´€ÇªÎÏ
+ß²ó²jS²^´ƒ²Ös®2 €ÏªÎÏ
+ß®2¶Fpƒ²Ös²Šƒ²Š²Â§²^´€ÇªÎÏ²vƒ²jÓ¶Z$ƒ²"s²s®2®†pƒªÎƒ®–ã®.¸)™Õ¹Ñ¥½¸}µ•ÑÉ½¥É•Ñ¥½¹1…¹‘µ…É­Ì¡ÍÑ¸±É½Ü¥ì(€¥˜¡É½Ü¹Ñ•Éµ¥¹…Ñ¥¹œ˜˜…É½Ü¹‘•ÁÌ¹±•¹Ñ ¥É•ÑÕÉ¸mtì(€½¹ÍĞÁ…Ñ¡ÌõÉ½Ü¹‘•ÁÌ¹µ…À¡‘•Àôù}µ•ÑÉ½M•ÉÙ¥•A…Ñ ¡ÍÑ¸±‘•À¤¤¹™¥±Ñ•È¡Á…Ñ ôùÁ…Ñ ¹±•¹Ñ øÄ¤¹Í½ÉĞ ¡„±ˆ¤ôùˆ¹±•¹Ñ µ„¹±•¹Ñ ¤ì(€½¹ÍĞ¹•áĞõl¸¸¹¹•ÜM•Ğ¡É½Ü¹‘•ÁÌ¹µ…À¡‘•Àôù‘•À¹¹•áĞ¤¹™¥±Ñ•È¡¹…µ”ôù¹…µ”˜™¹…µ”„ôõÍÑ¸¤¥tì(€½¹ÍĞÑ•Éµ¥¹¤õl¸¸¹¹•ÜM•Ğ¡É½Ü¹‘•ÁÌ¹µ…À¡‘•Àôù‘•À¹‘•ÍĞ¤¹™¥±Ñ•È¡¹…µ”ôù¹…µ”˜™¹…µ”„ôõÍÑ¸¤¥tì(€½¹ÍĞ½ÕĞõmt±Í••¸õ¹•ÜM•Ğ ¤±ÁÕÍ ô¡¹…µ”±­¥¹¤ôùí¥˜¡¹…µ”˜˜…Í••¸¹¡…Ì¡¹…µ”¤˜™½ÕĞ¹±•¹Ñ ğÔ¥íÍ••¸¹…‘¡¹…µ”¤í½ÕĞ¹ÁÕÍ ¡í¹…µ”±­¥¹‘ô¤íõôì(€¹•áĞ¹Í±¥” À°Ä¤¹™½É… ¡¹…µ”ôùÁÕÍ ¡¹…µ”°Ÿ®.“²v3²^´œ¤¤ì(€½¹ÍĞÁ…Ñ õÁ…Ñ¡ÍlÁuññmt±Ñ•Éµ¥¹…°õÁ…Ñ¡mÁ…Ñ ¹±•¹Ñ ´ÅuññÑ•Éµ¥¹¥lÁuññ¹Õ±°ì(€½¹ÍĞµ¥‘‘±”õÁ…Ñ ¹Í±¥” È°´Ä¤¹™¥±Ñ•È¡¹…µ”ôø…Í••¸¹¡…Ì¡¹…µ”¤˜™¹…µ”„ôõÑ•Éµ¥¹…°¤ì(€¥˜¡µ¥‘‘±”¹±•¹Ñ ¥ì(€€€½¹ÍĞµ¥‘Á½¥¹Ğô¡Á…Ñ ¹±•¹Ñ ´Ä¤¼Èì(€€€½¹ÍĞµ…©½ÉÌõµ¥‘‘±”¹Í½ÉĞ ¡„±ˆ¤ôùì(€€€€€½¹ÍĞ…Ìõ}µ•ÑÉ½MÑ…Ñ¥½¹%µÁ½ÉÑ…¹”¡„¤±‰Ìõ}µ•ÑÉ½MÑ…Ñ¥½¹%µÁ½ÉÑ…¹”¡ˆ¤ì(€€€€€¥˜¡…Ì„ôõ‰Ì¥É•ÑÕÉ¸‰Ìµ…Ìì(€€€€€É•ÑÕÉ¸5…Ñ ¹…‰Ì¡Á…Ñ ¹¥¹‘•á=˜¡„¤µµ¥‘Á½¥¹Ğ¤µ5…Ñ ¹…‰Ì¡Á…Ñ ¹¥¹‘•á=˜¡ˆ¤µµ¥‘Á½¥¹Ğ¤ì(€€€ô¤¹Í±¥” À°Ì¤¹Í½ÉĞ ¡„±ˆ¤ôùÁ…Ñ ¹¥¹‘•á=˜¡„¤µÁ…Ñ ¹¥¹‘•á=˜¡ˆ¤¤ì(€€€µ…©½ÉÌ¹™½É… ¡¹…µ”ôùÁÕÍ ¡¹…µ”°Ÿ²ó²jS²^´œ¤¤ì(€ô(€ÁÕÍ ¡Ñ•Éµ¥¹…°°Ÿ²Š²Â§²^´œ¤ì(€É•ÑÕÉ¸½ÕĞì)ô()™Õ¹Ñ¥½¸}µ•ÑÉ½¥É•Ñ¥½¹!Q50¡ÍÑ¸±É½Ü¥ì(€½¹ÍĞ±…¹‘µ…É­Ìõ}µ•ÑÉ½¥É•Ñ¥½¹1…¹‘µ…É­Ì¡ÍÑ¸±É½Ü¤ì(€¥˜ …±…¹‘µ…É­Ì¹±•¹Ñ ¥É•ÑÕÉ¸€œñÍÁ…¸±…ÍÌô‰Í¤µµ•ÑÉ¼µÑ•Éµ¥¹…°ˆû®.ç²^·²Š²Â¤ğ½ÍÁ…¸øœì(€É•ÑÕÉ¸€ñÍÁ…¸±…ÍÌô‰Í¤µµ•ÑÉ¼µ‘¥É•Ñ¥½¸ˆøñÍÁ…¸ø‘í±…¹‘µ…É­Ì¹µ…À¡¥Ñ•´ôù}½ÁÍÍŒ¡¥Ñ•´¹¹…µ”¤¤¹©½¥¸ œƒ
+Ü€œ¥ôğ½ÍÁ…¸øñ•´û®Â§®¦Ğğ½•´øğ½ÍÁ…¸ù€ì)ô((¼¼ƒ²*çªÂW²z—®Î
+ß®Â§¶Z—®Îƒ²
+³²j¤ƒ²‚W®ÎÓ®–ğƒ®3®Nƒ®.¸ƒ®ÎÓ²†Àƒ¶f#®>ƒªÂg²v ƒ²*çªÂW²z”ƒ®ª§®†w²^@ƒ¶>³¶V£¶Vc®B`U'²^C²pƒ®NÇªâ'²vƒªÖ³®Ú¶Vc² ƒ²V+®*S®.¸)™Õ¹Ñ¥½¸}µ•ÑÉ½A±…Ñ™½ÉµÕ¥‘•I½İÌ¡ÍÑ¸¥ì(€¥˜¡ÑåÁ•½˜5QI=}M!ôôôÕ¹‘•™¥¹•œ¥É•ÑÕÉ¸mtì(€½¹ÍĞÕÍ…”õ¹•Ü5…À ¤±ÍÑ…Ñ¥½¹•ÁÌõ}µ•ÑÉ½MÑ…Ñ¥½¹•ÁÌ¡ÍÑ¸¤ì(€½¹ÍĞ…‘ô¡±¥¹”±Á±…Ñ™½É´±‘¥É•Ñ¥½¹-•ä±‘•À±Ñ•Éµ¥¹…Ñ¥¹œõ™…±Í”¤ôùì(€€€¥˜ …9Õµ‰•È¹¥Í¥¹¥Ñ”¡9Õµ‰•È¡Á±…Ñ™½É´¤¤¥É•ÑÕÉ¸ì(€€€½¹ÍĞ­•äõ€‘í9Õµ‰•È¡Á±…Ñ™½É´¥õğ‘í±¥¹•õğ‘í‘¥É•Ñ¥½¹-•åõ€ì(€€€½¹ÍĞÉ½ÜõÕÍ…”¹•Ğ¡­•ä¥ññíÁ±…Ñ™½É´é9Õµ‰•È¡Á±…Ñ™½É´¤±±¥¹”±½±½Èé}µ•ÑÉ½1¥¹•½±½È¡±¥¹”¤±‘•ÁÌémt±Ñ•Éµ¥¹…Ñ¥¹ôì(€€€¥˜¡‘•À˜˜…É½Ü¹‘•ÁÌ¹Í½µ”¡¥Ñ•´ôù¥Ñ•´¹ÍÙŒôôõ‘•À¹ÍÙŒ˜™¥Ñ•´¹¹•áĞôôõ‘•À¹¹•áĞ˜™¥Ñ•´¹‘•ÍĞôôõ‘•À¹‘•ÍĞ¤¥É½Ü¹‘•ÁÌ¹ÁÕÍ ¡‘•À¤ì(€€€É½Ü¹Ñ•Éµ¥¹…Ñ¥¹œõÉ½Ü¹Ñ•Éµ¥¹…Ñ¥¹ññÑ•Éµ¥¹…Ñ¥¹œì(€€€ÕÍ…”¹Í•Ğ¡­•ä±É½Ü¤ì(€ôì(€l¸¸¹¹•ÜM•Ğ¡ÍÑ…Ñ¥½¹•ÁÌ¹µ…À¡¥Ñ•´ôù¥Ñ•´¹±¥¹”¤¥t¹™½É… ¡±¥¹”ôùì(€€€½¹ÍĞ‘•ÁÌõÍÑ…Ñ¥½¹•ÁÌ¹™¥±Ñ•È¡¥Ñ•´ôù¥Ñ•´¹±¥¹”ôôõ±¥¹”¤ì(€€€½¹ÍĞÉ…Üô¡ÑåÁ•½˜5QI=}A1Q=I5}%IQ%=9L„ôôÕ¹‘•™¥¹•œ˜™5QI=}A1Q=I5}%IQ%=9L¹±¥¹•Ìü¹m±¥¹•t¥ññ¹Õ±°ì(€€€½¹ÍĞµ…Ñ¡•‘=ÕÉÉ•¹•Ìõ¹•ÜM•Ğ ¤ì(€€€‘•ÁÌ¹™½É… ¡‘•Àôùì(€€€€€½¹ÍĞ½ÕÉÉ•¹”õ}µ•ÑÉ½A±…Ñ™½Éµ=ÕÉÉ•¹”¡±¥¹”±ÍÑ¸±‘•À¹¹•áĞ¤í¥˜ …½ÕÉÉ•¹”¥É•ÑÕÉ¸ì(€€€€€µ…Ñ¡•‘=ÕÉÉ•¹•Ì¹…‘¡½ÕÉÉ•¹”¹¤¤ì(€€€€€l¸¸¸¡½ÕÉÉ•¹”¹Áññmt¤°¸¸¸¡½ÕÉÉ•¹”¹…ññmt¥t¹™½É… ¡Á±…Ñ™½É´ôù…‘¡±¥¹”±Á±…Ñ™½É´±É…Ü´‘í½ÕÉÉ•¹”¹¥õ€±‘•À¤¤ì(€€€ô¤ì(€€€€¼¼ƒ²Ús®Âs¶:ã²vĞƒ²^®*Pƒ²Š²Â¤½ÕÉÉ•¹—®>ƒ²*çªÂW²z”ƒ²V#®
+Ó²^C²pƒ®"®v÷¶Vc² ƒ²V+®*S®.¸(€€€€¡É…Üü¹Á±…Ñ™½ÉµÌü¹mÍÑ¹uññmt¤¹™¥±Ñ•È¡½Œôø…µ…Ñ¡•‘=ÕÉÉ•¹•Ì¹¡…Ì¡½Œ¹¤¤¤¹™½É… ¡½Œôùì(€€€€€l¸¸¸¡½Œ¹Áññmt¤°¸¸¸¡½Œ¹…ññmt¥t¹™½É… ¡Á±…Ñ™½É´ôù…‘¡±¥¹”±Á±…Ñ™½É´±É…Ü´‘í½Œ¹¥õ€±¹Õ±°±ÑÉÕ”¤¤ì(€€€ô¤ì(€€€¥˜¡É…İñğ…‘•ÁÌ¹±•¹Ñ ¥É•ÑÕÉ¸ì(€€€€¼¼ƒ²nC®Îã²^@ƒ²^®*Pƒ²"c®>dƒ®ã²ƒ²v ƒªâÃ²†Ğƒ²*çªÂW²z”ƒ²"s²s²f ƒ®Â§®¦ĞƒªŞã®ç²vƒ®2²vG¶Vs®.¸(€€€½¹ÍĞ‘¥É½Õ¹ÑÌõíôí‘•ÁÌ¹™½É… ¡‘•Àôùí‘¥É½Õ¹ÑÍm‘•À¹¹•áÑtô¡‘¥É½Õ¹ÑÍm‘•À¹¹•áÑuñğÀ¤¬Äíô¤ì(€€€½¹ÍĞÉ½ÕÁÌõ}µ•ÑÉ½¥ÉÉ½ÕÁÌ¡±¥¹”±ÍÑ¸±‘¥É½Õ¹ÑÌ¤±Á±…Ñ™½ÉµÌõ}µ•ÑÉ½	½…É‘A±…Ñ™½ÉµÌ¡ÍÑ¸±±¥¹”¤ì(€€€É½ÕÁÌ¹™½É…  ¡É½ÕÀ±¥¹‘•à¤ôùì(€€€€€½¹ÍĞÁ±…Ñ™½É´õÁ±…Ñ™½ÉµÍm5…Ñ ¹µ¥¸¡¥¹‘•à±Á±…Ñ™½ÉµÌ¹±•¹Ñ ´Ä¥tí¥˜¡Á±…Ñ™½É´ôõ¹Õ±°¥É•ÑÕÉ¸ì(€€€€€‘•ÁÌ¹™¥±Ñ•È¡‘•ÀôùÉ½ÕÀ¹¥¹±Õ‘•Ì¡‘•À¹¹•áĞ¤¤¹™½É… ¡‘•Àôù…‘¡±¥¹”±Á±…Ñ™½É´±™…±±‰…¬´‘í¥¹‘•áõ€±‘•À¤¤ì(€€€ô¤ì(€ô¤ì(€É•ÑÕÉ¸l¸¸¹ÕÍ…”¹Ù…±Õ•Ì ¥t¹Í½ÉĞ ¡„±ˆ¤ôù„¹Á±…Ñ™½É´µˆ¹Á±…Ñ™½Éµññ„¹±¥¹”¹±½…±•½µÁ…É”¡ˆ¹±¥¹”°­¼œ¤¤ì)ô((¼¼ƒ²‚²Ê€ƒ¶´ƒ²‚²j¤ƒ²‚W²‚ƒ²*çªÂW²z”ƒ²V#®
+Ğ¸ƒ²*çªÂW²z”ƒ®Ê¶*ó²vƒªÎƒ®–Ó®¦ĞƒªŞàƒ¶f#²v`ƒ².“²‚pƒ®ã²ƒ
+ß®Â§¶Z—®0ƒ¶:ó²æs®.¸)™Õ¹Ñ¥½¸}µ•ÑÉ½A±…Ñ™½ÉµÕ¥‘•!Q50¡ÍÑ¸¥ì(€¥˜¡ÑåÁ•½˜5QI=}1%9LôôôÕ¹‘•™¥¹•ññÑåÁ•½˜5QI=}M!ôôôÕ¹‘•™¥¹•œ¥É•ÑÕÉ¸€œœì(€½¹ÍĞÉ½İÌõ}µ•ÑÉ½A±…Ñ™½ÉµÕ¥‘•I½İÌ¡ÍÑ¸¤±Á±…Ñ™½ÉµÌõl¸¸¹¹•ÜM•Ğ¡É½İÌ¹µ…À¡É½ÜôùÉ½Ü¹Á±…Ñ™½É´¤¥tì(€¥˜ …Á±…Ñ™½ÉµÌ¹±•¹Ñ ¥É•ÑÕÉ¸€œœì(€¥˜¡}Í¥5•ÑÉ½Õ¥‘•A±…Ñ™½É´ôôõ¹Õ±±ñğ…Á±…Ñ™½ÉµÌ¹¥¹±Õ‘•Ì¡}Í¥5•ÑÉ½Õ¥‘•A±…Ñ™½É´¤¥}Í¥5•ÑÉ½Õ¥‘•A±…Ñ™½É´õÁ±…Ñ™½ÉµÍlÁtì(€½¹ÍĞÍ•±•Ñ•õÉ½İÌ¹™¥±Ñ•È¡É½ÜôùÉ½Ü¹Á±…Ñ™½É´ôôõ}Í¥5•ÑÉ½Õ¥‘•A±…Ñ™½É´¤ì(€½¹ÍĞÍÑ¹ÍŒõMÑÉ¥¹œ¡ÍÑ¸¤¹É•Á±…” ½qp½œ°qqqpœ¤¹É•Á±…” ¼œ½œ°‰qpœˆ¤ì(€É•ÑÕÉ¸€ñÍ•Ñ¥½¸±…ÍÌô‰Í¤µµ•ÑÉ¼µÁ±…Ñ™½É´µÕ¥‘”ˆøñ‘¥Ø±…ÍÌô‰Í¤µµ•ÑÉ¼µÁ±…Ñ™½É´µ¡•…‘¥¹œˆøñˆû²‚²Ê€ƒ²*çªÂW²z”ƒ²V#®
+Ğğ½ˆøñÍµ…±°û²Òt€‘íÁ±…Ñ™½ÉµÌ¹±•¹Ñ¡÷ªÂpƒ²*çªÂW²z”ğ½Íµ…±°øğ½‘¥Øø(€€€€ñ‘¥Ø±…ÍÌô‰Í¤µµ•ÑÉ¼µÁ±…Ñ™½É´µÑ…‰ÌˆÉ½±”ô‰Ñ…‰±¥ÍĞˆ…É¥„µ±…‰•°ô‹²‚²Ê€ƒ²*çªÂW²z”ƒ²ƒ¶tˆø‘íÁ±…Ñ™½ÉµÌ¹µ…À¡Á±…Ñ™½É´ôù€ñ‰ÕÑÑ½¸±…ÍÌôˆ‘íÁ±…Ñ™½É´ôôõ}Í¥5•ÑÉ½Õ¥‘•A±…Ñ™½É´ü½¸œèœôˆ½¹±¥¬ô‰Í•±•ÑM%5•ÑÉ½A±…Ñ™½É´ œ‘íÍÑ¹Íôœ°‘íÁ±…Ñ™½Éµô¤ˆÉ½±”ô‰Ñ…ˆˆ…É¥„µ±…‰•°ôˆ‘íÁ±…Ñ™½Éµ÷®Ê ƒ²*çªÂW²z”ˆ…É¥„µÍ•±•Ñ•ôˆ‘íÁ±…Ñ™½É´ôôõ}Í¥5•ÑÉ½Õ¥‘•A±…Ñ™½Éµôˆø‘íÁ±…Ñ™½Éµôğ½‰ÕÑÑ½¸ù€¤¹©½¥¸ œœ¥ôğ½‘¥Øø(€€€€ñ‘¥Ø±…ÍÌô‰Í¤µµ•ÑÉ¼µÁ±…Ñ™½É´µÁ…¹•°ˆøñÍÑÉ½¹œ…É¥„µ±…‰•°ôˆ‘í}Í¥5•ÑÉ½Õ¥‘•A±…Ñ™½Éµ÷®Ê ƒ²*çªÂW²z”ˆø‘í}Í¥5•ÑÉ½Õ¥‘•A±…Ñ™½Éµôğ½ÍÑÉ½¹œøñ‘¥Ø±…ÍÌô‰Í¤µµ•ÑÉ¼µÁ±…Ñ™½É´µÍ•ÉÙ¥•Ìˆø‘íÍ•±•Ñ•¹µ…À¡É½Üôù€ñ…ÉÑ¥±”ÍÑå±”ôˆ´µµ•ÑÉ¼µ±¥¹”è‘íÉ½Ü¹½±½Éôˆøñ¤øğ½¤øñˆø‘í}½ÁÍÍŒ¡É½Ü¹±¥¹”¥ôğ½ˆø‘í}µ•ÑÉ½¥É•Ñ¥½¹!Q50¡ÍÑ¸±É½Ü¥ôğ½…ÉÑ¥±”ù€¤¹©½¥¸ œœ¥ôğ½‘¥Øøğ½‘¥Øø(€€ğ½Í•Ñ¥½¸ù€ì)ô()™Õ¹Ñ¥½¸Í•±•ÑM%5•ÑÉ½A±…Ñ™½É´¡ÍÑ¸±Á±…Ñ™½É´¥ì(€}Í¥5•ÑÉ½Õ¥‘•A±…Ñ™½É´õ9Õµ‰•È¡Á±…Ñ™½É´¤ì(€É•¹‘•ÉM%…É¡}Í¥ÕÉÉ•¹ÑññÍÑ¸¤ì)ô()™Õ¹Ñ¥½¸}µ•ÑÉ½1¥¹•Í½ÉQÉ…¥¹A±…Ñ™½Éµ!Q50¡ÍÑ¸±Á±…Ñ™½É´¥ì(€¥˜¡Á±…Ñ™½É´ôõ¹Õ±°¥É•ÑÕÉ¸€œœì(€½¹ÍĞÉ½İÌõ}µ•ÑÉ½A±…Ñ™½ÉµÕ¥‘•I½İÌ¡ÍÑ¸¤¹™¥±Ñ•È¡É½ÜôùÉ½Ü¹Á±…Ñ™½É´ôôõ9Õµ‰•È¡Á±…Ñ™½É´¤¤í¥˜ …É½İÌ¹±•¹Ñ ¥É•ÑÕÉ¸€œœì(€½¹ÍĞÉ½ÕÁ•õ¹•Ü5…À ¤ì(€É½İÌ¹™½É… ¡É½Üôùì(€€€½¹ÍĞ¥Ñ•´õÉ½ÕÁ•¹•Ğ¡É½Ü¹±¥¹”¥ññí±¥¹”éÉ½Ü¹±¥¹”±½±½ÈéÉ½Ü¹½±½È±‘•ÍÑ¥¹…Ñ¥½¹Ìé¹•ÜM•Ğ ¤±Ñ•Éµ¥¹…Ñ¥¹œé™…±Í•ôì(€€€É½Ü¹‘•ÁÌ¹™½É… ¡‘•Àôùí¥˜¡‘•À¹‘•ÍĞ˜™‘•À¹‘•ÍĞ„ôõÍÑ¸¥¥Ñ•´¹‘•ÍÑ¥¹…Ñ¥½¹Ì¹…‘¡‘•À¹‘•ÍĞ¤íô¤ì(€€€¥Ñ•´¹Ñ•Éµ¥¹…Ñ¥¹œõ¥Ñ•´¹Ñ•Éµ¥¹…Ñ¥¹ññÉ½Ü¹Ñ•Éµ¥¹…Ñ¥¹œì(€€€É½ÕÁ•¹Í•Ğ¡É½Ü¹±¥¹”±¥Ñ•´¤ì(€ô¤ì(€É•ÑÕÉ¸€ñ‘¥Ø±…ÍÌô‰Í¤µÑÉ…¥¸µµ•ÑÉ¼µÕÍ•ÌˆøñÍÑÉ½¹œûÂ~jƒ²vĞƒ²*çªÂW²z—²vƒ²NÃ®*Pƒ²‚²Ê€ğ½ÍÑÉ½¹œøñ‘¥Øø‘íl¸¸¹É½ÕÁ•¹Ù…±Õ•Ì ¥t¹µ…À¡¥Ñ•´ôùì(€€€½¹ÍĞ‘¥É•Ñ¥½¹Ìõl¸¸¹¥Ñ•´¹‘•ÍÑ¥¹…Ñ¥½¹Ít±±…‰•°õ‘¥É•Ñ¥½¹Ì¹±•¹Ñ ı€‘í‘¥É•Ñ¥½¹Ì¹Í±¥” À°Ğ¤¹©½¥¸ œƒ
+Ü€œ¥ôƒ®Â§®¦Ñ€èŸ®.ç²^·²Š²Â¤œì(€€€É•ÑÕÉ¸€ñÍÁ…¸ÍÑå±”ôˆ´µµ•ÑÉ¼µ±¥¹”è‘í¥Ñ•´¹½±½Éôˆøñ¤øğ½¤øñˆø‘í}½ÁÍÍŒ¡¥Ñ•´¹±¥¹”¥ôğ½ˆøñÍµ…±°ø ‘í}½ÁÍÍŒ¡±…‰•°¥ô¤ğ½Íµ…±°øğ½ÍÁ…¸ù€ì(€ô¤¹©½¥¸ œœ¥ôğ½‘¥Øøğ½‘¥Øù€ì)ô)™Õ¹Ñ¥½¸É•¹‘•ÉM%…É¡¹…µ”¥ì(€½¹ÍĞ•°õ‘½Õµ•¹Ğ¹•Ñ±•µ•¹Ñ	å% Í¤µ…Éœ¤ì(€¥˜ …•°¥É•ÑÕÉ¸ì(€¹…µ”õÉ…¥±MÑ…Ñ¥½¹…Ñ…9…µ”¡¹…µ”¤ì(€€¼¼ƒ²®>ƒ¶Ó®š·²v €Ÿ²s²jàœ£® ƒ²vÓ®š¤°ƒªÊ²'²v €Ÿ²s²jã²^´œ¡ƒ¶
+¤ƒŠHƒ¶
+“®†pƒ²‚WªŞs¶fP(€¥˜¡ÑåÁ•½˜MQQ%=9}„ôôÕ¹‘•™¥¹•œ€˜˜€…MQQ%=9}	m¹…µ•t€˜˜MQQ%=9}	m¹…µ”¬Ÿ²^´t¤¹…µ”õ¹…µ”¬Ÿ²^´œì(€½¹ÍĞõÑåÁ•½˜MQQ%=9}„ôôÕ¹‘•™¥¹•œıMQQ%=9}	m¹…µ•té¹Õ±°ì(€€¼¼11}QI%9LÕÍ•ÌÍÑ…Ñ¥½¸¹…µ•Ìİ¥Ñ¡½ÕĞƒ²^´ÍÕ™™¥à€¡”¹œ¸€‹²b²ğˆ¤°MQQ%=9}ÕÍ•Ì€‹²b²ó²^´ˆ(€½¹ÍĞÑÉ…¥¹9…µ”õ¹…µ”¹•¹‘Í]¥Ñ  Ÿ²^´œ¤ı¹…µ”¹Í±¥” À°´Ä¤é¹…µ”ì(€€¼¼ƒ¶×ªÎğƒ²^Ó²Â ƒ²‚s²fàƒŠPƒ²‚W²Â ƒ²^Ó²Â£®0€£²*çªÂW²z”ƒ²V#®
+Ğƒ²jSªÆĞ¤(€½¹ÍĞÑÉ…¥¹Ìõ}ÍÑ…Ñ¥½¹MÑ½ÁÁ¥¹QÉ…¥¹Ì¡ÑÉ…¥¹9…µ”¤ì(€€¼¼ƒ².“²
+³²j¤ƒ²*çªÂW²z”£ªÊ3²z¤ƒ²jÃ²€ƒŠPƒ².“²‚pƒ²‚W²Â ƒ²^Ó²Â£®N“²vĞƒ²NÃ®*Pƒ¶f ƒ®Ê#¶bã®0ƒ®ã²Úp(€±•ĞÁ±…Ñ™½ÉµÌõmtì(€ì(€€€½¹ÍĞÍ•Ğõ¹•ÜM•Ğ ¤ì(€€€ÑÉ…¥¹Ì¹™½É… ¡Ğôùí½¹ÍĞÀõ}Á±…Ñ™½Éµ½ÉQÉ…¥¸¡¹…µ”±ÑÉ…¥¹9…µ”±ÑÉ…¥¹Ì±Ğ¤í¥˜¡À„õ¹Õ±°¥Í•Ğ¹…‘¡À¤íô¤ì(€€€Á±…Ñ™½ÉµÌõl¸¸¹Í•Ñt¹Í½ÉĞ ¡„±ˆ¤ôù„µˆ¤ì(€ô(€¥˜¡Á±…Ñ™½ÉµÌ¹±•¹Ñ ôôôÀ˜™ÑÉ…¥¹Ì¹±•¹Ñ øÀ˜™ü¹Á±…Ñ™½ÉµÌü¹±•¹Ñ øÀ¤Á±…Ñ™½ÉµÌõ¹Á±…Ñ™½ÉµÌì(€€¼¼I•Í•ĞÍ•±•Ñ•Á±…Ñ™½É´¥˜¥Ğİ…Ì™¥±Ñ•É•½ÕĞ(€¥˜¡}Í¥…É‘A±…Ñ™½É´„ôõ¹Õ±°˜˜…Á±…Ñ™½ÉµÌ¹¥¹±Õ‘•Ì¡}Í¥…É‘A±…Ñ™½É´¤¤}Í¥…É‘A±…Ñ™½É´õ¹Õ±°ì(€¥˜¡}Í¥…É‘A±…Ñ™½É´ôôõ¹Õ±°˜™Á±…Ñ™½ÉµÌ¹±•¹Ñ øÀ¤}Í¥…É‘A±…Ñ™½É´õÁ±…Ñ™½ÉµÍlÁtì(€½¹ÍĞ¹…µ•ÍŒõ¹…µ”¹É•Á±…” ½qp½œ°qqqpœ¤¹É•Á±…” ¼œ½œ°‰qpœˆ¤ì(€€¼¼ƒ²vĞƒ²^·²vƒ²®
+c®*Pƒ²‚²Ê€ƒ®ã²€€£²²€ƒ¶>³¶V ¤(€½¹ÍĞµ•ÑÉ½1¥¹•ÌõÑåÁ•½˜5QI=}1%9L„ôôÕ¹‘•™¥¹•œ(€€€€ı5QI=}1%9L¹™¥±Ñ•È¡°ôø¡°¹É½ÕÑ•ÍññmíÍÑ…Ñ¥½¹Ìé°¹ÍÑ…Ñ¥½¹Íõt¤¹Í½µ”¡ÈôùÈ¹ÍÑ…Ñ¥½¹Ì¹¥¹±Õ‘•Ì¡ÑÉ…¥¹9…µ”¤¤¤(€€€€émtì(€•°¹¥¹¹•É!Q50õ€(€€€€ñ‘¥ØÍÑå±”ô‰‰…­É½Õ¹éÙ…È ´µ‰œÈ¤í‰½É‘•ÈèÅÁàÍ½±¥Ù…È ´µ‰½É‘•È¤í‰½É‘•ÈµÉ…‘¥ÕÌèÄÑÁàí½Ù•É™±½Üé¡¥‘‘•¸ˆø(€€€€€€ñ‘¥ØÍÑå±”ô‰Á…‘‘¥¹œèÄÙÁàí‰½É‘•Èµ‰½ÑÑ½´èÅÁàÍ½±¥Ù…È ´µ‰½É‘•È¤ˆø(€€€€€€€€ñ‘¥ØÍÑå±”ô‰‘¥ÍÁ±…äé™±•àí…±¥¸µ¥Ñ•µÌé™±•àµÍÑ…ÉĞí©ÕÍÑ¥™äµ½¹Ñ•¹ĞéÍÁ…”µ‰•Ñİ••¸ˆø(€€€€€€€€€€ñ‘¥ØÍÑå±”ô‰™½¹ĞµÍ¥é”èÈÉÁàí™½¹Ğµİ•¥¡ĞèÜÀÀˆø‘íÑÉ…¥¹9…µ•ôğ½‘¥Øø(€€€€€€€€€€ñ‘¥ØÍÑå±”ô‰™½¹ĞµÍ¥é”èÄÅÁàí½±½ÈéÙ…È ´µÑ•áĞÈ¤íÑ•áĞµ…±¥¸éÉ¥¡Ğˆø‘í}…ÁÁ5½‘”ôôôµ•ÑÉ¼œ(€€€€€€€€€€€€ü¡µ•ÑÉ½1¥¹•Ì¹±•¹Ñ ı€‘íµ•ÑÉ½1¥¹•Ì¹±•¹Ñ¡÷ªÂpƒ®ã²€èœœ¤(€€€€€€€€€€€€è¡ÑÉ…¥¹Ì¹±•¹Ñ ı€‘íÁ±…Ñ™½ÉµÌ¹±•¹Ñ øÀıÁ±…Ñ™½ÉµÌ¹±•¹Ñ ¬ŸªÂpƒ¶f ñ‰Èøœèœô‘íÑÉ…¥¹Ì¹±•¹Ñ¡÷¶:àƒªÊ÷²r€è¡µ•ÑÉ½1¥¹•Ì¹±•¹Ñ ı€‘íµ•ÑÉ½1¥¹•Ì¹±•¹Ñ¡÷ªÂpƒ²‚²Ê€ƒ®ã²€èœœ¤¥ôğ½‘¥Øø(€€€€€€€€ğ½‘¥Øø(€€€€€€€€‘íı€ñ‘¥Ø¥ô‰Í¤µ…‘‘Èˆ‘…Ñ„µ±…Ğôˆ‘í¹±…Ñôˆ‘…Ñ„µ±½¸ôˆ‘í¹±½¹ôˆÍÑå±”ô‰™½¹ĞµÍ¥é”èÄÅÁàí½±½ÈéÙ…È ´µÑ•áĞÌ¤íµ…É¥¸µÑ½ÀèÑÁàˆûÂ~N4€‘í¹…‘‘ÉñğŸ²ó²0ƒ¶fW²vàƒ²’GŠ˜ôğ½‘¥Øù€èœô(€€€€€€€€‘ì  ¤ôùì€¼¼ƒ®ª£®Ns®Îƒ®vó®Ê èƒªâÃ²Â ƒ®ª£®Np€ôƒ²^Ó²Â ƒ®NÇªâ'®0€£¶:ã²"c
+ß²V÷¶bàƒ²^²vĞ¤°ƒ²‚²Ê€ƒ®ª£®Np€ôƒ²‚²Ê€ƒ®ã²ƒ®0(€€€€€€€€€¥˜¡}…ÁÁ5½‘”ôôôµ•ÑÉ¼œ¥ì(€€€€€€€€€€€¥˜ …µ•ÑÉ½1¥¹•Ì¹±•¹Ñ ¥É•ÑÕÉ¸€œœì(€€€€€€€€€€€É•ÑÕÉ¸€ñ‘¥ØÍÑå±”ô‰‘¥ÍÁ±…äé™±•àí…ÀèÙÁàí™±•àµİÉ…ÀéİÉ…Àíµ…É¥¸µÑ½ÀèÄÁÁàˆø(€€€€€€€€€€€€€€‘íµ•ÑÉ½1¥¹•Ì¹µ…À¡°ôù€ñÍÁ…¸½¹±¥¬ô‰½Á•¹5•ÑÉ½1¥¹” œ‘í°¹¥‘ôœ¤ˆÍÑå±”ô‰ÕÉÍ½ÈéÁ½¥¹Ñ•ÈíÁ…‘‘¥¹œèÍÁà€ÄÁÁàí‰½É‘•ÈµÉ…‘¥ÕÌèÄÉÁàí™½¹ĞµÍ¥é”èÄÅÁàí™½¹Ğµİ•¥¡ĞèÜÀÀí‰…­É½Õ¹è‘í°¹½±½ÉôÅŒí‰½É‘•ÈèÅÁàÍ½±¥€‘í°¹½±½Éôí½±½Èè‘í°¹½±½ÉôˆûÂ~j€‘í°¹¹…µ•ôğ½ÍÁ…¸ù€¤¹©½¥¸ œœ¥ô(€€€€€€€€€€€€ğ½‘¥Øù€ì(€€€€€€€€€ô(€€€€€€€€€½¹ÍĞÉ…‘•Ìõl¸¸¹¹•ÜM•Ğ¡ÑÉ…¥¹Ì¹µ…À¡ĞôùĞ¹É…‘”¤¥tì(€€€€€€€€€¥˜ …É…‘•Ì¹±•¹Ñ ¥É•ÑÕÉ¸€œœì(€€€€€€€€€½¹ÍĞ=Iõl-Q`œ°MIPœ°-Q`·²
+Ã²Êpœ°-Q`·²vÓ²v0œ°%Q`·²Ê·²Ú`œ°%Q`·²#®#²vœ°%Q`·®#²v0œ°Ÿ®²ÓªÚ¶fS¶bàtì(€€€€€€€€€É…‘•Ì¹Í½ÉĞ ¡„±ˆ¤ôùì(€€€€€€€€€€€½¹ÍĞ¥„õ=I¹¥¹‘•á=˜¡„¤°¥ˆõ=I¹¥¹‘•á=˜¡ˆ¤ì(€€€€€€€€€€€É•ÑÕÉ¸€¡¥„ğÀüääé¥„¤´¡¥ˆğÀüääé¥ˆ¤ì(€€€€€€€€€ô¤ì(€€€€€€€€€É•ÑÕÉ¸€ñ‘¥ØÍÑå±”ô‰‘¥ÍÁ±…äé™±•àí…ÀèÙÁàí™±•àµİÉ…ÀéİÉ…Àíµ…É¥¸µÑ½ÀèÄÁÁàˆø(€€€€€€€€€€€€‘íÉ…‘•Ì¹µ…À¡œôùì(€€€€€€€€€€€€€½¹ÍĞŒõ}MM}YImŒ¡œ¥uñğµ œì(€€€€€€€€€€€€€É•ÑÕÉ¸€ñÍÁ…¸ÍÑå±”ô‰Á…‘‘¥¹œèÍÁà€ÄÁÁàí‰½É‘•ÈµÉ…‘¥ÕÌèÄÉÁàí™½¹ĞµÍ¥é”èÄÅÁàí™½¹Ğµİ•¥¡ĞèØÀÀí‰½É‘•ÈèÅÁàÍ½±¥Ù…È ´µŒ´‘íô¤í½±½ÈéÙ…È ´µŒ´‘íô¤ˆø‘íôğ½ÍÁ…¸ù€ì(€€€€€€€€€€€ô¤¹©½¥¸ œœ¥ô(€€€€€€€€€€ğ½‘¥Øù€ì(€€€€€€€ô¤ ¥ô(€€€€€€ğ½‘¥Øø(€€€€€€‘í}…ÁÁ5½‘”„ôôµ•ÑÉ¼œ˜™ÑÉ…¥¹Ì¹±•¹Ñ ı€ñ‘¥ØÍÑå±”ô‰Á…‘‘¥¹œèÄÉÁà€ÄÙÁà€ÑÁàˆø(€€€€€€€€ñ‰ÕÑÑ½¸±…ÍÌô‰Í¤µ‰½…Éµ‰Ñ¸ˆ½¹±¥¬ô‰½Á•¹MÑ…Ñ¥½¹	½…É œ‘í¹…µ•Íôœ¤ˆûÂ~j$ƒ²Ús®Âpƒ²V#®
+Ğƒ²‚ªÒG¶2@ƒ²^ÓªâÀğ½‰ÕÑÑ½¸ø(€€€€€€ğ½‘¥Øù€èœô(€€€€€€‘í}…ÁÁ5½‘”ôôôµ•ÑÉ¼œı€ñ‘¥ØÍÑå±”ô‰Á…‘‘¥¹œèÄÉÁà€ÄÙÁà€ÑÁàˆø(€€€€€€€€ñ‰ÕÑÑ½¸±…ÍÌô‰Í¤µ‰½…Éµ‰Ñ¸ˆ½¹±¥¬ô‰½Á•¹5•ÑÉ½MÑ…Ñ¥½¹¥ÍÁ±…ä œ‘íÑÉ…¥¹9…µ”¹É•Á±…” ½qp½œ°qqqpœ¤¹É•Á±…” ¼œ½œ°‰qpœˆ¥ôœ¤ˆûÂ~jƒ²Ús®Âpƒ²V#®
+Ğƒ²‚ªÒG¶2@ƒ²^ÓªâÀğ½‰ÕÑÑ½¸ø(€€€€€€ğ½‘¥Øù€èœô(€€€€€€‘í}…ÁÁ5½‘”ôôôµ•ÑÉ¼œü  ¤ôùì€¼¼ƒÂ~jƒ²‚²Ê€èƒ®ã²€¡É½ÕÑ”§®Îƒ²‚²^´¿®.“²v3²^´ƒŠPƒªÊ÷²r€ƒ®ã²ƒ
+ß²²€ƒ®ÚªâÀƒ®ª£®F@ƒ¶Fs².p(€€€€€€€¥˜¡ÑåÁ•½˜5QI=}1%9LôôôÕ¹‘•™¥¹•œ¥É•ÑÕÉ¸€œœì(€€€€€€€½¹ÍĞÉ½İÌõmtì(€€€€€€€5QI=}1%9L¹™½É… ¡°ôùì(€€€€€€€€€€¡°¹É½ÕÑ•ÍññmíÍÑ…Ñ¥½¹Ìé°¹ÍÑ…Ñ¥½¹Íõt¤¹™½É… ¡Èôùì(€€€€€€€€€€€½¹ÍĞ¤õÈ¹ÍÑ…Ñ¥½¹Ì¹¥¹‘•á=˜¡ÑÉ…¥¹9…µ”¤ì(€€€€€€€€€€€¥˜¡¤ğÀ¥É•ÑÕÉ¸ì(€€€€€€€€€€€½¹ÍĞÁÉ•Øõ¤øÀıÈ¹ÍÑ…Ñ¥½¹Ím¤´Åté¹Õ±°°¹•áĞõ¤ñÈ¹ÍÑ…Ñ¥½¹Ì¹±•¹Ñ ´ÄıÈ¹ÍÑ…Ñ¥½¹Ím¤¬Åté¹Õ±°ì(€€€€€€€€€€€¥˜ …ÁÉ•Ø˜˜…¹•áĞ¥É•ÑÕÉ¸ì(€€€€€€€€€€€É½İÌ¹ÁÕÍ ¡í°±‘…Í è„…È¹‘…Í ±ÁÉ•Ø±¹•áÑô¤ì(€€€€€€€€€ô¤ì(€€€€€€€ô¤ì(€€€€€€€½¹ÍĞÍ••¸õ¹•ÜM•Ğ ¤°Õ¹¥Äõmtì(€€€€€€€É½İÌ¹™½É… ¡àôùí½¹ÍĞ¬õà¹°¹¥¬ğœ¬¡à¹ÁÉ•Ùñğœœ¤¬ğœ¬¡à¹¹•áÑñğœœ¤í¥˜ …Í••¸¹¡…Ì¡¬¤¥íÍ••¸¹…‘¡¬¤íÕ¹¥Ä¹ÁÕÍ ¡à¤íõô¤ì(€€€€€€€¥˜ …Õ¹¥Ä¹±•¹Ñ ¥É•ÑÕÉ¸€œœì(€€€€€€€½¹ÍĞ‰Ñ¸ô¡ÍÑ¸±…ÉÉ½Ü¤ôùÍÑ¸(€€€€€€€€€€ı€ñ‰ÕÑÑ½¸½¹±¥¬ô‰½Á•¹MÑ…Ñ¥½¹•Ñ…¥° œ‘íÍÑ¸¹É•Á±…” ¼œ½œ°‰qpœˆ¥ôœ¤ˆÍÑå±”ô‰™±•àèÄíµ¥¸µİ¥‘Ñ èÀíÁ…‘‘¥¹œèİÁà€ÄÁÁàí‰½É‘•ÈµÉ…‘¥ÕÌèåÁàí‰½É‘•ÈèÅÁàÍ½±¥Ù…È ´µ‰½É‘•È¤í‰…­É½Õ¹éÙ…È ´µ‰œÌ¤í½±½ÈéÙ…È ´µÑ•áĞÄ¤í™½¹ĞµÍ¥é”èÄÉÁàí™½¹Ğµİ•¥¡ĞèÜÀÀíÕÉÍ½ÈéÁ½¥¹Ñ•Èí™½¹Ğµ™…µ¥±äéÙ…È ´µÍ…¹Ì¤íİ¡¥Ñ”µÍÁ…”é¹½İÉ…Àí½Ù•É™±½Üé¡¥‘‘•¸íÑ•áĞµ½Ù•É™±½Üé•±±¥ÁÍ¥ÌíÑ•áĞµ…±¥¸è‘í…ÉÉ½ÜôôôÁÉ•Øœü±•™ĞœèÉ¥¡Ğôˆø‘í…ÉÉ½ÜôôôÁÉ•ØœüŸŠ@€œ­ÍÑ¸éÍÑ¸¬œƒŠHôğ½‰ÕÑÑ½¸ù€(€€€€€€€€€€é€ñÍÁ…¸ÍÑå±”ô‰™±•àèÄíµ¥¸µİ¥‘Ñ èÀíÁ…‘‘¥¹œèİÁà€ÄÁÁàí™½¹ĞµÍ¥é”èÄÅÁàí½±½ÈéÙ…È ´µÑ•áĞÌ¤íÑ•áĞµ…±¥¸è‘í…ÉÉ½ÜôôôÁÉ•Øœü±•™ĞœèÉ¥¡Ğôˆø‘í…ÉÉ½ÜôôôÁÉ•ØœüŸªâÃ²‚@œèŸ²Š²‚@ôğ½ÍÁ…¸ù€ì(€€€€€€€É•ÑÕÉ¸€ñ‘¥ØÍÑå±”ô‰Á…‘‘¥¹œèÄÉÁà€ÄÙÁàí‰½É‘•Èµ‰½ÑÑ½´èÅÁàÍ½±¥Ù…È ´µ‰½É‘•È¤ˆø(€€€€€€€€€€ñ‘¥ØÍÑå±”ô‰™½¹ĞµÍ¥é”èÄÉÁàí™½¹Ğµİ•¥¡ĞèÜÀÀí½±½ÈéÙ…È ´µÑ•áĞÈ¤íµ…É¥¸µ‰½ÑÑ½´èáÁàˆûÂ~jƒ²‚²^´ƒ
+Üƒ®.“²v3²^´ğ½‘¥Øø(€€€€€€€€€€‘íÕ¹¥Ä¹µ…À¡àôù€ñ‘¥ØÍÑå±”ô‰‘¥ÍÁ±…äé™±•àí…±¥¸µ¥Ñ•µÌé•¹Ñ•Èí…ÀèáÁàíµ…É¥¸µ‰½ÑÑ½´èÙÁàˆø(€€€€€€€€€€€€ñÍÁ…¸ÍÑå±”ô‰™±•àµÍ¡É¥¹¬èÀí‘¥ÍÁ±…äé¥¹±¥¹”µ™±•àí…±¥¸µ¥Ñ•µÌé•¹Ñ•Èí…ÀèÕÁàíİ¥‘Ñ èàÙÁàí™½¹ĞµÍ¥é”èÄÅÁàí™½¹Ğµİ•¥¡ĞèÜÀÀí½±½Èè‘íà¹°¹½±½Éôí½Ù•É™±½Üé¡¥‘‘•¸ˆøñÍÁ…¸ÍÑå±”ô‰İ¥‘Ñ èáÁàí¡•¥¡ĞèáÁàí‰½É‘•ÈµÉ…‘¥ÕÌèÔÀ”í‰…­É½Õ¹è‘íà¹°¹½±½Éôí™±•àµÍ¡É¥¹¬èÀˆøğ½ÍÁ…¸øñÍÁ…¸ÍÑå±”ô‰İ¡¥Ñ”µÍÁ…”é¹½İÉ…Àí½Ù•É™±½Üé¡¥‘‘•¸íÑ•áĞµ½Ù•É™±½Üé•±±¥ÁÍ¥Ìˆø‘íà¹°¹¹…µ•ô‘íà¹‘…Í üœƒ
+ß²²€œèœôğ½ÍÁ…¸øğ½ÍÁ…¸ø(€€€€€€€€€€€€‘í‰Ñ¸¡à¹ÁÉ•Ø°ÁÉ•Øœ¥ô‘í‰Ñ¸¡à¹¹•áĞ°¹•áĞœ¥ô(€€€€€€€€€€ğ½‘¥Øù€¤¹©½¥¸ œœ¥ô(€€€€€€€€ğ½‘¥Øù€ì(€€€€€ô¤ ¤èœô(€€€€€€‘í}…ÁÁ5½‘”ôôôµ•ÑÉ¼œı}µ•ÑÉ½A±…Ñ™½ÉµÕ¥‘•!Q50¡ÑÉ…¥¹9…µ”¤èœô(€€€€€€‘í}…ÁÁ5½‘”ôôôµ•ÑÉ¼œı}µ•ÑÉ½MÑ…Ñ¥½¹	½…É‘!Q50¡ÑÉ…¥¹9…µ”¤èœô(€€€€€€‘í}…ÁÁ5½‘”ôôôµ•ÑÉ¼œ˜™}¥ÍQÉ…¥¹MÑ¸¡ÑÉ…¥¹9…µ”¤ı€ñ‘¥ØÍÑå±”ô‰Á…‘‘¥¹œèÄÉÁà€ÄÙÁà€ÑÁàˆø(€€€€€€€€ñ‰ÕÑÑ½¸±…ÍÌô‰Í¤µ‰½…Éµ‰Ñ¸ˆ½¹±¥¬ô‰Íİ¥Ñ¡5½‘•MÑ…Ñ¥½¸ ÑÉ…¥¸œ°œ‘í¹…µ•Íôœ¤ˆûÂ~jƒªâÃ²Â €‘íÑÉ…¥¹9…µ•÷²^·²ró®†pƒ²‚¶f`ğ½‰ÕÑÑ½¸ø(€€€€€€ğ½‘¥Øù€èœô(€€€€€€‘í}…ÁÁ5½‘”„ôôµ•ÑÉ¼œ˜™Á±…Ñ™½ÉµÌ¹±•¹Ñ øÀı€(€€€€€€ñ‘¥ØÍÑå±”ô‰Á…‘‘¥¹œèÄÉÁà€ÄÙÁàí‰½É‘•Èµ‰½ÑÑ½´èÅÁàÍ½±¥Ù…È ´µ‰½É‘•È¤ˆø(€€€€€€€€ñ‘¥ØÍÑå±”ô‰™½¹ĞµÍ¥é”èÄÉÁàí™½¹Ğµİ•¥¡ĞèÜÀÀí½±½ÈéÙ…È ´µÑ•áĞÈ¤íµ…É¥¸µ‰½ÑÑ½´èáÁàˆûÂ~j$ƒ¶f ƒ²ƒ¶tğ½‘¥Øø(€€€€€€€€ñ‘¥ØÍÑå±”ô‰½Ù•É™±½Üµàé…ÕÑ¼ìµİ•‰­¥Ğµ½Ù•É™±½ÜµÍÉ½±±¥¹œéÑ½Õ íÁ…‘‘¥¹œµ‰½ÑÑ½´èÉÁàˆø(€€€€€€€€€€ñ‘¥ØÍÑå±”ô‰‘¥ÍÁ±…äé™±•àí…ÀèÙÁàíµ¥¸µİ¥‘Ñ éµ…àµ½¹Ñ•¹Ğˆø(€€€€€€€€€€€€‘íÁ±…Ñ™½ÉµÌ¹µ…À¡Àôù€(€€€€€€€€€€€€€€ñ‰ÕÑÑ½¸¥ô‰Í¤µÁÑ…ˆ´‘íÁôˆ½¹±¥¬ô‰Í•±•ÑM%…É‘A±…Ñ™½É´ œ‘í¹…µ•Íôœ°‘íÁô¤ˆ(€€€€€€€€€€€€€€€ÍÑå±”ô‰Á…‘‘¥¹œèÙÁà€ÄÙÁàí‰½É‘•ÈµÉ…‘¥ÕÌèÈÁÁàí‰½É‘•ÈèÅÁàÍ½±¥Ù…È ´µ‰½É‘•È¤í™½¹ĞµÍ¥é”èÄÍÁàí™½¹Ğµİ•¥¡ĞèØÀÀíÕÉÍ½ÈéÁ½¥¹Ñ•Èíİ¡¥Ñ”µÍÁ…”é¹½İÉ…Àí™½¹Ğµ™…µ¥±äéÙ…È ´µÍ…¹Ì¤íÑÉ…¹Í¥Ñ¥½¸é‰…­É½Õ¹€¸ÄÕÌ±½±½È€¸ÄÕÌì(€€€€€€€€€€€€€€€‰…­É½Õ¹è‘í}Í¥…É‘A±…Ñ™½É´ôôõÀüÙ…È ´µ…•¹Ğ¤œèÙ…È ´µ‰œÌ¤ôí½±½Èè‘í}Í¥…É‘A±…Ñ™½É´ôôõÀüœ™™˜œèÙ…È ´µÑ•áĞÄ¤ôˆø(€€€€€€€€€€€€€€€€‘íÁô(€€€€€€€€€€€€€€ğ½‰ÕÑÑ½¸ù€¤¹©½¥¸ œœ¥ô(€€€€€€€€€€ğ½‘¥Øø(€€€€€€€€ğ½‘¥Øø(€€€€€€ğ½‘¥Øù€èœô(€€€€€€‘í}…ÁÁ5½‘”„ôôµ•ÑÉ¼œ˜™ÑÉ…¥¹Ì¹±•¹Ñ ı€ñ‘¥Ø¥ô‰Í¤µÁ±…Ñ™½É´µÑÉ…¥¹ÌˆÍÑå±”ô‰Á…‘‘¥¹œèÄÑÁà€ÄÙÁàˆø(€€€€€€€€‘í}Í¥A±…Ñ™½ÉµQÉ…¥¹Í!Q50¡¹…µ”°ÑÉ…¥¹Ì¥ô(€€€€€€ğ½‘¥Øù€èœô(€€€€€€‘í}…ÁÁ5½‘”„ôôµ•ÑÉ¼œ˜™µ•ÑÉ½1¥¹•Ì¹±•¹Ñ ı€ñ‘¥ØÍÑå±”ô‰Á…‘‘¥¹œèÀ€ÄÙÁà€ÄÉÁàˆø(€€€€€€€€ñ‰ÕÑÑ½¸±…ÍÌô‰Í¤µ‰½…Éµ‰Ñ¸ˆ½¹±¥¬ô‰Íİ¥Ñ¡5½‘•MÑ…Ñ¥½¸ µ•ÑÉ¼œ°œ‘í¹…µ•Íôœ¤ˆûÂ~jƒ²‚²Ê€€‘íÑÉ…¥¹9…µ•÷²^·²ró®†pƒ²‚¶f`ğ½‰ÕÑÑ½¸ø(€€€€€€ğ½‘¥Øù€èœô(€€€€€€ñ‘¥Ø±…ÍÌô‰Í¤µ¹•Ñİ½É¬µµ…Àµ…Ñ¥½¸ˆø(€€€€€€€€‘í˜™¹±…Ğ˜™¹±½¸ı€ñ‰ÕÑÑ½¸ÑåÁ”ô‰‰ÕÑÑ½¸ˆ…É¥„µ•áÁ…¹‘•ô‰™…±Í”ˆ…É¥„µ½¹ÑÉ½±Ìô‰Í¤µ¹•…É‰äµµ…ÀµÍ•Ñ¥½¸ˆ½¹±¥¬ô‰Ñ½±•MÑ…Ñ¥½¹9•…É‰å5…À¡Ñ¡¥Ì¤ˆøñÍÙœ…É¥„µ¡¥‘‘•¸ô‰ÑÉÕ”ˆøñÕÍ”¡É•˜ôˆ¤µµ…Àˆ¼øğ½ÍÙœøñÍÁ…¸øñÍÑÉ½¹œû²^´ƒ²ó®Î ƒ²®>ƒ®ÎÓªâÀğ½ÍÑÉ½¹œøñÍµ…±°ø‘íÑÉ…¥¹9…µ•÷²^´ƒ²ó®Î²v`ƒ².“²‚pƒ²®>®–ğƒ¶fW²vã¶V§®.#®.ğ½Íµ…±°øğ½ÍÁ…¸øñ¤±…ÍÌô‰Í¤µµ…Àµ¡•ÙÉ½¸ˆ…É¥„µ¡¥‘‘•¸ô‰ÑÉÕ”ˆûŠ2ğ½¤øğ½‰ÕÑÑ½¸ø(€€€€€€€€ñ‘¥Ø¥ô‰Í¤µ¹•…É‰äµµ…ÀµÍ•Ñ¥½¸ˆ±…ÍÌô‰Í¤µ¹•…É‰äµµ…ÀµÍ•Ñ¥½¸ˆ¡¥‘‘•¸ø(€€€€€€€€€€ñ¥™É…µ”ÍÉŒô‰¡ÑÑÁÌè¼½İİÜ¹½Á•¹ÍÑÉ••Ñµ…À¹½Éœ½•áÁ½ÉĞ½•µ‰•¹¡Ñµ°ı‰‰½àô‘ì¡¹±½¸´À¸ÀÄ¤¹Ñ½¥á• Ô¥ô°‘ì¡¹±…Ğ´À¸ÀÀà¤¹Ñ½¥á• Ô¥ô°‘ì¡¹±½¸¬À¸ÀÄ¤¹Ñ½¥á• Ô¥ô°‘ì¡¹±…Ğ¬À¸ÀÀà¤¹Ñ½¥á• Ô¥ô™…µÀí±…å•Èõµ…Á¹¥¬™…µÀíµ…É­•Èô‘í¹±…Ğ¹Ñ½¥á• Ô¥ô°‘í¹±½¸¹Ñ½¥á• Ô¥ôˆ±½…‘¥¹œô‰±…éäˆÑ¥Ñ±”ôˆ‘í¹…µ•Íôƒ²ó®Î ƒ²®>ˆøğ½¥™É…µ”ø(€€€€€€€€€€ñ‘¥Ø±…ÍÌô‰Í¤µ¹•…É‰äµµ…Àµ±¥¹­Ìˆø(€€€€€€€€€€€€ñ„¡É•˜ô‰¡ÑÑÁÌè¼½µ…À¹­…­…¼¹½´½±¥¹¬½µ…À¼‘í•¹½‘•UI%½µÁ½¹•¹Ğ¡¹…µ”¥ô°‘í¹±…Ñô°‘í¹±½¹ôˆÑ…É•Ğô‰}‰±…¹¬ˆÉ•°ô‰¹½½Á•¹•È¹½É•™•ÉÉ•Èˆû²æÓ²æÓ²b“²®>²^C²pƒ²^ÓªâÀğ½„ø(€€€€€€€€€€€€ñ„¡É•˜ô‰¡ÑÑÁÌè¼½µ…À¹¹…Ù•È¹½´¼ı±¹œô‘í¹±½¹ô™…µÀí±…Ğô‘í¹±…Ñô™…µÀíé½½´ôÄÔˆÑ…É•Ğô‰}‰±…¹¬ˆÉ•°ô‰¹½½Á•¹•È¹½É•™•ÉÉ•Èˆû®“²vÓ®Ê²®>²^C²pƒ²^ÓªâÀğ½„ø(€€€€€€€€€€ğ½‘¥Øø(€€€€€€€€ğ½‘¥Øù€èœô(€€€€€€€€ñ‰ÕÑÑ½¸ÑåÁ”ô‰‰ÕÑÑ½¸ˆ½¹±¥¬ô‰½Á•¹MÑ…Ñ¥½¹I•…¡…‰¥±¥Ñå5…À œ‘íÑÉ…¥¹9…µ”¹É•Á±…” ½qp½œ°qqqpœ¤¹É•Á±…” ¼œ½œ°‰qpœˆ¥ôœ¤ˆøñÍÙœ…É¥„µ¡¥‘‘•¸ô‰ÑÉÕ”ˆøñÕÍ”¡É•˜ôˆ¤µµ…Àˆ¼øğ½ÍÙœøñÍÁ…¸øñÍÑÉ½¹œû²®>²^C²pƒ²¶×²^´ƒ®ÎÓªâÀğ½ÍÑÉ½¹œøñÍµ…±°ø‘íÑÉ…¥¹9…µ•÷²^·²^C²pƒ¶fc²*äƒ²^²vĞƒªÂ ƒ²"`ƒ²z#®*Pƒ²^·²vƒ¶Fs².s¶V§®.#®.ğ½Íµ…±°øğ½ÍÁ…¸øñ¤…É¥„µ¡¥‘‘•¸ô‰ÑÉÕ”ˆûŠèğ½¤øğ½‰ÕÑÑ½¸ø(€€€€€€ğ½‘¥Øø(€€€€ğ½‘¥Øù€ì(€¥˜¡¤Í¥1½…‘‘‘É•ÍÌ¡¹…µ”°¹±…Ğ°¹±½¸¤ì)ô()™Õ¹Ñ¥½¸Ñ½±•MÑ…Ñ¥½¹9•…É‰å5…À¡‰ÕÑÑ½¸¥ì(€½¹ÍĞÍ•Ñ¥½¸õ‘½Õµ•¹Ğ¹•Ñ±•µ•¹Ñ	å% Í¤µ¹•…É‰äµµ…ÀµÍ•Ñ¥½¸œ¤ì(€¥˜ …Í•Ñ¥½¸¥É•ÑÕÉ¸ì(€½¹ÍĞİ¥±±=Á•¸õÍ•Ñ¥½¸¹¡¥‘‘•¸ì(€Í•Ñ¥½¸¹¡¥‘‘•¸ô…İ¥±±=Á•¸ì(€¥˜¡‰ÕÑÑ½¸¥ì(€€€‰ÕÑÑ½¸¹Í•ÑÑÑÉ¥‰ÕÑ” …É¥„µ•áÁ…¹‘•œ±MÑÉ¥¹œ¡İ¥±±=Á•¸¤¤ì(€€€‰ÕÑÑ½¸¹±…ÍÍ1¥ÍĞ¹Ñ½±” ¥Ìµ½Á•¸œ±İ¥±±=Á•¸¤ì(€ô)ô((¼¼ƒ²Š3¶FpƒŠHƒ²ó²0€£²
+³²j§²z@ƒ®â3®vó²jÃ²‚²^C²pƒ²^·²²b“²öS®R¤°±½…±MÑ½É…”ƒ²êC².p°ƒ².“¶2 ƒ².pƒ²Š3¶Fpƒ¶Fs².p¤)…Íå¹Œ™Õ¹Ñ¥½¸Í¥1½…‘‘‘É•ÍÌ¡¹…µ”°±…Ğ°±½¸¥ì(€½¹ÍĞ‰½àõ‘½Õµ•¹Ğ¹•Ñ±•µ•¹Ñ	å% Í¤µ…‘‘Èœ¤ì(€¥˜ …‰½à¤É•ÑÕÉ¸ì(€±•Ğ…¡”õíôìÑÉåì…¡”õ)M=8¹Á…ÉÍ”¡±½…±MÑ½É…”¹•Ñ%Ñ•´ ¹¥µ‰¥}…‘‘Èœ¥ñğíôœ¤ìõ…Ñ ¡”¥íô(€½¹ÍĞ…¡•-•äõ€‘í¹…µ•õğ‘ì ­±…Ğ¤¹Ñ½¥á• Ø¥ô°‘ì ­±½¸¤¹Ñ½¥á• Ø¥õ€ì(€¥˜¡…¡•m…¡•-•åt¥ì‰½à¹¥¹¹•É!Q50ôŸÂ~N4€œ­…¡•m…¡•-•åtìÉ•ÑÕÉ¸ìô(€½¹ÍĞ½½É‘MÑÈõ€‘ì ­±½¸¤¹Ñ½¥á• Ğ¥÷
+Á°€‘ì ­±…Ğ¤¹Ñ½¥á• Ğ¥÷
+Á9€ì(€ÑÉåì(€€€½¹ÍĞÈõ…İ…¥Ğ™•Ñ ¡¡ÑÑÁÌè¼½¹½µ¥¹…Ñ¥´¹½Á•¹ÍÑÉ••Ñµ…À¹½Éœ½É•Ù•ÉÍ”ı™½Éµ…Ğõ©Í½¸™±…Ğô‘í±…Ñô™±½¸ô‘í±½¹ô™…•ÁĞµ±…¹Õ…”õ­¼™é½½´ôÄØ™…‘‘É•ÍÍ‘•Ñ…¥±ÌôÅ€±í¡•…‘•ÉÌéí•ÁĞè…ÁÁ±¥…Ñ¥½¸½©Í½¸õô¤ì(€€€½¹ÍĞ¨õ…İ…¥ĞÈ¹©Í½¸ ¤ì½¹ÍĞ„õ¨¹…‘‘É•ÍÍññíôì(€€€½¹ÍĞÁ…ÉÑÌõm„¹ÍÑ…Ñ•ññ„¹ÁÉ½Ù¥¹”°„¹¥Ñåññ„¹½Õ¹Ñåññ„¹Ñ½İ¹ññ„¹Ù¥±±…”°„¹‰½É½Õ¡ññ„¹¥Ñå}‘¥ÍÑÉ¥Ğ°„¹ÍÕ‰ÕÉ‰ññ„¹¹•¥¡‰½ÕÉ¡½½‘ññ„¹ÅÕ…ÉÑ•È°„¹É½…‘t¹™¥±Ñ•È¡	½½±•…¸¤ì(€€€½¹ÍĞÍ••¸õ¹•ÜM•Ğ ¤ì½¹ÍĞ…‘‘ÈõÁ…ÉÑÌ¹™¥±Ñ•È¡Àôø…Í••¸¹¡…Ì¡À¤˜™Í••¸¹…‘¡À¤¤¹Í±¥” À°Ğ¤¹©½¥¸ œ€œ¤ì(€€€¥˜¡…‘‘È¥ì…¡•m…¡•-•åtõ…‘‘ÈìÑÉåì±½…±MÑ½É…”¹Í•Ñ%Ñ•´ ¹¥µ‰¥}…‘‘Èœ±)M=8¹ÍÑÉ¥¹¥™ä¡…¡”¤¤ìõ…Ñ ¡”¥íôô(€€€½¹ÍĞÕÈõ‘½Õµ•¹Ğ¹•Ñ±•µ•¹Ñ	å% Í¤µ…‘‘Èœ¤ì(€€€¥˜¡ÕÈ€˜˜MÑÉ¥¹œ¡ÕÈ¹‘…Ñ…Í•Ğ¹±…Ğ¤ôôõMÑÉ¥¹œ¡±…Ğ¤¤ÕÈ¹¥¹¹•É!Q50ôŸÂ~N4€œ¬¡…‘‘Éññ½½É‘MÑÈ¤ì(€õ…Ñ ¡”¥ì(€€€½¹ÍĞÕÈõ‘½Õµ•¹Ğ¹•Ñ±•µ•¹Ñ	å% Í¤µ…‘‘Èœ¤ì(€€€¥˜¡ÕÈ€˜˜MÑÉ¥¹œ¡ÕÈ¹‘…Ñ…Í•Ğ¹±…Ğ¤ôôõMÑÉ¥¹œ¡±…Ğ¤¤ÕÈ¹¥¹¹•É!Q50ôŸÂ~N4€œ­½½É‘MÑÈì(€ô)ô()™Õ¹Ñ¥½¸Í•±•ÑM%…É‘A±…Ñ™½É´¡¹…µ”°À¥ì(€}Í¥…É‘A±…Ñ™½É´õÀì(€‘½Õµ•¹Ğ¹ÅÕ•ÉåM•±•Ñ½É±° m¥‘xô‰Í¤µÁÑ…ˆ´‰tœ¤¹™½É… ¡ˆôùì(€€€½¹ÍĞ‰ÀõÁ…ÉÍ•%¹Ğ¡ˆ¹¥¹É•Á±…” Í¤µÁÑ…ˆ´œ°œœ¤¤ì(€€€ˆ¹ÍÑå±”¹‰…­É½Õ¹õ‰ÀôôõÀüÙ…È ´µ…•¹Ğ¤œèÙ…È ´µ‰œÌ¤œì(€€€ˆ¹ÍÑå±”¹½±½Èõ‰ÀôôõÀüœ™™˜œèÙ…È ´µÑ•áĞÄ¤œì(€ô¤ì(€½¹ÍĞÑÉ…¥¹9…µ”õ¹…µ”¹•¹‘Í]¥Ñ  Ÿ²^´œ¤ı¹…µ”¹Í±¥” À°´Ä¤é¹…µ”ì(€½¹ÍĞÑÉ…¥¹Ìõ}ÍÑ…Ñ¥½¹MÑ½ÁÁ¥¹QÉ…¥¹Ì¡ÑÉ…¥¹9…µ”¤ì(€½¹ÍĞ•°õ‘½Õµ•¹Ğ¹•Ñ±•µ•¹Ñ	å% Í¤µÁ±…Ñ™½É´µÑÉ…¥¹Ìœ¤ì(€¥˜¡•°¤•°¹¥¹¹•É!Q50õ}Í¥A±…Ñ™½ÉµQÉ…¥¹Í!Q50¡¹…µ”°ÑÉ…¥¹Ì¤ì)ô()™Õ¹Ñ¥½¸Ñ½±•M%Q•É´¡¹…µ”¥ì(€}Í¥!¥‘•Q•É´ô…}Í¥!¥‘•Q•É´ì(€½¹ÍĞÑÉ…¥¹9…µ”õ¹…µ”¹•¹‘Í]¥Ñ  Ÿ²^´œ¤ı¹…µ”¹Í±¥” À°´Ä¤é¹…µ”ì(€½¹ÍĞÑÉ…¥¹Ìõ}ÍÑ…Ñ¥½¹MÑ½ÁÁ¥¹QÉ…¥¹Ì¡ÑÉ…¥¹9…µ”¤ì(€½¹ÍĞ•°õ‘½Õµ•¹Ğ¹•Ñ±•µ•¹Ñ	å% Í¤µÁ±…Ñ™½É´µÑÉ…¥¹Ìœ¤ì(€¥˜¡•°¤•°¹¥¹¹•É!Q50õ}Í¥A±…Ñ™½ÉµQÉ…¥¹Í!Q50¡¹…µ”°ÑÉ…¥¹Ì¤ì)ô()™Õ¹Ñ¥½¸Ñ½±•M%UÁ½µ¥¹œ¡¹…µ”¥ì(€}Í¥UÁ½µ¥¹=¹±äô…}Í¥UÁ½µ¥¹=¹±äì(€½¹ÍĞÑÉ…¥¹9…µ”õ¹…µ”¹•¹‘Í]¥Ñ  Ÿ²^´œ¤ı¹…µ”¹Í±¥” À°´Ä¤é¹…µ”ì(€½¹ÍĞÑÉ…¥¹Ìõ}ÍÑ…Ñ¥½¹MÑ½ÁÁ¥¹QÉ…¥¹Ì¡ÑÉ…¥¹9…µ”¤ì(€½¹ÍĞ•°õ‘½Õµ•¹Ğ¹•Ñ±•µ•¹Ñ	å% Í¤µÁ±…Ñ™½É´µÑÉ…¥¹Ìœ¤ì(€¥˜¡•°¤•°¹¥¹¹•É!Q50õ}Í¥A±…Ñ™½ÉµQÉ…¥¹Í!Q50¡¹…µ”°ÑÉ…¥¹Ì¤ì)ô()™Õ¹Ñ¥½¸Í•…É¡MÑ…Ñ¥½¸¡¹…µ”¥ì(€½¹ÍĞÑÉ…¥¹9…µ”õ¹…µ”¹•¹‘Í]¥Ñ  Ÿ²^´œ¤ı¹…µ”¹Í±¥” À°´Ä¤é¹…µ”ì(€‘½Õµ•¹Ğ¹•Ñ±•µ•¹Ñ	å% ¥¹ÁÕĞµÍÑ…Ñ¥½¸œ¤¹Ù…±Õ”õÑÉ…¥¹9…µ”ì(€¥˜¡ÑåÁ•½˜¹¥µ‰¥=Á•¹MÑ…Ñ¥½¹Q¥µ•Ñ…‰±”ôôô™Õ¹Ñ¥½¸œ¥¹¥µ‰¥=Á•¹MÑ…Ñ¥½¹Q¥µ•Ñ…‰±” ¤í•±Í”Íİ¥Ñ¡Q…ˆ ÍÑ…Ñ¥½¸œ¤ì(€Í•…É¡	åMÑ…Ñ¥½¸ ¤ì)ô()™Õ¹Ñ¥½¸}ÑÉ…¥¹5…Ñ¡•ÍA±…Ñ™½ÉµI½ÕÑ”¡ÑÉ…¥¸°ÍÑ…Ñ¥½¹9…µ”°Á%¹™¼¥ì(€¥˜ …Á%¹™¼¹±ññÁ%¹™¼¹°¹±•¹Ñ ôôôÀ¥É•ÑÕÉ¸ÑÉÕ”ì(€½¹ÍĞÍÑ¹	…Í”õÍÑ…Ñ¥½¹9…µ”¹•¹‘Í]¥Ñ  Ÿ²^´œ¤ıÍÑ…Ñ¥½¹9…µ”¹Í±¥” À°´Ä¤éÍÑ…Ñ¥½¹9…µ”ì(€½¹ÍĞÉ…‘•]½É‘Ìõl%Q`·²#®#²vœ°%Qc²#®#²vœ°%Q`·²Ê·²Ú`œ°%Qc²Ê·²Ú`œ°%Q`·®#²v0œ°%Qc®#²v0œ°Ÿ®²ÓªÚ¶fS¶bàœ°Ÿ®²ÓªÚ¶fPœ°-Q`œ°MIPtì(€½¹ÍĞÍ•ÉÙ¥•¥Ñ¥•Ìõ¹•ÜM•Ğ ¤ì(€½¹ÍĞÕ¹¥ÅÕ•1¥¹•Ìõl¸¸¹¹•ÜM•Ğ¡Á%¹™¼¹°¹µ…À¡°ôù°¹É•Á±…” ½p½qL¬¼°œœ¤¹ÑÉ¥´ ¤¤¥tì(€™½È¡½¹ÍĞÍÙŒ½˜Õ¹¥ÅÕ•1¥¹•Ì¥ì(€€€±•ĞÌõÍÙŒ¹É•Á±…” ½p¡mx¥t©p¤½œ°œœ¤¹ÑÉ¥´ ¤ì(€€€™½È¡½¹ÍĞœ½˜É…‘•]½É‘Ì¤ÌõÌ¹É•Á±…”¡¹•ÜI•áÀ¡œ°œœ¤°œœ¤¹ÑÉ¥´ ¤ì(€€€ÌõÌ¹É•Á±…” ½oªÂ ·¶zt¯²qÌ¨½œ°œœ¤¹ÑÉ¥´ ¤ì(€€€Ì¹ÍÁ±¥Ğ œ´œ¤¹µ…À¡ŒôùŒ¹ÑÉ¥´ ¤¤¹™¥±Ñ•È¡ŒôùŒ˜™Œ„ôõÍÑ¹	…Í”˜™Œ„ôõÍÑ…Ñ¥½¹9…µ”¤(€€€€€€¹™½É… ¡ŒôùÍ•ÉÙ¥•¥Ñ¥•Ì¹…‘¡Œ¤¤ì(€ô(€¥˜¡Í•ÉÙ¥•¥Ñ¥•Ì¹Í¥é”ôôôÀ¥É•ÑÕÉ¸ÑÉÕ”ì(€½¹ÍĞ‘•ÍĞõÑÉ…¥¸¹‘•ÍĞ¹•¹‘Í]¥Ñ  Ÿ²^´œ¤ıÑÉ…¥¸¹‘•ÍĞ¹Í±¥” À°´Ä¤éÑÉ…¥¸¹‘•ÍĞì(€¥˜¡Í•ÉÙ¥•¥Ñ¥•Ì¹¡…Ì¡ÑÉ…¥¸¹‘•ÍĞ¥ññÍ•ÉÙ¥•¥Ñ¥•Ì¹¡…Ì¡‘•ÍĞ¤¥É•ÑÕÉ¸ÑÉÕ”ì(€½¹ÍĞ½É¥¥¸õÑÉ…¥¸¹ÍÑ½ÁÌü¹lÁtü¹Ìì(€¥˜¡½É¥¥¸¥ì(€€€½¹ÍĞ½É¥¥¹	…Í”õ½É¥¥¸¹•¹‘Í]¥Ñ  Ÿ²^´œ¤ı½É¥¥¸¹Í±¥” À°´Ä¤é½É¥¥¸ì(€€€¥˜¡Í•ÉÙ¥•¥Ñ¥•Ì¹¡…Ì¡½É¥¥¸¥ññÍ•ÉÙ¥•¥Ñ¥•Ì¹¡…Ì¡½É¥¥¹	…Í”¤¥É•ÑÕÉ¸ÑÉÕ”ì(€ô(€É•ÑÕÉ¸™…±Í”ì)ô((¼¼I•ÑÕÉ¹Ì‘¥É•Ñ¥½¸€ ‘½İ¸ğÕÀñ¹Õ±°¤™½È„Á±…Ñ™½É´‰…Í•½¸¥‘•¹Ñ¥…°µÍ•ÉÙ¥”Ñİ¥¹Ì)™Õ¹Ñ¥½¸}•Ñ¥É•Ñ¥½¹½ÉA±…Ñ™½É´¡ÍÑ…Ñ¥½¹9…µ”°Á±…Ñ™½Éµ9Õ´¥ì(€¥˜¡ÑåÁ•½˜A1Q=I5}ôôôÕ¹‘•™¥¹•ñğ…A1Q=I5}	mÍÑ…Ñ¥½¹9…µ•t¥É•ÑÕÉ¸¹Õ±°ì(€½¹ÍĞ‘ˆõA1Q=I5}	mÍÑ…Ñ¥½¹9…µ•tì(€½¹ÍĞµå%¹™¼õ‘‰mMÑÉ¥¹œ¡Á±…Ñ™½Éµ9Õ´¥tì(€¥˜ …µå%¹™½ñğ…µå%¹™¼¹±ññµå%¹™¼¹°¹±•¹Ñ ôôôÀ¥É•ÑÕÉ¸¹Õ±°ì(€½¹ÍĞ¹½É´õ°ôù°¹É•Á±…” ½p½qL¬¼°œœ¤¹ÑÉ¥´ ¤ì(€½¹ÍĞµå-•äõl¸¸¹¹•ÜM•Ğ¡µå%¹™¼¹°¹µ…À¡¹½É´¤¥t¹Í½ÉĞ ¤¹©½¥¸ ğœ¤ì(€€¼¼¥¹Á±…Ñ™½ÉµÌİ¥Ñ ¥‘•¹Ñ¥…°€¡¹½Éµ…±¥é•¤Í•ÉÙ¥”±¥ÍÑÌƒŠH‘¥É•Ñ¥½¸Ñİ¥¹Ì(€½¹ÍĞÑİ¥¹Ìõ=‰©•Ğ¹­•åÌ¡‘ˆ¤¹µ…À¡9Õµ‰•È¤¹™¥±Ñ•È¡Àôùì(€€€¥˜¡ÀôôõÁ±…Ñ™½Éµ9Õ´¥É•ÑÕÉ¸™…±Í”ì(€€€½¹ÍĞ¥¹™¼õ‘‰mMÑÉ¥¹œ¡À¥tì(€€€¥˜ …¥¹™½ñğ…¥¹™¼¹±ññ¥¹™¼¹°¹±•¹Ñ ôôôÀ¥É•ÑÕÉ¸™…±Í”ì(€€€É•ÑÕÉ¸l¸¸¹¹•ÜM•Ğ¡¥¹™¼¹°¹µ…À¡¹½É´¤¥t¹Í½ÉĞ ¤¹©½¥¸ ğœ¤ôôõµå-•äì(€ô¤ì(€¥˜¡Ñİ¥¹Ì¹±•¹Ñ ôôôÀ¥É•ÑÕÉ¸¹Õ±°ì(€½¹ÍĞÉ½ÕÀõmÁ±…Ñ™½Éµ9Õ´°¸¸¹Ñİ¥¹Ít¹Í½ÉĞ ¡„±ˆ¤ôù„µˆ¤ì(€½¹ÍĞ¥‘àõÉ½ÕÀ¹¥¹‘•á=˜¡Á±…Ñ™½Éµ9Õ´¤ì(€€¼¼1½İ•È¡…±˜ƒŠHƒ¶Vc¶Z$¡‘½İ¸¤°ÕÁÁ•È¡…±˜ƒŠHƒ²¶Z$¡ÕÀ¤(€É•ÑÕÉ¸¥‘àñ5…Ñ ¹•¥°¡É½ÕÀ¹±•¹Ñ ¼È¤ü‘½İ¸œèÕÀœì)ô((¼¼Õ±°Á±…Ñ™½É´ÑÉ…¥¸™¥±Ñ•ÈèÉ…‘”€¬É½ÕÑ”€¬‘¥É•Ñ¥½¸€¡Ñ•Éµ¥¹ÕÌÑÉ…¥¹Ì•á•µÁĞ™É½´‘¥É•Ñ¥½¸¤)™Õ¹Ñ¥½¸}•Ñ¥±Ñ•É•‘QÉ…¥¹Í½ÉA±…Ñ™½É´¡¹…µ”°…±±QÉ…¥¹Ì°Á±…Ñ™½Éµ9Õ´¥ì(€½¹ÍĞÑÉ…¥¹9…µ”õ¹…µ”¹•¹‘Í]¥Ñ  Ÿ²^´œ¤ı¹…µ”¹Í±¥” À°´Ä¤é¹…µ”ì(€½¹ÍĞÁ%¹™¼õ}•ÑA±…Ñ™½Éµ%¹™¼¡¹…µ”±Á±…Ñ™½Éµ9Õ´¤ì(€¥˜ …Á%¹™¼¥É•ÑÕÉ¸…±±QÉ…¥¹Ìì(€±•Ğ™¥±Ñ•É•õ…±±QÉ…¥¹Ì¹™¥±Ñ•È¡Ğôø(€€€}É…‘•5…Ñ¡•ÍA±…Ñ™½É´¡Ğ¹É…‘”±Á%¹™¼¹œ¤˜˜(€€€}ÑÉ…¥¹5…Ñ¡•ÍA±…Ñ™½ÉµI½ÕÑ”¡Ğ±¹…µ”±Á%¹™¼¤(€€¤ì(€½¹ÍĞ‘¥É¥±Ñ•Èõ}•Ñ¥É•Ñ¥½¹½ÉA±…Ñ™½É´¡¹…µ”±Á±…Ñ™½Éµ9Õ´¤ì(€¥˜¡‘¥É¥±Ñ•È„ôõ¹Õ±°¥ì(€€€™¥±Ñ•É•õ™¥±Ñ•É•¹™¥±Ñ•È¡Ğôùì(€€€€€½¹ÍĞÍÑ½ÀõĞ¹ÍÑ½ÁÌ¹™¥¹¡ÌôùÌ¹ÌôôõÑÉ…¥¹9…µ”¤ì(€€€€€½¹ÍĞ¥ÍQ•Éµ¥¹ÕÌõÍÑ½À˜™ÍÑ½À¹…ÉÈ˜˜…ÍÑ½À¹‘•Àì€¼¼…ÉÉ¥Ù•Ì‰ÕĞ‘½•Ì¹½Ğ‘•Á…ÉĞ€ôƒ®.ç²^·²Š²Â¤(€€€€€É•ÑÕÉ¸¥ÍQ•Éµ¥¹ÕÍññĞ¹‘¥Èôôõ‘¥É¥±Ñ•Èì(€€€ô¤ì(€ô(€É•ÑÕÉ¸™¥±Ñ•É•ì)ô()™Õ¹Ñ¥½¸}•áÑÉ…Ñ•ÍÑ¥¹…Ñ¥½¹Ì¡±¥¹•Ì°ÍÑ…Ñ¥½¹9…µ”°‘¥É•Ñ¥½¸õ¹Õ±°¥ì(€½¹ÍĞÍÑ¹	…Í”õÍÑ…Ñ¥½¹9…µ”¹•¹‘Í]¥Ñ  Ÿ²^´œ¤ıÍÑ…Ñ¥½¹9…µ”¹Í±¥” À°´Ä¤éÍÑ…Ñ¥½¹9…µ”ì(€½¹ÍĞÉ…‘•]½É‘Ìõl%Q`·²#®#²vœ°%Qc²#®#²vœ°%Q`·²Ê·²Ú`œ°%Qc²Ê·²Ú`œ°%Q`·®#²v0œ°%Qc®#²v0œ°Ÿ®²ÓªÚ¶fS¶bàœ°Ÿ®²ÓªÚ¶fPœ°-Q`œ°MIPtì(€½¹ÍĞ¥ÑåM•Ğõ¹•ÜM•Ğ ¤ì(€½¹ÍĞ‘•‘ÕÁ•õl¸¸¹¹•ÜM•Ğ¡±¥¹•Ì¹µ…À¡°ôù°¹É•Á±…” ½p½qL¬¼°œœ¤¹ÑÉ¥´ ¤¤¥tì(€™½È¡½¹ÍĞ±¥¹”½˜‘•‘ÕÁ•¥ì(€€€±•ĞÌõ±¥¹”¹É•Á±…” ½p¡mx¥t©p¤½œ°œœ¤¹ÑÉ¥´ ¤ì(€€€™½È¡½¹ÍĞœ½˜É…‘•]½É‘Ì¤ÌõÌ¹É•Á±…”¡¹•ÜI•áÀ¡œ°œœ¤°œœ¤¹ÑÉ¥´ ¤ì(€€€ÌõÌ¹É•Á±…” ½oªÂ ·¶zt¯²qÌ¨½œ°œœ¤¹ÑÉ¥´ ¤ì(€€€¥˜ …Ì¹¥¹±Õ‘•Ì œ´œ¤¥½¹Ñ¥¹Õ”ì(€€€½¹ÍĞ¥Ñ¥•ÌõÌ¹ÍÁ±¥Ğ œ´œ¤¹µ…À¡ŒôùŒ¹ÑÉ¥´ ¤¤¹™¥±Ñ•È¡ŒôùŒ˜™Œ„ôõÍÑ¹	…Í”˜™Œ„ôõÍÑ…Ñ¥½¹9…µ”¤ì(€€€¥˜ …¥Ñ¥•Ì¹±•¹Ñ ¥½¹Ñ¥¹Õ”ì(€€€¥˜¡‘¥É•Ñ¥½¸ôôô‘½İ¸œ¤¥ÑåM•Ğ¹…‘¡¥Ñ¥•Ím¥Ñ¥•Ì¹±•¹Ñ ´Åt¤ì€¼¼Ñ½İ…É±…ÍĞ¥Ñä€ô‘½İ¹‰½Õ¹•¹‘Á½¥¹Ğ(€€€•±Í”¥˜¡‘¥É•Ñ¥½¸ôôôÕÀœ¤¥ÑåM•Ğ¹…‘¡¥Ñ¥•ÍlÁt¤ì€€€€€€€€€€€€¼¼Ñ½İ…É™¥ÉÍĞ¥Ñä€ôÕÁ‰½Õ¹•¹‘Á½¥¹Ğ(€€€•±Í”¥Ñ¥•Ì¹™½É… ¡Œôù¥ÑåM•Ğ¹…‘¡Œ¤¤ì(€ô(€É•ÑÕÉ¸l¸¸¹¥ÑåM•Ñt¹Í±¥” À±‘¥É•Ñ¥½¸üÌèÔ¤ì)ô()™Õ¹Ñ¥½¸}Í¥A±…Ñ™½ÉµQÉ…¥¹Í!Q50¡¹…µ”°ÑÉ…¥¹Ì¥ì(€½¹ÍĞÑÉ…¥¹9…µ”õ¹…µ”¹•¹‘Í]¥Ñ  Ÿ²^´œ¤ı¹…µ”¹Í±¥” À°´Ä¤é¹…µ”ì(€½¹ÍĞ¹…µ•ÍŒõ¹…µ”¹É•Á±…” ½qp½œ°qqqpœ¤¹É•Á±…” ¼œ½œ°‰qpœˆ¤ì(€€¼¼ƒ²ƒ¶tƒ¶f#²^@ƒ².“²‚pƒ®ÂÃ²‚W®Bpƒ²^Ó²Â €£ªÊ3²zƒªâÃ²’ °ƒ²^²ró®¦Ğƒ¶rÓ®š³²*“¶.Äƒ¶>Ó®ÂÄ¤(€½¹ÍĞÁ±…ÑQÉ…¥¹Ìõ}Í¥…É‘A±…Ñ™½É´„ôõ¹Õ±°(€€€€ıÑÉ…¥¹Ì¹™¥±Ñ•È¡Ğôù}Á±…Ñ™½Éµ½ÉQÉ…¥¸¡¹…µ”±ÑÉ…¥¹9…µ”±ÑÉ…¥¹Ì±Ğ¤ôôõ}Í¥…É‘A±…Ñ™½É´¤(€€€€él¸¸¹ÑÉ…¥¹Ítì(€€¼¼ƒ®.ç²^·²Š²Â¤ƒ²‚s²fàƒ¶V¶À€ ŒĞ¤(€±•Ğ™¥±Ñ•É•õ}Í¥!¥‘•Q•É´ıÁ±…ÑQÉ…¥¹Ì¹™¥±Ñ•È¡Ğôø…}¥ÍQ•Éµ¥¹ÕÍĞ¡Ğ±ÑÉ…¥¹9…µ”¤¤éÁ±…ÑQÉ…¥¹Ìì(€€¼¼ƒ²vÓ¶nƒ²^Ó²Â£®0ƒ¶V¶ÀƒŠPƒ²jÓ¶Z'²vğ ÀĞèÀÁû²v×²vğ€ÀÌèÔä¤ƒªâÃ²’ ¸€ÈÌèÌÃ²^@€ÀèĞÀƒ²^Ó²Â£®*P€Ÿ²vÓ¶nŸ®†pƒ²Ş£ªâ$(€±•ĞÍÙ¹‘•õ™…±Í”°™¥ÉÍÑ9•áĞõ¹Õ±°ì(€¥˜¡}Í¥UÁ½µ¥¹=¹±ä¥ì(€€€½¹ÍĞ¹½İõ¹•Ü…Ñ” ¤ì(€€€½¹ÍĞ¹½İMÉØõ}ÍÉÙ5¥¸¡¹½İ¹•Ñ!½ÕÉÌ ¤¨ØÀ­¹½İ¹•Ñ5¥¹ÕÑ•Ì ¤¤ì(€€€½¹ÍĞÕÁ½µ¥¹œõ™¥±Ñ•É•¹™¥±Ñ•È¡Ğôùì(€€€€€½¹ÍĞÌõĞ¹ÍÑ½ÁÌ¹™¥¹¡àôùà¹ÌôôõÑÉ…¥¹9…µ”¤ì(€€€€€½¹ÍĞ´õÑ½5¥¸¡Ìü¹‘•ÁññÌü¹…ÉÈ¤ì(€€€€€É•ÑÕÉ¸´„ôõ¹Õ±°€˜˜}ÍÉÙ5¥¸¡´¤øõ¹½İMÉØì(€€€ô¤ì(€€€¥˜¡ÕÁ½µ¥¹œ¹±•¹Ñ ôôôÀ€˜˜™¥±Ñ•É•¹±•¹Ñ øÀ¥ì(€€€€€ÍÙ¹‘•õÑÉÕ”ì(€€€€€€¼¼ƒ²v×²vğ£®.“²v0ƒ²jÓ¶Z'²vğ¤ƒ²Ê¯²Â ƒ²V#®
+Ó²j¤(€€€€€½¹ÍĞ‰åMÑ…ÉĞõl¸¸¹™¥±Ñ•É•‘t¹Í½ÉĞ ¡„±ˆ¤ôùì(€€€€€€€½¹ÍĞÍ„õ„¹ÍÑ½ÁÌ¹™¥¹¡àôùà¹ÌôôõÑÉ…¥¹9…µ”¤°Íˆõˆ¹ÍÑ½ÁÌ¹™¥¹¡àôùà¹ÌôôõÑÉ…¥¹9…µ”¤ì(€€€€€€€É•ÑÕÉ¸}ÍÉÙ5¥¸¡Ñ½5¥¸¡Í„ü¹‘•ÁññÍ„ü¹…ÉÈ¥ñğÀ¤µ}ÍÉÙ5¥¸¡Ñ½5¥¸¡Íˆü¹‘•ÁññÍˆü¹…ÉÈ¥ñğÀ¤ì(€€€€€ô¤ì(€€€€€½¹ÍĞ™Ìõ‰åMÑ…ÉÑlÁtü¹ÍÑ½ÁÌ¹™¥¹¡àôùà¹ÌôôõÑÉ…¥¹9…µ”¤ì(€€€€€™¥ÉÍÑ9•áĞõ™Ìü¡™Ì¹‘•Áññ™Ì¹…ÉÈ¤é¹Õ±°ì(€€€ô(€€€™¥±Ñ•É•õÕÁ½µ¥¹œì(€ô(€½¹ÍĞÍ½ÉÑ•õl¸¸¹™¥±Ñ•É•‘t¹Í½ÉĞ ¡„±ˆ¤ôùì(€€€½¹ÍĞÍ„õ„¹ÍÑ½ÁÌ¹™¥¹¡àôùà¹ÌôôõÑÉ…¥¹9…µ”¤°Íˆõˆ¹ÍÑ½ÁÌ¹™¥¹¡àôùà¹ÌôôõÑÉ…¥¹9…µ”¤ì(€€€½¹ÍĞ­„õÑ½5¥¸¡Í„ü¹‘•ÁññÍ„ü¹…ÉÈ¤°­ˆõÑ½5¥¸¡Íˆü¹‘•ÁññÍˆü¹…ÉÈ¤ì(€€€€¼¼ƒ²vÓ¶nƒ²^Ó²Â£®0ƒ®ª£®Ns²^C²s®*Pƒ²jÓ¶Z'²vğƒ²"s²p ÀÓ².pƒªâÃ²’ §®†pƒ²‚W®‚³¶VĞƒ²zC²‚Tƒ®c®*Pƒ²^Ó²Â£ªÂ ƒ®J“²^@ƒ²b“®>®†t(€€€¥˜¡}Í¥UÁ½µ¥¹=¹±ä¤É•ÑÕÉ¸€¡­„ôôõ¹Õ±°üääääé}ÍÉÙ5¥¸¡­„¤¤´¡­ˆôôõ¹Õ±°üääääé}ÍÉÙ5¥¸¡­ˆ¤¤ì(€€€É•ÑÕÉ¸€¡­…ñğääää¤´¡­‰ñğääää¤ì(€ô¤ì(€€¼¼ƒ®Â§®¦Ó
+ß®Â§¶Z—²v ƒ².“²‚pƒ®ÂÃ²‚W®Bpƒ²^Ó²Â£²^C²pƒ®>²Úp(€½¹ÍĞ™‘¥ÉÌõ¹•ÜM•Ğ¡Í½ÉÑ•¹µ…À¡ĞôùĞ¹‘¥È¤¤ì(€½¹ÍĞ‘¥É1…‰•°ô¡}Í¥…É‘A±…Ñ™½É´„ôõ¹Õ±°˜™™‘¥ÉÌ¹Í¥é”ôôôÄ¤ü¡Í½ÉÑ•‘lÁt¹‘¥Èôôô‘½İ¸œüŸ¶Vc¶Z'ŠLœèŸ²¶Z'ŠDœ¤èœœì(€½¹ÍĞ‘•ÍÑÌõ}Í¥…É‘A±…Ñ™½É´„ôõ¹Õ±°ıl¸¸¹¹•ÜM•Ğ¡Í½ÉÑ•¹™¥±Ñ•È¡Ğôø…}¥ÍQ•Éµ¥¹ÕÍĞ¡Ğ±ÑÉ…¥¹9…µ”¤¤¹µ…À¡ĞôùĞ¹‘•ÍĞ¤¥t¹Í±¥” À°Ì¤émtì(€½¹ÍĞ‘•ÍÑÍMÑÈõ‘•ÍÑÌ¹±•¹Ñ øÀı‘•ÍÑÌ¹©½¥¸ œƒŠˆ€œ¤¬œƒ®Â§®¦Ğœèœœì(€€¼¼ƒ²vÓ²‚¿®.“²v3²^´ƒ²vÓ®>d€ ŒÔ¤ƒŠPƒ¶f ƒ²^Ó²Â£®N“²v`ƒ²²‚¿²¶nƒ²‚W²Â£²^´ƒ²’Dƒ²ÖsªŞó²‚G²^´(€½¹ÍĞ¹•áÑõmt°ÁÉ•Ùõmtì(€Á±…ÑQÉ…¥¹Ì¹™½É… ¡Ğôùí½¹ÍĞ„õ}…‘©MÑ½Á=˜¡Ğ±ÑÉ…¥¹9…µ”¤ì¥˜¡„¹¹•áĞ¥¹•áÑ¹ÁÕÍ ¡„¹¹•áĞ¤ì¥˜¡„¹ÁÉ•Ø¥ÁÉ•Ù¹ÁÕÍ ¡„¹ÁÉ•Ø¤íô¤ì(€½¹ÍĞÁÉ•ÙMÑ¸õ}¹•…É•ÍÑMÑ¸¡ÑÉ…¥¹9…µ”±ÁÉ•Ù¤°¹•áÑMÑ¸õ}¹•…É•ÍÑMÑ¸¡ÑÉ…¥¹9…µ”±¹•áÑ¤ì(€½¹ÍĞ¹…Ù	Ñ¸ô¡ÍÑ¸±…ÉÉ½Ü¤ôù€ñ‰ÕÑÑ½¸½¹±¥¬ô‰½Á•¹MÑ…Ñ¥½¹•Ñ…¥° œ‘íÍÑ¸¹É•Á±…” ¼œ½œ°‰qpœˆ¥ôœ¤ˆÍÑå±”ô‰™±•àèÄíµ¥¸µİ¥‘Ñ èÀíÁ…‘‘¥¹œèáÁà€ÄÁÁàí‰½É‘•ÈµÉ…‘¥ÕÌèåÁàí‰½É‘•ÈèÅÁàÍ½±¥Ù…È ´µ‰½É‘•È¤í‰…­É½Õ¹éÙ…È ´µ‰œÌ¤í½±½ÈéÙ…È ´µÑ•áĞÄ¤í™½¹ĞµÍ¥é”èÄÈ¸ÕÁàí™½¹Ğµİ•¥¡ĞèÜÀÀíÕÉÍ½ÈéÁ½¥¹Ñ•Èí™½¹Ğµ™…µ¥±äéÙ…È ´µÍ…¹Ì¤íİ¡¥Ñ”µÍÁ…”é¹½İÉ…Àí½Ù•É™±½Üé¡¥‘‘•¸íÑ•áĞµ½Ù•É™±½Üé•±±¥ÁÍ¥Ìˆø‘í…ÉÉ½ÜôôôÁÉ•ØœüŸŠ@€œ­ÍÑ¸éÍÑ¸¬œƒŠHôğ½‰ÕÑÑ½¸ù€ì(€½¹ÍĞ¹…Ù!Ñµ°ô¡ÁÉ•ÙMÑ¹ññ¹•áÑMÑ¸¤ı€ñ‘¥ØÍÑå±”ô‰‘¥ÍÁ±…äé™±•àí…ÀèáÁàíµ…É¥¸µ‰½ÑÑ½´èÄÁÁàˆø‘íÁÉ•ÙMÑ¸ı¹…Ù	Ñ¸¡ÁÉ•ÙMÑ¸°ÁÉ•Øœ¤èœô‘í¹•áÑMÑ¸ı¹…Ù	Ñ¸¡¹•áÑMÑ¸°¹•áĞœ¤èœôğ½‘¥Øù€èœœì(€½¹ÍĞÑ•Éµ=¸õ}Í¥!¥‘•Q•É´°ÕÁ=¸õ}Í¥UÁ½µ¥¹=¹±äì(€½¹ÍĞ¡¥Àô¡½¸±±…‰•°±™¸¤ôù€ñ‰ÕÑÑ½¸½¹±¥¬ôˆ‘í™¹ô œ‘í¹…µ•Íôœ¤ˆÍÑå±”ô‰Á…‘‘¥¹œèÑÁà€ÄÁÁàí‰½É‘•ÈµÉ…‘¥ÕÌèÄÑÁàí‰½É‘•ÈèÅÁàÍ½±¥€‘í½¸üÙ…È ´µ…•¹Ğ¤œèÙ…È ´µ‰½É‘•È¤ôí‰…­É½Õ¹è‘í½¸üÙ…È ´µ…•¹Ğ¤œèÙ…È ´µ‰œÌ¤ôí½±½Èè‘í½¸üœ™™˜œèÙ…È ´µÑ•áĞÈ¤ôí™½¹ĞµÍ¥é”èÄÅÁàí™½¹Ğµİ•¥¡ĞèØÀÀíÕÉÍ½ÈéÁ½¥¹Ñ•Èí™½¹Ğµ™…µ¥±äéÙ…È ´µÍ…¹Ì¤íİ¡¥Ñ”µÍÁ…”é¹½İÉ…Àˆø‘í±…‰•±ôğ½‰ÕÑÑ½¸ù€ì(€½¹ÍĞ•¹‘•‘!Ñµ°õÍÙ¹‘•(€€€€ı€ñ‘¥ØÍÑå±”ô‰Ñ•áĞµ…±¥¸é•¹Ñ•ÈíÁ…‘‘¥¹œèÄáÁà€ÄÉÁàí½±½ÈéÙ…È ´µÑ•áĞÈ¤í™½¹ĞµÍ¥é”èÄÍÁàí±¥¹”µ¡•¥¡ĞèÄ¸Üˆø(€€€€€€€ƒÂ~2d€ñˆûªâ#²vğƒ²jÓ¶Z'²vĞƒ²Š®3®Bc²^#²*×®.#®.ğ½ˆøñ‰Èø(€€€€€€€€ñÍÁ…¸ÍÑå±”ô‰™½¹ĞµÍ¥é”èÄÄ¸ÕÁàí½±½ÈéÙ…È ´µÑ•áĞÌ¤ˆû²jÓ¶Z'²vğƒªâÃ²’ €ÀĞèÀÁû²v×²vğ€ÀÌèÔä‘í™¥ÉÍÑ9•áĞı€ƒ
+Üƒ²v×²vğƒ²Ê¯²Â €ñˆÍÑå±”ô‰½±½ÈéÙ…È ´µ…•¹Ğ¤í™½¹Ğµ™…µ¥±äéÙ…È ´µµ½¹¼¤ˆø‘í™¥ÉÍÑ9•áÑôğ½ˆù€èœôğ½ÍÁ…¸ø(€€€€€€ğ½‘¥Øù€èœœì(€É•ÑÕÉ¸€(€€€€ñ‘¥ØÍÑå±”ô‰‘¥ÍÁ±…äé™±•àí…±¥¸µ¥Ñ•µÌé•¹Ñ•Èí…ÀèÙÁàíµ…É¥¸µ‰½ÑÑ½´è‘í}Í¥…É‘A±…Ñ™½É´üœØœèœÄÀõÁàí™±•àµİÉ…ÀéİÉ…Àˆø(€€€€€€ñ‘¥ØÍÑå±”ô‰™½¹ĞµÍ¥é”èÄÉÁàí™½¹Ğµİ•¥¡ĞèÜÀÀí½±½ÈéÙ…È ´µÑ•áĞÈ¤í™±•àèÄíµ¥¸µİ¥‘Ñ èÄÈÁÁàˆûÂ~j€‘í}Í¥…É‘A±…Ñ™½É´ı€‘í}Í¥…É‘A±…Ñ™½Éµ÷®Ê ƒ¶f ‘í‘¥É1…‰•°üœ€ œ­‘¥É1…‰•°¬œ¤œèœôƒ².sªÂ¶Fq€èŸ²^´ƒ².sªÂ¶Fpôğ½‘¥Øø(€€€€€€‘í¡¥À¡ÕÁ=¸°Ÿ²vÓ¶nƒ²^Ó²Â£®0œ°Ñ½±•M%UÁ½µ¥¹œœ¥ô(€€€€€€‘í¡¥À¡Ñ•Éµ=¸°Ÿ®.ç²^·²Š²Â¤ƒ²‚s²fàœ°Ñ½±•M%Q•É´œ¥ô(€€€€ğ½‘¥Øø(€€€€‘í}Í¥…É‘A±…Ñ™½É´„ôõ¹Õ±°ı}µ•ÑÉ½1¥¹•Í½ÉQÉ…¥¹A±…Ñ™½Éµ!Q50¡ÑÉ…¥¹9…µ”±}Í¥…É‘A±…Ñ™½É´¤èœô(€€€€‘í‘•ÍÑÍMÑÈı€ñ‘¥ØÍÑå±”ô‰™½¹ĞµÍ¥é”èÄÁÁàí½±½ÈéÙ…È ´µ…•¹ĞÈ¤íµ…É¥¸µ‰½ÑÑ½´èáÁàˆûÂ~N4€‘í‘•ÍÑÍMÑÉôğ½‘¥Øù€èœô(€€€€‘í¹…Ù!Ñµ±ô(€€€€‘í•¹‘•‘!Ñµ±ô(€€€€‘íÍ½ÉÑ•¹±•¹Ñ ôôôÀ˜˜…ÍÙ¹‘•üœñ‘¥ØÍÑå±”ô‰½±½ÈéÙ…È ´µÑ•áĞÌ¤í™½¹ĞµÍ¥é”èÄÍÁàíÑ•áĞµ…±¥¸é•¹Ñ•ÈíÁ…‘‘¥¹œèÄÉÁàˆû²jÓ¶Z$ƒ²^Ó²Â ƒ²^²v0ğ½‘¥Øøœèœô(€€€€‘ì  ¤ôùì(€€€€€½¹ÍĞÑÉ…¥¹I½ÜõĞôùì(€€€€€€€½¹ÍĞÌõĞ¹ÍÑ½ÁÌ¹™¥¹¡àôùà¹ÌôôõÑÉ…¥¹9…µ”¤ì(€€€€€€€½¹ÍĞÑ¥µ”õÌü¹‘•ÁññÌü¹…ÉÉñğœ´œì(€€€€€€€½¹ÍĞ‘¥ÈõĞ¹‘¥Èôôô‘½İ¸œüŸ¶Vc¶Z'ŠLœèŸ²¶Z'ŠDœì(€€€€€€€½¹ÍĞ‘¥ÉõĞ¹‘¥Èôôô‘½İ¸œüÙ…È ´µ…•¹Ğ¤œèÙ…È ´µÉ•¤œì(€€€€€€€½¹ÍĞ¥ÍQ•É´õ}¥ÍQ•Éµ¥¹ÕÍĞ¡Ğ±ÑÉ…¥¹9…µ”¤ì(€€€€€€€½¹ÍĞ‘•ÍÑ!Ñµ°õ¥ÍQ•É´(€€€€€€€€€€ı€ñÍÁ…¸ÍÑå±”ô‰½±½ÈéÙ…È ´µ…•¹ĞÈ¤ˆû®.ç²^·²Š²Â¤ğ½ÍÁ…¸ù€(€€€€€€€€€€é€‘íĞ¹‘•ÍÑ÷¶Z%€ì(€€€€€€€É•ÑÕÉ¸€ñ‘¥ØÍÑå±”ô‰‘¥ÍÁ±…äé™±•àí…±¥¸µ¥Ñ•µÌé•¹Ñ•Èí…ÀèáÁàíÁ…‘‘¥¹œèáÁà€Àí‰½É‘•Èµ‰½ÑÑ½´èÅÁàÍ½±¥Ù…È ´µ‰½É‘•È¤ÈÈˆø(€€€€€€€€€€ñ‘¥ØÍÑå±”ô‰™½¹ĞµÍ¥é”èÄÕÁàí™½¹Ğµİ•¥¡ĞèÜÀÀí™½¹Ğµ™…µ¥±äéÙ…È ´µµ½¹¼¤íµ¥¸µİ¥‘Ñ èĞÙÁàˆø‘íÑ¥µ•ôğ½‘¥Øø(€€€€€€€€€€ñ‘¥ØÍÑå±”ô‰µ¥¸µİ¥‘Ñ èÔÁÁàˆø(€€€€€€€€€€€€ñ‘¥ØÍÑå±”ô‰™½¹ĞµÍ¥é”èÄÉÁàí™½¹Ğµİ•¥¡ĞèÜÀÀí½±½ÈéÙ…È ´µŒ´‘íÍÍY…È¡Ğ¹É…‘”¥ô¤ˆø‘íĞ¹É…‘•ôğ½‘¥Øø(€€€€€€€€€€€€ñ‘¥ØÍÑå±”ô‰™½¹ĞµÍ¥é”èÄÁÁàí½±½ÈéÙ…È ´µÑ•áĞÌ¤í™½¹Ğµ™…µ¥±äéÙ…È ´µµ½¹¼¤ˆø‘íĞ¹¹½ôğ½‘¥Øø(€€€€€€€€€€ğ½‘¥Øø(€€€€€€€€€€ñ‘¥ØÍÑå±”ô‰™±•àèÄí™½¹ĞµÍ¥é”èÄÍÁàí™½¹Ğµİ•¥¡ĞèØÀÀˆø‘í‘•ÍÑ!Ñµ±ôğ½‘¥Øø(€€€€€€€€€€ñ‘¥ØÍÑå±”ô‰™½¹ĞµÍ¥é”èÄÅÁàí™½¹Ğµİ•¥¡ĞèÜÀÀí½±½Èè‘í‘¥Éôˆø‘í‘¥Éôğ½‘¥Øø(€€€€€€€€ğ½‘¥Øù€ì(€€€€€ôì(€€€€€½¹ÍĞÍ¡½İ¸õÍ½ÉÑ•¹Í±¥” À°ÈÀ¤ì(€€€€€½¹ÍĞÉ•ÍĞõÍ½ÉÑ•¹Í±¥” ÈÀ¤ì(€€€€€É•ÑÕÉ¸Í¡½İ¸¹µ…À¡ÑÉ…¥¹I½Ü¤¹©½¥¸ œœ¤¬(€€€€€€€€¡É•ÍĞ¹±•¹Ñ øÀı€ñ‘¥Ø¥ô‰Í¤µÑÉ…¥¸µ•áÑÉ„ˆÍÑå±”ô‰‘¥ÍÁ±…äé¹½¹”ˆø‘íÉ•ÍĞ¹µ…À¡ÑÉ…¥¹I½Ü¤¹©½¥¸ œœ¥ôğ½‘¥Øø(€€€€€€€€ñ‘¥Ø½¹±¥¬ô‰‘½Õµ•¹Ğ¹•Ñ±•µ•¹Ñ	å% Í¤µÑÉ…¥¸µ•áÑÉ„œ¤¹ÍÑå±”¹‘¥ÍÁ±…äô‰±½¬œíÑ¡¥Ì¹ÍÑå±”¹‘¥ÍÁ±…äô¹½¹”œˆ(€€€€€€€€€ÍÑå±”ô‰™½¹ĞµÍ¥é”èÄÉÁàí½±½ÈéÙ…È ´µ…•¹Ğ¤íÑ•áĞµ…±¥¸é•¹Ñ•ÈíÁ…‘‘¥¹œèáÁà€ÀíÕÉÍ½ÈéÁ½¥¹Ñ•Èí‰½É‘•ÈèÅÁà‘…Í¡•Ù…È ´µ‰½É‘•È¤í‰½É‘•ÈµÉ…‘¥ÕÌèáÁàíµ…É¥¸µÑ½ÀèÑÁàí™½¹Ğµİ•¥¡ĞèØÀÀˆø(€€€€€€€€€€¬‘íÉ•ÍĞ¹±•¹Ñ¡÷¶:àƒ®6Pƒ®ÎÓªâÀƒŠZğ(€€€€€€€€ğ½‘¥Øù€èœœ¤ì(€€€ô¤ ¥ô(€€€€ñ‰ÕÑÑ½¸½¹±¥¬ô‰Í•…É¡MÑ…Ñ¥½¸ œ‘í¹…µ•Íôœ¤ˆÍÑå±”ô‰İ¥‘Ñ èÄÀÀ”íµ…É¥¸µÑ½ÀèÄÁÁàíÁ…‘‘¥¹œèåÁàí‰½É‘•ÈµÉ…‘¥ÕÌèáÁàí‰½É‘•ÈèÅÁàÍ½±¥Ù…È ´µ…•¹Ğ¤í‰…­É½Õ¹éÑÉ…¹ÍÁ…É•¹Ğí½±½ÈéÙ…È ´µ…•¹Ğ¤í™½¹ĞµÍ¥é”èÄÉÁàíÕÉÍ½ÈéÁ½¥¹Ñ•Èí™½¹Ğµ™…µ¥±äéÙ…È ´µÍ…¹Ì¤í™½¹Ğµİ•¥¡ĞèØÀÀˆû²‚²ÊĞƒ².sªÂ¶Fpƒ®ÎÓªâÀƒŠHğ½‰ÕÑÑ½¸ø(€€ì)ô((¼¼ƒŠRŠR ƒ²^´ƒ²‚ªÒG¶2@ƒªÎ×¶Ôèƒ²jÓ¶Z'²vğƒ²Š®0ƒ².p€Ÿ²jÓ¶Z$ƒ²Š®0ƒŠPƒ®
+Ó²vğƒ²Ê¬ƒ²^Ó²Â œƒªÖC®2 ƒ¶Fs².pƒŠRŠR )™Õ¹Ñ¥½¸}Í‰¹‘•‘!Q50¡½±Í!Ñµ°°ÑµÉI½İÍ!Ñµ°°™¥ÉÍÑMÑÈ°­¥¹‘1…‰•°¥ì(€É•ÑÕÉ¸€ñ‘¥Ø±…ÍÌô‰ÍÑ¸µ‰½…Éµ•¹‘•ˆø(€€€€ñ‘¥Ø±…ÍÌô‰Í‰”µ™±¥ÀÍ‰”µ„ˆø(€€€€€€ñ‘¥Ø±…ÍÌô‰Í‰”µµ½½¸ˆûÂ~2dğ½‘¥Øø(€€€€€€ñ‘¥Ø±…ÍÌô‰Í‰”µµÍœˆûªâ#²vğƒ²jÓ¶Z'²vĞƒ²Š®3®Bc²^#²*×®.#®.ğ½‘¥Øø(€€€€€€ñ‘¥Ø±…ÍÌô‰Í‰”µÍÕˆˆû²jÓ¶Z'²vğƒªâÃ²’ €ÀĞèÀÀøƒ²v×²vğ€ÀÌèÔä‘í™¥ÉÍÑMÑÈı€ƒ
+Üƒ®
+Ó²vğƒ²Ê¬€‘í­¥¹‘1…‰•±ô€ñˆø‘í™¥ÉÍÑMÑÉôğ½ˆù€èœôğ½‘¥Øø(€€€€ğ½‘¥Øø(€€€€ñ‘¥Ø±…ÍÌô‰Í‰”µ™±¥ÀÍ‰”µˆˆø(€€€€€€ñ‘¥Ø±…ÍÌô‰Í‰”µ¹•áĞµ¡•…ˆûÂ~jƒ®
+Ó²vğƒ²jÓ¶Z$ƒ²b#²‚Tğ½‘¥Øø(€€€€€€‘í½±Í!Ñµ±ô(€€€€€€‘íÑµÉI½İÍ!Ñµ±ñğœñ‘¥Ø±…ÍÌô‰ÍÑ¸µ‰½…Éµ•µÁÑäˆû®
+Ó²vğƒ²jÓ¶Z$ƒ²‚W®ÎĞƒ²^²v0ğ½‘¥Øøô(€€€€ğ½‘¥Øø(€€ğ½‘¥Øù€ì)ô((¼¼ƒŠRŠR ƒ²^´ƒ²‚ªÒG¶2@€£²Ús®Âpƒ²V#®
+Ğ1¤ƒŠRŠR ƒ²b“®*`£²jÓ¶Z'²vğ€ÀĞèÀÁû²v×²vğ€ÀÌèÔä¤ƒ²^Ó²Â£®0ƒ¶Fs².p)™Õ¹Ñ¥½¸}Í¥•Á…ÉÑÕÉ•	½…É‘!Q50¡¹…µ”°ÑÉ…¥¹Ì°±¥µ¥Ğ¥ì(€±¥µ¥Ğõ±¥µ¥ÑñğØì(€½¹ÍĞÑÉ…¥¹9…µ”õ¹…µ”¹•¹‘Í]¥Ñ  Ÿ²^´œ¤ı¹…µ”¹Í±¥” À°´Ä¤é¹…µ”ì(€½¹ÍĞ¹½Üõ¹•Ü…Ñ” ¤ì(€½¹ÍĞ¹½İ5¥¸õ¹½Ü¹•Ñ!½ÕÉÌ ¤¨ØÀ­¹½Ü¹•Ñ5¥¹ÕÑ•Ì ¤ì(€½¹ÍĞ¹½İMÉØõ}ÍÉÙ5¥¸¡¹½İ5¥¸¤ì(€½¹ÍĞ±½¬õ€‘íMÑÉ¥¹œ¡¹½Ü¹•Ñ!½ÕÉÌ ¤¤¹Á…‘MÑ…ÉĞ È°œÀœ¥ôè‘íMÑÉ¥¹œ¡¹½Ü¹•Ñ5¥¹ÕÑ•Ì ¤¤¹Á…‘MÑ…ÉĞ È°œÀœ¥õ€ì(€€¼¼ƒ²^Ó²Â£®Îƒ²*çªÂW²z”ƒ®“¶VD€£ªÊ3²zƒ²jÃ²€°ƒ²^²ró®¦Ğƒ¶rÓ®š³²*“¶.Ä¤(€½¹ÍĞÁ±…Ñ=˜õíôì(€ÑÉ…¥¹Ì¹™½É… ¡Ğôùì½¹ÍĞÀõ}Á±…Ñ™½Éµ½ÉQÉ…¥¸¡¹…µ”°ÑÉ…¥¹9…µ”°ÑÉ…¥¹Ì°Ğ¤ì¥˜¡À„õ¹Õ±°¤Á±…Ñ=™mĞ¹¹½tõÀìô¤ì(€€¼¼ƒ²Ús®Âs¶2@ƒ¶n®ÎĞ£®.ç²^·²Š²Â¤ƒ²‚s²fà¤ƒŠPƒ²jÓ¶Z'²vğƒªâÃ²’ ƒ².sªÂ¡‘¥™˜€ôƒ²jÓ¶Z'²vğƒ®Úƒ²Â£²vĞ¤(€½¹ÍĞ…¹õÑÉ…¥¹Ì¹µ…À¡Ğôùì(€€€½¹ÍĞÌõĞ¹ÍÑ½ÁÌ¹™¥¹¡àôùà¹ÌôôõÑÉ…¥¹9…µ”¤ì(€€€¥˜ …Ì¤É•ÑÕÉ¸¹Õ±°ì(€€€¥˜¡Ğ¹‘•ÍĞôôõÑÉ…¥¹9…µ•ñğ¡¡…ÍQ¥µ”¡Ì¹…ÉÈ¤˜˜…¡…ÍQ¥µ”¡Ì¹‘•À¤¤¤É•ÑÕÉ¸¹Õ±°ì€¼¼ƒ®.ç²^·²Š²Â§²v ƒ²Ús®Âs¶2@ƒ²‚s²fà(€€€½¹ÍĞ‘•ÁMÑÈõÌ¹‘•ÁññÌ¹…ÉÈì¥˜ …‘•ÁMÑÈ¤É•ÑÕÉ¸¹Õ±°ì(€€€½¹ÍĞÑ¥µ•õĞ¹ÍÑ½ÁÌ¹™¥±Ñ•È¡àôù¡…ÍQ¥µ”¡à¹…ÉÈ¥ññ¡…ÍQ¥µ”¡à¹‘•À¤¤ì(€€€½¹ÍĞÍ¤õÑ¥µ•¹™¥¹‘%¹‘•à¡àôùà¹ÌôôõÑÉ…¥¹9…µ”¤ì(€€€½¹ÍĞ‘•±…äõÍ¤øôÀı}Í¥µ•±…åÑMÑ½À¡Ğ±Í¤¤èÀì(€€€½¹ÍĞ•áÁ•Ñ•õ‘•±…äøÀı…‘‘5¥¹Q½±½¬¡‘•ÁMÑÈ±‘•±…ä¤é‘•ÁMÑÈì(€€€½¹ÍĞ´õÑ½5¥¸¡•áÁ•Ñ•¤ì¥˜¡´ôôõ¹Õ±°¤É•ÑÕÉ¸¹Õ±°ì(€€€½¹ÍĞÍÉØõ}ÍÉÙ5¥¸¡´¤ì(€€€½¹ÍĞ‘¥™˜õÍÉØµ¹½İMÉØì€¼¼ƒ²jÓ¶Z'²vğƒªâÃ²’ ƒ¶b²z³²f²v`ƒ®Úƒ²Â£²vĞ€£®.“²v0ƒ²jÓ¶Z'²vğƒ²^Ó²Â£®*Pƒ²v3²"`ƒŠHƒ²‚s²fà¤(€€€É•ÑÕÉ¸íĞ±‘•ÁMÑÈ±•áÁ•Ñ•±‘•±…ä±ÍÉØ±‘¥™™ôì(€ô¤¹™¥±Ñ•È¡	½½±•…¸¤ì(€½¹ÍĞ‘•ÁI½Üô¡È±ÑµÈ¤ôùì(€€€½¹ÍĞĞõÈ¹Ğ°Á±…ĞõÁ±…Ñ=™mĞ¹¹½tì(€€€±•ĞÍĞ°±Ìì(€€€¥˜¡ÑµÈ¥ìÍĞôŸ®
+Ó²vğœì±ÌôÍˆµÍĞµÍ¡•œìô(€€€•±Í”¥˜¡È¹‘¥™˜ğôÀ¥ìÍĞôŸ²Ús®Âpœì±ÌôÍˆµÍĞµ‰½…Éœìô(€€€•±Í”¥˜¡È¹‘¥™˜ğôÔ¥ìÍĞõ€‘íÈ¹‘¥™™÷®Úƒ¶n€ì±ÌôÍˆµÍĞµÍ½½¸œìô(€€€•±Í”ìÍĞôŸ²‚W².pœì±ÌôÍˆµÍĞµÍ¡•œìô(€€€½¹ÍĞÍ‘±äõÑµÈüÀéÈ¹‘•±…äì(€€€¥˜¡Í‘±äøÀ¥ìÍĞõ€‘íÍ‘±å÷®Úƒ²²^Á€ì±ÌôÍˆµÍĞµ‘•±…äœìô(€€€½¹ÍĞ¥ÍQ•É´€ôĞ¹‘•ÍĞôôõÑÉ…¥¹9…µ”ñğ€  ¤ôùí½¹ÍĞÌõĞ¹ÍÑ½ÁÌ¹™¥¹¡àôùà¹ÌôôõÑÉ…¥¹9…µ”¤íÉ•ÑÕÉ¸Ì˜™Ì¹…ÉÈ˜˜…Ì¹‘•Àíô¤ ¤ì(€€€½¹ÍĞ‘˜õ}‘•±…å½É•…ÍĞ¡Ğ¹±¥¹”±Ğ¹É…‘”¤ì(€€€É•ÑÕÉ¸€ñ‘¥Ø±…ÍÌô‰ÍÑ¸µ‰½…ÉµÉ½Üˆø(€€€€€€ñÍÁ…¸±…ÍÌô‰ÍˆµÑ¥µ”‘íÍ‘±äøÀüœ‘•±…å•œèœôˆø‘íÍ‘±äøÀı€ñ¤ø‘íÈ¹‘•ÁMÑÉôğ½¤øñ¤ø‘íÈ¹•áÁ•Ñ•‘ôğ½¤ù€éÈ¹‘•ÁMÑÉôğ½ÍÁ…¸ø(€€€€€€ñÍÁ…¸±…ÍÌô‰Íˆµ¥¹™¼ˆø(€€€€€€€€ñÍÁ…¸±…ÍÌô‰Íˆµ‘•ÍĞˆø‘í¥ÍQ•É´üŸ®.ç²^·²Š²Â¤œéĞ¹‘•ÍĞ¬Ÿ¶Z$ôğ½ÍÁ…¸ø(€€€€€€€€ñÍÁ…¸±…ÍÌô‰ÍˆµÑÉ…¥¸ˆø‘íĞ¹É…‘•ô€‘íĞ¹¹½ô€ñÍÁ…¸±…ÍÌô‰ÍˆµÉ¥Í¬ˆÍÑå±”ô‰‰…­É½Õ¹è‘í‘˜¹½±½ÉôˆÑ¥Ñ±”ô‹²²^Àƒ²r¶^`€‘í‘˜¹±…‰•±ôˆøğ½ÍÁ…¸øğ½ÍÁ…¸ø(€€€€€€ğ½ÍÁ…¸ø(€€€€€€ñÍÁ…¸±…ÍÌô‰ÍˆµÁ±…Ğ€‘íÁ±…Ğüœœè¹½¹”ôˆø‘íÁ±…ÑñğŸŠLôğ½ÍÁ…¸ø(€€€€€€ñÍÁ…¸±…ÍÌô‰ÍˆµÍÑ…ÑÕÌ€‘í±Íôˆø‘íÍÑôğ½ÍÁ…¸ø(€€€€ğ½‘¥Øù€ì(€ôì(€½¹ÍĞ½±Ìõ€ñ‘¥Ø±…ÍÌô‰ÍÑ¸µ‰½…Éµ½±ÌˆøñÍÁ…¸ÍÑå±”ô‰İ¥‘Ñ èÔÉÁàˆû².sªÂğ½ÍÁ…¸øñÍÁ…¸ÍÑå±”ô‰™±•àèÄˆû®Â§®¦Ğƒ
+Üƒ²^Ó²Â ğ½ÍÁ…¸øñÍÁ…¸ÍÑå±”ô‰İ¥‘Ñ èÌÁÁàíÑ•áĞµ…±¥¸é•¹Ñ•Èˆû¶f ğ½ÍÁ…¸øñÍÁ…¸ÍÑå±”ô‰İ¥‘Ñ èÔÙÁàíÑ•áĞµ…±¥¸éÉ¥¡Ğˆû²V#®
+Ğğ½ÍÁ…¸øğ½‘¥Øù€ì(€€¼¼ƒ²b“®*`£¶b²z°ƒ²vÓ¶n¤ƒ²Ús®Âpƒ²^Ó²Â (€½¹ÍĞÉ½İÌõ…¹¹™¥±Ñ•È¡ÈôùÈ¹‘¥™˜øô´È¤¹Í½ÉĞ ¡„±ˆ¤ôù„¹‘¥™˜µˆ¹‘¥™˜¤¹Í±¥” À±±¥µ¥Ğ¤ì(€½¹ÍĞÍÙ¹‘•€ôÉ½İÌ¹±•¹Ñ ôôôÀ€˜˜…¹¹±•¹Ñ øÀì(€±•Ğ‰½‘äì(€¥˜¡ÍÙ¹‘•¥ì(€€€½¹ÍĞÑµÈõl¸¸¹…¹‘t¹Í½ÉĞ ¡„±ˆ¤ôù„¹ÍÉØµˆ¹ÍÉØ¤¹Í±¥” À±±¥µ¥Ğ¤ì(€€€‰½‘äõ}Í‰¹‘•‘!Q50¡½±Ì°ÑµÈ¹µ…À¡Èôù‘•ÁI½Ü¡È±ÑÉÕ”¤¤¹©½¥¸ œœ¤°ÑµÉlÁtü¹‘•ÁMÑÈ°€Ÿ²Ús®Âpœ¤ì(€ô•±Í”ì(€€€‰½‘äõ½±Ì¬¡É½İÌ¹±•¹Ñ ıÉ½İÌ¹µ…À¡Èôù‘•ÁI½Ü¡È±™…±Í”¤¤¹©½¥¸ œœ¤é€ñ‘¥Ø±…ÍÌô‰ÍÑ¸µ‰½…Éµ•µÁÑäˆû¶b²z°ƒ²Ús®Âpƒ²b#²‚Tƒ²^Ó²Â ƒ²^²v0ğ½‘¥Øù€¤ì(€ô(€É•ÑÕÉ¸€ñ‘¥Ø±…ÍÌô‰ÍÑ¸µ‰½…Éˆø(€€€€ñ‘¥Ø±…ÍÌô‰ÍÑ¸µ‰½…Éµ¡•…ˆø(€€€€€€ñÍÁ…¸±…ÍÌô‰ÍÑ¸µ‰½…ÉµÑ¥Ñ±”ˆûŠZØƒ²Ús®Âpƒ²V#®
+Ğƒ
+ÜAIQUILğ½ÍÁ…¸ø(€€€€€€ñÍÁ…¸±…ÍÌô‰ÍÑ¸µ‰½…Éµ±½¬ˆø‘í±½­ôğ½ÍÁ…¸ø(€€€€ğ½‘¥Øø(€€€€‘í‰½‘åô(€€ğ½‘¥Øù€ì)ô((¼¼ƒŠRŠR ƒ®>²Â¤ƒ²V#®
+Ğƒ²‚ªÒG¶2@€£²Ús®Âs¶2C²v`ƒ®>²Â¤ƒ®Ê²‚°ƒ®>²Â¤ƒ².sªÂƒªâÃ²’ ¤ƒŠRŠR ƒ²b“®*`ƒ²^Ó²Â£®0ƒ¶Fs².p)™Õ¹Ñ¥½¸}Í¥ÉÉ¥Ù…±	½…É‘!Q50¡¹…µ”°ÑÉ…¥¹Ì°±¥µ¥Ğ¥ì(€±¥µ¥Ğõ±¥µ¥ÑñğÄÀì(€½¹ÍĞÑÉ…¥¹9…µ”õ¹…µ”¹•¹‘Í]¥Ñ  Ÿ²^´œ¤ı¹…µ”¹Í±¥” À°´Ä¤é¹…µ”ì(€½¹ÍĞ¹½Üõ¹•Ü…Ñ” ¤ì(€½¹ÍĞ¹½İ5¥¸õ¹½Ü¹•Ñ!½ÕÉÌ ¤¨ØÀ­¹½Ü¹•Ñ5¥¹ÕÑ•Ì ¤ì(€½¹ÍĞ¹½İMÉØõ}ÍÉÙ5¥¸¡¹½İ5¥¸¤ì(€½¹ÍĞ±½¬õ€‘íMÑÉ¥¹œ¡¹½Ü¹•Ñ!½ÕÉÌ ¤¤¹Á…‘MÑ…ÉĞ È°œÀœ¥ôè‘íMÑÉ¥¹œ¡¹½Ü¹•Ñ5¥¹ÕÑ•Ì ¤¤¹Á…‘MÑ…ÉĞ È°œÀœ¥õ€ì(€½¹ÍĞÁ±…Ñ=˜õíôì(€ÑÉ…¥¹Ì¹™½É… ¡Ğôùì½¹ÍĞÀõ}Á±…Ñ™½Éµ½ÉQÉ…¥¸¡¹…µ”°ÑÉ…¥¹9…µ”°ÑÉ…¥¹Ì°Ğ¤ì¥˜¡À„õ¹Õ±°¤Á±…Ñ=™mĞ¹¹½tõÀìô¤ì(€½¹ÍĞ…¹õÑÉ…¥¹Ì¹µ…À¡Ğôùì(€€€½¹ÍĞÌõĞ¹ÍÑ½ÁÌ¹™¥¹¡àôùà¹ÌôôõÑÉ…¥¹9…µ”¤ì(€€€¥˜ …Ì¤É•ÑÕÉ¸¹Õ±°ì(€€€½¹ÍĞ…ÉÉMÑÈõÌ¹…ÉÈì¥˜ ……ÉÉMÑÉñğ…¡…ÍQ¥µ”¡…ÉÉMÑÈ¤¤É•ÑÕÉ¸¹Õ±°ì€¼¼ƒ®>²Â¤ƒ².sªÂƒ²z#®*Pƒ²^Ó²Â£®0£²Ús®Âs²^´ƒ²‚s²fà¤(€€€½¹ÍĞÑ¥µ•õĞ¹ÍÑ½ÁÌ¹™¥±Ñ•È¡àôù¡…ÍQ¥µ”¡à¹…ÉÈ¥ññ¡…ÍQ¥µ”¡à¹‘•À¤¤ì(€€€½¹ÍĞÍ¤õÑ¥µ•¹™¥¹‘%¹‘•à¡àôùà¹ÌôôõÑÉ…¥¹9…µ”¤ì(€€€½¹ÍĞ‘•±…äõÍ¤øôÀı}Í¥µ•±…åÑMÑ½À¡Ğ±Í¤¤èÀì(€€€½¹ÍĞ•áÁ•Ñ•õ‘•±…äøÀı…‘‘5¥¹Q½±½¬¡…ÉÉMÑÈ±‘•±…ä¤é…ÉÉMÑÈì(€€€½¹ÍĞ´õÑ½5¥¸¡•áÁ•Ñ•¤ì¥˜¡´ôôõ¹Õ±°¤É•ÑÕÉ¸¹Õ±°ì(€€€½¹ÍĞÍÉØõ}ÍÉÙ5¥¸¡´¤ì(€€€½¹ÍĞ‘¥™˜õÍÉØµ¹½İMÉØì(€€€±•Ğ™É½µMÑ¸õ¹Õ±°ì(€€€™½È¡±•Ğ¤ôÀí¤ñĞ¹ÍÑ½ÁÌ¹±•¹Ñ í¤¬¬¥ì¥˜¡¡…ÍQ¥µ”¡Ğ¹ÍÑ½ÁÍm¥t¹‘•À¥ññ¡…ÍQ¥µ”¡Ğ¹ÍÑ½ÁÍm¥t¹…ÉÈ¤¥ì™É½µMÑ¸õĞ¹ÍÑ½ÁÍm¥t¹Ìì‰É•…¬ìôô(€€€½¹ÍĞ¥ÍQ•É´ô¡Ğ¹‘•ÍĞôôõÑÉ…¥¹9…µ”¥ñğ …¡…ÍQ¥µ”¡Ì¹‘•À¤¤ì(€€€É•ÑÕÉ¸íĞ±…ÉÉMÑÈ±•áÁ•Ñ•±‘•±…ä±ÍÉØ±‘¥™˜±™É½µMÑ¸±¥ÍQ•Éµôì(€ô¤¹™¥±Ñ•È¡	½½±•…¸¤ì(€½¹ÍĞ…ÉÉI½Üô¡È±ÑµÈ¤ôùì(€€€½¹ÍĞĞõÈ¹Ğ°Á±…ĞõÁ±…Ñ=™mĞ¹¹½tì(€€€±•ĞÍĞ°±Ìì(€€€¥˜¡ÑµÈ¥ìÍĞôŸ®
+Ó²vğœì±ÌôÍˆµÍĞµÍ¡•œìô(€€€•±Í”¥˜¡È¹‘¥™˜ğôÀ¥ìÍĞôŸ®>²Â¤œì±ÌôÍˆµÍĞµ‰½…Éœìô(€€€•±Í”¥˜¡È¹‘¥™˜ğôÔ¥ìÍĞõ€‘íÈ¹‘¥™™÷®Úƒ¶n€ì±ÌôÍˆµÍĞµÍ½½¸œìô(€€€•±Í”ìÍĞôŸ²‚W².pœì±ÌôÍˆµÍĞµÍ¡•œìô(€€€½¹ÍĞÍ‘±äõÑµÈüÀéÈ¹‘•±…äì(€€€¥˜¡Í‘±äøÀ¥ìÍĞõ€‘íÍ‘±å÷®Úƒ²²^Á€ì±ÌôÍˆµÍĞµ‘•±…äœìô(€€€½¹ÍĞ‘˜õ}‘•±…å½É•…ÍĞ¡Ğ¹±¥¹”±Ğ¹É…‘”¤ì(€€€É•ÑÕÉ¸€ñ‘¥Ø±…ÍÌô‰ÍÑ¸µ‰½…ÉµÉ½Üˆø(€€€€€€ñÍÁ…¸±…ÍÌô‰ÍˆµÑ¥µ”‘íÍ‘±äøÀüœ‘•±…å•œèœôˆø‘íÍ‘±äøÀı€ñ¤ø‘íÈ¹…ÉÉMÑÉôğ½¤øñ¤ø‘íÈ¹•áÁ•Ñ•‘ôğ½¤ù€éÈ¹…ÉÉMÑÉôğ½ÍÁ…¸ø(€€€€€€ñÍÁ…¸±…ÍÌô‰Íˆµ¥¹™¼ˆø(€€€€€€€€ñÍÁ…¸±…ÍÌô‰Íˆµ‘•ÍĞˆø‘íÈ¹¥ÍQ•É´üŸ®.ç²^·²Š²Â¤œè¡È¹™É½µMÑ¸ıÈ¹™É½µMÑ¸¬œƒ®ÂpœéĞ¹‘•ÍĞ¬Ÿ¶Z$œ¥ôğ½ÍÁ…¸ø(€€€€€€€€ñÍÁ…¸±…ÍÌô‰ÍˆµÑÉ…¥¸ˆø‘íĞ¹É…‘•ô€‘íĞ¹¹½ô€ñÍÁ…¸±…ÍÌô‰ÍˆµÉ¥Í¬ˆÍÑå±”ô‰‰…­É½Õ¹è‘í‘˜¹½±½ÉôˆÑ¥Ñ±”ô‹²²^Àƒ²r¶^`€‘í‘˜¹±…‰•±ôˆøğ½ÍÁ…¸øğ½ÍÁ…¸ø(€€€€€€ğ½ÍÁ…¸ø(€€€€€€ñÍÁ…¸±…ÍÌô‰ÍˆµÁ±…Ğ€‘íÁ±…Ğüœœè¹½¹”ôˆø‘íÁ±…ÑñğŸŠLôğ½ÍÁ…¸ø(€€€€€€ñÍÁ…¸±…ÍÌô‰ÍˆµÍÑ…ÑÕÌ€‘í±Íôˆø‘íÍÑôğ½ÍÁ…¸ø(€€€€ğ½‘¥Øù€ì(€ôì(€½¹ÍĞ½±Ìõ€ñ‘¥Ø±…ÍÌô‰ÍÑ¸µ‰½…Éµ½±ÌˆøñÍÁ…¸ÍÑå±”ô‰İ¥‘Ñ èÔÉÁàˆû².sªÂğ½ÍÁ…¸øñÍÁ…¸ÍÑå±”ô‰™±•àèÄˆû²Ús®Âs² ƒ
+Üƒ²^Ó²Â ğ½ÍÁ…¸øñÍÁ…¸ÍÑå±”ô‰İ¥‘Ñ èÌÁÁàíÑ•áĞµ…±¥¸é•¹Ñ•Èˆû¶f ğ½ÍÁ…¸øñÍÁ…¸ÍÑå±”ô‰İ¥‘Ñ èÔÙÁàíÑ•áĞµ…±¥¸éÉ¥¡Ğˆû²V#®
+Ğğ½ÍÁ…¸øğ½‘¥Øù€ì(€½¹ÍĞÉ½İÌõ…¹¹™¥±Ñ•È¡ÈôùÈ¹‘¥™˜øô´È¤¹Í½ÉĞ ¡„±ˆ¤ôù„¹‘¥™˜µˆ¹‘¥™˜¤¹Í±¥” À±±¥µ¥Ğ¤ì(€½¹ÍĞÍÙ¹‘•€ôÉ½İÌ¹±•¹Ñ ôôôÀ€˜˜…¹¹±•¹Ñ øÀì(€±•Ğ‰½‘äì(€¥˜¡ÍÙ¹‘•¥ì(€€€½¹ÍĞÑµÈõl¸¸¹…¹‘t¹Í½ÉĞ ¡„±ˆ¤ôù„¹ÍÉØµˆ¹ÍÉØ¤¹Í±¥” À±±¥µ¥Ğ¤ì(€€€‰½‘äõ}Í‰¹‘•‘!Q50¡½±Ì°ÑµÈ¹µ…À¡Èôù…ÉÉI½Ü¡È±ÑÉÕ”¤¤¹©½¥¸ œœ¤°ÑµÉlÁtü¹…ÉÉMÑÈ°€Ÿ®>²Â¤œ¤ì(€ô•±Í”ì(€€€‰½‘äõ½±Ì¬¡É½İÌ¹±•¹Ñ ıÉ½İÌ¹µ…À¡Èôù…ÉÉI½Ü¡È±™…±Í”¤¤¹©½¥¸ œœ¤é€ñ‘¥Ø±…ÍÌô‰ÍÑ¸µ‰½…Éµ•µÁÑäˆû¶b²z°ƒ®>²Â¤ƒ²b#²‚Tƒ²^Ó²Â ƒ²^²v0ğ½‘¥Øù€¤ì(€ô(€É•ÑÕÉ¸€ñ‘¥Ø±…ÍÌô‰ÍÑ¸µ‰½…Éˆø(€€€€ñ‘¥Ø±…ÍÌô‰ÍÑ¸µ‰½…Éµ¡•…ˆø(€€€€€€ñÍÁ…¸±…ÍÌô‰ÍÑ¸µ‰½…ÉµÑ¥Ñ±”ˆûŠZğƒ®>²Â¤ƒ²V#®
+Ğƒ
+ÜII%Y1Lğ½ÍÁ…¸ø(€€€€€€ñÍÁ…¸±…ÍÌô‰ÍÑ¸µ‰½…Éµ±½¬ˆø‘í±½­ôğ½ÍÁ…¸ø(€€€€ğ½‘¥Øø(€€€€‘í‰½‘åô(€€ğ½‘¥Øù€ì)ô(¼¼ƒŠRŠR ƒ²^´ƒ².“².sªÂƒ²‚ªÒG¶2@ƒ¶2w²^€£²Ús®Âp¿®>²Â¤ƒ¶´ƒ
+Üƒ²zC®>dƒªÂÇ².€¤ƒŠRŠR )±•Ğ}Í¥	½…É‘5½‘”ô‘•Àœ°}Í¥	½…É‘9…µ”õ¹Õ±°°}Í¥	½…É‘QÉ…¥¹Ìõ¹Õ±°ì)™Õ¹Ñ¥½¸½Á•¹MÑ…Ñ¥½¹	½…É¡¹…µ”¥ì(€¥˜¡ÑåÁ•½˜MQQ%=9}„ôôÕ¹‘•™¥¹•œ˜˜…MQQ%=9}	m¹…µ•t˜™MQQ%=9}	m¹…µ”¬Ÿ²^´t¤¹…µ”õ¹…µ”¬Ÿ²^´œì(€½¹ÍĞÑÉ…¥¹9…µ”õ¹…µ”¹•¹‘Í]¥Ñ  Ÿ²^´œ¤ı¹…µ”¹Í±¥” À°´Ä¤é¹…µ”ì(€½¹ÍĞ½±õ‘½Õµ•¹Ğ¹•Ñ±•µ•¹Ñ	å% Í¤µ‰½…ÉµİÉ…Àœ¤ì¥˜¡½±¥½±¹É•µ½Ù” ¤ì(€}Í¥	½…É‘9…µ”õ¹…µ”ì}Í¥	½…É‘QÉ…¥¹Ìõ}ÍÑ…Ñ¥½¹MÑ½ÁÁ¥¹QÉ…¥¹Ì¡ÑÉ…¥¹9…µ”¤ì}Í¥	½…É‘5½‘”ô‘•Àœì(€½¹ÍĞİÉ…Àõ‘½Õµ•¹Ğ¹É•…Ñ•±•µ•¹Ğ ‘¥Øœ¤ì(€İÉ…À¹¥ôÍ¤µ‰½…ÉµİÉ…Àœì(€İÉ…À¹¥¹¹•É!Q50õ€(€€€€ñ‘¥Ø±…ÍÌô‰É…¥°µÑ¥­•Ğµ‰…­‘É½Àˆ½¹±¥¬ô‰±½Í•MÑ…Ñ¥½¹	½…É ¤ˆøğ½‘¥Øø(€€€€ñ‘¥Ø±…ÍÌô‰Í¤µ‰½…ÉµÁ½ÁÕÀˆÉ½±”ô‰‘¥…±½œˆ…É¥„µ±…‰•°ôˆ‘íÑÉ…¥¹9…µ•÷²^´ƒ²^Ó²Â ƒ²V#®
+Ğˆø(€€€€€€ñ‘¥Ø±…ÍÌô‰Í¤µ‰½…ÉµÁ½ÁÕÀµ¡•…ˆø(€€€€€€€€ñÍÁ…¸ûÂ~j$€‘íÑÉ…¥¹9…µ•÷²^´ğ½ÍÁ…¸ø(€€€€€€€€ñ‰ÕÑÑ½¸±…ÍÌô‰Í¤µ‰½…Éµ±½Í”ˆ½¹±¥¬ô‰±½Í•MÑ…Ñ¥½¹	½…É ¤ˆ…É¥„µ±…‰•°ô‹®.¯ªâÀˆûŠrTğ½‰ÕÑÑ½¸ø(€€€€€€ğ½‘¥Øø(€€€€€€ñ‘¥Ø±…ÍÌô‰Í¤µ‰½…ÉµÑ…‰Ìˆø(€€€€€€€€ñ‰ÕÑÑ½¸±…ÍÌô‰Í¤µ‰½…ÉµÑ…ˆˆ¥ô‰Í¤µ‰Ğµ‘•Àˆ½¹±¥¬ô‰Í•ÑMÑ…Ñ¥½¹	½…É‘5½‘” ‘•Àœ¤ˆûŠZØƒ²Ús®Âpğ½‰ÕÑÑ½¸ø(€€€€€€€€ñ‰ÕÑÑ½¸±…ÍÌô‰Í¤µ‰½…ÉµÑ…ˆˆ¥ô‰Í¤µ‰Ğµ…ÉÈˆ½¹±¥¬ô‰Í•ÑMÑ…Ñ¥½¹	½…É‘5½‘” …ÉÈœ¤ˆûŠZğƒ®>²Â¤ğ½‰ÕÑÑ½¸ø(€€€€€€ğ½‘¥Øø(€€€€€€ñ‘¥Ø¥ô‰Í¤µ‰½…Éµ±¥Ù”ˆøğ½‘¥Øø(€€€€ğ½‘¥Øù€ì(€‘½Õµ•¹Ğ¹‰½‘ä¹…ÁÁ•¹‘¡¥±¡İÉ…À¤ì(€}‘É…İMÑ…Ñ¥½¹	½…É ¤ì(€¥˜¡}Í¥	½…É‘Q¥µ•È¥±•…É%¹Ñ•ÉÙ…°¡}Í¥	½…É‘Q¥µ•È¤ì(€}Í¥	½…É‘Q¥µ•ÈõÍ•Ñ%¹Ñ•ÉÙ…°¡}‘É…İMÑ…Ñ¥½¹	½…É°ÄÔÀÀÀ¤ì)ô)™Õ¹Ñ¥½¸}‘É…İMÑ…Ñ¥½¹	½…É ¥ì(€½¹ÍĞ•°õ‘½Õµ•¹Ğ¹•Ñ±•µ•¹Ñ	å% Í¤µ‰½…Éµ±¥Ù”œ¤ì¥˜ …•±ñğ…}Í¥	½…É‘9…µ”¥É•ÑÕÉ¸ì(€•°¹¥¹¹•É!Q50õ}Í¥	½…É‘5½‘”ôôô…ÉÈœ(€€€€ı}Í¥ÉÉ¥Ù…±	½…É‘!Q50¡}Í¥	½…É‘9…µ”±}Í¥	½…É‘QÉ…¥¹Ì°ÄÈ¤(€€€€é}Í¥•Á…ÉÑÕÉ•	½…É‘!Q50¡}Í¥	½…É‘9…µ”±}Í¥	½…É‘QÉ…¥¹Ì°ÄÈ¤ì(€½¹ÍĞ‘Ğõ‘½Õµ•¹Ğ¹•Ñ±•µ•¹Ñ	å% Í¤µ‰Ğµ‘•Àœ¤°…Ğõ‘½Õµ•¹Ğ¹•Ñ±•µ•¹Ñ	å% Í¤µ‰Ğµ…ÉÈœ¤ì(€¥˜¡‘Ğ¥‘Ğ¹±…ÍÍ1¥ÍĞ¹Ñ½±” ½¸œ±}Í¥	½…É‘5½‘”ôôô‘•Àœ¤ì(€¥˜¡…Ğ¥…Ğ¹±…ÍÍ1¥ÍĞ¹Ñ½±” ½¸œ±}Í¥	½…É‘5½‘”ôôô…ÉÈœ¤ì)ô)™Õ¹Ñ¥½¸Í•ÑMÑ…Ñ¥½¹	½…É‘5½‘”¡´¥ì}Í¥	½…É‘5½‘”õ´ì}‘É…İMÑ…Ñ¥½¹	½…É ¤ìô)™Õ¹Ñ¥½¸±½Í•MÑ…Ñ¥½¹	½…É ¥ì(€½¹ÍĞ•°õ‘½Õµ•¹Ğ¹•Ñ±•µ•¹Ñ	å% Í¤µ‰½…ÉµİÉ…Àœ¤ì¥˜¡•°¥•°¹É•µ½Ù” ¤ì(€¥˜¡}Í¥	½…É‘Q¥µ•È¥í±•…É%¹Ñ•ÉÙ…°¡}Í¥	½…É‘Q¥µ•È¤í}Í¥	½…É‘Q¥µ•Èõ¹Õ±°íô(€}Í¥	½…É‘9…µ”õ¹Õ±°ì}Í¥	½…É‘QÉ…¥¹Ìõ¹Õ±°ì)ô(¼¼ƒÂ~jƒ²‚²Ê€ƒ²Ús®Âpƒ²V#®
+Ğƒ²‚ªÒG¶2@ƒ¶2w²^ƒŠPƒ²^´ƒ²²ã²v`ƒªâÃ²†Ğƒ².“².sªÂƒ®>²Â¤ƒ²æÓ®Ns®*Pƒ²rƒ²¶VcªÎ€ƒ®Î®>ƒ®Ê¶*ó²ró®†pƒ²^÷®.#®.¸)±•Ğ}µ•ÑÉ½¥ÍÁ±…åQ¥µ•Èõ¹Õ±°ì)™Õ¹Ñ¥½¸½Á•¹5•ÑÉ½MÑ…Ñ¥½¹¥ÍÁ±…ä¡ÍÑ¸¥ì(€±½Í•5•ÑÉ½MÑ…Ñ¥½¹¥ÍÁ±…ä ¤ì(€}µ•ÑÉ½	½…É‘5½‘”ôÁ½Ìœì(€}µ•ÑÉ½¥ÍÁ±…å1¥¹•%¹‘•àôÀì(€}µ•ÑÉ½¥ÍÁ±…å¥É%¹‘•àôÀì(€}µ•ÑÉ½¥ÍÁ±…å1¥¹•Ìõmtì(€}µ•ÑÉ½¥ÍÁ±…å1¥¹•É½ÕÁÌõmtì(€½¹ÍĞ¡Ñµ°õ}µ•ÑÉ½MÑ…Ñ¥½¹	½…É‘!Q50¡ÍÑ¸±ÑÉÕ”¤ì(€¥˜ …¡Ñµ°¥É•ÑÕÉ¸ì(€½¹ÍĞÍ…™”õ}½ÁÍÍŒ¡ÍÑ¸¤ì(€½¹ÍĞİÉ…Àõ‘½Õµ•¹Ğ¹É•…Ñ•±•µ•¹Ğ ‘¥Øœ¤ì(€İÉ…À¹¥ôµ•ÑÉ¼µ‘¥ÍÁ±…äµİÉ…Àœì(€İÉ…À¹¥¹¹•É!Q50õ€(€€€€ñ‘¥Ø±…ÍÌô‰É…¥°µÑ¥­•Ğµ‰…­‘É½Àˆ½¹±¥¬ô‰±½Í•5•ÑÉ½MÑ…Ñ¥½¹¥ÍÁ±…ä ¤ˆøğ½‘¥Øø(€€€€ñ‘¥Ø±…ÍÌô‰µ•ÑÉ¼µ‘¥ÍÁ±…äµÁ½ÁÕÀˆÉ½±”ô‰‘¥…±½œˆ…É¥„µµ½‘…°ô‰ÑÉÕ”ˆ…É¥„µ±…‰•°ôˆ‘íÍ…™•÷²^´ƒ²Ús®Âpƒ²V#®
+Ğƒ²‚ªÒG¶2@ˆø(€€€€€€ñ‘¥Ø±…ÍÌô‰µ•ÑÉ¼µ‘¥ÍÁ±…äµ¡•…ˆø(€€€€€€€€ñÍÁ…¸ûÂ~j€‘íÍ…™•÷²^´ƒ²Ús®Âpƒ²V#®
+Ğƒ²‚ªÒG¶2@ğ½ÍÁ…¸ø(€€€€€€€€ñ‰ÕÑÑ½¸±…ÍÌô‰Í¤µ‰½…Éµ±½Í”ˆ½¹±¥¬ô‰±½Í•5•ÑÉ½MÑ…Ñ¥½¹¥ÍÁ±…ä ¤ˆ…É¥„µ±…‰•°ô‹®.¯ªâÀˆûŠrTğ½‰ÕÑÑ½¸ø(€€€€€€ğ½‘¥Øø(€€€€€€ñ‘¥Ø±…ÍÌô‰µ•ÑÉ¼µ‘¥ÍÁ±…äµÍÉ½±°ˆø‘í¡Ñµ±ôğ½‘¥Øø(€€€€ğ½‘¥Øù€ì(€‘½Õµ•¹Ğ¹‰½‘ä¹…ÁÁ•¹‘¡¥±¡İÉ…À¤ì(€}µ•ÑÉ½¥ÍÁ±…åQ¥µ•ÈõÍ•Ñ%¹Ñ•ÉÙ…°¡}É•™É•Í¡5•ÑÉ½¥ÍÁ±…å	½…É°ÄÔÀÀÀ¤ì)ô)™Õ¹Ñ¥½¸±½Í•5•ÑÉ½MÑ…Ñ¥½¹¥ÍÁ±…ä ¥ì(€½¹ÍĞ•°õ‘½Õµ•¹Ğ¹•Ñ±•µ•¹Ñ	å% µ•ÑÉ¼µ‘¥ÍÁ±…äµİÉ…Àœ¤ì¥˜¡•°¥•°¹É•µ½Ù” ¤ì(€¥˜¡}µ•ÑÉ½¥ÍÁ±…åQ¥µ•È¥í±•…É%¹Ñ•ÉÙ…°¡}µ•ÑÉ½¥ÍÁ±…åQ¥µ•È¤í}µ•ÑÉ½¥ÍÁ±…åQ¥µ•Èõ¹Õ±°íô(€¥˜¡‘½Õµ•¹Ğ¹‰½‘ä¹±…ÍÍ1¥ÍĞ¹½¹Ñ…¥¹Ì µ•ÑÉ¼µ‘¥ÍÁ±…äµÁ…¥É•œ¤¥±½Í•5•ÑÉ½QÉ…¥¸ ¤ì(€‘½Õµ•¹Ğ¹‰½‘ä¹±…ÍÍ1¥ÍĞ¹É•µ½Ù” µ•ÑÉ¼µ‘¥ÍÁ±…äµÁ…¥É•œ¤ì)ô(¼¼ƒÂ~jƒ²‚²Ê€ƒ²^´ƒ²‚²ÊĞƒ².sªÂ¶FpƒŠPƒ²æÓ²æÓ²b“²¶Vc²Êƒ².t£®Â§®¦Ó®Îƒ²^Ğ°ƒªÂg²v ƒ².sªÂ®2®*PƒªÂg²v ƒ¶Z'²^@ƒ²‚W®‚°¤)±•Ğ}µÑÑáÁÉ•ÍÍ=¹±äõ™…±Í”°}µÑÑMÑ…Ñ¥½¸õ¹Õ±°°}µÑÑ1¥¹”õ¹Õ±°°}µÑÑI½ÕÑ•MÙŒõ¹Õ±°°}µÑÑI½ÕÑ•-•äõ¹Õ±°ì)™Õ¹Ñ¥½¸}µÑÑ¥±Ñ•É¹ÑÉ¥•Ì¡•¹ÑÉ¥•Ì±•áÁÉ•ÍÍ=¹±ä¥ì(€É•ÑÕÉ¸•áÁÉ•ÍÍ=¹±äı•¹ÑÉ¥•Ì¹™¥±Ñ•È¡•¹ÑÉäôù9Õµ‰•È¡•¹ÑÉä¹±Ì¤øÀ¤é•¹ÑÉ¥•Ìì)ô)™Õ¹Ñ¥½¸}µÑÑ!…ÍáÁÉ•ÍÌ¡•¹ÑÉ¥•Ì¥ì(€É•ÑÕÉ¸•¹ÑÉ¥•Ì¹Í½µ”¡•¹ÑÉäôù9Õµ‰•È¡•¹ÑÉä¹±Ì¤øÀ¤ì)ô)™Õ¹Ñ¥½¸Í•Ñ5•ÑÉ½Q¥µ•Ñ…‰±•áÁÉ•ÍÍ=¹±ä¡¡•­•¥ì(€}µÑÑáÁÉ•ÍÍ=¹±äô„…¡•­•ì(€¥˜¡}µÑÑMÑ…Ñ¥½¸˜™}µÑÑ1¥¹”¥½Á•¹5•ÑÉ½Q¥µ•Ñ…‰±”¡}µÑÑMÑ…Ñ¥½¸±}µÑÑ1¥¹”±ÑÉÕ”¤ì)ô)™Õ¹Ñ¥½¸}½Á•¹5•ÑÉ½Q¥µ•Ñ…‰±•I½Ü¡É½Ü±±¥¹”±ÍÙŒ±±¬±¬À±¬Ä¥ì(€½¹ÍĞİÉ…ÀõÉ½Ü˜™É½Ü¹±½Í•ÍĞıÉ½Ü¹±½Í•ÍĞ œµÑĞµİÉ…Àœ¤é¹Õ±°ì(€¥˜¡İÉ…À¥İÉ…À¹ÅÕ•ÉåM•±•Ñ½É±° œ¹µÑĞµÉ½Ü´µÍ•±•Ñ•œ¤¹™½É… ¡•°ôù•°¹±…ÍÍ1¥ÍĞ¹É•µ½Ù” µÑĞµÉ½Ü´µÍ•±•Ñ•œ¤¤ì(€¥˜¡É½Ü˜™É½Ü¹±…ÍÍ1¥ÍĞ¥É½Ü¹±…ÍÍ1¥ÍĞ¹…‘ µÑĞµÉ½Ü´µÍ•±•Ñ•œ¤ì(€½Á•¹5•ÑÉ½QÉ…¥¸¡±¥¹”±ÍÙŒ±±¬±¬À±¬Ä¤ì)ô)™Õ¹Ñ¥½¸½Á•¹5•ÑÉ½I½ÕÑ•Q¥µ•Ñ…‰±”¡ÍÑ¸±±¥¹”±ÍÙŒ±±¬±¬À±¬Ä¥ì(€}µÑÑI½ÕÑ•MÙŒõ9Õµ‰•È¡ÍÙŒ¤ì(€}µÑÑI½ÕÑ•-•äõí±¬é9Õµ‰•È¡±¬¤±¬Àé9Õµ‰•È¡¬À¤±¬Äé9Õµ‰•È¡¬Ä¥ôì(€½Á•¹5•ÑÉ½Q¥µ•Ñ…‰±”¡ÍÑ¸±±¥¹”±™…±Í”¤ì)ô)™Õ¹Ñ¥½¸½Á•¹5•ÑÉ½Q¥µ•Ñ…‰±”¡ÍÑ¸°±¥¹”°ÁÉ•Í•ÉÙ•¥±Ñ•È¥ì(€½¹ÍĞ½±õ‘½Õµ•¹Ğ¹•Ñ±•µ•¹Ñ	å% µÑĞµİÉ…Àœ¤ì¥˜¡½±¥½±¹É•µ½Ù” ¤ì(€½¹ÍĞ‘•ÁÌõ}µ•ÑÉ½MÑ…Ñ¥½¹•ÁÌ¡ÍÑ¸¤¹™¥±Ñ•È¡¼ôù¼¹±¥¹”ôôõ±¥¹”¤ì(€¥˜ …‘•ÁÌ¹±•¹Ñ ¤É•ÑÕÉ¸ì(€¥˜ …ÁÉ•Í•ÉÙ•¥±Ñ•È¥}µÑÑáÁÉ•ÍÍ=¹±äõ™…±Í”ì(€½¹ÍĞ¡…ÍáÁÉ•ÍÌõ}µÑÑ!…ÍáÁÉ•ÍÌ¡‘•ÁÌ¤ì(€¥˜ …¡…ÍáÁÉ•ÍÌ¥}µÑÑáÁÉ•ÍÍ=¹±äõ™…±Í”ì(€}µÑÑMÑ…Ñ¥½¸õÍÑ¸í}µÑÑ1¥¹”õ±¥¹”ì(€½¹ÍĞ™±¬õ´ôù5…Ñ ¹™±½½È¡´¼ØÀ¤¬œèœ­MÑÉ¥¹œ¡´”ØÀ¤¹Á…‘MÑ…ÉĞ È°œÀœ¤ì(€½¹ÍĞ‘¥ÉÌõíôì‘•ÁÌ¹™½É… ¡¼ôùì€¡‘¥ÉÍm¼¹¹•áÑtõ‘¥ÉÍm¼¹¹•áÑuññmt¤¹ÁÕÍ ¡¼¤ìô¤ì(€€¼¼ƒ®ÚªâÃ²^·²v ƒ²Š3¶FpƒªâÃ²’ €ËªÂpƒ®²ó®š°ƒ®Â§®¦Ó²ró®†pƒ®ÎG¶V¤ƒŠPƒªÂg²v ƒ²ªôƒªÎ¶×²v ƒ¶Vpƒ²^Ó²^@ƒ¶×¶V¤(€½¹ÍĞ‘¥É½Õ¹ÑÌõíôì=‰©•Ğ¹­•åÌ¡‘¥ÉÌ¤¹™½É… ¡¬ôù‘¥É½Õ¹ÑÍm­tõ‘¥ÉÍm­t¹±•¹Ñ ¤ì(€½¹ÍĞÉ½ÕÁÌõ}µ•ÑÉ½¥ÉÉ½ÕÁÌ¡±¥¹”°ÍÑ¸°‘¥É½Õ¹ÑÌ¤ì(€½¹ÍĞ½±½Èõ}µ•ÑÉ½1¥¹•½±½È¡±¥¹”¤ì(€½¹ÍĞ¹½İ4õ¹•Ü…Ñ” ¤¹•Ñ!½ÕÉÌ ¤¨ØÀ­¹•Ü…Ñ” ¤¹•Ñ5¥¹ÕÑ•Ì ¤ì(€½¹ÍĞ¹½İMÉØô  ¡¹½İ4´ÈĞÀ¤”ÄĞĞÀ¤¬ÄĞĞÀ¤”ÄĞĞÀì€€€¼¼ƒ²jÓ¶Z'²vğƒªâÃ²’ ƒ®Ú ÀĞèÀÀôÀ¤(€±•Ğ¹•áÑ¹¡½É4õ%¹™¥¹¥Ñäì(€€¼¼ƒ®Â§®¦Ğ£ªŞã®ä§®Îƒ².sªÂ²"pƒ¶:àƒ®ª§®†t€£²²ƒ®Îƒ®Ú®
+Ğƒ²’G®ÎÔƒ²‚sªÆÀƒ¶nƒ®ÎG¶V¤¤€¬ƒ®Â§®¦Ó®Î€Ÿ®.“²v0ƒ²^Ó²Â œƒ¶Fs².p(€½¹ÍĞ½±…Ñ„õÉ½ÕÁÌ¹µ…À¡ÉÀôùì(€€€½¹ÍĞí•¹ÑÉ¥•Íôõ}µ•ÑÉ½É½ÕÁ¹ÑÉ¥•Ì¡‘¥ÉÌ°ÉÀ¤ì(€€€½¹ÍĞÉ½İÌõ}µÑÑ¥±Ñ•É¹ÑÉ¥•Ì¡•¹ÑÉ¥•Ì±}µÑÑáÁÉ•ÍÍ=¹±ä¤(€€€€€€¹µ…À¡¼ôø¡í´é5…Ñ ¹™±½½È¡¼¹Í•Œ¼ØÀ¤±½É¥œé¼¹½É¥œ±‘•ÍĞé¼¹‘•ÍĞ±±Ìé¼¹±Ì±ÍÙŒé¼¹ÍÙŒ±±¥¹”é¼¹±¥¹”±¬Àé¼¹¬À±¬Äé¼¹¬Åô¤¤(€€€€€€¹Í½ÉĞ ¡„±ˆ¤ôù„¹´µˆ¹´¤(€€€€€€¹µ…À¡¼ôø¡ì¸¸¹¼±±¬è¡¼¹´¬ÈĞÀ¤”ÄĞĞÁô¤¤ì(€€€½¹ÍĞ¹¤õÉ½İÌ¹™¥¹‘%¹‘•à¡ÈôùÈ¹´øõ¹½İMÉØ¤ì€€€¼¼ƒ²vĞƒ®Â§®¦Ó²v`ƒ®.“²v0ƒ²^Ó²Â (€€€¥˜¡¹¤øôÀ¥ìÉ½İÍm¹¥t¹¥Í9•áĞõÑÉÕ”ì¥˜¡É½İÍm¹¥t¹´ñ¹•áÑ¹¡½É4¥¹•áÑ¹¡½É4õÉ½İÍm¹¥t¹´ìô(€€€É•ÑÕÉ¸É½İÌì(€ô¤ì(€½¹ÍĞ…¹¡½ÈõíÍ•Ğé™…±Í•ôì(€€¼¼ƒ®NÇ²z—¶Vc®*Pƒ²jÓ¶Z'²vğ€Ÿ².pœƒ®ª§®†t(€½¹ÍĞ¡½ÕÉM•Ğõ¹•ÜM•Ğ ¤ì½±…Ñ„¹™½É… ¡É½İÌôùÉ½İÌ¹™½É… ¡Èôù¡½ÕÉM•Ğ¹…‘¡5…Ñ ¹™±½½È¡È¹´¼ØÀ¤¤¤¤ì(€½¹ÍĞ¡½ÕÉÌõl¸¸¹¡½ÕÉM•Ñt¹Í½ÉĞ ¡„±ˆ¤ôù„µˆ¤ì(€½¹ÍĞ•Í0õàôùMÑÉ¥¹œ¡à¤¹É•Á±…” ½qp½œ°qqqpœ¤¹É•Á±…” ¼œ½œ°‰qpœˆ¤ì(€½¹ÍĞÉ½İ!Q50õÈôùì(€€€½¹ÍĞ½ô¡È¹½É¥œ˜™È¹½É¥œ„ôõÈ¹‘•ÍĞ¤ı€‘íÈ¹½É¥ôƒŠè€‘íÈ¹‘•ÍÑõ€é€‘íÈ¹‘•ÍÑõ€ì(€€€½¹ÍĞÕÈõÈ¹¥Í9•áĞüœµÑĞµÉ½Ü´µ¹•áĞœèœœì(€€€±•Ğ¥‘ÑÑÈôœœì¥˜¡È¹¥Í9•áĞ˜˜……¹¡½È¹Í•Ğ˜™È¹´ôôõ¹•áÑ¹¡½É4¥ì¥‘ÑÑÈôœ¥ô‰µÑĞµ¹•áĞˆœì…¹¡½È¹Í•ĞõÑÉÕ”ìô(€€€½¹ÍĞ±¬ô¡È¹ÍÙŒ„õ¹Õ±°¤ı€½¹±¥¬ô‰}½Á•¹5•ÑÉ½Q¥µ•Ñ…‰±•I½Ü¡Ñ¡¥Ì°œ‘í•Í0¡È¹±¥¹”¥ôœ°‘íÈ¹ÍÙô°‘íÈ¹±­ô°‘íÈ¹¬Áô°‘íÈ¹¬Åô¤‰€èœœì(€€€É•ÑÕÉ¸€ñ‘¥Ø±…ÍÌô‰µÑĞµÉ½Ü‘íÕÉô‘íÈ¹ÍÙŒ„õ¹Õ±°üœµÑĞµÉ½Ü´µÑ…Àœèœôˆ‘í¥‘ÑÑÉô‘íÈ¹ÍÙŒ„õ¹Õ±°ı€‘…Ñ„µÍÙŒôˆ‘íÈ¹ÍÙôˆ‘…Ñ„µ±¬ôˆ‘íÈ¹±­ôˆ‘…Ñ„µ¬Àôˆ‘íÈ¹¬Áôˆ‘…Ñ„µ¬Äôˆ‘íÈ¹¬Åô‰€èœô‘í±­ôøñÍÁ…¸±…ÍÌô‰µÑĞµĞˆø‘í™±¬¡È¹±¬¥ôğ½ÍÁ…¸øñÍÁ…¸±…ÍÌô‰µÑĞµ½ˆø‘í½‘ôğ½ÍÁ…¸ø‘í}µ•ÑÉ½±ÍQ…œ¡È¹±Ì¥ôğ½‘¥Øù€ì(€ôì(€½¹ÍĞÉ¥õ¡½ÕÉÌ¹µ…À¡ ôùì(€€€½¹ÍĞ•±±Ìõ½±…Ñ„¹µ…À¡É½İÌôùì(€€€€€½¹ÍĞ¡ÈõÉ½İÌ¹™¥±Ñ•È¡Èôù5…Ñ ¹™±½½È¡È¹´¼ØÀ¤ôôõ ¤ì(€€€€€É•ÑÕÉ¸€ñ‘¥Ø±…ÍÌô‰µÑĞµ¡•±°ˆø‘í¡È¹µ…À¡É½İ!Q50¤¹©½¥¸ œœ¥ñğœñ‘¥Ø±…ÍÌô‰µÑĞµ•µÁÑäˆû
+Üğ½‘¥Øøôğ½‘¥Øù€ì(€€€ô¤¹©½¥¸ œœ¤ì(€€€É•ÑÕÉ¸€ñ‘¥Ø±…ÍÌô‰µÑĞµ¡É½Üˆø‘í•±±Íôğ½‘¥Øù€ì(€ô¤¹©½¥¸ œœ¤ì(€½¹ÍĞ¡•…‘ÌõÉ½ÕÁÌ¹µ…À¡ÉÀôù€ñ‘¥Ø±…ÍÌô‰µÑĞµ‘¥É¡•…ˆøñÍÁ…¸±…ÍÌô‰µÑĞµ…ÉÈˆûŠZàğ½ÍÁ…¸ø‘íÉÀ¹©½¥¸ œƒŠˆ€œ¥ôƒ®Â§®¦Ğğ½‘¥Øù€¤¹©½¥¸ œœ¤ì(€½¹ÍĞİÉ…Àõ‘½Õµ•¹Ğ¹É•…Ñ•±•µ•¹Ğ ‘¥Øœ¤ì(€İÉ…À¹¥ôµÑĞµİÉ…Àœì(€İÉ…À¹¥¹¹•É!Q50õ€(€€€€ñ‘¥Ø±…ÍÌô‰É…¥°µÑ¥­•Ğµ‰…­‘É½Àˆ½¹±¥¬ô‰±½Í•5•ÑÉ½Q¥µ•Ñ…‰±” ¤ˆøğ½‘¥Øø(€€€€ñ‘¥Ø±…ÍÌô‰µÑĞµÁ½ÁÕÀˆÉ½±”ô‰‘¥…±½œˆ…É¥„µ±…‰•°ôˆ‘í±¥¹•ô€‘íÍÑ¹ôƒ².sªÂ¶FpˆÍÑå±”ôˆ´µµŒè‘í½±½Éôˆø(€€€€€€ñ‘¥Ø±…ÍÌô‰µÑĞµ¡•…ˆøñÍÁ…¸øñˆÍÑå±”ô‰½±½Èè‘í½±½ÉôˆûÂ~j€‘í±¥¹•ôğ½ˆøƒ
+Ü€‘íÍÑ¹ôğ½ÍÁ…¸ø(€€€€€€€€ñ‰ÕÑÑ½¸±…ÍÌô‰Í¤µ‰½…Éµ±½Í”ˆ½¹±¥¬ô‰±½Í•5•ÑÉ½Q¥µ•Ñ…‰±” ¤ˆ…É¥„µ±…‰•°ô‹®.¯ªâÀˆûŠrTğ½‰ÕÑÑ½¸øğ½‘¥Øø(€€€€€€‘í¡…ÍáÁÉ•ÍÌı€ñ‘¥Ø±…ÍÌô‰µÑĞµ™¥±Ñ•É‰…Èˆø(€€€€€€€€ñ±…‰•°±…ÍÌô‰µÑĞµ™¥±Ñ•É¡•¬ˆøñ¥¹ÁÕĞÑåÁ”ô‰¡•­‰½àˆ‘í}µÑÑáÁÉ•ÍÍ=¹±äüœ¡•­•œèœô½¹¡…¹”ô‰Í•Ñ5•ÑÉ½Q¥µ•Ñ…‰±•áÁÉ•ÍÍ=¹±ä¡Ñ¡¥Ì¹¡•­•¤ˆøñÍÁ…¸ûªâ'¶Z'®0ƒ®ÎÓªâÀğ½ÍÁ…¸øğ½±…‰•°ø(€€€€€€ğ½‘¥Øù€èœô(€€€€€€ñ‘¥Ø±…ÍÌô‰µÑĞµÍÉ½±°ˆÍÑå±”ôˆ´µ½±Ìè‘íÉ½ÕÁÌ¹±•¹Ñ¡ôˆø(€€€€€€€€ñ‘¥Ø±…ÍÌô‰µÑĞµ¡•…‘É½Üˆø‘í¡•…‘Íôğ½‘¥Øø(€€€€€€€€ñ‘¥Ø±…ÍÌô‰µÑĞµÉ¥ˆø‘íÉ¥‘ôğ½‘¥Øø(€€€€€€ğ½‘¥Øø(€€€€€€ñ‘¥Ø±…ÍÌô‰µÑĞµ™½½Ğˆû²vãªÊ3²zƒ².sªÂ¶FpƒªâÃ²’ ƒ
+Üƒ².“²‚pƒ²‚W²Â£².sªÂƒ
+Üƒ²Ús®Âs² ƒŠèƒ¶Z'²ƒ² ğ½‘¥Øø(€€€€ğ½‘¥Øù€ì(€‘½Õµ•¹Ğ¹‰½‘ä¹…ÁÁ•¹‘¡¥±¡İÉ…À¤ì(€€¼¼ƒ®.“²v0ƒ²^Ó²Â ƒ²r²æc®†pƒ²zC®>dƒ²*“¶³®†£²^²ró®¦Ğƒ® ƒ²r¤(€½¹ÍĞÉ½ÕÑ•I½Üõ}µÑÑI½ÕÑ•MÙŒôõ¹Õ±°ı¹Õ±°éİÉ…À¹ÅÕ•ÉåM•±•Ñ½È¡€¹µÑĞµÉ½İm‘…Ñ„µÍÙŒôˆ‘í}µÑÑI½ÕÑ•MÙô‰um‘…Ñ„µ±¬ôˆ‘í}µÑÑI½ÕÑ•-•äü¹±­ô‰um‘…Ñ„µ¬Àôˆ‘í}µÑÑI½ÕÑ•-•äü¹¬Áô‰um‘…Ñ„µ¬Äôˆ‘í}µÑÑI½ÕÑ•-•äü¹¬Åô‰u€¤ì(€¥˜¡É½ÕÑ•I½Ü¥íİÉ…À¹ÅÕ•ÉåM•±•Ñ½É±° œ¹µÑĞµÉ½Ü´µ¹•áĞœ¤¹™½É… ¡É½ÜôùÉ½Ü¹±…ÍÍ1¥ÍĞ¹É•µ½Ù” µÑĞµÉ½Ü´µ¹•áĞœ¤¤íÉ½ÕÑ•I½Ü¹±…ÍÍ1¥ÍĞ¹…‘ µÑĞµÉ½Ü´µÉ½ÕÑ”œ¤íÉ½ÕÑ•I½Ü¹ÍÉ½±±%¹Ñ½Y¥•Ü¡í‰±½¬è•¹Ñ•Èô¤íô(€•±Í”í½¹ÍĞ¹àõİÉ…À¹ÅÕ•ÉåM•±•Ñ½È œµÑĞµ¹•áĞœ¤±ÍŒõİÉ…À¹ÅÕ•ÉåM•±•Ñ½È œ¹µÑĞµÍÉ½±°œ¤í¥˜¡¹à¥¹à¹ÍÉ½±±%¹Ñ½Y¥•Ü¡í‰±½¬è•¹Ñ•Èô¤í•±Í”¥˜¡ÍŒ¥ÍŒ¹ÍÉ½±±Q½ÀôÀíô)ô)™Õ¹Ñ¥½¸±½Í•5•ÑÉ½Q¥µ•Ñ…‰±” ¥ì½¹ÍĞ•°õ‘½Õµ•¹Ğ¹•Ñ±•µ•¹Ñ	å% µÑĞµİÉ…Àœ¤ì¥˜¡•°¥•°¹É•µ½Ù” ¤ì½¹ÍĞĞõ‘½Õµ•¹Ğ¹•Ñ±•µ•¹Ñ	å% µÑ¸µİÉ…Àœ¤ì¥˜¡Ğ¥Ğ¹É•µ½Ù” ¤ì}µÑÑMÑ…Ñ¥½¸õ¹Õ±°í}µÑÑ1¥¹”õ¹Õ±°í}µÑÑáÁÉ•ÍÍ=¹±äõ™…±Í”í}µÑÑI½ÕÑ•MÙŒõ¹Õ±°í}µÑÑI½ÕÑ•-•äõ¹Õ±°ì‘½Õµ•¹Ğ¹‰½‘ä¹±…ÍÍ1¥ÍĞ¹É•µ½Ù” µ•ÑÉ¼µÁ…¥É•œ¤ìô(¼¼ƒ²fW®ÎÔƒ¶:ã²Ç²vƒ¶j3²Â£²‚@¡ùù
+ß²^Ã²7²’G®ÎÔ¤ƒªâÃ²’ ƒ®Â§¶Z—®Î±•œƒªÖ³ªÂ²ró®†pƒ®Ú¶V€)™Õ¹Ñ¥½¸}µ•ÑÉ½1•I…¹•Ì¡¥‘áM•Ä¥ì(€½¹ÍĞÉ…¹•Ìõmtì±•ĞÍÑ…ÉĞôÀì½¹ÍĞ¸õ¥‘áM•Ä¹±•¹Ñ ì(€™½È¡±•Ğ¨ôÄí¨ñ¸´Äí¨¬¬¥ì(€€€¥˜¡¥‘áM•Åm¨´Åtôôõ¥‘áM•Åm¨¬Åt¥ìÉ…¹•Ì¹ÁÕÍ ¡mÍÑ…ÉĞ±©t¤ìÍÑ…ÉĞõ¨ìô€€€€€€€€¼¼ùùƒ¶j3²Â£²‚@€ôƒ².ƒ²Š²‚@(€€€•±Í”¥˜¡¥‘áM•Åm©tôôõ¥‘áM•Åm¨¬Åt¥ìÉ…¹•Ì¹ÁÕÍ ¡mÍÑ…ÉĞ±©t¤ìÍÑ…ÉĞõ¨¬Äìô€€€€¼¼ƒ²^Ã²7²’G®ÎÔ£¶j3²Â ƒ²‚W²Â ¤(€ô(€É…¹•Ì¹ÁÕÍ ¡mÍÑ…ÉĞ±¸´Åt¤ì(€É•ÑÕÉ¸É…¹•Ì¹™¥±Ñ•È ¡mÌ±•t¤ôù”ùÌ¤ì)ô)™Õ¹Ñ¥½¸}µ•ÑÉ½1•I…¹•½É±¥¬¡¥‘áM•Ä±‘P±¡±±¬±±•MÑ…ÉĞ±±•¹¥ì(€½¹ÍĞÉ…¹•Ìõ}µ•ÑÉ½1•I…¹•Ì¡¥‘áM•Ä¤ì(€¥˜¡9Õµ‰•È¹¥Í%¹Ñ••È¡±•MÑ…ÉĞ¤˜™9Õµ‰•È¹¥Í%¹Ñ••È¡±•¹¤¥ì(€€€€¼¼ƒ²‚²ÊĞƒ².sªÂ¶Fpƒ¶Z'²v ƒ².“²‚pƒ²Ús®Âs²^·ŠK²Š²Â§²^´±•Ÿ®–ğƒ²vÓ®¾àƒªÎ²
+Ã¶VĞƒ²‚®.³¶Vs®.¸(€€€€¼¼ƒ¶j3²Â£
+ß²²€ƒªÖ³²†Ã®–ğƒ®.“².pƒ²ÚS²‚W¶Vc®¦Ğƒ²²‚ƒ®Âc®2 ƒ®Â§¶Z”ƒ¶:ã²Ç²ró®†pƒ®Bc®>3²VªÂ ƒ²"`ƒ²z#²ró®¾®†p(€€€€¼¼ƒ²rƒ¶j£¶Vpƒ®ª².pƒ®ÊS²r®*Pƒ®ª£®N€ƒ®ã²ƒ²^C²pƒ²ÚS²‚W®ÎÓ®.ƒ²jÃ²ƒ¶Vs®.¸(€€€¥˜¡±•MÑ…ÉĞøôÀ˜™±•¹ñ¥‘áM•Ä¹±•¹Ñ ˜™±•¹ù±•MÑ…ÉĞ¥É•ÑÕÉ¸m±•MÑ…ÉĞ±±•¹‘tì(€ô(€½¹ÍĞ¹½É´õ´ôø  ¡´”ÄĞĞÀ¤¬ÄĞĞÀ¤”ÄĞĞÀ¤ì(€±•Ğ¤ôÀì(€™½È¡±•Ğ¤ôÀí¤ñ‘P¹±•¹Ñ í¤¬¬¥í¥˜¡¹½É´¡‘Qm¥t¤ôôõ¡±±¬¥í¤õ¤í‰É•…¬íõô(€€¼¼ƒ¶j3²Â£²^·²v ƒ²Vxƒ²jÓ¶Z'²v`ƒ²Š²Â§²‚C²vÓ²z@ƒ®.“²v0ƒ²jÓ¶Z'²v`ƒ².s®Âs²‚C²vÓ®.¸(€€¼¼ƒ²‚²ÊĞƒ².sªÂ¶Fs®*Pƒ²Ús®Âpƒ¶Z'²vƒ²^³®*Pƒ¶fS®¦Ó²vÓ®¾®†pƒªÊ÷ªÎ²^C²s®*Pƒ®.“²v0±•Ÿ®–ğƒ²jÃ²ƒ¶Vs®.¸(€É•ÑÕÉ¸É…¹•Ì¹™¥¹ ¡mÍt¤ôùÌôôõ¤¥ññÉ…¹•Ì¹™¥¹ ¡mÌ±•t¤ôù¤øõÌ˜™¤ğõ”¥ññlÀ±¥‘áM•Ä¹±•¹Ñ ´Åtì)ô(¼¼ƒÂ~jƒªÂs®Îƒ¶:ã²Äƒ²^·®Îƒ¶²z®vó²vàƒŠPƒªâÃ²Â ƒ¶G²*äƒ²^³²‚WªÎğƒ®>g²vó¶Vpƒ®RS²zC²và°ƒ²fW®Î×²v ƒ².ƒ²Š²‚@ƒªâÃ²’ ƒ®Â§¶Z”±•Ÿ®0ƒ¶Fs².p)™Õ¹Ñ¥½¸½Á•¹5•ÑÉ½QÉ…¥¸¡±¥¹”°ÍÙ%‘à°¡±±¬°±•MÑ…ÉĞ°±•¹¥ì(€½¹ÍĞ½±õ‘½Õµ•¹Ğ¹•Ñ±•µ•¹Ñ	å% µÑ¸µİÉ…Àœ¤ì¥˜¡½±¥½±¹É•µ½Ù” ¤ì(€‘½Õµ•¹Ğ¹‰½‘ä¹±…ÍÍ1¥ÍĞ¹É•µ½Ù” µ•ÑÉ¼µÁ…¥É•œ°µ•ÑÉ¼µ‘¥ÍÁ±…äµÁ…¥É•œ¤ì(€½¹ÍĞ•¹Ğô¡ÑåÁ•½˜5QI=}M!„ôôÕ¹‘•™¥¹•œ¤˜™5QI=}M!m±¥¹•tì¥˜ …•¹Ğ¥É•ÑÕÉ¸ì(€½¹ÍĞ˜õ•¹Ğ¹ÑmÍÙ%‘átì¥˜ …˜¥É•ÑÕÉ¸ì(€½¹ÍĞ¹…µ•Ìõ•¹Ğ¹Ì°±Ìõ•¹Ğ¹Œı•¹Ğ¹mÍÙ%‘átèÀ°½±½Èõ}µ•ÑÉ½1¥¹•½±½È¡±¥¹”¤ì(€½¹ÍĞ¸õ˜¹±•¹Ñ ¼Ì°¹½É´õ´ôø  ¡´”ÄĞĞÀ¤¬ÄĞĞÀ¤”ÄĞĞÀ¤ì(€½¹ÍĞ™µĞõ´ôù€‘í5…Ñ ¹™±½½È¡¹½É´¡´¤¼ØÀ¥ôè‘íMÑÉ¥¹œ¡¹½É´¡´¤”ØÀ¤¹Á…‘MÑ…ÉĞ È°œÀœ¥õ€ì(€½¹ÍĞ¥‘áM•Äõmt°…Põmt°‘Põmtì™½È¡±•Ğ¤ôÀí¤ñ¸í¤¬¬¥ì¥‘áM•Ä¹ÁÕÍ ¡™lÌ©¤¬Ét¤ì…P¹ÁÕÍ ¡™lÌ©¥t¤ì‘P¹ÁÕÍ ¡™lÌ©¤¬Åt¤ìô(€€¼¼ƒ¶Ó®š´ƒ²²‚@ƒŠHƒªŞàƒ²²‚C²vĞƒ²7¶Vpƒ®Â§¶Z”±•œ¸ƒ¶j3²Â£²^´ƒ²Ús®Âs²v ƒ²²‚ƒ²Š²Â§¶:ã²vĞƒ²V®.0ƒ®.“²v0ƒ²jÓ¶Z'²vƒ²^÷®.#®.¸(€½¹ÍĞm±Ì±±•tõ}µ•ÑÉ½1•I…¹•½É±¥¬¡¥‘áM•Ä±‘P±¡±±¬±±•MÑ…ÉĞ±±•¹¤ì(€€¼¼ƒ¶×ªÎó²^´÷²Ús®Âp¡¤ƒ¶Fs².p°±•œƒ²Š²Â§²^´÷®>²Â¤¡„¤ƒ¶Fs².p£®Âc®2®Â§¶Z”ƒ¶j3²Â ƒ²Ús®Âs².sªÂƒ²b“ªâÀƒ®Â§² ¤(€½¹ÍĞÍ•Äõmtì™½È¡±•Ğ¤õ±Ìí¤ğõ±”í¤¬¬¥ì½¹ÍĞÍĞõíÌé¹…µ•Ím¥‘áM•Åm¥ut°„é…Qm¥t°è¡¤ôôõ±”ı…Qm¥té‘Qm¥t¤°´è¡¤ôôõ±”ı…Qm¥té‘Qm¥t¥ôì¥˜ …Í•Ä¹±•¹Ñ¡ññÍ•ÅmÍ•Ä¹±•¹Ñ ´Åt¹Ì„ôõÍĞ¹Ì¤Í•Ä¹ÁÕÍ ¡ÍĞ¤ì•±Í”Í•ÅmÍ•Ä¹±•¹Ñ ´ÅtõÍĞìô(€½¹ÍĞ½É¥œõÍ•ÅlÁt¹Ì°‘•ÍĞõÍ•ÅmÍ•Ä¹±•¹Ñ ´Åt¹Ìì(€€¼¼ƒ².“².sªÂƒ²¶Z$ƒ²r²æ`èƒªâÃ²Â ƒ¶G²*äƒ²^³²‚WªÎğƒ®>g²vğƒŠPƒ²‚W²Â ƒ²’G²vÓ®¦ĞƒªŞàƒ²^´÷¶b²z°°ƒ²vÓ®>dƒ²’G²vÓ®¦Ğƒ®.“²v3²^´÷®.“²v0£ªÂW²†À¤(€½¹ÍĞÍÉØõàôø  ¡à´ÈĞÀ¤”ÄĞĞÀ¤¬ÄĞĞÀ¤”ÄĞĞÀì(€½¹ÍĞ™±…ĞõmtìÍ•Ä¹™½É… ¡ÍĞôùì™±…Ğ¹ÁÕÍ ¡ÍÉØ¡ÍĞ¹„¤°ÍÉØ¡ÍĞ¹¤¤ìô¤ì€€€¼¼ƒ®>²Â§
+ß²Ús®ÂpƒªÖC®2 (€±•Ğ½™˜ôÀì½¹ÍĞµ½¹¼õmtì™½È¡±•Ğ¤ôÀí¤ñ™±…Ğ¹±•¹Ñ í¤¬¬¥ì±•ĞØõ™±…Ñm¥t­½™˜ì¥˜¡¤øÀ˜™Øñµ½¹½m¤´Åt¥ì½™˜¬ôÄĞĞÀìØ¬ôÄĞĞÀìôµ½¹¼¹ÁÕÍ ¡Ø¤ìô(€½¹ÍĞ…‰ÍõÍ•Ä¹µ…À ¡|±¤¤ôùµ½¹½lÈ©¥t¤°…‰ÍõÍ•Ä¹µ…À ¡|±¤¤ôùµ½¹½lÈ©¤¬Åt¤ì(€½¹ÍĞ¹½İŒõ¹•Ü…Ñ” ¤ì±•Ğ¹½İ‰ÌõÍÉØ¡¹½İŒ¹•Ñ!½ÕÉÌ ¤¨ØÀ­¹½İŒ¹•Ñ5¥¹ÕÑ•Ì ¤¤ì(€İ¡¥±”¡¹½İ‰Ìñ…‰ÍlÁt´ÜÈÀ¥¹½İ‰Ì¬ôÄĞĞÀìİ¡¥±”¡¹½İ‰Ìù…‰Ím…‰Í¹±•¹Ñ ´Åt¬ÜÈÀ¥¹½İ‰Ì´ôÄĞĞÀì(€±•ĞÁ¡…Í”°‘İ•±±%‘àô´Ä°¹•áÑ%‘àô´Äì€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€¼¼‘İ•±±%‘àèƒ²‚W²Â ƒ²’Dƒ²^´°¹•áÑ%‘àèƒ²‚GªŞğƒ²’Dƒ®.“²v3²^´(€¥˜¡¹½İ‰Ìñ…‰ÍlÁt¤Á¡…Í”ô‰•™½É”œì(€•±Í”¥˜¡¹½İ‰Ìøõ…‰Ím…‰Í¹±•¹Ñ ´Åt¤Á¡…Í”ô‘½¹”œì(€•±Í”ìÁ¡…Í”ôÉÕ¹¹¥¹œœì(€€€™½È¡±•Ğ¤ôÀí¤ñÍ•Ä¹±•¹Ñ í¤¬¬¥ì¥˜¡¹½İ‰Ìøõ…‰Ím¥t˜™¹½İ‰Ìğõ…‰Ím¥t¥ì‘İ•±±%‘àõ¤ì‰É•…¬ìôô(€€€¥˜¡‘İ•±±%‘àğÀ¥ì™½È¡±•Ğ¤ôÀí¤ñÍ•Ä¹±•¹Ñ í¤¬¬¥ì¥˜¡…‰Ím¥tù¹½İ‰Ì¥ì¹•áÑ%‘àõ¤ì‰É•…¬ìôôô(€ô(€½¹ÍĞÉ½İÌõÍ•Ä¹µ…À ¡ÍĞ±¤¤ôùì(€€€½¹ÍĞ¥Í=É¥¥¸õ¤ôôôÀ°¥ÍQ•É´õ¤ôôõÍ•Ä¹±•¹Ñ ´Äì(€€€½¹ÍĞÁ…ÍÍ•ô¡Á¡…Í”ôôô‘½¹”œ¥ñğ¡Á¡…Í”ôôôÉÕ¹¹¥¹œœ˜™¹½İ‰Ìù…‰Ím¥t¬Å”´Ø¤ì(€€€½¹ÍĞ¥ÍÕÈõÁ¡…Í”ôôôÉÕ¹¹¥¹œœ˜™¤ôôõ‘İ•±±%‘àì(€€€½¹ÍĞ¥Í9•áĞõÁ¡…Í”ôôôÉÕ¹¹¥¹œœ˜™¤ôôõ¹•áÑ%‘à˜™‘İ•±±%‘àğÀì(€€€½¹ÍĞ±Íõl©ÈµÍÑ½Àtì¥˜¡Á…ÍÍ•˜˜…¥ÍÕÈ¥±Í¹ÁÕÍ  ‘½¹”œ¤ì¥˜¡¥ÍÕÈ¥±Í¹ÁÕÍ  ÕÈœ¤ì¥˜¡¥Í9•áĞ¥±Í¹ÁÕÍ  ¹•áĞœ¤ì(€€€½¹ÍĞ¹…µ•±Ìõ¥Í=É¥¥¸ü©Èµ½É¥¥¸œé¥ÍQ•É´ü©ÈµÑ•É´œèœœì(€€€½¹ÍĞ‰…‘”õ¥ÍÕÈüœñÍÁ…¸±…ÍÌô‰©Èµ‰…‘”ÕÈˆû¶b²z°ğ½ÍÁ…¸øœé¥Í9•áĞüœñÍÁ…¸±…ÍÌô‰©Èµ‰…‘”¹•áĞˆû®.“²v0ğ½ÍÁ…¸øœèœœì(€€€½¹ÍĞÑ¥µ•QáĞõ¥Í=É¥¥¸ı€‘í™µĞ¡ÍĞ¹´¥ôƒ²Ús®Âq€é¥ÍQ•É´ı€‘í™µĞ¡ÍĞ¹´¥ôƒ®>²Â¥€é™µĞ¡ÍĞ¹´¤ì(€€€É•ÑÕÉ¸€ñ‘¥Ø±…ÍÌôˆ‘í±Í¹©½¥¸ œ€œ¥ôˆÍÑå±”ôˆ´µŒè‘í½±½Éôˆø(€€€€€€ñ‘¥Ø±…ÍÌô‰©Èµ‘½Ğˆøğ½‘¥Øø(€€€€€€ñ‘¥Ø±…ÍÌô‰©Èµ¥¹™¼ˆøñÍÁ…¸±…ÍÌô‰©Èµ¹…µ”€‘í¹…µ•±Íôˆø‘í}½ÁÍÍŒ¡ÍĞ¹Ì¥ô‘í‰…‘•ôğ½ÍÁ…¸øğ½‘¥Øø(€€€€€€ñ‘¥Ø±…ÍÌô‰©ÈµÑ¥µ”ˆø‘íÑ¥µ•QáÑôğ½‘¥Øø(€€€€ğ½‘¥Øù€ì(€ô¤¹©½¥¸ œœ¤ì(€½¹ÍĞÍÑ…ÑÕÍQáĞõÁ¡…Í”ôôô‰•™½É”œüŸ²jÓ¶Z$ƒ²‚œéÁ¡…Í”ôôô‘½¹”œüŸ²jÓ¶Z$ƒ²Š®0œèŸ²jÓ¶Z$ƒ²’Dœì(€½¹ÍĞ•áÀõ±ÌôôôÈüœñÍÁ…¸±…ÍÌô‰µÑˆµ•áÀµÑˆµ•áÀ´µĞˆû¶*çªâ$ğ½ÍÁ…¸øœé±ÌôôôÄüœñÍÁ…¸±…ÍÌô‰µÑˆµ•áÀˆûªâ'¶Z$ğ½ÍÁ…¸øœèœœì(€½¹ÍĞİÉ…Àõ‘½Õµ•¹Ğ¹É•…Ñ•±•µ•¹Ğ ‘¥Øœ¤ìİÉ…À¹¥ôµÑ¸µİÉ…Àœì(€İÉ…À¹¥¹¹•É!Q50õ€ñ‘¥Ø±…ÍÌô‰É…¥°µÑ¥­•Ğµ‰…­‘É½Àˆ½¹±¥¬ô‰±½Í•5•ÑÉ½QÉ…¥¸ ¤ˆøğ½‘¥Øø(€€€€ñ‘¥Ø±…ÍÌô‰µÑ¸µÁ½ÁÕÀˆÉ½±”ô‰‘¥…±½œˆ…É¥„µ±…‰•°ôˆ‘í}½ÁÍÍŒ¡±¥¹”¥ô€‘í}½ÁÍÍŒ¡½É¥œ¥÷ŠH‘í}½ÁÍÍŒ¡‘•ÍĞ¥ôƒ².sªÂ¶FpˆÍÑå±”ôˆ´µµŒè‘í½±½Éôˆø(€€€€€€ñ‘¥Ø±…ÍÌô‰µÑ¸µ¡•…ˆøñÍÁ…¸±…ÍÌô‰µÑ¸µ±¡¥ÀˆÍÑå±”ô‰‰…­É½Õ¹è‘í½±½Éôˆø‘í}½ÁÍÍŒ¡±¥¹”¥ôğ½ÍÁ…¸ø(€€€€€€€€ñˆø‘í}½ÁÍÍŒ¡½É¥œ¥ôğ½ˆøñÍÁ…¸±…ÍÌô‰µÑ¸µ…ÉÉ½ÜˆûŠZÛŠZÛŠZØğ½ÍÁ…¸øñˆø‘í}½ÁÍÍŒ¡‘•ÍĞ¥ôğ½ˆø‘í•áÁô(€€€€€€€€ñ‰ÕÑÑ½¸±…ÍÌô‰Í¤µ‰½…Éµ±½Í”ˆ½¹±¥¬ô‰±½Í•5•ÑÉ½QÉ…¥¸ ¤ˆ…É¥„µ±…‰•°ô‹®.¯ªâÀˆûŠrTğ½‰ÕÑÑ½¸øğ½‘¥Øø(€€€€€€ñ‘¥Ø±…ÍÌô‰©ÈµÑ¥µ•±¥¹”µÑ¸µÑ°ˆø‘íÉ½İÍôğ½‘¥Øø(€€€€€€ñ‘¥Ø±…ÍÌô‰µÑ¸µ™½½Ğˆû²vãªÊ3²zƒ².sªÂ¶FpƒªâÃ²’ ƒ
+Ü€‘íÍ•Ä¹±•¹Ñ¡÷ªÂpƒ²^´ƒ
+Ü€ñˆÍÑå±”ô‰½±½Èè‘í½±½Éôˆø‘íÍÑ…ÑÕÍQáÑôğ½ˆøğ½‘¥Øø(€€€€ğ½‘¥Øù€ì(€‘½Õµ•¹Ğ¹‰½‘ä¹…ÁÁ•¹‘¡¥±¡İÉ…À¤ì(€€¼¼ƒ²^´ƒ².sªÂ¶Fp¡µÑĞ§²^C²pƒ²^Ó®‚ã²ró®¦Ğƒ®
+c®z¶z ¿²b“®Ê®‚#²vĞƒ¶:c²ZĞƒ®‚#²vÓ²V²nƒ²‚²j¤(€¥˜¡‘½Õµ•¹Ğ¹•Ñ±•µ•¹Ñ	å% µÑĞµİÉ…Àœ¤¤‘½Õµ•¹Ğ¹‰½‘ä¹±…ÍÍ1¥ÍĞ¹…‘ µ•ÑÉ¼µÁ…¥É•œ¤ì(€•±Í”¥˜¡‘½Õµ•¹Ğ¹•Ñ±•µ•¹Ñ	å% µ•ÑÉ¼µ‘¥ÍÁ±…äµİÉ…Àœ¤¤‘½Õµ•¹Ğ¹‰½‘ä¹±…ÍÍ1¥ÍĞ¹…‘ µ•ÑÉ¼µ‘¥ÍÁ±…äµÁ…¥É•œ¤ì(€½¹ÍĞÕÈõİÉ…À¹ÅÕ•ÉåM•±•Ñ½È œ¹©ÈµÍÑ½À¹ÕÈœ¥ññİÉ…À¹ÅÕ•ÉåM•±•Ñ½È œ¹©ÈµÍÑ½À¹¹•áĞœ¤ì¥˜¡ÕÈ¥ÕÈ¹ÍÉ½±±%¹Ñ½Y¥•Ü¡í‰±½¬è•¹Ñ•Èô¤ì)ô)™Õ¹Ñ¥½¸±½Í•5•ÑÉ½QÉ…¥¸ ¥ì(€½¹ÍĞ•°õ‘½Õµ•¹Ğ¹•Ñ±•µ•¹Ñ	å% µÑ¸µİÉ…Àœ¤ì¥˜¡•°¥•°¹É•µ½Ù” ¤ì(€½¹ÍĞÑ¥µ•Ñ…‰±”õ‘½Õµ•¹Ğ¹•Ñ±•µ•¹Ñ	å% µÑĞµİÉ…Àœ¤ì(€¥˜¡Ñ¥µ•Ñ…‰±”¥Ñ¥µ•Ñ…‰±”¹ÅÕ•ÉåM•±•Ñ½É±° œ¹µÑĞµÉ½Ü´µÍ•±•Ñ•œ¤¹™½É… ¡É½ÜôùÉ½Ü¹±…ÍÍ1¥ÍĞ¹É•µ½Ù” µÑĞµÉ½Ü´µÍ•±•Ñ•œ¤¤ì(€‘½Õµ•¹Ğ¹‰½‘ä¹±…ÍÍ1¥ÍĞ¹É•µ½Ù” µ•ÑÉ¼µÁ…¥É•œ°µ•ÑÉ¼µ‘¥ÍÁ±…äµÁ…¥É•œ¤ì)ô((¼¼ƒÂ~n“¾â<ƒ®ÂÃ²ƒ®>£ªÂ²vĞ¤èƒ®Î×²€ƒ¶*ã®zd€¬ƒ²*çªÂW²z”€¬ƒ®Â§¶Z”ƒ¶fS²
+Ó¶Fpƒ²^Ó²Â ¸ƒ²¶Z$£²Š²‚CŠKªâÃ²‚@¤÷²Š3²â‡
+ßŠZÈ°ƒ¶Vc¶Z$£ªâÃ²‚CŠK²Š²‚@¤÷²jÃ²â‡
+ßŠZğ)±•Ğ}µ±9…µ•M•Ğõ¹Õ±°ì)™Õ¹Ñ¥½¸}µ•ÑÉ½1¥¹•9…µ•M•Ğ ¥ì¥˜¡}µ±9…µ•M•Ğ¥É•ÑÕÉ¸}µ±9…µ•M•Ğì}µ±9…µ•M•Ğõ¹•ÜM•Ğ ¡ÑåÁ•½˜5QI=}1%9L„ôôÕ¹‘•™¥¹•œı5QI=}1%9Lémt¤¹µ…À¡°ôù°¹¹…µ”¤¤ìÉ•ÑÕÉ¸}µ±9…µ•M•Ğìô(¼¼ƒ²^·²v`ƒ®ª£®N€ƒ²*çªÂW²z”ƒ²‚W®ÎĞ€¡A1Q=I5}¤ƒŠPƒ²vĞƒ®ã²€¿¶ ƒ®ã²€¿ªâÃ²Â ƒªÖ³®Ú€¬ƒ®2¶Fs²$(¼¼ƒ²^´ƒ¶f#²v`ƒ²‚²ÊĞƒ®ã²€ƒ²vÓ®šƒ²G¶V¤£²*çªÂW²z—ŠK®ã²€ƒ²nC®²à¤ƒŠPƒ¶>'¶Z'²Äƒ¶2C²‚W²j¤)™Õ¹Ñ¥½¸}ÍÑ¹1¥¹•9…µ•Ì¡Ì¥ì(€¥˜¡Ìôõ¹Õ±±ññÑåÁ•½˜A1Q=I5}ôôôÕ¹‘•™¥¹•œ¥É•ÑÕÉ¸¹•ÜM•Ğ ¤ì(€½¹ÍĞ¬õA1Q=I5}	mÍtıÌè¡A1Q=I5}	mÌ¬Ÿ²^´tıÌ¬Ÿ²^´œé¹Õ±°¤ì¥˜ …¬¥É•ÑÕÉ¸¹•ÜM•Ğ ¤ì(€½¹ÍĞÍ•Ğõ¹•ÜM•Ğ ¤ì½¹ÍĞÁ°õA1Q=I5}	m­tì(€™½È¡½¹ÍĞÁ¸½˜=‰©•Ğ¹­•åÌ¡Á°¤¤¡Á±mÁ¹t¹±ññmt¤¹™½É… ¡àôùÍ•Ğ¹…‘¡MÑÉ¥¹œ¡à¤¤¤ì(€É•ÑÕÉ¸Í•Ğì)ô)™Õ¹Ñ¥½¸}µ•ÑÉ½1¥¹•Y…É¥…¹Ğ¡É…Ü±‰…Í”¥ì(€½¹ÍĞÌõMÑÉ¥¹œ¡É…İñğœœ¤¹ÑÉ¥´ ¤ì(€¥˜¡Ìôôõ‰…Í”¥É•ÑÕÉ¸€œœì(€¥˜¡Ì¹ÍÑ…ÉÑÍ]¥Ñ ¡‰…Í”¬œ¼œ¤¥É•ÑÕÉ¸Ì¹Í±¥”¡‰…Í”¹±•¹Ñ ¬Ä¤¹ÑÉ¥´ ¤ì(€¥˜¡Ì¹ÍÑ…ÉÑÍ]¥Ñ ¡‰…Í”¬œ€ œ¤¥É•ÑÕÉ¸Ì¹Í±¥”¡‰…Í”¹±•¹Ñ ¤¹É•Á±…” ½yqÌ©p¡ñp¥qÌ¨½œ°œœ¤¹ÑÉ¥´ ¤ì(€É•ÑÕÉ¸¹Õ±°ì)ô(¼¼ƒ²^´ƒ²*çªÂW²z”ƒ®Ú®–`¸ÁÉ•Ø½¹•áĞƒ²ó²ZÓ²®¦Ğƒ¶ ƒ®ã²ƒ²v €Ÿ¶>'¶Z$£²‚
+ß®.“²v3²^´ƒ²^Ã²4¤Ÿ®0ƒ®
+£ªâÃªÎ€°ƒ¶Vs²ª÷®0÷².s²zG²‚@°ƒ²^²ró®¦Ğƒ²‚s²fà¸)™Õ¹Ñ¥½¸}µ•ÑÉ½MÑ…Ñ¥½¹A±…Ñ™½ÉµÌ¡ÍÑ¸°ÕÉ	…Í”°ÁÉ•ÙMÑ¸°¹•áÑMÑ¸¥ì(€¥˜¡ÑåÁ•½˜A1Q=I5}ôôôÕ¹‘•™¥¹•œ¥É•ÑÕÉ¸mtì(€½¹ÍĞ­•äõA1Q=I5}	mÍÑ¹tıÍÑ¸è¡A1Q=I5}	mÍÑ¸¬Ÿ²^´tıÍÑ¸¬Ÿ²^´œé¹Õ±°¤ì¥˜ …­•ä¥É•ÑÕÉ¸mtì(€½¹ÍĞÁ±…ÑÌõA1Q=I5}	m­•åt°µÍ•Ğõ}µ•ÑÉ½1¥¹•9…µ•M•Ğ ¤°½ÕĞõmtì(€½¹ÍĞÍ¥‘•Ìõmtì¥˜¡ÁÉ•ÙMÑ¸„õ¹Õ±°¥Í¥‘•Ì¹ÁÕÍ ¡}ÍÑ¹1¥¹•9…µ•Ì¡ÁÉ•ÙMÑ¸¤¤ì¥˜¡¹•áÑMÑ¸„õ¹Õ±°¥Í¥‘•Ì¹ÁÕÍ ¡}ÍÑ¹1¥¹•9…µ•Ì¡¹•áÑMÑ¸¤¤ì(€™½È¡½¹ÍĞÁ¸½˜=‰©•Ğ¹­•åÌ¡Á±…ÑÌ¤¥ì(€€€½¹ÍĞ¹Õ´õ9Õµ‰•È¡Á¸¤ì¥˜¡¥Í9…8¡¹Õ´¤¥½¹Ñ¥¹Õ”ì(€€€½¹ÍĞ±¥¹•Ìô¡Á±…ÑÍmÁ¹t¹±ññmt¤¹µ…À¡MÑÉ¥¹œ¤ì(€€€½¹ÍĞ‰…Í•Ìõl¸¸¹¹•ÜM•Ğ¡±¥¹•Ì¹µ…À¡àôùà¹ÍÁ±¥Ğ œ¼œ¥lÁt¹ÍÁ±¥Ğ œ€ œ¥lÁt¹ÑÉ¥´ ¤¤¥tì(€€€½¹ÍĞµ•ÑÉ½	…Í•Ìõ‰…Í•Ì¹™¥±Ñ•È¡ˆôùµÍ•Ğ¹¡…Ì¡ˆ¤¤ì(€€€½¹ÍĞ¥ÍÕÈõµ•ÑÉ½	…Í•Ì¹¥¹±Õ‘•Ì¡ÕÉ	…Í”¤ì(€€€€¼¼ƒ²²€ƒ²‚²j¤ƒ²*çªÂW²z”£²vĞƒ®ã²€ƒªÒ®‚ ƒ²vÓ®š²vĞƒ®ª£®F@€Ÿ²²€œ¤ƒŠHƒ®Îã²ƒ²^C²pƒ®æóªÎ€ƒ²²€ƒ²^Ó®†p(€€€½¹ÍĞÕÉ1¥¹•Ìõ±¥¹•Ì¹™¥±Ñ•È¡°ôù°¹ÍÁ±¥Ğ œ¼œ¥lÁt¹ÍÁ±¥Ğ œ€ œ¥lÁt¹ÑÉ¥´ ¤ôôõÕÉ	…Í”¤ì(€€€½¹ÍĞÙ…É¥…¹ÑÌõl¸¸¹¹•ÜM•Ğ¡ÕÉ1¥¹•Ì¹µ…À¡°ôù}µ•ÑÉ½1¥¹•Y…É¥…¹Ğ¡°±ÕÉ	…Í”¤¤¹™¥±Ñ•È¡ØôùØ„õ¹Õ±°˜™Ø„ôôœœ¤¥tì(€€€€¼¼ƒªâÃ®Îàƒ®ã²ƒ®ª²vĞƒ²^®*P€¼Ç
+Ü¼Ë
+ßŠ^/Š^/²²€ƒ²‚²j¤ƒ¶f#²v ƒ®Îã²€ƒ¶f#ªÎğƒ®Î®>ƒ²ƒ®†sªÖÃ²ró®†pƒ²rƒ²¶Vs®.¸(€€€½¹ÍĞ‰É…¹¡=¹±äõ¥ÍÕÈ˜™ÕÉ1¥¹•Ì¹±•¹Ñ øÀ˜˜…ÕÉ1¥¹•Ì¹Í½µ”¡°ôù}µ•ÑÉ½1¥¹•Y…É¥…¹Ğ¡°±ÕÉ	…Í”¤ôôôœœ¤ì(€€€€¼¼ƒ¶>'¶Z'²Äèƒ¶ ƒ®ã²€ƒ²*çªÂW²z—²v ƒ²‚¿®.“²v3²^·ªÎğƒ²^Ã²7®B€ƒ®V3®0ƒ®ÂÃ²ƒ²^@ƒ¶>³¶V (€€€±•ĞÑ¡É½Õ ôÈì(€€€¥˜ …¥ÍÕÈ˜™Í¥‘•Ì¹±•¹Ñ ¥ì(€€€€€±•Ğ…ĞôÀìÍ¥‘•Ì¹™½É… ¡Íôùì¥˜¡±¥¹•Ì¹Í½µ”¡°ôùÍ¹¡…Ì¡°¤¤¥…Ğ¬¬ìô¤ì(€€€€€Ñ¡É½Õ ô¡…ĞôôôÀ¤üÀè¡…ĞñÍ¥‘•Ì¹±•¹Ñ üÄèÈ¤ì(€€€€€¥˜¡Ñ¡É½Õ ôôôÀ¥½¹Ñ¥¹Õ”ì€¼¼ƒ¶>'¶Z$ƒ²V®.`ƒŠHƒ²‚s²fà(€€€ô(€€€±•Ğ½±½È±­¥¹ì(€€€¥˜¡¥ÍÕÈ¥ì½±½Èõ}µ•ÑÉ½1¥¹•½±½È¡ÕÉ	…Í”¤ì­¥¹ôÕÈœìô(€€€•±Í”¥˜¡µ•ÑÉ½	…Í•Ì¹±•¹Ñ ¥ì½±½Èõ}µ•ÑÉ½1¥¹•½±½È¡µ•ÑÉ½	…Í•ÍlÁt¤ì­¥¹ôµ•ÑÉ¼œìô(€€€•±Í”ì½±½ÈôœŒáˆäĞå”œì­¥¹ôÑÉ…¥¸œìô(€€€½ÕĞ¹ÁÕÍ ¡íÁ¸é¹Õ´±¥ÍÕÈ±½±½È±­¥¹±±…‰•°è¡µ•ÑÉ½	…Í•ÍlÁuññ±¥¹•ÍlÁuñğœœ¤±Í¡…É•é¥ÍÕÈ˜™µ•ÑÉ½	…Í•Ì¹±•¹Ñ øÄ±©Õ¹Ñ¥½¸éÑ¡É½Õ ôôôÄ±Ñ¡É½Õ ±‰É…¹¡=¹±ä±Ù…É¥…¹ÑÌ±±¥¹•Íô¤ì(€ô(€É•ÑÕÉ¸½ÕĞ¹Í½ÉĞ ¡„±ˆ¤ôù„¹Á¸µˆ¹Á¸¤ì)ô(¼¼ƒ®ÂÃ²ƒ®>ƒ²êS®Ê²*!Q50ƒ²w²Ä€£¶´ƒ²vã®vó²vàƒªÎ×²j¤¤¸ƒ®Âc¶f`èí¹Ğ°¡Ñµ±ô(¼¼ƒ²*çªÂW²z—²v ƒ®Ê#¶bã²"pƒªÎƒ²‚Tƒ²*³®†¼ Ä€È€Ì€ÓŠ˜¤°ƒ²vĞƒ®ã²€ƒ®Î×²€ƒ¶*ã®zg²v ƒ²zCªâÀƒ²*çªÂW²z”ƒ²r²æc®†pƒ¶rc²ZÓªÂ@£²r®æd¤¸(¼¼ƒŠRŠR ƒ®>².s²Êƒ®>ƒ®ÂÃ²€ƒ®‚3®6S®~°ØÈèƒ²’G².³²ÚTƒªÎƒ²‚Tƒ²²€ƒ®Î×²€€¬ƒ²‚²Æ®>ƒ²*çªÂW²z”€¬¥é¥•Èƒ®ÚªâÀ¿¶V§®–`¿¶j3²Â €¬ƒ²²€ƒ²f²‚®ÂÃ²€ƒŠRŠR )½¹ÍĞM`õí95\èÔĞ±Q=@èÌÀ±I=\èĞØ±èÈÀ±	\èÄÈ±	 èÈØ±A<èà±MèÄáôì)™Õ¹Ñ¥½¸}Íád¡½½É‘Ì±I=\¥ì½¹ÍĞ¸õ½½É‘Ì¹±•¹Ñ ì½¹ÍĞÉ½İ õ¹•ÜÉÉ…ä¡5…Ñ ¹µ…à À±¸´Ä¤¤¹™¥±°¡I=\¤ì(€¥˜¡½½É‘Ì˜™½½É‘Ì¹±•¹Ñ ôôõ¸˜™½½É‘Ì¹•Ù•Éä¡	½½±•…¸¤˜™¸øôÈ¥ì½¹ÍĞ±…ĞÀõ½½É‘ÍlÁulÅt±­àõ5…Ñ ¹½Ì¡±…ĞÀ©5…Ñ ¹A$¼ÄàÀ¤¨ÄÄÄÌÈÀ±­äôÄÄÀÔĞÀì(€€€½¹ÍĞ@õ½½É‘Ì¹µ…À ¡m±¼±±…t¤ôùl¡±¼µ½½É‘ÍlÁulÁt¤©­à°¡±„µ±…ĞÀ¤©­åt¤ì(€€€½¹ÍĞÍ•œõmtí™½È¡±•Ğ¤ôÀí¤ñ¸´Äí¤¬¬¥Í•œ¹ÁÕÍ ¡5…Ñ ¹¡åÁ½Ğ¡Am¤¬ÅulÁtµAm¥ulÁt±Am¤¬ÅulÅtµAm¥ulÅt¤¤ì(€€€½¹ÍĞÍÈõl¸¸¹Í•t¹™¥±Ñ•È¡ôùøÄ¤¹Í½ÉĞ ¡„±ˆ¤ôù„µˆ¤±µ•õÍÈ¹±•¹Ñ ıÍÉmÍÈ¹±•¹Ñ øøÅtèÄì(€€€™½È¡±•Ğ¤ôÀí¤ñ¸´Äí¤¬¬¥É½İ!m¥tõ5…Ñ ¹µ…à¡I=\±5…Ñ ¹µ¥¸¡I=\¨È¸Ä±Í•m¥t¨¡I=\½5…Ñ ¹µ…à ÈÀÀ±µ•¤¤¤¤ìô(€½¹ÍĞdõ¹•ÜÉÉ…ä¡¸¤íelÁtõM`¹Q=@í™½È¡±•Ğ¤ôÄí¤ñ¸í¤¬¬¥em¥tõem¤´Åt­É½İ!m¤´ÅtìÉ•ÑÕÉ¸dì)ô(¼¼ƒ¶Vpƒ®vó²jÃ¶*à£®Îã²€¿²²€¤ƒ®‚3®6Pèƒ²²€ƒ®Î×²€€¬ƒ²*çªÂW²z”€¬ƒ®2¶Rğƒ²rƒ²æc²€€¬ƒ²Š®. ƒ¶j3²Â )™Õ¹Ñ¥½¸}ÍáI½ÕÑ”¡¹…µ•Ì±ÕÉ	…Í”±…á¥Í`±d±½±½È±½ÁÑÌ¥ì(€½ÁÑÌõ½ÁÑÍññíôì½¹ÍĞ¸õ¹…µ•Ì¹±•¹Ñ ±í±	\±	 ±A<±MôõM`°ÕÀõ…á¥Í`µ¼È°‘¸õ…á¥Í`­¼È°õàôø ­à¤¹Ñ½¥á• Ä¤ì(€±•ĞÁ±…ÑÌôœœ±Í¥‘”ôœœ±µ¥¹`õÕÀ´È±µ…á`õ‘¸¬Èì(€½¹ÍĞ‰½àô¡à±±…ˆ±ä¤ôùíµ¥¹`õ5…Ñ ¹µ¥¸¡µ¥¹`±àµ	\¼È¤íµ…á`õ5…Ñ ¹µ…à¡µ…á`±à­	\¼È¤íÉ•ÑÕÉ¸€ñÉ•Ğàôˆ‘í¡àµ	\¼È¥ôˆäôˆ‘í¡äµ	 ¼È¥ôˆİ¥‘Ñ ôˆ‘í	]ôˆ¡•¥¡Ğôˆ‘í	!ôˆÉàôˆÈ¸Ôˆ±…ÍÌô‰ÑÍàµÁ±…Ğˆ¼ù€¬¡±…ˆ„ôôœœ˜™±…ˆ„õ¹Õ±°ı€ñÑ•áĞàôˆ‘í¡à¥ôˆäôˆ‘í¡ä¬Ì¥ôˆ±…ÍÌô‰ÑÍàµÁ¹Õ´ˆø‘í±…‰ôğ½Ñ•áĞù€èœœ¤íôì(€™½È¡±•Ğ¤ôÀí¤ñ¸í¤¬¬¥ì½¹ÍĞäõem¥tì(€€€½¹ÍĞÁ™Ìõ}µ•ÑÉ½MÑ…Ñ¥½¹A±…Ñ™½ÉµÌ¡¹…µ•Ím¥t±ÕÉ	…Í”±¹…µ•Ím¤´Åt±¹…µ•Ím¤¬Åt¤ì(€€€½¹ÍĞÕÈõÁ™Ì¹™¥±Ñ•È¡ÀôùÀ¹¥ÍÕÈ˜˜…À¹‰É…¹¡=¹±ä¤ì±•ĞÁ¹ÌõÕÈ¹µ…À¡ÀôùÀ¹Á¸¤ì¥˜ …Á¹Ì¹±•¹Ñ ¥Á¹Ìõlœtì(€€€½¹ÍĞ@õÁ¹Ì¹±•¹Ñ ì(€€€¥˜¡@ğôÄ¥ìÁ±…ÑÌ¬õ‰½à¡…á¥Í`±Á¹ÍlÁt±ä¤ìô(€€€•±Í”¥˜¡@ôôôÈ¥ìÁ±…ÑÌ¬õ‰½à¡ÕÀµA<µ	\¼È±Á¹ÍlÁt±ä¤­‰½à¡‘¸­A<­	\¼È±Á¹ÍlÅt±ä¤ìô(€€€•±Í”ìÁ±…ÑÌ¬õ‰½à¡ÕÀµA<µ	\¼È±Á¹ÍlÁt±ä¤­‰½à¡‘¸­A<­	\¼È±Á¹ÍlÅt±ä¤ì(€€€€€½¹ÍĞÉ¡Tõä´¡em¤´Åt„õ¹Õ±°ıem¤´ÅtéäµM`¹I=\¤°É¡ô¡em¤¬Åt„õ¹Õ±°ıem¤¬Åtéä­M`¹I=\¤µäì(€€€€€½¹ÍĞM õ5…Ñ ¹µ¥¸ ÄÌ±5…Ñ ¹µ¥¸¡É¡T±É¡¤¨À¸Ì¤°Qõ5…Ñ ¹µ¥¸ ÈÀ±5…Ñ ¹µ¥¸¡É¡T±É¡¤¨À¸Ğ¤ì(€€€€€™½È¡±•Ğ¬ôÈí¬ñ@í¬¬¬¥ì½¹ÍĞ”õ¬´Èì½¹ÍĞ‰½áàõ‘¸­A<­	\¼È¬¡”¬Ä¤¨¡	\­M¤ì½¹ÍĞÑàõ‰½áàµ	\¼ÈµA<ì(€€€€€€€Á±…ÑÌ¬õ‰½à¡‰½áà±Á¹Ím­t±ä¤ì(€€€€€€€Í¥‘”¬õ€ñÁ…Ñ ô‰4€‘í¡‘¸¥ô€‘í¡äµM µQ¥ô€‘í¡‘¸¥ô€‘í¡äµM µQ¨À¸Ğ¥ô°€‘í¡Ñà¥ô€‘í¡äµM µQ¨À¸Ğ¥ô°€‘í¡Ñà¥ô€‘í¡äµM ¥ô0€‘í¡Ñà¥ô€‘í¡ä­M ¥ô€‘í¡Ñà¥ô€‘í¡ä­M ­Q¨À¸Ğ¥ô°€‘í¡‘¸¥ô€‘í¡ä­M ­Q¨À¸Ğ¥ô°€‘í¡‘¸¥ô€‘í¡ä­M ­Q¥ôˆ™¥±°ô‰¹½¹”ˆÍÑÉ½­”ôˆ‘í½±½ÉôˆÍÑÉ½­”µİ¥‘Ñ ôˆÈ¸Ğˆ±…ÍÌô‰ÑÍàµÍ¥‘¥¹œˆ¼ù€ì(€€€€€ô(€€€ô(€ô(€€¼¼ƒ²²€ƒ®Îã²€ƒ®Î×²€(€½¹ÍĞäÀõelÁt°å8õem¸´Åtì(€±•Ğµ…¥¸õ€ñ±¥¹”àÄôˆ‘í¡ÕÀ¥ôˆäÄôˆ‘í¡äÀ¥ôˆàÈôˆ‘í¡ÕÀ¥ôˆäÈôˆ‘í¡å8¥ôˆÍÑÉ½­”ôˆ‘í½±½ÉôˆÍÑÉ½­”µİ¥‘Ñ ôˆÌ¸ĞˆÍÑÉ½­”µ±¥¹•…Àô‰É½Õ¹ˆ¼ù€¬(€€€€€€€€€€€ñ±¥¹”àÄôˆ‘í¡‘¸¥ôˆäÄôˆ‘í¡äÀ¥ôˆàÈôˆ‘í¡‘¸¥ôˆäÈôˆ‘í¡å8¥ôˆÍÑÉ½­”ôˆ‘í½±½ÉôˆÍÑÉ½­”µİ¥‘Ñ ôˆÌ¸ĞˆÍÑÉ½­”µ±¥¹•…Àô‰É½Õ¹ˆ¼ù€ì(€€¼¼ƒ²Š®. ƒ¶j3²Â £²r¿²V®z`¤(€½¹ÍĞÑ•É´ô¡ä±‘¥È¤ôùì½¹ÍĞ¼õ‘¥È¨ÄÔìÉ•ÑÕÉ¸€ñÁ…Ñ ô‰4€‘í¡ÕÀ¥ô€‘í¡ä¥ô€‘í¡ÕÀ¥ô€‘í¡ä­¼¥ô°€‘í¡‘¸¥ô€‘í¡ä­¼¥ô°€‘í¡‘¸¥ô€‘í¡ä¥ôˆ™¥±°ô‰¹½¹”ˆÍÑÉ½­”ôˆ‘í½±½ÉôˆÍÑÉ½­”µİ¥‘Ñ ôˆÌˆÍÑÉ½­”µ±¥¹•…Àô‰É½Õ¹ˆ¼ù€¬(€€€€€€ñÁ…Ñ ô‰4€‘í¡ÕÀ¥ô€‘í¡äµ‘¥È¨ÄÀ¥ô0€‘í¡‘¸¥ô€‘í¡ä¥ô4€‘í¡‘¸¥ô€‘í¡äµ‘¥È¨ÄÀ¥ô0€‘í¡ÕÀ¥ô€‘í¡ä¥ôˆ™¥±°ô‰¹½¹”ˆÍÑÉ½­”ôˆ‘í½±½ÉôˆÍÑÉ½­”µİ¥‘Ñ ôˆÄ¸Üˆ½Á…¥Ñäôˆ¸Üˆ¼ù€ìôì(€¥˜¡½ÁÑÌ¹Ñ•ÉµQ½À¥µ…¥¸¬õÑ•É´¡äÀ°´Ä¤ì(€¥˜¡½ÁÑÌ¹Ñ•Éµ	½ÑÑ½´¥µ…¥¸¬õÑ•É´¡å8°Ä¤ì(€É•ÑÕÉ¸íÁ±…ÑÌ°ÑÉ…­ÌéÍ¥‘”­µ…¥¸°ÕÀ°‘¸°µ¥¹`°µ…áaôì)ô()™Õ¹Ñ¥½¸}µ•ÑÉ½M¡…¹Ù…Í1•…ä¡°¥ì(€½¹ÍĞ½±½Èõ°¹½±½È°õàôø ­à¤¹Ñ½¥á• Ä¤°í95\±Q=@±I=\±±	\±A=ôõM`ì(€½¹ÍĞ<ô¡ÑåÁ•½˜5QI=}<„ôôÕ¹‘•™¥¹•œ¤ı5QI=}=m°¹¹…µ•té¹Õ±°ì(€½¹ÍĞµ½½É‘Ìô¡<˜™<¹´¥ññ°¹ÍÑ…Ñ¥½¹Ì¹µ…À  ¤ôù¹Õ±°¤ì(€½¹ÍĞdõ}Íád¡µ½½É‘Ì°I=\¤°¸õ°¹ÍÑ…Ñ¥½¹Ì¹±•¹Ñ ì(€½¹ÍĞ5%9`ôäØì(€½¹ÍĞµ…¥¹%‘àõíôì°¹ÍÑ…Ñ¥½¹Ì¹™½É…  ¡Ì±¤¤ôùí¥˜¡µ…¥¹%‘ámÍtôõ¹Õ±°¥µ…¥¹%‘ámÍtõ¤íô¤ì(€½¹ÍĞHõ}ÍáI½ÕÑ”¡°¹ÍÑ…Ñ¥½¹Ì°°¹¹…µ”°5%9`°d°½±½È°íÑ•ÉµQ½Àè…°¹±½½À°Ñ•Éµ	½ÑÑ½´è…°¹±½½Áô¤ì(€±•ĞÁ±…ÑÍMYõH¹Á±…ÑÌ°ÑÉ…­ÍMYõH¹ÑÉ…­Ì°¹…µ•Í!Q50ôœœ°±…‰•±Í!Q50ôœœì(€€¼¼ƒ²^·®ª£²Š3²â„ƒªÎƒ²‚TƒªÊ3¶À¤(€°¹ÍÑ…Ñ¥½¹Ì¹™½É…  ¡Ì±¤¤ôùì½¹ÍĞ•¹ô¡¤ôôôÁññ¤ôôõ¸´Ä¤ì(€€€¹…µ•Í!Q50¬õ€ñÍÁ…¸±…ÍÌô‰ÑÍàµ¹…µ”‘í•¹üœ•¹œèœôˆÍÑå±”ô‰Ñ½Àè‘í¡em¥t¥õÁàˆø‘í}½ÁÍÍŒ¡Ì¥ôğ½ÍÁ…¸ù€ìô¤ì(€±•ĞÕÉ5…á`õH¹µ…á`° õem¸´Åt¬ÌĞì(€€¼¼ƒŠRŠR ƒ²²€èƒ®>g²vğƒ²^S²²ró®†pƒ²f²‚ƒ®ÂÃ²€£²zC²ÊĞƒ²ÚT¤ƒŠRŠR (€€ ¡<˜™<¹ˆ¥ññmt¤¹™½É… ¡ˆôùì¥˜ …ˆ¹Íññˆ¹Ì¹±•¹Ñ ğÉñğ…ˆ¹ññˆ¹Œ¹Í½µ”¡àôø…à¤¥É•ÑÕÉ¸ì(€€€±•Ğ©ˆõˆ¹Ì¹™¥¹‘%¹‘•à ¡Ì±¤¤ôùµ…¥¹%‘ámÍt„õ¹Õ±°˜˜ ¡¤¬Äñˆ¹Ì¹±•¹Ñ ˜™µ…¥¹%‘ámˆ¹Ím¤¬Åutôõ¹Õ±°¥ñğ¡¤´ÄøôÀ˜™µ…¥¹%‘ámˆ¹Ím¤´Åutôõ¹Õ±°¤¤¤ì(€€€¥˜¡©ˆğÀ¥©ˆõˆ¹Ì¹™¥¹‘%¹‘•à¡Ìôùµ…¥¹%‘ámÍt„õ¹Õ±°¤ì¥˜¡©ˆğÀ¥©ˆôÀì(€€€½¹ÍĞµ¨õµ…¥¹%‘ámˆ¹Ím©‰ut°…¹¡½Édô¡µ¨„õ¹Õ±°¤ıemµ©téQ=@ì(€€€½¹ÍĞÉ…İdõ}Íád¡ˆ¹Œ°I=\¤ì½¹ÍĞÍ¡¥™Ğõ…¹¡½ÉdµÉ…İem©‰tì±•Ğ‰dõÉ…İd¹µ…À¡äôùä­Í¡¥™Ğ¤ì(€€€½¹ÍĞµ¸õ5…Ñ ¹µ¥¸ ¸¸¹‰d¤ì¥˜¡µ¸ñQ=@¥í½¹ÍĞõQ=@µµ¸í‰dõ‰d¹µ…À¡äôùä­¤íô(€€€½¹ÍĞ‰àõÕÉ5…á`¬ØĞì(€€€½¹ÍĞ	Hõ}ÍáI½ÕÑ”¡ˆ¹Ì°°¹¹…µ”°‰à°‰d°½±½È°íÑ•ÉµQ½Àé©ˆøÀ°Ñ•Éµ	½ÑÑ½´éÑÉÕ•ô¤ì(€€€Á±…ÑÍMY¬õ	H¹Á±…ÑÌìÑÉ…­ÍMY¬õ	H¹ÑÉ…­Ìì(€€€€¼¼ƒ®ÚªâÀƒ²^ÃªÊÃ²€£®Îã²€ƒ¶Vc¶Z$ƒŠHƒ²²€¤¥é¥•È(€€€½¹ÍĞ©äõ‰em©‰t°ÑÑdõ‰em©ˆñˆ¹Ì¹±•¹Ñ ´Äı©ˆ¬Äé©‰tì(€€€ÑÉ…­ÍMY¬õ€ñÁ…Ñ ô‰4€‘í¡5%9`­¼È¥ô€‘í¡…¹¡½Éd¥ô€‘í ¡5%9`­¼È­	H¹ÕÀ¤¼È¥ô€‘í¡…¹¡½Éd¥ô°€‘í¡	H¹ÕÀ¥ô€‘í¡…¹¡½Éd¥ô°€‘í¡	H¹ÕÀ¥ô€‘í¡ÑÑd¥ôˆ™¥±°ô‰¹½¹”ˆÍÑÉ½­”ôˆ‘í½±½ÉôˆÍÑÉ½­”µİ¥‘Ñ ôˆÌˆ½Á…¥Ñäôˆ¸àÔˆ¼ù€ì(€€€±…‰•±Í!Q50¬õ€ñÍÁ…¸±…ÍÌô‰ÑÍàµ‰ÉÑ…œˆÍÑå±”ô‰±•™Ğè‘í¡‰à¥õÁàíÑ½Àè‘í¡5…Ñ ¹µ¥¸ ¸¸¹‰d¤´ÄØ¥õÁàì´µÁŒè‘í½±½Éôˆû²²€ğ½ÍÁ…¸ù€ì(€€€ˆ¹Ì¹™½É…  ¡‰¸±‰¤¤ôùì¥˜¡‰¤ôôõ©ˆ¥É•ÑÕÉ¸ì¹…µ•Í!Q50¬õ€ñÍÁ…¸±…ÍÌô‰ÑÍàµ‰¹…µ”ˆÍÑå±”ô‰±•™Ğè‘í¡	H¹µ…á`¬Ü¥õÁàíÑ½Àè‘í¡‰em‰¥t¥õÁàˆø‘í}½ÁÍÍŒ¡‰¸¥ôğ½ÍÁ…¸ù€ìô¤ì(€€€ÕÉ5…á`õ5…Ñ ¹µ…à¡ÕÉ5…á`±	H¹µ…á`¤ì(€€€ õ5…Ñ ¹µ…à¡ °5…Ñ ¹µ…à ¸¸¹‰d¤¬ÌĞ¤ì(€ô¤ì(€€¼¼ƒŠRŠR ƒ²Â£®~'ªâÃ² ƒ²vã²z²€¥é¥•ÈƒŠRŠR (€±•Ğ‘•Á`õÕÉ5…á`¬ĞÀì½¹ÍĞ‘•Ádõíôì(€€ ¡<˜™<¹¥ññmt¤¹™½É… ¡ôùì½¹ÍĞ¨õ¹¨°äÀô¡em©t„õ¹Õ±°ıem©téQ=@¤°­•äõ5…Ñ ¹É½Õ¹¡äÀ¼ÈØ¤ì‘•Áem­•åtô¡‘•Áem­•åuñğÀ¤ì½¹ÍĞåäõäÀ­‘•Áem­•åt¨ÈÀì‘•Áem­•åt¬¬ì(€€€ÑÉ…­ÍMY¬õ€ñÁ…Ñ ô‰4€‘í¡5%9`­¼È¥ô€‘í¡äÀ¥ô€‘í ¡5%9`­¼È­‘•Á`¤¼È¥ô€‘í¡äÀ¥ô°€‘í¡‘•Á`¥ô€‘í¡åä¥ô°€‘í¡‘•Á`¬ÄĞ¥ô€‘í¡åä¥ôˆ™¥±°ô‰¹½¹”ˆÍÑÉ½­”ôˆŒáˆäĞå”ˆÍÑÉ½­”µİ¥‘Ñ ôˆÈ¸ÈˆÍÑÉ½­”µ‘…Í¡…ÉÉ…äôˆĞ€Ìˆ½Á…¥Ñäôˆ¸àÔˆ¼ù€ì(€€€±…‰•±Í!Q50¬õ€ñÍÁ…¸±…ÍÌô‰ÑÍàµ‘•Á½ĞˆÍÑå±”ô‰±•™Ğè‘í¡‘•Á`¬Äà¥õÁàíÑ½Àè‘í¡åä¥õÁàˆûÂ~>´€‘í}½ÁÍÍŒ¡MÑÉ¥¹œ¡¹¸¤¹É•Á±…” Ÿ²^´€¼€œ°œ€œ¤¹É•Á±…” Ÿ²ó®ÂW²€œ°œƒ²ó®ÂTœ¤¹É•Á±…” Ÿ²Â£®~'²
+³²^²0œ°œƒ²
+³²^²0œ¤¹ÑÉ¥´ ¤¥ôğ½ÍÁ…¸ù€ì(€€€ÕÉ5…á`õ5…Ñ ¹µ…à¡ÕÉ5…á`±‘•Á`¬ÄÈÀ¤ì õ5…Ñ ¹µ…à¡ ±åä¬ÈØ¤ì(€ô¤ì(€€¼¼ƒŠRŠR ƒ²^Ó²Â èƒ².“²‚pƒ®Îã²€ƒ¶*ã®zdƒ²rƒŠRŠR (€±•Ğ¹ĞôÀì½¹ÍĞÑÈõmtì(€}µ•ÑÉ½1¥¹•1¥Ù•QÉ…¥¹Ì¡°¹¹…µ”¤¹™½É… ¡Ğôùì½¹ÍĞ™¤õµ…¥¹%‘ámĞ¹™É½µMÑ¹t±Ñ¤õµ…¥¹%‘ámĞ¹Ñ½MÑ¹tì¥˜¡™¤ôõ¹Õ±±ññÑ¤ôõ¹Õ±°¥É•ÑÕÉ¸ì¹Ğ¬¬ì(€€€½¹ÍĞ‘½İ¸õÑ¤ù™¤ì½¹ÍĞäõĞ¹…ÑMÑ…Ñ¥½¸ıem™¥téem™¥t­Ğ¹™É…Œ¨¡emÑ¥tµem™¥t¤ì½¹ÍĞàõ‘½İ¸ı5%9`­¼Èé5%9`µ¼Èì(€€€ÑÈ¹ÁÕÍ ¡íà±ä±‘½İ¸±‘•ÍĞéĞ¹‘•ÍÑô¤ìô¤ì(€ÑÈ¹Í½ÉĞ ¡„±ˆ¤ôù„¹äµˆ¹ä¤ì±•Ğ±…ÍÑdô´ääì(€ÑÈ¹™½É… ¡Ğôùì½¹ÍĞÍ¡¥™Ğô¡Ğ¹äµ±…ÍÑdğÄĞ¤üÄèÀì±…ÍÑdõĞ¹äì(€€€±…‰•±Í!Q50¬õ€ñÍÁ…¸±…ÍÌô‰ÑÍàµ…ÉÜ€‘íĞ¹‘½İ¸ü‘½İ¸œèÕÀôˆÍÑå±”ô‰±•™Ğè‘í¡Ğ¹à¥õÁàíÑ½Àè‘í¡Ğ¹ä¥õÁàˆø‘íĞ¹‘½İ¸üŸŠZğœèŸŠZÈôğ½ÍÁ…¸ù€¬(€€€€€€ñÍÁ…¸±…ÍÌô‰ÑÍàµÑ±‰°ˆÍÑå±”ô‰±•™Ğè‘í¡Ğ¹à¬¡Ğ¹‘½İ¸üÄÀè´ÄÀ¤¥õÁàíÑ½Àè‘í¡Ğ¹ä¥õÁàì´µÑŒè‘íĞ¹‘½İ¸ı½±½ÈèœäÜàÉ˜ôíÑÉ…¹Í™½É´éÑÉ…¹Í±…Ñ” ‘íĞ¹‘½İ¸üœÀœèœ´ÄÀÀ”ô°´ÔÀ”¤ˆø‘í}½ÁÍÍŒ¡Ğ¹‘•ÍĞ¥ôğ½ÍÁ…¸ù€ì(€ô¤ì(€½¹ÍĞ\õ5…Ñ ¹•¥°¡ÕÉ5…á`¬ÄØ¤° õ5…Ñ ¹•¥°¡ ¤ì(€½¹ÍĞÍÙœõ€ñÍÙœ±…ÍÌô‰ÑÍàµÍÙœˆİ¥‘Ñ ôˆ‘í]ôˆ¡•¥¡Ğôˆ‘í!ôˆÙ¥•İ	½àôˆÀ€À€‘í]ô€‘í!ôˆøñœ±…ÍÌô‰ÑÍàµÁ±…Ñ±…å•Èˆø‘íÁ±…ÑÍMYôğ½œøñœ±…ÍÌô‰ÑÍàµÑÉ…­±…å•Èˆø‘íÑÉ…­ÍMYôğ½œøğ½ÍÙœù€ì(€É•ÑÕÉ¸í¹Ğ°¡Ñµ°é€ñ‘¥Ø±…ÍÌô‰ÑÍàµ…¹Ù…ÌˆÍÑå±”ô‰¡•¥¡Ğè‘í!õÁàíİ¥‘Ñ è‘í]õÁàì´µµŒè‘í½±½Éôˆø‘íÍÙô‘í¹…µ•Í!Q51ô‘í±…‰•±Í!Q51ôğ½‘¥Øùôì)ô((¼¼ƒŠRŠR ƒ®>².s²Êƒ®>ƒ®ÂÃ²€ƒ®‚3®6S®~°ØÌèƒ²vãªÊ3²zÌ½ƒ²ƒ®†p•½µ•ÑÉç®–ğƒ²Š®. ƒ®ÂÃ²ƒ²ró®†pƒ¶"³²bƒŠRŠR (¼¼Ì÷®ã²€ƒ²’G².³²€ƒ®"²‚ªÆÃ®š°°÷²’G².³²€ƒ²Š3²jÀƒ¶:ã²Â ¸ƒ².“²‚pƒ®ÚªâÃ
+ßªÆÓ®c²ƒ
+ß®2¶Ró²ƒ²v ƒ¶j3²$ƒªâÃ®Âc²ƒ²ró®†p°(¼¼ƒ²z—ªÆÃ®š°ƒ®Îã²ƒªÎğƒ²’G².³²ÚTƒ²^ÃªÊÃ²ƒ²v ƒ®ã²ƒ²$ƒ²‚C²r€ƒªÊ÷®†s®†pƒ¶Fs².s¶Vs®.¸)™Õ¹Ñ¥½¸}ÍáQÉ…­d¡Ì°ÍÌ°d¥ì(€¥˜ …ÍÍñğ…ÍÌ¹±•¹Ñ¡ñğ…eñğ…d¹±•¹Ñ ¥É•ÑÕÉ¸M`¹Q=@ì(€¥˜¡ÌğõÍÍlÁt¥É•ÑÕÉ¸elÁtì½¹ÍĞ±…ÍĞõÍÌ¹±•¹Ñ ´Äì(€¥˜¡ÌøõÍÍm±…ÍÑt¥É•ÑÕÉ¸em5…Ñ ¹µ¥¸¡±…ÍĞ±d¹±•¹Ñ ´Ä¥tì(€±•Ğ±¼ôÀ±¡¤õ±…ÍĞì(€İ¡¥±”¡±¼¬Äñ¡¤¥í½¹ÍĞ´ô¡±¼­¡¤¤øøÄí¥˜¡ÍÍmµtğõÌ¥±¼õ´í•±Í”¡¤õ´íô(€½¹ÍĞÍÁ…¸õ5…Ñ ¹µ…à Ä±ÍÍm¡¥tµÍÍm±½t¤°…Àõem¡¥tµem±½t°É•°õÌµÍÍm±½tì(€€¼¼ƒ².“²‚pƒ²^´ƒªÖ³®
+Ğƒ®ÚªâÃªâÃ®*Pƒ²"c².µû²"c®ÂÄ·²^@ƒ®Ú#ªÎó¶Vc®.¸ƒ²vÓ®–ğƒ²"`­´ƒ²^·ªÂƒªÆÃ®š³²f ƒªÂg²v (€€¼¼ƒ²ÚW²Êg²ró®†pƒ²’²vÓ®¦Ğƒ²"c¶>$ƒªÂ².s²Êc®~ğƒªÊç²æc®¾®†pƒ²ZG²ªôƒ²^´ƒ²‚¶nƒªÖ³ªÂ²^@ƒ¶fS®¦Ğƒ®K²vÓ®–ğƒ®6Pƒ®ÂÃ²‚W¶Vs®.¸(€½¹ÍĞÑ¡É½…Ñ4õ5…Ñ ¹µ¥¸ ØÔÀ±ÍÁ…¸¨¸ÈÈ¤°Ñ¡É½…ÑAàõ5…Ñ ¹µ¥¸ Ää±…À¨¸ÌÈ¤ì(€¥˜¡É•°ğõÑ¡É½…Ñ4¥É•ÑÕÉ¸em±½t¬¡É•°½Ñ¡É½…Ñ4¤©Ñ¡É½…ÑAàì(€¥˜¡ÍÁ…¸µÉ•°ğõÑ¡É½…Ñ4¥É•ÑÕÉ¸em¡¥t´ ¡ÍÁ…¸µÉ•°¤½Ñ¡É½…Ñ4¤©Ñ¡É½…ÑAàì(€½¹ÍĞµ¥‘4õ5…Ñ ¹µ…à Ä±ÍÁ…¸µÑ¡É½…Ñ4¨È¤±µ¥‘Aàõ5…Ñ ¹µ…à Ä±…ÀµÑ¡É½…ÑAà¨È¤ì(€É•ÑÕÉ¸em±½t­Ñ¡É½…ÑAà¬ ¡É•°µÑ¡É½…Ñ4¤½µ¥‘4¤©µ¥‘Aàì)ô)™Õ¹Ñ¥½¸}Íá9½Éµ…±¥é•MÑ½ÁÌ¡É…Ü±Ñ½Ñ…°¥ì(€½¹ÍĞÍÌô¡É…İññmt¤¹µ…À¡9Õµ‰•È¤±¸õÍÌ¹±•¹Ñ í¥˜ …¸¥É•ÑÕÉ¸ÍÌì(€ÍÍlÁtôÀì(€™½È¡±•Ğ¤ôÄí¤ñ¸í¤¬¬¥¥˜ …9Õµ‰•È¹¥Í¥¹¥Ñ”¡ÍÍm¥t¥ññÍÍm¥tğõÍÍm¤´Åt¥ì(€€€±•Ğ¨õ¤¬Äíİ¡¥±”¡¨ñ¸˜˜ …9Õµ‰•È¹¥Í¥¹¥Ñ”¡ÍÍm©t¥ññÍÍm©tğõÍÍm¤´Åt¤¥¨¬¬ì(€€€½¹ÍĞ•¹õ¨ñ¸ıÍÍm©té5…Ñ ¹µ…à¡9Õµ‰•È¡Ñ½Ñ…°¥ññÍÍm¤´Åt¬Ä±ÍÍm¤´Åt¬Ä¤ì(€€€™½È¡±•Ğ¬õ¤í¬ñ¨í¬¬¬¥ÍÍm­tõÍÍm¤´Åt¬¡•¹µÍÍm¤´Åt¤¨¡¬µ¤¬Ä¤¼¡¨µ¤¬Ä¤ì(€ô(€É•ÑÕÉ¸ÍÌì)ô)™Õ¹Ñ¥½¸}ÍáQÉ…­IÕ¹MÑ…ÑÌ¡ÉÕ¸¥ì(€±•Ğµ¥¹Lõ%¹™¥¹¥Ñä±µ…áLôµ%¹™¥¹¥Ñä±¹•…ÈôÀ±¸ôÀ±µ¥¹õ%¹™¥¹¥Ñä±µ…áôµ%¹™¥¹¥Ñäì(€™½È¡±•Ğ¤ôÀí¤¬ÄñÉÕ¸¹±•¹Ñ í¤¬ôÈ¥í½¹ÍĞÌõ9Õµ‰•È¡ÉÕ¹m¥t¤±õ9Õµ‰•È¡ÉÕ¹m¤¬Åt¤í¥˜ …9Õµ‰•È¹¥Í¥¹¥Ñ”¡Ì¥ñğ…9Õµ‰•È¹¥Í¥¹¥Ñ”¡¤¥½¹Ñ¥¹Õ”ì(€€€µ¥¹Lõ5…Ñ ¹µ¥¸¡µ¥¹L±Ì¤íµ…áLõ5…Ñ ¹µ…à¡µ…áL±Ì¤íµ¥¹õ5…Ñ ¹µ¥¸¡µ¥¹±¤íµ…áõ5…Ñ ¹µ…à¡µ…á±¤í¥˜¡5…Ñ ¹…‰Ì¡¤ğôä¥¹•…È¬¬í¸¬¬íô(€É•ÑÕÉ¸íÍÁ…¸é5…Ñ ¹µ…à À±µ…áLµµ¥¹L¤±¹•…Èé¸ı¹•…È½¸èÀ±µ¥¹±µ…áôì)ô)™Õ¹Ñ¥½¸}ÍáM¥µÁ±•A±…Ñ™½ÉµÌ¡°±ÑÉ…¬±d±…á¥Í`±Í…±”±É½ÕÑ•!¥¹Ğ±Í•µ…¹Ñ¥I½ÕÑ”¥ì(€½¹ÍĞõàôø ­à¤¹Ñ½¥á• Ä¤ì±•ĞÍÙœôœœ±µ¥¹`õ…á¥Í`±µ…á`õ…á¥Í`ì(€½¹ÍĞ‰½àô¡à±ä±Ü± ¤ôùíµ¥¹`õ5…Ñ ¹µ¥¸¡µ¥¹`±àµÜ¼È¤íµ…á`õ5…Ñ ¹µ…à¡µ…á`±à­Ü¼È¤íÍÙœ¬õ€ñÉ•Ğàôˆ‘í¡àµÜ¼È¥ôˆäôˆ‘í¡äµ ¼È¥ôˆİ¥‘Ñ ôˆ‘í¡Ü¥ôˆ¡•¥¡Ğôˆ‘í¡ ¥ôˆÉàôˆÈˆ±…ÍÌô‰ÑÍàµÁ±…ĞÑÍàµÁ±…Ğ´µ…µ”ˆ¼ù€íôì(€½¹ÍĞÁ…É…±±•±5…Àõ}ÍáA…É…±±•±½±Õµ¹5…À¡°±ÑÉ…¬±ÑÉ…¬¹ÍÌ±É½ÕÑ•!¥¹Ğ±Í•µ…¹Ñ¥I½ÕÑ”¤ì(€½¹ÍĞ…‘‘	±½­Ìô¡‰±½­Ì±ä± ±½™™Í•Ğ¤ôùì(€€€‰±½­Ì¹™½É… ¡ˆôùì(€€€€€¥˜¡ˆ¹­¥¹ôôô‰•Ñİ••¸œ¥ì(€€€€€€€½¹ÍĞ„õˆ¹„­½™™Í•Ğ±‰ˆõˆ¹ˆ­½™™Í•Ğ±…Àô¡‰ˆµ„¤©Í…±”±Üõ5…Ñ ¹µ…à à±5…Ñ ¹µ¥¸ ÄÈ±…À´Ô¤¤ì(€€€€€€€‰½à¡…á¥Í`¬ ¡„­‰ˆ¤¼È¤©Í…±”±ä±Ü± ¤ì(€€€€€õ•±Í•ì(€€€€€€€½¹ÍĞõˆ¹­½™™Í•Ğ±ÜôÄÀ±àõ…á¥Í`­©Í…±”¬¡ˆ¹Í¥‘”ôôô±•™Ğœü´¡Ü¼È¬Ô¤è¡Ü¼È¬Ô¤¤ì(€€€€€€€‰½à¡à±ä±Ü± ¤ì(€€€€€ô(€€€ô¤ì(€ôì(€°¹ÍÑ…Ñ¥½¹Ì¹™½É…  ¡¹…µ”±¤¤ôùì(€€€½¹ÍĞÑ½Á¼õ}ÍáMÑ…Ñ¥½¹Q½Á½±½ä¡°±ÑÉ…¬±ÑÉ…¬¹ÍÌ±¤±É½ÕÑ•!¥¹Ğ±Í•µ…¹Ñ¥I½ÕÑ”¤°äõem¥tì(€€€½¹ÍĞ õ5…Ñ ¹µ¥¸ ĞĞ°ÌØ­5…Ñ ¹µ…à À±Ñ½Á¼¹Á±…Ñ™½ÉµÌ´È¤¨È¤ì(€€€…‘‘	±½­Ì¡Ñ½Á¼¹‰±½­Ì±ä± °À¤ì(€€€Ñ½Á¼¹Á…É…±±•±É½ÕÁÌ¹™½É… ¡œôùí½¹ÍĞÁ´õÁ…É…±±•±5…Ámœ¹­•åtí¥˜¡Á´˜™œ¹µ½‘•°¹½‰Í•ÉÙ•„ôõ™…±Í”¥…‘‘	±½­Ì¡œ¹µ½‘•°¹‰±½­Ì±ä±5…Ñ ¹µ¥¸ ĞÀ°ÌĞ­œ¹½Õ¹Ğ¨È¤±Á´¹½™™Í•Ğ¤íô¤ì(€ô¤ì(€É•ÑÕÉ¸íÍÙœ±µ¥¹`±µ…áaôì)ô)™Õ¹Ñ¥½¸}ÍáA±…Ñ™½Éµ5½‘•°¡Á±…Ñ™½ÉµÌ±±¥¹•9…µ”±ÍÑ…Ñ¥½¹9…µ”¥ì(€Á±…Ñ™½ÉµÌõ5…Ñ ¹µ…à Ä±9Õµ‰•È¡Á±…Ñ™½ÉµÌ¥ñğÄ¤ì(€½¹ÍĞÑÉ…­ÌõÉÉ…ä¹™É½´¡í±•¹Ñ éÁ±…Ñ™½ÉµÍô°¡|±¬¤ôøÈ¸Ô¬¡¬´¡Á±…Ñ™½ÉµÌ´Ä¤¼È¤¨Ô¤±‰±½­Ìõmtì(€¥˜¡Á±…Ñ™½ÉµÌôôôÄ¥‰±½­Ì¹ÁÕÍ ¡í­¥¹è½ÕÑÍ¥‘”œ±éÑÉ…­ÍlÁt±Í¥‘”èÉ¥¡Ğô¤ì(€•±Í”¥˜¡Á±…Ñ™½ÉµÌôôôÈ¥‰±½­Ì¹ÁÕÍ ¡í­¥¹è½ÕÑÍ¥‘”œ±éÑÉ…­ÍlÁt±Í¥‘”è±•™Ğô±í­¥¹è½ÕÑÍ¥‘”œ±éÑÉ…­ÍlÅt±Í¥‘”èÉ¥¡Ğô¤ì(€•±Í•ì(€€€±•Ğ¬ôÀí¥˜¡Á±…Ñ™½ÉµÌ”È¥í‰±½­Ì¹ÁÕÍ ¡í­¥¹è½ÕÑÍ¥‘”œ±éÑÉ…­ÍlÁt±Í¥‘”è±•™Ğô¤í¬ôÄíô(€€€™½È í¬¬ÄñÁ±…Ñ™½ÉµÌí¬¬ôÈ¥‰±½­Ì¹ÁÕÍ ¡í­¥¹è‰•Ñİ••¸œ±„éÑÉ…­Ím­t±ˆéÑÉ…­Ím¬¬Åuô¤ì(€ô(€±•Ğµ…¥¹%‘àì(€¥˜¡Á±…Ñ™½ÉµÌôôôÄ¥µ…¥¹%‘àõlÀ°Átì(€•±Í”¥˜¡Á±…Ñ™½ÉµÌôôôÈ¥µ…¥¹%‘àõlÀ°Åtì(€•±Í”µ…¥¹%‘àõm5…Ñ ¹™±½½È ¡Á±…Ñ™½ÉµÌ´Ä¤¼È¤±5…Ñ ¹•¥° ¡Á±…Ñ™½ÉµÌ´Ä¤¼È¥tì(€É•ÑÕÉ¸íÑÉ…­Ì±‰±½­Ì±µ…¥¹%‘à±µ…¥¹Ìéµ…¥¹%‘à¹µ…À¡¬ôùÑÉ…­Ím­t¥ôì)ô)™Õ¹Ñ¥½¸}Íá½¹Í•ÕÑ¥Ù•A±…Ñ™½ÉµÉ½ÕÁÌ¡¥Ñ•µÌ±­•å¸¥ì(€½¹ÍĞ‰äõíôí¥Ñ•µÌ¹™½É… ¡Àôùí½¹ÍĞ¬õ­•å¸¡À¤ì¡‰åm­tõ‰åm­uññmt¤¹ÁÕÍ ¡À¤íô¤í½¹ÍĞ½ÕĞõmtì(€=‰©•Ğ¹­•åÌ¡‰ä¤¹™½É… ¡¬ôùí½¹ÍĞ„õ‰åm­t¹Í½ÉĞ ¡à±ä¤ôùà¹Á¸µä¹Á¸¤í±•Ğœõmtì(€€€„¹™½É… ¡Àôùí¥˜¡œ¹±•¹Ñ ˜™À¹Á¸ùmœ¹±•¹Ñ ´Åt¹Á¸¬Ä¥í½ÕĞ¹ÁÕÍ ¡í­•äé¬±¥Ñ•µÌéô¤íœõmtíõœ¹ÁÕÍ ¡À¤íô¤ì(€€€¥˜¡œ¹±•¹Ñ ¥½ÕĞ¹ÁÕÍ ¡í­•äé¬±¥Ñ•µÌéô¤ì(€ô¤íÉ•ÑÕÉ¸½ÕĞì)ô)™Õ¹Ñ¥½¸}ÍáI½ÕÑ•Q½­•¹Ì¡É½ÕÑ•!¥¹Ğ¥ì(€¥˜ …É½ÕÑ•!¥¹Ğ¥É•ÑÕÉ¸mtì(€É•ÑÕÉ¸l¸¸¹¹•ÜM•Ğ¡mÉ½ÕÑ•!¥¹Ğ¹±…‰•°°¸¸¸¡É½ÕÑ•!¥¹Ğ¹¹…µ•Íññmt¥t(€€€€¹™±…Ñ5…À¡ØôùMÑÉ¥¹œ¡Ùñğœœ¤¹ÍÁ±¥Ğ ½mqÏŠIpµ|¼ ¥t¬¼¤¤¹µ…À¡ØôùØ¹ÑÉ¥´ ¤¤¹™¥±Ñ•È¡ØôùØ¹±•¹Ñ øôÈ¤¥tì)ô)™Õ¹Ñ¥½¸}ÍáA±…Ñ™½Éµ5…Ñ¡•ÍI½ÕÑ”¡À±É½ÕÑ•!¥¹Ğ¥ì(€¥˜ …Áñğ…É½ÕÑ•!¥¹Ññğ…À¹Ù…É¥…¹ÑÌü¹±•¹Ñ ¥É•ÑÕÉ¸™…±Í”ì(€½¹ÍĞÑ½­•¹Ìõ}ÍáI½ÕÑ•Q½­•¹Ì¡É½ÕÑ•!¥¹Ğ¤ì(€É•ÑÕÉ¸À¹Ù…É¥…¹ÑÌ¹Í½µ”¡ØôùÑ½­•¹Ì¹Í½µ”¡ĞôùMÑÉ¥¹œ¡Ø¤¹¥¹±Õ‘•Ì¡Ğ¥ññĞ¹¥¹±Õ‘•Ì¡MÑÉ¥¹œ¡Ø¤¤¤¤ì)ô)™Õ¹Ñ¥½¸}Íá±¥¹•‘	É…¹¡d¡¹…µ•Ì±µ…¥¹%‘à±µ…¥¹d±É½Ü¥ì(€É½Üõ9Õµ‰•È¡É½Ü¥ñğĞĞí½¹ÍĞ½µµ½¸õmtì(€¹…µ•Ì¹™½É…  ¡¸±¤¤ôùí¥˜¡µ…¥¹%‘ám¹t„õ¹Õ±°¥½µµ½¸¹ÁÕÍ ¡¤¤íô¤ì(€¥˜ …½µµ½¸¹±•¹Ñ ¥É•ÑÕÉ¸}Íád¡¹…µ•Ì¹µ…À  ¤ôù¹Õ±°¤±É½Ü¤ì(€½¹ÍĞ½ÕĞõ¹•ÜÉÉ…ä¡¹…µ•Ì¹±•¹Ñ ¤±™¥ÉÍĞõ½µµ½¹lÁt±±…ÍĞõ½µµ½¹m½µµ½¸¹±•¹Ñ ´Åtì(€½µµ½¸¹™½É… ¡¤ôùí½ÕÑm¥tõµ…¥¹emµ…¥¹%‘ám¹…µ•Ím¥uutíô¤ì(€½¹ÍĞÕÁMÑ•Àõ™¥ÉÍĞı5…Ñ ¹µ¥¸¡É½Ü±5…Ñ ¹µ…à Äà°¡½ÕÑm™¥ÉÍÑt´ÄÈ¤½™¥ÉÍĞ¤¤éÉ½Üì(€™½È¡±•Ğ¤õ™¥ÉÍĞ´Äí¤øôÀí¤´´¥½ÕÑm¥tõ½ÕÑm¤¬ÅtµÕÁMÑ•Àì(€™½È¡±•Ğ¤õ±…ÍĞ¬Äí¤ñ¹…µ•Ì¹±•¹Ñ í¤¬¬¥½ÕÑm¥tõ½ÕÑm¤´Åt­É½Üì(€™½È¡±•ĞŒôÀíŒ¬Äñ½µµ½¸¹±•¹Ñ íŒ¬¬¥ì(€€€½¹ÍĞ„õ½µµ½¹mt±ˆõ½µµ½¹mŒ¬Åt±ÍÁ…¸õˆµ„ì(€€€™½È¡±•Ğ¤õ„¬Äí¤ñˆí¤¬¬¥½ÕÑm¥tõ½ÕÑm…t¬¡½ÕÑm‰tµ½ÕÑm…t¤¨¡¤µ„¤½ÍÁ…¸ì(€ô(€É•ÑÕÉ¸½ÕĞì)ô)™Õ¹Ñ¥½¸}ÍáM¥‘¥¹%Í½¹¹•Ñ•¡±½…±IÕ¹Ì±Í¥‘¥¹±ÍÑ…Ñ¥½¹QÉ…­Ì¥ì(€½¹ÍĞ½¹M¥‘¥¹œõôù5…Ñ ¹…‰Ì¡9Õµ‰•È¡¤µÍ¥‘¥¹¤ğôÈ¸ÜÔì(€½¹ÍĞ½¹MÑ…Ñ¥½¹QÉ…¬õôùÍÑ…Ñ¥½¹QÉ…­Ì¹Í½µ”¡Ñôù5…Ñ ¹…‰Ì¡9Õµ‰•È¡¤µÑ¤ğôÈ¸ÜÔ¤ì(€É•ÑÕÉ¸±½…±IÕ¹Ì¹Í½µ”¡Á½¥¹ÑÌôùì(€€€™½È¡±•Ğ¤ôÀí¤¬ÄñÁ½¥¹ÑÌ¹±•¹Ñ í¤¬¬¥ì(€€€€€½¹ÍĞ„õÁ½¥¹ÑÍm¥t±ˆõÁ½¥¹ÑÍm¤¬Åt±±½¹¥ÑÕ‘¥¹…°õ5…Ñ ¹…‰Ì¡ˆ¹Ìµ„¹Ì¤±±…Ñ•É…°õ5…Ñ ¹…‰Ì¡ˆ¹µ„¹¤ì(€€€€€€¼¼ƒªÂg²v ƒ¶>Ó®š³®vó²vã²^@ƒ²jÃ²^Ã¶z ƒ®F@ƒ²ƒ®†sªÂ ƒ®N“²ZĞƒ²z#®.“®*Pƒ²vÓ²rƒ®3²ró®†pƒ²^ÃªÊÃ¶Vc² ƒ²V+®*S®.¸(€€€€€€¼¼ƒ²^´ƒªÖ³®
+Ó²v`ƒ²ŸªÎ€ƒ²^Ã²7®Bpƒ®ÚªâÀƒ²ƒ®Ú²vĞƒ².“²‚pƒ²ZDƒ²ƒ®†s®–ğƒ²z®*PƒªÊ÷²jÃ®0ƒ²^ÃªÊÃ®†pƒ²vã²‚W¶Vs®.¸(€€€€€¥˜¡±½¹¥ÑÕ‘¥¹…°ğÉññ±½¹¥ÑÕ‘¥¹…°øÈÈÁññ±…Ñ•É…°ğÈ¸Õññ±…Ñ•É…°øà¸Ô¥½¹Ñ¥¹Õ”ì(€€€€€¥˜ ¡½¹M¥‘¥¹œ¡„¹¤˜™½¹MÑ…Ñ¥½¹QÉ…¬¡ˆ¹¤¥ñğ¡½¹M¥‘¥¹œ¡ˆ¹¤˜™½¹MÑ…Ñ¥½¹QÉ…¬¡„¹¤¤¥É•ÑÕÉ¸ÑÉÕ”ì(€€€ô(€€€É•ÑÕÉ¸™…±Í”ì(€ô¤ì)ô(¼¼ƒ²vc®¾àƒ®Ú²tƒªÊÃªÎó²v`ƒ².“²‚pƒ²Š3²jÀƒ²"s²s²f ƒ²^ÃªÊÀƒªÒªÎ®*Pƒ²rƒ²¶Vc®B`°ƒ²nC®Îàƒ²Š3¶Fs²v`ƒ®¾ã²ã¶Vpƒ¶vS®N“®šó²v (¼¼ƒ¶fS®¦Ó²^@ƒ²²‚Dƒ¶"³²b¶Vc² ƒ²V+®*S®.¸ƒ®ÂÃ²ƒ®>²^C®*Pƒ²^·®#®.ƒ²Ös®2 €Û²ƒªæ3²®0ƒªŞƒ®NÄƒªÂªÊ§²ró®†pƒ²‚W®š³¶Vs®.¸)™Õ¹Ñ¥½¸}ÍáM¥µÁ±•Q½Á½±½ä¡É…Ü¥ì(€¥˜ …É…Ü¥É•ÑÕÉ¸É…Üì(€½¹ÍĞ½‰Í•ÉÙ•õÉ…Ü¹½‰Í•ÉÙ•„ôõ™…±Í”˜™ÉÉ…ä¹¥ÍÉÉ…ä¡É…Ü¹ÑÉ…­Ì¤˜™É…Ü¹ÑÉ…­Ì¹±•¹Ñ øÀì(€½¹ÍĞÍ½ÕÉ•Ìõ½‰Í•ÉÙ•ıÉ…Ü¹ÑÉ…­Ìémtì(€½¹ÍĞ™…±±‰…­½Õ¹Ğõ5…Ñ ¹µ…à Ä±5…Ñ ¹µ¥¸ Ğ±9Õµ‰•È¡É…Ü¹Á±…Ñ™½ÉµÌ¥ñğÈ¤¤ì(€½¹ÍĞ½Õ¹Ğõ5…Ñ ¹µ…à Ä±5…Ñ ¹µ¥¸ Ø±Í½ÕÉ•Ì¹±•¹Ñ¡ññ™…±±‰…­½Õ¹Ğ¤¤ì(€½¹ÍĞ•¹Ñ•Èô¡½Õ¹Ğ´Ä¤¼È±ÑÉ…­ÌõÉÉ…ä¹™É½´¡í±•¹Ñ é½Õ¹Ñô°¡|±¤¤ôøÈ¸Ô¬¡¤µ•¹Ñ•È¤¨Ô¤ì(€½¹ÍĞÍ½ÕÉ•%¹‘•àõôùì(€€€¥˜ …Í½ÕÉ•Ì¹±•¹Ñ ¥É•ÑÕÉ¸€´Äì(€€€±•Ğ‰•ÍĞôÀ±‘¥ÍĞõ%¹™¥¹¥ÑäíÍ½ÕÉ•Ì¹™½É…  ¡Ø±¤¤ôùí½¹ÍĞ¸õ5…Ñ ¹…‰Ì¡Øµ¤í¥˜¡¸ñ‘¥ÍĞ¥í‘¥ÍĞõ¸í‰•ÍĞõ¤íõô¤ì(€€€É•ÑÕÉ¸‰•ÍĞì(€ôì(€½¹ÍĞµ…ÁÁ•‘%¹‘•àõ¤ôù5…Ñ ¹µ…à À±5…Ñ ¹µ¥¸¡½Õ¹Ğ´Ä±5…Ñ ¹É½Õ¹ ¡5…Ñ ¹µ…à À±¤¤¤¨¡½Õ¹Ğ´Ä¤½5…Ñ ¹µ…à Ä±Í½ÕÉ•Ì¹±•¹Ñ ´Ä¤¤¤¤ì(€±•Ğµ…¥¹%‘àô¡É…Ü¹µ…¥¹Íññmt¤¹µ…À¡ôùµ…ÁÁ•‘%¹‘•à¡Í½ÕÉ•%¹‘•à¡¤¤¤¹Í±¥” À°È¤ì(€¥˜¡µ…¥¹%‘à¹±•¹Ñ ğÈ¥µ…¥¹%‘àõ½Õ¹ĞôôôÄılÀ°Átém5…Ñ ¹™±½½È ¡½Õ¹Ğ´Ä¤¼È¤±5…Ñ ¹•¥° ¡½Õ¹Ğ´Ä¤¼È¥tì(€µ…¥¹%‘à¹Í½ÉĞ ¡„±ˆ¤ôù„µˆ¤ì(€½¹ÍĞµ…¥¹Ìõµ…¥¹%‘à¹µ…À¡¤ôùÑÉ…­Ím¥t¤ì(€½¹ÍĞ‰±½­Ìõ½‰Í•ÉÙ•ü¡É…Ü¹‰±½­Íññmt¤¹µ…À¡ˆôùì(€€€¥˜¡ˆ¹­¥¹ôôô‰•Ñİ••¸œ¥ì(€€€€€½¹ÍĞ„õµ…ÁÁ•‘%¹‘•à¡Í½ÕÉ•%¹‘•à¡ˆ¹„¤¤±Œõµ…ÁÁ•‘%¹‘•à¡Í½ÕÉ•%¹‘•à¡ˆ¹ˆ¤¤ì(€€€€€É•ÑÕÉ¸„ôôõŒı¹Õ±°éí­¥¹è‰•Ñİ••¸œ±„éÑÉ…­Ím5…Ñ ¹µ¥¸¡„±Œ¥t±ˆéÑÉ…­Ím5…Ñ ¹µ…à¡„±Œ¥t±½¹™¥‘•¹”éˆ¹½¹™¥‘•¹•ôì(€€€ô(€€€½¹ÍĞ¤õµ…ÁÁ•‘%¹‘•à¡Í½ÕÉ•%¹‘•à¡ˆ¹¤¤íÉ•ÑÕÉ¸í­¥¹è½ÕÑÍ¥‘”œ±éÑÉ…­Ím¥t±Í¥‘”éˆ¹Í¥‘”±½¹™¥‘•¹”éˆ¹½¹™¥‘•¹•ôì(€ô¤¹™¥±Ñ•È¡	½½±•…¸¤é}ÍáA±…Ñ™½Éµ5½‘•°¡½Õ¹Ğ°œœ°œœ¤¹‰±½­Ìì(€½¹ÍĞ½ÕÑÍ¥‘”õmÑÉ…­ÍlÁt´Ô±ÑÉ…­ÍmÑÉ…­Ì¹±•¹Ñ ´Åt¬Õtì(€½¹ÍĞÍ¥‘¥¹Ìô¡É…Ü¹Í¥‘¥¹Íññmt¤¹Í±¥” À°È¤¹µ…À ¡Ì±¤¤ôø¡ì¸¸¹Ì±é½ÕÑÍ¥‘•m¤”Éuô¤¤ì(€½¹ÍĞÁ…É…±±•±É½ÕÁÌô¡É…Ü¹Á…É…±±•±É½ÕÁÍññmt¤¹™¥±Ñ•È¡œôùœ¹µ½‘•°˜™œ¹µ½‘•°¹½‰Í•ÉÙ•„ôõ™…±Í”¤¹Í±¥” À°È¤¹µ…À¡œôùì(€€€½¹ÍĞ¸õ5…Ñ ¹µ…à Ä±5…Ñ ¹µ¥¸ Ğ±œ¹µ½‘•°¹ÑÉ…­Ì¹±•¹Ñ¡ññœ¹½Õ¹ÑñğÈ¤¤ì(€€€½¹ÍĞ‘ÌõÉÉ…ä¹™É½´¡í±•¹Ñ é¹ô°¡|±¤¤ôøÈ¸Ô¬¡¤´¡¸´Ä¤¼È¤¨Ô¤ì(€€€É•ÑÕÉ¸ì¸¸¹œ±µ½‘•°éì¸¸¹œ¹µ½‘•°±ÑÉ…­Ìé‘Ì±µ…¥¹Ìé¸ôôôÄım‘ÍlÁt±‘ÍlÁutém‘ÍlÁt±‘Ím¸´Åut±‰±½­Ìé}ÍáA±…Ñ™½Éµ5½‘•°¡¸°œœ°œœ¤¹‰±½­Ì±½‰Í•ÉÙ•éÑÉÕ•õôì(€ô¤ì(€½¹ÍĞÑÉ…­5•Ñ„õÑÉ…­Ì¹µ…À ¡±¥¹‘•à¤ôùì(€€€½¹ÍĞÍÉŒõÉ…Ü¹ÑÉ…­5•Ñ„˜™É…Ü¹ÑÉ…­5•Ñ…m5…Ñ ¹µ¥¸¡¥¹‘•à±É…Ü¹ÑÉ…­5•Ñ„¹±•¹Ñ ´Ä¥tì(€€€É•ÑÕÉ¸í¥¹‘•à±±ÑåÁ”éÍÉŒü¹ÑåÁ•ñğÕ¹­¹½İ¸œ±½¹™¥‘•¹”éÍÉŒü¹½¹™¥‘•¹•ñğÀ±½¹¹•Ñ•éÍÉŒü¹½¹¹•Ñ•„ôõ™…±Í”±½‰Í•ÉÙ•‘ôì(€ô¤ì(€É•ÑÕÉ¸ì¸¸¹É…Ü±ÑÉ…­Ì±ÑÉ…­5•Ñ„±µ…¥¹%‘à±µ…¥¹Ì±‰±½­Ì±Í¥‘¥¹Ì±Á…É…±±•±É½ÕÁÌ±É½ÍÌéÉ…Ü¹É½ÍÌüÄèÀ±½‰Í•ÉÙ•‘ôì)ô(¼¼ƒ²vãªÊ3²zƒ².“²Š3¶Fs²^C²pƒ®ÂÃ²ƒ²v`ƒ²vc®¾ã®0ƒ²ÚS²Ús¶Vs®.¸ƒ²nC®Îàƒ¶>Ó®š³®vó²vã²vƒªŞã®2®†pƒ²ÚW²3¶Vc² ƒ²V+ªÎ€(¼¼ƒ®Ú®Îã²€ƒ²"c
+ßªÆÓ®c²ƒ
+ß¶j3²Â ¿²rƒ²æc²€ƒ²†Ó²z³®–ğƒªÒ²‚pƒ®ÂÃ²€ƒªâÃ¶bã®†pƒ®.“².pƒªŞã®šÃ®.¸)™Õ¹Ñ¥½¸}ÍáMÑ…Ñ¥½¹Q½Á½±½ä¡°±ÑÉ…¬±ÍÌ±¤±É½ÕÑ•!¥¹Ğ±Í•µ…¹Ñ¥I½ÕÑ”¥ì(€½¹ÍĞÍ•µ…¹Ñ¥Q½Á½±½äõÍ•µ…¹Ñ¥I½ÕÑ”˜™Í•µ…¹Ñ¥I½ÕÑ”¹ÍÑ…Ñ¥½¹Ì˜™Í•µ…¹Ñ¥I½ÕÑ”¹ÍÑ…Ñ¥½¹Ím¥t˜™Í•µ…¹Ñ¥I½ÕÑ”¹ÍÑ…Ñ¥½¹Ím¥t¹Ñ½Á½±½äì(€¥˜¡Í•µ…¹Ñ¥Q½Á½±½ä¥É•ÑÕÉ¸}ÍáM¥µÁ±•Q½Á½±½ä¡Í•µ…¹Ñ¥Q½Á½±½ä¤ì(€½¹ÍĞÌõÍÍm¥t±ÁÉ•Øõ¤ıÍÍm¤´ÅtéÌ±¹•áĞõ¤¬ÄñÍÌ¹±•¹Ñ ıÍÍm¤¬ÅtéÌì(€½¹ÍĞİ¥¹‘½Üõ5…Ñ ¹µ¥¸ ÜÈÀ±5…Ñ ¹µ…à ÈØÀ±5…Ñ ¹µ¥¸¡¤ıÌµÁÉ•Øé%¹™¥¹¥Ñä±¤¬ÄñÍÌ¹±•¹Ñ ı¹•áĞµÌé%¹™¥¹¥Ñä¤¨¸ÈĞ¤¤ì(€½¹ÍĞÍÕÁÁ½ÉÑÌõ¹•Ü5…À ¤±±½…±IÕ¹Ìõmtí±•ĞÉ½ÍÌôÀ±Á½­•ĞôÀì(€€¡ÑÉ…¬¹É¹ññmt¤¹™½É… ¡ÉÕ¸ôùì(€€€½¹ÍĞÍĞõ}ÍáQÉ…­IÕ¹MÑ…ÑÌ¡ÉÕ¸¤í¥˜¡ÍĞ¹ÍÁ…¸ğÈÈ¥É•ÑÕÉ¸ì(€€€±•Ğµ¥¹Lõ%¹™¥¹¥Ñä±µ…áLôµ%¹™¥¹¥Ñäí½¹ÍĞ‘Ìõmt±Á½¥¹ÑÌõmtì(€€€™½È¡±•Ğ¬ôÀí¬¬ÄñÉÕ¸¹±•¹Ñ í¬¬ôÈ¥í½¹ÍĞÉÌõ9Õµ‰•È¡ÉÕ¹m­t¤±õ9Õµ‰•È¡ÉÕ¹m¬¬Åt¤íµ¥¹Lõ5…Ñ ¹µ¥¸¡µ¥¹L±ÉÌ¤íµ…áLõ5…Ñ ¹µ…à¡µ…áL±ÉÌ¤í¥˜¡5…Ñ ¹…‰Ì¡ÉÌµÌ¤ğõİ¥¹‘½Ü¥í‘Ì¹ÁÕÍ ¡¤íÁ½¥¹ÑÌ¹ÁÕÍ ¡íÌéÉÌ±‘ô¤íõô(€€€¥˜¡µ…áLñÌµİ¥¹‘½İññµ¥¹LùÌ­İ¥¹‘½İñğ…‘Ì¹±•¹Ñ ¥É•ÑÕÉ¸ì(€€€¥˜¡Á½¥¹ÑÌ¹±•¹Ñ øÄ¥±½…±IÕ¹Ì¹ÁÕÍ ¡Á½¥¹ÑÌ¤ì(€€€¥˜¡ÍĞ¹ÍÁ…¸øôÜÀ¥‘Ì¹™½É… ¡ôùí½¹ÍĞÄõ5…Ñ ¹É½Õ¹¡¼Ô¤¨Ôí¥˜¡Äğ´ÅññÄøØ¥ÍÕÁÁ½ÉÑÌ¹Í•Ğ¡Ä°¡ÍÕÁÁ½ÉÑÌ¹•Ğ¡Ä¥ñğÀ¤¬Ä¤íô¤ì(€€€¥˜¡ÍĞ¹ÍÁ…¸ğôÔÈÀ˜™ÍĞ¹µ¥¹ğôÄ˜™ÍĞ¹µ…áøôĞ˜™ÍĞ¹µ…áµÍĞ¹µ¥¹ğôÄÌ¥É½ÍÌ¬¬ì(€€€½¹ÍĞİ¡½±±å1½…°õµ¥¹LøõÌµİ¥¹‘½Ü˜™µ…áLğõÌ­İ¥¹‘½Üì(€€€¥˜¡İ¡½±±å1½…°˜™ÍĞ¹ÍÁ…¸øôàÀ˜™ÍĞ¹ÍÁ…¸ğôÜØÀ˜™ÍĞ¹µ¥¹ø´Ä˜™ÍĞ¹µ…áğÜ¥Á½­•Ğ¬¬ì(€ô¤ì(€½¹ÍĞ…±±A™Ìõ}µ•ÑÉ½MÑ…Ñ¥½¹A±…Ñ™½ÉµÌ¡°¹ÍÑ…Ñ¥½¹Ím¥t±°¹¹…µ”±°¹ÍÑ…Ñ¥½¹Ím¤´Åt±°¹ÍÑ…Ñ¥½¹Ím¤¬Åt¤ì(€½¹ÍĞµ…Ñ¡•‘I½ÕÑ•A™ÌõÉ½ÕÑ•!¥¹Ğı…±±A™Ì¹™¥±Ñ•È¡ÀôùÀ¹¥ÍÕÈ˜™}ÍáA±…Ñ™½Éµ5…Ñ¡•ÍI½ÕÑ”¡À±É½ÕÑ•!¥¹Ğ¤¤émtì(€½¹ÍĞÉ½ÕÑ•A™Ìõµ…Ñ¡•‘I½ÕÑ•A™Ì¹±•¹Ñ ıµ…Ñ¡•‘I½ÕÑ•A™Ìè¡É½ÕÑ•!¥¹Ğı…±±A™Ì¹™¥±Ñ•È¡ÀôùÀ¹¥ÍÕÈ˜™À¹‰É…¹¡=¹±ä¤émt¤ì(€½¹ÍĞµ…¥¹A½½°õÉ½ÕÑ•A™Ì¹±•¹Ñ ıÉ½ÕÑ•A™Ìé…±±A™Ì¹™¥±Ñ•È¡ÀôùÀ¹¥ÍÕÈ˜˜…À¹‰É…¹¡=¹±ä¤ì(€½¹ÍĞÕÉÉ½ÕÁÌõ}Íá½¹Í•ÕÑ¥Ù•A±…Ñ™½ÉµÉ½ÕÁÌ¡µ…¥¹A½½°° ¤ôù°¹¹…µ”¤ì(€ÕÉÉ½ÕÁÌ¹Í½ÉĞ ¡„±ˆ¤ôùˆ¹¥Ñ•µÌ¹±•¹Ñ µ„¹¥Ñ•µÌ¹±•¹Ñ¡ññ„¹¥Ñ•µÍlÁt¹Á¸µˆ¹¥Ñ•µÍlÁt¹Á¸¤ì(€½¹ÍĞÁ™ÌõÕÉÉ½ÕÁÌ¹±•¹Ñ ıÕÉÉ½ÕÁÍlÁt¹¥Ñ•µÌémtì(€½¹ÍĞÁ±…Ñ™½ÉµÌõ5…Ñ ¹µ…à Ä±Á™Ì¹±•¹Ñ¡ñğÄ¤±¹ÕµÌõÁ™Ì¹±•¹Ñ ıÁ™Ì¹µ…À¡ÀôùÀ¹Á¸¤¹Í½ÉĞ ¡„±ˆ¤ôù„µˆ¤élÅtì(€€¼¼ƒ²*çªÂW²z”ƒ®Ê#¶bã®*Pƒ²Š3ŠK²jÀƒ²ƒ®†pƒ²"s²s®†pƒ²
+³²j§¶Vc®¦Àƒ²®2².t¿²³².tƒªÖ³²†Ã²f ƒ®Îã²€ƒ®Ê#¶bã®–ğ(€€¼¼ƒ¶Vc®
+c²v`ƒ®ª£®6ã²^C²pƒ¶V£ªî`ƒ²
+Ã²Ús¶Vs®.¸(€½¹ÍĞµ½‘•°õ}ÍáA±…Ñ™½Éµ5½‘•°¡Á±…Ñ™½ÉµÌ±°¹¹…µ”±°¹ÍÑ…Ñ¥½¹Ím¥t¤ì(€½¹ÍĞíÑÉ…­Ì±‰±½­Ì±µ…¥¹%‘à±µ…¥¹Íôõµ½‘•°ì(€€¼¼ƒ²*çªÂW²z—²vĞƒ²^®*Pƒ²vãªÊ3²zƒ²fã²â„ƒ²ƒ®†sªÂ ƒ®Âc®ÎÔƒªÊ²Ús®B€ƒ®V3®0ƒ²ÚSªÂ ƒ²rƒ²æ`¿®2¶Ró²ƒ²ró®†pƒ®
+£ªâÓ®.¸(€½¹ÍĞ½ÕÁ¥•‘5¥¸õÑÉ…­ÍlÁt±½ÕÁ¥•‘5…àõÑÉ…­ÍmÑÉ…­Ì¹±•¹Ñ ´Åtì(€±•ĞÍ¥‘¥¹Ìõl¸¸¹ÍÕÁÁ½ÉÑÍt¹™¥±Ñ•È ¡m±¹t¤ôù¸øôÌ˜˜¡ñ½ÕÁ¥•‘5¥¸´Éññù½ÕÁ¥•‘5…à¬È¤¤¹Í½ÉĞ ¡„±ˆ¤ôù‰lÅtµ…lÅt¤(€€€€¹µ…À ¡m‘t¤ôø¡í±½¹¹•Ñ•é}ÍáM¥‘¥¹%Í½¹¹•Ñ•¡±½…±IÕ¹Ì±±ÑÉ…­Ì¥ô¤¤¹Í±¥” À°È¤ì(€½¹ÍĞÍ•½¹‘…ÉåÕÈõÉ½ÕÑ•!¥¹ĞımtéÕÉÉ½ÕÁÌ¹Í±¥” Ä¤¹µ…À ¡œ±¤¤ôø¡í­•äé€‘í°¹¹…µ•ôë²ó²jP‘í¥õ€±±…‰•°èœœ±½±½Èé°¹½±½È±­¥¹èµ…¥¸œ±¥Ñ•µÌéœ¹¥Ñ•µÍô¤¤ì(€½¹ÍĞµ…ÁÁ•‘	É…¹ ô…É½ÕÑ•!¥¹Ğ˜˜¡ÑÉ…¬¹‰ññmt¤¹Í½µ”¡ˆôùÉÉ…ä¹¥ÍÉÉ…ä¡ˆ¹¹…µ•Ì¤˜™ˆ¹¹…µ•Ì¹¥¹±Õ‘•Ì¡°¹ÍÑ…Ñ¥½¹Ím¥t¤¤ì(€½¹ÍĞÙ…É¥…¹ÑÉ½ÕÁÌõÉ½ÕÑ•!¥¹Ñññµ…ÁÁ•‘	É…¹ ımté}Íá½¹Í•ÕÑ¥Ù•A±…Ñ™½ÉµÉ½ÕÁÌ¡…±±A™Ì¹™¥±Ñ•È¡ÀôùÀ¹¥ÍÕÈ˜™À¹‰É…¹¡=¹±ä¤±ÀôùÀ¹Ù…É¥…¹ÑÌü¹©½¥¸ Ÿ
+Üœ¥ñğŸªÂ² œ¤(€€€€¹µ…À¡œôø¡í­•äéƒªÂ² è‘í°¹¹…µ•ôè‘íœ¹­•åõ€±±…‰•°é€‘í°¹¹…µ•ô€‘íœ¹­•åõ€±½±½Èé°¹½±½È±­¥¹èÙ…É¥…¹Ğœ±É½ÕÑ•-•åÌéœ¹¥Ñ•µÌ¹™±…Ñ5…À¡ÀôùÀ¹Ù…É¥…¹ÑÍññmt¤±¥Ñ•µÌéœ¹¥Ñ•µÍô¤¤ì(€½¹ÍĞ½Ñ¡•ÈõÉ½ÕÑ•!¥¹Ğımté}Íá½¹Í•ÕÑ¥Ù•A±…Ñ™½ÉµÉ½ÕÁÌ¡…±±A™Ì¹™¥±Ñ•È¡Àôø…À¹¥ÍÕÈ˜˜…À¹©Õ¹Ñ¥½¸˜˜¡À¹­¥¹ôôôµ•ÑÉ¼ññÀ¹­¥¹ôôôÑÉ…¥¸œ¤¤±ÀôùÀ¹­¥¹ôôôÑÉ…¥¸œüŸ²vó®Âc²^Ó²Â ƒ®ÎG¶Z'²€œè¡À¹±…‰•±ñğŸ¶>'¶Z'²€œ¤¤(€€€€¹µ…À¡œôø¡í­•äéƒ¶>'¶Z$è‘íœ¹­•åõ€±±…‰•°éœ¹­•ä±½±½Èéœ¹¥Ñ•µÍlÁt¹½±½È±­¥¹éœ¹¥Ñ•µÍlÁt¹­¥¹±¥Ñ•µÌéœ¹¥Ñ•µÍô¤¤ì(€½¹ÍĞÁ…É…±±•±É½ÕÁÌõl¸¸¹Í•½¹‘…ÉåÕÈ°¸¸¹Ù…É¥…¹ÑÉ½ÕÁÌ°¸¸¹½Ñ¡•Ét¹µ…À¡œôø¡ì¸¸¹œ±½Õ¹Ğéœ¹¥Ñ•µÌ¹±•¹Ñ ±Á±…Ñ™½Éµ9ÕµÌéœ¹¥Ñ•µÌ¹µ…À¡ÀôùÀ¹Á¸¤±µ½‘•°é}ÍáA±…Ñ™½Éµ5½‘•°¡œ¹¥Ñ•µÌ¹±•¹Ñ ±œ¹±…‰•°±°¹ÍÑ…Ñ¥½¹Ím¥t¥ô¤¤ì(€É•ÑÕÉ¸íÑÉ…­Ì±µ…¥¹Ì±µ…¥¹%‘à±‰±½­Ì±Í¥‘¥¹Ì±Á…É…±±•±É½ÕÁÌ±É½ÍÌé5…Ñ ¹µ¥¸ È±É½ÍÌ¤±Á½­•ĞéÁ½­•ĞøÀ±Á±…Ñ™½ÉµÌ±¹ÕµÍôì)ô)™Õ¹Ñ¥½¸}ÍáA…É…±±•±½±Õµ¹5…À¡°±ÑÉ…¬±ÍÌ±É½ÕÑ•!¥¹Ğ±Í•µ…¹Ñ¥I½ÕÑ”¥ì(€½¹ÍĞ­•åÌõíôí°¹ÍÑ…Ñ¥½¹Ì¹™½É…  ¡Ì±¤¤ôù}ÍáMÑ…Ñ¥½¹Q½Á½±½ä¡°±ÑÉ…¬±ÍÌ±¤±É½ÕÑ•!¥¹Ğ±Í•µ…¹Ñ¥I½ÕÑ”¤¹Á…É…±±•±É½ÕÁÌ¹™½É… ¡œôùí¥˜¡œ¹µ½‘•°¹½‰Í•ÉÙ•„ôõ™…±Í”¥­•åÍmœ¹­•åtõœíô¤¤ì(€½¹ÍĞ½ÕĞõíôí=‰©•Ğ¹­•åÌ¡­•åÌ¤¹Í½ÉĞ ¤¹™½É…  ¡¬±¤¤ôùí½¹ÍĞ´õ­•åÍm­t¹µ½‘•°í½ÕÑm­tõí½™™Í•ĞèÈÔ­¤¨ÄÔµ´¹ÑÉ…­ÍlÁt±½±½Èé­•åÍm­t¹½±½È±±…‰•°é­•åÍm­t¹±…‰•±ôíô¤ì(€É•ÑÕÉ¸½ÕĞì)ô)™Õ¹Ñ¥½¸}ÍáM¡•µ…Ñ¥QÉ…­1…å•È¡°±ÑÉ…¬±ÍÌ±d±…á¥Í`±Í…±”±½±½È±É½ÕÑ•!¥¹Ğ±½ÁÑÌ±Í•µ…¹Ñ¥I½ÕÑ”¥ì(€½ÁÑÌõ½ÁÑÍññíôì(€½¹ÍĞõàôø ­à¤¹Ñ½¥á• Ä¤±ÕÀõ…á¥Í`±‘½İ¸õ…á¥Í`¬Ô©Í…±”±äÀõelÁt±å8õemd¹±•¹Ñ ´Åtì(€±•Ğ…Õàôœœ±µ¥¹`õÕÀ±µ…á`õ‘½İ¸ì(€½¹ÍĞÑ½Á½Ìõ°¹ÍÑ…Ñ¥½¹Ì¹µ…À ¡Ì±¤¤ôù}ÍáMÑ…Ñ¥½¹Q½Á½±½ä¡°±ÑÉ…¬±ÍÌ±¤±É½ÕÑ•!¥¹Ğ±Í•µ…¹Ñ¥I½ÕÑ”¤¤±Á…É…±±•±5…Àõ}ÍáA…É…±±•±½±Õµ¹5…À¡°±ÑÉ…¬±ÍÌ±É½ÕÑ•!¥¹Ğ±Í•µ…¹Ñ¥I½ÕÑ”¤ì(€½¹ÍĞÉ½ÕÑ•Ìõm4€‘í¡ÕÀ¥ô€‘í¡äÀ¥õ€±4€‘í¡‘½İ¸¥ô€‘í¡äÀ¥õtì(€°¹ÍÑ…Ñ¥½¹Ì¹™½É…  ¡¹…µ”±¤¤ôùì(€€€½¹ÍĞäõem¥t±Ñ½Á¼õÑ½Á½Ím¥tì(€€€½¹ÍĞ¡…±˜õ5…Ñ ¹µ¥¸ ÈĞ°Äà­5…Ñ ¹µ…à À±Ñ½Á¼¹Á±…Ñ™½ÉµÌ´È¤¨Ä¸Ô¤±Ñ¡É½…Ğõ¡…±˜¬ÄÌì(€€€Ñ½Á¼¹ÑÉ…­Ì¹™½É…  ¡±Ñ¤¤ôùì(€€€€€¥˜¡Ñ½Á¼¹µ…¥¹%‘à¹¥¹±Õ‘•Ì¡Ñ¤¤¥É•ÑÕÉ¸ì(€€€€€½¹ÍĞàõ…á¥Í`­©Í…±”±µ…¥¸õğÈ¸ÔıÕÀé‘½İ¸ì(€€€€€µ¥¹`õ5…Ñ ¹µ¥¸¡µ¥¹`±à¤íµ…á`õ5…Ñ ¹µ…à¡µ…á`±à¤ì(€€€€€½¹ÍĞµ•Ñ„õÑ½Á¼¹ÑÉ…­5•Ñ„˜™Ñ½Á¼¹ÑÉ…­5•Ñ…mÑ¥tì(€€€€€¥˜¡µ•Ñ„˜™µ•Ñ„¹½‰Í•ÉÙ•˜˜…µ•Ñ„¹½¹¹•Ñ•¥ì(€€€€€€€…Õà¬õ€ñÁ…Ñ ô‰4€‘í¡à¥ô€‘í¡äµ¡…±˜¥ô0€‘í¡à¥ô€‘í¡ä­¡…±˜¥ô4€‘í¡à´Ì¥ô€‘í¡äµ¡…±˜¥ô0€‘í¡à¬Ì¥ô€‘í¡äµ¡…±˜¥ô4€‘í¡à´Ì¥ô€‘í¡ä­¡…±˜¥ô0€‘í¡à¬Ì¥ô€‘í¡ä­¡…±˜¥ôˆ±…ÍÌô‰ÑÍàµÍåµ‰½°µÑÉ…¬ÑÍàµÍåµ‰½°µ‘•Ñ…¡•ˆ¼ù€ì(€€€€€õ•±Í•ì(€€€€€€€…Õà¬õ€ñÁ…Ñ ô‰4€‘í¡µ…¥¸¥ô€‘í¡äµÑ¡É½…Ğ¥ô€‘í¡µ…¥¸¥ô€‘í¡äµÑ¡É½…Ğ¬Ø¥ô°€‘í¡à¥ô€‘í¡äµ¡…±˜´Ô¥ô°€‘í¡à¥ô€‘í¡äµ¡…±˜¥ô0€‘í¡à¥ô€‘í¡ä­¡…±˜¥ô€‘í¡à¥ô€‘í¡ä­¡…±˜¬Ô¥ô°€‘í¡µ…¥¸¥ô€‘í¡ä­Ñ¡É½…Ğ´Ø¥ô°€‘í¡µ…¥¸¥ô€‘í¡ä­Ñ¡É½…Ğ¥ôˆ±…ÍÌô‰ÑÍàµÍåµ‰½°µÑÉ…¬ˆ¼ù€ì(€€€€€ô(€€€ô¤ì(€€€Ñ½Á¼¹Í¥‘¥¹Ì¹™½É…  ¡Í¥‘¥¹œ±Í¤¤ôùì(€€€€€½¹ÍĞõÍ¥‘¥¹œ¹ì(€€€€€½¹ÍĞàõ…á¥Í`­©Í…±”±µ…¥¸õğÈ¸ÔıÕÀé‘½İ¸± õ¡…±˜´ÌµÍ¤¨È±ĞõÑ¡É½…Ğ¬Ô­Í¤¨Ìì(€€€€€µ¥¹`õ5…Ñ ¹µ¥¸¡µ¥¹`±à¤íµ…á`õ5…Ñ ¹µ…à¡µ…á`±à¤ì(€€€€€¥˜¡Í¥‘¥¹œ¹½¹¹•Ñ•¥ì(€€€€€€€…Õà¬õ€ñÁ…Ñ ô‰4€‘í¡µ…¥¸¥ô€‘í¡äµĞ¥ô€‘í¡µ…¥¸¥ô€‘í¡äµĞ¬Ø¥ô°€‘í¡à¥ô€‘í¡äµ ´Ô¥ô°€‘í¡à¥ô€‘í¡äµ ¥ô0€‘í¡à¥ô€‘í¡ä­ ¥ô€‘í¡à¥ô€‘í¡ä­ ¬Ô¥ô°€‘í¡µ…¥¸¥ô€‘í¡ä­Ğ´Ø¥ô°€‘í¡µ…¥¸¥ô€‘í¡ä­Ğ¥ôˆ±…ÍÌô‰ÑÍàµÍåµ‰½°µÑÉ…¬ÑÍàµÍåµ‰½°µÍ¥‘¥¹œˆ¼ù€ì(€€€€€õ•±Í•ì(€€€€€€€€¼¼ƒ²vãªÊ3²z²^C²pƒ®Îã²€ƒ²^ÃªÊÃ²vĞƒ¶fW²vã®Bc² ƒ²V+²v ƒ¶>'¶Z'²ƒ
+ß®K²vÓªÂ ƒ®.“®–àƒ²ƒ®†s
+ß²rƒ²æc²ƒ²v (€€€€€€€€¼¼ƒ®Îã²ƒ²^@ƒ²Z×²®†pƒ®Úg²vÓ² ƒ²V+ªÎ€ƒ®>®šôƒ²ƒ®†s®†pƒ®w®
+ã®.¸(€€€€€€€…Õà¬õ€ñÁ…Ñ ô‰4€‘í¡à¥ô€‘í¡äµ ¥ô0€‘í¡à¥ô€‘í¡ä­ ¥ô4€‘í¡à´Ì¥ô€‘í¡äµ ¥ô0€‘í¡à¬Ì¥ô€‘í¡äµ ¥ô4€‘í¡à´Ì¥ô€‘í¡ä­ ¥ô0€‘í¡à¬Ì¥ô€‘í¡ä­ ¥ôˆ±…ÍÌô‰ÑÍàµÍåµ‰½°µÑÉ…¬ÑÍàµÍåµ‰½°µ‘•Ñ…¡•ˆ¼ù€ì(€€€€€ô(€€€ô¤ì(€€€Ñ½Á¼¹Á…É…±±•±É½ÕÁÌ¹™½É… ¡œôùì(€€€€€¥˜¡œ¹µ½‘•°¹½‰Í•ÉÙ•ôôõ™…±Í”¥É•ÑÕÉ¸ì(€€€€€½¹ÍĞÁ´õÁ…É…±±•±5…Ámœ¹­•åtí¥˜ …Á´¥É•ÑÕÉ¸ì(€€€€€½¹ÍĞÁ õ5…Ñ ¹µ¥¸ ÈÈ°ÄÜ­œ¹½Õ¹Ğ¤±ÁÉ•ØõÑ½Á½Ím¤´Åtü¹Á…É…±±•±É½ÕÁÌ¹Í½µ”¡àôùà¹­•äôôõœ¹­•ä¤±¹•áĞõÑ½Á½Ím¤¬Åtü¹Á…É…±±•±É½ÕÁÌ¹Í½µ”¡àôùà¹­•äôôõœ¹­•ä¤ì(€€€€€œ¹µ½‘•°¹ÑÉ…­Ì¹™½É… ¡ôùì(€€€€€€€½¹ÍĞàõ…á¥Í`¬¡­Á´¹½™™Í•Ğ¤©Í…±”íµ¥¹`õ5…Ñ ¹µ¥¸¡µ¥¹`±à¤íµ…á`õ5…Ñ ¹µ…à¡µ…á`±à¤ì(€€€€€€€½¹ÍĞµ…©½Èõœ¹­¥¹ôôôµ…¥¸ññœ¹­¥¹ôôôÙ…É¥…¹Ğœì(€€€€€€€…Õà¬õ€ñÁ…Ñ ô‰4€‘í¡à¥ô€‘í¡äµÁ ¥ô0€‘í¡à¥ô€‘í¡¹•áĞıem¤¬ÅtµÁ éä­Á ¥ôˆ±…ÍÌô‰ÑÍàµÁ…É…±±•°µÑÉ…¬‘íµ…©½ÈüœÑÍàµÁ…É…±±•°µÑÉ…¬´µµ…©½ÈœèœôˆÍÑÉ½­”ôˆ‘íœ¹½±½Éôˆ¼ù€ì(€€€€€ô¤ì(€€€€€¥˜ …ÁÉ•Ø˜™œ¹±…‰•°¥…Õà¬õ€ñÑ•áĞàôˆ‘í¡…á¥Í`¬¡œ¹µ½‘•°¹ÑÉ…­Ímœ¹µ½‘•°¹ÑÉ…­Ì¹±•¹Ñ ´Åt­Á´¹½™™Í•Ğ¤©Í…±”¬Ü¥ôˆäôˆ‘í¡ä¬Ì¥ôˆ±…ÍÌô‰ÑÍàµÁ…É…±±•°µ±…‰•°ˆ™¥±°ôˆ‘íœ¹½±½Éôˆø‘í}½ÁÍÍŒ¡œ¹±…‰•°¥ôğ½Ñ•áĞù€ì(€€€ô¤ì(€€€mÕÀ±‘½İ¹t¹™½É…  ¡ÑÉÕ¹­`±‘¥È¤ôùì(€€€€€½¹ÍĞÑ…É•Ğõ…á¥Í`­Ñ½Á¼¹µ…¥¹Ím‘¥Ét©Í…±”ì(€€€€€µ¥¹`õ5…Ñ ¹µ¥¸¡µ¥¹`±Ñ…É•Ğ¤íµ…á`õ5…Ñ ¹µ…à¡µ…á`±Ñ…É•Ğ¤ì(€€€€€É½ÕÑ•Ím‘¥Ét¬õ€0€‘í¡ÑÉÕ¹­`¥ô€‘í¡äµÑ¡É½…Ğ¥ô€‘í¡ÑÉÕ¹­`¥ô€‘í¡äµÑ¡É½…Ğ¬Ø¥ô°€‘í¡Ñ…É•Ğ¥ô€‘í¡äµ¡…±˜´Ô¥ô°€‘í¡Ñ…É•Ğ¥ô€‘í¡äµ¡…±˜¥ô0€‘í¡Ñ…É•Ğ¥ô€‘í¡ä­¡…±˜¥ô€‘í¡Ñ…É•Ğ¥ô€‘í¡ä­¡…±˜¬Ô¥ô°€‘í¡ÑÉÕ¹­`¥ô€‘í¡ä­Ñ¡É½…Ğ´Ø¥ô°€‘í¡ÑÉÕ¹­`¥ô€‘í¡ä­Ñ¡É½…Ğ¥õ€ì(€€€ô¤ì(€€€¥˜¡Ñ½Á¼¹É½ÍÌ¥ì(€€€€€½¹ÍĞäõäµÑ¡É½…Ğ´àì(€€€€€…Õà¬õ€ñÁ…Ñ ô‰4€‘í¡ÕÀ¥ô€‘í¡ä´à¥ô0€‘í¡‘½İ¸¥ô€‘í¡ä¬à¥ô‘íÑ½Á¼¹É½ÍÌøÄı€4€‘í¡‘½İ¸¥ô€‘í¡ä´à¥ô0€‘í¡ÕÀ¥ô€‘í¡ä¬à¥õ€èœôˆ±…ÍÌô‰ÑÍàµÍåµ‰½°µÍİ¥Ñ ˆ¼ù€ì(€€€ô(€€€¥˜¡Ñ½Á¼¹Á½­•Ğ¥ì(€€€€€½¹ÍĞàô¡ÕÀ­‘½İ¸¤¼È±‘¥Èô¡¤ôôõ°¹ÍÑ…Ñ¥½¹Ì¹±•¹Ñ ´Äü´ÄèÄ¤±„õä­‘¥È¨Äà±ˆõä­‘¥È¨ÌÔì(€€€€€…Õà¬õ€ñÁ…Ñ ô‰4€‘í¡ÕÀ¥ô€‘í¡„¥ô€‘í¡ÕÀ¥ô€‘í¡„­‘¥È¨Ô¥ô°€‘í¡à¥ô€‘í¡„­‘¥È¨Ü¥ô°€‘í¡à¥ô€‘í¡„­‘¥È¨ÄÈ¥ô0€‘í¡à¥ô€‘í¡ˆ¥ôˆ±…ÍÌô‰ÑÍàµÍåµ‰½°µÁ½­•Ğˆ¼øñÁ…Ñ ô‰4€‘í¡à´Ì¥ô€‘í¡ˆ¥ô0€‘í¡à¬Ì¥ô€‘í¡ˆ¥ôˆ±…ÍÌô‰ÑÍàµÍåµ‰½°µÍÑ½Àˆ¼ù€ì(€€€ô(€ô¤ì(€¥˜ …°¹±½½À¥ì(€€€¥˜¡½ÁÑÌ¹Ñ•ÉµQ½À„ôõ™…±Í”¥…Õà¬õ€ñÁ…Ñ ô‰4€‘í¡ÕÀ¥ô€‘í¡äÀ¥ô€‘í¡ÕÀ¥ô€‘í¡äÀ´ÄÌ¥ô°€‘í¡‘½İ¸¥ô€‘í¡äÀ´ÄÌ¥ô°€‘í¡‘½İ¸¥ô€‘í¡äÀ¥ôˆ±…ÍÌô‰ÑÍàµÍåµ‰½°µÑÕÉ¹‰…¬ˆ¼ù€ì(€€€¥˜¡½ÁÑÌ¹Ñ•Éµ	½ÑÑ½´„ôõ™…±Í”¥…Õà¬õ€ñÁ…Ñ ô‰4€‘í¡ÕÀ¥ô€‘í¡å8¥ô€‘í¡ÕÀ¥ô€‘í¡å8¬ÄÌ¥ô°€‘í¡‘½İ¸¥ô€‘í¡å8¬ÄÌ¥ô°€‘í¡‘½İ¸¥ô€‘í¡å8¥ôˆ±…ÍÌô‰ÑÍàµÍåµ‰½°µÑÕÉ¹‰…¬ˆ¼ù€ì(€ô(€½¹ÍĞÑÉÕ¹¬õÉ½ÕÑ•Ì¹µ…À ¡±‘¥È¤ôù€ñÁ…Ñ ôˆ‘í‘ô0€‘í¡‘¥Èı‘½İ¸éÕÀ¥ô€‘í¡å8¥ôˆ±…ÍÌô‰ÑÍàµÉ•…°µÑÉÕ¹¬ˆÍÑÉ½­”ôˆ‘í½±½Éôˆ¼ù€¤¹©½¥¸ œœ¤ì(€É•ÑÕÉ¸íÍÙœé€ñœ±…ÍÌô‰ÑÍàµÍåµ‰½°µ…Õàˆø‘í…Õáôğ½œøñœ±…ÍÌô‰ÑÍàµÉ•…°µÑÉÕ¹­Ìˆø‘íÑÉÕ¹­ôğ½œù€±µ¥¹`±µ…á`±Ñ½Á½Ì±Á…É…±±•±5…Áôì)ô)™Õ¹Ñ¥½¸}Íá5•ÑÉ½M•ÉÙ¥•MÑ½ÁÌ¡±¥¹•9…µ”±ÍÙ%‘à¥ì(€½¹ÍĞ•¹Ğô¡ÑåÁ•½˜5QI=}M!„ôôÕ¹‘•™¥¹•œ¤˜™5QI=}M!m±¥¹•9…µ•t±˜õ•¹Ğ˜™•¹Ğ¹Ğ˜™•¹Ğ¹ÑmÍÙ%‘átì(€¥˜ …•¹Ññğ…ÉÉ…ä¹¥ÍÉÉ…ä¡˜¤¥É•ÑÕÉ¸mtì(€½¹ÍĞ½ÕĞõmtí™½È¡±•Ğ¤ôÈí¤ñ˜¹±•¹Ñ í¤¬ôÌ¥í½¹ÍĞ¸õ•¹Ğ¹Ím™m¥utí¥˜¡¸„õ¹Õ±°˜™½ÕÑm½ÕĞ¹±•¹Ñ ´Åt„ôõ¸¥½ÕĞ¹ÁÕÍ ¡¸¤íô(€É•ÑÕÉ¸½ÕĞì)ô)™Õ¹Ñ¥½¸}ÍáQ½Á½±½åQÉ…¥¹1…¹”¡±…å•È±Ñ½Á¼±…á¥Í`±Í…±”±‘½İ¸±Í•ÉÙ¥•MÑ½ÁÌ¥ì(€½¹ÍĞÉ½ÕÑ•Q•áĞô¡Í•ÉÙ¥•MÑ½ÁÍññmt¤¹©½¥¸ œ€œ¤ì(€½¹ÍĞ±…¹•½İ¸õÑ½Á¼¹É•™•É•¹”˜™Ñ½Á¼¹É•™•É•¹”¹µ¥ÉÉ½Èü…‘½İ¸é‘½İ¸ì(€½¹ÍĞÉ½ÕÀõÑ½Á¼¹Á…É…±±•±É½ÕÁÌ¹™¥¹¡œôùœ¹­¥¹ôôôÙ…É¥…¹Ğœ˜˜¡œ¹É½ÕÑ•-•åÍññmt¤¹Í½µ”¡¬ôùì(€€€½¹ÍĞÁ…ÉÑÌõMÑÉ¥¹œ¡¬¤¹ÍÁ±¥Ğ ½mqÏŠIpµ| ¥t¬¼¤¹™¥±Ñ•È¡àôùà¹±•¹Ñ øôÈ¤ì(€€€É•ÑÕÉ¸Á…ÉÑÌ¹±•¹Ñ ˜™Á…ÉÑÌ¹•Ù•Éä¡ÀôùÉ½ÕÑ•Q•áĞ¹¥¹±Õ‘•Ì¡À¤¤ì(€ô¤¤ì(€¥˜¡É½ÕÀ˜™É½ÕÀ¹µ½‘•°¹½‰Í•ÉÙ•„ôõ™…±Í”¥ì(€€€½¹ÍĞÁ´õ±…å•È¹Á…É…±±•±5…ÁmÉ½ÕÀ¹­•åt±õÉ½ÕÀ¹µ½‘•°¹µ…¥¹Ím±…¹•½İ¸üÄèÁtì(€€€¥˜¡Á´¥É•ÑÕÉ¸…á¥Í`¬¡­Á´¹½™™Í•Ğ¤©Í…±”ì(€ô(€É•ÑÕÉ¸…á¥Í`­Ñ½Á¼¹µ…¥¹Ím±…¹•½İ¸üÄèÁt©Í…±”ì)ô)™Õ¹Ñ¥½¸}µ•ÑÉ½M¡…¹Ù…Ì¡°¥ì(€½¹ÍĞÑÉ…¬ô¡ÑåÁ•½˜5QI=}QI,„ôôÕ¹‘•™¥¹•œ¤˜™5QI=}QI-m°¹¹…µ•tì(€¥˜ …ÑÉ…­ñğ…ÉÉ…ä¹¥ÍÉÉ…ä¡ÑÉ…¬¹ÍÌ¥ññÑÉ…¬¹ÍÌ¹±•¹Ñ „ôõ°¹ÍÑ…Ñ¥½¹Ì¹±•¹Ñ¡ñğ…ÉÉ…ä¹¥ÍÉÉ…ä¡ÑÉ…¬¹É¸¥ñğ…ÑÉ…¬¹É¸¹±•¹Ñ ¤(€€€É•ÑÕÉ¸}µ•ÑÉ½M¡…¹Ù…Í1•…ä¡°¤ì(€½¹ÍĞ½±½Èõ°¹½±½È±õàôø ­à¤¹Ñ½¥á• Ä¤±<ô¡ÑåÁ•½˜5QI=}<„ôôÕ¹‘•™¥¹•œ¤ı5QI=}=m°¹¹…µ•té¹Õ±°ì(€½¹ÍĞÍ•µ…¹Ñ¥Œô¡ÑåÁ•½˜9%5	%}QI-}M59Q%„ôôÕ¹‘•™¥¹•œ¤ı9%5	%}QI-}M59Q%¹…¹…±åé•1¥¹”¡ì(€€€±¥¹”é°±ÑÉ…¬±•¼é<±Í¡•‘Õ±”è¡ÑåÁ•½˜5QI=}M!„ôôÕ¹‘•™¥¹•œ˜™5QI=}M!m°¹¹…µ•t¥ññ¹Õ±°°(€€€Á±…Ñ™½ÉµY•ÉÍ¥½¸èœÈÀÈØÀÜÈÜµÉ•™•É•¹”Äœ°(€€€É•™•É•¹”è¡ÑåÁ•½˜9%5	%}QI-}II9„ôôÕ¹‘•™¥¹•œ˜™9%5	%}QI-}II9¹±¥¹•Ì˜™9%5	%}QI-}II9¹±¥¹•Ím°¹¹…µ•t¥ññ¹Õ±°°(€€€É•™•É•¹•Y•ÉÍ¥½¸è¡ÑåÁ•½˜9%5	%}QI-}II9„ôôÕ¹‘•™¥¹•œ˜™9%5	%}QI-}II9¹Ù•ÉÍ¥½¸¥ñğœœ°(€€€Á…É…±±•±½±½ÉI•Í½±Ù•Èé¹…µ”ôù}µ•ÑÉ½1¥¹•½±½È¡¹…µ”¤°(€€€Á±…Ñ™½ÉµI•Í½±Ù•Èè¡É½ÕÑ”±¤¤ôù}µ•ÑÉ½MÑ…Ñ¥½¹A±…Ñ™½ÉµÌ¡É½ÕÑ”¹¹…µ•Ím¥t±°¹¹…µ”±É½ÕÑ”¹¹…µ•Ím¤´Åt±É½ÕÑ”¹¹…µ•Ím¤¬Åt¤(€ô¤é¹Õ±°ì(€½¹ÍĞµ…¥¹M•µ…¹Ñ¥ŒõÍ•µ…¹Ñ¥Œ˜™Í•µ…¹Ñ¥Œ¹É½ÕÑ•Ì˜™Í•µ…¹Ñ¥Œ¹É½ÕÑ•ÍlÁt±ÍÑ½ÁLõµ…¥¹M•µ…¹Ñ¥Œıµ…¥¹M•µ…¹Ñ¥Œ¹ÍÌé}Íá9½Éµ…±¥é•MÑ½ÁÌ¡ÑÉ…¬¹ÍÌ±ÑÉ…¬¹Ø¤ì(€½¹ÍĞdõ}Íád ¡<˜™<¹´¥ññ°¹ÍÑ…Ñ¥½¹Ì¹µ…À  ¤ôù¹Õ±°¤°ØÈ¤°…á¥Í`ôÄÈÈ°Í…±”ôÌ¸Èì(€½¹ÍĞ±…å•Èõ}ÍáM¡•µ…Ñ¥QÉ…­1…å•È¡°±ÑÉ…¬±ÍÑ½ÁL±d±…á¥Í`±Í…±”±½±½È±¹Õ±°±¹Õ±°±µ…¥¹M•µ…¹Ñ¥Œ¤ì(€½¹ÍĞÉ•¹‘•ÉQÉ…¬õì¸¸¹ÑÉ…¬±ÍÌéÍÑ½ÁMô±Á±…ÑÌõ}ÍáM¥µÁ±•A±…Ñ™½ÉµÌ¡°±É•¹‘•ÉQÉ…¬±d±…á¥Í`±Í…±”±¹Õ±°±µ…¥¹M•µ…¹Ñ¥Œ¤ì(€±•Ğ¹…µ•Í!Q50ôœœ±±…‰•±Í!Q50ôœœ±Á±…ÑMYõÁ±…ÑÌ¹ÍÙœ±ÑÉ…­MYõ±…å•È¹ÍÙœì(€±•Ğµ¥¹`õ5…Ñ ¹µ¥¸¡±…å•È¹µ¥¹`±Á±…ÑÌ¹µ¥¹`¤±µ…á`õ5…Ñ ¹µ…à¡±…å•È¹µ…á`±Á±…ÑÌ¹µ…á`¤± õemd¹±•¹Ñ ´Åt¬ĞÈì(€½¹ÍĞ•½µ•ÑÉåI¥¡Ğõµ…á`ì(€½¹ÍĞµ…¥¹%‘àõíôì°¹ÍÑ…Ñ¥½¹Ì¹™½É…  ¡Ì±¤¤ôùí¥˜¡µ…¥¹%‘ámÍtôõ¹Õ±°¥µ…¥¹%‘ámÍtõ¤ì(€€€¹…µ•Í!Q50¬õ€ñÍÁ…¸±…ÍÌô‰ÑÍàµ¹…µ”ÑÍàµ¹…µ”´µ…µ”‘í¤ôôôÁññ¤ôôõ°¹ÍÑ…Ñ¥½¹Ì¹±•¹Ñ ´Äüœ•¹œèœôˆÍÑå±”ô‰Ñ½Àè‘í¡em¥t¥õÁàˆø‘í}½ÁÍÍŒ¡Ì¥ôğ½ÍÁ…¸ù€íô¤ì(€€¼¼ƒŠRŠR ƒªÂg²v ƒ®ã²€ƒ²²€èƒ².“²‚pƒ®ÚªâÃ²^´ƒ®K²vÓ²^@ƒ®{²ÚÀƒ®Îã²€ƒ²b²^C²pƒ².s²zG¶VcªÎ€ƒ¶>'¶Z'¶VcªÊ0ƒ²¶Z$ƒŠRŠR (€½¹ÍĞ‰É…¹¡I½ÕÑ•Ìõmtí±•Ğ‰É…¹¡`õ•½µ•ÑÉåI¥¡Ğ¬ĞÈì(€€ ¡ÑÉ…¬˜™ÑÉ…¬¹ˆ¥ññmt¤¹™½É…  ¡ˆ±‰¤¤ôùì(€€€¥˜ …ÉÉ…ä¹¥ÍÉÉ…ä¡ˆ¹¹…µ•Ì¥ññˆ¹¹…µ•Ì¹±•¹Ñ ğÉñğ…ÉÉ…ä¹¥ÍÉÉ…ä¡ˆ¹ÍÌ¥ñğ…ÉÉ…ä¹¥ÍÉÉ…ä¡ˆ¹É¸¤¥É•ÑÕÉ¸ì(€€€½¹ÍĞ‰É…¹¡M•µ…¹Ñ¥ŒõÍ•µ…¹Ñ¥Œ˜™Í•µ…¹Ñ¥Œ¹É½ÕÑ•Ì˜™Í•µ…¹Ñ¥Œ¹É½ÕÑ•Ím‰¤¬Åt±‰Ìõ‰É…¹¡M•µ…¹Ñ¥Œı‰É…¹¡M•µ…¹Ñ¥Œ¹ÍÌé}Íá9½Éµ…±¥é•MÑ½ÁÌ¡ˆ¹ÍÌ±ˆ¹Ø¤±‰dõ}Íá±¥¹•‘	É…¹¡d¡ˆ¹¹…µ•Ì±µ…¥¹%‘à±d°ĞĞ¤ì(€€€½¹ÍĞ¡¥¹Ğõí±…‰•°éˆ¹±‰±ñğœœ±¹…µ•Ìéˆ¹¹…µ•Íô±‰°õì¸¸¹°±ÍÑ…Ñ¥½¹Ìéˆ¹¹…µ•Ì±±½½Àé™…±Í•ô±‰Ğõì¸¸¹ˆ±ÍÌé‰Íôì(€€€½¹ÍĞ™¥ÉÍÑ½µµ½¸õµ…¥¹%‘ámˆ¹¹…µ•ÍlÁut„õ¹Õ±°±±…ÍÑ½µµ½¸õµ…¥¹%‘ámˆ¹¹…µ•Ímˆ¹¹…µ•Ì¹±•¹Ñ ´Åut„õ¹Õ±°ì(€€€½¹ÍĞ‰1…å•Èõ}ÍáM¡•µ…Ñ¥QÉ…­1…å•È¡‰°±‰Ğ±‰Ì±‰d±…á¥Í`±Í…±”±½±½È±¡¥¹Ğ±íÑ•ÉµQ½Àè…™¥ÉÍÑ½µµ½¸±Ñ•Éµ	½ÑÑ½´è…±…ÍÑ½µµ½¹ô±‰É…¹¡M•µ…¹Ñ¥Œ¤ì(€€€½¹ÍĞ‰A±…ÑÌõ}ÍáM¥µÁ±•A±…Ñ™½ÉµÌ¡‰°±‰Ğ±‰d±…á¥Í`±Í…±”±¡¥¹Ğ±‰É…¹¡M•µ…¹Ñ¥Œ¤ì(€€€½¹ÍĞ‘àõ‰É…¹¡`µ…á¥Í`ì(€€€Á±…ÑMY¬õ€ñœÑÉ…¹Í™½É´ô‰ÑÉ…¹Í±…Ñ” ‘í¡‘à¥ô€À¤ˆø‘í‰A±…ÑÌ¹ÍÙôğ½œù€ì(€€€ÑÉ…­MY¬õ€ñœÑÉ…¹Í™½É´ô‰ÑÉ…¹Í±…Ñ” ‘í¡‘à¥ô€À¤ˆø‘í‰1…å•È¹ÍÙôğ½œù€ì(€€€€¼¼ƒªÎ×¶ÔƒªÖ³ªÂ²v`ƒ²²z
+ß²vÓ¶ ƒªÊ÷ªÎ²^C²s®0ƒ®Îã²ƒªÎğƒ²^ÃªÊÃ¶Vs®.¸ƒªÎ×¶×²^´ƒ²‚®Ú®–ğƒªÂ®†s²ƒ²ró®†pƒ®²Û² ƒ²V+®*S®.¸(€€€½¹ÍĞ©Õ¹Ñ¥½¹Ìõmtíˆ¹¹…µ•Ì¹™½É…  ¡¸±¨¤ôùì(€€€€€¥˜¡µ…¥¹%‘ám¹tôõ¹Õ±°¥É•ÑÕÉ¸ì(€€€€€½¹ÍĞÁÉ•Ùá±ÕÍ¥Ù”õ¨øÀ˜™µ…¥¹%‘ámˆ¹¹…µ•Ím¨´Åutôõ¹Õ±°±¹•áÑá±ÕÍ¥Ù”õ¨¬Äñˆ¹¹…µ•Ì¹±•¹Ñ ˜™µ…¥¹%‘ámˆ¹¹…µ•Ím¨¬Åutôõ¹Õ±°ì(€€€€€¥˜¡ÁÉ•Ùá±ÕÍ¥Ù•ññ¹•áÑá±ÕÍ¥Ù•ññ¨ôôôÁññ¨ôôõˆ¹¹…µ•Ì¹±•¹Ñ ´Ä¥©Õ¹Ñ¥½¹Ì¹ÁÕÍ ¡¨¤ì(€€€ô¤ì(€€€l¸¸¹¹•ÜM•Ğ¡©Õ¹Ñ¥½¹Ì¥t¹™½É… ¡¨ôùì(€€€€€½¹ÍĞµäõemµ…¥¹%‘ámˆ¹¹…µ•Ím©uut±‰àõ‰É…¹¡`±ÍÉŒõ…á¥Í`¬Ô©Í…±”ì(€€€€€ÑÉ…­MY¬õ€ñÁ…Ñ ô‰4€‘í¡ÍÉŒ¥ô€‘í¡µä¥ô€‘í¡ÍÉŒ¬ÄÈ¥ô€‘í¡µä¥ô°€‘í¡‰à´ÄÈ¥ô€‘í¡‰em©t¥ô°€‘í¡‰à¥ô€‘í¡‰em©t¥ôˆ±…ÍÌô‰ÑÍàµ‰É…¹ µ±¥¹¬ˆÍÑÉ½­”ôˆ‘í½±½Éôˆ¼ù€ì(€€€ô¤ì(€€€½¹ÍĞ™¥ÉÍÑá±ÕÍ¥Ù”õˆ¹¹…µ•Ì¹™¥¹‘%¹‘•à¡¸ôùµ…¥¹%‘ám¹tôõ¹Õ±°¤±Ñ…Ğõ™¥ÉÍÑá±ÕÍ¥Ù”øôÀı™¥ÉÍÑá±ÕÍ¥Ù”èÀì(€€€±…‰•±Í!Q50¬õ€ñÍÁ…¸±…ÍÌô‰ÑÍàµ‰ÉÑ…œÑÍàµ‰ÉÑ…œ´µ…µ”ˆÍÑå±”ô‰±•™Ğè‘í¡‰É…¹¡`¬È¥õÁàíÑ½Àè‘í¡5…Ñ ¹µ…à ÄÈ±‰emÑ…Ñt´ÄÄ¤¥õÁàì´µÁŒè‘í½±½Éôˆø‘í}½ÁÍÍŒ¡ˆ¹±‰±ññ€‘íˆ¹¹…µ•ÍlÁu÷ŠH‘íˆ¹¹…µ•Ímˆ¹¹…µ•Ì¹±•¹Ñ ´Åuõ€¥ôğ½ÍÁ…¸ù€ì(€€€ˆ¹¹…µ•Ì¹™½É…  ¡¸±¨¤ôùí¥˜¡µ…¥¹%‘ám¹t„õ¹Õ±°¥É•ÑÕÉ¸í¹…µ•Í!Q50¬õ€ñÍÁ…¸±…ÍÌô‰ÑÍàµ‰¹…µ”ÑÍàµ‰¹…µ”´µ…µ”ˆÍÑå±”ô‰±•™Ğè‘í¡‰É…¹¡`­‰1…å•È¹µ…á`µ…á¥Í`¬ä¥õÁàíÑ½Àè‘í¡‰em©t¥õÁàˆø‘í}½ÁÍÍŒ¡¸¥ôğ½ÍÁ…¸ù€íô¤ì(€€€½¹ÍĞÉ½ÕÑ”õíˆ±‰Ì±‰d±…á¥Í`é‰É…¹¡`±±…å•Èé‰1…å•È±‰°±‰Ğ±¡¥¹Ğ±•á±ÕÍ¥Ù”é¹•ÜM•Ğ¡ˆ¹¹…µ•Ì¹™¥±Ñ•È¡¸ôùµ…¥¹%‘ám¹tôõ¹Õ±°¤¥ôì(€€€‰É…¹¡I½ÕÑ•Ì¹ÁÕÍ ¡É½ÕÑ”¤ì(€€€µ…á`õ5…Ñ ¹µ…à¡µ…á`±‰É…¹¡`­5…Ñ ¹µ…à¡‰1…å•È¹µ…á`±‰A±…ÑÌ¹µ…á`¤µ…á¥Í`¬Üà¤í õ5…Ñ ¹µ…à¡ ±5…Ñ ¹µ…à ¸¸¹‰d¤¬ĞÈ¤ì(€€€‰É…¹¡`õµ…á`¬ÈØì(€ô¤ì(€€¼¼ƒŠRŠR ƒ²Â£®~'ªâÃ²
+ß²ó®ÂW²€èƒ²’GªÂ²^·ªÎğƒ²Š²‚@ƒ®ª£®F@ƒ¶b²z°ƒ²^´ƒ®K²vÓ²^C²pƒ²vã²z°ƒ²ƒªÖÀƒ®ÂSªæ—²^@ƒ²rƒ²æc²€ƒ¶Fs².pƒŠRŠR (€½¹ÍĞ‘•Á½Ñ`õµ…á`¬ÌÀ±‘•Á½ÑI½İÌõíôì(€€ ¡<˜™<¹¥ññmt¤¹™½É…  ¡±‘¤¤ôùì(€€€½¹ÍĞ‰…Í•dõem¹©t„õ¹Õ±°ıem¹©téelÁt±­•äõ5…Ñ ¹É½Õ¹¡‰…Í•d¼Èà¤±É½Üõ‘•Á½ÑI½İÍm­•åuñğÀí‘•Á½ÑI½İÍm­•åtõÉ½Ü¬Äì(€€€¥˜¡¹¨ôôõd¹±•¹Ñ ´Ä¥ì(€€€€€½¹ÍĞ•¹Ñ•Èõ…á¥Í`¬È¸Ô©Í…±”±™…¹dõ‰…Í•d¬ØĞ­É½Ü¨ÌĞ±±…¹•Ìõl´ÌÀ°´ÄÔ°À°ÄÔ°ÌÁt¹µ…À¡Øôù•¹Ñ•È­Ø¤ì(€€€€€ÑÉ…­MY¬õ€ñœ±…ÍÌô‰ÑÍàµå…ÉÑÍàµå…É´µÑ•Éµ¥¹…°ˆø‘í±…¹•Ì¹µ…À ¡à±¬¤ôùì(€€€€€€€½¹ÍĞÍÉŒõ¬ğÈı…á¥Í`é…á¥Í`¬Ô©Í…±”ì(€€€€€€€É•ÑÕÉ¸€ñÁ…Ñ ô‰4€‘í¡ÍÉŒ¥ô€‘í¡‰…Í•d¬Ô¥ô€‘í¡ÍÉŒ¥ô€‘í¡‰…Í•d¬ÈĞ¥ô°€‘í¡à¥ô€‘í¡‰…Í•d¬ÈÜ¥ô°€‘í¡à¥ô€‘í¡™…¹d¥ôˆ¼ù€ì(€€€€€ô¤¹©½¥¸ œœ¥ôñÁ…Ñ ô‰4€‘í¡±…¹•ÍlÁt¥ô€‘í¡™…¹d¥ô0€‘í¡±…¹•Ím±…¹•Ì¹±•¹Ñ ´Åt¥ô€‘í¡™…¹d¥ôˆ¼øğ½œù€ì(€€€€€±…‰•±Í!Q50¬õ€ñÍÁ…¸±…ÍÌô‰ÑÍàµ‘•Á½ĞÑÍàµ‘•Á½Ğ´µ…µ”ˆÍÑå±”ô‰±•™Ğè‘í¡±…¹•Ím±…¹•Ì¹±•¹Ñ ´Åt¬ÄÈ¥õÁàíÑ½Àè‘í¡™…¹d´à¥õÁàˆûÂ~>´€‘í}½ÁÍÍŒ¡MÑÉ¥¹œ¡¹¸¤¹É•Á±…” Ÿ²Â£®~'²
+³²^²0œ°Ÿ²
+³²^²0œ¤¥ôğ½ÍÁ…¸ù€ì(€€€€€µ¥¹`õ5…Ñ ¹µ¥¸¡µ¥¹`±±…¹•ÍlÁt¤íµ…á`õ5…Ñ ¹µ…à¡µ…á`±±…¹•Ím±…¹•Ì¹±•¹Ñ ´Åt¬ÄÌÀ¤í õ5…Ñ ¹µ…à¡ ±™…¹d¬ÈĞ¤ì(€€€€€É•ÑÕÉ¸ì(€€€ô(€€€½¹ÍĞàõ‘•Á½Ñ`­É½Ü¨ĞÈ±äõ‰…Í•d­É½Ü¨Äà±ÍÉŒõ…á¥Í`¬Ô©Í…±”ì(€€€ÑÉ…­MY¬õ€ñœ±…ÍÌô‰ÑÍàµå…ÉˆøñÁ…Ñ ô‰4€‘í¡ÍÉŒ¥ô€‘í¡‰…Í•d¥ô€‘í¡ÍÉŒ¬ÄĞ¥ô€‘í¡‰…Í•d¥ô°€‘í¡à´ÄĞ¥ô€‘í¡ä¥ô°€‘í¡à¥ô€‘í¡ä¥ôˆ¼ù€¬(€€€€€lÀ°Ä°Ét¹µ…À¡¬ôù€ñÁ…Ñ ô‰4€‘í¡à­¬¨à¥ô€‘í¡ä´ÈÀ¥ô0€‘í¡à­¬¨à¥ô€‘í¡ä¬ÈÀ¥ôˆ¼ù€¤¹©½¥¸ œœ¤¬(€€€€€€ñÁ…Ñ ô‰4€‘í¡à¥ô€‘í¡ä´ÄĞ¥ô0€‘í¡à¬à¥ô€‘í¡ä´Ü¥ô0€‘í¡à¬ÄØ¥ô€‘í¡ä¥ô4€‘í¡à¥ô€‘í¡ä¬ÄĞ¥ô0€‘í¡à¬à¥ô€‘í¡ä¬Ü¥ô0€‘í¡à¬ÄØ¥ô€‘í¡ä¥ôˆ¼øğ½œù€ì(€€€±…‰•±Í!Q50¬õ€ñÍÁ…¸±…ÍÌô‰ÑÍàµ‘•Á½ĞÑÍàµ‘•Á½Ğ´µ…µ”ˆÍÑå±”ô‰±•™Ğè‘í¡à¬ÈÜ¥õÁàíÑ½Àè‘í¡ä¥õÁàˆûÂ~>´€‘í}½ÁÍÍŒ¡MÑÉ¥¹œ¡¹¸¤¹É•Á±…” Ÿ²Â£®~'²
+³²^²0œ°Ÿ²
+³²^²0œ¤¥ôğ½ÍÁ…¸ù€ì(€€€µ…á`õ5…Ñ ¹µ…à¡µ…á`±à¬ÄÌÀ¤í õ5…Ñ ¹µ…à¡ ±ä¬Ìà¤ì(€ô¤ì(€±•Ğ¹ĞôÀì½¹ÍĞÑÉ…¥¹Ìõmtì(€}µ•ÑÉ½1¥¹•1¥Ù•QÉ…¥¹Ì¡°¹¹…µ”¤¹™½É… ¡Ğôùì(€€€½¹ÍĞÍ•ÉÙ¥•MÑ½ÁÌõ}Íá5•ÑÉ½M•ÉÙ¥•MÑ½ÁÌ¡°¹¹…µ”±Ğ¹ÍÙ%‘à¤ì(€€€½¹ÍĞ‰É…¹ õ‰É…¹¡I½ÕÑ•Ì¹™¥¹¡ÈôùÍ•ÉÙ¥•MÑ½ÁÌ¹Í½µ”¡¸ôùÈ¹•á±ÕÍ¥Ù”¹¡…Ì¡¸¤¤˜™È¹ˆ¹¹…µ•Ì¹¥¹±Õ‘•Ì¡Ğ¹™É½µMÑ¸¤˜™È¹ˆ¹¹…µ•Ì¹¥¹±Õ‘•Ì¡Ğ¹Ñ½MÑ¸¤¤ì(€€€¥˜¡‰É…¹ ¥ì(€€€€€½¹ÍĞ™¤õ‰É…¹ ¹ˆ¹¹…µ•Ì¹¥¹‘•á=˜¡Ğ¹™É½µMÑ¸¤±Ñ¤õ‰É…¹ ¹ˆ¹¹…µ•Ì¹¥¹‘•á=˜¡Ğ¹Ñ½MÑ¸¤í¥˜¡™¤ğÁññÑ¤ğÀ¥É•ÑÕÉ¸í¹Ğ¬¬ì(€€€€€½¹ÍĞ‘½İ¸õÑ¤ù™¤±ÌõĞ¹…ÑMÑ…Ñ¥½¸ı‰É…¹ ¹‰Ím™¥té‰É…¹ ¹‰Ím™¥t­Ğ¹™É…Œ¨¡‰É…¹ ¹‰ÍmÑ¥tµ‰É…¹ ¹‰Ím™¥t¤ì(€€€€€½¹ÍĞÑ½Á¼õ‰É…¹ ¹±…å•È¹Ñ½Á½Ím™¥t±àõ}ÍáQ½Á½±½åQÉ…¥¹1…¹”¡‰É…¹ ¹±…å•È±Ñ½Á¼±‰É…¹ ¹…á¥Í`±Í…±”±‘½İ¸±Í•ÉÙ¥•MÑ½ÁÌ¤ì(€€€€€ÑÉ…¥¹Ì¹ÁÕÍ ¡íà±äé}ÍáQÉ…­d¡Ì±‰É…¹ ¹‰Ì±‰É…¹ ¹‰d¤±‘½İ¸±‘•ÍĞéĞ¹‘•ÍĞ±¥éL‘íMÑÉ¥¹œ¡Ğ¹ÍÙ%‘à¬Ä¤¹Á…‘MÑ…ÉĞ Ğ°œÀœ¥õô¤ì(€€€€€É•ÑÕÉ¸ì(€€€ô(€€€½¹ÍĞ™¤õµ…¥¹%‘ámĞ¹™É½µMÑ¹t±Ñ¤õµ…¥¹%‘ámĞ¹Ñ½MÑ¹tí¥˜¡™¤ôõ¹Õ±±ññÑ¤ôõ¹Õ±°¥É•ÑÕÉ¸í¹Ğ¬¬ì(€€€½¹ÍĞ‘½İ¸õÑ¤ù™¤±ÌõĞ¹…ÑMÑ…Ñ¥½¸ıÍÑ½ÁMm™¥téÍÑ½ÁMm™¥t­Ğ¹™É…Œ¨¡ÍÑ½ÁMmÑ¥tµÍÑ½ÁMm™¥t¤±Ñ½Á¼õ±…å•È¹Ñ½Á½Ím™¥tì(€€€½¹ÍĞàõ}ÍáQ½Á½±½åQÉ…¥¹1…¹”¡±…å•È±Ñ½Á¼±…á¥Í`±Í…±”±‘½İ¸±Í•ÉÙ¥•MÑ½ÁÌ¤ì(€€€ÑÉ…¥¹Ì¹ÁÕÍ ¡íà±äé}ÍáQÉ…­d¡Ì±ÍÑ½ÁL±d¤±‘½İ¸±‘•ÍĞéĞ¹‘•ÍĞ±¥éL‘íMÑÉ¥¹œ¡Ğ¹ÍÙ%‘à¬Ä¤¹Á…‘MÑ…ÉĞ Ğ°œÀœ¥õô¤ì(€ô¤ì(€ÑÉ…¥¹Ì¹Í½ÉĞ ¡„±ˆ¤ôù„¹äµˆ¹ä¤ì½¹ÍĞ½ÕÁ¥•õmtì(€ÑÉ…¥¹Ì¹™½É…  ¡Ğ±¤¤ôùì(€€€±•ĞÍ¡¥™ĞôÀìİ¡¥±”¡½ÕÁ¥•¹Í½µ”¡¼ôù5…Ñ ¹…‰Ì¡¼¹äµĞ¹ä¤ğÄà˜™¼¹Í¡¥™ĞôôõÍ¡¥™Ğ¤¥Í¡¥™Ğ¬¬í½ÕÁ¥•¹ÁÕÍ ¡íäéĞ¹ä±Í¡¥™Ñô¤ì(€€€½¹ÍĞÍ¥‘”õĞ¹‘½İ¸üÄè´Ä±ÑàõĞ¹à­Í¥‘”¨ ÄÈ­Í¡¥™Ğ¨Ìà¤ì(€€€±…‰•±Í!Q50¬õ€ñÍÁ…¸±…ÍÌô‰ÑÍàµÑÉ…¥¸µ…ÉÉ½Ü€‘íĞ¹‘½İ¸ü‘½İ¸œèÕÀôˆÍÑå±”ô‰±•™Ğè‘í¡Ğ¹à¥õÁàíÑ½Àè‘í¡Ğ¹ä¥õÁàˆø‘íĞ¹‘½İ¸üŸŠZğœèŸŠZÈôğ½ÍÁ…¸ù€¬(€€€€€€ñÍÁ…¸±…ÍÌô‰ÑÍàµÑÉ…¥¸µ…ÉˆÍÑå±”ô‰±•™Ğè‘í¡Ñà¥õÁàíÑ½Àè‘í¡Ğ¹ä¥õÁàíÑÉ…¹Í™½É´éÑÉ…¹Í±…Ñ” ‘íĞ¹‘½İ¸üœÀœèœ´ÄÀÀ”ô°´ÔÀ”¤ì´µÑŒè‘í½±½Éôˆøñˆø‘íĞ¹¥‘ôğ½ˆøñÍÁ…¸ø‘í}½ÁÍÍŒ¡Ğ¹‘•ÍĞ¥÷¶Z$ğ½ÍÁ…¸øğ½ÍÁ…¸ù€ì(€ô¤ì(€ õ5…Ñ ¹•¥°¡ ¤í½¹ÍĞÍ¡¥™Ñ`õ5…Ñ ¹µ…à À°ÜĞµµ¥¹`¤±\õ5…Ñ ¹•¥°¡µ…á`­Í¡¥™Ñ`¬Äà¤ì(€€¼¼ƒ².“²‚p“ªÂ ƒ²v3²"c²vàƒ²ƒ®†sªÂ ƒ²vÓ®šƒªÊ3¶Ã®–ğƒ²æ£®ÊS¶Vc®¦Ğƒ²ƒ®†s
+ß®vó®Ê£®0ƒ¶V£ªî`ƒ²jÃ²â„ƒ²vÓ®>g¶Vs®.¸(€½¹ÍĞÍÙœõ€ñÍÙœ±…ÍÌô‰ÑÍàµÍÙœˆİ¥‘Ñ ôˆ‘í]ôˆ¡•¥¡Ğôˆ‘í!ôˆÙ¥•İ	½àôˆÀ€À€‘í]ô€‘í!ôˆøñœÑÉ…¹Í™½É´ô‰ÑÉ…¹Í±…Ñ” ‘í¡Í¡¥™Ñ`¥ô€À¤ˆøñœ±…ÍÌô‰ÑÍàµÁ±…Ñ±…å•Èˆø‘íÁ±…ÑMYôğ½œøñœ±…ÍÌô‰ÑÍàµÑÉ…­±…å•Èˆø‘íÑÉ…­MYôğ½œøğ½œøğ½ÍÙœù€ì(€¥˜¡Í¡¥™Ñ`¤±…‰•±Í!Q50õ±…‰•±Í!Q50¹É•Á±…” ½±•™Ğè¡lÀ´ä¸µt¬¥Áà½œ°¡´±Ø¤ôù±•™Ğè‘í¡9Õµ‰•È¡Ø¤­Í¡¥™Ñ`¥õÁá€¤ì(€É•ÑÕÉ¸í¹Ğ±¡Ñµ°é€ñ‘¥Ø±…ÍÌô‰ÑÍàµ…¹Ù…ÌÑÍàµ…¹Ù…Ì´µ…µ”ˆÍÑå±”ô‰¡•¥¡Ğè‘í!õÁàíİ¥‘Ñ è‘í]õÁàì´µµŒè‘í½±½Éôˆø‘íÍÙô‘í¹…µ•Í!Q51ô‘í±…‰•±Í!Q51ôğ½‘¥Øùôì)ô(¼¼ƒŠRŠR ƒ²²^Àƒ²b#²â„ƒ®ª£®6à€£®ã²ƒ
+ß®NÇªâ'®Îƒ¶fW®–€¿²b#²ƒ²²^À¤ƒŠRŠR (¼¼ƒŠRŠR ƒ²²^Àƒ²b#®ÎĞ¿².s®º³®‚#²vÓ²`ƒ²^S²²v ©Ì½™•…ÑÕÉ•Ì½¹¥µ‰¥}‘•±…ä¹©Ï®†pƒ®Ú®š°€¡1e}5=3
+İ}‘•±…å½É•…ÍÓ
+İ}Í¥µAÉ½™¥±—
+İ}Í¥µ•±…ç
+İ}Í¥µ¥¹…±•±…ç
+İ}±¥Ù••±…å=›
+İ}Í¥µ…ÕÍ•MÕµµ…Éç
+İ}Í¥µÙ•¹Ñ1½œƒ®NÄ¤ƒŠRŠR (¼¼ƒ¶G²*äƒ²^³²‚Tƒ¶^“®6S²j¤ƒ²²^Àƒ²b#®ÎĞƒ²æ¤)™Õ¹Ñ¥½¸}‘•±…å¡¥Á!Q50¡Ğ¥ì(€½¹ÍĞ˜õ}‘•±…å½É•…ÍĞ¡Ğ¹±¥¹”±Ğ¹É…‘”¤ì(€É•ÑÕÉ¸€ñ‘¥Ø±…ÍÌô‰‘•±…äµ¡¥ÀˆÍÑå±”ôˆ´µ‘Œè‘í˜¹½±½ÉôˆøñÍÁ…¸±…ÍÌô‰‘•±…äµ‘½Ğˆøğ½ÍÁ…¸øñˆû²²^Àƒ²b#®ÎĞ€‘í˜¹±…‰•±ôğ½ˆøñÍÁ…¸±…ÍÌô‰‘•±…äµµ•Ñ„ˆû¶fW®–€€‘í˜¹ÁÉ½‰ô”ƒ
+Üƒ²b#²€¬‘í˜¹µ¥¹õø‘í˜¹µ…á÷®Úğ½ÍÁ…¸øğ½‘¥Øù€ì)ô(¼¼ƒ²^Ó²Â ƒ²²àƒ®¦S¶²’²j¤ƒ²²^Àƒ²b#®ÎĞ£®ÂÃ®#ªÂ ƒ²V®.0ƒ²‚W®ÎĞƒ¶Vpƒ²’®†p¤)™Õ¹Ñ¥½¸}‘•±…å5•Ñ…!Q50¡Ğ¥ì(€½¹ÍĞ˜õ}‘•±…å½É•…ÍĞ¡Ğ¹±¥¹”±Ğ¹É…‘”¤ì(€É•ÑÕÉ¸€ñ‘¥Ø±…ÍÌô‰‘•Ñ…¥°µµ•Ñ„ˆÍÑå±”ô‰µ…É¥¸µÑ½ÀèÉÁàˆû²²^Àƒ²b#®ÎĞ€ñˆÍÑå±”ô‰½±½Èè‘í˜¹½±½Éôˆø‘í˜¹±…‰•±ôğ½ˆø€ñÍÁ…¸ÍÑå±”ô‰½±½ÈéÙ…È ´µÑ•áĞÌ¤ˆû
+Üğ½ÍÁ…¸øƒ¶fW®–€€‘í˜¹ÁÉ½‰ô”€ñÍÁ…¸ÍÑå±”ô‰½±½ÈéÙ…È ´µÑ•áĞÌ¤ˆû
+Üğ½ÍÁ…¸øƒ²b#²€¬‘í˜¹µ¥¹õø‘í˜¹µ…á÷®Úğ½‘¥Øù€ì)ô(¼¼ƒ²b#®“
+ß²*ç²Â£ªÚ3²j¤ƒ²öS®‚#²vó¶‡².tƒ²²^Àƒ²V#®
+Ğ£²b#²ƒ²²^Ã²vĞƒ²z#®*Pƒ²^Ó²Â£®0¤¸ƒ¶b²z°ƒ²jÓ¶Z$ƒ²’G²vÓ®¦Ğƒ².“².sªÂƒ²²^Ã®>ƒ¶V£ªî`¸)™Õ¹Ñ¥½¸}‰½½­¥¹•±…å	…¹¹•É!Q50¡Ğ±ÑÉ…Ù•±…Ñ”¥ì(€¥˜¡ÑÉ…Ù•±…Ñ”˜™ÑåÁ•½˜}Í¥µQ¥­•Ñ5…Ñ¡•ÍM•ÉÙ¥•…äôôô™Õ¹Ñ¥½¸œ˜˜…}Í¥µQ¥­•Ñ5…Ñ¡•ÍM•ÉÙ¥•…ä¡Ğ±ÑÉ…Ù•±…Ñ”¤¥É•ÑÕÉ¸€œœì(€½¹ÍĞ•ÍĞõ}Í¥µ¥¹…±•±…ä¡Ğ±ÑÉ…Ù•±…Ñ”¤ì¥˜¡•ÍĞğôÀ¥É•ÑÕÉ¸€œœì(€½¹ÍĞ±¥Ù”õ}±¥Ù••±…å=˜¡Ğ¤ì(€½¹ÍĞ±¥Ù•QáĞõ±¥Ù”øÀı€ñ‰ÈøñÍÁ…¸±…ÍÌô‰‰¬µ‘•±…äµ±¥Ù”ˆû¶b²z°ƒ²Vô€‘í±¥Ù•÷®Úƒ²²^Àƒ²jÓ¶Z$ƒ²’Dğ½ÍÁ…¸ù€èœœì(€É•ÑÕÉ¸€ñ‘¥Ø±…ÍÌô‰‰½½­¥¹œµ‘•±…äµ‰…¹¹•Èˆø(€€€€ñ‘¥Ø±…ÍÌô‰‰¬µ‘•±…äµ¡•…ˆûŠjƒ¾â<ƒ²ƒ¶w¶Vc².€ƒ²^Ó²Â£®*P€ñˆû²Vô€‘í•ÍÑ÷®Úƒ²²^Àƒ²b#²ğ½ˆøƒ²^Ó²Â£²z®.#®.ğ½‘¥Øø(€€€€ñ‘¥Ø±…ÍÌô‰‰¬µ‘•±…äµ¹½Ñ”ˆû²^Ó²Â ƒ²jÓ¶Z$ƒ²
+³¶V·²vƒ¶fW²vã¶VcªÎ€ƒªÖ³²z¶Vc²ã²jP¸ƒ²²^Ã²^@ƒ®RÃ®–àƒ®Î®>ƒ®ÂÃ²²v ƒ²^²*×®.#®.¸‘í±¥Ù•QáÑôğ½‘¥Øø(€€ğ½‘¥Øù€ì)ô(¼¼ƒ²²^Àƒ²b#²â„ƒ¶´èƒ²ªâ ƒ²²^Àƒ²jÓ¶Z$ƒ²’G²vàƒ²^Ó²Â ƒ®ª§®†t)™Õ¹Ñ¥½¸}‘•±…å•‘QÉ…¥¹Í!Q50 ¥ì(€¥˜ …}Í¥µ•±…å=¸¥É•ÑÕÉ¸€œœì(€½¹ÍĞ¸õ¹•Ü…Ñ” ¤°¹´õ¸¹•Ñ!½ÕÉÌ ¤¨ØÀ­¸¹•Ñ5¥¹ÕÑ•Ì ¤ì(€½¹ÍĞÉ½İÌõmtì(€11}QI%9L¹™½É… ¡Ğôùì(€€€½¹ÍĞõ}Í¥µ•±…ä¡Ğ±¹´¤ì¥˜¡ğôÀ¥É•ÑÕÉ¸ì(€€€½¹ÍĞÍĞõ•ÑÕÉÉ•¹ÑMÑ…ÑÕÌ¡Ğ°¹´µ¤ì¥˜ …ÍÑññÍĞ¹ÍÑ…ÑÕÌ„ôôÉÕ¹¹¥¹œœ¥É•ÑÕÉ¸ì(€€€½¹ÍĞÁ½ÌõÍĞ¹…ÑMÑ¸ı€‘íÍĞ¹…ÑMÑ¹ôƒ²‚W²Â¡€è¡ÍĞ¹Á…ÍÍMÑ¸ı€‘íÍĞ¹Á…ÍÍMÑ¹ôƒ¶×ªÎñ€è¡ÍĞ¹ÁÉ•ÙMÑ¸˜™ÍĞ¹¹•áÑMÑ¸ı€‘íÍĞ¹ÁÉ•ÙMÑ¹÷ŠH‘íÍĞ¹¹•áÑMÑ¹õ€èŸ²jÓ¶Z$ƒ²’Dœ¤¤ì(€€€É½İÌ¹ÁÕÍ ¡íĞ±±Á½Íô¤ì(€ô¤ì(€É½İÌ¹Í½ÉĞ ¡„±ˆ¤ôùˆ¹µ„¹¤ì(€¥˜ …É½İÌ¹±•¹Ñ ¥É•ÑÕÉ¸€ñ‘¥Ø±…ÍÌô‰‘•±…å•µ•µÁÑäˆû¶b²z°ƒ²²^Àƒ²jÓ¶Z$ƒ²’G²vàƒ²^Ó²Â£ªÂ ƒ²^²*×®.#®.¸ğ½‘¥Øù€ì(€½¹ÍĞ°õœôø¡ÑåÁ•½˜0„ôôÕ¹‘•™¥¹•œ˜™1mt¥ññœì(€É•ÑÕÉ¸€ñ‘¥Ø±…ÍÌô‰‘•±…å•µ±¥ÍĞˆø(€€€€ñ‘¥Ø±…ÍÌô‰‘•±…å•µ¡•…ˆûÂ~RĞƒ²ªâ ƒ²²^Àƒ²jÓ¶Z$ƒ²’D€ñˆø‘íÉ½İÌ¹±•¹Ñ¡ôğ½ˆû¶:à€ñÍÁ…¸±…ÍÌô‰‘•±…å•µÍÕˆˆû®"®–Ó®¦Ğƒ¶G²*äƒ²^³²‚Tğ½ÍÁ…¸øğ½‘¥Øø(€€€€‘íÉ½İÌ¹Í±¥” À°ĞÀ¤¹µ…À¡Èôù€ñ‰ÕÑÑ½¸±…ÍÌô‰‘•±…å•µÉ½Üˆ½¹±¥¬ô‰½Á•¹)½ÕÉ¹•ä œ‘íÈ¹Ğ¹¹½ôœ¤ˆø(€€€€€€ñÍÁ…¸±…ÍÌô‰‘°µÉ…‘”ˆÍÑå±”ô‰‰…­É½Õ¹è‘ì¡ÑåÁ•½˜I}=1=IL„ôôÕ¹‘•™¥¹•œ˜™I}=1=IMmÈ¹Ğ¹É…‘•t¥ñğœŒàààôˆø‘í}½ÁÍÍŒ¡°¡È¹Ğ¹É…‘”¤¥ôğ½ÍÁ…¸ø(€€€€€€ñÍÁ…¸±…ÍÌô‰‘°µ¹¼ˆø‘í}½ÁÍÍŒ¡È¹Ğ¹¹¼¥ôğ½ÍÁ…¸ø(€€€€€€ñÍÁ…¸±…ÍÌô‰‘°µÉ½ÕÑ”ˆø‘í}½ÁÍÍŒ¡È¹Ğ¹ÍÑ½ÁÍlÁt¹Ì¥÷ŠH‘í}½ÁÍÍŒ¡È¹Ğ¹‘•ÍĞ¥ôƒ
+Ü€‘í}½ÁÍÍŒ¡È¹Á½Ì¥ôğ½ÍÁ…¸ø(€€€€€€ñÍÁ…¸±…ÍÌô‰‘°µ‘•±…äˆø¬‘íÈ¹‘÷®Úğ½ÍÁ…¸ø(€€€€ğ½‰ÕÑÑ½¸ù€¤¹©½¥¸ œœ¥ô(€€€€‘íÉ½İÌ¹±•¹Ñ øĞÀı€ñ‘¥Ø±…ÍÌô‰‘•±…å•µµ½É”ˆû²fà€‘íÉ½İÌ¹±•¹Ñ ´ĞÁ÷¶:àğ½‘¥Øù€èœô(€€ğ½‘¥Øù€ì)ô)™Õ¹Ñ¥½¸Ñ½±•M¥µ•±…ä ¥ì(€}Í¥µ•±…å=¸ô…}Í¥µ•±…å=¸ì(€ÑÉåí±½…±MÑ½É…”¹Í•Ñ%Ñ•´ ¹¥µ‰¥}Í¥µ‘•±…äœ±}Í¥µ•±…å=¸üœÄœèœÀœ¤íõ…Ñ ¡”¥íô(€½¹ÍĞÍŒõ‘½Õµ•¹Ğ¹•Ñ±•µ•¹Ñ	å% µäµÍÕˆµ½¹Ñ•¹Ğœ¤ì(€¥˜¡ÍŒ˜™ÍŒ¹ÅÕ•ÉåM•±•Ñ½È œ¹Í•Ğµµ½‘•Ìœ¤¥É•¹‘•ÉM•ÑÑ¥¹ÍM•Ñ¥½¸¡ÍŒ¤ì(€¥˜¡ÑåÁ•½˜É•¹‘•ÉM%½¹Ñ•¹Ğôôô™Õ¹Ñ¥½¸œ¥í½¹ÍĞ•°õ‘½Õµ•¹Ğ¹•Ñ±•µ•¹Ñ	å% É•ÍÕ±Ğµ‘•±…äœ¤ì¥˜¡•°˜™‘½Õµ•¹Ğ¹•Ñ±•µ•¹Ñ	å% Á…¹•°µ‘•±…äœ¤ü¹±…ÍÍ1¥ÍĞ¹½¹Ñ…¥¹Ì …Ñ¥Ù”œ¤¥É•¹‘•ÉM%•±…ä¡•°¤íô(€½¹ÍĞ‘”õ‘½Õµ•¹Ğ¹•Ñ±•µ•¹Ñ	å% É•ÍÕ±Ğµ‘•±…äœ¤ì¥˜¡‘”˜™‘”¹½™™Í•ÑA…É•¹Ğ„ôõ¹Õ±°¥É•¹‘•ÉM%•±…ä¡‘”¤ì(€¥˜¡}©½ÕÉ¹•å9¼˜™ÑåÁ•½˜}É•¹‘•É)½ÕÉ¹•äôôô™Õ¹Ñ¥½¸œ¥í½¹ÍĞˆõ‘½Õµ•¹Ğ¹•Ñ±•µ•¹Ñ	å% ©½ÕÉ¹•äµ‰½‘äœ¤ì¥˜¡ˆ¥ˆ¹}ÍÉ½±±•‘=¹”õÑÉÕ”ì}É•¹‘•É)½ÕÉ¹•ä ¤íô(€¥˜¡}Í¥	½…É‘9…µ”˜™ÑåÁ•½˜}‘É…İMÑ…Ñ¥½¹	½…Éôôô™Õ¹Ñ¥½¸œ¥}‘É…İMÑ…Ñ¥½¹	½…É ¤ì(€¥˜¡ÑåÁ•½˜ÕÁ‘…Ñ•5…ÁQÉ…¥¹Ìôôô™Õ¹Ñ¥½¸œ˜™}µ…ÁÕÉÉ•¹Ñ1¥¹”¥ÕÁ‘…Ñ•5…ÁQÉ…¥¹Ì ¤ì)ô)™Õ¹Ñ¥½¸}½ÕÑ±½½­!Q50 ¥ì(€¥˜ …}Í¥µ•±…å=¹ññÑåÁ•½˜}Í¥µ=ÕÑ±½½¬„ôô™Õ¹Ñ¥½¸œ¥É•ÑÕÉ¸€œœì(€½¹ÍĞ¼õ}Í¥µ=ÕÑ±½½¬¡İ¥¹‘½Ü¹}½±±°üÄÀÀÀÀèà¤ì¥˜ …¼¥É•ÑÕÉ¸€œœì(€½¹ÍĞ}¸õ¹•Ü…Ñ” ¤°¹½İ5¥¸õ}¸¹•Ñ!½ÕÉÌ ¤¨ØÀ­}¸¹•Ñ5¥¹ÕÑ•Ì ¤ì(€€¼¼ƒ²®. ƒ®2¶FpƒªâÃ²²v ƒ¶b²z°ƒ².sªÂ
+ß²²^´ƒªâÃ²’²ró®†pƒ²z³ªÎ²
+À£¶Vc® Á•…¬ƒ®.£²vóªÂHƒ²V®.`¤ƒŠHƒ²²^´ƒ®ª£²"pƒ¶VÓ²0(€½¹ÍĞ¡°ô¡ÑåÁ•½˜}İá!•…‘±¥¹”ôôô™Õ¹Ñ¥½¸œ¤ı}İá!•…‘±¥¹”¡¹½İ5¥¸¤é¹Õ±°ì(€½¹ÍĞ¡•…‘]•…Ñ¡•Èõ¡°ı¡°¹ÁÉ¥µ…Éå]•…Ñ¡•Èé¼¹Ñà¹İ•…Ñ¡•Èì(€½¹ÍĞ¡•…‘1…‰•°õ¡°ı¡°¹±…‰•°é¼¹Ñà¹İ•…Ñ¡•Èì(€½¹ÍĞİá%¼õìŸ®G²v0œèŸŠb¾â<œ°Ÿ²V#ªÂpœèŸÂ~2¯¾â<œ°ŸªÂW¶J4œèŸÂ~J œ°Ÿ¶>·²^ğœèŸÂ~2‡¾â<œ°Ÿ®æœèŸÂ~2Ÿ¾â<œ°Ÿ¶>·²jÀœèŸŠn#¾â<œ°Ÿ¶>·²œèŸŠv¾â<œ°Ÿ¶s¶J4œèŸÂ~2 õm¡•…‘]•…Ñ¡•ÉuñğŸÂ~2“¾â<œì(€½¹ÍĞ‰…õ¡•…‘]•…Ñ¡•È„ôôŸ®G²v0œì(€½¹ÍĞÉ•…±]àô¡¡°ı¡°¹Í½ÕÉ”é¼¹Ñà¹İ•…Ñ¡•ÉM½ÕÉ”¤ôôôŸ².“²‚pƒ²b#®ÎĞœì(€½¹ÍĞÍÉ1…‰•°õ¡°ı¡°¹Í½ÕÉ”è¡¼¹Ñà¹İ•…Ñ¡•ÉM½ÕÉ”ôôôŸ².“²‚pƒ²b#®ÎĞœüŸ².“²‚pƒ²b#®ÎĞœèŸ®.c®æ®‚#²vğƒ².s®º³®‚#²vÓ²`ƒ²b#®ÎĞœ¤ì(€½¹ÍĞ¥¹™½	Ñ¸ô¡¡°˜™¡°¹¡…ÍI•¥½¹Ì¤ı€ñ‰ÕÑÑ½¸ÑåÁ”ô‰‰ÕÑÑ½¸ˆ±…ÍÌô‰İ•…Ñ¡•Èµ¥¹™¼µ‰Ñ¸ˆ…É¥„µ±…‰•°ô‹²²^·®Îƒ®
+ƒ²R ƒ²²àƒ®ÎÓªâÀˆ½¹±¥¬ô‰½Á•¹I•¥½¹…±]•…Ñ¡•É5½‘…° ¤ˆûŠN`ğ½‰ÕÑÑ½¸ù€èœœì(€½¹ÍĞÁ•…­]àõÉ•…±]à˜™‰…˜™¼¹Ñà¹É•¥½¸ı€‘í}½ÁÍÍŒ¡¼¹Ñà¹É•¥½¸¥ô€‘íMÑÉ¥¹œ¡¼¹Ñà¹¡½ÕÈ¤¹Á…‘MÑ…ÉĞ È°œÀœ¥÷².pƒ²b¶Z”ƒ²G²’E€èœœì(€½¹ÍĞ°õœôø¡ÑåÁ•½˜0„ôôÕ¹‘•™¥¹•œ˜™1mt¥ññœì(€½¹ÍĞÉ½İÌõ¼¹É½İÌ¹µ…À¡Èôùì(€€€½¹ÍĞÉ¹œõÈ¹É…¹•Q•áÑññ€‘íÈ¹•ÍÑ÷®Úƒ®
+Ó²fá€ì(€€€½¹ÍĞŒô¡ÑåÁ•½˜I}=1=IL„ôôÕ¹‘•™¥¹•œ˜™I}=1=IMmÈ¹Ğ¹É…‘•t¥ñğœŒàààœì(€€€½¹ÍĞÍ•ØõÈ¹•ÍĞøôÄÔüÈœéÈ¹•ÍĞøôàü¼œèäœì(€€€É•ÑÕÉ¸€ñ‰ÕÑÑ½¸±…ÍÌô‰½°µÉ½Üˆ½¹±¥¬ô‰½Á•¹)½ÕÉ¹•ä œ‘í}½ÁÍÍŒ¡È¹Ğ¹¹¼¥ôœ¤ˆøñÍÁ…¸±…ÍÌô‰½°µÉ…‘”ˆÍÑå±”ô‰‰…­É½Õ¹è‘íôˆø‘í}½ÁÍÍŒ¡°¡È¹Ğ¹É…‘”¤¥ôğ½ÍÁ…¸øñÍÁ…¸±…ÍÌô‰½°µ¹¼ˆø‘í}½ÁÍÍŒ¡È¹Ğ¹¹¼¥ôğ½ÍÁ…¸øñÍÁ…¸±…ÍÌô‰½°µÉ½ÕÑ”ˆø‘í}½ÁÍÍŒ¡È¹Ğ¹ÍÑ½ÁÍlÁt¹Ì¥ôñÍÁ…¸±…ÍÌô‰½°µ…ÉÈˆûŠHğ½ÍÁ…¸ø‘í}½ÁÍÍŒ¡È¹Ğ¹‘•ÍĞ¥ôğ½ÍÁ…¸øñÍÁ…¸±…ÍÌô‰½°µÉ¹œ½°µÍ•Ø´‘íÍ•Ùôˆø‘íÉ¹ôğ½ÍÁ…¸ø‘íÈ¹…ÕÍ”ı€ñÍÁ…¸±…ÍÌô‰½°µèˆø ‘í}½ÁÍÍŒ¡È¹…ÕÍ”¥ô¤ğ½ÍÁ…¸ù€èœôğ½‰ÕÑÑ½¸ù€ì(€ô¤¹©½¥¸ œœ¤ì(€É•ÑÕÉ¸€ñ‘¥Ø±…ÍÌô‰½ÕÑ±½½¬µ…É‘í‰…üœ‰…œèœôˆø(€€€€ñ‘¥Ø±…ÍÌô‰½°µ¡•…ˆø‘íİá%½ôƒ²b“®*c²v`ƒ²jÓ¶Z$ƒ²‚®t€‘í¥¹™½	Ñ¹ô€ñÍÁ…¸±…ÍÌô‰½°µİàˆø‘í}½ÁÍÍŒ¡¡•…‘1…‰•°¥ôƒ
+Ü€‘í¼¹Ñà¹İ••­•¹üŸ²ó®C
+ßªÎ×¶rÓ²vğœèŸ¶>'²vğôğ½ÍÁ…¸øğ½‘¥Øø(€€€€‘í¼¹É½İÌ¹±•¹Ñ ı€ñ‘¥Ø±…ÍÌô‰½°µ‘•ÍŒˆø‘í‰…ı€‘í}½ÁÍÍŒ¡¡•…‘]•…Ñ¡•È¥ôƒ²b#®ÎÓ®–ğƒ®Âc²b¶VĞƒ®.“²v0ƒ²^Ó²Â£²v`ƒ²²^ÀƒªÂ®*—²Ç²vƒªÎ²
+Ã¶Z#²*×®.#®.¹€èŸ².“²‚pƒ²b#®ÎÓ®–ğƒ®Âc²b¶VpƒªÊÃªÎğƒ®.“²v0ƒ²^Ó²Â£²v`ƒ²²^ÀƒªÂ®*—²Ç²vĞƒ²z#²*×®.#®.¸ôğ½‘¥Øø‘íÉ½İÍô‘í¼¹Ñ½Ñ…°øàı€ñ‰ÕÑÑ½¸±…ÍÌô‰½°µ…±±‰Ñ¸ˆ½¹±¥¬ô‰İ¥¹‘½Ü¹}½±±°ô…İ¥¹‘½Ü¹}½±±°íÙ…È”õ‘½Õµ•¹Ğ¹•Ñ±•µ•¹Ñ	å% É•ÍÕ±Ğµ‘•±…äœ¤í¥˜¡”¥É•¹‘•ÉM%•±…ä¡”¤ˆø‘íİ¥¹‘½Ü¹}½±±°üŸ²‚GªâÀƒŠZÈœéƒ²‚²ÊĞ€‘í¼¹Ñ½Ñ…±÷¶:àƒ®ÎÓªâÀƒŠZñôğ½‰ÕÑÑ½¸ù€èœõ€(€€€€€€é€ñ‘¥Ø±…ÍÌô‰½°µ‘•ÍŒˆû¶b²z°ƒ²²^Ã²vĞƒ²b#®ÎÓ®Bpƒ²^Ó²Â£ªÂ ƒ²^²*×®.#®.¸ƒ²‚ƒ²^Ó²Â ƒ²‚W²ƒ²jÓ¶Z'²vĞƒ²b#²®B§®.#®.¸ğ½‘¥Øùô(€€€€ñ‘¥Ø±…ÍÌô‰½°µ…Ù•…Ğˆø(€€€€€ƒ²b#²â‡²v ƒ¶fW²‚W²vĞƒ²V®.#®¦À°ƒªâÃ²ƒ¶bã²‚ƒ®NÇ²^@ƒ®RÃ®vğƒ²‚W²ƒ²jÓ¶Z'²ró®†pƒ®ÎªÊ÷®B€ƒ²"`ƒ²z#²*×®.#®.¸(€€€€€€ñÍÁ…¸û²jÓ¶Z$ƒ²‚ªÎğƒ²jÓ¶Z$ƒ²’G²^C®>ƒªÒ²â„ƒ²¶f¤°ƒ²^´ƒ¶×ªÎğ°ƒ®>3®Âs²¶f§²^@ƒ®RÃ®vğƒ²²^Àƒ²‚W®ÎÓ²f ƒ²b#®ÎÓªÂ ƒ®.³®vó² ƒ²"`ƒ²z#²*×®.#®.¸ğ½ÍÁ…¸ø(€€€€€€‘íÉ•…±]àüœñÍÁ…¸ûªâÃ²ƒ²b#®ÎĞƒ²‚sªÎÔè=Á•¸µ5•Ñ•¼ƒ
+Üƒ²‚G²4ƒ².pƒ²Ös².€ƒ²b#®ÎĞƒ¶fW²vàğ½ÍÁ…¸øœèœô(€€€€ğ½‘¥Øø(€€€€ñ‰ÕÑÑ½¸±…ÍÌô‰½°µ•áÁ±…¥¸µ‰Ñ¸ˆ½¹±¥¬ô‰½Á•¹•±…åáÁ±…¹…Ñ¥½¸ ¤ˆû²²^Ã²v ƒ²ZÓ®ZïªÊ0ƒ²
+Ã²‚W®Bc®
+c²jPüğ½‰ÕÑÑ½¸ø(€€ğ½‘¥Øù€ì)ô((¼¼ƒ²*çªÂw²j¤ƒ²²^Àƒ²
+Ã²‚Tƒ²V#®
+Ó®*Pƒ®Î®>!Q50ƒ²†ÃªÂ²ró®†pƒªÒ®š³¶Vs®.¸(¼¼ƒ¶Vpƒ®Ê ƒ®Ú#®~³²b ƒ®
+Ó²j§²v ƒ¶´ƒ²z³®‚3®6S®ƒ².pƒ²z³²
+³²j§¶VĞƒ®Ú#¶V²jS¶Vpƒ®“¶*ã²n3¶°ƒ²jS²Ê·²vƒ®'®*S®.¸)±•Ğ}‘•±…åáÁ±…¹…Ñ¥½¹AÉ½µ¥Í”õ¹Õ±°ì)™Õ¹Ñ¥½¸}±½…‘•±…åáÁ±…¹…Ñ¥½¸¡¡½ÍĞ¥ì(€¥˜ …¡½ÍĞ¥É•ÑÕÉ¸ì(€¥˜ …}‘•±…åáÁ±…¹…Ñ¥½¹AÉ½µ¥Í”¥ì(€€€}‘•±…åáÁ±…¹…Ñ¥½¹AÉ½µ¥Í”õ™•Ñ  Á…•Ì½¹¥µ‰¥}‘•±…å}•áÁ±…¹…Ñ¥½¸¹¡Ñµ°ıØôÈÀÈØÀÜÈÀÌÈœ¤(€€€€€€¹Ñ¡•¸¡É•Ìôùì(€€€€€€€¥˜ …É•Ì¹½¬¥Ñ¡É½Ü¹•ÜÉÉ½È¡!QQ@€‘íÉ•Ì¹ÍÑ…ÑÕÍõ€¤ì(€€€€€€€É•ÑÕÉ¸É•Ì¹Ñ•áĞ ¤ì(€€€€€ô¤(€€€€€€¹…Ñ ¡•ÉÈôùì(€€€€€€€}‘•±…åáÁ±…¹…Ñ¥½¹AÉ½µ¥Í”õ¹Õ±°ì(€€€€€€€Ñ¡É½Ü•ÉÈì(€€€€€ô¤ì(€ô(€}‘•±…åáÁ±…¹…Ñ¥½¹AÉ½µ¥Í”(€€€€¹Ñ¡•¸¡¡Ñµ°ôùì(€€€€€½¹ÍĞÕÉÉ•¹Ğõ‘½Õµ•¹Ğ¹•Ñ±•µ•¹Ñ	å% ‘•±…äµ•áÁ±…¹…Ñ¥½¸µµ½‘…°µ‰½‘äœ¤ì(€€€€€¥˜ …ÕÉÉ•¹Ğ¥É•ÑÕÉ¸ì(€€€€€½¹ÍĞÁ…ÉÍ•õ‘½Õµ•¹Ğ¹É•…Ñ•±•µ•¹Ğ ‘¥Øœ¤ì(€€€€€Á…ÉÍ•¹¥¹¹•É!Q50õ¡Ñµ°ì(€€€€€½¹ÍĞ½¹Ñ•¹ĞõÁ…ÉÍ•¹ÅÕ•ÉåM•±•Ñ½È ‘•Ñ…¥±Ì€ø‘¥Øœ¤ì(€€€€€ÕÉÉ•¹Ğ¹¥¹¹•É!Q50õ½¹Ñ•¹Ğı½¹Ñ•¹Ğ¹½ÕÑ•É!Q50é¡Ñµ°ì(€€€ô¤(€€€€¹…Ñ   ¤ôùì(€€€€€½¹ÍĞÕÉÉ•¹Ğõ‘½Õµ•¹Ğ¹•Ñ±•µ•¹Ñ	å% ‘•±…äµ•áÁ±…¹…Ñ¥½¸µµ½‘…°µ‰½‘äœ¤ì(€€€€€¥˜¡ÕÉÉ•¹Ğ¥ÕÉÉ•¹Ğ¹¥¹¹•É!Q50ôœñ‘¥Ø±…ÍÌô‰‘•±…å•µ•µÁÑäˆû²²^Àƒ²
+Ã²‚Tƒ®Â§².tƒ²V#®
+Ó®–ğƒ®Ú#®~³²b“² ƒ®ªï¶Z#²*×®.#®.¸ƒ²zƒ².pƒ¶nƒ®.“².pƒ².s®>¶VĞƒ²ó²ã²jP¸ğ½‘¥Øøœì(€€€ô¤ì)ô)™Õ¹Ñ¥½¸½Á•¹•±…åáÁ±…¹…Ñ¥½¸ ¥ì(€‘½Õµ•¹Ğ¹•Ñ±•µ•¹Ñ	å% ‘•±…äµ•áÁ±…¹…Ñ¥½¸µµ½‘…°œ¤ü¹É•µ½Ù” ¤ì(€½¹ÍĞµ½‘…°õ‘½Õµ•¹Ğ¹É•…Ñ•±•µ•¹Ğ ‘¥Øœ¤ì(€µ½‘…°¹¥ô‘•±…äµ•áÁ±…¹…Ñ¥½¸µµ½‘…°œì(€µ½‘…°¹±…ÍÍ9…µ”ô‘•±…äµ•áÁ±…¹…Ñ¥½¸µµ½‘…°œì(€µ½‘…°¹¥¹¹•É!Q50õ€ñ‘¥Ø±…ÍÌô‰‘•±…äµ•áÁ±…¹…Ñ¥½¸µ‘¥…±½œˆÉ½±”ô‰‘¥…±½œˆ…É¥„µµ½‘…°ô‰ÑÉÕ”ˆ…É¥„µ±…‰•±±•‘‰äô‰‘•±…äµ•áÁ±…¹…Ñ¥½¸µÑ¥Ñ±”ˆø(€€€€ñ‘¥Ø±…ÍÌô‰‘•±…äµ•áÁ±…¹…Ñ¥½¸µ¡•…ˆø(€€€€€€ñˆ¥ô‰‘•±…äµ•áÁ±…¹…Ñ¥½¸µÑ¥Ñ±”ˆû²²^Ã²v ƒ²ZÓ®ZïªÊ0ƒ²
+Ã²‚W®Bc®
+c²jPüğ½ˆø(€€€€€€ñ‰ÕÑÑ½¸½¹±¥¬ô‰±½Í••±…åáÁ±…¹…Ñ¥½¸ ¤ˆ…É¥„µ±…‰•°ô‹®.¯ªâÀˆûŠrTğ½‰ÕÑÑ½¸ø(€€€€ğ½‘¥Øø(€€€€ñ‘¥Ø±…ÍÌô‰‘•±…äµ•áÁ±…¹…Ñ¥½¸µµ½‘…°µ‰½‘äˆ¥ô‰‘•±…äµ•áÁ±…¹…Ñ¥½¸µµ½‘…°µ‰½‘äˆø(€€€€€€ñ‘¥Ø±…ÍÌô‰‘•±…å•µ•µÁÑäˆû²²^Àƒ²
+Ã²‚Tƒ®Â§².tƒ²V#®
+Ó®–ğƒ®Ú#®~³²b“®*Pƒ²’GŠ˜ğ½‘¥Øø(€€€€ğ½‘¥Øø(€€ğ½‘¥Øù€ì(€µ½‘…°¹…‘‘Ù•¹Ñ1¥ÍÑ•¹•È ±¥¬œ±”ôùí¥˜¡”¹Ñ…É•Ğôôõµ½‘…°¥±½Í••±…åáÁ±…¹…Ñ¥½¸ ¤íô¤ì(€‘½Õµ•¹Ğ¹‰½‘ä¹…ÁÁ•¹‘¡¥±¡µ½‘…°¤ì(€}±½…‘•±…åáÁ±…¹…Ñ¥½¸¡‘½Õµ•¹Ğ¹•Ñ±•µ•¹Ñ	å% ‘•±…äµ•áÁ±…¹…Ñ¥½¸µµ½‘…°µ‰½‘äœ¤¤ì)ô)™Õ¹Ñ¥½¸±½Í••±…åáÁ±…¹…Ñ¥½¸ ¥ì(€½¹ÍĞµ½‘…°õ‘½Õµ•¹Ğ¹•Ñ±•µ•¹Ñ	å% ‘•±…äµ•áÁ±…¹…Ñ¥½¸µµ½‘…°œ¤ì(€¥˜ …µ½‘…±ññµ½‘…°¹±…ÍÍ1¥ÍĞ¹½¹Ñ…¥¹Ì ±½Í¥¹œœ¤¥É•ÑÕÉ¸ì(€µ½‘…°¹±…ÍÍ1¥ÍĞ¹…‘ ±½Í¥¹œœ¤ì(€Í•ÑQ¥µ•½ÕĞ  ¤ôùµ½‘…°¹É•µ½Ù” ¤°ÈĞÀ¤ì)ô((¼¼ƒŠRŠR ƒŠN`ƒ²²^·®Îƒ²jÓ¶Z$ƒ®
+ƒ²R ƒ®ª£®.°ƒŠRŠR )±•Ğ}İá5½‘…±I•ÑÕÉ¹½ÕÌõ¹Õ±°°}İá5½‘…±-•å!…¹‘±•Èõ¹Õ±°°}İá5½‘…±A…•1½¬õ¹Õ±°ì)™Õ¹Ñ¥½¸½Á•¹I•¥½¹…±]•…Ñ¡•É5½‘…° ¥ì(€‘½Õµ•¹Ğ¹•Ñ±•µ•¹Ñ	å% İ•…Ñ¡•Èµµ½‘…°œ¤ü¹É•µ½Ù” ¤ì(€‘½Õµ•¹Ğ¹•Ñ±•µ•¹Ñ	å% İ•…Ñ¡•Èµµ½‘…°µ‰…­‘É½Àœ¤ü¹É•µ½Ù” ¤ì(€}İá5½‘…±I•ÑÕÉ¹½ÕÌõ‘½Õµ•¹Ğ¹…Ñ¥Ù•±•µ•¹Ğì(€½¹ÍĞ¸õ¹•Ü…Ñ” ¤°¹½İ5¥¸õ¸¹•Ñ!½ÕÉÌ ¤¨ØÀ­¸¹•Ñ5¥¹ÕÑ•Ì ¤ì(€½¹ÍĞ‘•Ñ…¥°ô¡ÑåÁ•½˜}İáI•¥½¹…±•Ñ…¥°ôôô™Õ¹Ñ¥½¸œ¤ı}İáI•¥½¹…±•Ñ…¥°¡¹½İ5¥¸¤é¹Õ±°ì(€½¹ÍĞ‰…­‘É½Àõ‘½Õµ•¹Ğ¹É•…Ñ•±•µ•¹Ğ ‘¥Øœ¤ì(€‰…­‘É½À¹±…ÍÍ9…µ”ôİ•…Ñ¡•Èµµ½‘…°µ‰…­‘É½Àœì‰…­‘É½À¹¥ôİ•…Ñ¡•Èµµ½‘…°µ‰…­‘É½Àœì(€‰…­‘É½À¹½¹±¥¬õ±½Í•I•¥½¹…±]•…Ñ¡•É5½‘…°ì(€½¹ÍĞµ½‘…°õ‘½Õµ•¹Ğ¹É•…Ñ•±•µ•¹Ğ ‘¥Øœ¤ì(€µ½‘…°¹±…ÍÍ9…µ”ôİ•…Ñ¡•Èµµ½‘…°œìµ½‘…°¹¥ôİ•…Ñ¡•Èµµ½‘…°œì(€µ½‘…°¹Í•ÑÑÑÉ¥‰ÕÑ” É½±”œ°‘¥…±½œœ¤ìµ½‘…°¹Í•ÑÑÑÉ¥‰ÕÑ” …É¥„µµ½‘…°œ°ÑÉÕ”œ¤ì(€µ½‘…°¹Í•ÑÑÑÉ¥‰ÕÑ” …É¥„µ±…‰•±±•‘‰äœ°İ•…Ñ¡•Èµµ½‘…°µÑ¥Ñ±”œ¤ì(€½¹ÍĞ±¬õ€‘íMÑÉ¥¹œ¡¸¹•Ñ!½ÕÉÌ ¤¤¹Á…‘MÑ…ÉĞ È°œÀœ¥ôè‘íMÑÉ¥¹œ¡¸¹•Ñ5¥¹ÕÑ•Ì ¤¤¹Á…‘MÑ…ÉĞ È°œÀœ¥õ€ì(€½¹ÍĞ¡°õ‘•Ñ…¥°ı‘•Ñ…¥°¹¡•…‘±¥¹”é¹Õ±°ì(€±•Ğ‰½‘äì(€¥˜ …‘•Ñ…¥°¥ì(€€€‰½‘äõ€ñ‘¥Ø±…ÍÌô‰İá´µÍÕµµ…Éäˆû¶b²z°ƒ².“²‚pƒ²²^·®Îƒ²b#®ÎÓ®–ğƒ®Ú#®~³²b“² ƒ®ªï¶Z#²*×®.#®.¸ƒ®.c®æ®‚#²vğƒ².s®º³®‚#²vÓ²`ƒ²b#®ÎĞƒªâÃ²’²ró®†pƒ²‚ªÖ´ƒ®>g²vğƒªâÃ²²vƒ²‚²j¤ƒ²’G²z®.#®.¸ğ½‘¥Øù€ì(€ô•±Í”ì(€€€½¹ÍĞ…É‘Ìõ‘•Ñ…¥°¹É•¥½¹Ì¹µ…À¡Èôù€ñ‘¥Ø±…ÍÌô‰İá´µÉ•¥½¸ˆø(€€€€€€ñ‘¥Ø±…ÍÌô‰İá´µÉ•¥½¸µÑ½ÀˆøñÍÁ…¸±…ÍÌô‰İá´µ¥¼ˆø‘íÈ¹¥½¹ôğ½ÍÁ…¸øñˆø‘í}½ÁÍÍŒ¡È¹¹…µ”¥ôğ½ˆøñÍÁ…¸±…ÍÌô‰İá´µÜˆø‘í}½ÁÍÍŒ¡È¹İ•…Ñ¡•È¥ôğ½ÍÁ…¸øğ½‘¥Øø(€€€€€€ñ‘¥Ø±…ÍÌô‰İá´µÉ•¥½¸µÉ½ÜˆûÂ~VH€‘í}½ÁÍÍŒ¡È¹Ñ¥µ•1…‰•°¥ôğ½‘¥Øø(€€€€€€‘íÈ¹¡…¹•1…‰•°ı€ñ‘¥Ø±…ÍÌô‰İá´µÉ•¥½¸µÉ½Üİá´µ¡…¹”ˆûÂ~R€‘í}½ÁÍÍŒ¡È¹¡…¹•1…‰•°¥ôğ½‘¥Øù€èœô(€€€€€€ñ‘¥Ø±…ÍÌô‰İá´µÉ•¥½¸µÉ½ÜˆûÂ~j˜€‘í}½ÁÍÍŒ¡È¹¥µÁ…Ğ¥ôğ½‘¥Øø(€€€€€€ñ‘¥Ø±…ÍÌô‰İá´µÉ•¥½¸µÉ½Üİá´µÑÈˆûÂ~jƒ¶b²z°ƒ²b¶Z”ƒ²b#²€‘íÈ¹ÑÉ…¥¹Í÷¶:àğ½‘¥Øø(€€€€ğ½‘¥Øù€¤¹©½¥¸ œœ¤ì(€€€‰½‘äõ€ñ‘¥Ø±…ÍÌô‰İá´µÍÕµµ…Éäˆøñˆû¶b²z°ƒ®2¶FpƒªâÃ²ğ½ˆøñ‰Èø‘í}½ÁÍÍŒ¡¡°ı¡°¹±…‰•°èŸŠPœ¥ôƒ
+Ü€‘í}½ÁÍÍŒ¡¡°ı¡°¹Í½ÕÉ”èœœ¥ôğ½‘¥Øø(€€€€€€ñ‘¥Ø±…ÍÌô‰İá´µÉ•¥½¸µ±¥ÍĞˆø‘í…É‘Íôğ½‘¥Øù€ì(€ô(€µ½‘…°¹¥¹¹•É!Q50õ€ñ‘¥Ø±…ÍÌô‰İ•…Ñ¡•Èµµ½‘…°µ¡•…‘•Èˆø(€€€€€€ñ‘¥Øøñ‘¥Ø¥ô‰İ•…Ñ¡•Èµµ½‘…°µÑ¥Ñ±”ˆû²²^·®Îƒ²jÓ¶Z$ƒ®
+ƒ²R ğ½‘¥Øøñ‘¥Ø±…ÍÌô‰İá´µÕÁ‘…Ñ•ˆû¶b²z°€‘í±­ôƒªâÃ²’ ğ½‘¥Øøğ½‘¥Øø(€€€€€€ñ‰ÕÑÑ½¸½¹±¥¬ô‰±½Í•I•¥½¹…±]•…Ñ¡•É5½‘…° ¤ˆ…É¥„µ±…‰•°ô‹®.¯ªâÀˆûŠrTğ½‰ÕÑÑ½¸ø(€€€€ğ½‘¥Øø(€€€€ñ‘¥Ø±…ÍÌô‰İ•…Ñ¡•Èµµ½‘…°µ‰½‘äˆø‘í‰½‘åôğ½‘¥Øù€ì(€€¼¼ƒ®ÂÃªÊôƒ²*“¶³®†“
+ß¶Ã²æ`ƒ²Â£®. £¶G²*äƒ²^³²‚Tƒ®ª£®.³ªÎğƒ®>g²vğƒ®Â§².t¤(€½¹ÍĞ‘½	½‘äõ‘½Õµ•¹Ğ¹‰½‘ä°É½½Ğõ‘½Õµ•¹Ğ¹‘½Õµ•¹Ñ±•µ•¹Ğ°ÍÉ½±±dõİ¥¹‘½Ü¹ÍÉ½±±dì(€}İá5½‘…±A…•1½¬õíÍÉ½±±d°(€€€‰½‘äéíÁ½Í¥Ñ¥½¸é‘½	½‘ä¹ÍÑå±”¹Á½Í¥Ñ¥½¸±Ñ½Àé‘½	½‘ä¹ÍÑå±”¹Ñ½À±±•™Ğé‘½	½‘ä¹ÍÑå±”¹±•™Ğ±É¥¡Ğé‘½	½‘ä¹ÍÑå±”¹É¥¡Ğ±İ¥‘Ñ é‘½	½‘ä¹ÍÑå±”¹İ¥‘Ñ ±½Ù•É™±½Üé‘½	½‘ä¹ÍÑå±”¹½Ù•É™±½İô°(€€€É½½Ñ=Ù•É™±½ÜéÉ½½Ğ¹ÍÑå±”¹½Ù•É™±½İôì(€‘½	½‘ä¹±…ÍÍ1¥ÍĞ¹…‘ ©½ÕÉ¹•äµµ½‘…°µ½Á•¸œ¤ì‘½	½‘ä¹ÍÑå±”¹Ñ½Àõ€´‘íÍÉ½±±eõÁá€ìÉ½½Ğ¹ÍÑå±”¹½Ù•É™±½Üô¡¥‘‘•¸œì(€‰…­‘É½À¹…‘‘Ù•¹Ñ1¥ÍÑ•¹•È Ñ½Õ¡µ½Ù”œ±”ôù”¹ÁÉ•Ù•¹Ñ•™…Õ±Ğ ¤±íÁ…ÍÍ¥Ù”é™…±Í•ô¤ì(€µ½‘…°¹…‘‘Ù•¹Ñ1¥ÍÑ•¹•È Ñ½Õ¡µ½Ù”œ±”ôù”¹ÍÑ½ÁAÉ½Á……Ñ¥½¸ ¤±íÁ…ÍÍ¥Ù”éÑÉÕ•ô¤ì(€‘½Õµ•¹Ğ¹‰½‘ä¹…ÁÁ•¹‘¡¥±¡‰…­‘É½À¤ì(€‘½Õµ•¹Ğ¹‰½‘ä¹…ÁÁ•¹‘¡¥±¡µ½‘…°¤ì(€}İá5½‘…±-•å!…¹‘±•Èõ”ôùì¥˜¡”¹­•äôôôÍ…Á”œ¥±½Í•I•¥½¹…±]•…Ñ¡•É5½‘…° ¤ìôì(€‘½Õµ•¹Ğ¹…‘‘Ù•¹Ñ1¥ÍÑ•¹•È ­•å‘½İ¸œ±}İá5½‘…±-•å!…¹‘±•È¤ì(€½¹ÍĞ±½Í•	Ñ¸õµ½‘…°¹ÅÕ•ÉåM•±•Ñ½È œ¹İ•…Ñ¡•Èµµ½‘…°µ¡•…‘•È‰ÕÑÑ½¸œ¤ì¥˜¡±½Í•	Ñ¸¥±½Í•	Ñ¸¹™½ÕÌ ¤ì)ô)™Õ¹Ñ¥½¸±½Í•I•¥½¹…±]•…Ñ¡•É5½‘…° ¥ì(€½¹ÍĞµ½‘…°õ‘½Õµ•¹Ğ¹•Ñ±•µ•¹Ñ	å% İ•…Ñ¡•Èµµ½‘…°œ¤ì(€½¹ÍĞ‰…­‘É½Àõ‘½Õµ•¹Ğ¹•Ñ±•µ•¹Ñ	å% İ•…Ñ¡•Èµµ½‘…°µ‰…­‘É½Àœ¤ì(€¥˜¡}İá5½‘…±-•å!…¹‘±•È¥ì‘½Õµ•¹Ğ¹É•µ½Ù•Ù•¹Ñ1¥ÍÑ•¹•È ­•å‘½İ¸œ±}İá5½‘…±-•å!…¹‘±•È¤ì}İá5½‘…±-•å!…¹‘±•Èõ¹Õ±°ìô(€¥˜¡µ½‘…°¥ìµ½‘…°¹±…ÍÍ1¥ÍĞ¹…‘ ±½Í¥¹œœ¤ìÍ•ÑQ¥µ•½ÕĞ  ¤ôùµ½‘…°¹É•µ½Ù” ¤°ÈÀÀ¤ìô(€¥˜¡‰…­‘É½À¥ì‰…­‘É½À¹±…ÍÍ1¥ÍĞ¹…‘ ±½Í¥¹œœ¤ìÍ•ÑQ¥µ•½ÕĞ  ¤ôù‰…­‘É½À¹É•µ½Ù” ¤°ÈÀÀ¤ìô(€¥˜¡}İá5½‘…±A…•1½¬¥ì½¹ÍĞ‰½‘äõ‘½Õµ•¹Ğ¹‰½‘ä°É½½Ğõ‘½Õµ•¹Ğ¹‘½Õµ•¹Ñ±•µ•¹Ğ°±½¬õ}İá5½‘…±A…•1½¬ì(€€€‰½‘ä¹±…ÍÍ1¥ÍĞ¹É•µ½Ù” ©½ÕÉ¹•äµµ½‘…°µ½Á•¸œ¤ì=‰©•Ğ¹…ÍÍ¥¸¡‰½‘ä¹ÍÑå±”±±½¬¹‰½‘ä¤ìÉ½½Ğ¹ÍÑå±”¹½Ù•É™±½Üõ±½¬¹É½½Ñ=Ù•É™±½Üì(€€€İ¥¹‘½Ü¹ÍÉ½±±Q¼ À±±½¬¹ÍÉ½±±d¤ì}İá5½‘…±A…•1½¬õ¹Õ±°ìô(€¥˜¡}İá5½‘…±I•ÑÕÉ¹½ÕÌ˜™ÑåÁ•½˜}İá5½‘…±I•ÑÕÉ¹½ÕÌ¹™½ÕÌôôô™Õ¹Ñ¥½¸œ¥ìÑÉåí}İá5½‘…±I•ÑÕÉ¹½ÕÌ¹™½ÕÌ ¤íõ…Ñ ¡”¥íôô(€}İá5½‘…±I•ÑÕÉ¹½ÕÌõ¹Õ±°ì)ô()™Õ¹Ñ¥½¸É•¹‘•ÉM%•±…ä¡•°¥ì(€½¹ÍĞµ½‘•°õ1e}5=0ì(€•°¹¥¹¹•É!Q50õ€ñ‘¥ØÍÑå±”ô‰µ…É¥¸µÑ½ÀèÄÉÁàˆø(€€€€‘í}½ÕÑ±½½­!Q50 ¥ô(€€€€‘í}‘•±…å•‘QÉ…¥¹Í!Q50 ¥ô(€€€€ñ‘•Ñ…¥±Ì±…ÍÌô‰™Œµ™½±ˆ‘í}Í¥µ•±…å=¸üœœèœ½Á•¸ôø(€€€€ñÍÕµµ…ÉäûÂ~N(ƒ®ã²ƒ®Îƒ²²^Àƒ²b#®ÎĞ€ñÍÁ…¸±…ÍÌô‰™Œµ™½±µÍÕˆˆù5åÍÑ•É¥½ÕÌ¹Ñ•ÉÁÉ¥Í”ƒ²jÓ¶Z$ƒªâÃ®†tƒªâÃ®Â`ƒ
+Ü€‘íµ½‘•°¹±•¹Ñ¡÷ªÂpƒ®ã²€ğ½ÍÁ…¸øğ½ÍÕµµ…Éäø(€€€€‘íµ½‘•°¹µ…À¡ôùì(€€€€€½¹ÍĞ±Øõ¹ÁÉ½ˆğÈÔü±½Üœé¹ÁÉ½ˆğĞÀüµ•œè¡¥ œì(€€€€€½¹ÍĞ±Œõ±Øôôô±½ÜœüÙ…È ´µÉ••¸¤œé±Øôôôµ•œüÙ…È ´µ½É…¹”¤œèÙ…È ´µÉ•¤œì(€€€€€½¹ÍĞ±Ğõ±Øôôô±½ÜœüŸ®
+»²v0œé±Øôôôµ•œüŸ®ÎÓ¶ÔœèŸ®K²v0œì(€€€€€É•ÑÕÉ¸€ñ‘¥ØÍÑå±”ô‰‰…­É½Õ¹éÙ…È ´µ‰œÈ¤í‰½É‘•ÈèÅÁàÍ½±¥Ù…È ´µ‰½É‘•È¤í‰½É‘•ÈµÉ…‘¥ÕÌèÄÉÁàíÁ…‘‘¥¹œèÄÑÁà€ÄÙÁàíµ…É¥¸µ‰½ÑÑ½´èáÁàˆø(€€€€€€€€ñ‘¥ØÍÑå±”ô‰‘¥ÍÁ±…äé™±•àí©ÕÍÑ¥™äµ½¹Ñ•¹ĞéÍÁ…”µ‰•Ñİ••¸í…±¥¸µ¥Ñ•µÌé•¹Ñ•Èíµ…É¥¸µ‰½ÑÑ½´èáÁàˆø(€€€€€€€€€€ñ‘¥ØÍÑå±”ô‰™½¹ĞµÍ¥é”èÄÍÁàí™½¹Ğµİ•¥¡ĞèÜÀÀí½±½Èè‘í¹ôˆø‘í¹¹…µ•ôğ½‘¥Øø(€€€€€€€€€€ñ‘¥ØÍÑå±”ô‰™½¹ĞµÍ¥é”èÄÅÁàí™½¹Ğµİ•¥¡ĞèÜÀÀíÁ…‘‘¥¹œèÍÁà€ÄÁÁàí‰½É‘•ÈµÉ…‘¥ÕÌèÄÉÁàí‰…­É½Õ¹è‘í±ôÈÈí½±½Èè‘í±ôí‰½É‘•ÈèÅÁàÍ½±¥€‘í±ôĞĞˆø‘í±Ñôğ½‘¥Øø(€€€€€€€€ğ½‘¥Øø(€€€€€€€€ñ‘¥ØÍÑå±”ô‰‰…­É½Õ¹éÙ…È ´µ‰œÌ¤í‰½É‘•ÈµÉ…‘¥ÕÌèÙÁàí¡•¥¡ĞèÙÁàí½Ù•É™±½Üé¡¥‘‘•¸íµ…É¥¸µ‰½ÑÑ½´èÙÁàˆø(€€€€€€€€€€ñ‘¥ØÍÑå±”ô‰İ¥‘Ñ è‘í¹ÁÉ½‰ô”í¡•¥¡ĞèÄÀÀ”í‰½É‘•ÈµÉ…‘¥ÕÌèÙÁàí‰…­É½Õ¹è‘í±ôˆøğ½‘¥Øø(€€€€€€€€ğ½‘¥Øø(€€€€€€€€ñ‘¥ØÍÑå±”ô‰‘¥ÍÁ±…äé™±•àí©ÕÍÑ¥™äµ½¹Ñ•¹ĞéÍÁ…”µ‰•Ñİ••¸í™½¹ĞµÍ¥é”èÄÅÁàí½±½ÈéÙ…È ´µÑ•áĞÌ¤ˆø(€€€€€€€€€€ñÍÁ…¸û²²^Àƒ¶fW®–€€‘í¹ÁÉ½‰ô”ğ½ÍÁ…¸øñÍÁ…¸û²b#²€‘í¹µ¥¹õø‘í¹µ…á÷®Úğ½ÍÁ…¸ø(€€€€€€€€ğ½‘¥Øø(€€€€€€ğ½‘¥Øù€ì(€€€ô¤¹©½¥¸ œœ¥ô(€€€€ğ½‘•Ñ…¥±Ìø(€€ğ½‘¥Øù€ì)ô((¼¼ƒŠRŠR ƒ²vÓ²j¤ƒ®ª£®Np£ªâÃ²Â ¿²‚²Ê€¤ƒ²Ò#ªâÀƒ®Âc²bƒŠRŠR )ÑÉåì(€}…ÁÁ±å5½‘•Q…‰Ì ¤ì(€¥˜¡}…ÁÁ5½‘”ôôôµ•ÑÉ¼œ¤Íİ¥Ñ¡Q…ˆ µ•ÑÉ½±¥¹•Ìœ¤ì)õ…Ñ ¡”¥íô((¼¼ƒŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠV@(¼¼ƒÂ~nÃ¾â<ƒªÒ²‚pƒ®ª£®NpƒŠPƒ²‚ƒ®ã²€ƒªÊÃ¶V¤ƒ²®>(¼¼ƒŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠV@)±•Ğ}…±±5…Á1¥¹•…¡”õ¹Õ±°ì)™Õ¹Ñ¥½¸}…±±Í5…Á1¥¹” ¥ì(€¥˜¡}…±±5…Á1¥¹•…¡”¥É•ÑÕÉ¸}…±±5…Á1¥¹•…¡”ì(€½¹ÍĞÉ½ÕÑ•Ìõmtì(€€¼¼ƒ®
+£¶Vpƒ²‚²ÊÓ®ÎÓªâÃ²f ƒ®Ú¶VpƒªÚ3²^·®>®*Pƒ²²^´ƒ²ƒ¶w²Êc®~ğƒ®Ú®š³¶Vs®.¸(€™½È¡½¹ÍĞµ°½˜=‰©•Ğ¹Ù…±Õ•Ì¡5A}1%9L¤¤¥˜ …µ°¹¹½ÉÑ¡=¹±ä˜˜…µ°¹½µ‰¥¹•‘=¹±ä¤™½È¡½¹ÍĞÈ½˜µ°¹É½ÕÑ•Ì¤É½ÕÑ•Ì¹ÁÕÍ ¡È¤ì(€É•ÑÕÉ¸}…±±5…Á1¥¹•…¡”õí¹…µ”èŸ²‚²ÊĞƒ®“¶*ã²n3¶°œ±½±½ÈèœŒáˆäĞå”œ±É½ÕÑ•Íôì)ô)±•Ğ}…±±I•¥½¹Í5…Á1¥¹•…¡”õ¹Õ±°ì)™Õ¹Ñ¥½¸}…±±I•¥½¹ÍÍ5…Á1¥¹” ¥ì(€¥˜¡}…±±I•¥½¹Í5…Á1¥¹•…¡”¥É•ÑÕÉ¸}…±±I•¥½¹Í5…Á1¥¹•…¡”ì(€½¹ÍĞÍ¡…É•‘9…µ•Ìõ¹•ÜM•Ğ¡lŸªÊ÷²vc²€œ°ŸªÊ÷²nC²€œ°Ÿ®>g¶VÓ²€t¤ì(€½¹ÍĞÍ½ÕÑ õmtì(€™½È¡½¹ÍĞµ°½˜=‰©•Ğ¹Ù…±Õ•Ì¡5A}1%9L¤¤¥˜ …µ°¹¹½ÉÑ¡=¹±ä˜˜…µ°¹½µ‰¥¹•‘=¹±ä˜˜…Í¡…É•‘9…µ•Ì¹¡…Ì¡µ°¹¹…µ”¤¤Í½ÕÑ ¹ÁÕÍ  ¸¸¹µ°¹É½ÕÑ•Ì¤ì(€½¹ÍĞ¹½ÉÑ õ5A}1%9L¹¹½ÉÑ ¹É½ÕÑ•Ì¹™¥±Ñ•È¡É½ÕÑ”ôø…Í¡…É•‘9…µ•Ì¹¡…Ì¡É½ÕÑ”¹¹…µ”¤¤ì(€½¹ÍĞÍ¡…É•õlå•½¹Õ¥}…±°œ°å•½¹İ½¹}…±°œ°‘½¹¡…•}…±°t¹™±…Ñ5…À¡­•äôù5A}1%9Mm­•åt¹É½ÕÑ•Ì¤ì(€É•ÑÕÉ¸}…±±I•¥½¹Í5…Á1¥¹•…¡”õí¹…µ”èŸ®
+£®Úƒ²‚²ÊĞƒ®“¶*ã²n3¶°œ±½±½ÈèœŒáˆäĞå”œ±¹½MÁÉ•…éÑÉÕ”±…±±Y¥•ÜéÑÉÕ”±É½ÕÑ•Ìél¸¸¹Í½ÕÑ °¸¸¹¹½ÉÑ °¸¸¹Í¡…É•‘uôì)ô((¼¼ƒŠRŠR ƒªÎ×²j¤èƒ²ó²jS²^´ƒ®ª§®†t£²‚W²Â ƒ¶:ã²"`ƒ²²r¤ƒŠRŠR )±•Ğ}µ…©½ÉMÑ¹Í…¡”õ¹Õ±°ì)™Õ¹Ñ¥½¸}µ…©½ÉMÑ…Ñ¥½¹Ì¡¸¥ì(€¥˜ …}µ…©½ÉMÑ¹Í…¡”¥ì(€€€½¹ÍĞŒõíôì(€€€11}QI%9L¹™½É… ¡ĞôùĞ¹ÍÑ½ÁÌ¹™½É… ¡Ìôùí¥˜¡¡…ÍQ¥µ”¡Ì¹…ÉÈ¥ññ¡…ÍQ¥µ”¡Ì¹‘•À¤¥mÌ¹Ítô¡mÌ¹ÍuñğÀ¤¬Äíô¤¤ì(€€€}µ…©½ÉMÑ¹Í…¡”õ=‰©•Ğ¹•¹ÑÉ¥•Ì¡Œ¤¹Í½ÉĞ ¡„±ˆ¤ôù‰lÅtµ…lÅt¤¹µ…À¡àôùálÁt¤ì(€ô(€É•ÑÕÉ¸}µ…©½ÉMÑ¹Í…¡”¹Í±¥” À±¹ñğÈĞ¤ì)ô(¼¼ƒ²^·²v`ƒ®.“²v0ƒ²Ús®Âpƒ®ª§®†t€£ªÂªæ3²jĞƒ²"p°½Õ¹ÓªÂp¤)™Õ¹Ñ¥½¸}¹•áÑ•ÁÌ¡ÍÑ¸±½Õ¹Ğ¥ì(€½¹ÍĞ¹½Üõ¹•Ü…Ñ” ¤ì½¹ÍĞ¹½İ4õ¹½Ü¹•Ñ!½ÕÉÌ ¤¨ØÀ­¹½Ü¹•Ñ5¥¹ÕÑ•Ì ¤ì(€½¹ÍĞÉ½İÌõmtì(€11}QI%9L¹™½É… ¡Ğôùì(€€€½¹ÍĞÌõĞ¹ÍÑ½ÁÌ¹™¥¹¡àôùà¹ÌôôõÍÑ¸¤ì(€€€¥˜ …Íñğ…¡…ÍQ¥µ”¡Ì¹‘•À¥ññ¥ÍA…ÍÍMÑ½À¡Ğ±ÍÑ¸¤¥É•ÑÕÉ¸ì(€€€½¹ÍĞ´õÑ½5¥¸¡Ì¹‘•À¤ì¥˜¡´ôôõ¹Õ±°¥É•ÑÕÉ¸ì(€€€±•Ğô¡´µ¹½İ4¬ÄĞĞÀ¤”ÄĞĞÀì¥˜¡øĞÈÀ¥É•ÑÕÉ¸ì€¼¼€ß².sªÂƒ²vÓ®
+Ó®0(€€€É½İÌ¹ÁÕÍ ¡í±´±Ğ±‘•ÀéÌ¹‘•Áô¤ì(€ô¤ì(€É½İÌ¹Í½ÉĞ ¡„±ˆ¤ôù„¹µˆ¹¤ì(€É•ÑÕÉ¸É½İÌ¹Í±¥” À±½Õ¹ÑñğØ¤ì)ô((¼¼ƒŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠV@(¼¼ƒÂ~Z—¾â<ƒ¶Ã®¾ã®@ƒ®ŞÀƒŠPƒ²ó²jS²^´€ÓªÎÌƒ®Âs²Â ƒ®ÎÓ®Npƒ®>g².pƒªÒ²‚(¼¼ƒŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠV@(¼¼ƒŠRŠR ƒªÎ×²j¤ƒ²^´ƒªÊ²'®ÂP€£ªâÃ²†ĞƒªÊ²'®ÂPƒ®RS²zC²vã
+ß²Ò#²ÄƒªÊ²$ƒ¶×²vğƒŠPƒ²V{²ró®†pƒ®ª£®N€ƒ²^´ƒªÊ²'²v ƒ²vĞƒ²îÓ¶>³®3¶*àƒ²
+³²j¤¤ƒŠRŠR )™Õ¹Ñ¥½¸ÍÑ¹M•…É¡	½á!Q50¡¥±Ù…±Õ”±Á¥­¸±Á ¥ì(€É•ÑÕÉ¸€ñ‘¥Ø±…ÍÌô‰…ÕÑ½½µÁ±•Ñ”µİÉ…ÀˆÍÑå±”ô‰µ¥¸µİ¥‘Ñ èÀˆø(€€€€ñ¥¹ÁÕĞÑåÁ”ô‰Ñ•áĞˆ¥ôˆ‘í¥‘ôˆ±…ÍÌô‰Ñ•É´µÍ•°ˆÍÑå±”ô‰µ…É¥¸µ‰½ÑÑ½´èÀˆÙ…±Õ”ôˆ‘íÙ…±Õ•ñğœôˆÁ±…•¡½±‘•Èôˆ‘íÁ¡ñğŸ²^´ƒ²vÓ®š€£²Ò#²ÄƒªÂ®*”¤ôˆ…ÕÑ½½µÁ±•Ñ”ô‰½™˜ˆ(€€€€€½¹¥¹ÁÕĞô‰}ÍÑ¹M¡½Ü œ‘í¥‘ôœ°œ‘íÁ¥­¹ôœ¤ˆ½¹™½ÕÌô‰Ñ¡¥Ì¹Í•±•Ğ ¤í}ÍÑ¹M¡½Ü œ‘í¥‘ôœ°œ‘íÁ¥­¹ôœ¤ˆ(€€€€€½¹‰±ÕÈô‰Í•ÑQ¥µ•½ÕĞ  ¤ôùí½¹ÍĞõ‘½Õµ•¹Ğ¹•Ñ±•µ•¹Ñ	å% œ‘í¥‘ôµ…Œœ¤í¥˜¡¥¹ÍÑå±”¹‘¥ÍÁ±…äô¹½¹”œíô°ÄÔÀ¤ˆø(€€€€ñ‘¥Ø±…ÍÌô‰…Œµ‘É½Á‘½İ¸ˆ¥ôˆ‘í¥‘ôµ…Œˆøğ½‘¥Øø(€€ğ½‘¥Øù€ì)ô)™Õ¹Ñ¥½¸}ÍÑ¹M¡½Ü¡¥±Á¥­¸¥ì(€}µ…©½ÉMÑ…Ñ¥½¹Ì Ä¤ì€¼¼ƒ²^´ƒ²êC².pƒ²’®æ(€½¹ÍĞ¥¹Àõ‘½Õµ•¹Ğ¹•Ñ±•µ•¹Ñ	å%¡¥¤ì¥˜ …¥¹À¥É•ÑÕÉ¸ì(€½¹ÍĞÄõ¥¹À¹Ù…±Õ”¹ÑÉ¥´ ¤ì(€½¹ÍĞ•°õ‘½Õµ•¹Ğ¹•Ñ±•µ•¹Ñ	å%¡¥¬œµ…Œœ¤ì¥˜ …•°¥É•ÑÕÉ¸ì(€½¹ÍĞ±¥ÍĞô¡Äı}µ…©½ÉMÑ¹Í…¡”¹™¥±Ñ•È¡¸ôùµ…Ñ¡•ÍEÕ•Éä¡¸±Ä¤¤é}µ…©½ÉMÑ¹Í…¡”¹Í±¥” À°ÄÀ¤¤¹Í±¥” À°ÄÀ¤ì(€½¹ÍĞ¥‘ÍŒõ¥¹É•Á±…” ¼œ½œ°‰qpœˆ¤ì(€•°¹¥¹¹•É!Q50õ±¥ÍĞ¹µ…À¡¸ôùì(€€€½¹ÍĞ¹ÍŒõ¸¹É•Á±…” ¼œ½œ°‰qpœˆ¤ì(€€€É•ÑÕÉ¸€ñ‘¥Ø±…ÍÌô‰…Œµ¥Ñ•´ˆ½¹µ½ÕÍ•‘½İ¸ô‰•Ù•¹Ğ¹ÁÉ•Ù•¹Ñ•™…Õ±Ğ ¤í‘½Õµ•¹Ğ¹•Ñ±•µ•¹Ñ	å% œ‘í¥‘Íôœ¤¹Ù…±Õ”ôœ‘í¹Íôœí‘½Õµ•¹Ğ¹•Ñ±•µ•¹Ñ	å% œ‘í¥‘Íôµ…Œœ¤¹ÍÑå±”¹‘¥ÍÁ±…äô¹½¹”œíİ¥¹‘½İlœ‘íÁ¥­¹ôt œ‘í¹Íôœ°œ‘í¥‘Íôœ¤ˆø‘í¹ôğ½‘¥Øù€ì(€ô¤¹©½¥¸ œœ¤ì(€•°¹±…ÍÍ9…µ”ô…Œµ‘É½Á‘½İ¸½Á•¸œì(€•°¹ÍÑå±”¹‘¥ÍÁ±…äõ±¥ÍĞ¹±•¹Ñ ü‰±½¬œè¹½¹”œì)ô)±•Ğ}Ñ•ÉµMÑ¹Ìõ¹Õ±°ì)™Õ¹Ñ¥½¸}Ñ•ÉµA¥­MÑ¸¡¹…µ”±¥¥ì(€½¹ÍĞ¤ô­¥¹ÍÁ±¥Ğ œ´œ¤¹Á½À ¤ì(€¥˜¡9Õµ‰•È¹¥Í¥¹¥Ñ”¡¤¤¥ì}Ñ•ÉµMÑ¹Ím¥tõ¹…µ”ì}Ñ•Éµ¥±°¡¤¤ìô)ô)™Õ¹Ñ¥½¸É•¹‘•ÉQ•Éµ¥¹…±Y¥•Ü ¥ì(€½¹ÍĞ•°õ‘½Õµ•¹Ğ¹•Ñ±•µ•¹Ñ	å% É•ÍÕ±ĞµÑ•Éµ¥¹…°œ¤ì¥˜ …•°¥É•ÑÕÉ¸ì(€}µ…©½ÉMÑ…Ñ¥½¹Ì Ä¤ì(€¥˜ …}Ñ•ÉµMÑ¹Ì¥ì½¹ÍĞ´õ}µ…©½ÉMÑ…Ñ¥½¹Ì ÌÀ¤ì}Ñ•ÉµMÑ¹ÌõlŸ²s²jàœ°Ÿ®2²‚œ°Ÿ®
+£®2ªÖ°œ°Ÿ®Ú²
+Àt¹™¥±Ñ•È¡Ìôù´¹¥¹±Õ‘•Ì¡Ì¤¤ìİ¡¥±”¡}Ñ•ÉµMÑ¹Ì¹±•¹Ñ ğĞ¥}Ñ•ÉµMÑ¹Ì¹ÁÕÍ ¡µm}Ñ•ÉµMÑ¹Ì¹±•¹Ñ¡t¤ìô(€•°¹¥¹¹•É!Q50õ€(€€€€ñ‘¥ØÍÑå±”ô‰Á…‘‘¥¹œèÄÑÁà€ÄÙÁà€ÈÑÁàˆø(€€€€€€ñ‘¥ØÍÑå±”ô‰™½¹ĞµÍ¥é”èÄÉÁàí½±½ÈéÙ…È ´µÑ•áĞÌ¤íµ…É¥¸µ‰½ÑÑ½´èÄÁÁàˆû²ó²jS²^´ƒ®Âs²Â ƒ®ÎÓ®Npƒ
+Ü€ÌÃ²Ò#®#®.ƒ²zC®>dƒªÂÇ².€ƒ
+Üƒ²^´ƒ²vÓ®š²vƒ²²‚DƒªÊ²'¶VĞƒ²ZÓ®*@ƒ²^·²vÓ®N€ƒ®Îğƒ²"`ƒ²z#²*×®.#®.ğ½‘¥Øø(€€€€€€ñ‘¥Ø±…ÍÌô‰Ñ•É´µÉ¥ˆø(€€€€€€€€‘ílÀ°Ä°È°Ít¹µ…À¡¤ôù€(€€€€€€€€ñ‘¥Ø±…ÍÌô‰Ñ•É´µ‰½…Éˆ¥ô‰Ñ•É´µˆ‘í¥ôˆø(€€€€€€€€€€‘íÍÑ¹M•…É¡	½á!Q50 Ñ•É´µ¥¹À´œ­¤±}Ñ•ÉµMÑ¹Ím¥t°}Ñ•ÉµA¥­MÑ¸œ¥ô(€€€€€€€€€€ñ‘¥Ø±…ÍÌô‰Ñ•É´µÉ½İÌˆ¥ô‰Ñ•É´µÉ½İÌ´‘í¥ôˆøğ½‘¥Øø(€€€€€€€€ğ½‘¥Øù€¤¹©½¥¸ œœ¥ô(€€€€€€ğ½‘¥Øø(€€€€ğ½‘¥Øù€ì(€lÀ°Ä°È°Ít¹™½É… ¡}Ñ•Éµ¥±°¤ì(€±•…É%¹Ñ•ÉÙ…°¡İ¥¹‘½Ü¹}Ñ•ÉµP¤ì(€İ¥¹‘½Ü¹}Ñ•ÉµPõÍ•Ñ%¹Ñ•ÉÙ…°  ¤ôùì(€€€¥˜ …‘½Õµ•¹Ğ¹•Ñ±•µ•¹Ñ	å% É•ÍÕ±ĞµÑ•Éµ¥¹…°œ¤¥í±•…É%¹Ñ•ÉÙ…°¡İ¥¹‘½Ü¹}Ñ•ÉµP¤íÉ•ÑÕÉ¸íô(€€€lÀ°Ä°È°Ít¹™½É… ¡}Ñ•Éµ¥±°¤ì(€ô°ÌÀÀÀÀ¤ì)ô)™Õ¹Ñ¥½¸}Ñ•Éµ¥±°¡¤¥ì(€½¹ÍĞ‰½àõ‘½Õµ•¹Ğ¹•Ñ±•µ•¹Ñ	å% Ñ•É´µÉ½İÌ´œ­¤¤ì¥˜ …‰½à¥É•ÑÕÉ¸ì(€½¹ÍĞÉ½İÌõ}¹•áÑ•ÁÌ¡}Ñ•ÉµMÑ¹Ím¥t°Ø¤ì(€‰½à¹¥¹¹•É!Q50õÉ½İÌ¹±•¹Ñ ıÉ½İÌ¹µ…À¡Èôù€(€€€€ñ‘¥Ø±…ÍÌô‰Ñ•É´µÉ½Üˆ½¹±¥¬ô‰©ÕµÁQ½QÉ…¥¸ œ‘íÈ¹Ğ¹¹½ôœ¤ˆø(€€€€€€ñÍÁ…¸±…ÍÌô‰Ñ•É´µÑ¥µ”ˆø‘íÈ¹‘•Áôğ½ÍÁ…¸ø(€€€€€€ñÍÁ…¸±…ÍÌô‰Ñ•É´µÉ…‘”ˆÍÑå±”ô‰½±½ÈéÙ…È ´µŒ´‘íÍÍY…È¡È¹Ğ¹É…‘”¥ô¤ˆø‘íÈ¹Ğ¹É…‘•ôğ½ÍÁ…¸ø(€€€€€€ñÍÁ…¸±…ÍÌô‰Ñ•É´µ¹¼ˆø‘íÈ¹Ğ¹¹½ôğ½ÍÁ…¸ø(€€€€€€ñÍÁ…¸±…ÍÌô‰Ñ•É´µ‘•ÍĞˆø‘íÈ¹Ğ¹‘•ÍÑ÷¶Z$ğ½ÍÁ…¸ø(€€€€€€ñÍÁ…¸±…ÍÌô‰Ñ•É´µ•Ñ„ˆø‘íÈ¹ôôôÀüŸ²Ús®ÂpœéÈ¹¬Ÿ®Úôğ½ÍÁ…¸ø(€€€€ğ½‘¥Øù€¤¹©½¥¸ œœ¤(€€€€èœñ‘¥ØÍÑå±”ô‰Á…‘‘¥¹œèÄÙÁàíÑ•áĞµ…±¥¸é•¹Ñ•Èí½±½ÈéÙ…È ´µÑ•áĞÌ¤í™½¹ĞµÍ¥é”èÄÉÁàˆøß².sªÂƒ®
+Ğƒ²Ús®Âpƒ²^²v0ğ½‘¥Øøœì)ô((¼¼ƒŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠV@(¼¼ƒÂ~2ƒ®.ç²vó²æcªâÀƒ²ÚS²ÊpƒŠPƒ²ªâ ƒ²Ús®Âs¶VÓ²pƒ®.“®²b°ƒ²öS²*(¼¼ƒŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠV@)±•Ğ}‘ÑÁ=É¥¥¸ôŸ²s²jàœì)™Õ¹Ñ¥½¸}‘ÑÁA¥­MÑ¸¡¹…µ”¥ì(€}‘ÑÁ=É¥¥¸õ¹…µ”ìÉ•¹‘•É…åÑÉ¥À ¤ì)ô)™Õ¹Ñ¥½¸É•¹‘•É…åÑÉ¥À ¥ì(€½¹ÍĞ•°õ‘½Õµ•¹Ğ¹•Ñ±•µ•¹Ñ	å% É•ÍÕ±Ğµ‘…åÑÉ¥Àœ¤ì¥˜ …•°¥É•ÑÕÉ¸ì(€}µ…©½ÉMÑ…Ñ¥½¹Ì Ä¤ì(€¥˜ …}µ…©½ÉMÑ¹Í…¡”¹¥¹±Õ‘•Ì¡}‘ÑÁ=É¥¥¸¤¥}‘ÑÁ=É¥¥¸õ}µ…©½ÉMÑ¹Í…¡•lÁtì(€•°¹¥¹¹•É!Q50õ€(€€€€ñ‘¥ØÍÑå±”ô‰Á…‘‘¥¹œèÄÑÁà€ÄÙÁà€ÈÑÁàˆø(€€€€€€ñ‘¥ØÍÑå±”ô‰‘¥ÍÁ±…äé™±•àí…±¥¸µ¥Ñ•µÌé•¹Ñ•Èí…ÀèÄÁÁàíµ…É¥¸µ‰½ÑÑ½´èÙÁàí™±•àµİÉ…ÀéİÉ…Àˆø(€€€€€€€€ñÍÁ…¸ÍÑå±”ô‰™½¹ĞµÍ¥é”èÄÍÁàí™½¹Ğµİ•¥¡ĞèÜÀÀˆû²Ús®Âs²^´ğ½ÍÁ…¸ø(€€€€€€€€ñ‘¥ØÍÑå±”ô‰İ¥‘Ñ èÄÔÁÁàˆø‘íÍÑ¹M•…É¡	½á!Q50 ‘ÑÀµ¥¹Àœ±}‘ÑÁ=É¥¥¸°}‘ÑÁA¥­MÑ¸œ¥ôğ½‘¥Øø(€€€€€€€€ñÍÁ…¸ÍÑå±”ô‰™½¹ĞµÍ¥é”èÄÄ¸ÕÁàí½±½ÈéÙ…È ´µÑ•áĞÌ¤ˆû²ªâ ƒ²vÓ¶nƒ²Ús®Âpƒ
+Üƒ²¶Ôƒ²fW®ÎÔƒªâÃ²’ ğ½ÍÁ…¸ø(€€€€€€ğ½‘¥Øø(€€€€€€ñ‘¥Ø¥ô‰‘ÑÀµ±¥ÍĞˆø‘í}‘…åÑÉ¥Á!Q50¡}‘ÑÁ=É¥¥¸¥ôğ½‘¥Øø(€€€€ğ½‘¥Øù€ì)ô)™Õ¹Ñ¥½¸}‘…åÑÉ¥Á!Q50¡½É¥¥¸¥ì(€½¹ÍĞ¹½Üõ¹•Ü…Ñ” ¤ì½¹ÍĞ¹½İ4õ¹½Ü¹•Ñ!½ÕÉÌ ¤¨ØÀ­¹½Ü¹•Ñ5¥¹ÕÑ•Ì ¤ì(€½¹ÍĞ½ÕĞõíôì(€11}QI%9L¹™½É… ¡Ğôùì(€€€½¹ÍĞ¤õĞ¹ÍÑ½ÁÌ¹™¥¹‘%¹‘•à¡ÌôùÌ¹Ìôôõ½É¥¥¸¤ì(€€€¥˜¡¤ğÀ¥É•ÑÕÉ¸ì½¹ÍĞÍ¼õĞ¹ÍÑ½ÁÍm¥tì(€€€¥˜ …¡…ÍQ¥µ”¡Í¼¹‘•À¥ññ¥ÍA…ÍÍMÑ½À¡Ğ±½É¥¥¸¤¥É•ÑÕÉ¸ì(€€€½¹ÍĞ‘´õÑ½5¥¸¡Í¼¹‘•À¤ì±•Ğô¡‘´µ¹½İ4¬ÄĞĞÀ¤”ÄĞĞÀì(€€€¥˜¡ğÈÁññøÈĞÀ¥É•ÑÕÉ¸ì(€€€™½È¡±•Ğ¨õ¤¬Äí¨ñĞ¹ÍÑ½ÁÌ¹±•¹Ñ í¨¬¬¥ì(€€€€€½¹ÍĞÌõĞ¹ÍÑ½ÁÍm©tì(€€€€€¥˜ „¡¡…ÍQ¥µ”¡Ì¹…ÉÈ¥ññ¡…ÍQ¥µ”¡Ì¹‘•À¤¥ññ¥ÍA…ÍÍMÑ½À¡Ğ±Ì¹Ì¤¥½¹Ñ¥¹Õ”ì(€€€€€½¹ÍĞ…´õÑ½5¥¸¡Ì¹…ÉÉññÌ¹‘•À¤ì¥˜¡…´ôôõ¹Õ±°¥½¹Ñ¥¹Õ”ì(€€€€€½¹ÍĞ…ÉÉ‰Ìõ¹½İ4­¬  ¡…´µ‘´¤¬ÄĞĞÀ¤”ÄĞĞÀ¤ì(€€€€€½¹ÍĞÕÈõ½ÕÑmÌ¹Ítì(€€€€€¥˜ …ÕÉññ…ÉÉ‰ÌñÕÈ¹…ÉÉ‰Ì¥½ÕÑmÌ¹ÍtõíĞ±‘•ÀéÍ¼¹‘•À±…ÉÈéÌ¹…ÉÉññÌ¹‘•À±…ÉÉ‰Ì±ÍÑ¸éÌ¹Íôì(€€€ô(€ô¤ì(€½¹ÍĞ…É‘Ìõmtì(€™½È¡½¹ÍĞm‘•ÍĞ±½t½˜=‰©•Ğ¹•¹ÑÉ¥•Ì¡½ÕĞ¤¥ì(€€€¥˜¡‘•ÍĞôôõ½É¥¥¸¥½¹Ñ¥¹Õ”ì(€€€±•Ğ‰•ÍĞõ¹Õ±°ì(€€€11}QI%9L¹™½É… ¡Ğôùì(€€€€€½¹ÍĞ¤õĞ¹ÍÑ½ÁÌ¹™¥¹‘%¹‘•à¡ÌôùÌ¹Ìôôõ‘•ÍĞ¤ì(€€€€€¥˜¡¤ğÀ¥É•ÑÕÉ¸ì½¹ÍĞÍõĞ¹ÍÑ½ÁÍm¥tì(€€€€€¥˜ …¡…ÍQ¥µ”¡Í¹‘•À¥ññ¥ÍA…ÍÍMÑ½À¡Ğ±‘•ÍĞ¤¥É•ÑÕÉ¸ì(€€€€€½¹ÍĞ¨õĞ¹ÍÑ½ÁÌ¹™¥¹‘%¹‘•à ¡Ì±¬¤ôù¬ù¤˜™Ì¹Ìôôõ½É¥¥¸¤ì(€€€€€¥˜¡¨ğÀ¥É•ÑÕÉ¸ì½¹ÍĞÍ„õĞ¹ÍÑ½ÁÍm©tì(€€€€€¥˜ „¡¡…ÍQ¥µ”¡Í„¹…ÉÈ¥ññ¡…ÍQ¥µ”¡Í„¹‘•À¤¤¥É•ÑÕÉ¸ì(€€€€€½¹ÍĞ‘´õÑ½5¥¸¡Í¹‘•À¤ì±•Ğ‘‰Ìõ¹½İ4¬  ¡‘´µ¹½İ4¤¬ÄĞĞÀ¤”ÄĞĞÀ¤ì(€€€€€¥˜¡‘‰Ìµ¼¹…ÉÉ‰ÌğØÀ¥É•ÑÕÉ¸ì(€€€€€¥˜¡‘‰Ìµ¹½İ4øÄÈÀÀ¥É•ÑÕÉ¸ì(€€€€€¥˜ …‰•ÍÑññ‘‰Ìù‰•ÍĞ¹‘‰Ì¥‰•ÍĞõíĞ±‘•ÀéÍ¹‘•À±…ÉÈéÍ„¹…ÉÉññÍ„¹‘•À±‘‰Íôì(€€€ô¤ì(€€€¥˜ …‰•ÍĞ¥½¹Ñ¥¹Õ”ì(€€€½¹ÍĞÍÑ…äõ‰•ÍĞ¹‘‰Ìµ¼¹…ÉÉ‰Ìì(€€€…É‘Ì¹ÁÕÍ ¡í‘•ÍĞ±¼±É•Ğé‰•ÍĞ±ÍÑ…åô¤ì(€ô(€…É‘Ì¹Í½ÉĞ ¡„±ˆ¤ôùˆ¹ÍÑ…äµ„¹ÍÑ…ä¤ì(€½¹ÍĞÑ½Àõ…É‘Ì¹Í±¥” À°à¤ì(€¥˜ …Ñ½À¹±•¹Ñ ¥É•ÑÕÉ¸€œñ‘¥Ø±…ÍÌô‰•µÁÑäˆøñ‘¥Ø±…ÍÌô‰•µÁÑäµ¥½¸ˆûÂ~2dğ½‘¥ØøñÀû²ªâ ƒ²Ús®Âs¶VĞƒ®.“®²b°ƒ²"`ƒ²z#®*Pƒ²¶Ôƒ²fW®ÎÔƒ²öS²*“ªÂ ƒ²^²*×®.#®.¸ñ‰Èû®
+Ó²vğƒ²V²æ ƒ®.“².pƒ¶fW²vã¶VÓ®ÎÓ²ã²jP¸ğ½Àøğ½‘¥Øøœì(€½¹ÍĞ™µÑMÑ…äõ´ôù€‘í5…Ñ ¹™±½½È¡´¼ØÀ¥÷².sªÂ€‘íMÑÉ¥¹œ¡´”ØÀ¤¹Á…‘MÑ…ÉĞ È°œÀœ¥÷®Ú€ì(€É•ÑÕÉ¸Ñ½À¹µ…À¡Œôù€(€€€€ñ‘¥Ø±…ÍÌô‰‘ÑÀµ…Éˆø(€€€€€€ñ‘¥Ø±…ÍÌô‰‘ÑÀµ¡•…ˆø(€€€€€€€€ñÍÁ…¸±…ÍÌô‰‘ÑÀµ‘•ÍĞˆø‘íŒ¹‘•ÍÑôğ½ÍÁ…¸ø(€€€€€€€€ñÍÁ…¸±…ÍÌô‰‘ÑÀµÍÑ…äˆû²ÊÓ®–`€‘í™µÑMÑ…ä¡Œ¹ÍÑ…ä¥ôğ½ÍÁ…¸ø(€€€€€€ğ½‘¥Øø(€€€€€€ñ‘¥Ø±…ÍÌô‰‘ÑÀµ±•œˆ½¹±¥¬ô‰©ÕµÁQ½QÉ…¥¸ œ‘íŒ¹¼¹Ğ¹¹½ôœ¤ˆø(€€€€€€€€ñÍÁ…¸±…ÍÌô‰‘ÑÀµÑ…œ¼ˆûªÂ®*S¶:àğ½ÍÁ…¸ø(€€€€€€€€ñÍÁ…¸ÍÑå±”ô‰½±½ÈéÙ…È ´µŒ´‘íÍÍY…È¡Œ¹¼¹Ğ¹É…‘”¥ô¤í™½¹Ğµİ•¥¡ĞèÜÀÀˆø‘íŒ¹¼¹Ğ¹É…‘•ôğ½ÍÁ…¸ø(€€€€€€€€ñÍÁ…¸±…ÍÌô‰µ½¹¼µÍ´ˆø‘íŒ¹¼¹Ğ¹¹½ôğ½ÍÁ…¸ø(€€€€€€€€ñÍÁ…¸±…ÍÌô‰µ½¹¼µÍ´ˆø‘íŒ¹¼¹‘•ÁôƒŠH€‘íŒ¹¼¹…ÉÉôğ½ÍÁ…¸ø(€€€€€€ğ½‘¥Øø(€€€€€€ñ‘¥Ø±…ÍÌô‰‘ÑÀµ±•œˆ½¹±¥¬ô‰©ÕµÁQ½QÉ…¥¸ œ‘íŒ¹É•Ğ¹Ğ¹¹½ôœ¤ˆø(€€€€€€€€ñÍÁ…¸±…ÍÌô‰‘ÑÀµÑ…œ‰…¬ˆû²b“®*S¶:àğ½ÍÁ…¸ø(€€€€€€€€ñÍÁ…¸ÍÑå±”ô‰½±½ÈéÙ…È ´µŒ´‘íÍÍY…È¡Œ¹É•Ğ¹Ğ¹É…‘”¥ô¤í™½¹Ğµİ•¥¡ĞèÜÀÀˆø‘íŒ¹É•Ğ¹Ğ¹É…‘•ôğ½ÍÁ…¸ø(€€€€€€€€ñÍÁ…¸±…ÍÌô‰µ½¹¼µÍ´ˆø‘íŒ¹É•Ğ¹Ğ¹¹½ôğ½ÍÁ…¸ø(€€€€€€€€ñÍÁ…¸±…ÍÌô‰µ½¹¼µÍ´ˆø‘íŒ¹É•Ğ¹‘•ÁôƒŠH€‘íŒ¹É•Ğ¹…ÉÉôğ½ÍÁ…¸ø(€€€€€€ğ½‘¥Øø(€€€€ğ½‘¥Øù€¤¹©½¥¸ œœ¤ì)ô((¼¼ƒŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠV@(¼¼ƒÂ~¤ƒ®£¶*àƒ¶6ó²š@ƒŠPƒªÊ÷®†pƒ²"s²pƒ®{²ÚSªâÀ€£®²Ó²‚s¶Vpƒ²Ús²‚p¤(¼¼ƒŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠV@)±•Ğ}ÁÕéMÑ…Ñ”õ¹Õ±°ì)™Õ¹Ñ¥½¸}ÁÕéM½±Ù•‘½Õ¹Ğ ¥ì(€½¹ÍĞÑ½‘…äõÑ½‘…å1½…±MÑÈ¡¹•Ü…Ñ” ¤¤ì(€±•ĞÍ…Ù•õ¹Õ±°ìÑÉåíÍ…Ù•õ)M=8¹Á…ÉÍ”¡±½…±MÑ½É…”¹•Ñ%Ñ•´ ¹¥µ‰¥}ÁÕéé±”œ¤¤íõ…Ñ ¡”¥íô(€É•ÑÕÉ¸€¡Í…Ù•˜™Í…Ù•¹‘…Ñ”ôôõÑ½‘…ä˜™Í…Ù•¹Í½±Ù•¥ñğÀì)ô)™Õ¹Ñ¥½¸}ÁÕé9•Ü ¥ì(€½¹ÍĞ…¹‘Ìõ11}QI%9L¹™¥±Ñ•È¡ĞôùĞ¹ÍÑ½ÁÌ¹™¥±Ñ•È¡Ìôø¡¡…ÍQ¥µ”¡Ì¹…ÉÈ¥ññ¡…ÍQ¥µ”¡Ì¹‘•À¤¤˜˜…¥ÍA…ÍÍMÑ½À¡Ğ±Ì¹Ì¤¤¹±•¹Ñ øôà¤ì(€½¹ÍĞĞõ…¹‘Ím5…Ñ ¹™±½½È¡5…Ñ ¹É…¹‘½´ ¤©…¹‘Ì¹±•¹Ñ ¥tì(€½¹ÍĞÍÑ½ÁÌõĞ¹ÍÑ½ÁÌ¹™¥±Ñ•È¡Ìôø¡¡…ÍQ¥µ”¡Ì¹…ÉÈ¥ññ¡…ÍQ¥µ”¡Ì¹‘•À¤¤˜˜…¥ÍA…ÍÍMÑ½À¡Ğ±Ì¹Ì¤¤¹µ…À¡ÌôùÌ¹Ì¤ì(€½¹ÍĞ8ôØ°Á¥¬õlÁtì(€™½È¡±•Ğ¬ôÄí¬ñ8´Äí¬¬¬¥Á¥¬¹ÁÕÍ ¡5…Ñ ¹É½Õ¹¡¬¨¡ÍÑ½ÁÌ¹±•¹Ñ ´Ä¤¼¡8´Ä¤¤¤ì(€Á¥¬¹ÁÕÍ ¡ÍÑ½ÁÌ¹±•¹Ñ ´Ä¤ì(€½¹ÍĞ…¹Íİ•Èõl¸¸¹¹•ÜM•Ğ¡Á¥¬¥t¹µ…À¡¤ôùÍÑ½ÁÍm¥t¤ì(€½¹ÍĞÍ¡Õ™™±•õl¸¸¹…¹Íİ•Étì(€™½È¡±•Ğ¤õÍ¡Õ™™±•¹±•¹Ñ ´Äí¤øÀí¤´´¥í½¹ÍĞ¨õ5…Ñ ¹™±½½È¡5…Ñ ¹É…¹‘½´ ¤¨¡¤¬Ä¤¤ímÍ¡Õ™™±•‘m¥t±Í¡Õ™™±•‘m©utõmÍ¡Õ™™±•‘m©t±Í¡Õ™™±•‘m¥utíô(€}ÁÕéMÑ…Ñ”õíÑÉ…¥¸éĞ¹¹¼±É…‘”éĞ¹É…‘”±‘•ÍĞéĞ¹‘•ÍĞ±…¹Íİ•È±Í¡Õ™™±•±Í•°émt±Í½±Ù•é™…±Í”±ÑÉ¥•ÌèÁôì(€}ÁÕéÉ…Ü ¤ì)ô)™Õ¹Ñ¥½¸É•¹‘•ÉI½ÕÑ•AÕéé±” ¥ì(€½¹ÍĞ•°õ‘½Õµ•¹Ğ¹•Ñ±•µ•¹Ñ	å% É•ÍÕ±ĞµÁÕéé±”œ¤ì¥˜ …•°¥É•ÑÕÉ¸ì(€}ÁÕé9•Ü ¤ì)ô)™Õ¹Ñ¥½¸}ÁÕéÉ…Ü ¥ì(€½¹ÍĞ•°õ‘½Õµ•¹Ğ¹•Ñ±•µ•¹Ñ	å% É•ÍÕ±ĞµÁÕéé±”œ¤ì¥˜ …•°¥É•ÑÕÉ¸ì(€½¹ÍĞÀõ}ÁÕéMÑ…Ñ”ì(€½¹ÍĞÍ±½ÑÌõÀ¹…¹Íİ•È¹µ…À ¡|±¤¤ôù€ñÍÁ…¸±…ÍÌô‰ÁÕèµÍ±½Ğ‘íÀ¹Í•±m¥tüœ™¥±°œèœôˆø‘íÀ¹Í•±m¥uñğ¡¤¬Ä¥ôğ½ÍÁ…¸ù€¤¹©½¥¸ œñÍÁ…¸±…ÍÌô‰ÁÕèµ…ÉÉ½ÜˆûŠHğ½ÍÁ…¸øœ¤ì(€½¹ÍĞ¡¥ÁÌõÀ¹Í¡Õ™™±•¹µ…À¡Ìôùì(€€€½¹ÍĞÕÍ•õÀ¹Í•°¹¥¹±Õ‘•Ì¡Ì¤ì(€€€É•ÑÕÉ¸€ñ‰ÕÑÑ½¸±…ÍÌô‰ÁÕèµ¡¥À‘íÕÍ•üœÕÍ•œèœôˆ€‘íÕÍ•ü‘¥Í…‰±•œèœô½¹±¥¬ô‰}ÁÕéA¥¬ œ‘íÌ¹É•Á±…” ¼œ½œ°‰qpœˆ¥ôœ¤ˆø‘íÍôğ½‰ÕÑÑ½¸ù€ì(€ô¤¹©½¥¸ œœ¤ì(€½¹ÍĞÍ½±Ù•‘8õ}ÁÕéM½±Ù•‘½Õ¹Ğ ¤ì(€•°¹¥¹¹•É!Q50õ€(€€€€ñ‘¥ØÍÑå±”ô‰Á…‘‘¥¹œèÄÑÁà€ÄÙÁà€ÈÑÁàˆø(€€€€€€ñ‘¥Ø±…ÍÌô‰ÁÕèµ…Éˆø(€€€€€€€€ñ‘¥ØÍÑå±”ô‰™½¹ĞµÍ¥é”èÄÉÁàí½±½ÈéÙ…È ´µÑ•áĞÌ¤íµ…É¥¸µ‰½ÑÑ½´èÑÁàˆû²b“®*`€‘íÍ½±Ù•‘9÷®²ã²‚pƒ¶VÓªÊÀƒ
+Üƒ²vÓ®Ê ƒ®²ã²‚pƒ².s®>€‘íÀ¹ÑÉ¥•Í÷¶j0ğ½‘¥Øø(€€€€€€€€ñ‘¥ØÍÑå±”ô‰™½¹ĞµÍ¥é”èÄÕÁàí™½¹Ğµİ•¥¡ĞèàÀÀíµ…É¥¸µ‰½ÑÑ½´èÄÁÁàˆûÂ~j€‘íÀ¹É…‘•ô€ñÍÁ…¸±…ÍÌô‰µ½¹¼µÍ´ˆø‘íÀ¹ÑÉ…¥¹ôğ½ÍÁ…¸ø€ ‘íÀ¹‘•ÍÑ÷¶Z$¤ƒ²^Ó²Â£ªÂ ƒ²®
+c®*Pƒ²^·²v€ñÍÁ…¸ÍÑå±”ô‰½±½ÈéÙ…È ´µ…•¹Ğ¤ˆû²jÓ¶Z$ƒ²"s²s®2®†pğ½ÍÁ…¸øƒ®"3®~³®ÎÓ²ã²jPğ½‘¥Øø(€€€€€€€€ñ‘¥Ø±…ÍÌô‰ÁÕèµÍ±½ÑÌˆø‘íÍ±½ÑÍôğ½‘¥Øø(€€€€€€€€ñ‘¥Ø±…ÍÌô‰ÁÕèµ¡¥ÁÌˆø‘í¡¥ÁÍôğ½‘¥Øø(€€€€€€€€ñ‘¥ØÍÑå±”ô‰‘¥ÍÁ±…äé™±•àí…ÀèáÁàíµ…É¥¸µÑ½ÀèÄÉÁàˆø(€€€€€€€€€€ñ‰ÕÑÑ½¸±…ÍÌô‰‰Ñ¸ˆÍÑå±”ô‰™±•àèÄˆ½¹±¥¬ô‰}ÁÕé9•Ü ¤ˆûÂ~:Èƒ®.“²v0ƒ®²ã²‚pğ½‰ÕÑÑ½¸ø(€€€€€€€€€€ñ‰ÕÑÑ½¸±…ÍÌô‰‰Ñ¸ˆÍÑå±”ô‰™±•àèÄˆ½¹±¥¬ô‰}ÁÕéMÑ…Ñ”¹Í•°õmtí}ÁÕéÉ…Ü ¤ˆûŠèƒ®.“².pƒ®ÂÃ²^Ğğ½‰ÕÑÑ½¸ø(€€€€€€€€€€‘íÀ¹Í•°¹±•¹Ñ ôôõÀ¹…¹Íİ•È¹±•¹Ñ ı€ñ‰ÕÑÑ½¸±…ÍÌô‰‰Ñ¸ˆÍÑå±”ô‰™±•àèÈí‰…­É½Õ¹éÙ…È ´µ…•¹Ğ¤í½±½Èè™™˜í‰½É‘•Èµ½±½ÈéÙ…È ´µ…•¹Ğ¤ˆ½¹±¥¬ô‰}ÁÕé¡•¬ ¤ˆû²‚W®.Ôƒ¶fW²vàğ½‰ÕÑÑ½¸ù€èœô(€€€€€€€€ğ½‘¥Øø(€€€€€€€€ñ‘¥Ø¥ô‰ÁÕèµÉ•ÍÕ±ĞˆÍÑå±”ô‰µ…É¥¸µÑ½ÀèÄÁÁàˆø‘íÀ¹Í½±Ù•ı€ñ‘¥Ø±…ÍÌô‰ÁÕèµ½¬ˆûŠrƒ²‚W®.Ô„€ñÍÁ…¸ÍÑå±”ô‰ÕÉÍ½ÈéÁ½¥¹Ñ•ÈíÑ•áĞµ‘•½É…Ñ¥½¸éÕ¹‘•É±¥¹”ˆ½¹±¥¬ô‰±½Í•5åA…” ¤í©ÕµÁQ½QÉ…¥¸ œ‘íÀ¹ÑÉ…¥¹ôœ¤ˆû²^Ó²Â ƒ®ÎÓªâÀƒŠHğ½ÍÁ…¸øƒ
+Ü€ñÍÁ…¸ÍÑå±”ô‰ÕÉÍ½ÈéÁ½¥¹Ñ•ÈíÑ•áĞµ‘•½É…Ñ¥½¸éÕ¹‘•É±¥¹”ˆ½¹±¥¬ô‰}ÁÕé9•Ü ¤ˆûÂ~:Èƒ®.“²v0ƒ®²ã²‚pğ½ÍÁ…¸øğ½‘¥Øù€èœôğ½‘¥Øø(€€€€€€ğ½‘¥Øø(€€€€ğ½‘¥Øù€ì)ô)™Õ¹Ñ¥½¸}ÁÕéA¥¬¡Ì¥ì¥˜¡}ÁÕéMÑ…Ñ”¹Í•°¹±•¹Ñ ñ}ÁÕéMÑ…Ñ”¹…¹Íİ•È¹±•¹Ñ ¥í}ÁÕéMÑ…Ñ”¹Í•°¹ÁÕÍ ¡Ì¤í}ÁÕéÉ…Ü ¤íôô)™Õ¹Ñ¥½¸}ÁÕé¡•¬ ¥ì(€½¹ÍĞÀõ}ÁÕéMÑ…Ñ”ìÀ¹ÑÉ¥•Ì¬¬ì(€½¹ÍĞ½¬õÀ¹Í•°¹©½¥¸ ğœ¤ôôõÀ¹…¹Íİ•È¹©½¥¸ ğœ¤ì(€¥˜¡½¬¥ì(€€€À¹Í½±Ù•õÑÉÕ”ì(€€€½¹ÍĞÑ½‘…äõÑ½‘…å1½…±MÑÈ¡¹•Ü…Ñ” ¤¤ì(€€€ÑÉåí±½…±MÑ½É…”¹Í•Ñ%Ñ•´ ¹¥µ‰¥}ÁÕéé±”œ±)M=8¹ÍÑÉ¥¹¥™ä¡í‘…Ñ”éÑ½‘…ä±Í½±Ù•é}ÁÕéM½±Ù•‘½Õ¹Ğ ¤¬Åô¤¤íõ…Ñ ¡”¥íô(€ô(€¥˜¡½¬¥í}ÁÕéÉ…Ü ¤íô(€•±Í•ì(€€€½¹ÍĞ½ÉÉ•ĞõÀ¹Í•°¹™¥±Ñ•È ¡Ì±¤¤ôùÌôôõÀ¹…¹Íİ•Ém¥t¤¹±•¹Ñ ì(€€€À¹Í•°õmtí}ÁÕéÉ…Ü ¤ì(€€€½¹ÍĞÈõ‘½Õµ•¹Ğ¹•Ñ±•µ•¹Ñ	å% ÁÕèµÉ•ÍÕ±Ğœ¤ì(€€€¥˜¡È¥È¹¥¹¹•É!Q50õ€ñ‘¥Ø±…ÍÌô‰ÁÕèµ¹¼ˆûŠv0ƒ²V²&³²n3²jPƒŠPƒ²zC®š°ƒ®{²v ƒ²^´€‘í½ÉÉ•Ñô¼‘íÀ¹…¹Íİ•È¹±•¹Ñ¡ô¸ƒ®.“².pƒ®>²‚„ğ½‘¥Øù€ì(€ô)ô((¼¼ƒŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠV@(¼¼ƒŠj[¾â<ƒ²^Ó²Â ƒ®æªÖ@ƒŠPƒ®2¶Ró
+ß²ÚS²nPƒ²²‚@ƒ¶fW²và(¼¼ƒŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠV@)™Õ¹Ñ¥½¸½Á•¹QÉ…¥¹½µÁ…É”¡¹¼¥ì(€‘½Õµ•¹Ğ¹•Ñ±•µ•¹Ñ	å% µÀµİÉ…Àœ¤ü¹É•µ½Ù” ¤ì(€½¹ÍĞ„õ•ÑQÉ…¥¹	å9¼¡¹¼¤ì¥˜ …„¥É•ÑÕÉ¸ì(€½¹ÍĞ…MÑ½ÁÌõ„¹ÍÑ½ÁÌ¹™¥±Ñ•È¡Ìôù¡…ÍQ¥µ”¡Ì¹…ÉÈ¥ññ¡…ÍQ¥µ”¡Ì¹‘•À¤¤ì(€½¹ÍĞ…M•Ğõ¹•Ü5…À¡…MÑ½ÁÌ¹µ…À¡ÌôùmÌ¹Ì±Ñ½5¥¸¡Ì¹‘•ÁññÌ¹…ÉÈ¥t¤¤ì(€½¹ÍĞÍÕœõmtì(€11}QI%9L¹™½É… ¡Ğôùì(€€€¥˜¡Ğ¹¹¼ôôõ¹½ññĞ¹‘¥È„ôõ„¹‘¥È¥É•ÑÕÉ¸ì(€€€½¹ÍĞÍ¡…É•õĞ¹ÍÑ½ÁÌ¹™¥±Ñ•È¡Ìôø¡¡…ÍQ¥µ”¡Ì¹…ÉÈ¥ññ¡…ÍQ¥µ”¡Ì¹‘•À¤¤˜™…M•Ğ¹¡…Ì¡Ì¹Ì¤¤ì(€€€¥˜¡Í¡…É•¹±•¹Ñ ğĞ¥É•ÑÕÉ¸ì(€€€½¹ÍĞ˜õÍ¡…É•‘lÁtì½¹ÍĞõ5…Ñ ¹…‰Ì ¡Ñ½5¥¸¡˜¹‘•Áññ˜¹…ÉÈ¤µ…M•Ğ¹•Ğ¡˜¹Ì¤¬ÜÈÀ¬ÄĞĞÀ¤”ÄĞĞÀ´ÜÈÀ¤ì(€€€¥˜¡øÄÈÀ¥É•ÑÕÉ¸ì(€€€ÍÕœ¹ÁÕÍ ¡í¹¼éĞ¹¹¼±É…‘”éĞ¹É…‘”±‘•ÍĞéĞ¹‘•ÍĞ±±¸éÍ¡…É•¹±•¹Ñ¡ô¤ì(€ô¤ì(€ÍÕœ¹Í½ÉĞ ¡à±ä¤ôùà¹µä¹¤ì(€½¹ÍĞİÉ…Àõ‘½Õµ•¹Ğ¹É•…Ñ•±•µ•¹Ğ ‘¥Øœ¤ì(€İÉ…À¹¥ôµÀµİÉ…Àœì(€İÉ…À¹ÍÑå±”¹ÍÍQ•áĞôÁ½Í¥Ñ¥½¸é™¥á•í¥¹Í•ĞèÀíèµ¥¹‘•àèäÔÀÀí‘¥ÍÁ±…äé™±•àí…±¥¸µ¥Ñ•µÌé•¹Ñ•Èí©ÕÍÑ¥™äµ½¹Ñ•¹Ğé•¹Ñ•Èœì(€İÉ…À¹¥¹¹•É!Q50õ€(€€€€ñ‘¥Ø±…ÍÌô‰…±…É´µÁ½ÁÕÀµ‰…­‘É½Àˆ½¹±¥¬ô‰‘½Õµ•¹Ğ¹•Ñ±•µ•¹Ñ	å% µÀµİÉ…Àœ¤¹É•µ½Ù” ¤ˆøğ½‘¥Øø(€€€€ñ‘¥Ø±…ÍÌô‰…±…É´µÁ½ÁÕÀˆÍÑå±”ô‰µ…àµİ¥‘Ñ èĞàÁÁàíµ…àµ¡•¥¡ĞèàÙÙ í‘¥ÍÁ±…äé™±•àí™±•àµ‘¥É•Ñ¥½¸é½±Õµ¸ˆø(€€€€€€ñ‘¥Ø±…ÍÌô‰…±…É´µÁ½ÁÕÀµÑ¥Ñ±”ˆûŠj[¾â<€‘í„¹É…‘•ô€‘í„¹¹½ôƒ²^Ó²Â ƒ®æªÖ@ğ½‘¥Øø(€€€€€€ñ‘¥Ø±…ÍÌô‰…±…É´µÁ½ÁÕÀµÍÕˆˆûªÂg²v ƒ®Â§¶Z”ƒ²^Ó²Â£²f ƒ²^·®Îƒ².sªÂ²vƒ®æªÖC¶VĞƒ®2¶Ró
+ß²ÚS²nPƒ²²‚C²vƒ¶fW²vã¶V§®.#®.ğ½‘¥Øø(€€€€€€ñ‘¥ØÍÑå±”ô‰‘¥ÍÁ±…äé™±•àí…ÀèÙÁàíµ…É¥¸èáÁà€Àˆø(€€€€€€€€ñ¥¹ÁÕĞ¥ô‰µÀµ¥¹ÀˆÁ±…•¡½±‘•Èô‹®æªÖC¶V€ƒ²^Ó²Â£®Ê#¶bàˆÍÑå±”ô‰™±•àèÄí‰…­É½Õ¹éÙ…È ´µ‰œÌ¤í‰½É‘•ÈèÅÁàÍ½±¥Ù…È ´µ‰½É‘•È¤í‰½É‘•ÈµÉ…‘¥ÕÌèáÁàí½±½ÈéÙ…È ´µÑ•áĞÄ¤íÁ…‘‘¥¹œèáÁà€ÄÁÁàí™½¹Ğµ™…µ¥±äéÙ…È ´µµ½¹¼¤ˆø(€€€€€€€€ñ‰ÕÑÑ½¸±…ÍÌô‰‰Ñ¸ˆ½¹±¥¬ô‰É•¹‘•ÉQÉ…¥¹½µÁ…É” œ‘í¹½ôœ±‘½Õµ•¹Ğ¹•Ñ±•µ•¹Ñ	å% µÀµ¥¹Àœ¤¹Ù…±Õ”¹ÑÉ¥´ ¤¤ˆû®æªÖ@ğ½‰ÕÑÑ½¸ø(€€€€€€ğ½‘¥Øø(€€€€€€‘íÍÕœ¹±•¹Ñ ı€ñ‘¥ØÍÑå±”ô‰™½¹ĞµÍ¥é”èÄÅÁàí½±½ÈéÙ…È ´µÑ•áĞÌ¤íµ…É¥¸µ‰½ÑÑ½´èÑÁàˆûªÂªæ3²jĞƒ².sªÂ®2 ƒ²ÚS²Êpğ½‘¥Øø(€€€€€€ñ‘¥ØÍÑå±”ô‰‘¥ÍÁ±…äé™±•àí…ÀèÙÁàí™±•àµİÉ…ÀéİÉ…Àíµ…É¥¸µ‰½ÑÑ½´èÙÁàˆø(€€€€€€€€‘íÍÕœ¹Í±¥” À°Ø¤¹µ…À¡Ìôù€ñ‰ÕÑÑ½¸±…ÍÌô‰Í•…Ğµ…ÕÑ¼µ¡¥Àˆ½¹±¥¬ô‰É•¹‘•ÉQÉ…¥¹½µÁ…É” œ‘í¹½ôœ°œ‘íÌ¹¹½ôœ¤ˆø‘íÌ¹É…‘•ô€‘íÌ¹¹½ôñÍÁ…¸ÍÑå±”ô‰½Á…¥Ñäè¸Øˆøƒ
+Ä‘íÌ¹‘÷®Úğ½ÍÁ…¸øğ½‰ÕÑÑ½¸ù€¤¹©½¥¸ œœ¥ô(€€€€€€ğ½‘¥Øù€èœñ‘¥ØÍÑå±”ô‰™½¹ĞµÍ¥é”èÄÉÁàí½±½ÈéÙ…È ´µÑ•áĞÌ¤ˆûªÂªæ3²jĞƒ².sªÂ®2²v`ƒªÂg²v ƒ®Â§¶Z”ƒ²^Ó²Â£ªÂ ƒ²^²*×®.#®.¸ğ½‘¥Øøô(€€€€€€ñ‘¥Ø¥ô‰µÀµ‰½‘äˆÍÑå±”ô‰½Ù•É™±½Üµäé…ÕÑ¼íµ¥¸µ¡•¥¡ĞèÀí™±•àèÄˆøğ½‘¥Øø(€€€€€€ñ‰ÕÑÑ½¸±…ÍÌô‰…±…É´µÁ½ÁÕÀµ±½Í”ˆ½¹±¥¬ô‰‘½Õµ•¹Ğ¹•Ñ±•µ•¹Ñ	å% µÀµİÉ…Àœ¤¹É•µ½Ù” ¤ˆû®.¯ªâÀğ½‰ÕÑÑ½¸ø(€€€€ğ½‘¥Øù€ì(€‘½Õµ•¹Ğ¹‰½‘ä¹…ÁÁ•¹‘¡¥±¡İÉ…À¤ì(€¥˜¡ÍÕœ¹±•¹Ñ ¥É•¹‘•ÉQÉ…¥¹½µÁ…É”¡¹¼±ÍÕlÁt¹¹¼¤ì)ô)™Õ¹Ñ¥½¸É•¹‘•ÉQÉ…¥¹½µÁ…É”¡¹½±¹½¥ì(€½¹ÍĞ‰½‘äõ‘½Õµ•¹Ğ¹•Ñ±•µ•¹Ñ	å% µÀµ‰½‘äœ¤ì¥˜ …‰½‘ä¥É•ÑÕÉ¸ì(€½¹ÍĞõ•ÑQÉ…¥¹	å9¼¡¹½¤°õ•ÑQÉ…¥¹	å9¼¡¹½¤ì(€¥˜ …¥í‰½‘ä¹¥¹¹•É!Q50ôœñ‘¥ØÍÑå±”ô‰½±½ÈéÙ…È ´µÉ•¤í™½¹ĞµÍ¥é”èÄÉÁàíÁ…‘‘¥¹œèáÁàˆû²^Ó²Â£®–ğƒ²Âû²vƒ²"`ƒ²^²*×®.#®.¸ğ½‘¥ØøœíÉ•ÑÕÉ¸íô(€½¹ÍĞ‰5…Àõ¹•Ü5…À¡¹ÍÑ½ÁÌ¹™¥±Ñ•È¡Ìôù¡…ÍQ¥µ”¡Ì¹…ÉÈ¥ññ¡…ÍQ¥µ”¡Ì¹‘•À¤¤¹µ…À¡ÌôùmÌ¹Ì±Ít¤¤ì(€½¹ÍĞÍ¡…É•õ¹ÍÑ½ÁÌ¹™¥±Ñ•È¡Ìôø¡¡…ÍQ¥µ”¡Ì¹…ÉÈ¥ññ¡…ÍQ¥µ”¡Ì¹‘•À¤¤˜™‰5…À¹¡…Ì¡Ì¹Ì¤¤ì(€¥˜¡Í¡…É•¹±•¹Ñ ğÈ¥í‰½‘ä¹¥¹¹•É!Q50ôœñ‘¥ØÍÑå±”ô‰½±½ÈéÙ…È ´µÑ•áĞÌ¤í™½¹ĞµÍ¥é”èÄÉÁàíÁ…‘‘¥¹œèáÁàˆû®F@ƒ²^Ó²Â£²v`ƒªÎ×²r€ƒ²‚W²Â£²^·²vĞƒ®Ú²†Ç¶V§®.#®.¸ğ½‘¥ØøœíÉ•ÑÕÉ¸íô(€½¹ÍĞİô¡à±ä¤ôø ¡äµà¬ÜÈÀ¬ÄĞĞÀ¤”ÄĞĞÀ¤´ÜÈÀì(€±•ĞÉ½İÌôœœ°ÁÉ•ÙM¥¸ôÀ°•Ù•¹ÑÌõmtì(€Í¡…É•¹™½É… ¡Í„ôùì(€€€½¹ÍĞÍˆõ‰5…À¹•Ğ¡Í„¹Ì¤ì(€€€½¹ÍĞÑ„õÑ½5¥¸¡Í„¹‘•ÁññÍ„¹…ÉÈ¤°ÑˆõÑ½5¥¸¡Íˆ¹‘•ÁññÍˆ¹…ÉÈ¤ì(€€€½¹ÍĞõİ¡Ñ„±Ñˆ¤ì½¹ÍĞÍ¥¸õøÀüÄéğÀü´ÄèÀì(€€€±•Ğµ…É¬ôœœì(€€€¥˜¡ÁÉ•ÙM¥¸„ôôÀ˜™Í¥¸„ôôÀ˜™Í¥¸„ôõÁÉ•ÙM¥¸¥ì(€€€€€½¹ÍĞ…ÉÉõÑ½5¥¸¡Í„¹…ÉÈ¤°…ÉÉõÑ½5¥¸¡Íˆ¹…ÉÈ¤ì(€€€€€±•ĞÑáĞì(€€€€€¥˜¡…ÉÉ„ôõ¹Õ±°˜™…ÉÉ„ôõ¹Õ±°¥ì(€€€€€€€½¹ÍĞ™¥ÉÍÑ%¸€ôİ¡…ÉÉ±…ÉÉ¤øÀ€ü€èì(€€€€€€€½¹ÍĞÁ…ÍÍ•È€€ô™¥ÉÍÑ%¸ôôõ€ü€èì(€€€€€€€ÑáĞõ€‘íÍ„¹Í÷²^C²p€‘í™¥ÉÍÑ%¸¹É…‘•ô€‘í™¥ÉÍÑ%¸¹¹½ôƒ®2¶RğƒŠH€‘íÁ…ÍÍ•È¹É…‘•ô€‘íÁ…ÍÍ•È¹¹½ôƒ²ÚS²nQ€ì(€€€€€ô•±Í”ÑáĞõ€‘íÍ„¹Íôƒ®ÚªŞó²^C²pƒ²"s²pƒªÖC²ÊÑ€ì(€€€€€•Ù•¹ÑÌ¹ÁÕÍ ¡ÑáĞ¤ì(€€€€€µ…É¬õ€ñ‘¥Ø±…ÍÌô‰µÀµ•Ù•¹ĞˆûÂ~R €‘íÑáÑôğ½‘¥Øù€ì(€€€ô(€€€¥˜¡Í¥¸„ôôÀ¥ÁÉ•ÙM¥¸õÍ¥¸ì(€€€É½İÌ¬õ€‘íµ…É­ôñ‘¥Ø±…ÍÌô‰µÀµÉ½Üˆø(€€€€€€ñÍÁ…¸±…ÍÌô‰µÀµÍÑ¸ˆø‘íÍ„¹Íôğ½ÍÁ…¸ø(€€€€€€ñÍÁ…¸±…ÍÌô‰µÀµĞˆø‘íÍ„¹…ÉÉñğŸŠLôñ‰Èø‘íÍ„¹‘•ÁñğŸŠLôğ½ÍÁ…¸ø(€€€€€€ñÍÁ…¸±…ÍÌô‰µÀµĞˆø‘íÍˆ¹…ÉÉñğŸŠLôñ‰Èø‘íÍˆ¹‘•ÁñğŸŠLôğ½ÍÁ…¸ø(€€€€€€ñÍÁ…¸±…ÍÌô‰µÀµ‘¥™˜ˆø‘íøÀüœ¬œèœô‘í‘÷®Úğ½ÍÁ…¸ø(€€€€ğ½‘¥Øù€ì(€ô¤ì(€‰½‘ä¹¥¹¹•É!Q50õ€(€€€€ñ‘¥Ø±…ÍÌô‰µÀµÍÕµµ…Éäˆø‘í•Ù•¹ÑÌ¹±•¹Ñ ı•Ù•¹ÑÌ¹µ…À¡”ôù€ñ‘¥ØûÂ~R €‘í•ôğ½‘¥Øù€¤¹©½¥¸ œœ¤èŸ®F@ƒ²^Ó²Â£²v`ƒ²ƒ¶nƒªÒªÎªÂ ƒ²rƒ²®B§®.#®.€£²ÚS²nPƒ²^²v0¤ôğ½‘¥Øø(€€€€ñ‘¥Ø±…ÍÌô‰µÀµÉ½ÜµÀµ¡•…ˆø(€€€€€€ñÍÁ…¸±…ÍÌô‰µÀµÍÑ¸ˆû²^´ğ½ÍÁ…¸ø(€€€€€€ñÍÁ…¸±…ÍÌô‰µÀµĞˆÍÑå±”ô‰½±½ÈéÙ…È ´µŒ´‘íÍÍY…È¡¹É…‘”¥ô¤ˆø‘í¹¹½ôñ‰ÈøñÍµ…±°û²Â¤¿®Âpğ½Íµ…±°øğ½ÍÁ…¸ø(€€€€€€ñÍÁ…¸±…ÍÌô‰µÀµĞˆÍÑå±”ô‰½±½ÈéÙ…È ´µŒ´‘íÍÍY…È¡¹É…‘”¥ô¤ˆø‘í¹¹½ôñ‰ÈøñÍµ…±°û²Â¤¿®Âpğ½Íµ…±°øğ½ÍÁ…¸ø(€€€€€€ñÍÁ…¸±…ÍÌô‰µÀµ‘¥™˜ˆû²Â£²vĞğ½ÍÁ…¸ø(€€€€ğ½‘¥Øø(€€€€‘íÉ½İÍõ€ì)ô((¼¼ƒªÎ²‚T£®†s²î°ƒ¶R®†s¶V¤ƒ²Ò#ªâÃ¶fPƒŠPƒ²Ös²Ò ƒ².“¶Z$ƒ².pƒªâÃ²†Ğƒ®6Ã²vÓ¶Ã®†pƒªâÃ®ÎàƒªÎ²‚Tƒ²w²Ä)ÑÉåí…Ñ%¹¥Ğ ¤íõ…Ñ ¡”¥íô((¼¼ƒŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠV@(¼¼ƒÂ~Rƒ²^Ó²Â ƒ²jÓ²j¤ƒ¶´ƒŠPƒ².sªÂ·ªÆÃ®š°ƒ®.“²vÓ²ZÓªŞã®z €¬ƒ¶:ã²Äƒ²jÓ²j¤ƒ¶vC®š®>(¼¼ƒŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠV@)±•Ğ}½ÁÍY¥•Üô‘¥…É…´œì€€€¼¼€‘¥…É…´œğ€É…­”œ)±•Ğ}½ÁÍ½ÉÉ¥‘½Èõ¹Õ±°ì€€€€¼¼ƒ®.“²vÓ²ZÓªŞã®z ƒ®2²5A}1%9Lƒ¶
+)±•Ğ}½ÁÍÉ…‘•Ìõ¹Õ±°ì€€€€€€¼¼ƒ®NÇªâ$ƒ¶V¶À¡M•Ğ¤ƒŠP¹Õ±³²vÓ®¦Ğƒ²‚²ÊĞƒ¶Fs².p)±•Ğ}½ÁÍÉ½ÕÀõ¹Õ±°ì€€€€€€€¼¼ƒ¶vC®š®>ƒ¶:ã²ÄƒªŞã®äƒ¶R®š³¶R÷²*)±•Ğ}½ÁÍM•°õ¹Õ±°ì€€€€€€€€€¼¼ƒ®.“²vÓ²ZÓªŞã®z£²^C²pƒ²ƒ¶t£ªÂW²†À§¶Vpƒ²^Ó²Â ƒ®Ê#¶bà(¼¼ƒ®.“²vÓ²ZÓªŞã®z ƒ²z³®‚3®6Pƒ².pƒªÂ®†pƒ²*“¶³®†ƒ²r²æ`ƒ®ÎÓ²†Ğ)™Õ¹Ñ¥½¸}½ÁÍI•É•¹‘•É-••ÁMÉ½±° ¥ì(€½¹ÍĞÍŒõ‘½Õµ•¹Ğ¹ÅÕ•ÉåM•±•Ñ½È œ¹½ÁÌµ‘¥…É…´µÍÉ½±°œ¤ì½¹ÍĞ±•™ĞõÍŒıÍŒ¹ÍÉ½±±1•™ĞèÀì(€É•¹‘•É=ÁÍQ…ˆ ¤ì(€½¹ÍĞÍŒÈõ‘½Õµ•¹Ğ¹ÅÕ•ÉåM•±•Ñ½È œ¹½ÁÌµ‘¥…É…´µÍÉ½±°œ¤ì¥˜¡ÍŒÈ¥ÍŒÈ¹ÍÉ½±±1•™Ğõ±•™Ğì)ô)™Õ¹Ñ¥½¸}½ÁÍM•±•ÑQÉ…¥¸¡¹¼¥ì}½ÁÍM•°ô¡}½ÁÍM•°ôôõ¹¼¤ı¹Õ±°é¹¼ì}½ÁÍI•É•¹‘•É-••ÁMÉ½±° ¤ìô)™Õ¹Ñ¥½¸}½ÁÍ±•…ÉM•° ¥ì¥˜¡}½ÁÍM•°¥í}½ÁÍM•°õ¹Õ±°í}½ÁÍI•É•¹‘•É-••ÁMÉ½±° ¤íôô(¼¼ƒ²ƒ¶tƒ²^Ó²Â£²f ƒ®.“®–àƒ²^Ó²Â£®N“²v`ƒªÖC¶Z$£®Âc®2®Â§¶Z”ƒ®3®
+ §
+ß²ÚS²nP£ªÂg²v®Â§¶Z”ƒ²ÚS²nP¤ƒ²²‚@ƒ²
+Ã²Úp)™Õ¹Ñ¥½¸}½ÁÍ5••ÑÌ¡Í•°°½Ñ¡•ÉÌ°½È¥ì(€½¹ÍĞ¥¹Ñ•ÉÀô¡ÁÑÌ±à¤ôùì¥˜¡àñÁÑÍlÁt¹ÑññàùÁÑÍmÁÑÌ¹±•¹Ñ ´Åt¹Ğ¥É•ÑÕÉ¸¹Õ±°ì(€€€™½È¡±•Ğ¤ôÄí¤ñÁÑÌ¹±•¹Ñ í¤¬¬¥ì¥˜¡àğõÁÑÍm¥t¹Ğ¥í½¹ÍĞ„õÁÑÍm¤´Åt±ˆõÁÑÍm¥tí½¹ÍĞ˜ô¡àµ„¹Ğ¤¼ ¡ˆ¹Ğµ„¹Ğ¥ñğÄ¤íÉ•ÑÕÉ¸„¹¬¡ˆ¹µ„¹¤©˜íôô(€€€É•ÑÕÉ¸ÁÑÍmÁÑÌ¹±•¹Ñ ´Åt¹ìôì(€½¹ÍĞ¹…µ•Ğõôùì±•Ğ‰•ÍĞõ¹Õ±°±‰ôÅ”äì™½È¡½¹ÍĞ¸½˜½È¹¹…µ•Ì¥í½¹ÍĞ‘õ5…Ñ ¹…‰Ì¡½È¹‘µm¹tµ¤í¥˜¡‘ñ‰¥í‰õ‘í‰•ÍĞõ¸íõôÉ•ÑÕÉ¸‰•ÍĞìôì(€½¹ÍĞÍ5¥¸õÍ•°¹ÁÑÍlÁt¹Ğ°Í5…àõÍ•°¹ÁÑÍmÍ•°¹ÁÑÌ¹±•¹Ñ ´Åt¹Ğì(€½¹ÍĞµ••ÑÌõmtì(€½Ñ¡•ÉÌ¹™½É… ¡¼ôùì(€€€¥˜¡¼¹Ğ¹¹¼ôôõÍ•°¹Ğ¹¹¼¥É•ÑÕÉ¸ì(€€€½¹ÍĞ±¼õ5…Ñ ¹µ…à¡Í5¥¸±¼¹ÁÑÍlÁt¹Ğ¤°¡¤õ5…Ñ ¹µ¥¸¡Í5…à±¼¹ÁÑÍm¼¹ÁÑÌ¹±•¹Ñ ´Åt¹Ğ¤ì(€€€¥˜¡¡¤µ±¼ğÄ¥É•ÑÕÉ¸ì(€€€±•ĞÁÉ•Øõ¹Õ±°±ÁÉ•Ù`õ¹Õ±°ì(€€€™½È¡±•Ğàõ±¼íàğõ¡¤íà¬ôÄ¥ì(€€€€€½¹ÍĞ‘Ìõ¥¹Ñ•ÉÀ¡Í•°¹ÁÑÌ±à¤°‘<õ¥¹Ñ•ÉÀ¡¼¹ÁÑÌ±à¤ì(€€€€€¥˜¡‘Ìôõ¹Õ±±ññ‘<ôõ¹Õ±°¥íÁÉ•Øõ¹Õ±°íÁÉ•Ù`õ¹Õ±°í½¹Ñ¥¹Õ”íô(€€€€€½¹ÍĞ‘¥™˜õ‘Ìµ‘<ì(€€€€€¥˜¡ÁÉ•Ø„õ¹Õ±°˜™ÁÉ•Ù`„õ¹Õ±°˜˜ ¡ÁÉ•ØğÀ˜™‘¥™˜øôÀ¥ñğ¡ÁÉ•ØøÀ˜™‘¥™˜ğôÀ¤¤¥ì(€€€€€€€½¹ÍĞµàõÁÉ•Ù`¬¡àµÁÉ•Ù`¤¨¡5…Ñ ¹…‰Ì¡ÁÉ•Ø¤¼ ¡5…Ñ ¹…‰Ì¡ÁÉ•Ø¤­5…Ñ ¹…‰Ì¡‘¥™˜¤¥ñğÄ¤¤ì(€€€€€€€½¹ÍĞ‘Á½Ìõ¥¹Ñ•ÉÀ¡Í•°¹ÁÑÌ±µà¤ì(€€€€€€€µ••ÑÌ¹ÁÕÍ ¡í¹¼é¼¹Ğ¹¹¼±É…‘”é¼¹Ğ¹É…‘”±àéµà±é‘Á½Ì±Í…µ”é¼¹Ğ¹‘¥ÈôôõÍ•°¹Ğ¹‘¥È±ÍÑ¸é¹…µ•Ğ¡‘Á½Ì¥ô¤ì(€€€€€ô(€€€€€ÁÉ•Øõ‘¥™˜íÁÉ•Ù`õàì(€€€ô(€ô¤ì(€µ••ÑÌ¹Í½ÉĞ ¡„±ˆ¤ôù„¹àµˆ¹à¤ì(€É•ÑÕÉ¸µ••ÑÌì)ô)™Õ¹Ñ¥½¸=AM}à¡´¥í¥˜¡´ôõ¹Õ±°¥É•ÑÕÉ¸¹Õ±°íÉ•ÑÕÉ¸´ğÈĞÀı´¬ÄĞĞÀé´íô€¼¼€ÀĞèÀÁøÈàèÀÀƒŠH€ÈĞÁøÄØàÀ€£²zC²‚Tƒ®cªæ ƒ²^Ã²4¤)™Õ¹Ñ¥½¸}½ÁÍÍŒ¡Ì¥íÉ•ÑÕÉ¸MÑÉ¥¹œ¡Ìôõ¹Õ±°üœœéÌ¤¹É•Á±…” ¼˜½œ°œ™…µÀìœ¤¹É•Á±…” ¼ğ½œ°œ™±Ğìœ¤¹É•Á±…” ¼ø½œ°œ™Ğìœ¤íô)™Õ¹Ñ¥½¸}™µÑ4¡´¥í¥˜¡´ôõ¹Õ±°¥É•ÑÕÉ¸€œ´œí´ô ¡´”ÄĞĞÀ¤¬ÄĞĞÀ¤”ÄĞĞÀíÉ•ÑÕÉ¸5…Ñ ¹™±½½È¡´¼ØÀ¤¬œèœ­MÑÉ¥¹œ¡´”ØÀ¤¹Á…‘MÑ…ÉĞ È°œÀœ¤íô((¼¼ƒ²öS®š³®>£®ã²€¤ƒ²^´ƒ²"s²p€¬ƒ®"²‚ƒªÆÃ®š°£²*“¶
+“®“¶.ÄƒªÊ÷®†pƒªâã²vĞ¤)½¹ÍĞ}½ÁÍ½É…¡”õíôì)™Õ¹Ñ¥½¸}½ÁÍ½ÉÉ¥‘½É…Ñ„¡­•ä¥ì(€¥˜¡}½ÁÍ½É…¡•m­•åt„ôõÕ¹‘•™¥¹•¥É•ÑÕÉ¸}½ÁÍ½É…¡•m­•åtì(€½¹ÍĞµ°ô¡ÑåÁ•½˜5A}1%9L„ôôÕ¹‘•™¥¹•œ¤ı5A}1%9Mm­•åté¹Õ±°ì(€¥˜ …µ±ñğ…µ°¹É½ÕÑ•Ì¥íÉ•ÑÕÉ¸}½ÁÍ½É…¡•m­•åtõ¹Õ±°íô(€½¹ÍĞµ…¥¸õµ°¹É½ÕÑ•Ì¹™¥±Ñ•È¡Èôø…È¹‘…Í ¤¹Í½ÉĞ ¡„±ˆ¤ôùˆ¹ÍÑ…Ñ¥½¹Ì¹±•¹Ñ µ„¹ÍÑ…Ñ¥½¹Ì¹±•¹Ñ ¥lÁuññµ°¹É½ÕÑ•ÍlÁtì(€½¹ÍĞÍÑÌõµ…¥¸¹ÍÑ…Ñ¥½¹Ìì(€¥˜ …ÍÑÍññÍÑÌ¹±•¹Ñ ğÌ¥íÉ•ÑÕÉ¸}½ÁÍ½É…¡•m­•åtõ¹Õ±°íô(€½¹ÍĞ‘¥ÍĞõlÁtì(€™½È¡±•Ğ¤ôÄí¤ñÍÑÌ¹±•¹Ñ í¤¬¬¥‘¥ÍÑm¥tõ‘¥ÍÑm¤´Åt­5…Ñ ¹¡åÁ½Ğ¡ÍÑÍm¥t¹àµÍÑÍm¤´Åt¹à±ÍÑÍm¥t¹äµÍÑÍm¤´Åt¹ä¤ì(€½¹ÍĞÑ½Ñ…°õ‘¥ÍÑm‘¥ÍĞ¹±•¹Ñ ´ÅuñğÄì(€½¹ÍĞ‘´õíô±¹…µ•Ìõmtì(€ÍÑÌ¹™½É…  ¡Ì±¤¤ôùí¥˜ „¡Ì¹¸¥¸‘´¤¥í‘µmÌ¹¹tõ‘¥ÍÑm¥tí¹…µ•Ì¹ÁÕÍ ¡Ì¹¸¤íõô¤ì(€É•ÑÕÉ¸}½ÁÍ½É…¡•m­•åtõí­•ä±¹…µ”éµ°¹¹…µ”±½±½Èéµ°¹½±½È±¹…µ•Ì±‘´±Ñ½Ñ…±ôì)ô(¼¼ƒ²^Ó²Â£ªÂ ƒ².“²‚s®†pƒ²vĞƒ²öS®š³®>£®ã²€§®–ğƒ²jÓ¶Z'¶Vc®*S² ƒŠP±¥¹”ƒ¶V®Ns²^@ƒ®ã²ƒ®ª²vĞƒ²z#²ZÓ²Vğƒ¶V ¸(¼¼€£²‚W²Â£²^´ƒ²vÓ®š®0ƒªÊç²æc®*Pƒ¶ ƒ®ã²€ƒ²^Ó²Â ƒ²b“¶Fs².pƒ®Â§² èƒªÊ÷®ÚªÎƒ²7²€-QcªÂ ƒªÊ÷®Ú²ƒ²^@ƒ®r£®6`ƒ®²ã²‚p¤)™Õ¹Ñ¥½¸}½ÁÍQÉ…¥¹=¹½ÉÉ¥‘½È¡Ğ±½È¥ì(€É•ÑÕÉ¸€„„¡Ğ¹±¥¹”˜™½È˜™Ğ¹±¥¹”¹ÍÁ±¥Ğ Ÿ
+Üœ¤¹Í½µ”¡°ôù°¹ÑÉ¥´ ¤ôôõ½È¹¹…µ”¤¤ì)ô(¼¼ƒ²^Ó²Â£²v`ƒ²öS®š³®>ƒ²ƒ²‚W²Â£²‚@€£².sªÂ
+ßªÆÃ®š°¤)™Õ¹Ñ¥½¸}½ÁÍQÉ…¥¹AÑÌ¡Ğ±½È¥ì(€½¹ÍĞÁÑÌõmtì(€Ğ¹ÍÑ½ÁÌ¹™½É… ¡Ìôùì(€€€¥˜ „¡Ì¹Ì¥¸½È¹‘´¤¥É•ÑÕÉ¸ì(€€€½¹ÍĞÑ´õ¡…ÍQ¥µ”¡Ì¹‘•À¤ıÑ½5¥¸¡Ì¹‘•À¤è¡¡…ÍQ¥µ”¡Ì¹…ÉÈ¤ıÑ½5¥¸¡Ì¹…ÉÈ¤é¹Õ±°¤ì(€€€¥˜¡Ñ´ôõ¹Õ±°¥É•ÑÕÉ¸ì(€€€ÁÑÌ¹ÁÕÍ ¡íÍÑ¸éÌ¹Ì±é½È¹‘µmÌ¹Ít±Ğé=AM}à¡Ñ´¤±Á…ÍÌé¥ÍA…ÍÍMÑ½À¡Ğ±Ì¹Ì¥ô¤ì(€ô¤ì(€É•ÑÕÉ¸ÁÑÌì)ô(¼¼ƒ²öS®š³®>ƒ¶n®ÎĞƒ®ª§®†tƒŠPƒ²‚W²Â ƒ²^Ó²Â €ÏªÂpƒ²vÓ²°ƒ¶:ã²"`ƒ®
+Ó®šó²Â£²"p)±•Ğ}½ÁÍ½ÉÉ¥‘½É1¥ÍĞõ¹Õ±°ì)™Õ¹Ñ¥½¸}½ÁÍ½ÉÉ¥‘½ÉÌ ¥ì(€¥˜¡}½ÁÍ½ÉÉ¥‘½É1¥ÍĞ¥É•ÑÕÉ¸}½ÁÍ½ÉÉ¥‘½É1¥ÍĞì(€½¹ÍĞ±¥ÍĞõmtì(€™½È¡½¹ÍĞ­•ä½˜=‰©•Ğ¹­•åÌ¡5A}1%9L¤¥ì(€€€½¹ÍĞ½Èõ}½ÁÍ½ÉÉ¥‘½É…Ñ„¡­•ä¤ì¥˜ …½È¥½¹Ñ¥¹Õ”ì(€€€±•Ğ¹PôÀì™½È¡½¹ÍĞĞ½˜11}QI%9L¥í¥˜¡}½ÁÍQÉ…¥¹=¹½ÉÉ¥‘½È¡Ğ±½È¤˜™}½ÁÍQÉ…¥¹AÑÌ¡Ğ±½È¤¹±•¹Ñ øôÌ¥¹P¬¬íô(€€€¥˜¡¹PøÀ¥±¥ÍĞ¹ÁÕÍ ¡í­•ä±¹…µ”é½È¹¹…µ”±¸é¹Qô¤ì(€ô(€±¥ÍĞ¹Í½ÉĞ ¡„±ˆ¤ôùˆ¹¸µ„¹¸¤ì(€É•ÑÕÉ¸}½ÁÍ½ÉÉ¥‘½É1¥ÍĞõ±¥ÍĞì)ô)™Õ¹Ñ¥½¸}ÕÉ½ÉÉ¥‘½ÉÉ…‘•Ì ¥ì(€½¹ÍĞ½Èõ}½ÁÍ½ÉÉ¥‘½É…Ñ„¡}½ÁÍ½ÉÉ¥‘½È¤ì¥˜ …½È¥É•ÑÕÉ¸mtì(€É•ÑÕÉ¸l¸¸¹¹•ÜM•Ğ¡11}QI%9L¹™¥±Ñ•È¡Ğôù}½ÁÍQÉ…¥¹=¹½ÉÉ¥‘½È¡Ğ±½È¤˜™}½ÁÍQÉ…¥¹AÑÌ¡Ğ±½È¤¹±•¹Ñ øôÌ¤¹µ…À¡ĞôùĞ¹É…‘”¤¥tì)ô)™Õ¹Ñ¥½¸}½ÁÍQ½±•É…‘”¡œ¥ì(€¥˜¡}½ÁÍÉ…‘•Ìôôõ¹Õ±°¥}½ÁÍÉ…‘•Ìõ¹•ÜM•Ğ¡}ÕÉ½ÉÉ¥‘½ÉÉ…‘•Ì ¤¤ì(€¥˜¡}½ÁÍÉ…‘•Ì¹¡…Ì¡œ¤¥}½ÁÍÉ…‘•Ì¹‘•±•Ñ”¡œ¤ì•±Í”}½ÁÍÉ…‘•Ì¹…‘¡œ¤ì(€¥˜¡}½ÁÍÉ…‘•Ì¹Í¥é”ôôôÁññ}½ÁÍÉ…‘•Ì¹Í¥é”øõ}ÕÉ½ÉÉ¥‘½ÉÉ…‘•Ì ¤¹±•¹Ñ ¥}½ÁÍÉ…‘•Ìõ¹Õ±°ì(€É•¹‘•É=ÁÍQ…ˆ ¤ì)ô()™Õ¹Ñ¥½¸É•¹‘•É=ÁÍQ…ˆ ¥ì(€½¹ÍĞ¡½ÍĞõ‘½Õµ•¹Ğ¹•Ñ±•µ•¹Ñ	å% ½ÁÌµ½¹Ñ…¥¹•Èœ¤ì¥˜ …¡½ÍĞ¥É•ÑÕÉ¸ì(€¡½ÍĞ¹¥¹¹•É!Q50õ€ñ‘¥Ø±…ÍÌô‰½ÁÌµÙ¥•İÑ½±”ˆø(€€€€ñ‰ÕÑÑ½¸±…ÍÌô‰½ÁÌµÙĞ‘í}½ÁÍY¥•Üôôô‘¥…É…´œüœ½¸œèœôˆ½¹±¥¬ô‰}½ÁÍY¥•Üô‘¥…É…´œíÉ•¹‘•É=ÁÍQ…ˆ ¤ˆûÂ~N ƒ²jÓ¶Z$ƒ®.“²vÓ²ZÓªŞã®z ğ½‰ÕÑÑ½¸ø(€€€€ñ‰ÕÑÑ½¸±…ÍÌô‰½ÁÌµÙĞ‘í}½ÁÍY¥•ÜôôôÉ…­”œüœ½¸œèœôˆ½¹±¥¬ô‰}½ÁÍY¥•ÜôÉ…­”œíÉ•¹‘•É=ÁÍQ…ˆ ¤ˆûÂ~Rƒ¶:ã²Äƒ²jÓ²j¤ƒ¶vC®š®>ğ½‰ÕÑÑ½¸ø(€€ğ½‘¥Øøñ‘¥Ø¥ô‰½ÁÌµ‰½‘äˆøğ½‘¥Øù€ì(€½¹ÍĞ‰½‘äõ‘½Õµ•¹Ğ¹•Ñ±•µ•¹Ñ	å% ½ÁÌµ‰½‘äœ¤ì(€¥˜¡}½ÁÍY¥•Üôôô‘¥…É…´œ¥É•¹‘•É=ÁÍ¥…É…´¡‰½‘ä¤ì•±Í”É•¹‘•É=ÁÍI…­”¡‰½‘ä¤ì)ô()™Õ¹Ñ¥½¸É•¹‘•É=ÁÍ¥…É…´¡¡½ÍĞ¥ì(€¥˜¡ÑåÁ•½˜5A}1%9LôôôÕ¹‘•™¥¹•œ¥í¡½ÍĞ¹¥¹¹•É!Q50ôœñ‘¥Ø±…ÍÌô‰•µÁÑäˆøñ‘¥Ø±…ÍÌô‰•µÁÑäµ¥½¸ˆûÂ~N ğ½‘¥ØøñÀû®ã²€ƒ®6Ã²vÓ¶ÃªÂ ƒ²^²*×®.#®.¸ğ½Àøğ½‘¥ØøœíÉ•ÑÕÉ¸íô(€½¹ÍĞ½ÉÌõ}½ÁÍ½ÉÉ¥‘½ÉÌ ¤ì(€¥˜ …½ÉÌ¹±•¹Ñ ¥í¡½ÍĞ¹¥¹¹•É!Q50ôœñ‘¥Ø±…ÍÌô‰•µÁÑäˆøñ‘¥Ø±…ÍÌô‰•µÁÑäµ¥½¸ˆûÂ~N ğ½‘¥ØøñÀû¶Fs².s¶V€ƒ²jÓ¶Z$ƒ®ã²ƒ²vĞƒ²^²*×®.#®.¸ğ½Àøğ½‘¥ØøœíÉ•ÑÕÉ¸íô(€¥˜ …}½ÁÍ½ÉÉ¥‘½Éñğ…½ÉÌ¹Í½µ”¡ŒôùŒ¹­•äôôõ}½ÁÍ½ÉÉ¥‘½È¤¥}½ÁÍ½ÉÉ¥‘½Èõ½ÉÍlÁt¹­•äì(€½¹ÍĞ½Èõ}½ÁÍ½ÉÉ¥‘½É…Ñ„¡}½ÁÍ½ÉÉ¥‘½È¤ì(€½¹ÍĞÑÉ…¥¹Ìõmtì™½È¡½¹ÍĞĞ½˜11}QI%9L¥í¥˜ …}½ÁÍQÉ…¥¹=¹½ÉÉ¥‘½È¡Ğ±½È¤¥½¹Ñ¥¹Õ”í½¹ÍĞÁÑÌõ}½ÁÍQÉ…¥¹AÑÌ¡Ğ±½È¤í¥˜¡ÁÑÌ¹±•¹Ñ øôÌ¥ÑÉ…¥¹Ì¹ÁÕÍ ¡íĞ±ÁÑÍô¤íô(€½¹ÍĞÍ•Ğõl¸¸¹¹•ÜM•Ğ¡ÑÉ…¥¹Ì¹µ…À¡¼ôù¼¹Ğ¹É…‘”¤¥tì(€½¹ÍĞÍ¡½İPõÑÉ…¥¹Ì¹™¥±Ñ•È¡¼ôø…}½ÁÍÉ…‘•Íññ}½ÁÍÉ…‘•Ì¹¡…Ì¡¼¹Ğ¹É…‘”¤¤ì((€±•Ğ õ€ñ‘¥Ø±…ÍÌô‰½ÁÌµÑ½½±‰…Èˆø(€€€€ñÍ•±•Ğ±…ÍÌô‰½ÁÌµÍ•°ˆ½¹¡…¹”ô‰}½ÁÍ½ÉÉ¥‘½ÈõÑ¡¥Ì¹Ù…±Õ”í}½ÁÍÉ…‘•Ìõ¹Õ±°íÉ•¹‘•É=ÁÍQ…ˆ ¤ˆø(€€€€€€‘í½ÉÌ¹µ…À¡Œôù€ñ½ÁÑ¥½¸Ù…±Õ”ôˆ‘íŒ¹­•åôˆ‘íŒ¹­•äôôõ}½ÁÍ½ÉÉ¥‘½ÈüœÍ•±•Ñ•œèœôø‘í}½ÁÍÍŒ¡Œ¹¹…µ”¥ôƒ
+Ü€‘íŒ¹¹÷¶:àğ½½ÁÑ¥½¸ù€¤¹©½¥¸ œœ¥ô(€€€€ğ½Í•±•Ğø(€€€€ñÍÁ…¸±…ÍÌô‰½ÁÌµ½Õ¹Ğˆø‘íÍ¡½İP¹±•¹Ñ¡÷¶:àƒ¶Fs².pğ½ÍÁ…¸ø(€€ğ½‘¥Øù€ì(€ ¬õ€ñ‘¥Ø±…ÍÌô‰½ÁÌµ±••¹ˆø‘íÍ•Ğ¹µ…À¡œôù€ñ‰ÕÑÑ½¸±…ÍÌô‰½ÁÌµ¡¥À‘ì …}½ÁÍÉ…‘•Íññ}½ÁÍÉ…‘•Ì¹¡…Ì¡œ¤¤üœ½¸œèœôˆÍÑå±”ôˆ´µŒè‘íI}=1=IMmuñğœŒáˆäĞå”ôˆ½¹±¥¬ô‰}½ÁÍQ½±•É…‘” œ‘í}½ÁÍÍŒ¡œ¥ôœ¤ˆø‘í}½ÁÍÍŒ¡œ¥ôğ½‰ÕÑÑ½¸ù€¤¹©½¥¸ œœ¥ôğ½‘¥Øù€ì((€€¼¼ƒ²ƒ¶tƒ²^Ó²Â £ªÂW²†Àƒ®2²¤(€½¹ÍĞÍ•°õ}½ÁÍM•°ıÍ¡½İP¹™¥¹¡¼ôù¼¹Ğ¹¹¼ôôõ}½ÁÍM•°¤é¹Õ±°ì(€¥˜¡}½ÁÍM•°˜˜…Í•°¥}½ÁÍM•°õ¹Õ±°ì(€±•Ğµ••ÑÌõmtì(€¥˜¡Í•°¥ì(€€€µ••ÑÌõ}½ÁÍ5••ÑÌ¡Í•°±Í¡½İP±½È¤ì(€€€½¹ÍĞÉ½ÍÌõµ••ÑÌ¹™¥±Ñ•È¡´ôø…´¹Í…µ”¤°½Ù•Èõµ••ÑÌ¹™¥±Ñ•È¡´ôù´¹Í…µ”¤ì(€€€½¹ÍĞÍ•±õI}=1=IMmÍ•°¹Ğ¹É…‘•uñğœŒáˆäĞå”œì(€€€½¹ÍĞ•àõµ••ÑÌ¹Í±¥” À°Ø¤¹µ…À¡´ôù€ñÍÁ…¸±…ÍÌô‰½ÁÌµµ••ĞµÉ½Üˆøñˆø‘í}™µÑ4¡5…Ñ ¹É½Õ¹¡´¹à¤¥ôğ½ˆø€‘í}½ÁÍÍŒ¡´¹ÍÑ¸¥ôƒ
+Ü€ñÍÁ…¸ÍÑå±”ô‰½±½Èè‘í´¹Í…µ”üœ˜ÀààÍ”œèœ•˜ĞĞĞĞôˆø‘í´¹Í…µ”üŸ²ÚS²nPœèŸªÖC¶Z$ôğ½ÍÁ…¸ø€‘í}½ÁÍÍŒ¡´¹É…‘”¥ô€‘í}½ÁÍÍŒ¡´¹¹¼¥ôğ½ÍÁ…¸ù€¤¹©½¥¸ œœ¤ì(€€€ ¬õ€ñ‘¥Ø±…ÍÌô‰½ÁÌµÍ•±‰…ÈˆÍÑå±”ôˆ´µŒè‘íÍ•±ôˆø(€€€€€€ñ‘¥Ø±…ÍÌô‰½ÁÌµÍ•±‰…Èµ¡•…ˆø(€€€€€€€€ñÍÁ…¸±…ÍÌô‰½ÁÌµÍ•±‰…ÈµÑ¥Ñ±”ˆøñÍÁ…¸±…ÍÌô‰½ÁÌµÍ•°µ¡¥ÀˆÍÑå±”ô‰‰…­É½Õ¹è‘íÍ•±ôˆø‘í}½ÁÍÍŒ ¡ÑåÁ•½˜0„ôôÕ¹‘•™¥¹•œ˜™1mÍ•°¹Ğ¹É…‘•t¥ññÍ•°¹Ğ¹É…‘”¥ô€‘í}½ÁÍÍŒ¡Í•°¹Ğ¹¹¼¥ôğ½ÍÁ…¸ø€‘í}½ÁÍÍŒ¡Í•°¹Ğ¹ÍÑ½ÁÍlÁt¹Ì¥÷ŠH‘í}½ÁÍÍŒ¡Í•°¹Ğ¹‘•ÍĞ¥ôğ½ÍÁ…¸ø(€€€€€€€€ñ‰ÕÑÑ½¸±…ÍÌô‰½ÁÌµÍ•±‰…Èµàˆ½¹±¥¬ô‰}½ÁÍ±•…ÉM•° ¤ˆûŠrTƒ¶VÓ²‚pğ½‰ÕÑÑ½¸ø(€€€€€€ğ½‘¥Øø(€€€€€€ñ‘¥Ø±…ÍÌô‰½ÁÌµÍ•±‰…Èµµ•Ñ„ˆøñÍÁ…¸ÍÑå±”ô‰½±½Èè•˜ĞĞĞĞˆûªÖC¶Z$€‘íÉ½ÍÌ¹±•¹Ñ¡ôğ½ÍÁ…¸øƒ
+Ü€ñÍÁ…¸ÍÑå±”ô‰½±½Èè˜ÀààÍ”ˆû²ÚS²nP€‘í½Ù•È¹±•¹Ñ¡ôğ½ÍÁ…¸øğ½‘¥Øø(€€€€€€‘í•àı€ñ‘¥Ø±…ÍÌô‰½ÁÌµµ••Ğµ±¥ÍĞˆø‘í•áô‘íµ••ÑÌ¹±•¹Ñ øØı€ñÍÁ…¸±…ÍÌô‰½ÁÌµµ••ĞµÉ½ÜˆÍÑå±”ô‰½±½ÈéÙ…È ´µÑ•áĞÌ¤ˆû²fà€‘íµ••ÑÌ¹±•¹Ñ ´Ù÷ªÆÓŠ˜ğ½ÍÁ…¸ù€èœôğ½‘¥Øù€èœô(€€€€€€ñ‘¥Ø±…ÍÌô‰½ÁÌµÍ•±‰…Èµ‰Ñ¹Ìˆøñ‰ÕÑÑ½¸½¹±¥¬ô‰½Á•¹)½ÕÉ¹•ä œ‘íÍ•°¹Ğ¹¹½ôœ¤ˆûÂ~jƒ¶G²*äƒ²^³²‚Tğ½‰ÕÑÑ½¸øñ‰ÕÑÑ½¸½¹±¥¬ô‰©ÕµÁQ½QÉ…¥¸ œ‘íÍ•°¹Ğ¹¹½ôœ¤ˆûÂ~N,ƒ²^Ó²Â ƒ²²àğ½‰ÕÑÑ½¸øğ½‘¥Øø(€€€€ğ½‘¥Øù€ì(€ô((€½¹ÍĞ0ôØØ±PôÈØ±HôÄØ±ôÄÀì(€½¹ÍĞÁáA•É5¥¸ôÄ¸ÀØ°Á±½Ñ\õ5…Ñ ¹É½Õ¹ ÄĞĞÀ©ÁáA•É5¥¸¤ì(€½¹ÍĞÁ±½Ñ õ5…Ñ ¹µ…à ĞĞÀ°½È¹¹…µ•Ì¹±•¹Ñ ¨ÈÈ¤ì(€½¹ÍĞ õP­Á±½Ñ ­ì(€½¹ÍĞaÀõ´ôø¡´´ÈĞÀ¤©ÁáA•É5¥¸ì€€€¼¼ƒ¶R3®†¼ƒ®
+Ó®Ú `€£²Š3²â„ƒ²ÚTƒ²‚s²fàƒŠHƒªŞã®zc¶R®0ƒ²*“¶³®†¤(€½¹ÍĞdõôùP­½½È¹Ñ½Ñ…°©Á±½Ñ ì(€€¼¼ƒŠRŠR ƒ²Š3²â„ƒªÎƒ²‚Tƒ²ÚT£²^·®ª¤ƒŠPƒªÂ®†pƒ²*“¶³®†ƒ².pƒ¶V£ªî`ƒ²n²²vÓ² ƒ²V+²v0ƒŠRŠR (€½¹ÍĞ…àõmtì(€…à¹ÁÕÍ ¡€ñÍÙœÙ¥•İ	½àôˆÀ€À€‘í1ô€‘í!ôˆİ¥‘Ñ ôˆ‘í1ôˆ¡•¥¡Ğôˆ‘í!ôˆáµ±¹Ìô‰¡ÑÑÀè¼½İİÜ¹ÜÌ¹½Éœ¼ÈÀÀÀ½ÍÙœˆ±…ÍÌô‰½ÁÌµ…á¥ÌµÍÙœˆù€¤ì(€…à¹ÁÕÍ ¡€ñÉ•ĞàôˆÀˆäôˆÀˆİ¥‘Ñ ôˆ‘í1ôˆ¡•¥¡Ğôˆ‘í!ôˆ™¥±°ô‰Ù…È ´µ‰œ¤ˆ¼ù€¤ì(€±•Ğ±…ÍÑe„ô´ääì(€½È¹¹…µ•Ì¹™½É… ¡¸ôùí½¹ÍĞäõd¡½È¹‘µm¹t¤ì(€€€¥˜¡äµ±…ÍÑe„øôÄÀ¥í…à¹ÁÕÍ ¡€ñÑ•áĞàôˆ‘í0´Ùôˆäôˆ‘íä¬Íôˆ™¥±°ô‰Ù…È ´µÑ•áĞÈ¤ˆ™½¹ĞµÍ¥é”ôˆä¸ÔˆÑ•áĞµ…¹¡½Èô‰•¹ˆø‘í}½ÁÍÍŒ¡¸¥ôğ½Ñ•áĞù€¤í±…ÍÑe„õäíõô¤ì(€…à¹ÁÕÍ ¡€ñ±¥¹”àÄôˆ‘í0´À¸ÕôˆäÄôˆ‘íQôˆàÈôˆ‘í0´À¸ÕôˆäÈôˆ‘íP­Á±½Ñ!ôˆÍÑÉ½­”ô‰Ù…È ´µ‰½É‘•È¤ˆÍÑÉ½­”µİ¥‘Ñ ôˆÄˆ½Á…¥ÑäôˆÀ¸Üˆ¼ù€¤ì(€…à¹ÁÕÍ  œğ½ÍÙœøœ¤ì(€€¼¼ƒŠRŠR ƒ²jÃ²â„ƒ²*“¶³®†ƒ¶R3®†¼£®.“²vÓ²ZÓªŞã®z ƒªŞã®zc¶R¤ƒŠRŠR (€½¹ÍĞ]ÀõÁ±½Ñ\­Hì(€½¹ÍĞÌõmtì(€Ì¹ÁÕÍ ¡€ñÍÙœÙ¥•İ	½àôˆÀ€À€‘í]Áô€‘í!ôˆİ¥‘Ñ ôˆ‘í]Áôˆ¡•¥¡Ğôˆ‘í!ôˆáµ±¹Ìô‰¡ÑÑÀè¼½İİÜ¹ÜÌ¹½Éœ¼ÈÀÀÀ½ÍÙœˆ±…ÍÌô‰½ÁÌµ‘¥…É…´µÍÙœˆù€¤ì(€Ì¹ÁÕÍ ¡€ñÉ•ĞàôˆÀˆäôˆÀˆİ¥‘Ñ ôˆ‘í]Áôˆ¡•¥¡Ğôˆ‘í!ôˆ™¥±°ô‰Ù…È ´µ‰œ¤ˆ‘íÍ•°üœÍÑå±”ô‰ÕÉÍ½ÈéÁ½¥¹Ñ•Èˆ½¹±¥¬ô‰}½ÁÍ±•…ÉM•° ¤ˆœèœô¼ù€¤ì(€™½È¡±•Ğ¡ ôĞí¡ ğôÈàí¡ ¬¬¥í½¹ÍĞàõaÀ¡¡ ¨ØÀ¤ì(€€€Ì¹ÁÕÍ ¡€ñ±¥¹”àÄôˆ‘íáôˆäÄôˆ‘íQôˆàÈôˆ‘íáôˆäÈôˆ‘íP­Á±½Ñ!ôˆÍÑÉ½­”ô‰Ù…È ´µ‰½É‘•È¤ˆÍÑÉ½­”µİ¥‘Ñ ôˆ‘í¡ ”ÈüÀ¸ÔèÅôˆ½Á…¥ÑäôˆÀ¸ÔÔˆ¼ù€¤ì(€€€Ì¹ÁÕÍ ¡€ñÑ•áĞàôˆ‘íáôˆäôˆ‘íP´İôˆ™¥±°ô‰Ù…È ´µÑ•áĞÈ¤ˆ™½¹ĞµÍ¥é”ôˆÄÀˆÑ•áĞµ…¹¡½Èô‰µ¥‘‘±”ˆø‘íMÑÉ¥¹œ¡¡ ”ÈĞ¤¹Á…‘MÑ…ÉĞ È°œÀœ¥ôğ½Ñ•áĞù€¤íô(€½È¹¹…µ•Ì¹™½É… ¡¸ôùí½¹ÍĞäõd¡½È¹‘µm¹t¤ì(€€€Ì¹ÁÕÍ ¡€ñ±¥¹”àÄôˆÀˆäÄôˆ‘íåôˆàÈôˆ‘íÁ±½Ñ]ôˆäÈôˆ‘íåôˆÍÑÉ½­”ô‰Ù…È ´µ‰½É‘•È¤ˆÍÑÉ½­”µİ¥‘Ñ ôˆÀ¸Ôˆ½Á…¥ÑäôˆÀ¸Ğˆ¼ù€¤íô¤ì(€½¹ÍĞ¹½Üõ¹•Ü…Ñ” ¤í±•Ğ¹´õ¹½Ü¹•Ñ!½ÕÉÌ ¤¨ØÀ­¹½Ü¹•Ñ5¥¹ÕÑ•Ì ¤í±•Ğ¹àõ¹´ğÈĞÀı¹´¬ÄĞĞÀé¹´ì(€¥˜¡¹àøôÈĞÀ˜™¹àğôÄØàÀ¥í½¹ÍĞàõaÀ¡¹à¤íÌ¹ÁÕÍ ¡€ñ±¥¹”àÄôˆ‘íáôˆäÄôˆ‘íQôˆàÈôˆ‘íáôˆäÈôˆ‘íP­Á±½Ñ!ôˆÍÑÉ½­”ô‰Ù…È ´µÉ•¤ˆÍÑÉ½­”µİ¥‘Ñ ôˆÄ¸Ìˆ½Á…¥ÑäôˆÀ¸äˆ¼ù€¤íÌ¹ÁÕÍ ¡€ñÑ•áĞàôˆ‘íáôˆäôˆ‘íP­Á±½Ñ ¬áôˆ™¥±°ô‰Ù…È ´µÉ•¤ˆ™½¹ĞµÍ¥é”ôˆäˆÑ•áĞµ…¹¡½Èô‰µ¥‘‘±”ˆû²ªâ ğ½Ñ•áĞù€¤íô(€€¼¼ƒ²ƒ¶tƒ².pƒ®
+c®¢ã²®*Pƒ¶vC®š³ªÊ0°ƒ²ƒ¶tƒ²^Ó²Â£®*PƒªÖ×ªÊ0(€Í¡½İP¹™½É… ¡¼ôùì(€€€½¹ÍĞŒõI}=1=IMm¼¹Ğ¹É…‘•uñğœŒáˆäĞå”œì(€€€½¹ÍĞ¥ÍM•°õÍ•°˜™¼¹Ğ¹¹¼ôôõÍ•°¹Ğ¹¹¼ì(€€€½¹ÍĞ½Àô…Í•°üÀ¸àÔè¡¥ÍM•°üÄèÀ¸Ä¤ì(€€€½¹ÍĞÜõ¥ÍM•°üÈ¸àèÄ¸Ğì(€€€½¹ÍĞÁ°õ¼¹ÁÑÌ¹µ…À¡Àôù€‘íaÀ¡À¹Ğ¤¹Ñ½¥á• Ä¥ô°‘íd¡À¹¤¹Ñ½¥á• Ä¥õ€¤¹©½¥¸ œ€œ¤ì(€€€Ì¹ÁÕÍ ¡€ñÁ½±å±¥¹”Á½¥¹ÑÌôˆ‘íÁ±ôˆ™¥±°ô‰¹½¹”ˆÍÑÉ½­”ô‰ÑÉ…¹ÍÁ…É•¹ĞˆÍÑÉ½­”µİ¥‘Ñ ôˆàˆÍÑå±”ô‰ÕÉÍ½ÈéÁ½¥¹Ñ•Èˆ½¹±¥¬ô‰}½ÁÍM•±•ÑQÉ…¥¸ œ‘í¼¹Ğ¹¹½ôœ¤ˆøñÑ¥Ñ±”ø‘í}½ÁÍÍŒ¡¼¹Ğ¹É…‘”¥ô€‘í¼¹Ğ¹¹½ôƒ
+Ü€‘í}½ÁÍÍŒ¡¼¹Ğ¹ÍÑ½ÁÍlÁt¹Ì¥÷ŠH‘í}½ÁÍÍŒ¡¼¹Ğ¹‘•ÍĞ¥ôğ½Ñ¥Ñ±”øğ½Á½±å±¥¹”ù€¤ì(€€€Ì¹ÁÕÍ ¡€ñÁ½±å±¥¹”Á½¥¹ÑÌôˆ‘íÁ±ôˆ™¥±°ô‰¹½¹”ˆÍÑÉ½­”ôˆ‘íôˆÍÑÉ½­”µİ¥‘Ñ ôˆ‘íİôˆ½Á…¥Ñäôˆ‘í½ÁôˆÁ½¥¹Ñ•Èµ•Ù•¹ÑÌô‰¹½¹”ˆ¼ù€¤ì(€€€¥˜ …Í•±ññ¥ÍM•°¥¼¹ÁÑÌ¹™½É… ¡Àôùí¥˜ …À¹Á…ÍÌ¥Ì¹ÁÕÍ ¡€ñ¥É±”àôˆ‘íaÀ¡À¹Ğ¤¹Ñ½¥á• Ä¥ôˆäôˆ‘íd¡À¹¤¹Ñ½¥á• Ä¥ôˆÈôˆ‘í¥ÍM•°üÈ¸ÈèÄ¸Õôˆ™¥±°ôˆ‘íôˆÁ½¥¹Ñ•Èµ•Ù•¹ÑÌô‰¹½¹”ˆ¼ù€¤íô¤ì(€ô¤ì(€€¼¼ƒªÖC¶Z$¿²ÚS²nPƒ²²‚@ƒ®#²î€£²ƒ¶tƒ².p¤(€¥˜¡Í•°¥µ••ÑÌ¹™½É… ¡´ôùí½¹ÍĞàõaÀ¡´¹à¤±äõd¡´¹¤±½°õ´¹Í…µ”üœ˜ÀààÍ”œèœ•˜ĞĞĞĞœì(€€€Ì¹ÁÕÍ ¡€ñ¥É±”àôˆ‘íà¹Ñ½¥á• Ä¥ôˆäôˆ‘íä¹Ñ½¥á• Ä¥ôˆÈôˆÌ¸Ğˆ™¥±°ô‰¹½¹”ˆÍÑÉ½­”ôˆ‘í½±ôˆÍÑÉ½­”µİ¥‘Ñ ôˆÄ¸ØˆøñÑ¥Ñ±”ø‘í´¹Í…µ”üŸ²ÚS²nPœèŸªÖC¶Z$ôƒ
+Ü€‘í}½ÁÍÍŒ¡´¹É…‘”¥ô€‘í}½ÁÍÍŒ¡´¹¹¼¥ôƒ
+Ü€‘í}½ÁÍÍŒ¡´¹ÍÑ¸¥ô€‘í}™µÑ4¡5…Ñ ¹É½Õ¹¡´¹à¤¥ôğ½Ñ¥Ñ±”øğ½¥É±”ù€¤íô¤ì(€Ì¹ÁÕÍ  œğ½ÍÙœøœ¤ì(€ ¬õ€ñ‘¥Ø±…ÍÌô‰½ÁÌµ‘¥…É…´µİÉ…Àˆøñ‘¥Ø±…ÍÌô‰½ÁÌµ‘¥…É…´µ…á¥Ìˆø‘í…à¹©½¥¸ œœ¥ôğ½‘¥Øøñ‘¥Ø±…ÍÌô‰½ÁÌµ‘¥…É…´µÍÉ½±°ˆø‘íÌ¹©½¥¸ œœ¥ôğ½‘¥Øøğ½‘¥Øù€ì(€ ¬õ€ñÀ±…ÍÌô‰½ÁÌµ¡¥¹ĞˆûªÂ®†s²ÚT€ôƒ².sªÂ ÀÓŠHÈã².p¤ƒ
+Üƒ²ã®†s²ÚT€ô€ñˆø‘í}½ÁÍÍŒ¡½È¹¹…µ”¥ôğ½ˆøƒ²^´£ªÆÃ®š³²"p¤ƒ
+Üƒ²€ƒ¶Vc®
+`€ôƒ²^Ó²Â €Ç¶:àƒ
+ÜƒªâÃ²jãªâÃªÂ ƒªâ'¶Vƒ²"c®†tƒªÎƒ²4ƒ
+Ü€ñˆû²ƒ²vƒ®"®–Ó®¦ĞƒªÂW²†Àğ½ˆû®BcªÎ€ƒªÖC¶Z$£®æ£ªÂT§
+ß²ÚS²nP£²ó¶f¤¤ƒ²²‚C²vĞƒ¶Fs².s®B§®.#®.ğ½Àù€ì(€¡½ÍĞ¹¥¹¹•É!Q50õ ì)ô((¼¼ƒŠRŠR ƒ¶:ã²Äƒ²jÓ²j¤ƒ¶vC®š®>ƒŠRŠR )±•Ğ}É…­•É½ÕÁÍ…¡”õ¹Õ±°ì(¼¼ƒ¶:ã²Äƒ²3²4£ªâÃ²‚@§²^´€ôƒ¶Vc¶Z$£¶f#ŠK²nC®. ¤ƒ²^Ó²Â£²v`ƒ²Ús®Âs²^´¡‰½Õ¹‘…ÉålÁt¤¸ƒ®2²‚ŠK®
+£®2ªÖ°ƒ²^Ó²Â£®*P(¼¼ƒ¶Vc¶Z$½É¥¥¸÷®2²‚ƒŠH€Ÿ®2²‚ƒ²3²4Ÿ²vÓ®¦Àƒ®
+£®2ªÖ³²^C²pƒ²ó®ÂW²ró®†pƒ¶Fs².s®Bs®.¸)™Õ¹Ñ¥½¸}É…­•!½µ”¡Í•Ä¥ì(€™½È¡½¹ÍĞ¹¼½˜Í•Ä¥í½¹ÍĞĞõ•ÑQÉ…¥¹	å9¼¡¹¼¤í¥˜¡Ğ˜™Ğ¹‘¥Èôôô‘½İ¸œ˜™Ğ¹‰½Õ¹‘…Éä˜™Ğ¹‰½Õ¹‘…ÉålÁt¥É•ÑÕÉ¸Ğ¹‰½Õ¹‘…ÉålÁtíô(€½¹ÍĞ˜õ•ÑQÉ…¥¹	å9¼¡Í•ÅlÁt¤ì(€É•ÑÕÉ¸€¡˜˜™˜¹‰½Õ¹‘…Éä˜™˜¹‰½Õ¹‘…ÉålÁt¥ñğ¡˜ı}É½ÑMÑ…ÉĞ¡˜¤¹ÍÑ¸èŸªâÃ¶ œ¤ì)ô)™Õ¹Ñ¥½¸}É…­•É½ÕÁÌ ¥ì(€¥˜¡}É…­•É½ÕÁÍ…¡”¥É•ÑÕÉ¸}É…­•É½ÕÁÍ…¡”ì(€½¹ÍĞ‰å%õíôì=‰©•Ğ¹Ù…±Õ•Ì¡=9%I5}I=QQ%=8¤¹™½É… ¡Èôùí‰å%‘mÈ¹¥‘tõÈ¹Í•Äíô¤ì(€½¹ÍĞÉ½ÕÁÌõíôì(€=‰©•Ğ¹•¹ÑÉ¥•Ì¡‰å%¤¹™½É…  ¡m¥±Í•Åt¤ôùì(€€€½¹ÍĞ¡½µ”õ}É…­•!½µ”¡Í•Ä¤ì(€€€€¡É½ÕÁÍm¡½µ•tõÉ½ÕÁÍm¡½µ•uññmt¤¹ÁÕÍ ¡í¥±Í•Ä±¡½µ•ô¤ì(€ô¤ì(€½¹ÍĞ…ÉÈõ=‰©•Ğ¹•¹ÑÉ¥•Ì¡É½ÕÁÌ¤¹µ…À ¡mœ±É…­•Ít¤ôùì(€€€É…­•Ì¹Í½ÉĞ ¡„±ˆ¤ôù5…Ñ ¹µ¥¸ ¸¸¹„¹Í•Ä¹µ…À¡9Õµ‰•È¤¤µ5…Ñ ¹µ¥¸ ¸¸¹ˆ¹Í•Ä¹µ…À¡9Õµ‰•È¤¤¤ì(€€€½¹ÍĞµ¥¹9¼õ5…Ñ ¹µ¥¸ ¸¸¹É…­•Ì¹™±…Ñ5…À¡ÈôùÈ¹Í•Ä¹µ…À¡¸ôø­¸¤¤¤ì(€€€É•ÑÕÉ¸íœ±É…­•Ì±µ¥¹9½ôì(€ô¤ì(€…ÉÈ¹Í½ÉĞ ¡„±ˆ¤ôù„¹µ¥¹9¼µˆ¹µ¥¹9¼¤ì(€É•ÑÕÉ¸}É…­•É½ÕÁÍ…¡”õ…ÉÈì)ô)™Õ¹Ñ¥½¸É•¹‘•É=ÁÍI…­”¡¡½ÍĞ¥ì(€¥˜¡ÑåÁ•½˜=9%I5}I=QQ%=8ôôôÕ¹‘•™¥¹•œ¥í¡½ÍĞ¹¥¹¹•É!Q50ôœñ‘¥Ø±…ÍÌô‰•µÁÑäˆøñ‘¥Ø±…ÍÌô‰•µÁÑäµ¥½¸ˆûÂ~Rğ½‘¥ØøñÀû²jÓ²j¤ƒ®6Ã²vÓ¶ÃªÂ ƒ²^²*×®.#®.¸ğ½Àøğ½‘¥ØøœíÉ•ÑÕÉ¸íô(€½¹ÍĞÉ½ÕÁÌõ}É…­•É½ÕÁÌ ¤ì(€¥˜ …É½ÕÁÌ¹±•¹Ñ ¥í¡½ÍĞ¹¥¹¹•É!Q50ôœñ‘¥Ø±…ÍÌô‰•µÁÑäˆøñ‘¥Ø±…ÍÌô‰•µÁÑäµ¥½¸ˆûÂ~Rğ½‘¥ØøñÀû¶fW²‚Tƒ²jÓ²j§¶FsªÂ ƒ²^²*×®.#®.¸ğ½Àøğ½‘¥ØøœíÉ•ÑÕÉ¸íô(€¥˜ …}½ÁÍÉ½ÕÁñğ…É½ÕÁÌ¹Í½µ”¡àôùà¹œôôõ}½ÁÍÉ½ÕÀ¤¥}½ÁÍÉ½ÕÀõÉ½ÕÁÍlÁt¹œì(€½¹ÍĞÉÀõÉ½ÕÁÌ¹™¥¹¡àôùà¹œôôõ}½ÁÍÉ½ÕÀ¤ì(€±•Ğ õ€ñ‘¥Ø±…ÍÌô‰½ÁÌµÑ½½±‰…Èˆø(€€€€ñÍ•±•Ğ±…ÍÌô‰½ÁÌµÍ•°ˆ½¹¡…¹”ô‰}½ÁÍÉ½ÕÀõÑ¡¥Ì¹Ù…±Õ”íÉ•¹‘•É=ÁÍQ…ˆ ¤ˆø(€€€€€€‘íÉ½ÕÁÌ¹µ…À¡àôù€ñ½ÁÑ¥½¸Ù…±Õ”ôˆ‘í}½ÁÍÍŒ¡à¹œ¥ôˆ‘íà¹œôôõ}½ÁÍÉ½ÕÀüœÍ•±•Ñ•œèœôø‘í}½ÁÍÍŒ¡à¹œ¥ôƒ²3²4ƒ
+Ü€‘íà¹É…­•Ì¹±•¹Ñ¡÷¶:ã²Äğ½½ÁÑ¥½¸ù€¤¹©½¥¸ œœ¥ô(€€€€ğ½Í•±•Ğø(€€€€ñÍÁ…¸±…ÍÌô‰½ÁÌµ½Õ¹Ğˆø‘íÉÀ¹É…­•Ì¹É•‘Õ” ¡„±È¤ôù„­È¹Í•Ä¹±•¹Ñ °À¥÷¶:àƒ²jÓ¶Z$ğ½ÍÁ…¸ø(€€ğ½‘¥Øù€ì(€½¹ÍĞÉÕ±•Èõmtì(€™½È¡±•Ğ¡ ôĞí¡ ğôÈàí¡ ¬ôÈ¥í½¹ÍĞÁĞô¡¡ ¨ØÀ´ÈĞÀ¤¼ÄĞĞÀ¨ÄÀÀíÉÕ±•È¹ÁÕÍ ¡€ñÍÁ…¸±…ÍÌô‰½ÁÌµÑ¥¬ˆÍÑå±”ô‰±•™Ğè‘íÁÑô”ˆø‘íMÑÉ¥¹œ¡¡ ”ÈĞ¤¹Á…‘MÑ…ÉĞ È°œÀœ¥ôğ½ÍÁ…¸ù€¤íô(€ ¬õ€ñ‘¥Ø±…ÍÌô‰½ÁÌµÉÕ±•ÈµİÉ…Àˆøñ‘¥Ø±…ÍÌô‰½ÁÌµÉÕ±•Èˆø‘íÉÕ±•È¹©½¥¸ œœ¥ôğ½‘¥Øøğ½‘¥Øù€ì(€ ¬õ€ñ‘¥Ø±…ÍÌô‰½ÁÌµÉ…­•Ìˆù€ì(€ÉÀ¹É…­•Ì¹™½É… ¡É¬ôùì(€€€½¹ÍĞ±•ÌõÉ¬¹Í•Ä¹µ…À¡¹¼ôù•ÑQÉ…¥¹	å9¼¡¹¼¤¤¹™¥±Ñ•È¡	½½±•…¸¤ì(€€€¥˜ …±•Ì¹±•¹Ñ ¥É•ÑÕÉ¸ì(€€€½¹ÍĞ‰±½­Ìõ±•Ì¹µ…À¡Ğôùì(€€€€€½¹ÍĞÍĞõ}É½ÑMÑ…ÉĞ¡Ğ¤±”õ}É½Ñ¹¡Ğ¤ì(€€€€€±•Ğ„õ=AM}à¡ÍĞ¹µ¥¸¤±ˆõ=AM}à¡”¹µ¥¸¤ì(€€€€€¥˜¡ˆôõ¹Õ±±ññ„ôõ¹Õ±°¥É•ÑÕÉ¸€œœì(€€€€€¥˜¡ˆñ„¥ˆôÄØàÀì€¼¼ƒ²zC²‚Tƒ®cªæ ƒ®Â§²ZĞ(€€€€€½¹ÍĞ±•™Ğô¡„´ÈĞÀ¤¼ÄĞĞÀ¨ÄÀÀ°Üõ5…Ñ ¹µ…à À¸Ü°¡ˆµ„¤¼ÄĞĞÀ¨ÄÀÀ¤ì(€€€€€½¹ÍĞŒõI}=1=IMmĞ¹É…‘•uñğœŒáˆäĞå”œì(€€€€€É•ÑÕÉ¸€ñ‘¥Ø±…ÍÌô‰½ÁÌµ‰±¬ˆÍÑå±”ô‰±•™Ğè‘í±•™Ñô”íİ¥‘Ñ è‘íİô”ì´µŒè‘íôˆ½¹±¥¬ô‰©ÕµÁQ½QÉ…¥¸ œ‘íĞ¹¹½ôœ¤ˆÑ¥Ñ±”ôˆ‘í}½ÁÍÍŒ¡Ğ¹É…‘”¥ô€‘íĞ¹¹½ôƒ
+Ü€‘í}½ÁÍÍŒ¡ÍĞ¹ÍÑ¸¥ô€‘í}™µÑ4¡ÍĞ¹µ¥¸¥ôƒŠH€‘í}½ÁÍÍŒ¡”¹ÍÑ¸¥ô€‘í}™µÑ4¡”¹µ¥¸¥ôˆø‘íÜøÔı€ñÍÁ…¸ø‘íĞ¹¹½ôğ½ÍÁ…¸ù€èœôğ½‘¥Øù€ì(€€€ô¤¹©½¥¸ œœ¤ì(€€€½¹ÍĞ©´õÉ¬¹¥¹µ…Ñ  ½p ¡mx¥t¨ü§²ó®ÂUp¤¼¤ì(€€€½¹ÍĞ©Õ‰…­MÑ¸õ©´ı©µlÅté¹Õ±°ì(€€€ ¬õ€ñ‘¥Ø±…ÍÌô‰½ÁÌµÉ…­”ˆø(€€€€€€ñ‘¥Ø±…ÍÌô‰½ÁÌµÉ…­”µ±…‰•°ˆøñˆø‘í}½ÁÍÍŒ¡É¬¹¥¹É•Á±…” ½p ¸©p¤¼°œœ¤¹ÑÉ¥´ ¤¥ôğ½ˆø‘í©Õ‰…­MÑ¸ı€€ñÍÁ…¸±…ÍÌô‰½ÁÌµ©Õ‰…¬ˆø‘í}½ÁÍÍŒ¡©Õ‰…­MÑ¸¥ôƒ²ó®ÂTğ½ÍÁ…¸ù€èœôñÍÁ…¸±…ÍÌô‰½ÁÌµÉ…­”µ¸ˆø‘í±•Ì¹±•¹Ñ¡÷¶j0ƒ²jÓ²j¤ğ½ÍÁ…¸øğ½‘¥Øø(€€€€€€ñ‘¥Ø±…ÍÌô‰½ÁÌµÉ…­”µÑÉ…¬ˆø‘í‰±½­Íôğ½‘¥Øø(€€€€ğ½‘¥Øù€ì(€ô¤ì(€ ¬õ€ğ½‘¥Øù€ì(€ ¬õ€ñÀ±…ÍÌô‰½ÁÌµ¡¥¹Ğˆû¶Vpƒ²’€ôƒ¶:ã²Ä€ÇªÂs²v`ƒ¶Vc® ƒ²jÓ²j¤ƒ
+Üƒ®âS®†t€ôƒ²^Ó²Â €Ç¶:à£ªÂ®†pƒ²r²æc
+ßªâã²vĞ€ôƒ²jÓ¶Z$ƒ².sªÂ®2 ¤ƒ
+Üƒ®âS®†tƒ²
+³²vĞƒ®æ ƒªÖ³ªÂ€ôƒ¶j3²Â£
+ß²ó®ÂTƒ
+Üƒ®âS®†w²vƒ®"®–Ó®¦Ğƒ²^Ó²Â ƒ²²ã®†pƒ²vÓ®>dğ½Àù€ì(€¡½ÍĞ¹¥¹¹•É!Q50õ ì)ô((¼¼ƒŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠV@(¼¼ƒÂ~R4ƒ²‚²Ê€ƒªÊ÷®†pƒªÊ²$ƒŠPƒ²Ús®Âs
+ß®>²Â§²^´ƒ²Ös²3¶fc²*äƒªÊ÷®†pƒ²V#®
+Ğ(¼¼ƒŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠV@)±•Ğ}µÉÉ½´ôœœ°}µÉY¥„ôœœ°}µÉQ¼ôœœ°}µÉ5½‘”ôÑÉ…¹Í™•Èœ°}µÉQ¥µ•5½‘”ô‘•Á…ÉĞœ°}µÉQ¥µ”ôœœ°}µÉQ¥µ•áÁ±¥¥Ğõ™…±Í”°}µÉ‘•5½‘”ô¹½Éµ…°œ°}µÉ1…ÍÑ)½ÕÉ¹•äõ¹Õ±°ì)±•Ğ}µÉQÉ…¹ÍÁ½ÉÑ5½‘”ôµ•ÑÉ¼œ±}µÉQÉ…¹ÍÁ½ÉÑ¥±Ñ•ÉÌõí­ÑàéÑÉÕ”±•¹•É…°éÑÉÕ”±ÑàéÑÉÕ•ôì)±•Ğ}µÉA¥­•ÉÉ…™Ñ5½‘”ô‘•Á…ÉĞœ°}µÉA¥­•ÉÉ…™Ñ‘”ô¹½Éµ…°œì)™Õ¹Ñ¥½¸Í•Ñ5É5½‘”¡´¥í}µÉ5½‘”õ´í‘½Õµ•¹Ğ¹ÅÕ•ÉåM•±•Ñ½É±° œ¹µÈµµ½‘”µ¡¥Àœ¤¹™½É… ¡ŒôùŒ¹±…ÍÍ1¥ÍĞ¹Ñ½±” ½¸œ±Œ¹‘…Ñ…Í•Ğ¹µ½‘”ôôõ´¤¤í¥˜¡}µÉÉ½´˜™}µÉQ¼¥Í•…É¡5•ÑÉ½I½ÕÑ” ¤íô)±•Ğ}µ•ÑÉ½É…Á¡…¡”õ¹Õ±°ì)™Õ¹Ñ¥½¸}µ•ÑÉ½É…Á  ¥ì(€¥˜¡}µ•ÑÉ½É…Á¡…¡”¥É•ÑÕÉ¸}µ•ÑÉ½É…Á¡…¡”ì(€½¹ÍĞ…‘¨õíô°ÍÑ¹1¥¹•Ìõíô°ÍÑ¹A…ÑÑ•É¹Ìõíô°±¥¹•	å%õíô°Á…ÑÑ•É¹Ìõíôì(€½¹ÍĞ±¥¹•	å9…µ”õíôì(€€¡ÑåÁ•½˜5QI=}1%9L„ôôÕ¹‘•™¥¹•œı5QI=}1%9Lémt¤¹™½É… ¡°ôùì(€€€±¥¹•	å%‘m°¹¥‘tõ°ì±¥¹•	å9…µ•m°¹¹…µ•tõ°ì(€€€€¡°¹É½ÕÑ•ÍññmíÍÑ…Ñ¥½¹Ìé°¹ÍÑ…Ñ¥½¹Íõt¤¹™½É… ¡Èôùì(€€€€€½¹ÍĞÍĞõÈ¹ÍÑ…Ñ¥½¹Íññmtì(€€€€€ÍĞ¹™½É… ¡Ìôùì¡ÍÑ¹1¥¹•ÍmÍtõÍÑ¹1¥¹•ÍmÍuññ¹•ÜM•Ğ ¤¤¹…‘¡°¹¥¤íô¤ì(€€€ô¤ì(€ô¤ì(€€¼¼ƒ².“²‚pƒ¶:ã²Ç²v`ƒ²fW®ÎÔƒ®ÂÃ²^Ó²vƒ¶j3²Â£²‚C®Îƒ®.£®Â§¶Z”ƒ²jÓ¶Z$ƒªÖ³ªÂ²ró®†pƒ®
+c®"#®.¸(€€¼¼ƒªÂg²v ƒ®ã²ƒ²vÓ®vó®>ƒ²s®†pƒ®.“®–àƒªÖ³ªÂƒ¶:ã²Ç²ró®†pƒªÂ#²V¶®¦Ğƒ®Î®>Á…ÑÑ•É»²vÓ®¾®†pƒ¶fc²*ç²ró®†pƒªÎ²
+Ã®Bs®.¸(€½¹ÍĞÁ…ÑÑ•É¹-•åQ½%õ¹•Ü5…À ¤ì(€=‰©•Ğ¹•¹ÑÉ¥•Ì¡ÑåÁ•½˜5QI=}M!„ôôÕ¹‘•™¥¹•œı5QI=}M!éíô¤¹™½É…  ¡m±¥¹•9…µ”±•¹Ñt¤ôùì(€€€½¹ÍĞ±¥¹”õ±¥¹•	å9…µ•m±¥¹•9…µ•tì¥˜ …±¥¹•ñğ…•¹Ññğ…ÉÉ…ä¹¥ÍÉÉ…ä¡•¹Ğ¹Ğ¤¥É•ÑÕÉ¸ì(€€€•¹Ğ¹Ğ¹™½É… ¡˜ôùì(€€€€€½¹ÍĞ¸õ5…Ñ ¹™±½½È¡˜¹±•¹Ñ ¼Ì¤°¥‘áM•Äõmtì(€€€€€™½È¡±•Ğ¤ôÀí¤ñ¸í¤¬¬¥¥‘áM•Ä¹ÁÕÍ ¡™lÌ©¤¬Ét¤ì(€€€€€}µ•ÑÉ½1•I…¹•Ì¡¥‘áM•Ä¤¹™½É…  ¡mÍÑ…ÉĞ±•¹‘t¤ôùì(€€€€€€€½¹ÍĞÍ•Äõmtì(€€€€€€€™½È¡±•Ğ¤õÍÑ…ÉĞí¤ğõ•¹í¤¬¬¥ì(€€€€€€€€€½¹ÍĞÍÑ…Ñ¥½¸õ•¹Ğ¹Ím¥‘áM•Åm¥utì(€€€€€€€€€¥˜¡ÍÑ…Ñ¥½¸„õ¹Õ±°˜™Í•ÅmÍ•Ä¹±•¹Ñ ´Åt„ôõÍÑ…Ñ¥½¸¥Í•Ä¹ÁÕÍ ¡ÍÑ…Ñ¥½¸¤ì(€€€€€€€ô(€€€€€€€¥˜¡Í•Ä¹±•¹Ñ ğÈ¥É•ÑÕÉ¸ì(€€€€€€€½¹ÍĞ­•äõ€‘í±¥¹”¹¥‘õqÔÀÀÀÈ‘íÍ•Ä¹©½¥¸ qÔÀÀÀÈœ¥õ€ì(€€€€€€€±•ĞÁ¥õÁ…ÑÑ•É¹-•åQ½%¹•Ğ¡­•ä¤ì(€€€€€€€¥˜ …Á¥¥ì(€€€€€€€€€Á¥õÀ‘íÁ…ÑÑ•É¹-•åQ½%¹Í¥é•õ€ì(€€€€€€€€€Á…ÑÑ•É¹-•åQ½%¹Í•Ğ¡­•ä±Á¥¤ì(€€€€€€€€€Á…ÑÑ•É¹ÍmÁ¥‘tõí¥éÁ¥±±¥é±¥¹”¹¥±±¥¹•9…µ”±ÍÑ…Ñ¥½¹ÌéÍ•Åôì(€€€€€€€€€™½È¡±•Ğ¤ôÀí¤ñÍ•Ä¹±•¹Ñ í¤¬¬¥ì(€€€€€€€€€€€½¹ÍĞÍÑ…Ñ¥½¸õÍ•Åm¥tì(€€€€€€€€€€€€¡ÍÑ¹A…ÑÑ•É¹ÍmÍÑ…Ñ¥½¹tõÍÑ¹A…ÑÑ•É¹ÍmÍÑ…Ñ¥½¹uññ¹•ÜM•Ğ ¤¤¹…‘¡Á¥¤ì(€€€€€€€€€€€€¡ÍÑ¹1¥¹•ÍmÍÑ…Ñ¥½¹tõÍÑ¹1¥¹•ÍmÍÑ…Ñ¥½¹uññ¹•ÜM•Ğ ¤¤¹…‘¡±¥¹”¹¥¤ì(€€€€€€€€€€€¥˜¡¤ñÍ•Ä¹±•¹Ñ ´Ä¥ì(€€€€€€€€€€€€€€¡…‘©mÍÑ…Ñ¥½¹tõ…‘©mÍÑ…Ñ¥½¹uññ¹•Ü5…À ¤¤ì(€€€€€€€€€€€€€¥˜ ……‘©mÍÑ…Ñ¥½¹t¹¡…Ì¡Á¥¤¥…‘©mÍÑ…Ñ¥½¹t¹Í•Ğ¡Á¥±¹•ÜM•Ğ ¤¤ì(€€€€€€€€€€€€€…‘©mÍÑ…Ñ¥½¹t¹•Ğ¡Á¥¤¹…‘¡Í•Åm¤¬Åt¤ì(€€€€€€€€€€€ô(€€€€€€€€€ô(€€€€€€€ô(€€€€€ô¤ì(€€€ô¤ì(€ô¤ì(€É•ÑÕÉ¸}µ•ÑÉ½É…Á¡…¡”õí…‘¨±ÍÑ¹1¥¹•Ì±ÍÑ¹A…ÑÑ•É¹Ì±±¥¹•	å%±Á…ÑÑ•É¹Íôì)ô)™Õ¹Ñ¥½¸}µ•ÑÉ½MÑ¹1¥ÍĞ ¥í½¹ÍĞõ}µ•ÑÉ½É…Á  ¤íÉ•ÑÕÉ¸=‰©•Ğ¹­•åÌ¡¹ÍÑ¹1¥¹•Ì¤¹Í½ÉĞ ¤íô)™Õ¹Ñ¥½¸}µÉMÑ¹1¥ÍĞ ¥ì(€½¹ÍĞ¹…µ•Ìõ¹•ÜM•Ğ¡}µ•ÑÉ½MÑ¹1¥ÍĞ ¤¤ì(€¥˜¡}µÉQÉ…¹ÍÁ½ÉÑ5½‘”ôôô¥¹Ñ•É…Ñ•œ˜™ÑåÁ•½˜11}QI%9L„ôôÕ¹‘•™¥¹•œ¥11}QI%9L¹™½É… ¡ÑÉ…¥¸ôø¡ÑÉ…¥¸¹ÍÑ½ÁÍññmt¤¹™½É… ¡ÍÑ½Àôù¹…µ•Ì¹…‘¡ÍÑ½À¹Ì¤¤¤ì(€É•ÑÕÉ¸l¸¸¹¹…µ•Ít¹Í½ÉĞ ¤ì)ô)™Õ¹Ñ¥½¸}µ•ÑÉ½M¡½Ü¡¥±Á¥­¸¥ì(€½¹ÍĞ¥¹Àõ‘½Õµ•¹Ğ¹•Ñ±•µ•¹Ñ	å%¡¥¤ì¥˜ …¥¹À¥É•ÑÕÉ¸ì(€½¹ÍĞÄõ¥¹À¹Ù…±Õ”¹ÑÉ¥´ ¤ì(€½¹ÍĞ•°õ‘½Õµ•¹Ğ¹•Ñ±•µ•¹Ñ	å%¡¥¬œµ…Œœ¤ì¥˜ …•°¥É•ÑÕÉ¸ì(€½¹ÍĞ…±°õ}µÉMÑ¹1¥ÍĞ ¤ì(€½¹ÍĞ±¥ÍĞô¡Äı…±°¹™¥±Ñ•È¡¸ôùµ…Ñ¡•ÍEÕ•Éä¡¸±Ä¤¤é…±°¹Í±¥” À°ÄÈ¤¤¹Í±¥” À°ÄÈ¤ì(€½¹ÍĞ¥õ¥¹É•Á±…” ¼œ½œ°‰qpœˆ¤ì(€•°¹¥¹¹•É!Q50õ±¥ÍĞ¹µ…À¡¸ôùí½¹ÍĞ¹õ¸¹É•Á±…” ¼œ½œ°‰qpœˆ¤ì(€€€É•ÑÕÉ¸€ñ‘¥Ø±…ÍÌô‰…Œµ¥Ñ•´ˆ½¹µ½ÕÍ•‘½İ¸ô‰•Ù•¹Ğ¹ÁÉ•Ù•¹Ñ•™…Õ±Ğ ¤í‘½Õµ•¹Ğ¹•Ñ±•µ•¹Ñ	å% œ‘í¥ôœ¤¹Ù…±Õ”ôœ‘í¹ôœí‘½Õµ•¹Ğ¹•Ñ±•µ•¹Ñ	å% œ‘í¥ôµ…Œœ¤¹ÍÑå±”¹‘¥ÍÁ±…äô¹½¹”œíİ¥¹‘½İlœ‘íÁ¥­¹ôt œ‘í¹ôœ¤ˆø‘í¹ôğ½‘¥Øù€íô¤¹©½¥¸ œœ¤ì(€•°¹±…ÍÍ9…µ”ô…Œµ‘É½Á‘½İ¸½Á•¸œì•°¹ÍÑå±”¹‘¥ÍÁ±…äõ±¥ÍĞ¹±•¹Ñ ü‰±½¬œè¹½¹”œì)ô)™Õ¹Ñ¥½¸}µÉA¥­É½´¡¸¥í}µÉÉ½´õ¸í¥˜¡}µÉQ¼¥Í•…É¡5•ÑÉ½I½ÕÑ” ¤íô)™Õ¹Ñ¥½¸}µÉA¥­Y¥„¡¸¥í}µÉY¥„õ¸í¥˜¡}µÉÉ½´˜™}µÉQ¼¥Í•…É¡5•ÑÉ½I½ÕÑ” ¤íô)™Õ¹Ñ¥½¸}µÉA¥­Q¼¡¸¥í}µÉQ¼õ¸í¥˜¡}µÉÉ½´¥Í•…É¡5•ÑÉ½I½ÕÑ” ¤íô)™Õ¹Ñ¥½¸}µÉMİ…À ¥ì(€½¹ÍĞ„õ‘½Õµ•¹Ğ¹•Ñ±•µ•¹Ñ	å% µÈµ™É½´œ¤°ˆõ‘½Õµ•¹Ğ¹•Ñ±•µ•¹Ñ	å% µÈµÑ¼œ¤ì(€¥˜¡„˜™ˆ¥í½¹ÍĞĞõ„¹Ù…±Õ”í„¹Ù…±Õ”õˆ¹Ù…±Õ”íˆ¹Ù…±Õ”õĞí}µÉÉ½´õ„¹Ù…±Õ”¹ÑÉ¥´ ¤í}µÉQ¼õˆ¹Ù…±Õ”¹ÑÉ¥´ ¤íô(€¥˜¡}µÉÉ½´˜™}µÉQ¼¥Í•…É¡5•ÑÉ½I½ÕÑ” ¤ì)ô)™Õ¹Ñ¥½¸}µÉ½ÕÍM•…É  ¥ì(€½¹ÍĞ¥¹ÁÕĞõ‘½Õµ•¹Ğ¹•Ñ±•µ•¹Ñ	å% µÈµ™É½´œ¤ì(€¥˜¡¥¹ÁÕĞ¥í¥¹ÁÕĞ¹™½ÕÌ ¤í¥¹ÁÕĞ¹Í•±•Ğ ¤í¥¹ÁÕĞ¹ÍÉ½±±%¹Ñ½Y¥•Ü¡í‰±½¬è•¹Ñ•Èœ±‰•¡…Ù¥½ÈèÍµ½½Ñ ô¤íô)ô)™Õ¹Ñ¥½¸}µÉ•™…Õ±ÑQ¥µ” ¥ì(€½¹ÍĞõ¹•Ü…Ñ” ¤ì(€½¹ÍĞÀõ¸ôùMÑÉ¥¹œ¡¸¤¹Á…‘MÑ…ÉĞ È°œÀœ¤ì(€É•ÑÕÉ¸€‘íÀ¡¹•Ñ!½ÕÉÌ ¤¥ôè‘íÀ¡¹•Ñ5¥¹ÕÑ•Ì ¤¥õ€ì)ô)™Õ¹Ñ¥½¸Í•Ñ5ÉQ¥µ•5½‘”¡µ½‘”¥ì(€}µÉQ¥µ•5½‘”õµ½‘”ôôô…ÉÉ¥Ù”œü…ÉÉ¥Ù”œè‘•Á…ÉĞœì(€‘½Õµ•¹Ğ¹ÅÕ•ÉåM•±•Ñ½É±° œ¹µÈµÑ¥µ”µµ½‘”‰ÕÑÑ½¸œ¤¹™½É… ¡‰ÕÑÑ½¸ôù‰ÕÑÑ½¸¹±…ÍÍ1¥ÍĞ¹Ñ½±” ½¸œ±‰ÕÑÑ½¸¹‘…Ñ…Í•Ğ¹Ñ¥µ•5½‘”ôôõ}µÉQ¥µ•5½‘”¤¤ì(€¥˜¡}µÉÉ½´˜™}µÉQ¼¥Í•…É¡5•ÑÉ½I½ÕÑ” ¤ì)ô)™Õ¹Ñ¥½¸Í•Ñ5É‘•5½‘”¡µ½‘”±¡•­•¥ì(€½¹ÍĞÑ¥µ•%¹ÁÕĞõ‘½Õµ•¹Ğ¹•Ñ±•µ•¹Ñ	å% µÈµÑ¥µ”œ¤í¥˜¡Ñ¥µ•%¹ÁÕĞ¥}µÉQ¥µ”õÑ¥µ•%¹ÁÕĞ¹Ù…±Õ”ì(€}µÉ‘•5½‘”õ¡•­•ü¡µ½‘”ôôô±…ÍĞœü±…ÍĞœè™¥ÉÍĞœ¤è¹½Éµ…°œì(€‘½Õµ•¹Ğ¹ÅÕ•ÉåM•±•Ñ½É±° œ¹µÈµ•‘”µ¡•¬¥¹ÁÕĞœ¤¹™½É… ¡¥¹ÁÕĞôùí¥¹ÁÕĞ¹¡•­•õ¥¹ÁÕĞ¹Ù…±Õ”ôôõ}µÉ‘•5½‘”íô¤ì(€¥˜¡}µÉÉ½´˜™}µÉQ¼¥Í•…É¡5•ÑÉ½I½ÕÑ” ¤ì)ô)™Õ¹Ñ¥½¸}µÉ±½­1…‰•°¡Ù…±Õ”¥ì(€½¹ÍĞm ±µtõMÑÉ¥¹œ¡Ù…±Õ•ññ}µÉ•™…Õ±ÑQ¥µ” ¤¤¹ÍÁ±¥Ğ œèœ¤¹µ…À¡9Õµ‰•È¤±…µÀõ ğÄÈüŸ²b“²‚œèŸ²b“¶nœ±¡½ÕÈõ ”ÄÉñğÄÈì(€É•ÑÕÉ¸€‘í…µÁô€‘íMÑÉ¥¹œ¡¡½ÕÈ¤¹Á…‘MÑ…ÉĞ È°œÀœ¥ôè‘íMÑÉ¥¹œ¡µñğÀ¤¹Á…‘MÑ…ÉĞ È°œÀœ¥õ€ì)ô)™Õ¹Ñ¥½¸½Á•¹5ÉQ¥µ•A¥­•È ¥ì(€±½Í•5ÉQ¥µ•A¥­•È ¤ì(€}µÉA¥­•ÉÉ…™Ñ5½‘”õ}µÉQ¥µ•5½‘”í}µÉA¥­•ÉÉ…™Ñ‘”õ}µÉ‘•5½‘”ì(€½¹ÍĞm ±µtõMÑÉ¥¹œ¡}µÉQ¥µ•ññ}µÉ•™…Õ±ÑQ¥µ” ¤¤¹ÍÁ±¥Ğ œèœ¤¹µ…À¡9Õµ‰•È¤±¡½ÕÈõ ”ÄÉñğÄÈì(€½¹ÍĞİÉ…Àõ‘½Õµ•¹Ğ¹É•…Ñ•±•µ•¹Ğ ‘¥Øœ¤íİÉ…À¹¥ôµÈµÑ¥µ”µÁ¥­•ÈµİÉ…ÀœíİÉ…À¹±…ÍÍ9…µ”ôµÈµÑ¥µ”µÁ¥­•ÈµİÉ…Àœì(€½¹ÍĞ½ÁÑÌô¡™É½´±Ñ¼±ÕÉÉ•¹Ğ¤ôùÉÉ…ä¹™É½´¡í±•¹Ñ éÑ¼µ™É½´¬Åô°¡|±¥¹‘•à¤ôùí½¹ÍĞÙ…±Õ”õ™É½´­¥¹‘•àíÉ•ÑÕÉ¸€ñ½ÁÑ¥½¸Ù…±Õ”ôˆ‘íÙ…±Õ•ôˆ‘íÙ…±Õ”ôôõÕÉÉ•¹ĞüœÍ•±•Ñ•œèœôø‘íMÑÉ¥¹œ¡Ù…±Õ”¤¹Á…‘MÑ…ÉĞ È°œÀœ¥ôğ½½ÁÑ¥½¸ù€íô¤¹©½¥¸ œœ¤ì(€İÉ…À¹¥¹¹•É!Q50õ€ñ‘¥Ø±…ÍÌô‰µÈµÑ¥µ”µÁ¥­•Èµ‰…­‘É½Àˆ½¹±¥¬ô‰±½Í•5ÉQ¥µ•A¥­•È ¤ˆøğ½‘¥ØøñÍ•Ñ¥½¸±…ÍÌô‰µÈµÑ¥µ”µÁ¥­•ÈˆÉ½±”ô‰‘¥…±½œˆ…É¥„µµ½‘…°ô‰ÑÉÕ”ˆ…É¥„µ±…‰•°ô‹ªÊ÷®†pƒªÊ²$ƒ².sªÂƒ²ƒ¶tˆøñ‘¥Ø±…ÍÌô‰µÈµÁ¥­•ÈµÑ…‰Ìˆøñ‰ÕÑÑ½¸ÑåÁ”ô‰‰ÕÑÑ½¸ˆ‘…Ñ„µÁ¥­•Èµµ½‘”ô‰‘•Á…ÉĞˆ±…ÍÌôˆ‘í}µÉQ¥µ•5½‘”ôôô‘•Á…ÉĞœü½¸œèœôˆ½¹±¥¬ô‰Í•Ñ5ÉA¥­•É5½‘” ‘•Á…ÉĞœ¤ˆû²Ús®Âpğ½‰ÕÑÑ½¸øñ‰ÕÑÑ½¸ÑåÁ”ô‰‰ÕÑÑ½¸ˆ‘…Ñ„µÁ¥­•Èµµ½‘”ô‰…ÉÉ¥Ù”ˆ±…ÍÌôˆ‘í}µÉQ¥µ•5½‘”ôôô…ÉÉ¥Ù”œü½¸œèœôˆ½¹±¥¬ô‰Í•Ñ5ÉA¥­•É5½‘” …ÉÉ¥Ù”œ¤ˆû®>²Â¤ğ½‰ÕÑÑ½¸øğ½‘¥Øøñ‘¥Ø±…ÍÌô‰µÈµÁ¥­•Èµ±½¬ˆøñÍ•±•Ğ¥ô‰µÈµÁ¥­•Èµ…µÀˆ…É¥„µ±…‰•°ô‹²b“²‚ƒ²b“¶nˆøñ½ÁÑ¥½¸Ù…±Õ”ô‰…´ˆ‘í ğÄÈüœÍ•±•Ñ•œèœôû²b“²‚ğ½½ÁÑ¥½¸øñ½ÁÑ¥½¸Ù…±Õ”ô‰Á´ˆ‘í øôÄÈüœÍ•±•Ñ•œèœôû²b“¶nğ½½ÁÑ¥½¸øğ½Í•±•ĞøñÍ•±•Ğ¥ô‰µÈµÁ¥­•Èµ¡½ÕÈˆ…É¥„µ±…‰•°ô‹².pˆø‘í½ÁÑÌ Ä°ÄÈ±¡½ÕÈ¥ôğ½Í•±•ĞøñÍÁ…¸øèğ½ÍÁ…¸øñÍ•±•Ğ¥ô‰µÈµÁ¥­•Èµµ¥¹ÕÑ”ˆ…É¥„µ±…‰•°ô‹®Úˆø‘í½ÁÑÌ À°Ôä±µñğÀ¥ôğ½Í•±•Ğøğ½‘¥Øøñ‘¥Ø±…ÍÌô‰µÈµÁ¥­•Èµ•‘•Ìˆøñ±…‰•°øñ¥¹ÁÕĞÑåÁ”ô‰¡•­‰½àˆÙ…±Õ”ô‰™¥ÉÍĞˆ‘í}µÉ‘•5½‘”ôôô™¥ÉÍĞœüœ¡•­•œèœô½¹¡…¹”ô‰Í•Ñ5ÉA¥­•É‘” ™¥ÉÍĞœ±Ñ¡¥Ì¹¡•­•¤ˆøñÍÁ…¸û²Ê¯²Â£¶ªâÀğ½ÍÁ…¸øğ½±…‰•°øñ±…‰•°øñ¥¹ÁÕĞÑåÁ”ô‰¡•­‰½àˆÙ…±Õ”ô‰±…ÍĞˆ‘í}µÉ‘•5½‘”ôôô±…ÍĞœüœ¡•­•œèœô½¹¡…¹”ô‰Í•Ñ5ÉA¥­•É‘” ±…ÍĞœ±Ñ¡¥Ì¹¡•­•¤ˆøñÍÁ…¸û®'²Â£¶ªâÀğ½ÍÁ…¸øğ½±…‰•°øğ½‘¥Øøñ™½½Ñ•Èøñ‰ÕÑÑ½¸ÑåÁ”ô‰‰ÕÑÑ½¸ˆ½¹±¥¬ô‰±½Í•5ÉQ¥µ•A¥­•È ¤ˆû²Ş£²0ğ½‰ÕÑÑ½¸øñ‰ÕÑÑ½¸ÑåÁ”ô‰‰ÕÑÑ½¸ˆ±…ÍÌô‰½¹™¥É´ˆ½¹±¥¬ô‰…ÁÁ±å5ÉQ¥µ•A¥­•È ¤ˆû¶fW²vàğ½‰ÕÑÑ½¸øğ½™½½Ñ•Èøğ½Í•Ñ¥½¸ù€ì(€‘½Õµ•¹Ğ¹‰½‘ä¹…ÁÁ•¹‘¡¥±¡İÉ…À¤í‘½Õµ•¹Ğ¹‰½‘ä¹±…ÍÍ1¥ÍĞ¹…‘ µÈµÑ¥µ”µÁ¥­•Èµ½Á•¸œ¤ì)ô)™Õ¹Ñ¥½¸Í•Ñ5ÉA¥­•É5½‘”¡µ½‘”¥ì(€}µÉA¥­•ÉÉ…™Ñ5½‘”õµ½‘”ôôô…ÉÉ¥Ù”œü…ÉÉ¥Ù”œè‘•Á…ÉĞœí‘½Õµ•¹Ğ¹ÅÕ•ÉåM•±•Ñ½É±° m‘…Ñ„µÁ¥­•Èµµ½‘•tœ¤¹™½É… ¡‰ÕÑÑ½¸ôù‰ÕÑÑ½¸¹±…ÍÍ1¥ÍĞ¹Ñ½±” ½¸œ±‰ÕÑÑ½¸¹‘…Ñ…Í•Ğ¹Á¥­•É5½‘”ôôõ}µÉA¥­•ÉÉ…™Ñ5½‘”¤¤ì)ô)™Õ¹Ñ¥½¸Í•Ñ5ÉA¥­•É‘”¡µ½‘”±¡•­•¥ì(€}µÉA¥­•ÉÉ…™Ñ‘”õ¡•­•ü¡µ½‘”ôôô±…ÍĞœü±…ÍĞœè™¥ÉÍĞœ¤è¹½Éµ…°œí‘½Õµ•¹Ğ¹ÅÕ•ÉåM•±•Ñ½É±° œ¹µÈµÁ¥­•Èµ•‘•Ì¥¹ÁÕĞœ¤¹™½É… ¡¥¹ÁÕĞôùí¥¹ÁÕĞ¹¡•­•õ¥¹ÁÕĞ¹Ù…±Õ”ôôõ}µÉA¥­•ÉÉ…™Ñ‘”íô¤ì)ô)™Õ¹Ñ¥½¸…ÁÁ±å5ÉQ¥µ•A¥­•È ¥ì(€½¹ÍĞ…µÀõ‘½Õµ•¹Ğ¹•Ñ±•µ•¹Ñ	å% µÈµÁ¥­•Èµ…µÀœ¤ü¹Ù…±Õ”±¡½ÕÈõ9Õµ‰•È¡‘½Õµ•¹Ğ¹•Ñ±•µ•¹Ñ	å% µÈµÁ¥­•Èµ¡½ÕÈœ¤ü¹Ù…±Õ•ñğÄÈ¤±µ¥¹ÕÑ”õ9Õµ‰•È¡‘½Õµ•¹Ğ¹•Ñ±•µ•¹Ñ	å% µÈµÁ¥­•Èµµ¥¹ÕÑ”œ¤ü¹Ù…±Õ•ñğÀ¤ì(€±•Ğ õ¡½ÕÈ”ÄÈí¥˜¡…µÀôôôÁ´œ¥ ¬ôÄÈí}µÉQ¥µ”õ€‘íMÑÉ¥¹œ¡ ¤¹Á…‘MÑ…ÉĞ È°œÀœ¥ôè‘íMÑÉ¥¹œ¡µ¥¹ÕÑ”¤¹Á…‘MÑ…ÉĞ È°œÀœ¥õ€í}µÉQ¥µ•áÁ±¥¥ĞõÑÉÕ”í}µÉQ¥µ•5½‘”õ}µÉA¥­•ÉÉ…™Ñ5½‘”í}µÉ‘•5½‘”õ}µÉA¥­•ÉÉ…™Ñ‘”ì(€±½Í•5ÉQ¥µ•A¥­•È ¤íÉ•¹‘•É5•ÑÉ½I½ÕÑ•Q…ˆ ¤í¥˜¡}µÉÉ½´˜™}µÉQ¼¥Í•…É¡5•ÑÉ½I½ÕÑ” ¤ì)ô)™Õ¹Ñ¥½¸±½Í•5ÉQ¥µ•A¥­•È ¥í½¹ÍĞİÉ…Àõ‘½Õµ•¹Ğ¹•Ñ±•µ•¹Ñ	å% µÈµÑ¥µ”µÁ¥­•ÈµİÉ…Àœ¤í¥˜¡İÉ…À¥İÉ…À¹É•µ½Ù” ¤í‘½Õµ•¹Ğ¹‰½‘ä¹±…ÍÍ1¥ÍĞ¹É•µ½Ù” µÈµÑ¥µ”µÁ¥­•Èµ½Á•¸œ¤íô)™Õ¹Ñ¥½¸Í•Ñ5ÉQÉ…¹ÍÁ½ÉÑ5½‘”¡µ½‘”¥í}µÉQÉ…¹ÍÁ½ÉÑ5½‘”õµ½‘”ôôô¥¹Ñ•É…Ñ•œü¥¹Ñ•É…Ñ•œèµ•ÑÉ¼œíÉ•¹‘•É5•ÑÉ½I½ÕÑ•Q…ˆ ¤íô)™Õ¹Ñ¥½¸Í•Ñ5ÉQÉ…¹ÍÁ½ÉÑ¥±Ñ•È¡­¥¹±¡•­•¥í¥˜¡­¥¹¥¸}µÉQÉ…¹ÍÁ½ÉÑ¥±Ñ•ÉÌ¥}µÉQÉ…¹ÍÁ½ÉÑ¥±Ñ•ÉÍm­¥¹‘tô„…¡•­•í¥˜¡}µÉÉ½´˜™}µÉQ¼¥Í•…É¡5•ÑÉ½I½ÕÑ” ¤íô)™Õ¹Ñ¥½¸}µÉM¡…É•I½ÕÑ” ¥ì(€½¹ÍĞÑ•áĞõ9%5	dI…¥°ƒ²‚²Ê€ƒªÊ÷®†pè€‘ím}µÉÉ½´±}µÉY¥„±}µÉQ½t¹™¥±Ñ•È¡	½½±•…¸¤¹©½¥¸ œƒŠH€œ¥õ€ì(€¥˜¡¹…Ù¥…Ñ½È¹Í¡…É”¥í¹…Ù¥…Ñ½È¹Í¡…É”¡íÑ¥Ñ±”è9%5	dI…¥°ƒ²‚²Ê€ƒªÊ÷®†pœ±Ñ•áÑô¤¹…Ñ   ¤ôùíô¤íÉ•ÑÕÉ¸íô(€¥˜¡¹…Ù¥…Ñ½È¹±¥Á‰½…É˜™¹…Ù¥…Ñ½È¹±¥Á‰½…É¹İÉ¥Ñ•Q•áĞ¥í¹…Ù¥…Ñ½È¹±¥Á‰½…É¹İÉ¥Ñ•Q•áĞ¡Ñ•áĞ¤¹Ñ¡•¸  ¤ôù…±•ÉĞ ŸªÊ÷®†pƒ²‚W®ÎÓªÂ ƒ®Î×²
+³®BC²*×®.#®.¸œ¤¤¹…Ñ   ¤ôùíô¤íô)ô)™Õ¹Ñ¥½¸}µÉA±…¹¹•‘I½ÕÑ”¡™É½´±Ù¥„±Ñ¼±µ½‘”±•á±Õ‘•‘A¥‘Ì¥ì(€½¹ÍĞÁ½¥¹ÑÌõm™É½´±Ù¥„±Ñ½t¹™¥±Ñ•È¡	½½±•…¸¤±Í•µ•¹ÑÌõmtì(€™½È¡±•Ğ¤ôÀí¤ñÁ½¥¹ÑÌ¹±•¹Ñ ´Äí¤¬¬¥ì(€€€½¹ÍĞÁ…ÉĞõ}µ•ÑÉ½¥¹‘I½ÕÑ”¡Á½¥¹ÑÍm¥t±Á½¥¹ÑÍm¤¬Åt±µ½‘”±•á±Õ‘•‘A¥‘Ì¤ì(€€€¥˜¡Á…ÉĞ¹•ÉÈ¥É•ÑÕÉ¸Á…ÉĞì(€€€Á…ÉĞ¹Í•µ•¹ÑÌ¹™½É… ¡Í•µ•¹Ğôùì(€€€€€½¹ÍĞ±…ÍĞõÍ•µ•¹ÑÍmÍ•µ•¹ÑÌ¹±•¹Ñ ´Åtì(€€€€€¥˜¡±…ÍĞ˜™±…ÍĞ¹Á¥ôôõÍ•µ•¹Ğ¹Á¥˜™±…ÍĞ¹ÍÑ¹Ì¹…Ğ ´Ä¤ôôõÍ•µ•¹Ğ¹ÍÑ¹ÍlÁt¥±…ÍĞ¹ÍÑ¹Ì¹ÁÕÍ  ¸¸¹Í•µ•¹Ğ¹ÍÑ¹Ì¹Í±¥” Ä¤¤ì(€€€€€•±Í”Í•µ•¹ÑÌ¹ÁÕÍ ¡ì¸¸¹Í•µ•¹Ğ±ÍÑ¹Ìél¸¸¹Í•µ•¹Ğ¹ÍÑ¹Íuô¤ì(€€€ô¤ì(€ô(€É•ÑÕÉ¸íÍ•µ•¹ÑÌ±ÍÑ½ÁÌéÍ•µ•¹ÑÌ¹É•‘Õ” ¡ÍÕ´±Í•µ•¹Ğ¤ôùÍÕ´­Í•µ•¹Ğ¹ÍÑ¹Ì¹±•¹Ñ ´Ä°À¤±ÑÉ…¹Í™•ÉÌé5…Ñ ¹µ…à À±Í•µ•¹ÑÌ¹±•¹Ñ ´Ä¤±™É½´±Ñ¼±Ù¥…ôì)ô)™Õ¹Ñ¥½¸}µÉ=Á•¹5…À¡­¥¹¥ì(€¥˜ …}µÉ1…ÍÑ)½ÕÉ¹•ä¥É•ÑÕÉ¸ì(€}µ•ÑÉ½)½ÕÉ¹•å5…Àõ}µÉ1…ÍÑ)½ÕÉ¹•äì(€½¹ÍĞÉ…Á õ}µ•ÑÉ½É…Á  ¤±™¥ÉÍĞõ}µÉ1…ÍÑ)½ÕÉ¹•ä¹Í•µ•¹ÑÍlÁt±±¥¹”õÉ…Á ¹±¥¹•	å%‘m™¥ÉÍĞü¹±¥‘tì(€½¹ÍĞÉ•¥½¹Ìõl¸¸¹¹•ÜM•Ğ¡}µÉ1…ÍÑ)½ÕÉ¹•ä¹Í•µ•¹ÑÌ¹µ…À¡Í•µ•¹ĞôùÉ…Á ¹±¥¹•	å%‘mÍ•µ•¹Ğ¹±¥‘tü¹É•¥½¸¤¹™¥±Ñ•È¡	½½±•…¸¤¥tì(€¥˜¡±¥¹”¥}µ•ÑÉ½5…ÁI•¥½¸õ±¥¹”¹É•¥½¸ì(€}µ•ÑÉ½5…Á%ô}}…±±}|œíÍİ¥Ñ¡Q…ˆ µ…Àœ¤íÍ¡½İ5…Á1¥¹”¡É•¥½¹Ì¹±•¹Ñ øÄıµ•ÑÉ½©½ÕÉ¹•äè‘í•¹½‘•UI%½µÁ½¹•¹Ğ¡É•¥½¹Ì¹©½¥¸ ğœ¤¥õ€éµ•ÑÉ½…±°è‘í}µ•ÑÉ½5…ÁI•¥½¹õ€±¹Õ±°¤ì)ô)±•Ğ}µ•ÑÉ½)½ÕÉ¹•å5…Àõ¹Õ±°ì)™Õ¹Ñ¥½¸Í•Ñ5…ÁMÑ…Ñ¥½¹ÍI½ÕÑ•A½¥¹Ğ¡­¥¹±ÍÑ…Ñ¥½¸¥ì(€¥˜¡­¥¹ôôô™É½´œ¥}µÉÉ½´õÍÑ…Ñ¥½¸í•±Í”¥˜¡­¥¹ôôôÙ¥„œ¥}µÉY¥„õÍÑ…Ñ¥½¸í•±Í”}µÉQ¼õÍÑ…Ñ¥½¸ì(€±½Í•5…ÁA½ÁÕÀ ¤íÍİ¥Ñ¡Q…ˆ µ•ÑÉ½É½ÕÑ”œ¤íÉ•¹‘•É5•ÑÉ½I½ÕÑ•Q…ˆ ¤ì(€Í•ÑQ¥µ•½ÕĞ  ¤ôù‘½Õµ•¹Ğ¹•Ñ±•µ•¹Ñ	å%¡­¥¹ôôô™É½´œüµÈµ™É½´œé­¥¹ôôôÙ¥„œüµÈµÙ¥„œèµÈµÑ¼œ¤ü¹™½ÕÌ ¤°À¤ì)ô(¼¼ƒ²¶pô£²^´³².“²‚pƒ®.£®Â§¶Z”ƒ²jÓ¶Z$ƒ¶2£¶Ğ¤ƒ®.“²v×²*“¶*ã®vğ¸(¼¼ƒ®ã²ƒ®ª²vĞƒªÂg²V®>ƒ¶:ã²Ç²vĞƒ²vÓ²ZÓ²² ƒ²V+²ró®¦Ğƒ¶2£¶Ó²vƒªÂ#²V¶®¾®†pƒ¶fc²*ç²ró®†pƒ²Êc®š³¶Vs®.¸)™Õ¹Ñ¥½¸}µ•ÑÉ½¥¹‘I½ÕÑ”¡™É½´±Ñ¼±µ½‘”±•á±Õ‘•‘A¥‘Ì¥ì(€½¹ÍĞõ}µ•ÑÉ½É…Á  ¤ì(€¥˜ …¹ÍÑ¹1¥¹•Ím™É½µuñğ…¹ÍÑ¹1¥¹•ÍmÑ½t¥É•ÑÕÉ¸í•ÉÈè¹½MÑ¸ôì(€¥˜¡™É½´ôôõÑ¼¥É•ÑÕÉ¸í•ÉÈèÍ…µ”ôì(€¥˜ …¹ÍÑ¹A…ÑÑ•É¹Ím™É½µuñğ…¹ÍÑ¹A…ÑÑ•É¹ÍmÑ½t¥É•ÑÕÉ¸í•ÉÈè¹½Á…Ñ ôì(€€¼¼ƒ²Ös²3¶fc²*äèƒ¶fc²*ç²vƒ¶³ªÊ0ƒ¶:c®C¶.À£²^·²"c®*Pƒ®Ú²Â ¤€¼ƒ²Ös²3².sªÂèƒ¶fc²*çŠ& Ë²‚WªÆÃ²z”ƒ².sªÂ£²Òtƒ²3²jPƒ²Ös²0¤(€½¹ÍĞPô¡µ½‘”ôôôÑ¥µ”œ¤üÌèÄÀÀì(€½¹ÍĞ‘¥ÍĞõíô°ÁÉ•Øõíô°Í••¸õ¹•ÜM•Ğ ¤ì½¹ÍĞÁÄõmtì(€½¹ÍĞÍÑ…Ñ•-•äô¡ÍÑ…Ñ¥½¸±Á¥¤ôù€‘íÍÑ…Ñ¥½¹õqÔÀÀÀÄ‘íÁ¥‘õ€ì(€¹ÍÑ¹A…ÑÑ•É¹Ím™É½µt¹™½É… ¡Á¥ôùí¥˜¡•á±Õ‘•‘A¥‘Ì˜™•á±Õ‘•‘A¥‘Ì¹¡…Ì¡Á¥¤¥É•ÑÕÉ¸í½¹ÍĞ¬õÍÑ…Ñ•-•ä¡™É½´±Á¥¤í‘¥ÍÑm­tôÀíÁÉ•Ùm­tõ¹Õ±°íÁÄ¹ÁÕÍ ¡í¬±ÍÑ¸é™É½´±Á¥±èÁô¤íô¤ì(€±•Ğ‰•ÍĞõ¹Õ±°±‰•ÍÑõ%¹™¥¹¥Ñäì(€İ¡¥±”¡ÁÄ¹±•¹Ñ ¥ì(€€€±•Ğµ¤ôÀí™½È¡±•Ğ¤ôÄí¤ñÁÄ¹±•¹Ñ í¤¬¬¥¥˜¡ÁÅm¥t¹ñÁÅmµ¥t¹¥µ¤õ¤ì(€€€½¹ÍĞÕÈõÁÄ¹ÍÁ±¥”¡µ¤°Ä¥lÁtì(€€€¥˜¡Í••¸¹¡…Ì¡ÕÈ¹¬¤¥½¹Ñ¥¹Õ”ìÍ••¸¹…‘¡ÕÈ¹¬¤ì(€€€¥˜¡ÕÈ¹øõ‰•ÍÑ¥‰É•…¬ì(€€€¥˜¡ÕÈ¹ÍÑ¸ôôõÑ¼¥í‰•ÍĞõÕÈ¹¬í‰•ÍÑõÕÈ¹í‰É•…¬íô(€€€½¹ÍĞ¹‰ÉÌõ¹…‘©mÕÈ¹ÍÑ¹tì(€€€½¹ÍĞ¹•áÑMÑ…Ñ¥½¹Ìõ•á±Õ‘•‘A¥‘Ì˜™•á±Õ‘•‘A¥‘Ì¹¡…Ì¡ÕÈ¹Á¥¤ı¹Õ±°é¹‰ÉÌ˜™¹‰ÉÌ¹•Ğ¡ÕÈ¹Á¥¤ì(€€€¥˜¡¹•áÑMÑ…Ñ¥½¹Ì¥¹•áÑMÑ…Ñ¥½¹Ì¹™½É… ¡¹ˆôùì(€€€€€½¹ÍĞ¹¬õÍÑ…Ñ•-•ä¡¹ˆ±ÕÈ¹Á¥¤°¹õÕÈ¹¬Äì(€€€€€¥˜¡¹ğ¡‘¥ÍÑm¹­tüı%¹™¥¹¥Ñä¤¥í‘¥ÍÑm¹­tõ¹íÁÉ•Ùm¹­tõÕÈ¹¬íÁÄ¹ÁÕÍ ¡í¬é¹¬±ÍÑ¸é¹ˆ±Á¥éÕÈ¹Á¥±é¹‘ô¤íô(€€€ô¤ì(€€€€¡¹ÍÑ¹A…ÑÑ•É¹ÍmÕÈ¹ÍÑ¹uññmt¤¹™½É… ¡Á¥ôùì(€€€€€¥˜¡Á¥ôôõÕÈ¹Á¥‘ñğ¡•á±Õ‘•‘A¥‘Ì˜™•á±Õ‘•‘A¥‘Ì¹¡…Ì¡Á¥¤¤¥É•ÑÕÉ¸ì(€€€€€½¹ÍĞ¹¬õÍÑ…Ñ•-•ä¡ÕÈ¹ÍÑ¸±Á¥¤°¹õÕÈ¹­Pì(€€€€€¥˜¡¹ğ¡‘¥ÍÑm¹­tüı%¹™¥¹¥Ñä¤¥í‘¥ÍÑm¹­tõ¹íÁÉ•Ùm¹­tõÕÈ¹¬íÁÄ¹ÁÕÍ ¡í¬é¹¬±ÍÑ¸éÕÈ¹ÍÑ¸±Á¥±é¹‘ô¤íô(€€€ô¤ì(€ô(€¥˜ …‰•ÍĞ¥É•ÑÕÉ¸í•ÉÈè¹½Á…Ñ ôì(€½¹ÍĞÁ…Ñ õmtì±•Ğ¬õ‰•ÍĞìİ¡¥±”¡¬¥íÁ…Ñ ¹Õ¹Í¡¥™Ğ¡¬¤í¬ô¡¬¥¸ÁÉ•Ø¤ıÁÉ•Ùm­té¹Õ±°íô(€½¹ÍĞ¹½‘•ÌõÁ…Ñ ¹µ…À¡àôùí½¹ÍĞÀõà¹±…ÍÑ%¹‘•á=˜ qÔÀÀÀÄœ¤íÉ•ÑÕÉ¸íÌéà¹Í±¥” À±À¤±Á¥éà¹Í±¥”¡À¬Ä¥ôíô¤ì(€½¹ÍĞÍ•Ìõmtì(€¹½‘•Ì¹™½É… ¡¹ôùì(€€€½¹ÍĞ±…ÍĞõÍ•ÍmÍ•Ì¹±•¹Ñ ´Åtì(€€€¥˜¡±…ÍĞ˜™±…ÍĞ¹Á¥ôôõ¹¹Á¥¥í¥˜¡±…ÍĞ¹ÍÑ¹Ím±…ÍĞ¹ÍÑ¹Ì¹±•¹Ñ ´Åt„ôõ¹¹Ì¥±…ÍĞ¹ÍÑ¹Ì¹ÁÕÍ ¡¹¹Ì¤íô(€€€•±Í•ì(€€€€€½¹ÍĞÁ…ÑÑ•É¸õ¹Á…ÑÑ•É¹Ím¹¹Á¥‘tì(€€€€€Í•Ì¹ÁÕÍ ¡íÁ¥é¹¹Á¥±±¥éÁ…ÑÑ•É¸˜™Á…ÑÑ•É¸¹±¥±ÍÑ¹Ìém¹¹Íuô¤ì(€€€ô(€ô¤ì(€½¹ÍĞÉ•…°õÍ•Ì¹™¥±Ñ•È¡ÌôùÌ¹ÍÑ¹Ì¹±•¹Ñ øôÈ¤ì(€½¹ÍĞÍÑ½ÁÌõÉ•…°¹É•‘Õ” ¡„±Ì¤ôù„­Ì¹ÍÑ¹Ì¹±•¹Ñ ´Ä°À¤ì(€É•ÑÕÉ¸íÍ•µ•¹ÑÌéÉ•…°±ÍÑ½ÁÌ±ÑÉ…¹Í™•ÉÌé5…Ñ ¹µ…à À±É•…°¹±•¹Ñ ´Ä¤±™É½´±Ñ½ôì)ô)™Õ¹Ñ¥½¸É•¹‘•É5•ÑÉ½I½ÕÑ•Q…ˆ ¥ì(€½¹ÍĞ•°õ‘½Õµ•¹Ğ¹•Ñ±•µ•¹Ñ	å% É•ÍÕ±Ğµµ•ÑÉ½É½ÕÑ”œ¤ì¥˜ …•°¥É•ÑÕÉ¸ì(€¥˜¡ÑåÁ•½˜5QI=}1%9LôôôÕ¹‘•™¥¹•œ¥í•°¹¥¹¹•É!Q50ôœñ‘¥Ø±…ÍÌô‰•µÁÑäˆøñ‘¥Ø±…ÍÌô‰•µÁÑäµ¥½¸ˆûÂ~jğ½‘¥ØøñÀû²‚²Ê€ƒ®ã²€ƒ®6Ã²vÓ¶ÃªÂ ƒ²^²*×®.#®.¸ğ½Àøğ½‘¥ØøœíÉ•ÑÕÉ¸íô(€½¹ÍĞÍ¡½İ¹Q¥µ”õ}µÉQ¥µ•áÁ±¥¥Ğ˜™}µÉQ¥µ”ı}µÉQ¥µ”é}µÉ•™…Õ±ÑQ¥µ” ¤ì(€•°¹¥¹¹•É!Q50õ€(€€€€ñ¡•…‘•È±…ÍÌô‰µÈµÁ…”µ¡•…‘•Èˆø(€€€€€€ñ‘¥ØøñÍÁ…¸ù5QI<)=UI9dA199Hğ½ÍÁ…¸øñ Äû²‚²Ê€ƒªÊ÷®†pğ½ Äøğ½‘¥Øø(€€€€€€ñ‰ÕÑÑ½¸ÑåÁ”ô‰‰ÕÑÑ½¸ˆ±…ÍÌô‰µÈµÕ¥‘”ˆ½¹±¥¬ô‰…±•ÉĞ Ÿ²Ús®Âs
+ß®>²Â¤ƒ².sªÂƒ²’Dƒ¶Vc®
+c®–ğƒ²ƒ¶w¶VcªÎ€ƒ¶V²jS¶Vc®¦ĞƒªÊ÷²rƒ²®–ğƒ²ÚSªÂ¶Vc²ã²jP¸ƒ²^Ó²Â ƒ²jÓ¶Z'²v ƒ²v×²vğƒ²b“²‚€Ó².s²^@ƒ²Š®3®B§®.#®.¸œ¤ˆ…É¥„µ±…‰•°ô‹ªÊ÷®†pƒªÊ²$ƒ²vÓ²j¤ƒ²V#®
+ĞˆûŠN`ƒ²vÓ²j¤ƒ²V#®
+Ğğ½‰ÕÑÑ½¸ø(€€€€ğ½¡•…‘•Èø(€€€€ñ‘¥Ø±…ÍÌô‰Í•…É µ…ÉµÈµÍ•…É µÁ…¹•°ˆø(€€€€€€ñ‘¥Ø±…ÍÌô‰µÈµÑÉ…¹ÍÁ½ÉĞµÑ…‰ÌˆÉ½±”ô‰Ñ…‰±¥ÍĞˆ…É¥„µ±…‰•°ô‹ªâã²ÂûªâÀƒ®ÊS²rˆøñ‰ÕÑÑ½¸ÑåÁ”ô‰‰ÕÑÑ½¸ˆ±…ÍÌôˆ‘í}µÉQÉ…¹ÍÁ½ÉÑ5½‘”ôôôµ•ÑÉ¼œü½¸œèœôˆ½¹±¥¬ô‰Í•Ñ5ÉQÉ…¹ÍÁ½ÉÑ5½‘” µ•ÑÉ¼œ¤ˆû²‚²Ê€ƒªÊ÷®†pğ½‰ÕÑÑ½¸øñ‰ÕÑÑ½¸ÑåÁ”ô‰‰ÕÑÑ½¸ˆ±…ÍÌôˆ‘í}µÉQÉ…¹ÍÁ½ÉÑ5½‘”ôôô¥¹Ñ•É…Ñ•œü½¸œèœôˆ½¹±¥¬ô‰Í•Ñ5ÉQÉ…¹ÍÁ½ÉÑ5½‘” ¥¹Ñ•É…Ñ•œ¤ˆû¶×¶V¤ƒªâã²ÂûªâÀğ½‰ÕÑÑ½¸øğ½‘¥Øø(€€€€€€ñ‘¥Ø±…ÍÌô‰µÈµÁ±…”µÍÑ…¬ˆø(€€€€€€€€ñ‘¥Ø±…ÍÌô‰µÈµÁ±…”µÉ…¥°ˆ…É¥„µ¡¥‘‘•¸ô‰ÑÉÕ”ˆøñ¤±…ÍÌô‰™É½´ˆøğ½¤øñÍÁ…¸øğ½ÍÁ…¸øñ¤±…ÍÌô‰Ù¥„ˆøğ½¤øñÍÁ…¸øğ½ÍÁ…¸øñ¤±…ÍÌô‰Ñ¼ˆøğ½¤øğ½‘¥Øø(€€€€€€€€ñ‘¥Ø±…ÍÌô‰µÈµ™¥•±µÈµÁ±…”µ™¥•±ˆøñ±…‰•°û²Ús®Âpğ½±…‰•°ø(€€€€€€€€€€ñ‘¥Ø±…ÍÌô‰…ÕÑ½½µÁ±•Ñ”µİÉ…ÀˆÍÑå±”ô‰µ¥¸µİ¥‘Ñ èÀˆø(€€€€€€€€€€€€ñ¥¹ÁÕĞÑåÁ”ô‰Ñ•áĞˆ¥ô‰µÈµ™É½´ˆ±…ÍÌô‰Ñ•É´µÍ•°ˆÍÑå±”ô‰µ…É¥¸µ‰½ÑÑ½´èÀˆÙ…±Õ”ôˆ‘í}µÉÉ½µñğœôˆÁ±…•¡½±‘•Èô‹²Ús®Âs²^´ˆ…ÕÑ½½µÁ±•Ñ”ô‰½™˜ˆ(€€€€€€€€€€€€€½¹¥¹ÁÕĞô‰}µ•ÑÉ½M¡½Ü µÈµ™É½´œ°}µÉA¥­É½´œ¤ˆ½¹™½ÕÌô‰Ñ¡¥Ì¹Í•±•Ğ ¤í}µ•ÑÉ½M¡½Ü µÈµ™É½´œ°}µÉA¥­É½´œ¤ˆ(€€€€€€€€€€€€€½¹‰±ÕÈô‰Í•ÑQ¥µ•½ÕĞ  ¤ôùí½¹ÍĞõ‘½Õµ•¹Ğ¹•Ñ±•µ•¹Ñ	å% µÈµ™É½´µ…Œœ¤í¥˜¡¥¹ÍÑå±”¹‘¥ÍÁ±…äô¹½¹”œíô°ÄÔÀ¤ˆ(€€€€€€€€€€€€€½¹­•å‘½İ¸ô‰¥˜¡•Ù•¹Ğ¹­•äôôô¹Ñ•Èœ¥í}µÉÉ½´õÑ¡¥Ì¹Ù…±Õ”¹ÑÉ¥´ ¤íÍ•…É¡5•ÑÉ½I½ÕÑ” ¤íôˆø(€€€€€€€€€€€€ñ‘¥Ø±…ÍÌô‰…Œµ‘É½Á‘½İ¸ˆ¥ô‰µÈµ™É½´µ…Œˆøğ½‘¥Øø(€€€€€€€€€€ğ½‘¥Øø(€€€€€€€€ğ½‘¥Øø(€€€€€€€€ñ‘¥Ø±…ÍÌô‰µÈµ™¥•±µÈµÁ±…”µ™¥•±ˆøñ±…‰•°ûªÊ÷²r€€ñÍµ…±°û²ƒ¶tğ½Íµ…±°øğ½±…‰•°øñ‘¥Ø±…ÍÌô‰…ÕÑ½½µÁ±•Ñ”µİÉ…Àˆøñ¥¹ÁÕĞÑåÁ”ô‰Ñ•áĞˆ¥ô‰µÈµÙ¥„ˆ±…ÍÌô‰Ñ•É´µÍ•°ˆÙ…±Õ”ôˆ‘í}µÉY¥…ñğœôˆÁ±…•¡½±‘•Èô‹ªÊ÷²rƒ² ƒ²ÚSªÂ ˆ…ÕÑ½½µÁ±•Ñ”ô‰½™˜ˆ½¹¥¹ÁÕĞô‰}µ•ÑÉ½M¡½Ü µÈµÙ¥„œ°}µÉA¥­Y¥„œ¤ˆ½¹™½ÕÌô‰Ñ¡¥Ì¹Í•±•Ğ ¤í}µ•ÑÉ½M¡½Ü µÈµÙ¥„œ°}µÉA¥­Y¥„œ¤ˆ½¹‰±ÕÈô‰Í•ÑQ¥µ•½ÕĞ  ¤ôùí½¹ÍĞõ‘½Õµ•¹Ğ¹•Ñ±•µ•¹Ñ	å% µÈµÙ¥„µ…Œœ¤í¥˜¡¥¹ÍÑå±”¹‘¥ÍÁ±…äô¹½¹”œíô°ÄÔÀ¤ˆøñ‘¥Ø±…ÍÌô‰…Œµ‘É½Á‘½İ¸ˆ¥ô‰µÈµÙ¥„µ…Œˆøğ½‘¥Øøğ½‘¥Øøğ½‘¥Øø(€€€€€€€€ñ‘¥Ø±…ÍÌô‰µÈµ™¥•±µÈµÁ±…”µ™¥•±ˆøñ±…‰•°û®>²Â¤ğ½±…‰•°ø(€€€€€€€€€€ñ‘¥Ø±…ÍÌô‰…ÕÑ½½µÁ±•Ñ”µİÉ…ÀˆÍÑå±”ô‰µ¥¸µİ¥‘Ñ èÀˆø(€€€€€€€€€€€€ñ¥¹ÁÕĞÑåÁ”ô‰Ñ•áĞˆ¥ô‰µÈµÑ¼ˆ±…ÍÌô‰Ñ•É´µÍ•°ˆÍÑå±”ô‰µ…É¥¸µ‰½ÑÑ½´èÀˆÙ…±Õ”ôˆ‘í}µÉQ½ñğœôˆÁ±…•¡½±‘•Èô‹®>²Â§²^´ˆ…ÕÑ½½µÁ±•Ñ”ô‰½™˜ˆ(€€€€€€€€€€€€€½¹¥¹ÁÕĞô‰}µ•ÑÉ½M¡½Ü µÈµÑ¼œ°}µÉA¥­Q¼œ¤ˆ½¹™½ÕÌô‰Ñ¡¥Ì¹Í•±•Ğ ¤í}µ•ÑÉ½M¡½Ü µÈµÑ¼œ°}µÉA¥­Q¼œ¤ˆ(€€€€€€€€€€€€€½¹‰±ÕÈô‰Í•ÑQ¥µ•½ÕĞ  ¤ôùí½¹ÍĞõ‘½Õµ•¹Ğ¹•Ñ±•µ•¹Ñ	å% µÈµÑ¼µ…Œœ¤í¥˜¡¥¹ÍÑå±”¹‘¥ÍÁ±…äô¹½¹”œíô°ÄÔÀ¤ˆ(€€€€€€€€€€€€€½¹­•å‘½İ¸ô‰¥˜¡•Ù•¹Ğ¹­•äôôô¹Ñ•Èœ¥í}µÉQ¼õÑ¡¥Ì¹Ù…±Õ”¹ÑÉ¥´ ¤íÍ•…É¡5•ÑÉ½I½ÕÑ” ¤íôˆø(€€€€€€€€€€€€ñ‘¥Ø±…ÍÌô‰…Œµ‘É½Á‘½İ¸ˆ¥ô‰µÈµÑ¼µ…Œˆøğ½‘¥Øø(€€€€€€€€€€ğ½‘¥Øø(€€€€€€€€ğ½‘¥Øø(€€€€€€€€ñ‰ÕÑÑ½¸±…ÍÌô‰µÈµÍİ…Àˆ½¹±¥¬ô‰}µÉMİ…À ¤ˆÑ¥Ñ±”ô‹²Ús®Âs
+ß®>²Â¤ƒ®ÂSªúãªâÀˆ…É¥„µ±…‰•°ô‹²Ús®Âs²^·ªÎğƒ®>²Â§²^´ƒ®ÂSªúãªâÀˆûŠğ½‰ÕÑÑ½¸ø(€€€€€€ğ½‘¥Øø(€€€€€€ñ‘¥Ø±…ÍÌô‰µÈµÑ¥µ”µÉ½Üˆøñ‰ÕÑÑ½¸ÑåÁ”ô‰‰ÕÑÑ½¸ˆ±…ÍÌô‰µÈµÑ¥µ”µÑÉ¥•Èˆ½¹±¥¬ô‰½Á•¹5ÉQ¥µ•A¥­•È ¤ˆøñÍÁ…¸ø‘í}µÉQ¥µ•5½‘”ôôô…ÉÉ¥Ù”œüŸ®>²Â¤œèŸ²Ús®Âpôğ½ÍÁ…¸øñˆø‘í}µÉ±½­1…‰•°¡Í¡½İ¹Q¥µ”¥ôğ½ˆø‘í}µÉ‘•5½‘”„ôô¹½Éµ…°œı€ñ•´ø‘í}µÉ‘•5½‘”ôôô™¥ÉÍĞœüŸ²Ê¯²Â œèŸ®'²Â ôğ½•´ù€èœôñ¤…É¥„µ¡¥‘‘•¸ô‰ÑÉÕ”ˆûŠ2ğ½¤øğ½‰ÕÑÑ½¸øñ¥¹ÁÕĞÑåÁ”ô‰Ñ¥µ”ˆ¥ô‰µÈµÑ¥µ”ˆÙ…±Õ”ôˆ‘íÍ¡½İ¹Q¥µ•ôˆ¡¥‘‘•¸…É¥„µ±…‰•°ô‹ªÊ÷®†pƒªÊ²$ƒªâÃ²’ ƒ².sªÂˆøğ½‘¥Øø(€€€€€€ñ‘¥Ø±…ÍÌô‰µÈµÑÉ…¹ÍÁ½ÉĞµ™¥±Ñ•ÉÌˆ…É¥„µ±…‰•°ô‹ªÖC¶×²"c®. ƒ¶V¶Àˆøñ±…‰•°øñ¥¹ÁÕĞÑåÁ”ô‰¡•­‰½àˆ‘í}µÉQÉ…¹ÍÁ½ÉÑ¥±Ñ•ÉÌ¹­Ñàüœ¡•­•œèœô½¹¡…¹”ô‰Í•Ñ5ÉQÉ…¹ÍÁ½ÉÑ¥±Ñ•È ­Ñàœ±Ñ¡¥Ì¹¡•­•¤ˆù-Qc
+İMIPğ½±…‰•°øñ±…‰•°øñ¥¹ÁÕĞÑåÁ”ô‰¡•­‰½àˆ‘í}µÉQÉ…¹ÍÁ½ÉÑ¥±Ñ•ÉÌ¹•¹•É…°üœ¡•­•œèœô½¹¡…¹”ô‰Í•Ñ5ÉQÉ…¹ÍÁ½ÉÑ¥±Ñ•È •¹•É…°œ±Ñ¡¥Ì¹¡•­•¤ˆû²vó®Âc²^Ó²Â ğ½±…‰•°øñ±…‰•°øñ¥¹ÁÕĞÑåÁ”ô‰¡•­‰½àˆ‘í}µÉQÉ…¹ÍÁ½ÉÑ¥±Ñ•ÉÌ¹Ñàüœ¡•­•œèœô½¹¡…¹”ô‰Í•Ñ5ÉQÉ…¹ÍÁ½ÉÑ¥±Ñ•È Ñàœ±Ñ¡¥Ì¹¡•­•¤ˆùQ`ğ½±…‰•°øğ½‘¥Øø(€€€€€€ñ‘¥Ø±…ÍÌô‰µÈµÍ•…É µ™½½Ğˆøñ‘¥Ø±…ÍÌô‰µÈµµ½‘•Ìˆ…É¥„µ±…‰•°ô‹ªÊ÷®†pƒ²‚W®‚°ˆøñ‰ÕÑÑ½¸±…ÍÌô‰µÈµµ½‘”µ¡¥À‘í}µÉ5½‘”ôôôÑÉ…¹Í™•Èœüœ½¸œèœôˆ‘…Ñ„µµ½‘”ô‰ÑÉ…¹Í™•Èˆ½¹±¥¬ô‰Í•Ñ5É5½‘” ÑÉ…¹Í™•Èœ¤ˆû²Ös²0ƒ¶fc²*äğ½‰ÕÑÑ½¸øñ‰ÕÑÑ½¸±…ÍÌô‰µÈµµ½‘”µ¡¥À‘í}µÉ5½‘”ôôôÑ¥µ”œüœ½¸œèœôˆ‘…Ñ„µµ½‘”ô‰Ñ¥µ”ˆ½¹±¥¬ô‰Í•Ñ5É5½‘” Ñ¥µ”œ¤ˆû²Ös²0ƒ².sªÂğ½‰ÕÑÑ½¸øğ½‘¥Øøñ‰ÕÑÑ½¸±…ÍÌô‰‰Ñ¸‰Ñ¸µÁÉ¥µ…ÉäµÈµÍ•…É µ‰ÕÑÑ½¸ˆ½¹±¥¬ô‰}µÉÉ½´õ‘½Õµ•¹Ğ¹•Ñ±•µ•¹Ñ	å% µÈµ™É½´œ¤¹Ù…±Õ”¹ÑÉ¥´ ¤í}µÉY¥„õ‘½Õµ•¹Ğ¹•Ñ±•µ•¹Ñ	å% µÈµÙ¥„œ¤¹Ù…±Õ”¹ÑÉ¥´ ¤í}µÉQ¼õ‘½Õµ•¹Ğ¹•Ñ±•µ•¹Ñ	å% µÈµÑ¼œ¤¹Ù…±Õ”¹ÑÉ¥´ ¤í}µÉQ¥µ”õ}µÉQ¥µ•áÁ±¥¥Ğı‘½Õµ•¹Ğ¹•Ñ±•µ•¹Ñ	å% µÈµÑ¥µ”œ¤¹Ù…±Õ”é}µÉ•™…Õ±ÑQ¥µ” ¤íÍ•…É¡5•ÑÉ½I½ÕÑ” ¤ˆûªâã²ÂûªâÀğ½‰ÕÑÑ½¸øğ½‘¥Øø(€€€€ğ½‘¥Øø(€€€€ñ‘¥Ø¥ô‰µÈµÉ•ÍÕ±Ğˆøğ½‘¥Øù€ì)ô(¼¼ƒªÖ³ªÂƒ².“²‚pƒ®.“²v0ƒ²^Ó²Â èƒªÂg²v ƒ®.£®Â§¶Z”±•œƒ²V#²^C²p‰½…É“ŠI…±¥¡Ó®–ğƒ²z®*Pƒ¶:àƒ²’DƒªÂ²z”ƒ®æƒ®–àƒ²Ús®Âp)™Õ¹Ñ¥½¸}µ•ÑÉ½M•M•ÉÙ¥”¡±¥¹•9…µ”°‰½…É°…±¥¡Ğ°…™Ñ•ÉMÉØ°Á…ÑÑ•É¹%¥ì(€½¹ÍĞ•¹Ğô¡ÑåÁ•½˜5QI=}M!„ôôÕ¹‘•™¥¹•œ¤˜™5QI=}M!m±¥¹•9…µ•tì¥˜ …•¹Ğ¤É•ÑÕÉ¸¹Õ±°ì(€½¹ÍĞ¹…µ•Ìõ•¹Ğ¹Ì°ÍÙÌõ•¹Ğ¹Ğ°ÉÈõ•¹Ğ¹Œì(€¥˜ …¹…µ•Ì¹¥¹±Õ‘•Ì¡‰½…É¥ñğ…¹…µ•Ì¹¥¹±Õ‘•Ì¡…±¥¡Ğ¤¥É•ÑÕÉ¸¹Õ±°ì(€½¹ÍĞÍÉÙ5¥¸õ´ôø  ¡´´ÈĞÀ¤”ÄĞĞÀ¤¬ÄĞĞÀ¤”ÄĞĞÀì(€±•Ğ‰•ÍĞõ¹Õ±°í½¹ÍĞ…±°õmtì(€™½È¡±•ĞÍ¤ôÀíÍ¤ñÍÙÌ¹±•¹Ñ íÍ¤¬¬¥ì½¹ÍĞ˜õÍÙÍmÍ¥t°¸õ˜¹±•¹Ñ ¼Ì°±ÌõÉÈıÉÉmÍ¥tèÀì(€€€½¹ÍĞ¥‘áM•Äõmtí™½È¡±•Ğ¤ôÀí¤ñ¸í¤¬¬¥¥‘áM•Ä¹ÁÕÍ ¡™lÌ©¤¬Ét¤ì(€€€™½È¡½¹ÍĞmÍÑ…ÉĞ±•¹‘t½˜}µ•ÑÉ½1•I…¹•Ì¡¥‘áM•Ä¤¥ì(€€€€€±•Ğ¬ô´Ä±µ%‘àô´Äì(€€€€€™½È¡±•Ğ¤õÍÑ…ÉĞí¤ñ•¹í¤¬¬¥í¥˜¡¹…µ•Ím¥‘áM•Åm¥utôôõ‰½…É¥í¬õ¤í‰É•…¬íõô(€€€€€¥˜¡¬ğÀ¥½¹Ñ¥¹Õ”ì(€€€€€™½È¡±•Ğ¤õ¬¬Äí¤ğõ•¹í¤¬¬¥í¥˜¡¹…µ•Ím¥‘áM•Åm¥utôôõ…±¥¡Ğ¥íµ%‘àõ¤í‰É•…¬íõô(€€€€€¥˜¡µ%‘àğÀ¥½¹Ñ¥¹Õ”ì(€€€€€½¹ÍĞÉ…İÌõÍÉÙ5¥¸¡™lÌ©¬¬Åt¤í±•Ğ‘ÌõÉ…İÌì(€€€€€İ¡¥±”¡‘Ìñ…™Ñ•ÉMÉØ¥‘Ì¬ôÄĞĞÀì(€€€€€½¹ÍĞ…ÉÉ	…Í”õÍÉÙ5¥¸¡™lÌ©µ%‘át¤ì(€€€€€±•Ğ…Ìõ…ÉÉ	…Í”íİ¡¥±”¡…Ìñ‘Ì¥…Ì¬ôÄĞĞÀì(€€€€€½¹ÍĞÙ¥„õmtí™½È¡±•Ğàõ¬¬Äíàñµ%‘àíà¬¬¥Ù¥„¹ÁÕÍ ¡¹…µ•Ím¥‘áM•Åmáut¤ì(€€€€€±•ĞÉ…İÌõ…ÉÉ	…Í”íİ¡¥±”¡É…İÌñÉ…İÌ¥É…İÌ¬ôÄĞĞÀì(€€€€€½¹ÍĞÍ•ÉÙ¥•-•äõ€‘íÍ¥ôè‘íÍÑ…ÉÑôè‘í•¹‘õ€ì(€€€€€¥˜¡É…İÌğôÄĞĞÀ¥…±°¹ÁÕÍ ¡í‘ÌéÉ…İÌ±…ÌéÉ…İÌ±Í¤±¬ÀéÍÑ…ÉĞ±¬Äé•¹±­•äéÍ•ÉÙ¥•-•åô¤ì(€€€€€¥˜¡‘ÌøôÄĞĞÁññ…ÌøÄĞĞÀ¥½¹Ñ¥¹Õ”ì(€€€€€½¹ÍĞ…¹õí‘Ì±…Ì±‘•Àé™lÌ©¬¬Åt”ÄĞĞÀ±…ÉÈé™lÌ©µ%‘át”ÄĞĞÀ±…±¥¡Ñ•Àé™lÌ©µ%‘à¬Åt”ÄĞĞÀ±¹MÑ½ÁÌéµ%‘àµ¬±Ù¥„±±Ì±ÍÙŒéÍ¤±¬ÀéÍÑ…ÉĞ±¬Äé•¹±­•äéÍ•ÉÙ¥•-•ä±‘•ÍĞé¹…µ•Ím¥‘áM•Åm•¹‘uuôì(€€€€€¥˜ …‰•ÍÑññ…¹¹‘Ìñ‰•ÍĞ¹‘Ì¥‰•ÍĞõ…¹ì(€€€ô(€ô(€¥˜¡‰•ÍĞ˜™…±°¹±•¹Ñ ¥í‰•ÍĞ¹¥Í¥ÉÍĞõ‰•ÍĞ¹­•äôôõ…±°¹É•‘Õ” ¡„±ˆ¤ôù„¹‘Ìğõˆ¹‘Ìı„éˆ¤¹­•äí‰•ÍĞ¹¥Í1…ÍĞõ‰•ÍĞ¹­•äôôõ…±°¹É•‘Õ” ¡„±ˆ¤ôù„¹‘Ìøõˆ¹‘Ìı„éˆ¤¹­•äíô(€É•ÑÕÉ¸‰•ÍĞì)ô)™Õ¹Ñ¥½¸}µ•ÑÉ½M•M•ÉÙ¥•	•™½É”¡±¥¹•9…µ”±‰½…É±…±¥¡Ğ±‰•™½É•MÉØ±Í½ÉÑ	äô…ÉÉ¥Ù…°œ¥ì(€½¹ÍĞ•¹Ğô¡ÑåÁ•½˜5QI=}M!„ôôÕ¹‘•™¥¹•œ¤˜™5QI=}M!m±¥¹•9…µ•tí¥˜ …•¹Ğ¥É•ÑÕÉ¸¹Õ±°ì(€½¹ÍĞ¹…µ•Ìõ•¹Ğ¹Ì±ÍÙÌõ•¹Ğ¹Ğ±ÉÈõ•¹Ğ¹Œ±ÍÉÙ5¥¸õ´ôø  ¡´´ÈĞÀ¤”ÄĞĞÀ¤¬ÄĞĞÀ¤”ÄĞĞÀí±•Ğ‰•ÍĞõ¹Õ±°í½¹ÍĞ…±°õmtì(€™½È¡±•ĞÍ¤ôÀíÍ¤ñÍÙÌ¹±•¹Ñ íÍ¤¬¬¥í½¹ÍĞ˜õÍÙÍmÍ¥t±¸õ˜¹±•¹Ñ ¼Ì±±ÌõÉÈıÉÉmÍ¥tèÀ±¥‘áM•Äõmtí™½È¡±•Ğ¤ôÀí¤ñ¸í¤¬¬¥¥‘áM•Ä¹ÁÕÍ ¡™lÌ©¤¬Ét¤ì(€€€™½È¡½¹ÍĞmÍÑ…ÉĞ±•¹‘t½˜}µ•ÑÉ½1•I…¹•Ì¡¥‘áM•Ä¤¥í±•Ğ¬ô´Ä±µ%‘àô´Äí™½È¡±•Ğ¤õÍÑ…ÉĞí¤ñ•¹í¤¬¬¥¥˜¡¹…µ•Ím¥‘áM•Åm¥utôôõ‰½…É¥í¬õ¤í‰É•…¬íõ¥˜¡¬ğÀ¥½¹Ñ¥¹Õ”í™½È¡±•Ğ¤õ¬¬Äí¤ğõ•¹í¤¬¬¥¥˜¡¹…µ•Ím¥‘áM•Åm¥utôôõ…±¥¡Ğ¥íµ%‘àõ¤í‰É•…¬íõ¥˜¡µ%‘àğÀ¥½¹Ñ¥¹Õ”ì(€€€€€½¹ÍĞ‘ÌõÍÉÙ5¥¸¡™lÌ©¬¬Åt¤í±•Ğ…ÌõÍÉÙ5¥¸¡™lÌ©µ%‘át¤íİ¡¥±”¡…Ìñ‘Ì¥…Ì¬ôÄĞĞÀí½¹ÍĞÍ•ÉÙ¥•-•äõ€‘íÍ¥ôè‘íÍÑ…ÉÑôè‘í•¹‘õ€í¥˜¡…ÌğôÄĞĞÀ¥…±°¹ÁÕÍ ¡í‘Ì±…Ì±Í¤±¬ÀéÍÑ…ÉĞ±¬Äé•¹±­•äéÍ•ÉÙ¥•-•åô¤í½¹ÍĞ‰½Õ¹‘…ÉäõÍ½ÉÑ	äôôô‘•Á…ÉÑÕÉ”œı‘Ìé…Ìí¥˜¡‰½Õ¹‘…Éäù‰•™½É•MÉÙññ…ÌøÄĞĞÀ¥½¹Ñ¥¹Õ”ì(€€€€€½¹ÍĞÙ¥„õmtí™½È¡±•Ğàõ¬¬Äíàñµ%‘àíà¬¬¥Ù¥„¹ÁÕÍ ¡¹…µ•Ím¥‘áM•Åmáut¤í½¹ÍĞ…¹õí‘Ì±…Ì±‘•Àé™lÌ©¬¬Åt”ÄĞĞÀ±…ÉÈé™lÌ©µ%‘át”ÄĞĞÀ±…±¥¡Ñ•Àé™lÌ©µ%‘à¬Åt”ÄĞĞÀ±¹MÑ½ÁÌéµ%‘àµ¬±Ù¥„±±Ì±ÍÙŒéÍ¤±¬ÀéÍÑ…ÉĞ±¬Äé•¹±­•äéÍ•ÉÙ¥•-•ä±‘•ÍĞé¹…µ•Ím¥‘áM•Åm•¹‘uuôí½¹ÍĞµ•ÑÉ¥ŒõÍ½ÉÑ	äôôô‘•Á…ÉÑÕÉ”œı…¹¹‘Ìé…¹¹…Ìí¥˜ …‰•ÍÑññµ•ÑÉ¥Œø¡Í½ÉÑ	äôôô‘•Á…ÉÑÕÉ”œı‰•ÍĞ¹‘Ìé‰•ÍĞ¹…Ì¤¥‰•ÍĞõ…¹ì(€€€ô(€õ¥˜¡‰•ÍĞ˜™…±°¹±•¹Ñ ¥í‰•ÍĞ¹¥Í¥ÉÍĞõ‰•ÍĞ¹­•äôôõ…±°¹É•‘Õ” ¡„±ˆ¤ôù„¹‘Ìğõˆ¹‘Ìı„éˆ¤¹­•äí‰•ÍĞ¹¥Í1…ÍĞõ‰•ÍĞ¹­•äôôõ…±°¹É•‘Õ” ¡„±ˆ¤ôù„¹‘Ìøõˆ¹‘Ìı„éˆ¤¹­•äíõÉ•ÑÕÉ¸‰•ÍĞì)ô(¼¼ƒ®'²Â ƒ²ÂûªâÃ®*Pƒ®ª£®N€ƒ¶fc²*äƒªÖ³ªÂ²v`ƒ®'²Â£®–ğƒ²^·²"s²ró®†pƒ®Úg²vÓ®*PƒªÊ²vĞƒ²V®.#®vğ°(¼¼ƒ²Ús®Âs²^·²^C²pƒªÂ²z”ƒ®*›ªÊ0ƒ²Ús®Âs¶Vc®¦Ó²pƒ®ª§²‚²ªæ3² ƒ².“²‚s®†pƒ²^ÃªÊÃ®Bc®*Pƒ²^³²‚W²vƒ²Âû®*S®.¸(¼¼ƒ²Ê¬ƒªÖ³ªÂƒ¶n®ÎÓ®–ğƒ®*›²v ƒ²"s²s®†pƒ®
+»²ÚÀƒªÂ®¦À°ƒ¶n²4ƒªÖ³ªÂ²v ƒ®>²Â¤ƒ¶nƒ¶ ƒ²"`ƒ²z#®*PƒªÂ²z”ƒ®æƒ®–àƒ¶:ã²vƒ²
+³²j§¶Vs®.¸)™Õ¹Ñ¥½¸}µÉ1…Ñ•ÍÑ•Á…ÉÑ)½ÕÉ¹•ä¡Í•µ•¹ÑÌ±É…Á ±á‰Õ˜¥ì(€¥˜ …Í•µ•¹ÑÌ¹±•¹Ñ ¥É•ÑÕÉ¸¹Õ±°ì(€½¹ÍĞ™¥ÉÍÑM•µ•¹ĞõÍ•µ•¹ÑÍlÁt±™¥ÉÍÑ1¥¹”õÉ…Á ¹±¥¹•	å%‘m™¥ÉÍÑM•µ•¹Ğ¹±¥‘uññí¹…µ”èœüœ±½±½ÈèœŒáˆäĞå”ôì(€±•Ğ‰•™½É•MÉØôÄĞĞÀ±…ÑÑ•µÁÑÌôÀì(€İ¡¥±”¡‰•™½É•MÉØøôÀ˜™…ÑÑ•µÁÑÌ¬¬ğÈÀĞà¥ì(€€€½¹ÍĞ™¥ÉÍÑMÙŒõ}µ•ÑÉ½M•M•ÉÙ¥•	•™½É”¡™¥ÉÍÑ1¥¹”¹¹…µ”±™¥ÉÍÑM•µ•¹Ğ¹ÍÑ¹ÍlÁt±™¥ÉÍÑM•µ•¹Ğ¹ÍÑ¹Ì¹…Ğ ´Ä¤±‰•™½É•MÉØ°‘•Á…ÉÑÕÉ”œ¤ì(€€€¥˜ …™¥ÉÍÑMÙŒ¥É•ÑÕÉ¸¹Õ±°ì(€€€½¹ÍĞ±•Ìõmí°é™¥ÉÍÑ1¥¹”±Í•µ•¹Ğé™¥ÉÍÑM•µ•¹Ğ±‰½…Éé™¥ÉÍÑM•µ•¹Ğ¹ÍÑ¹ÍlÁt±…±¥¡Ğé™¥ÉÍÑM•µ•¹Ğ¹ÍÑ¹Ì¹…Ğ ´Ä¤°¸¸¹™¥ÉÍÑMÙõtì(€€€±•Ğ…™Ñ•ÉMÉØõ™¥ÉÍÑMÙŒ¹…Ì­á‰Õ˜±½µÁ±•Ñ”õÑÉÕ”ì(€€€™½È¡±•Ğ¤ôÄí¤ñÍ•µ•¹ÑÌ¹±•¹Ñ í¤¬¬¥ì(€€€€€½¹ÍĞÍ•µ•¹ĞõÍ•µ•¹ÑÍm¥t±±¥¹”õÉ…Á ¹±¥¹•	å%‘mÍ•µ•¹Ğ¹±¥‘uññí¹…µ”èœüœ±½±½ÈèœŒáˆäĞå”ôì(€€€€€½¹ÍĞÍÙŒõ}µ•ÑÉ½M•M•ÉÙ¥”¡±¥¹”¹¹…µ”±Í•µ•¹Ğ¹ÍÑ¹ÍlÁt±Í•µ•¹Ğ¹ÍÑ¹Ì¹…Ğ ´Ä¤±…™Ñ•ÉMÉØ±Í•µ•¹Ğ¹Á¥¤ì(€€€€€¥˜ …ÍÙŒ¥í½µÁ±•Ñ”õ™…±Í”í‰É•…¬íô(€€€€€±•Ì¹ÁÕÍ ¡í°é±¥¹”±Í•µ•¹Ğ±‰½…ÉéÍ•µ•¹Ğ¹ÍÑ¹ÍlÁt±…±¥¡ĞéÍ•µ•¹Ğ¹ÍÑ¹Ì¹…Ğ ´Ä¤°¸¸¹ÍÙô¤í…™Ñ•ÉMÉØõÍÙŒ¹…Ì­á‰Õ˜ì(€€€ô(€€€¥˜¡½µÁ±•Ñ”¥É•ÑÕÉ¸±•Ìì(€€€‰•™½É•MÉØõ™¥ÉÍÑMÙŒ¹‘Ì´Äì(€ô(€É•ÑÕÉ¸¹Õ±°ì)ô)™Õ¹Ñ¥½¸}µÉM¡½İI•Í½±Ù•‘Q¥µ”¡±½­5¥¹ÕÑ”¥ì(€½¹ÍĞ±½¬ô ¡5…Ñ ¹É½Õ¹¡±½­5¥¹ÕÑ”¤”ÄĞĞÀ¤¬ÄĞĞÀ¤”ÄĞĞÀ±Ù…±Õ”õ€‘í5…Ñ ¹™±½½È¡±½¬¼ØÀ¥ôè‘íMÑÉ¥¹œ¡±½¬”ØÀ¤¹Á…‘MÑ…ÉĞ È°œÀœ¥õ€ì(€½¹ÍĞ±…‰•°õ‘½Õµ•¹Ğ¹ÅÕ•ÉåM•±•Ñ½È œ¹µÈµÑ¥µ”µÑÉ¥•Èˆœ¤±¥¹ÁÕĞõ‘½Õµ•¹Ğ¹•Ñ±•µ•¹Ñ	å% µÈµÑ¥µ”œ¤ì(€¥˜¡±…‰•°¥±…‰•°¹Ñ•áÑ½¹Ñ•¹Ğõ}µÉ±½­1…‰•°¡Ù…±Õ”¤í¥˜¡¥¹ÁÕĞ¥¥¹ÁÕĞ¹Ù…±Õ”õÙ…±Õ”ì)ô)™Õ¹Ñ¥½¸}µÉ5•ÑÉ½¥ÍÑ…¹”¡Í•µ•¹ÑÌ¥ì(€±•Ğ­´ôÀ±±…ÍĞõ¹Õ±°ì(€€¡Í•µ•¹ÑÍññmt¤¹™½É… ¡Í•µ•¹Ğôø¡Í•µ•¹Ğ¹ÍÑ¹Íññmt¤¹™½É… ¡¹…µ”ôùí½¹ÍĞÁ½¥¹Ğõ}ÍÑ¹½½É¡¹…µ”¤í¥˜¡±…ÍĞ˜™Á½¥¹Ğ¥­´¬õ¡…ÙAĞ¡±…ÍĞ±Á½¥¹Ğ¤í¥˜¡Á½¥¹Ğ¥±…ÍĞõÁ½¥¹Ğíô¤¤ì(€É•ÑÕÉ¸­´ì)ô(¼¼ƒ²"c®>ªÚ0ƒ²‚²Ê€ƒªÖC¶×²æÓ®Npƒ²Ç²vàƒ²jÓ²zèƒªâÃ®Îà€ÄÁ­´€Ä°ÔÔÃ²n@°€ÄÁøÔÁ­´€Õ­·®#®.€ÄÀÃ²n@°(¼¼€ÔÁ­´ƒ²Ò#ªÎğ€á­·®#®.€ÄÀÃ²n@¸ƒ¶R®†s²‚w¶*ã²v`ƒªÂ²ƒ®ã²ƒ²v ƒ²^·ªÂƒ²²ƒªÆÃ®š°ƒ¶V§ªÎ®–ğƒ²‚²j§¶Vs®.¸)™Õ¹Ñ¥½¸}µÉ5•ÑÉ½…É”¡‘¥ÍÑ…¹•-´¥ì(€½¹ÍĞ­´õ5…Ñ ¹µ…à À±9Õµ‰•È¡‘¥ÍÑ…¹•-´¥ñğÀ¤í±•Ğ™…É”ôÄÔÔÀì(€¥˜¡­´øÄÀ¥™…É”¬õ5…Ñ ¹•¥° ¡5…Ñ ¹µ¥¸¡­´°ÔÀ¤´ÄÀ¤¼Ô¤¨ÄÀÀì(€¥˜¡­´øÔÀ¥™…É”¬õ5…Ñ ¹•¥° ¡­´´ÔÀ¤¼à¤¨ÄÀÀì(€É•ÑÕÉ¸™…É”ì)ô)±•Ğ}µÉ%¹Ñ•É…Ñ•‘‘•…¡”õ¹Õ±°ì)™Õ¹Ñ¥½¸}µÉI…¥±…Ñ•½Éä¡É…‘”¥ì(€É•ÑÕÉ¸l-Q`œ°-Q`·²
+Ã²Êpœ°-Q`·²vÓ²v0œ°MIPt¹¥¹±Õ‘•Ì¡É…‘”¤ü­Ñàœè•¹•É…°œì)ô)™Õ¹Ñ¥½¸}µÉ%¹Ñ•É…Ñ•‘‘•Ì ¥ì(€¥˜¡}µÉ%¹Ñ•É…Ñ•‘‘•…¡”¥É•ÑÕÉ¸}µÉ%¹Ñ•É…Ñ•‘‘•…¡”ì(€½¹ÍĞ‰åÉ½´õíô±ÍÉÙ5¥¸õ´ôø  ¡´´ÈĞÀ¤”ÄĞĞÀ¤¬ÄĞĞÀ¤”ÄĞĞÀ±ÁÕÍ õ•‘”ôùì¡‰åÉ½µm•‘”¹™É½µtõ‰åÉ½µm•‘”¹™É½µuññmt¤¹ÁÕÍ ¡•‘”¤íôì(€½¹ÍĞµ•ÑÉ½1¥¹•Ìõ¹•Ü5…À ¡ÑåÁ•½˜5QI=}1%9L„ôôÕ¹‘•™¥¹•œı5QI=}1%9Lémt¤¹µ…À¡±¥¹”ôùm±¥¹”¹¹…µ”±±¥¹•t¤¤ì(€=‰©•Ğ¹•¹ÑÉ¥•Ì¡ÑåÁ•½˜5QI=}M!„ôôÕ¹‘•™¥¹•œı5QI=}M!éíô¤¹™½É…  ¡m±¥¹•9…µ”±•¹ÑÉåt¤ôùì(€€€½¹ÍĞ±¥¹”õµ•ÑÉ½1¥¹•Ì¹•Ğ¡±¥¹•9…µ”¥ññí¹…µ”é±¥¹•9…µ”±½±½ÈèœŒÈÔØÍ•ˆôì(€€€€¡•¹ÑÉä¹Ñññmt¤¹™½É…  ¡Í•ÉÙ¥”±ÍÙŒ¤ôùí½¹ÍĞ½Õ¹Ğõ5…Ñ ¹™±½½È¡Í•ÉÙ¥”¹±•¹Ñ ¼Ì¤±¥¹‘•á•Ìõmtí™½È¡±•Ğ¤ôÀí¤ñ½Õ¹Ğí¤¬¬¥¥¹‘•á•Ì¹ÁÕÍ ¡Í•ÉÙ¥•m¤¨Ì¬Ét¤ì(€€€€€}µ•ÑÉ½1•I…¹•Ì¡¥¹‘•á•Ì¤¹™½É…  ¡mÍÑ…ÉĞ±•¹‘t¤ôùí™½È¡±•Ğ¤õÍÑ…ÉĞí¤ñ•¹í¤¬¬¥í½¹ÍĞ¨õ¤¬Äì(€€€€€€€½¹ÍĞ™É½´õ•¹ÑÉä¹Ím¥¹‘•á•Ím¥ut±Ñ¼õ•¹ÑÉä¹Ím¥¹‘•á•Ím©utí¥˜ …™É½µñğ…Ñ½ññ™É½´ôôõÑ¼¥½¹Ñ¥¹Õ”ì(€€€€€€€½¹ÍĞ‘ÌõÍÉÙ5¥¸¡Í•ÉÙ¥•m¤¨Ì¬Åt¤í±•Ğ…ÌõÍÉÙ5¥¸¡Í•ÉÙ¥•m¨¨Ít¤íİ¡¥±”¡…Ìñ‘Ì¥…Ì¬ôÄĞĞÀí¥˜¡…ÌøÄĞĞÀ¥½¹Ñ¥¹Õ”ì(€€€€€€€ÁÕÍ ¡íÑåÁ”èµ•ÑÉ¼œ±…Ñ•½Éäè½yQ` üèµğ¤½¤¹Ñ•ÍĞ¡±¥¹•9…µ”¤üÑàœèµ•ÑÉ¼œ±™É½´±Ñ¼±‘Ì±…Ì±±¥¹”é±¥¹•9…µ”±½±½Èé±¥¹”¹½±½ÉñğœŒÈÔØÍ•ˆœ±ÍÙŒ±¬ÀéÍÑ…ÉĞ±¬Äé•¹±‘•ÍĞé•¹ÑÉä¹Ím¥¹‘•á•Ím•¹‘ut±Ù¥„é¥¹‘•á•Ì¹Í±¥”¡¤¬Ä±¨¤¹µ…À¡¥¹‘•àôù•¹ÑÉä¹Ím¥¹‘•át¤±­•äé´è‘í±¥¹•9…µ•ôè‘íÍÙôè‘íÍÑ…ÉÑôè‘í•¹‘õô¤ì(€€€€€õô¤ì(€€€ô¤ì(€ô¤ì(€€¡ÑåÁ•½˜11}QI%9L„ôôÕ¹‘•™¥¹•œı11}QI%9Lémt¤¹™½É… ¡ÑÉ…¥¸ôùí½¹ÍĞ…±±Ìô¡ÑÉ…¥¸¹ÍÑ½ÁÍññmt¤¹µ…À ¡ÍÑ½À±¥¹‘•à¤ôø¡íÍÑ½À±¥¹‘•áô¤¤¹™¥±Ñ•È ¡íÍÑ½Áô¤ôù¡…ÍQ¥µ”¡ÍÑ½À¹…ÉÈ¥ññ¡…ÍQ¥µ”¡ÍÑ½À¹‘•À¤¤ì(€€€™½È¡±•Ğ¤ôÀí¤ñ…±±Ì¹±•¹Ñ ´Äí¤¬¬¥í½¹ÍĞ™É½µMÑ½Àõ…±±Ím¥t¹ÍÑ½À±¨õ¤¬Ä±Ñ½MÑ½Àõ…±±Ím©t¹ÍÑ½Àí¥˜ …¡…ÍQ¥µ”¡™É½µMÑ½À¹‘•À¥ñğ…¡…ÍQ¥µ”¡Ñ½MÑ½À¹…ÉÈ¤¥½¹Ñ¥¹Õ”ì(€€€€€½¹ÍĞ‘ÌõÍÉÙ5¥¸¡Ñ½5¥¸¡™É½µMÑ½À¹‘•À¤¤í±•Ğ…ÌõÍÉÙ5¥¸¡Ñ½5¥¸¡Ñ½MÑ½À¹…ÉÈ¤¤íİ¡¥±”¡…Ìñ‘Ì¥…Ì¬ôÄĞĞÀí¥˜¡…ÌøÄĞĞÀ¥½¹Ñ¥¹Õ”ì(€€€€€ÁÕÍ ¡íÑåÁ”èÉ…¥°œ±…Ñ•½Éäé}µÉI…¥±…Ñ•½Éä¡ÑÉ…¥¸¹É…‘”¤±™É½´é™É½µMÑ½À¹Ì±Ñ¼éÑ½MÑ½À¹Ì±‘Ì±…Ì±±¥¹”éÑÉ…¥¸¹±¥¹”±É…‘”éÑÉ…¥¸¹É…‘”±½±½Èè¡ÑåÁ•½˜I}=1=IL„ôôÕ¹‘•™¥¹•œ˜™I}=1=IMmÑÉ…¥¸¹É…‘•t¥ñğœŒĞÜÔÔØäœ±ÑÉ…¥¸±ÍÙŒéÑÉ…¥¸¹¹¼±‘•ÍĞéÑÉ…¥¸¹‘•ÍĞ±Ù¥„émt±­•äéÈè‘íÑÉ…¥¸¹É…‘•ôè‘íÑÉ…¥¸¹¹½õô¤ì(€€€ô(€ô¤ì(€=‰©•Ğ¹Ù…±Õ•Ì¡‰åÉ½´¤¹™½É… ¡•‘•Ìôù•‘•Ì¹Í½ÉĞ ¡„±ˆ¤ôù„¹‘Ìµˆ¹‘Íññ„¹…Ìµˆ¹…Ì¤¤ì(€É•ÑÕÉ¸}µÉ%¹Ñ•É…Ñ•‘‘•…¡”õ‰åÉ½´ì)ô)™Õ¹Ñ¥½¸}µÉ‘•±±½İ•¡•‘”¥ì(€¥˜¡•‘”¹…Ñ•½ÉäôôôÑàœ¥É•ÑÕÉ¸}µÉQÉ…¹ÍÁ½ÉÑ¥±Ñ•ÉÌ¹Ñàì(€¥˜¡•‘”¹…Ñ•½Éäôôô­Ñàœ¥É•ÑÕÉ¸}µÉQÉ…¹ÍÁ½ÉÑ¥±Ñ•ÉÌ¹­Ñàì(€¥˜¡•‘”¹…Ñ•½Éäôôô•¹•É…°œ¥É•ÑÕÉ¸}µÉQÉ…¹ÍÁ½ÉÑ¥±Ñ•ÉÌ¹•¹•É…°ì(€É•ÑÕÉ¸ÑÉÕ”ì)ô)™Õ¹Ñ¥½¸}µÉ%¹Ñ•É…Ñ•‘…É±¥•ÍĞ¡™É½´±Ñ¼±…™Ñ•ÉMÉØ±™¥ÉÍÑ‘”¥ì(€½¹ÍĞ•‘•Ìõ}µÉ%¹Ñ•É…Ñ•‘‘•Ì ¤±‰•ÍĞõím™É½µté…™Ñ•ÉMÉÙô±ÁÉ•Øõíô±ÅÕ•Õ”õmtí±•Ğ™¥¹¥Í õ¹Õ±°ì(€½¹ÍĞÁÕÍ õ¥Ñ•´ôùíÅÕ•Õ”¹ÁÕÍ ¡¥Ñ•´¤í±•Ğ¤õÅÕ•Õ”¹±•¹Ñ ´Äíİ¡¥±”¡¤øÀ¥í½¹ÍĞÀô¡¤´Ä¤øøÄí¥˜¡ÅÕ•Õ•mÁt¹Ñ¥µ”ğõ¥Ñ•´¹Ñ¥µ”¥‰É•…¬íÅÕ•Õ•m¥tõÅÕ•Õ•mÁtí¤õÀíõÅÕ•Õ•m¥tõ¥Ñ•´íôì(€½¹ÍĞÁ½Àô ¤ôùí½¹ÍĞÉ½½ĞõÅÕ•Õ•lÁt±±…ÍĞõÅÕ•Õ”¹Á½À ¤í¥˜¡ÅÕ•Õ”¹±•¹Ñ ˜™±…ÍĞ¥í±•Ğ¤ôÀíİ¡¥±”¡ÑÉÕ”¥í±•Ğ¡¥±õ¤¨È¬Äí¥˜¡¡¥±øõÅÕ•Õ”¹±•¹Ñ ¥‰É•…¬í¥˜¡¡¥±¬ÄñÅÕ•Õ”¹±•¹Ñ ˜™ÅÕ•Õ•m¡¥±¬Åt¹Ñ¥µ”ñÅÕ•Õ•m¡¥±‘t¹Ñ¥µ”¥¡¥±¬¬í¥˜¡ÅÕ•Õ•m¡¥±‘t¹Ñ¥µ”øõ±…ÍĞ¹Ñ¥µ”¥‰É•…¬íÅÕ•Õ•m¥tõÅÕ•Õ•m¡¥±‘tí¤õ¡¥±íõÅÕ•Õ•m¥tõ±…ÍĞíõÉ•ÑÕÉ¸É½½Ğíôì(€ÁÕÍ ¡íÍÑ…Ñ¥½¸é™É½´±Ñ¥µ”é…™Ñ•ÉMÉÙô¤ì(€İ¡¥±”¡ÅÕ•Õ”¹±•¹Ñ ¥í½¹ÍĞÕÈõÁ½À ¤í¥˜¡ÕÈ¹Ñ¥µ”„ôõ‰•ÍÑmÕÈ¹ÍÑ…Ñ¥½¹t¥½¹Ñ¥¹Õ”í¥˜¡ÕÈ¹ÍÑ…Ñ¥½¸ôôõÑ¼¥í™¥¹¥Í õÕÈ¹ÍÑ…Ñ¥½¸í‰É•…¬íô(€€€½¹ÍĞ½ÁÑ¥½¹Ìõ™¥ÉÍÑ‘”˜™ÕÈ¹ÍÑ…Ñ¥½¸ôôõ™É½´ım™¥ÉÍÑ‘•tè¡•‘•ÍmÕÈ¹ÍÑ…Ñ¥½¹uññmt¤ì(€€€™½È¡½¹ÍĞ•‘”½˜½ÁÑ¥½¹Ì¥í¥˜ …}µÉ‘•±±½İ•¡•‘”¥ññ•‘”¹‘ÌñÕÈ¹Ñ¥µ”¥½¹Ñ¥¹Õ”í¥˜¡•‘”¹…ÌøÄĞĞÀ¥½¹Ñ¥¹Õ”í¥˜¡•‘”¹…Ìğ¡‰•ÍÑm•‘”¹Ñ½tüı%¹™¥¹¥Ñä¤¥í‰•ÍÑm•‘”¹Ñ½tõ•‘”¹…ÌíÁÉ•Ùm•‘”¹Ñ½tõí™É½´éÕÈ¹ÍÑ…Ñ¥½¸±•‘•ôíÁÕÍ ¡íÍÑ…Ñ¥½¸é•‘”¹Ñ¼±Ñ¥µ”é•‘”¹…Íô¤íõô(€ô(€¥˜ …™¥¹¥Í ¥É•ÑÕÉ¸¹Õ±°í½¹ÍĞ±•Ìõmtí±•ĞÍÑ…Ñ¥½¸õ™¥¹¥Í íİ¡¥±”¡ÍÑ…Ñ¥½¸„ôõ™É½´¥í½¹ÍĞÍÑ•ÀõÁÉ•ÙmÍÑ…Ñ¥½¹tí¥˜ …ÍÑ•À¥É•ÑÕÉ¸¹Õ±°í±•Ì¹Õ¹Í¡¥™Ğ¡ÍÑ•À¹•‘”¤íÍÑ…Ñ¥½¸õÍÑ•À¹™É½´íõÉ•ÑÕÉ¸±•Ìì)ô)™Õ¹Ñ¥½¸}µÉ%¹Ñ•É…Ñ•‘A…ÉĞ¡™É½´±Ñ¼±…™Ñ•ÉMÉØ±•‘•5½‘”±‰•™½É•MÉØ¥ì(€½¹ÍĞ½ÕÑ½¥¹œô¡}µÉ%¹Ñ•É…Ñ•‘‘•Ì ¥m™É½µuññmt¤¹™¥±Ñ•È¡}µÉ‘•±±½İ•¤ì(€¥˜¡•‘•5½‘”ôôô±…ÍĞññ‰•™½É•MÉØ„õ¹Õ±°¥ì(€€€½¹ÍĞ±¥µ¥Ğõ‰•™½É•MÉØôõ¹Õ±°üÄĞĞÀé‰•™½É•MÉØì(€€€™½È¡½¹ÍĞ•‘”½˜l¸¸¹½ÕÑ½¥¹t¹™¥±Ñ•È¡•‘”ôù•‘”¹‘Ìğõ±¥µ¥Ğ¤¹Í½ÉĞ ¡„±ˆ¤ôùˆ¹‘Ìµ„¹‘Ì¤¥í½¹ÍĞ±•Ìõ}µÉ%¹Ñ•É…Ñ•‘…É±¥•ÍĞ¡™É½´±Ñ¼±•‘”¹‘Ì±•‘”¤í¥˜¡±•Ì˜™±•Ì¹…Ğ ´Ä¤¹…Ìğô¡‰•™½É•MÉØüüÄĞĞÀ¤¥É•ÑÕÉ¸±•Ìíô(€€€É•ÑÕÉ¸¹Õ±°ì(€ô(€É•ÑÕÉ¸}µÉ%¹Ñ•É…Ñ•‘…É±¥•ÍĞ¡™É½´±Ñ¼±•‘•5½‘”ôôô™¥ÉÍĞœüÀé…™Ñ•ÉMÉØ¤ì)ô)™Õ¹Ñ¥½¸}µÉ%¹Ñ•É…Ñ•‘)½ÕÉ¹•ä¡Á½¥¹ÑÌ±Í•±•Ñ•‘MÉØ¥ì(€½¹ÍĞ½¹¹•ÑI•ÍĞô¡™¥ÉÍÑA…ÉĞ±ÍÑ…ÉÑ%¹‘•à¤ôùí½¹ÍĞ…±°õl¸¸¹™¥ÉÍÑA…ÉÑtí±•ĞÕÉÍ½Èõ™¥ÉÍÑA…ÉĞ¹…Ğ ´Ä¤¹…Ì¬Èí™½È¡±•Ğ¤õÍÑ…ÉÑ%¹‘•àí¤ñÁ½¥¹ÑÌ¹±•¹Ñ ´Äí¤¬¬¥í½¹ÍĞÁ…ÉĞõ}µÉ%¹Ñ•É…Ñ•‘A…ÉĞ¡Á½¥¹ÑÍm¥t±Á½¥¹ÑÍm¤¬Åt±ÕÉÍ½È°¹½Éµ…°œ±¤ôôõÁ½¥¹ÑÌ¹±•¹Ñ ´È˜™}µÉQ¥µ•5½‘”ôôô…ÉÉ¥Ù”œ˜™}µÉ‘•5½‘”ôôô¹½Éµ…°œıÍ•±•Ñ•‘MÉØé¹Õ±°¤í¥˜ …Á…ÉĞ¥É•ÑÕÉ¸¹Õ±°í…±°¹ÁÕÍ  ¸¸¹Á…ÉĞ¤íÕÉÍ½ÈõÁ…ÉĞ¹…Ğ ´Ä¤¹…Ì¬ÈíõÉ•ÑÕÉ¸…±°íôì(€¥˜¡}µÉ‘•5½‘”ôôô±…ÍĞœ¥ì(€€€½¹ÍĞ½ÕÑ½¥¹œô¡}µÉ%¹Ñ•É…Ñ•‘‘•Ì ¥mÁ½¥¹ÑÍlÁuuññmt¤¹™¥±Ñ•È¡}µÉ‘•±±½İ•¤¹Í½ÉĞ ¡„±ˆ¤ôùˆ¹‘Ìµ„¹‘Ì¤ì(€€€™½È¡½¹ÍĞ•‘”½˜½ÕÑ½¥¹œ¥í½¹ÍĞ™¥ÉÍĞõ}µÉ%¹Ñ•É…Ñ•‘…É±¥•ÍĞ¡Á½¥¹ÑÍlÁt±Á½¥¹ÑÍlÅt±•‘”¹‘Ì±•‘”¤í¥˜¡™¥ÉÍĞ¥í½¹ÍĞ©½ÕÉ¹•äõ½¹¹•ÑI•ÍĞ¡™¥ÉÍĞ°Ä¤í¥˜¡©½ÕÉ¹•ä¥É•ÑÕÉ¸©½ÕÉ¹•äíõô(€€€É•ÑÕÉ¸¹Õ±°ì(€ô(€½¹ÍĞ™¥ÉÍĞõ}µÉ%¹Ñ•É…Ñ•‘A…ÉĞ¡Á½¥¹ÑÍlÁt±Á½¥¹ÑÍlÅt±}µÉ‘•5½‘”ôôô™¥ÉÍĞœüÀéÍ•±•Ñ•‘MÉØ±}µÉ‘•5½‘”ôôô™¥ÉÍĞœü™¥ÉÍĞœè¹½Éµ…°œ±Á½¥¹ÑÌ¹±•¹Ñ ôôôÈ˜™}µÉQ¥µ•5½‘”ôôô…ÉÉ¥Ù”œ˜™}µÉ‘•5½‘”ôôô¹½Éµ…°œıÍ•±•Ñ•‘MÉØé¹Õ±°¤ì(€É•ÑÕÉ¸™¥ÉÍĞı½¹¹•ÑI•ÍĞ¡™¥ÉÍĞ°Ä¤é¹Õ±°ì)ô)™Õ¹Ñ¥½¸}µÉ%¹Ñ•É…Ñ•‘…É”¡±•Ì¥ì(€±•Ğµ•ÑÉ½-´ôÀ±É…¥±…É”ôÀ±¡…Í5•ÑÉ¼õ™…±Í”ì(€±•Ì¹™½É… ¡±•œôùí¥˜¡±•œ¹ÑåÁ”ôôôµ•ÑÉ¼œ¥í¡…Í5•ÑÉ¼õÑÉÕ”í½¹ÍĞÍ•Äõm±•œ¹™É½´°¸¸¹±•œ¹Ù¥„±±•œ¹Ñ½tí™½È¡±•Ğ¤ôÄí¤ñÍ•Ä¹±•¹Ñ í¤¬¬¥µ•ÑÉ½-´¬õ¡…ÙAĞ¡}ÍÑ¹½½É¡Í•Åm¤´Åt¤±}ÍÑ¹½½É¡Í•Åm¥t¤¤íõ•±Í”¥˜¡±•œ¹ÑÉ…¥¸¥É…¥±…É”¬õ…±…É”¡±•œ¹ÑÉ…¥¸±±•œ¹™É½´±±•œ¹Ñ¼°•¹•É…°œ¤íô¤ì(€É•ÑÕÉ¸í‘¥ÍÑ…¹”éµ•ÑÉ½-´±™…É”éÉ…¥±…É”¬¡¡…Í5•ÑÉ¼ı}µÉ5•ÑÉ½…É”¡µ•ÑÉ½-´¤èÀ¥ôì)ô)™Õ¹Ñ¥½¸Í•…É¡%¹Ñ•É…Ñ•‘I½ÕÑ”¡™É½´±Ù¥„±Ñ¼¥ì(€½¹ÍĞ½ÕĞõ‘½Õµ•¹Ğ¹•Ñ±•µ•¹Ñ	å% µÈµÉ•ÍÕ±Ğœ¤±ÍÉÙ5¥¸õ´ôø  ¡´´ÈĞÀ¤”ÄĞĞÀ¤¬ÄĞĞÀ¤”ÄĞĞÀ±™µĞõ´ôùí´ô ¡5…Ñ ¹É½Õ¹¡´¤¬ÈĞÀ¤”ÄĞĞÀ¬ÄĞĞÀ¤”ÄĞĞÀíÉ•ÑÕÉ¸€‘í5…Ñ ¹™±½½È¡´¼ØÀ¥ôè‘íMÑÉ¥¹œ¡´”ØÀ¤¹Á…‘MÑ…ÉĞ È°œÀœ¥õ€íôì(€½¹ÍĞ±½¬ô¡}µÉQ¥µ•áÁ±¥¥Ğı}µÉQ¥µ”é}µÉ•™…Õ±ÑQ¥µ” ¤¤¹ÍÁ±¥Ğ œèœ¤¹µ…À¡9Õµ‰•È¤±Í•±•Ñ•õÍÉÙ5¥¸¡±½­lÁt¨ØÀ­±½­lÅt¤ì(€½¹ÍĞ±•Ìõ}µÉ%¹Ñ•É…Ñ•‘)½ÕÉ¹•ä¡m™É½´±Ù¥„±Ñ½t¹™¥±Ñ•È¡	½½±•…¸¤±Í•±•Ñ•¤í¥˜ …±•Ìü¹±•¹Ñ ¥í½ÕĞ¹¥¹¹•É!Q50ôœñ‘¥Ø±…ÍÌô‰µÈµ¡¥¹Ğˆû²ƒ¶w¶VpƒªÖC¶×²"c®.£ªÎğƒ².sªÂ²ró®†pƒ²^ÃªÊÃ®Bc®*Pƒ¶×¶V¤ƒªÊ÷®†s®–ğƒ²Âû²vƒ²"`ƒ²^²*×®.#®.¸ğ½‘¥ØøœíÉ•ÑÕÉ¸íô(€½¹ÍĞµ•É•õmtí±•Ì¹™½É… ¡•‘”ôùí½¹ÍĞ±…ÍĞõµ•É•¹…Ğ ´Ä¤í¥˜¡±…ÍĞ˜™±…ÍĞ¹­•äôôõ•‘”¹­•ä˜™±…ÍĞ¹Ñ¼ôôõ•‘”¹™É½´¥í±…ÍĞ¹Ñ¼õ•‘”¹Ñ¼í±…ÍĞ¹…Ìõ•‘”¹…Ìí±…ÍĞ¹Ù¥„¹ÁÕÍ ¡•‘”¹™É½´°¸¸¹•‘”¹Ù¥„¤íõ•±Í”µ•É•¹ÁÕÍ ¡ì¸¸¹•‘”±Ù¥„él¸¸¹•‘”¹Ù¥…uô¤íô¤ì(€½¹ÍĞµ½¹•äõ}µÉ%¹Ñ•É…Ñ•‘…É”¡µ•É•¤±Ñ½Ñ…°õµ•É•¹…Ğ ´Ä¤¹…Ìµµ•É•‘lÁt¹‘Ìì(€½¹ÍĞÉ…¥°õµ•É•¹µ…À ¡±•œ±¥¹‘•à¤ôùí½¹ÍĞ±¥¹•ÉœõMÑÉ¥¹œ¡±•œ¹±¥¹”¤¹É•Á±…” ½qp½œ°qqqpœ¤¹É•Á±…” ¼œ½œ°‰qpœˆ¤í½¹ÍĞ™É½µÉœõMÑÉ¥¹œ¡±•œ¹™É½´¤¹É•Á±…” ¼œ½œ°‰qpœˆ¤í½¹ÍĞ±¥¬õ±•œ¹ÑåÁ”ôôôµ•ÑÉ¼œı½¹±¥¬ô‰½Á•¹5•ÑÉ½I½ÕÑ•Q¥µ•Ñ…‰±” œ‘í™É½µÉôœ°œ‘í±¥¹•Éôœ°‘í±•œ¹ÍÙô°‘ì¡±•œ¹‘Ì¬ÈĞÀ¤”ÄĞĞÁô°‘í±•œ¹¬Áô°‘í±•œ¹¬Åô¤‰€èœœíÉ•ÑÕÉ¸€ñ‘¥Ø±…ÍÌô‰ÉĞµ¹½‘”ˆÍÑå±”ôˆ´µ±Œè‘í±•œ¹½±½Éôˆøñ‘¥Ø±…ÍÌô‰ÉĞµÑ¥µ”ˆøñˆø‘í™µĞ¡±•œ¹‘Ì¥ôğ½ˆøñÍµ…±°û²Ús®Âpğ½Íµ…±°øğ½‘¥Øøñ‘¥Ø±…ÍÌô‰ÉĞµÉ…¥°ˆøñÍÁ…¸±…ÍÌô‰ÉĞµ‘½ĞÉĞµ‰½…Éˆøğ½ÍÁ…¸øñÍÁ…¸±…ÍÌô‰ÉĞµÍ•œˆøğ½ÍÁ…¸øğ½‘¥Øøñ‘¥Ø±…ÍÌô‰ÉĞµ¥¹™¼ˆøñ‰ÕÑÑ½¸±…ÍÌô‰ÉĞµÍÑ¸ÉĞµÍÑ¸µ±¥¹¬ˆ€‘í±¥­ôø‘í}½ÁÍÍŒ¡±•œ¹™É½´¥ô‘í±¥¬üœñÍÁ…¸±…ÍÌô‰ÉĞµ¡•ØˆûŠèğ½ÍÁ…¸øœèœôğ½‰ÕÑÑ½¸øñ‘¥Ø±…ÍÌô‰ÉĞµÍÕˆˆøñÍÁ…¸±…ÍÌô‰ÉĞµ±¡¥ÀˆÍÑå±”ô‰‰…­É½Õ¹è‘í±•œ¹½±½Éôˆø‘í}½ÁÍÍŒ¡±•œ¹ÑåÁ”ôôôÉ…¥°œı±•œ¹É…‘”é±•œ¹±¥¹”¥ôğ½ÍÁ…¸ø€‘í}½ÁÍÍŒ¡±•œ¹‘•ÍĞ¥÷¶Z$ğ½‘¥Øøñ‘¥Ø±…ÍÌô‰ÉĞµ¹Ğˆø‘í±•œ¹Ù¥„¹±•¹Ñ ¬Å÷ªÂpƒ²^´ƒ
+Ü€‘í±•œ¹…Ìµ±•œ¹‘Í÷®Úğ½‘¥Øøğ½‘¥Øøğ½‘¥Øøñ‘¥Ø±…ÍÌô‰ÉĞµ¹½‘”‘í¥¹‘•àôôõµ•É•¹±•¹Ñ ´ÄüœÉĞµ™¥¹…°µ…ÉÉ¥Ù”œèœôˆÍÑå±”ôˆ´µ±Œè‘í±•œ¹½±½Éôˆøñ‘¥Ø±…ÍÌô‰ÉĞµÑ¥µ”ˆøñˆø‘í™µĞ¡±•œ¹…Ì¥ôğ½ˆøñÍµ…±°û®>²Â¤ğ½Íµ…±°øğ½‘¥Øøñ‘¥Ø±…ÍÌô‰ÉĞµÉ…¥°ˆøñÍÁ…¸±…ÍÌô‰ÉĞµ‘½ĞÉĞµ…±¥¡Ğˆøğ½ÍÁ…¸øñÍÁ…¸±…ÍÌô‰ÉĞµÍ•œˆøğ½ÍÁ…¸øğ½‘¥Øøñ‘¥Ø±…ÍÌô‰ÉĞµ¥¹™¼ˆøñÍÁ…¸±…ÍÌô‰ÉĞµÍÑ¸ÉĞµÍÑ¸µ±¥¹¬ˆø‘í}½ÁÍÍŒ¡±•œ¹Ñ¼¥ôğ½ÍÁ…¸øğ½‘¥Øøğ½‘¥Øø‘í¥¹‘•àñµ•É•¹±•¹Ñ ´Äı€ñ‘¥Ø±…ÍÌô‰ÉĞµ¹½‘”ÉĞµİ…±¬ˆøñ‘¥Ø±…ÍÌô‰ÉĞµÑ¥µ”ˆøñÍµ…±°û¶fc²*äğ½Íµ…±°øğ½‘¥Øøñ‘¥Ø±…ÍÌô‰ÉĞµÉ…¥°ˆøñÍÁ…¸±…ÍÌô‰ÉĞµÍ•œÉĞµ‘…Í ˆøğ½ÍÁ…¸øñÍÁ…¸±…ÍÌô‰ÉĞµİ…±¬µ¥ŒˆûŠPğ½ÍÁ…¸øğ½‘¥Øøñ‘¥Ø±…ÍÌô‰ÉĞµ¥¹™¼ˆøñ‘¥Ø±…ÍÌô‰ÉĞµÍÕˆÉĞµá™•Èˆø‘í}½ÁÍÍŒ¡±•œ¹Ñ¼¥÷²^´ƒ¶fc²*äƒ
+Üƒ®2ªâÀ€‘íµ•É•‘m¥¹‘•à¬Åt¹‘Ìµ±•œ¹…Í÷®Úğ½‘¥Øøğ½‘¥Øøğ½‘¥Øù€èœõ€íô¤¹©½¥¸ œœ¤ì(€¥˜¡}µÉ‘•5½‘”„ôô¹½Éµ…°œ¥}µÉM¡½İI•Í½±Ù•‘Q¥µ”¡µ•É•‘lÁt¹‘Ì¬ÈĞÀ¤ì(€½ÕĞ¹¥¹¹•É!Q50õ€ñÍ•Ñ¥½¸±…ÍÌô‰µÈµÉ½ÕÑ”µÉ•ÍÕ±Ğˆøñ¡•…‘•È±…ÍÌô‰µÈµÉ•ÍÕ±Ğµ¡•…‘•Èˆøñ‘¥ØøñÍÑÉ½¹œø‘ím™É½´±Ù¥„±Ñ½t¹™¥±Ñ•È¡	½½±•…¸¤¹µ…À¡}½ÁÍÍŒ¤¹©½¥¸ œƒŠH€œ¥ôğ½ÍÑÉ½¹œøñÍÁ…¸±…ÍÌô‰‰…‘”‰±Õ”ˆû¶×¶V¤ƒªâã²ÂûªâÀğ½ÍÁ…¸øğ½‘¥Øøñ‘¥Øøñˆû²Òt€‘í™µÑÕÉ-½È¡Ñ½Ñ…°¥ôğ½ˆøñÍµ…±°ø‘íµ•É•¹±•¹Ñ ´Äıƒ¶fc²*ä€‘íµ•É•¹±•¹Ñ ´Å÷¶j1€èŸ²¶Ôôƒ
+Üƒ²b#²€‘íµ½¹•ä¹™…É”¹Ñ½1½…±•MÑÉ¥¹œ ¥÷²n@‘íµ½¹•ä¹‘¥ÍÑ…¹”ı€ƒ
+Üƒ²‚²Ê€€‘íµ½¹•ä¹‘¥ÍÑ…¹”¹Ñ½¥á• Ä¥õ­µ€èœôğ½Íµ…±°øğ½‘¥Øøğ½¡•…‘•Èøñ‘¥Ø±…ÍÌô‰ÉĞµ±¥ÍĞˆøñ‘¥Ø±…ÍÌô‰ÉĞµ…Éˆøñ‘¥Ø±…ÍÌô‰ÉĞµÑ°ˆø‘íÉ…¥±ôğ½‘¥Øøğ½‘¥Øøğ½‘¥ØøñÀ±…ÍÌô‰½ÁÌµ¡¥¹Ğˆû²‚²ÊƒªÎğƒªâÃ²Â£²v`ƒ².“²‚pƒ².sªÂ¶Fs®–ğƒ²^ÃªÊÃ¶VpƒªÊÃªÎó²z®.#®.¸ƒ²vó®Âc²^Ó²Â ƒ²jÓ²zªÎğƒªÆÃ®š³®æ®† ƒ²‚²Ê€ƒ²jÓ²z²vƒ¶V§²
+Ã¶Z#²*×®.#®.¸ğ½Àøñ™½½Ñ•È±…ÍÌô‰µÈµÉ•ÍÕ±Ğµ…Ñ¥½¹Ìˆøñ‰ÕÑÑ½¸½¹±¥¬ô‰}µÉM¡…É•I½ÕÑ” ¤ˆûªÎ×²rƒ¶VcªâÀğ½‰ÕÑÑ½¸øñ‰ÕÑÑ½¸±…ÍÌô‰ÁÉ¥µ…Éäˆ½¹±¥¬ô‰}µÉ½ÕÍM•…É  ¤ˆû®.“®–àƒªÊ÷®†pƒ®ÎÓªâÀ€ñÍÁ…¸ûŠHğ½ÍÁ…¸øğ½‰ÕÑÑ½¸øğ½™½½Ñ•Èøğ½Í•Ñ¥½¸ù€ì)ô)™Õ¹Ñ¥½¸Í•…É¡5•ÑÉ½I½ÕÑ”¡•á±Õ‘•‘A¥‘Ì±É½ÕÑ•ÑÑ•µÁĞôÀ¥ì(€½¹ÍĞ½ÕĞõ‘½Õµ•¹Ğ¹•Ñ±•µ•¹Ñ	å% µÈµÉ•ÍÕ±Ğœ¤ì¥˜ …½ÕĞ¥É•ÑÕÉ¸ì(€½¹ÍĞ™É½´ô¡}µÉÉ½µñğœœ¤¹ÑÉ¥´ ¤°Ù¥„ô¡}µÉY¥…ñğœœ¤¹ÑÉ¥´ ¤°Ñ¼ô¡}µÉQ½ñğœœ¤¹ÑÉ¥´ ¤ì(€¥˜ …™É½µñğ…Ñ¼¥í½ÕĞ¹¥¹¹•É!Q50ôœñ‘¥Ø±…ÍÌô‰µÈµ¡¥¹Ğˆû²Ús®Âs²^·ªÎğƒ®>²Â§²^·²vƒ®ª£®F@ƒ²z®‚—¶Vc²ã²jP¸ğ½‘¥ØøœíÉ•ÑÕÉ¸íô(€¥˜¡}µÉQÉ…¹ÍÁ½ÉÑ5½‘”ôôô¥¹Ñ•É…Ñ•œ¥É•ÑÕÉ¸Í•…É¡%¹Ñ•É…Ñ•‘I½ÕÑ”¡™É½´±Ù¥„±Ñ¼¤ì(€¥˜ …}µÉQÉ…¹ÍÁ½ÉÑ¥±Ñ•ÉÌ¹Ñà¥í½¹ÍĞÉ…Á õ}µ•ÑÉ½É…Á  ¤±™¥±Ñ•É•õ¹•ÜM•Ğ¡•á±Õ‘•‘A¥‘Íññmt¤í=‰©•Ğ¹Ù…±Õ•Ì¡É…Á ¹Á…ÑÑ•É¹Ì¤¹™½É… ¡Á…ÑÑ•É¸ôùí¥˜ ½yQ` üèµğ¤½¤¹Ñ•ÍĞ¡É…Á ¹±¥¹•	å%‘mÁ…ÑÑ•É¸¹±¥‘tü¹¹…µ•ñğœœ¤¥™¥±Ñ•É•¹…‘¡Á…ÑÑ•É¸¹¥¤íô¤í•á±Õ‘•‘A¥‘Ìõ™¥±Ñ•É•íô(€½¹ÍĞÈõ}µÉA±…¹¹•‘I½ÕÑ”¡™É½´±Ù¥„±Ñ¼±}µÉ5½‘”±•á±Õ‘•‘A¥‘Ì¤ì(€¥˜¡È¹•ÉÈôôôÍ…µ”œ¥í½ÕĞ¹¥¹¹•É!Q50ôœñ‘¥Ø±…ÍÌô‰µÈµ¡¥¹Ğˆû²Ús®Âs²^·ªÎğƒ®>²Â§²^·²vĞƒªÂg²*×®.#®.¸ğ½‘¥ØøœíÉ•ÑÕÉ¸íô(€¥˜¡È¹•ÉÈôôô¹½MÑ¸œ¥í½¹ÍĞ‰…õ}µ•ÑÉ½É…Á  ¤¹ÍÑ¹1¥¹•Ím™É½µtıÑ¼é™É½´í½ÕĞ¹¥¹¹•É!Q50õ€ñ‘¥Ø±…ÍÌô‰µÈµ¡¥¹Ğˆû²‚²Ê€ƒ®ã²ƒ²^@€ñˆø‘í}½ÁÍÍŒ¡‰…¥ôğ½ˆøƒ²^·²vĞƒ²^²*×®.#®.¸ƒ²^·®ª²vƒ¶fW²vã¶Vc²ã²jP¸ğ½‘¥Øù€íÉ•ÑÕÉ¸íô(€¥˜¡È¹•ÉÉñğ…È¹Í•µ•¹ÑÍñğ…È¹Í•µ•¹ÑÌ¹±•¹Ñ ¥í½ÕĞ¹¥¹¹•É!Q50ôœñ‘¥Ø±…ÍÌô‰µÈµ¡¥¹ĞˆûªÊ÷®†s®–ğƒ²Âû²vƒ²"`ƒ²^²*×®.#®.¸ğ½‘¥ØøœíÉ•ÑÕÉ¸íô(€½¹ÍĞõ}µ•ÑÉ½É…Á  ¤ì(€½¹ÍĞÍÉÙ5¥¸õ´ôø  ¡´´ÈĞÀ¤”ÄĞĞÀ¤¬ÄĞĞÀ¤”ÄĞĞÀì(€½¹ÍĞ™µĞõ´ôùí´ô ¡5…Ñ ¹É½Õ¹¡´¤¤”ÄĞĞÀ¬ÄĞĞÀ¤”ÄĞĞÀíÉ•ÑÕÉ¸€‘í5…Ñ ¹™±½½È¡´¼ØÀ¥ôè‘íMÑÉ¥¹œ¡´”ØÀ¤¹Á…‘MÑ…ÉĞ È°œÀœ¥õ€íôì(€½¹ÍĞ‘ÕÉµĞõ´ôùí½¹ÍĞ õ5…Ñ ¹™±½½È¡´¼ØÀ¤íÉ•ÑÕÉ¸ ı€‘í¡÷².sªÂ€‘í´”ØÁ÷®Ú€é€‘íµ÷®Ú€íôì(€½¹ÍĞÍ•±•Ñ•‘±½¬ô¡}µÉQ¥µ•ññ}µÉ•™…Õ±ÑQ¥µ” ¤¤¹ÍÁ±¥Ğ œèœ¤¹µ…À¡9Õµ‰•È¤ì(€½¹ÍĞÍ•±•Ñ•‘MÉØõÍÉÙ5¥¸ ¡Í•±•Ñ•‘±½­lÁuñğÀ¤¨ØÀ¬¡Í•±•Ñ•‘±½­lÅuñğÀ¤¤ì(€½¹ÍĞa	UôÈì€¼¼ƒ¶fc²*äƒ®>®ÎĞƒ®Ê¶6ğ£®Ú¤(€€¼¼ƒŠRŠR ƒ².“²‚pƒ²jÓ¶Z$ƒ®6Ã²vÓ¶Ã®†pƒªÖ³ªÂ®Îƒ®.“²v0ƒ²^Ó²Â ƒ¶C²$ƒŠRŠR (€½¹ÍĞ±•Ìõmtí±•ĞÉ•…±=¬õÈ¹Í•µ•¹ÑÌ¹±•¹Ñ øÀ±•¹‘•‘Ğõ¹Õ±°±™…¥±•‘A¥õ¹Õ±°ì(€¥˜¡}µÉ‘•5½‘”ôôô±…ÍĞœ¥ì(€€€½¹ÍĞ±…Ñ•ÍÑ1•Ìõ}µÉ1…Ñ•ÍÑ•Á…ÉÑ)½ÕÉ¹•ä¡È¹Í•µ•¹ÑÌ±±a	U¤ì(€€€¥˜¡±…Ñ•ÍÑ1•Ì¥±•Ì¹ÁÕÍ  ¸¸¹±…Ñ•ÍÑ1•Ì¤í•±Í”íÉ•…±=¬õ™…±Í”í™…¥±•‘A¥õÈ¹Í•µ•¹ÑÍlÁtü¹Á¥íô(€õ•±Í”¥˜¡}µÉ‘•5½‘”ôôô¹½Éµ…°œ˜™}µÉQ¥µ•5½‘”ôôô…ÉÉ¥Ù”œ¥ì(€€€±•Ğ‰•™½É•MÉØõÍ•±•Ñ•‘MÉØì(€€€™½È¡±•Ğ¤õÈ¹Í•µ•¹ÑÌ¹±•¹Ñ ´Äí¤øôÀí¤´´¥í½¹ÍĞÌõÈ¹Í•µ•¹ÑÍm¥t±°õ¹±¥¹•	å%‘mÌ¹±¥‘uññí¹…µ”èœüœ±½±½ÈèœŒáˆäĞå”ô±ÍÙŒõ}µ•ÑÉ½M•M•ÉÙ¥•	•™½É”¡°¹¹…µ”±Ì¹ÍÑ¹ÍlÁt±Ì¹ÍÑ¹Ì¹…Ğ ´Ä¤±‰•™½É•MÉØ¤í¥˜ …ÍÙŒ¥íÉ•…±=¬õ™…±Í”í™…¥±•‘A¥õÌ¹Á¥í‰É•…¬íõ±•Ì¹Õ¹Í¡¥™Ğ¡í°±Í•µ•¹ĞéÌ±‰½…ÉéÌ¹ÍÑ¹ÍlÁt±…±¥¡ĞéÌ¹ÍÑ¹Ì¹…Ğ ´Ä¤°¸¸¹ÍÙô¤í‰•™½É•MÉØõÍÙŒ¹‘Ìµa	Uíô(€õ•±Í•ì(€€€±•Ğ…™Ñ•ÉMÉØõ}µÉ‘•5½‘”ôôô™¥ÉÍĞœüÀéÍ•±•Ñ•‘MÉØì(€€€™½È¡½¹ÍĞÌ½˜È¹Í•µ•¹ÑÌ¥í½¹ÍĞ°õ¹±¥¹•	å%‘mÌ¹±¥‘uññí¹…µ”èœüœ±½±½ÈèœŒáˆäĞå”ô±ÍÙŒõ}µ•ÑÉ½M•M•ÉÙ¥”¡°¹¹…µ”±Ì¹ÍÑ¹ÍlÁt±Ì¹ÍÑ¹Ì¹…Ğ ´Ä¤±…™Ñ•ÉMÉØ±Ì¹Á¥¤í¥˜ …ÍÙŒ¥íÉ•…±=¬õ™…±Í”í™…¥±•‘A¥õÌ¹Á¥í•¹‘•‘Ğõ±•Ì¹…Ğ ´Ä¤ü¹…±¥¡Ñññ™É½´í‰É•…¬íõ±•Ì¹ÁÕÍ ¡í°±Í•µ•¹ĞéÌ±‰½…ÉéÌ¹ÍÑ¹ÍlÁt±…±¥¡ĞéÌ¹ÍÑ¹Ì¹…Ğ ´Ä¤°¸¸¹ÍÙô¤í…™Ñ•ÉMÉØõÍÙŒ¹…Ì­a	Uíô(€ô(€¥˜ …É•…±=¬˜™™…¥±•‘A¥˜™É½ÕÑ•ÑÑ•µÁĞğà¥ì(€€€½¹ÍĞ‰±½­•õ¹•ÜM•Ğ¡•á±Õ‘•‘A¥‘Íññmt¤í‰±½­•¹…‘¡™…¥±•‘A¥¤ì(€€€½¹ÍĞ…±Ñ•É¹…Ñ¥Ù”õ}µÉA±…¹¹•‘I½ÕÑ”¡™É½´±Ù¥„±Ñ¼±}µÉ5½‘”±‰±½­•¤ì(€€€¥˜ ……±Ñ•É¹…Ñ¥Ù”¹•ÉÈ˜™…±Ñ•É¹…Ñ¥Ù”¹Í•µ•¹ÑÌü¹±•¹Ñ ¥É•ÑÕÉ¸Í•…É¡5•ÑÉ½I½ÕÑ”¡‰±½­•±É½ÕÑ•ÑÑ•µÁĞ¬Ä¤ì(€ô(€±•ĞÉ…¥°ôœœ°¡•…‘ÕÈ°¡•…‘5•Ñ„°™½½Ğì(€€¼¼ƒ®ª§²‚²ªæ3² ƒ²^ÃªÊÃ®Bc² ƒ²V+®6S®vó®>ƒ².“²‚s®†pƒ¶ ƒ²"`ƒ²z#®*Pƒ®#²®$ƒªÖ³ªÂªæ3²®*PƒªŞã®2®†pƒªŞã®šÃ®.¸(€±•Ì¹™½É…  ¡±œ±¤¤ôùì(€€€€€½¹ÍĞÍ•5¥¸õ±œ¹…Ìµ±œ¹‘Ìì(€€€€€½¹ÍĞ•áÀõ±œ¹±ÌôôôÈüœñÍÁ…¸±…ÍÌô‰µÑˆµ•áÀµÑˆµ•áÀ´µĞˆû¶*çªâ$ğ½ÍÁ…¸øœé±œ¹±ÌôôôÄüœñÍÁ…¸±…ÍÌô‰µÑˆµ•áÀˆûªâ'¶Z$ğ½ÍÁ…¸øœèœœì(€€€€€½¹ÍĞ•‘”õ±œ¹¥Í¥ÉÍĞüœñÍÁ…¸±…ÍÌô‰ÉĞµ•‘”µÑ…œ™¥ÉÍĞˆû²Ê¯²Â ğ½ÍÁ…¸øœé±œ¹¥Í1…ÍĞüœñÍÁ…¸±…ÍÌô‰ÉĞµ•‘”µÑ…œ±…ÍĞˆû®'²Â ğ½ÍÁ…¸øœèœœì(€€€€€½¹ÍĞ±¥¹•ÉœõMÑÉ¥¹œ¡±œ¹°¹¹…µ”¤¹É•Á±…” ½qp½œ°qqqpœ¤¹É•Á±…” ¼œ½œ°‰qpœˆ¤ì(€€€€€½¹ÍĞ‰½…É‘ÉœõMÑÉ¥¹œ¡±œ¹‰½…É¤¹É•Á±…” ½qp½œ°qqqpœ¤¹É•Á±…” ¼œ½œ°‰qpœˆ¤ì(€€€€€½¹ÍĞ…±¥¡ÑÉœõMÑÉ¥¹œ¡±œ¹…±¥¡Ğ¤¹É•Á±…” ½qp½œ°qqqpœ¤¹É•Á±…” ¼œ½œ°‰qpœˆ¤ì(€€€€€½¹ÍĞ™¥¹…±1•œõ¤ôôõ±•Ì¹±•¹Ñ ´Äì(€€€€€½¹ÍĞÕÑ=™˜õ™¥¹…±1•œ˜˜…É•…±=¬ì(€€€€€É…¥°¬õ€ñ‘¥Ø±…ÍÌô‰ÉĞµ¹½‘”ˆÍÑå±”ôˆ´µ±Œè‘í±œ¹°¹½±½Éôˆø(€€€€€€€€ñ‘¥Ø±…ÍÌô‰ÉĞµÑ¥µ”ˆøñˆø‘í™µĞ¡±œ¹‘•À¥ôğ½ˆøñ‘¥Ø±…ÍÌô‰ÉĞµÑ¥µ”µ±…‰•°ˆøñÍµ…±°û²Ús®Âpğ½Íµ…±°ø‘í•‘•ôğ½‘¥Øøğ½‘¥Øø(€€€€€€€€ñ‘¥Ø±…ÍÌô‰ÉĞµÉ…¥°ˆøñÍÁ…¸±…ÍÌô‰ÉĞµ‘½ĞÉĞµ‰½…ÉÉĞµµ‘½Ğˆøğ½ÍÁ…¸øñÍÁ…¸±…ÍÌô‰ÉĞµÍ•œˆøğ½ÍÁ…¸øğ½‘¥Øø(€€€€€€€€ñ‘¥Ø±…ÍÌô‰ÉĞµ¥¹™¼ˆø(€€€€€€€€€€ñ‰ÕÑÑ½¸ÑåÁ”ô‰‰ÕÑÑ½¸ˆ±…ÍÌô‰ÉĞµÍÑ¸ÉĞµÍÑ¸µ±¥¹¬ˆ½¹±¥¬ô‰½Á•¹5•ÑÉ½I½ÕÑ•Q¥µ•Ñ…‰±” œ‘í‰½…É‘Éôœ°œ‘í±¥¹•Éôœ°‘í±œ¹ÍÙô°‘í±œ¹‘•Áô°‘í±œ¹¬Áô°‘í±œ¹¬Åô¤ˆø‘í}½ÁÍÍŒ¡±œ¹‰½…É¥ôñÍÁ…¸±…ÍÌô‰ÉĞµ¡•ØˆûŠèğ½ÍÁ…¸øğ½‰ÕÑÑ½¸ø(€€€€€€€€€€ñ‘¥Ø±…ÍÌô‰ÉĞµÍÕˆˆø‘í•áÁôñÍÁ…¸±…ÍÌô‰ÉĞµ±¡¥ÀˆÍÑå±”ô‰‰…­É½Õ¹è‘í±œ¹°¹½±½Éôˆø‘í}½ÁÍÍŒ¡±œ¹°¹¹…µ”¥ôğ½ÍÁ…¸ø€‘í}½ÁÍÍŒ¡±œ¹‘•ÍĞ¥÷¶Z$ğ½‘¥Øø(€€€€€€€€€€ñ‘¥Ø±…ÍÌô‰ÉĞµ¹Ğˆø‘í±œ¹¹MÑ½ÁÍ÷ªÂpƒ²^´ƒ
+Ü€‘íÍ•5¥¹÷®Ú‘í±œ¹Ù¥„¹±•¹Ñ ı€€ñÍÁ…¸±…ÍÌô‰ÉĞµÙ¥„µÑœˆ½¹±¥¬ô‰Ñ¡¥Ì¹Á…É•¹Ñ±•µ•¹Ğ¹¹•áÑ±•µ•¹ÑM¥‰±¥¹œ¹±…ÍÍ1¥ÍĞ¹Ñ½±” ½Á•¸œ¤ˆûªÊ÷²rƒ²^´ƒŠZøğ½ÍÁ…¸ù€èœôğ½‘¥Øø(€€€€€€€€€€‘í±œ¹Ù¥„¹±•¹Ñ ı€ñ‘¥Ø±…ÍÌô‰ÉĞµÙ¥„ˆø‘í±œ¹Ù¥„¹µ…À¡}½ÁÍÍŒ¤¹©½¥¸ œƒ
+Ü€œ¥ôğ½‘¥Øù€èœô(€€€€€€€€ğ½‘¥Øøğ½‘¥Øù€ì(€€€€€É…¥°¬õ€ñ‘¥Ø±…ÍÌô‰ÉĞµ¹½‘”ÉĞµ±•œµ…ÉÉ¥Ù”‘í™¥¹…±1•œüœÉĞµ™¥¹…°µ…ÉÉ¥Ù”œèœô‘íÕÑ=™˜üœÉĞµÍ•ÉÙ¥”µ•¹‘•œèœôˆÍÑå±”ôˆ´µ±Œè‘í±œ¹°¹½±½Éôˆøñ‘¥Ø±…ÍÌô‰ÉĞµÑ¥µ”ˆøñˆø‘í™µĞ¡±œ¹…ÉÈ¥ôğ½ˆøñ‘¥Ø±…ÍÌô‰ÉĞµÑ¥µ”µ±…‰•°ˆøñÍµ…±°ø‘íÕÑ=™˜üŸ²jÓ¶Z$ƒ²Š®0œèŸ®>²Â¤ôğ½Íµ…±°øğ½‘¥Øøğ½‘¥Øøñ‘¥Ø±…ÍÌô‰ÉĞµÉ…¥°ˆøñÍÁ…¸±…ÍÌô‰ÉĞµ‘½ĞÉĞµ…±¥¡Ğˆøğ½ÍÁ…¸øñÍÁ…¸±…ÍÌô‰ÉĞµÍ•œˆøğ½ÍÁ…¸øğ½‘¥Øøñ‘¥Ø±…ÍÌô‰ÉĞµ¥¹™¼ˆøñ‰ÕÑÑ½¸ÑåÁ”ô‰‰ÕÑÑ½¸ˆ±…ÍÌô‰ÉĞµÍÑ¸ÉĞµÍÑ¸µ±¥¹¬ˆ½¹±¥¬ô‰½Á•¹5•ÑÉ½I½ÕÑ•Q¥µ•Ñ…‰±” œ‘í…±¥¡ÑÉôœ°œ‘í±¥¹•Éôœ°‘í±œ¹ÍÙô°‘í±œ¹…±¥¡Ñ•Áô°‘í±œ¹¬Áô°‘í±œ¹¬Åô¤ˆø‘í}½ÁÍÍŒ¡±œ¹…±¥¡Ğ¥ôñÍÁ…¸±…ÍÌô‰ÉĞµ¡•ØˆûŠèğ½ÍÁ…¸ø‘íÕÑ=™˜üœñÍÁ…¸±…ÍÌô‰ÉĞµ•¹‘•µÑ…œˆû²^³ªâÃªæ3² ƒ²jÓ¶Z$ğ½ÍÁ…¸øœèœôğ½‰ÕÑÑ½¸ø‘íÕÑ=™˜üœñ‘¥Ø±…ÍÌô‰ÉĞµÍÕˆˆû²v×²vğƒ²b“²‚€Ó².pƒ²‚ƒ²^ÃªÊÀƒ²^Ó²Â£ªÂ ƒ²^²ZĞƒ²vÓ¶nƒªÖ³ªÂ²v ƒ²vÓ®>g¶V€ƒ²"`ƒ²^²*×®.#®.¸ğ½‘¥Øøœèœôğ½‘¥Øøğ½‘¥Øù€ì(€€€€€¥˜¡¤ñ±•Ì¹±•¹Ñ ´Ä¥ì½¹ÍĞİ…¥Ğõ±•Ím¤¬Åt¹‘Ìµ±œ¹…Ìì(€€€€€€€É…¥°¬õ€ñ‘¥Ø±…ÍÌô‰ÉĞµ¹½‘”ÉĞµİ…±¬ˆøñ‘¥Ø±…ÍÌô‰ÉĞµÑ¥µ”ˆøñÍµ…±°û¶fc²*äğ½Íµ…±°øğ½‘¥Øøñ‘¥Ø±…ÍÌô‰ÉĞµÉ…¥°ˆøñÍÁ…¸±…ÍÌô‰ÉĞµÍ•œÉĞµ‘…Í ˆøğ½ÍÁ…¸øñÍÁ…¸±…ÍÌô‰ÉĞµİ…±¬µ¥ŒˆûŠPğ½ÍÁ…¸øğ½‘¥Øøñ‘¥Ø±…ÍÌô‰ÉĞµ¥¹™¼ˆøñ‘¥Ø±…ÍÌô‰ÉĞµÍÕˆÉĞµá™•Èˆø‘í}½ÁÍÍŒ¡±œ¹…±¥¡Ğ¥÷²^´ƒ¶fc²*äƒ
+Üƒ®2ªâÀ€‘íİ…¥Ñ÷®Úğ½‘¥Øøğ½‘¥Øøğ½‘¥Øù€ì(€€€€€ô(€ô¤ì(€¥˜¡É•…±=¬¥ì(€€€½¹ÍĞ±…ÍĞõ±•Ím±•Ì¹±•¹Ñ ´Åtì(€€€½¹ÍĞÑ½Ñ…°õ±…ÍĞ¹…Ìµ±•ÍlÁt¹‘Ìì(€€€¡•…‘ÕÈõ‘ÕÉµĞ¡Ñ½Ñ…°¤ì(€€€½¹ÍĞµ•ÑÉ½-´õ}µÉ5•ÑÉ½¥ÍÑ…¹”¡È¹Í•µ•¹ÑÌ¤±™…É”õ}µÉ5•ÑÉ½…É”¡µ•ÑÉ½-´¤ì(€€€¡•…‘5•Ñ„õ€‘íÈ¹ÑÉ…¹Í™•ÉÌøÀıƒ¶fc²*ä€‘íÈ¹ÑÉ…¹Í™•ÉÍ÷¶j1€èŸ²¶Ôôƒ
+Ü€ñÍÁ…¸±…ÍÌô‰ÉĞµµ½¹¼ˆø‘í™µĞ¡±•ÍlÁt¹‘•À¥÷ŠH‘í™µĞ¡±…ÍĞ¹…ÉÈ¥ôğ½ÍÁ…¸øƒ
+Üƒ²b#²€‘í™…É”¹Ñ½1½…±•MÑÉ¥¹œ ¥÷²n@ƒ
+Ü€‘íµ•ÑÉ½-´¹Ñ½¥á• Ä¥õ­µ€ì(€€€™½½Ğõƒ².“²‚pƒ²jÓ¶Z$ƒ².sªÂ¶FpƒªâÃ²’ ƒ
+Ü€‘í}µÉ‘•5½‘”ôôô™¥ÉÍĞœüŸ²Ê¯²Â ƒ²^ÃªÊÀœé}µÉ‘•5½‘”ôôô±…ÍĞœüŸ®'²Â ƒ²^ÃªÊÀœé}µÉQ¥µ•5½‘”ôôô…ÉÉ¥Ù”œüŸ²ƒ¶tƒ².sªÂªæ3² ƒ®>²Â¤œèŸ²ƒ¶tƒ².sªÂƒ²vÓ¶nƒ²Ús®Âpôƒ
+Üƒ²v×²vğƒ²b“²‚€Ó².pƒ²b²^ƒ²Š®0¹€ì(€€€¥˜¡}µÉ‘•5½‘”„ôô¹½Éµ…°œ¥}µÉM¡½İI•Í½±Ù•‘Q¥µ”¡±•ÍlÁt¹‘•À¤ì(€ô•±Í”ì(€€€¥˜ …±•Ì¹±•¹Ñ ¥í½ÕĞ¹¥¹¹•É!Q50ôœñ‘¥Ø±…ÍÌô‰µÈµ¡¥¹Ğˆû²ƒ¶w¶Vpƒ²b²^²vó²v`ƒ²jÓ¶Z$ƒ².sªÂ¶Fs®†pƒ²^ÃªÊÃ®Bc®*PƒªÊ÷®†s®–ğƒ²Âû²vƒ²"`ƒ²^²*×®.#®.¸ƒ².sªÂ²vÓ®
+`ƒ²^·®ª²vƒ¶fW²vã¶Vc²ã²jP¸ğ½‘¥ØøœíÉ•ÑÕÉ¸íô(€€€¡•…‘ÕÈôŸ²vÓ®>dƒªÂ®*”ƒªÖ³ªÂœí¡•…‘5•Ñ„õ€‘í™µĞ¡±•ÍlÁt¹‘•À¥ôƒŠH€´´è´µ€í™½½ĞôŸ®'²Â ƒ²jÓ¶Z'²vĞƒ®w®
+³²*×®.#®.¸ƒ¶Fs².s®Bpƒ®#²®$ƒ²^·ªæ3²®0ƒ²vÓ®>g¶V€ƒ²"`ƒ²z#²*×®.#®.¸œì(€ô(€}µÉ1…ÍÑ)½ÕÉ¹•äõí™É½´±Ù¥„±Ñ¼±µ…ÁQ¼éÉ•…±=¬ıÑ¼é±•Ì¹…Ğ ´Ä¤ü¹…±¥¡Ñññ™É½´±Í•µ•¹ÑÌéÉ•…±=¬ıÈ¹Í•µ•¹ÑÌé±•Ì¹µ…À¡°ôù°¹Í•µ•¹Ğ¤±±•Íôì(€½ÕĞ¹¥¹¹•É!Q50õ€(€€€€ñÍ•Ñ¥½¸±…ÍÌô‰µÈµÉ½ÕÑ”µÉ•ÍÕ±Ğ‘íÉ•…±=¬üœœèœÁ…ÉÑ¥…°ôˆø(€€€€€€ñ¡•…‘•È±…ÍÌô‰µÈµÉ•ÍÕ±Ğµ¡•…‘•Èˆøñ‘¥ØøñÍÑÉ½¹œø‘ím™É½´±Ù¥„±Ñ½t¹™¥±Ñ•È¡	½½±•…¸¤¹µ…À¡}½ÁÍÍŒ¤¹©½¥¸ œƒŠH€œ¥ôğ½ÍÑÉ½¹œøñÍÁ…¸±…ÍÌô‰‰…‘”‰±Õ”ˆø‘í}µÉ5½‘”ôôôÑ¥µ”œüŸ²Ös²0ƒ².sªÂœèŸ²Ös²0ƒ¶fc²*äôğ½ÍÁ…¸øğ½‘¥Øøñ‘¥Øøñˆø‘íÉ•…±=¬üŸ²Òt€œèœô‘í¡•…‘ÕÉôğ½ˆøñÍµ…±°ø‘í¡•…‘5•Ñ…ôğ½Íµ…±°øğ½‘¥Øøğ½¡•…‘•Èø(€€€€ñ‘¥Ø±…ÍÌô‰ÉĞµ±¥ÍĞˆøñ‘¥Ø±…ÍÌô‰ÉĞµ…Éˆø(€€€€€€ñ‘¥Ø±…ÍÌô‰ÉĞµÑ°ˆø‘íÉ…¥±ôğ½‘¥Øø(€€€€ğ½‘¥Øøğ½‘¥Øø(€€€€ñÀ±…ÍÌô‰½ÁÌµ¡¥¹Ğˆø‘í™½½Ñôğ½Àø(€€€€ñ™½½Ñ•È±…ÍÌô‰µÈµÉ•ÍÕ±Ğµ…Ñ¥½¹Ìˆøñ‰ÕÑÑ½¸ÑåÁ”ô‰‰ÕÑÑ½¸ˆ½¹±¥¬ô‰}µÉM¡…É•I½ÕÑ” ¤ˆûªÎ×²rƒ¶VcªâÀğ½‰ÕÑÑ½¸øñ‰ÕÑÑ½¸ÑåÁ”ô‰‰ÕÑÑ½¸ˆ½¹±¥¬ô‰}µÉ=Á•¹5…À µ…Àœ¤ˆû²®>²^C²pƒ®ÎÓªâÀğ½‰ÕÑÑ½¸øñ‰ÕÑÑ½¸ÑåÁ”ô‰‰ÕÑÑ½¸ˆ±…ÍÌô‰ÁÉ¥µ…Éäˆ½¹±¥¬ô‰}µÉ½ÕÍM•…É  ¤ˆû®.“®–àƒªÊ÷®†pƒ®ÎÓªâÀ€ñÍÁ…¸ûŠHğ½ÍÁ…¸øğ½‰ÕÑÑ½¸øğ½™½½Ñ•Èø(€€€€ğ½Í•Ñ¥½¸ù€ì)ô((¼¼ƒŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠV@(¼¼ƒÂ~jƒ¶G²*äƒ²^³²‚TƒŠPƒ².“².sªÂƒ²*ç²Â ƒ¶fS®¦Ğ€£ªâÃ²†Ğƒ²r²æ`ƒªÎ²
+Àƒ²z³¶fs²j¤°ƒ®ªÃ²z¶bT¤(¼¼ƒŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠV@)±•Ğ}©½ÕÉ¹•å9¼õ¹Õ±°°}©½ÕÉ¹•åQ¥µ•Èõ¹Õ±°°}©½ÕÉ¹•åA…•1½¬õ¹Õ±°ì(¼¼ƒ².sªÂƒ²z#®*Pƒ²‚W²Â ¿¶×ªÎó²^·²vƒ²zC²‚Tƒ®ÎÓ²‚W®Bpƒ®Ú²ró®†pƒ®Âc¶f`)™Õ¹Ñ¥½¸}©½ÕÉ¹•åMÑ½ÁÌ¡Ğ¥ì(€½¹ÍĞÉ…Üõmtì(€Ğ¹ÍÑ½ÁÌ¹™½É… ¡Ìôùì¥˜¡¡…ÍQ¥µ”¡Ì¹…ÉÈ¥ññ¡…ÍQ¥µ”¡Ì¹‘•À¤¥É…Ü¹ÁÕÍ ¡Ì¤ìô¤ì(€¥˜ …É…Ü¹±•¹Ñ ¥É•ÑÕÉ¸mtì(€½¹ÍĞ½É¥¥¹MÑ¸õÉ…İlÁt¹Ì°Ñ•ÉµMÑ¸õÉ…İmÉ…Ü¹±•¹Ñ ´Åt¹Ìì(€±•Ğ½™™Í•ĞôÀ°ÁÉ•Ù4ô´Äì(€É•ÑÕÉ¸É…Ü¹µ…À¡Ìôùì(€€€½¹ÍĞÉ„õÑ½5¥¸¡Ì¹…ÉÈ¤°ÉõÑ½5¥¸¡Ì¹‘•À¤ì(€€€½¹ÍĞÉ´õÉ„üıÉì(€€€¥˜¡É´„ôõ¹Õ±°˜™ÁÉ•Ù4øôÀ˜™É´ñÁÉ•Ù4´ØÀ¥½™™Í•Ğ¬ôÄĞĞÀì(€€€¥˜¡É´„ôõ¹Õ±°¥ÁÉ•Ù4õÉ´ì(€€€½¹ÍĞ¥Í=É¥¥¸õÌ¹Ìôôõ½É¥¥¹MÑ¸°¥ÍQ•É´õÌ¹ÌôôõÑ•ÉµMÑ¸ì(€€€É•ÑÕÉ¸íÌéÌ¹Ì°…ÉÈéÌ¹…ÉÈ°‘•ÀéÌ¹‘•À°(€€€€€¹½ÉµÉÈéÉ„„ôõ¹Õ±°ıÉ„­½™™Í•Ğé¹Õ±°°¹½Éµ•ÀéÉ„ôõ¹Õ±°ıÉ­½™™Í•Ğé¹Õ±°°(€€€€€¥ÍA…ÍÌè…¥Í=É¥¥¸˜˜…¥ÍQ•É´˜™¥ÍA…ÍÍMÑ½À¡Ğ±Ì¹Ì¤°¥Í=É¥¥¸°¥ÍQ•Éµôì(€ô¤ì)ô)™Õ¹Ñ¥½¸½Á•¹)½ÕÉ¹•ä¡¹¼¥ì(€½¹ÍĞĞõ•ÑQÉ…¥¹	å9¼¡¹¼¤ì¥˜ …Ğ¥É•ÑÕÉ¸ì(€}©½ÕÉ¹•å9¼õ¹¼ì(€±•Ğ½Øõ‘½Õµ•¹Ğ¹•Ñ±•µ•¹Ñ	å% ©½ÕÉ¹•äµ½Ù•É±…äœ¤ì(€¥˜ …½Ø¥ì(€€€½Øõ‘½Õµ•¹Ğ¹É•…Ñ•±•µ•¹Ğ ‘¥Øœ¤ì½Ø¹¥ô©½ÕÉ¹•äµ½Ù•É±…äœì½Ø¹±…ÍÍ9…µ”ô©½ÕÉ¹•äµ½Ù•É±…äœì(€€€½Ø¹¥¹¹•É!Q50õ€ñ‘¥Ø±…ÍÌô‰©½ÕÉ¹•äµÍ¡••Ğˆøñ‰ÕÑÑ½¸±…ÍÌô‰©½ÕÉ¹•äµ±½Í”ˆ½¹±¥¬ô‰±½Í•)½ÕÉ¹•ä ¤ˆ…É¥„µ±…‰•°ô‹®.¯ªâÀˆûŠrTğ½‰ÕÑÑ½¸øñ‘¥Ø¥ô‰©½ÕÉ¹•äµ‰½‘äˆøğ½‘¥Øøğ½‘¥Øù€ì(€€€½Ø¹…‘‘Ù•¹Ñ1¥ÍÑ•¹•È Á½¥¹Ñ•É‘½İ¸œ±”ôù”¹ÍÑ½ÁAÉ½Á……Ñ¥½¸ ¤¤ì(€€€½Ø¹…‘‘Ù•¹Ñ1¥ÍÑ•¹•È Ñ½Õ¡ÍÑ…ÉĞœ±”ôù”¹ÍÑ½ÁAÉ½Á……Ñ¥½¸ ¤±íÁ…ÍÍ¥Ù”éÑÉÕ•ô¤ì(€€€½Ø¹…‘‘Ù•¹Ñ1¥ÍÑ•¹•È Ñ½Õ¡µ½Ù”œ±”ôù”¹ÍÑ½ÁAÉ½Á……Ñ¥½¸ ¤±íÁ…ÍÍ¥Ù”éÑÉÕ•ô¤ì(€€€½Ø¹…‘‘Ù•¹Ñ1¥ÍÑ•¹•È ±¥¬œ±”ôùì”¹ÍÑ½ÁAÉ½Á……Ñ¥½¸ ¤ì¥˜¡”¹Ñ…É•Ğôôõ½Ø¥±½Í•)½ÕÉ¹•ä ¤ìô¤ì(€€€‘½Õµ•¹Ğ¹‰½‘ä¹…ÁÁ•¹‘¡¥±¡½Ø¤ì(€ô(€¥˜ …½Ø¹±…ÍÍ1¥ÍĞ¹½¹Ñ…¥¹Ì ½Á•¸œ¤¥ì(€€€½¹ÍĞ‰½‘äõ‘½Õµ•¹Ğ¹‰½‘ä°É½½Ğõ‘½Õµ•¹Ğ¹‘½Õµ•¹Ñ±•µ•¹Ğ°ÍÉ½±±dõİ¥¹‘½Ü¹ÍÉ½±±dì(€€€}©½ÕÉ¹•åA…•1½¬õì(€€€€€ÍÉ½±±d°(€€€€€‰½‘äéíÁ½Í¥Ñ¥½¸é‰½‘ä¹ÍÑå±”¹Á½Í¥Ñ¥½¸±Ñ½Àé‰½‘ä¹ÍÑå±”¹Ñ½À±±•™Ğé‰½‘ä¹ÍÑå±”¹±•™Ğ°(€€€€€€€É¥¡Ğé‰½‘ä¹ÍÑå±”¹É¥¡Ğ±İ¥‘Ñ é‰½‘ä¹ÍÑå±”¹İ¥‘Ñ ±½Ù•É™±½Üé‰½‘ä¹ÍÑå±”¹½Ù•É™±½İô°(€€€€€É½½Ñ=Ù•É™±½ÜéÉ½½Ğ¹ÍÑå±”¹½Ù•É™±½Ü(€€€ôì(€€€‰½‘ä¹±…ÍÍ1¥ÍĞ¹…‘ ©½ÕÉ¹•äµµ½‘…°µ½Á•¸œ¤ì(€€€‰½‘ä¹ÍÑå±”¹Ñ½Àõ€´‘íÍÉ½±±eõÁá€ì(€€€É½½Ğ¹ÍÑå±”¹½Ù•É™±½Üô¡¥‘‘•¸œì(€ô(€½Ø¹±…ÍÍ1¥ÍĞ¹…‘ ½Á•¸œ¤ì(€½¹ÍĞ©ˆõ‘½Õµ•¹Ğ¹•Ñ±•µ•¹Ñ	å% ©½ÕÉ¹•äµ‰½‘äœ¤ì¥˜¡©ˆ¥©ˆ¹}ÍÉ½±±•‘=¹”õ™…±Í”ì(€}É•¹‘•É)½ÕÉ¹•ä ¤ì(€}Í¡•‘Õ±•)½ÕÉ¹•åQ¥¬ ¤ì)ô(¼¼ƒ®“®Ú€Ã²Ò#²^@ƒ®{²ÚÀƒªÂÇ².€ƒ²*“²ò²’®)™Õ¹Ñ¥½¸}Í¡•‘Õ±•)½ÕÉ¹•åQ¥¬ ¥ì(€¥˜¡}©½ÕÉ¹•åQ¥µ•È¥±•…ÉQ¥µ•½ÕĞ¡}©½ÕÉ¹•åQ¥µ•È¤ì(€¥˜ …}©½ÕÉ¹•å9¼¥É•ÑÕÉ¸ì(€½¹ÍĞ¹½Üõ¹•Ü…Ñ” ¤ì(€½¹ÍĞµÌô ØÀµ¹½Ü¹•ÑM•½¹‘Ì ¤¤¨ÄÀÀÀµ¹½Ü¹•Ñ5¥±±¥Í•½¹‘Ì ¤ì(€}©½ÕÉ¹•åQ¥µ•ÈõÍ•ÑQ¥µ•½ÕĞ  ¤ôùì}É•¹‘•É)½ÕÉ¹•ä ¤ì}Í¡•‘Õ±•)½ÕÉ¹•åQ¥¬ ¤ìô°µÌ¤ì)ô)™Õ¹Ñ¥½¸±½Í•)½ÕÉ¹•ä ¥ì(€½¹ÍĞ½Øõ‘½Õµ•¹Ğ¹•Ñ±•µ•¹Ñ	å% ©½ÕÉ¹•äµ½Ù•É±…äœ¤ì(€¥˜¡½Ø¥½Ø¹±…ÍÍ1¥ÍĞ¹É•µ½Ù” ½Á•¸œ¤ì(€¥˜¡}©½ÕÉ¹•åA…•1½¬¥ì(€€€½¹ÍĞ‰½‘äõ‘½Õµ•¹Ğ¹‰½‘ä°É½½Ğõ‘½Õµ•¹Ğ¹‘½Õµ•¹Ñ±•µ•¹Ğ°±½¬õ}©½ÕÉ¹•åA…•1½¬ì(€€€‰½‘ä¹±…ÍÍ1¥ÍĞ¹É•µ½Ù” ©½ÕÉ¹•äµµ½‘…°µ½Á•¸œ¤ì(€€€=‰©•Ğ¹…ÍÍ¥¸¡‰½‘ä¹ÍÑå±”±±½¬¹‰½‘ä¤ì(€€€É½½Ğ¹ÍÑå±”¹½Ù•É™±½Üõ±½¬¹É½½Ñ=Ù•É™±½Üì(€€€İ¥¹‘½Ü¹ÍÉ½±±Q¼ À±±½¬¹ÍÉ½±±d¤ì(€€€}©½ÕÉ¹•åA…•1½¬õ¹Õ±°ì(€ô(€¥˜¡}©½ÕÉ¹•åQ¥µ•È¥í±•…ÉQ¥µ•½ÕĞ¡}©½ÕÉ¹•åQ¥µ•È¤í}©½ÕÉ¹•åQ¥µ•Èõ¹Õ±°íô(€}©½ÕÉ¹•å9¼õ¹Õ±°ì)ô)™Õ¹Ñ¥½¸}É•¹‘•É)½ÕÉ¹•å½É•…ÍĞ¡Ğ±¥Í=Á•¸õÑÉÕ”¥ì(€±•ĞÉ…Ñ”ô¸Ôì(€ÑÉåì(€€€½¹ÍĞ™¥ÉÍĞõĞ¹ÍÑ½ÁÌ¹™¥¹¡Ìôù¡…ÍQ¥µ”¡Ì¹‘•À¥ññ¡…ÍQ¥µ”¡Ì¹…ÉÈ¤¤ì(€€€½¹ÍĞ‘•Àõ™¥ÉÍĞü¡¡…ÍQ¥µ”¡™¥ÉÍĞ¹‘•À¤ı™¥ÉÍĞ¹‘•Àé™¥ÉÍĞ¹…ÉÈ¤èœœì(€€€¥˜¡ÑåÁ•½˜…±I•…±¥ÍÑ¥¥±±I…Ñ”ôôô™Õ¹Ñ¥½¸œ¥É…Ñ”õ…±I•…±¥ÍÑ¥¥±±I…Ñ”¡Ğ¹¹¼±Ñ½‘…å1½…±MÑÈ ¤±‘•À±Ğ¹É…‘”¤ì(€õ…Ñ ¡”¥íô(€É…Ñ”õ5…Ñ ¹µ…à À±5…Ñ ¹µ¥¸ Ä±É…Ñ”¤¤ì(€½¹ÍĞÁĞõ5…Ñ ¹É½Õ¹¡É…Ñ”¨ÄÀÀ¤ì(€½¹ÍĞ±•Ù•°õÉ…Ñ”øô¸äüŸ®“²jÀƒ¶bó²z„œéÉ…Ñ”øô¸ÜØüŸ¶bó²z„œéÉ…Ñ”øô¸ÔàüŸ®ÎÓ¶ÔœèŸ²^³²r€œì(€½¹ÍĞ±ÌõÉ…Ñ”øô¸äüÉ¥Ñ¥…°œéÉ…Ñ”øô¸ÜØü‰ÕÍäœéÉ…Ñ”øô¸Ôàü¹½Éµ…°œè…±´œì(€½¹ÍĞ¥¹Í¥¡ĞõÑåÁ•½˜}‘•±…åA…ÍÍ•¹•É%¹Í¥¡Ğôôô™Õ¹Ñ¥½¸œı}‘•±…åA…ÍÍ•¹•É%¹Í¥¡Ğ¡Ğ¤é¹Õ±°ì(€½¹ÍĞ™½É•…ÍÑ1½ÌõÑåÁ•½˜}Í¥µÙ•¹Ñ1½œôôô™Õ¹Ñ¥½¸œı}Í¥µÙ•¹Ñ1½œ¡Ğ±ÑÉÕ”¤émtì(€½¹ÍĞ™½É•…ÍÑ1½I½İÌõ™½É•…ÍÑ1½Ì¹Í±¥” À°ÈÀ¤(€€€€¹µ…À¡±¥¹”ôù€ñ‘¥Ø±…ÍÌô‰©Èµ™½É•…ÍĞµ±½œµÉ½Üˆø‘í}½ÁÍÍŒ¡±¥¹”¥ôğ½‘¥Øù€¤¹©½¥¸ œœ¤ì(€½¹ÍĞ‘•±…åY…±Õ”õ¥¹Í¥¡Ğü¹•ÍÑ¥µ…Ñ•‘•±…äı¥¹Í¥¡Ğ¹‘•±…åI…¹”é€‘í¥¹Í¥¡Ğü¹™½É•…ÍĞü¹ÁÉ½‰ñğÁô•€ì(€½¹ÍĞ‘•±…å1…‰•°õ¥¹Í¥¡Ğü¹•ÍÑ¥µ…Ñ•‘•±…äüŸ²b#²ƒ²²^Àƒ®ÊS²rœèŸ²²^ÀƒªÂ®*—²Äœì(€É•ÑÕÉ¸€ñ‘•Ñ…¥±Ì±…ÍÌô‰©Èµ™½É•…ÍĞµ…É€‘í±Íôˆ‘í¥Í=Á•¸üœ½Á•¸œèœôø(€€€€ñÍÕµµ…Éä±…ÍÌô‰©Èµ™½É•…ÍĞµ¡•…ˆø(€€€€€€ñ‘¥ØøñÍÁ…¸±…ÍÌô‰©Èµ™½É•…ÍĞµ¥½¸ˆûŠb¾â<ğ½ÍÁ…¸øñ‘¥Øøñˆû²b“®*c²v`ƒ²jÓ¶Z$ƒ²b#²ğ½ˆøñÍµ…±°û²Ús®Âpƒ²‚ƒ²b#²â„ƒ
+Üƒ²jÓ¶Z$ƒ².s²zDƒ¶nƒ²zC®>dƒ²"£ªæ ğ½Íµ…±°øğ½‘¥Øøğ½‘¥Øø(€€€€€€ñ‘¥Ø±…ÍÌô‰©Èµ™½É•…ÍĞµ¡•…µµ•Ñ„ˆøñÍÁ…¸±…ÍÌô‰©Èµ™½É•…ÍĞµ½¹™¥‘•¹”ˆû².ƒ®ŠÃ®>€‘í¥¹Í¥¡Ğü¹½¹™¥‘•¹•ñğœ´ô”ğ½ÍÁ…¸øñÍÁ…¸±…ÍÌô‰©Èµ™½É•…ÍĞµ¡•ÙÉ½¸ˆûŠ2ğ½ÍÁ…¸øğ½‘¥Øø(€€€€ğ½ÍÕµµ…Éäø(€€€€ñ‘¥Ø±…ÍÌô‰©Èµ™½É•…ÍĞµÉ¥ˆø(€€€€€€ñ‘¥Ø±…ÍÌô‰©Èµ™½É•…ÍĞµµ•ÑÉ¥Œˆø(€€€€€€€€ñÍÁ…¸û²b#²ƒ¶bó²z‡®>ğ½ÍÁ…¸øñˆø‘í±•Ù•±ôğ½ˆøñ•´ø‘íÁÑô”ğ½•´ø(€€€€€€€€ñ‘¥Ø±…ÍÌô‰©Èµ™½É•…ÍĞµ‰…Èˆøñ¤ÍÑå±”ô‰İ¥‘Ñ è‘íÁÑô”ˆøğ½¤øğ½‘¥Øø(€€€€€€ğ½‘¥Øø(€€€€€€ñ‘¥Ø±…ÍÌô‰©Èµ™½É•…ÍĞµµ•ÑÉ¥Œ‘•±…äˆø(€€€€€€€€ñÍÁ…¸ø‘í‘•±…å1…‰•±ôğ½ÍÁ…¸øñˆø‘í¥¹Í¥¡Ğü¹™½É•…ÍĞü¹±…‰•±ñğŸ®
+»²v0ôğ½ˆøñ•´ø‘í‘•±…åY…±Õ•ôğ½•´ø(€€€€€€€€ñ‘¥Ø±…ÍÌô‰©Èµ™½É•…ÍĞµ‰…Èˆøñ¤ÍÑå±”ô‰İ¥‘Ñ è‘í¥¹Í¥¡Ğü¹™½É•…ÍĞü¹ÁÉ½‰ñğÁô”ˆøğ½¤øğ½‘¥Øø(€€€€€€ğ½‘¥Øø(€€€€ğ½‘¥Øø(€€€€ñ‘¥Ø±…ÍÌô‰©Èµ™½É•…ÍĞµÍÕµµ…ÉäˆûÂ~F€‘í}½ÁÍÍŒ¡¥¹Í¥¡Ğü¹Á…ÍÍ•¹•ÉMÕµµ…ÉåñğŸ¶b²z°ƒ²b#²â‡²ƒ²*çªÂtƒ²^³²‚W²^@ƒ®¾ã²æc®*Pƒ²b¶Z—²v ƒªÆÃ²v`ƒ²^²*×®.#®.¸œ¥ôğ½‘¥Øø(€€€€ñ‘•Ñ…¥±Ì±…ÍÌô‰©Èµ™½É•…ÍĞµ‘•Ñ…¥°ˆø(€€€€€€ñÍÕµµ…Éäû²b#²ƒ²²^Àƒ®†sªŞàƒ®ÎÓªâÀ€ñÍÁ…¸ûŠèğ½ÍÁ…¸øğ½ÍÕµµ…Éäø(€€€€€€ñ‘¥Ø±…ÍÌô‰©Èµ™½É•…ÍĞµ‘•Ñ…¥°µ‰½‘äˆø(€€€€€€€€ñ‘¥Ø±…ÍÌô‰©Èµ™½É•…ÍĞµ‘•Ñ…¥°µÑ¥Ñ±”ˆû²jÓ¶Z$ƒ²‚ƒ²b#²ƒªÖ³ªÂ®ÎƒªâÃ®†tğ½‘¥Øø(€€€€€€€€ñ‘¥Ø±…ÍÌô‰©Èµ™½É•…ÍĞµ±½œˆø‘í™½É•…ÍÑ1½I½İÍñğœñ‘¥Ø±…ÍÌô‰©Èµ™½É•…ÍĞµ•µÁÑäˆû¶b²z°ƒ²b#²‚W®Bpƒ²²^Àƒ²vÓ®Ê“¶*ãªÂ ƒ²^²*×®.#®.¸ğ½‘¥Øøôğ½‘¥Øø(€€€€€€€€ñ‘¥Ø±…ÍÌô‰©Èµ™½É•…ÍĞµ™½½Ğˆû²jÓ¶Z$ƒ²‚ƒ².s®º³®‚#²vÓ²`ƒªâÃ²’ ƒ
+Üƒ².“²‚pƒ²jÓ¶Z$ƒ²’G²^C®*PƒªÒ²â„ƒ²¶f§²^@ƒ®RÃ®vğƒ®†sªŞã²f ƒ²²^Àƒ².sªÂ²vĞƒ®.“².pƒªÎ²
+Ã®B§®.#®.¸ğ½‘¥Øø(€€€€€€ğ½‘¥Øø(€€€€ğ½‘•Ñ…¥±Ìø(€€ğ½‘•Ñ…¥±Ìù€ì)ô)™Õ¹Ñ¥½¸}É•¹‘•É)½ÕÉ¹•ä ¥ì(€½¹ÍĞ‰½‘äõ‘½Õµ•¹Ğ¹•Ñ±•µ•¹Ñ	å% ©½ÕÉ¹•äµ‰½‘äœ¤ì¥˜ …‰½‘åñğ…}©½ÕÉ¹•å9¼¥É•ÑÕÉ¸ì(€€¼¼ƒ²zC®>dƒªÂÇ².€ƒ².pƒ¶b²z°ƒ²*“¶³®†ƒ²r²æ`ƒ®ÎÓ²†Ğ£¶bó²z@ƒ® ƒ²r®†pƒ¶*®*Pƒ®²ã²‚pƒ®Â§² ¤(€½¹ÍĞ}ÁÉ•ÙMŒõ‰½‘ä¹ÅÕ•ÉåM•±•Ñ½È œ¹©ÈµÍÉ½±°œ¤ì(€½¹ÍĞ}ÁÉ•ÙQ½Àõ}ÁÉ•ÙMŒı}ÁÉ•ÙMŒ¹ÍÉ½±±Q½ÀèÀì(€½¹ÍĞ}™½É•…ÍÑ°õ‰½‘ä¹ÅÕ•ÉåM•±•Ñ½È œ¹©Èµ™½É•…ÍĞµ…Éœ¤ì(€½¹ÍĞ}™½É•…ÍÑ=Á•¸õ}™½É•…ÍÑ°ı}™½É•…ÍÑ°¹½Á•¸éÑÉÕ”ì(€½¹ÍĞ}™¥ÉÍÑI•¹‘•Èô…‰½‘ä¹}ÍÉ½±±•‘=¹”ì(€½¹ÍĞĞõ•ÑQÉ…¥¹	å9¼¡}©½ÕÉ¹•å9¼¤ì¥˜ …Ğ¥É•ÑÕÉ¸ì(€½¹ÍĞÍÑ½ÁÌõ}©½ÕÉ¹•åMÑ½ÁÌ¡Ğ¤ì¥˜ …ÍÑ½ÁÌ¹±•¹Ñ ¥í‰½‘ä¹¥¹¹•É!Q50ôœñ‘¥Ø±…ÍÌô‰•µÁÑäˆû².sªÂƒ²‚W®ÎÓªÂ ƒ²^²*×®.#®.¸ğ½‘¥ØøœíÉ•ÑÕÉ¸íô(€½¹ÍĞ™¥ÉÍÑ4õÍÑ½ÁÍlÁt¹¹½Éµ•ÀüıÍÑ½ÁÍlÁt¹¹½ÉµÉÈì(€½¹ÍĞ±…ÍÑ%Ñ•´õÍÑ½ÁÍmÍÑ½ÁÌ¹±•¹Ñ ´Åtì(€½¹ÍĞ±…ÍÑ4õ±…ÍÑ%Ñ•´¹¹½ÉµÉÈüı±…ÍÑ%Ñ•´¹¹½Éµ•Àì(€½¹ÍĞ¹½Üõ¹•Ü…Ñ” ¤ì(€½¹ÍĞÉ•…±9½İ5¥¸õ¹½Ü¹•Ñ!½ÕÉÌ ¤¨ØÀ­¹½Ü¹•Ñ5¥¹ÕÑ•Ì ¤­¹½Ü¹•ÑM•½¹‘Ì ¤¼ØÀì(€½¹ÍĞÍ¥µMÑ…Ñ”õÑåÁ•½˜}Í¥µMÑ…Ñ”ôôô™Õ¹Ñ¥½¸œı}Í¥µMÑ…Ñ”¡Ğ¤é¹Õ±°ì(€€¼¼ƒ²²^Àƒ².s®º°ƒ®Âc²bèƒ²^Ó²Â£®*P‘±ç®Úƒ®J“²Êc²ƒ²r²æc²^@ƒ²z#²v0ƒŠHƒ²rƒ¶j£².sªÂ€ôƒ².“²‚s².sªÂ€´‘±ä(€½¹ÍĞ‘±äõÍ¥µMÑ…Ñ”ıÍ¥µMÑ…Ñ”¹ÕÉÉ•¹Ğé}Í¥µ•±…ä¡Ğ°É•…±9½İ5¥¸¤ì(€½¹ÍĞ™¥¹…±õÍ¥µMÑ…Ñ”ıÍ¥µMÑ…Ñ”¹™¥¹…°é}Í¥µ¥¹…±•±…ä¡Ğ¤ì(€±•Ğ¹½İ5¥¸õÉ•…±9½İ5¥¸µ‘±äì(€½¹ÍĞÍÑ…ÑÕÌõ•ÑÕÉÉ•¹ÑMÑ…ÑÕÌ¡Ğ°¹½İ5¥¸¤ì(€±•Ğ¹½İ4õ¹½İ5¥¸ì(€¥˜¡±…ÍÑ4øôÄĞĞÀ˜™¹½İ5¥¸ñ™¥ÉÍÑ4¥ì½¹ÍĞÍ õ¹½İ5¥¸¬ÄĞĞÀì¥˜¡¹½İ5¥¸ğÈĞÁññÍ ğõ±…ÍÑ4¥¹½İ4õÍ ìô(€½¹ÍĞŒô¡ÑåÁ•½˜I}=1=IL„ôôÕ¹‘•™¥¹•œ˜™I}=1=IMmĞ¹É…‘•t¥ñğœŒáˆäĞå”œì(€½¹ÍĞ°ô¡ÑåÁ•½˜0„ôôÕ¹‘•™¥¹•œ˜™1mĞ¹É…‘•t¥ññĞ¹É…‘”ì(€€¼¼ƒ²¶Z'®–€(€±•ĞÁÉ½œôÀ°Á¡…Í”ô‰•™½É”œì(€¥˜¡Í¥µMÑ…Ñ”ü¹Á¡…Í”ôôô‘½¹”ññÍÑ…ÑÕÌ˜™ÍÑ…ÑÕÌ¹ÍÑ…ÑÕÌôôô‘½¹”œ¥íÁÉ½œôÄÀÀíÁ¡…Í”ô‘½¹”œíô(€•±Í”¥˜¡Í¥µMÑ…Ñ”ü¹Á¡…Í”ôôôÉÕ¹¹¥¹œññÍÑ…ÑÕÌ˜™ÍÑ…ÑÕÌ¹ÍÑ…ÑÕÌôôôÉÕ¹¹¥¹œœ¥íÁÉ½œõ5…Ñ ¹µ…à Ä±5…Ñ ¹µ¥¸ ää°¡¹½İ4µ™¥ÉÍÑ4¤¼¡±…ÍÑ4µ™¥ÉÍÑ4¤¨ÄÀÀ¤¤íÁ¡…Í”ôÉÕ¹¹¥¹œœíô(€•±Í”íÁÉ½œôÀíÁ¡…Í”ô‰•™½É”œíô(€€¼¼ƒ¶×ªÎó²^´ƒ²vã² ƒ²r²æ`ƒªÎ²
+Àèƒ²‚W²Â ƒ²’D¡‘İ•±°§
+ß®.“²v0ƒ².“²‚pƒ²‚W²Â£²^´¡¹•áÑI•…°§²vƒ²²‚Dƒ²
+Ã²Úp(€±•Ğ‘İ•±±%‘àô´Ä°¹•áÑI•…±%‘àô´Äì(€¥˜¡Á¡…Í”ôôôÉÕ¹¹¥¹œœ¥ì(€€€™½È¡±•Ğ¤ôÀí¤ñÍÑ½ÁÌ¹±•¹Ñ í¤¬¬¥ì(€€€€€½¹ÍĞÍĞõÍÑ½ÁÍm¥tì¥˜¡ÍĞ¹¥ÍA…ÍÌ¥½¹Ñ¥¹Õ”ì(€€€€€½¹ÍĞ„õÍĞ¹¹½ÉµÉÈ°õÍĞ¹¹½Éµ•Àì(€€€€€¥˜¡„„õ¹Õ±°˜™„õ¹Õ±°˜™„„ôõ˜™¹½İ4øõ„˜™¹½İ4ğõ¥í‘İ•±±%‘àõ¤í‰É•…¬íô(€€€ô(€€€™½È¡±•Ğ¤ôÀí¤ñÍÑ½ÁÌ¹±•¹Ñ í¤¬¬¥ì(€€€€€½¹ÍĞÍĞõÍÑ½ÁÍm¥tì¥˜¡ÍĞ¹¥ÍA…ÍÌ¥½¹Ñ¥¹Õ”ì(€€€€€½¹ÍĞ„õÍĞ¹¹½ÉµÉÈüıÍĞ¹¹½Éµ•Àì(€€€€€¥˜¡„„õ¹Õ±°˜™„ù¹½İ4¥í¹•áÑI•…±%‘àõ¤í‰É•…¬íô(€€€ô(€ô(€€¼¼ƒ²¶pƒ®²ãªÖ°(€±•Ğ¡•…ôœœ°ÍÕˆôœœì(€¥˜¡Á¡…Í”ôôôÉÕ¹¹¥¹œœ¥ì(€€€¥˜¡ÍÑ…ÑÕÌ˜™ÍÑ…ÑÕÌ¹Á…ÍÍMÑ¸¥í¡•…õ€‘í}½ÁÍÍŒ¡ÍÑ…ÑÕÌ¹Á…ÍÍMÑ¸¥ôƒ¶×ªÎğƒ²’E€íô(€€€•±Í”¥˜¡‘İ•±±%‘àøôÀ¥í¡•…õ€‘í}½ÁÍÍŒ¡ÍÑ½ÁÍm‘İ•±±%‘át¹Ì¥ôƒ²‚W²Â ƒ²’E€íô(€€€•±Í”¥˜¡¹•áÑI•…±%‘àøôÀ¥í¡•…õ€‘í}½ÁÍÍŒ¡ÍÑ½ÁÍm¹•áÑI•…±%‘át¹Ì¥ôƒ®Â§®¦Ğƒ²vÓ®>dƒ²’E€íô(€€€•±Í”¡•…ôŸ²jÓ¶Z$ƒ²’Dœì(€€€¥˜¡¹•áÑI•…±%‘àøôÀ¥ì(€€€€€½¹ÍĞ‘´õ5…Ñ ¹É½Õ¹ ¡ÍÑ½ÁÍm¹•áÑI•…±%‘át¹¹½ÉµÉÈüıÍÑ½ÁÍm¹•áÑI•…±%‘át¹¹½Éµ•À¤µ¹½İ4¤ì(€€€€€ÍÕˆõ‘´ğôÀıƒªÎœ€‘í}½ÁÍÍŒ¡ÍÑ½ÁÍm¹•áÑI•…±%‘át¹Ì¥ôƒ®>²Â¥€éƒ®.“²v0ƒ²‚W²Â €‘í}½ÁÍÍŒ¡ÍÑ½ÁÍm¹•áÑI•…±%‘át¹Ì¥ôƒ
+Üƒ²Vô€‘í‘µ÷®Úƒ¶nƒ®>²Â¥€ì(€€€ô(€ô•±Í”¥˜¡Á¡…Í”ôôô‰•™½É”œ¥ì(€€€¡•…ôŸ²jÓ¶Z$ƒ²’®æƒ²’Dœì(€€€ÍÕˆô¡ÍÑ…ÑÕÌ˜™ÍÑ…ÑÕÌ¹•Ñ…5¥¸„õ¹Õ±°¤ı™µÑÑ…-½È¡ÍÑ…ÑÕÌ¹•Ñ…5¥¸¤èœœì(€ô•±Í”ì¡•…ôŸ²jÓ¶Z$ƒ²Š®0œìÍÕˆõ€‘í}½ÁÍÍŒ¡ÍÑ½ÁÍlÁt¹Ì¥ôƒŠH€‘í}½ÁÍÍŒ¡±…ÍÑ%Ñ•´¹Ì¥ôƒ²jÓ¶Z$ƒ²f®1€ìô(€€¼¼ƒ¶²z®vó²và(€½¹ÍĞ±¤õÍÑ½ÁÌ¹µ…À ¡ÍĞ±¥‘à¤ôùì(€€€½¹ÍĞ±•…Ù•4õÍĞ¹¹½Éµ•ÀüıÍĞ¹¹½ÉµÉÈì(€€€½¹ÍĞÁ…ÍÍ•ô¡Á¡…Í”ôôô‘½¹”œ¥ñğ¡±•…Ù•4„õ¹Õ±°˜™¹½İ4ù±•…Ù•4¬À¸ÀÄ¤ì(€€€½¹ÍĞ¥ÍÕÈõÁ¡…Í”ôôôÉÕ¹¹¥¹œœ˜™¥‘àôôõ‘İ•±±%‘àì(€€€½¹ÍĞ¥Í9•áĞõÁ¡…Í”ôôôÉÕ¹¹¥¹œœ˜™¥‘àôôõ¹•áÑI•…±%‘à˜™‘İ•±±%‘àğÀì(€€€½¹ÍĞÁ±…Ğô¡ÑåÁ•½˜}É•…±A±…Ñ™½É´ôôô™Õ¹Ñ¥½¸œ¤ı}É•…±A±…Ñ™½É´¡Ğ¹¹¼±ÍĞ¹Ì¤é¹Õ±°ì(€€€½¹ÍĞÑÉÈõ¡…ÍQ¥µ”¡ÍĞ¹…ÉÈ¤ıÍĞ¹…ÉÈèœœ°Ñ•Àõ¡…ÍQ¥µ”¡ÍĞ¹‘•À¤ıÍĞ¹‘•Àèœœì(€€€€¼¼ƒ²vĞƒ²^´ƒ².s²‚C²v`ƒ²²^Ã®Ú£²jÓ¶Z$¿²Š®0ƒ².p¤èƒ²®
+c²b ƒ²^´÷².“²‚pƒ²²^À°ƒ®
+£²v ƒ²^´÷²²^Àƒ²b#²‚T¸ƒ²‚W².s®¦Ğ€À¸(€€€½¹ÍĞ‘•±…åA…¥Èô¡}Í¥µ•±…å=¸˜™Á¡…Í”„ôô‰•™½É”œ˜™ÑåÁ•½˜}Í¥µ•±…åA…¥ÉÑMÑ½Àôôô™Õ¹Ñ¥½¸œ¤(€€€€€€ı}Í¥µ•±…åA…¥ÉÑMÑ½À¡Ğ±¥‘à¤éí…ÉÈé}Í¥µ•±…åÑMÑ½À¡Ğ±¥‘à¤±‘•Àé}Í¥µ•±…åÑMÑ½À¡Ğ±¥‘à¤±Í¡½ÉÑ•¹•é™…±Í•ôì(€€€½¹ÍĞ‘ÉÈõ‘•±…åA…¥È¹…ÉÉñğÀ°‘•Àõ‘•±…åA…¥È¹‘•ÁñğÀ°‘MÑ½Àõ5…Ñ ¹µ…à¡‘ÉÈ±‘•À¤ì(€€€½¹ÍĞÍõÑÉÈı…‘‘5¥¹Q½±½¬¡ÑÉÈ±‘ÉÈ¤èœœ°ÍõÑ•Àı…‘‘5¥¹Q½±½¬¡Ñ•À±‘•À¤èœœì(€€€½¹ÍĞ‘•±…åQáĞõ‘MÑ½ÀøÀ(€€€€€€ı‘ÉÈ„ôõ‘•À(€€€€€€€€ı€€ñÍÁ…¸±…ÍÌô‰©ÈµÑ¥µ”µ‘¥™˜ˆø ‘í‘ÉÈøÀüœ¬œ­‘ÉÈèœÀôƒŠH€¬‘í‘•Áô¤ğ½ÍÁ…¸ù€(€€€€€€€€é€€ñÍÁ…¸±…ÍÌô‰©ÈµÑ¥µ”µ‘¥™˜ˆø ¬‘í‘MÑ½Áô¤ğ½ÍÁ…¸ù€(€€€€€€èœœì(€€€½¹ÍĞÑ¥µ•	…Í”õÍĞ¹¥Í=É¥¥¸ı€‘íÍññÍôƒ²Ús®Âq€éÍĞ¹¥ÍQ•É´ı€‘íÍññÍôƒ®>²Â¥€è¡Í˜™Í˜™ÑÉÈ„ôõÑ•Àı€‘íÍ÷ŠL‘íÍõ€è¡ÍññÍ¤¤ì(€€€½¹ÍĞÑ¥µ•QáĞõÑ¥µ•	…Í”­‘•±…åQáĞì(€€€½¹ÍĞ±Ìõl©ÈµÍÑ½Àtì(€€€¥˜¡ÍĞ¹¥ÍA…ÍÌ¥±Ì¹ÁÕÍ  Á…ÍÌœ¤ì¥˜¡Á…ÍÍ•˜˜…¥ÍÕÈ¥±Ì¹ÁÕÍ  ‘½¹”œ¤ì¥˜¡¥ÍÕÈ¥±Ì¹ÁÕÍ  ÕÈœ¤ì¥˜¡¥Í9•áĞ¥±Ì¹ÁÕÍ  ¹•áĞœ¤ì(€€€½¹ÍĞ¹…µ•±ÌõÍĞ¹¥Í=É¥¥¸ü©Èµ½É¥¥¸œéÍĞ¹¥ÍQ•É´ü©ÈµÑ•É´œèœœì(€€€½¹ÍĞ‰…‘”õ¥ÍÕÈüœñÍÁ…¸±…ÍÌô‰©Èµ‰…‘”ÕÈˆû¶b²z°ğ½ÍÁ…¸øœé¥Í9•áĞüœñÍÁ…¸±…ÍÌô‰©Èµ‰…‘”¹•áĞˆû®.“²v0ğ½ÍÁ…¸øœèœœì(€€€½¹ÍĞÁ±…ÑQáĞô …ÍĞ¹¥ÍA…ÍÌ˜™Á±…Ğ„õ¹Õ±°¤ı€ñÍÁ…¸±…ÍÌô‰©ÈµÁ±…Ğˆø‘íÁ±…Ñ÷®Ê ğ½ÍÁ…¸ù€èœœì(€€€É•ÑÕÉ¸€ñ‘¥Ø±…ÍÌôˆ‘í±Ì¹©½¥¸ œ€œ¥ôˆÍÑå±”ôˆ´µŒè‘íôˆø(€€€€€€ñ‘¥Ø±…ÍÌô‰©Èµ‘½Ğˆøğ½‘¥Øø(€€€€€€ñ‘¥Ø±…ÍÌô‰©Èµ¥¹™¼ˆøñÍÁ…¸±…ÍÌô‰©Èµ¹…µ”€‘í¹…µ•±Íôˆø‘í}½ÁÍÍŒ¡ÍĞ¹Ì¥ô‘íÍĞ¹¥ÍA…ÍÌüœ€ñÍÁ…¸±…ÍÌô‰©ÈµÁ…ÍÍÑ…œˆû¶×ªÎğğ½ÍÁ…¸øœèœô‘í‰…‘•ôğ½ÍÁ…¸ø‘íÁ±…ÑQáÑôğ½‘¥Øø(€€€€€€ñ‘¥Ø±…ÍÌô‰©ÈµÑ¥µ”‘í‘MÑ½ÀøÀü¡‘MÑ½ÀğôÈüœ©Èµ±…Ñ”µäœé‘MÑ½ÀğôÄÀüœ©Èµ±…Ñ”µ¼œèœ©Èµ±…Ñ”µÈœ¤èœôˆø‘íÑ¥µ•QáÑôğ½‘¥Øø(€€€€ğ½‘¥Øù€ì(€ô¤¹©½¥¸ œœ¤ì(€½¹ÍĞ‘•ÁPõÍÑ½ÁÍlÁt¹‘•ÁññÍÑ½ÁÍlÁt¹…ÉÈ°…ÉÉPõ±…ÍÑ%Ñ•´¹…ÉÉññ±…ÍÑ%Ñ•´¹‘•Àì(€€¼¼ƒ²Š²Â¤ƒ®>²Â¤ƒ²²^Àƒ²b#²‚T£²Š²Â§²^´ƒ².s²‚@ƒ²²^À¤¸ƒ®
+£²v ƒ²^´ƒ².sªÂ²v ƒ¶²z®vó²vã²^C²pƒ®æ£ªÂƒ¶7²*“¶*ã®†pƒ¶Fs².p¸(€½¹ÍĞÑ•Éµô¡}Í¥µ•±…å=¸˜™Á¡…Í”„ôô‰•™½É”œ¤ı}Í¥µ•±…åÑMÑ½À¡Ğ°ÍÑ½ÁÌ¹±•¹Ñ ´Ä¤èÀì(€±•Ğ…ÉÉ‘¨ôœœì(€¥˜¡}Í¥µ•±…å=¸¥ì(€€€¥˜¡Ñ•ÉµøÀ¤…ÉÉ‘¨õ€€ñÍÁ…¸±…ÍÌô‰©Èµ•Ñ„µ…‘¨ˆø‘í…‘‘5¥¹Q½±½¬¡…ÉÉP±Ñ•Éµ¥ôƒ®>²Â¤ƒ²b#²‚T€ ¬‘íÑ•Éµô¤ğ½ÍÁ…¸ù€ì(€€€•±Í”¥˜¡Á¡…Í”ôôô‰•™½É”œ˜™™¥¹…±øÀ¤…ÉÉ‘¨õ€€ñÍÁ…¸±…ÍÌô‰©Èµ•Ñ„µ…‘¨ˆø‘í™¥¹…±÷®Úƒ²²^Àƒ²b#²ğ½ÍÁ…¸ù€ì(€ô(€½¹ÍĞ}‘±å1½œô¡}Í¥µ•±…å=¸˜™‘±äøÀ˜™Á¡…Í”„ôô‰•™½É”œ˜™ÑåÁ•½˜}Í¥µÙ•¹Ñ1½œôôô™Õ¹Ñ¥½¸œ¤ı}Í¥µÙ•¹Ñ1½œ¡Ğ¤émtì(€½¹ÍĞ}İàô¡}Í¥µ•±…å=¸˜™ÑåÁ•½˜}Í¥µ…å½¹Ñ•áĞôôô™Õ¹Ñ¥½¸œ¤ı}Í¥µ…å½¹Ñ•áĞ ¤¹İ•…Ñ¡•ÈèŸ®G²v0œì(€½¹ÍĞ}É•Àô¡}Í¥µ•±…å=¸˜™‘±äøÀ˜™Á¡…Í”„ôô‰•™½É”œ˜™ÑåÁ•½˜}Í¥µ•±…åI•Á½ÉĞôôô™Õ¹Ñ¥½¸œ¤ı}Í¥µ•±…åI•Á½ÉĞ¡Ğ¤é¹Õ±°ì(€½¹ÍĞ}É•Á!Q50õ}É•Àı€ñ‘¥Ø±…ÍÌô‰©Èµ±½œµÉ•Á½ÉĞˆø(€€€€€€€€‘í}É•À¹™¥ÉÍĞı€ñ‘¥ØøñÍÁ…¸±…ÍÌô‰©ÈµÉ¬ˆû²Ös²Ò ƒ²nC²vàğ½ÍÁ…¸ø‘í}½ÁÍÍŒ¡}É•À¹™¥ÉÍĞ¥ô‘í}İà„ôôŸ®G²v0œı€ƒ
+Ü€ñÍÁ…¸±…ÍÌô‰©Èµİàˆø‘í}½ÁÍÍŒ¡}İà¥ôğ½ÍÁ…¸ù€èœôğ½‘¥Øù€èœô(€€€€€€€€‘í}É•À¹ÍÁÉ•…¹±•¹Ñ ı€ñ‘¥ØøñÍÁ…¸±…ÍÌô‰©ÈµÉ¬ˆû²‚¶20ƒ²nC²vàğ½ÍÁ…¸ø‘í}½ÁÍÍŒ¡}É•À¹ÍÁÉ•…¹©½¥¸ œƒ
+Ü€œ¤¥ôğ½‘¥Øù€èœô(€€€€€€€€ñ‘¥ØøñÍÁ…¸±…ÍÌô‰©ÈµÉ¬ˆû¶j3®ÎÔƒ²jÓ²‚ğ½ÍÁ…¸ø‘í}É•À¹É•½Ù•É•øÀıƒ¶b²z³ªæ3² ƒ²Òt€‘í}É•À¹É•½Ù•É•‘÷®Úƒ¶j3®ÎÕ€è‹¶j3®ÎÔƒ²^²v0‰ôğ½‘¥Øø(€€€€€€€€ñ‘¥ØøñÍÁ…¸±…ÍÌô‰©ÈµÉ¬ˆû²Š²Â¤ƒ²²^Àğ½ÍÁ…¸ø‘í}É•À¹™¥¹…°øÀıƒ²Vô€‘í}É•À¹™¥¹…±÷®Úƒ²b#²€èŸ²‚W².pƒ®>²Â¤ƒ²b#²ôğ½‘¥Øø(€€€€€€€€‘í}É•À¹…™™•ÑÌı€ñ‘¥ØøñÍÁ…¸±…ÍÌô‰©ÈµÉ¬ˆû²b¶Z”ƒ²^Ó²Â ğ½ÍÁ…¸û®.“²v0ƒ¶j3²Â €‘í}½ÁÍÍŒ¡}É•À¹…™™•ÑÌ¥ôƒ²^Ó²Â ƒ²²^Àƒ²jÃ®‚ğ½‘¥Øù€èœô(€€€€€€ğ½‘¥Øù€èœœì(€½¹ÍĞ‘•±…å	…‘”ô¡}Í¥µ•±…å=¸˜™‘±äøÀ˜™Á¡…Í”ôôôÉÕ¹¹¥¹œœ¤(€€€€ı€ñ‘¥Ø±…ÍÌô‰©Èµ‘•±…äµ±¥Ù”ˆûÂ~RĞƒ¶b²z°ƒ²Vô€ñˆø‘í‘±å÷®Úğ½ˆøƒ²²^Àƒ²jÓ¶Z$ƒ²’Dğ½‘¥Øù€(€€€€€€¬ ¡}‘±å1½œ¹±•¹Ñ¡ññ}É•Á!Q50¤ı€ñ‘•Ñ…¥±Ì±…ÍÌô‰©Èµ±½œˆøñÍÕµµ…Éäû²²^ÀƒªâÃ®†tƒ®ÎÓªâÀğ½ÍÕµµ…Éäøñ‘¥Ø±…ÍÌô‰©Èµ±½œµ‰½‘äˆù€(€€€€€€€€­}É•Á!Q50(€€€€€€€€¬¡}‘±å1½œ¹±•¹Ñ ı€ñ‘¥Ø±…ÍÌô‰©Èµ±½œµÍ•ŒˆûªÖ³ªÂ®ÎƒªâÃ®†tğ½‘¥Øù€­}‘±å1½œ¹Í±¥” À°ÄØ¤¹µ…À¡°ôù€ñ‘¥Øø‘í}½ÁÍÍŒ¡°¥ôğ½‘¥Øù€¤¹©½¥¸ œœ¤èœœ¤(€€€€€€€€­€ğ½‘¥Øøğ½‘•Ñ…¥±Ìù€èœœ¤(€€€€€€­€ñ‘¥Ø±…ÍÌô‰©Èµ‘•±…äµ…Ù•…Ğˆû²²^Àƒ²‚W®ÎÓ®*Pƒ².“²‚pƒ²jÓ¶Z$ƒ²¶f§ªÎğƒ²Â£²vÓªÂ ƒ²z#²vƒ²"`ƒ²z#²*×®.#®.ğ½‘¥Øù€èœœì(€½¹ÍĞ}©É!Q50õ€(€€€€ñ‘¥Ø±…ÍÌô‰©Èµ¡•…‘•ÈˆÍÑå±”ôˆ´µŒè‘íôˆø(€€€€€€ñ‘¥Ø±…ÍÌô‰©Èµ µÑ½Àˆø(€€€€€€€€ñÍÁ…¸±…ÍÌô‰©ÈµÉ…‘”ˆÍÑå±”ô‰‰…­É½Õ¹è‘íôˆø‘í}½ÁÍÍŒ¡°¥ôğ½ÍÁ…¸ø(€€€€€€€€ñÍÁ…¸±…ÍÌô‰©Èµ¹¼ˆø‘í}½ÁÍÍŒ¡Ğ¹¹¼¥ôğ½ÍÁ…¸ø(€€€€€€€€ñÍÁ…¸±…ÍÌô‰©Èµ‘•ÍĞˆø‘í}½ÁÍÍŒ¡Ğ¹‘•ÍĞ¥÷¶Z$ğ½ÍÁ…¸ø(€€€€€€ğ½‘¥Øø(€€€€€€ñ‘¥Ø±…ÍÌô‰©ÈµÉ½ÕÑ”ˆø‘í}½ÁÍÍŒ¡ÍÑ½ÁÍlÁt¹Ì¥ô€‘í‘•ÁQôƒŠH€‘í}½ÁÍÍŒ¡±…ÍÑ%Ñ•´¹Ì¥ô€‘í…ÉÉQô‘í…ÉÉ‘©ôğ½‘¥Øø(€€€€€€ñ‘¥Ø±…ÍÌô‰©ÈµÍÑ…ÑÕÌ©È´‘íÁ¡…Í•ô‘ì¡}Í¥µ•±…å=¸˜™‘±äøÀ˜™Á¡…Í”ôôôÉÕ¹¹¥¹œœ¤üœ©Èµ‘•±…å•œèœôˆø(€€€€€€€€ñ‘¥Ø±…ÍÌô‰©ÈµÍÑ…ÑÕÌµ¡•…ˆø‘í¡•…‘ôğ½‘¥Øø(€€€€€€€€‘íÍÕˆı€ñ‘¥Ø±…ÍÌô‰©ÈµÍÑ…ÑÕÌµÍÕˆˆø‘íÍÕ‰ôğ½‘¥Øù€èœô(€€€€€€€€‘í‘•±…å	…‘•ô(€€€€€€ğ½‘¥Øø(€€€€€€ñ‘¥Ø±…ÍÌô‰©ÈµÁÉ½É•ÍÌˆøñ‘¥Ø±…ÍÌô‰©ÈµÁÉ½É•ÍÌµ™¥±°ˆÍÑå±”ô‰İ¥‘Ñ è‘íÁÉ½ô”í‰…­É½Õ¹è‘íôˆøğ½‘¥Øøğ½‘¥Øø(€€€€ğ½‘¥Øø(€€€€‘íÁ¡…Í”ôôô‰•™½É”œı€ñ‘¥Ø±…ÍÌô‰©ÈµÁ…ÍÍ•¹•Èµ¥¹Í¥¡ÑÌˆø‘í}É•¹‘•É)½ÕÉ¹•å½É•…ÍĞ¡Ğ±}™½É•…ÍÑ=Á•¸¥ôğ½‘¥Øù€èœô(€€€€ñ‘¥Ø±…ÍÌô‰©ÈµÍÉ½±°ˆø(€€€€€€ñ‘¥Ø±…ÍÌô‰©ÈµÑ¥µ•±¥¹”ˆø‘í±¥ôğ½‘¥Øø(€€€€€€ñÀ±…ÍÌô‰©Èµ™½½Ğˆû®“®Úƒ²zC®>dƒªÂÇ².€ƒ
+Üƒ².“²‚pƒªÊ3²zƒ®
+Ğƒ².sªÂƒªâÃ²’ ğ½Àø(€€€€ğ½‘¥Øù€ì(€¥˜¡‰½‘ä¹}±…ÍÑ)É!Q50ôôõ}©É!Q50¤É•ÑÕÉ¸ì€€€¼¼ƒ®
+Ó²j¤ƒ®>g²vó¶Vc®¦Ğƒ²z³®‚3®6Pƒ²w®zÔ£ªæs®æ‡²zƒ®Â§² ¤(€‰½‘ä¹}±…ÍÑ)É!Q50õ}©É!Q50ì(€‰½‘ä¹¥¹¹•É!Q50õ}©É!Q50ì(€½¹ÍĞÍŒõ‰½‘ä¹ÅÕ•ÉåM•±•Ñ½È œ¹©ÈµÍÉ½±°œ¤ì(€¥˜¡ÍŒ¥ì(€€€¥˜¡}™¥ÉÍÑI•¹‘•È¥ì(€€€€€€¼¼ƒ²Ös²Ò €Ç¶j3®0ƒ¶b²z°ƒ²r²æc®†pƒ²zC®>dƒ²*“¶³®†(€€€€€½¹ÍĞÕÈõ‰½‘ä¹ÅÕ•ÉåM•±•Ñ½È œ¹©ÈµÍÑ½À¹ÕÈœ¥ññ‰½‘ä¹ÅÕ•ÉåM•±•Ñ½È œ¹©ÈµÍÑ½À¹¹•áĞœ¤ì(€€€€€¥˜¡ÕÈ¥ÍŒ¹ÍÉ½±±Q½Àõ5…Ñ ¹µ…à À±ÕÈ¹½™™Í•ÑQ½ÀµÍŒ¹±¥•¹Ñ!•¥¡Ğ¼È­ÕÈ¹½™™Í•Ñ!•¥¡Ğ¼È¤ì(€€€€€‰½‘ä¹}ÍÉ½±±•‘=¹”õÑÉÕ”ì(€€€ô•±Í”ì(€€€€€€¼¼ƒ²zC®>dƒªÂÇ².€ƒ².s²^C®*Pƒ²
+³²j§²zCªÂ ƒ®ÎÓ®6`ƒ²*“¶³®†ƒ²r²æc®–ğƒªŞã®2®†pƒ²rƒ² (€€€€€ÍŒ¹ÍÉ½±±Q½Àõ}ÁÉ•ÙQ½Àì(€€€ô(€ô)ô((¼¼ƒŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠV@(¼¼ƒÂ~Ìƒ®
+Ğƒ²^³¶Z$ƒŠP;²vó²Â ƒ²vó²‚W²vƒ®²Û²ZĞƒ²vóªÒƒ²b#®(¼¼ƒŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠVCŠV@)½¹ÍĞQI%A}-dô¹¥µ‰¥}ÑÉ¥ÁÌœì)™Õ¹Ñ¥½¸}Ñ•ÍŒ¡Ì¥íÉ•ÑÕÉ¸MÑÉ¥¹œ¡Ìôõ¹Õ±°üœœéÌ¤¹É•Á±…” ½l˜ğø‰t½œ±Œôø¡ìœ˜œèœ™…µÀìœ°œğœèœ™±Ğìœ°œøœèœ™Ğìœ°œˆœèœ™ÅÕ½Ğìõmt¤¤íô)™Õ¹Ñ¥½¸}ÑÉ¥ÁQ½…ÍĞ¡µÍœ¥ì(€½¹ÍĞ½±õ‘½Õµ•¹Ğ¹•Ñ±•µ•¹Ñ	å% ÑÉ¥ÀµÑ½…ÍĞœ¤ì¥˜¡½±¥½±¹É•µ½Ù” ¤ì(€½¹ÍĞõ‘½Õµ•¹Ğ¹É•…Ñ•±•µ•¹Ğ ‘¥Øœ¤ì¹¥ôÑÉ¥ÀµÑ½…ÍĞœì(€¹ÍÑå±”¹ÍÍQ•áĞôÁ½Í¥Ñ¥½¸é™¥á•í±•™ĞèÔÀ”í‰½ÑÑ½´èÌáÁàíÑÉ…¹Í™½É´éÑÉ…¹Í±…Ñ•` ´ÔÀ”¤íèµ¥¹‘•àèÄÀÀÔÀí‰…­É½Õ¹éÙ…È ´µ…•¹ĞÈ°ŒÉ˜àÅ˜Ü¤í½±½Èè™™˜íÁ…‘‘¥¹œèÄÅÁà€ÄáÁàí‰½É‘•ÈµÉ…‘¥ÕÌèääåÁàí™½¹ĞµÍ¥é”èÄÍÁàí™½¹Ğµİ•¥¡ĞèØÀÀí‰½àµÍ¡…‘½ÜèÀ€ÙÁà€ÈÁÁàÉ‰„ À°À°À°¸ÌÔ¤íµ…àµİ¥‘Ñ èàáÙÜíÑ•áĞµ…±¥¸é•¹Ñ•Èœì(€¹Ñ•áÑ½¹Ñ•¹ĞõµÍœì‘½Õµ•¹Ğ¹‰½‘ä¹…ÁÁ•¹‘¡¥±¡¤ì(€Í•ÑQ¥µ•½ÕĞ  ¤ôùí¹ÍÑå±”¹ÑÉ…¹Í¥Ñ¥½¸ô½Á…¥Ñä€¸ÑÌœí¹ÍÑå±”¹½Á…¥ÑäôœÀœíÍ•ÑQ¥µ•½ÕĞ  ¤ôù¹É•µ½Ù” ¤°ĞÀÀ¤íô°ÄäÀÀ¤ì)ô(¼¼ƒŠRŠR ƒ®
+ƒ²p¿²vó²Â ƒ¶^³¶6ğƒŠRŠR )™Õ¹Ñ¥½¸}…‘‘…åÌ¡‘…Ñ•MÑÈ±¸¥í½¹ÍĞõ¹•Ü…Ñ” ¡‘…Ñ•MÑÉññÑ½‘…å1½…±MÑÈ ¤¤¬PÀÀèÀÀœ¤í¹Í•Ñ…Ñ”¡¹•Ñ…Ñ” ¤­¸¤íÉ•ÑÕÉ¸€‘í¹•ÑÕ±±e•…È ¥ô´‘íMÑÉ¥¹œ¡¹•Ñ5½¹Ñ  ¤¬Ä¤¹Á…‘MÑ…ÉĞ È°œÀœ¥ô´‘íMÑÉ¥¹œ¡¹•Ñ…Ñ” ¤¤¹Á…‘MÑ…ÉĞ È°œÀœ¥õ€íô)™Õ¹Ñ¥½¸}‘…åÍ	•Ñİ••¸¡„±ˆ¥íÉ•ÑÕÉ¸5…Ñ ¹É½Õ¹ ¡¹•Ü…Ñ”¡ˆ¬PÀÀèÀÀœ¤µ¹•Ü…Ñ”¡„¬PÀÀèÀÀœ¤¤¼àØĞÀÀÀÀÀ¤íô)™Õ¹Ñ¥½¸}‘…å…Ñ”¡ÑÉ¥À±‘…ä¥íÉ•ÑÕÉ¸}…‘‘…åÌ¡ÑÉ¥À¹ÍÑ…ÉÑ…Ñ”±‘…ä´Ä¤íô)™Õ¹Ñ¥½¸}µ¥É…Ñ•QÉ¥À¡ÑÀ¥ì(€¥˜ …ÑÁññÑåÁ•½˜ÑÀ„ôô½‰©•Ğœ¥É•ÑÕÉ¸ÑÀì(€¥˜ …ÉÉ…ä¹¥ÍÉÉ…ä¡ÑÀ¹±•Ì¤¥ÑÀ¹±•Ìõmtì(€¥˜¡ÑÀ¹ÍÑ…ÉÑ…Ñ”˜™ÑÀ¹‘…åÌ¥ì(€€€ÑÀ¹‘…åÌõ5…Ñ ¹µ…à Ä±5…Ñ ¹µ¥¸ ÌÀ±ÑÀ¹‘…åÍğÀ¤¤ì(€€€ÑÀ¹±•Ì¹™½É… ¡°ôùì¥˜ …°¹‘…ä¥°¹‘…äõ°¹‘…Ñ”ı5…Ñ ¹µ…à Ä±}‘…åÍ	•Ñİ••¸¡ÑÀ¹ÍÑ…ÉÑ…Ñ”±°¹‘…Ñ”¤¬Ä¤èÄì¥˜¡°¹‘…äùÑÀ¹‘…åÌ¥°¹‘…äõÑÀ¹‘…åÌì¥˜¡°¹‘…äğÄ¥°¹‘…äôÄìô¤ì(€€€É•ÑÕÉ¸ÑÀì(€ô(€½¹ÍĞ‘ÌõÑÀ¹±•Ì¹µ…À¡°ôù°¹‘…Ñ”¤¹™¥±Ñ•È¡	½½±•…¸¤¹Í½ÉĞ ¤ì(€½¹ÍĞÍÑ…ÉĞõ‘ÍlÁuññÑ½‘…å1½…±MÑÈ ¤°•¹õ‘Ím‘Ì¹±•¹Ñ ´ÅuññÍÑ…ÉĞì(€ÑÀ¹ÍÑ…ÉÑ…Ñ”õÍÑ…ÉĞìÑÀ¹‘…åÌõ5…Ñ ¹µ…à Ä±5…Ñ ¹µ¥¸ ÌÀ±}‘…åÍ	•Ñİ••¸¡ÍÑ…ÉĞ±•¹¤¬Ä¤¤ì(€ÑÀ¹±•Ì¹™½É… ¡°ôùì°¹‘…äõ°¹‘…Ñ”ı5…Ñ ¹µ…à Ä±5…Ñ ¹µ¥¸¡ÑÀ¹‘…åÌ±}‘…åÍ	•Ñİ••¸¡ÍÑ…ÉĞ±°¹‘…Ñ”¤¬Ä¤¤èÄìô¤ì(€É•ÑÕÉ¸ÑÀì)ô)™Õ¹Ñ¥½¸±½…‘QÉ¥ÁÌ ¥íÑÉåíÉ•ÑÕÉ¸€¡)M=8¹Á…ÉÍ”¡±½…±MÑ½É…”¹•Ñ%Ñ•´¡QI%A}-d¤¥ññmt¤¹µ…À¡}µ¥É…Ñ•QÉ¥À¤íõ…Ñ ¡”¥íÉ•ÑÕÉ¹mtíõô)™Õ¹Ñ¥½¸Í…Ù•QÉ¥ÁÌ¡Ğ¥íÑÉåí±½…±MÑ½É…”¹Í•Ñ%Ñ•´¡QI%A}-d±)M=8¹ÍÑÉ¥¹¥™ä¡Ğ¤¤íõ…Ñ ¡”¥íõô)™Õ¹Ñ¥½¸•¹QÉ¥Á% ¥íÉ•ÑÕÉ¸€QHœ­…Ñ”¹¹½Ü ¤¹Ñ½MÑÉ¥¹œ ÌØ¤­5…Ñ ¹É…¹‘½´ ¤¹Ñ½MÑÉ¥¹œ ÌØ¤¹Í±¥” È°Ô¤íô((¼¼ƒŠRŠR ƒ®6Ã²vÓ¶Àƒ²†Ã²zDƒŠRŠR )™Õ¹Ñ¥½¸É•…Ñ•QÉ¥À¡¹…µ”±ÍÑ…ÉÑ…Ñ”±‘…åÌ¥ì(€½¹ÍĞÑÉ¥ÁÌõ±½…‘QÉ¥ÁÌ ¤ì(€½¹ÍĞÑÉ¥Àõí¥é•¹QÉ¥Á% ¤±¹…µ”è¡¹…µ•ñğŸ®
+Ğƒ²^³¶Z$œ¤¹ÑÉ¥´ ¥ñğŸ®
+Ğƒ²^³¶Z$œ±É•…Ñ•‘Ğé…Ñ”¹¹½Ü ¤±ÍÑ…ÉÑ…Ñ”éÍÑ…ÉÑ…Ñ•ññÑ½‘…å1½…±MÑÈ ¤±‘…åÌé5…Ñ ¹µ…à Ä±5…Ñ ¹µ¥¸ ÌÀ±‘…åÍñğÄ¤¤±±•Ìémuôì(€ÑÉ¥ÁÌ¹ÁÕÍ ¡ÑÉ¥À¤ìÍ…Ù•QÉ¥ÁÌ¡ÑÉ¥ÁÌ¤ìÉ•ÑÕÉ¸ÑÉ¥À¹¥ì)ô)™Õ¹Ñ¥½¸‘•±•Ñ•QÉ¥À¡¥¥ì(€¥˜ …½¹™¥É´ Ÿ²vĞƒ²^³¶Z'²vƒ²
+·²‚s¶Vc².sªÊƒ²*×®.#ªæ0ıq¸£®.ÓªâĞƒ²vó²‚W®0ƒ²
+·²‚s®Bc®¦À°ƒ²vÓ®¾àƒ²b#®“¶Vpƒ²*ç²Â£ªÚ3²v ƒ²rƒ²®B§®.#®.¸¤œ¤¥É•ÑÕÉ¸ì(€Í…Ù•QÉ¥ÁÌ¡±½…‘QÉ¥ÁÌ ¤¹™¥±Ñ•È¡ĞôùĞ¹¥„ôõ¥¤¤ì(€¥˜¡İ¥¹‘½Ü¹}…Ñ¥Ù•QÉ¥Á%ôôõ¥¥İ¥¹‘½Ü¹}…Ñ¥Ù•QÉ¥Á%õ¹Õ±°ì(€É•¹‘•É5åQÉ¥ÁÌ ¤ì)ô)™Õ¹Ñ¥½¸}Íå¹1•…Ñ•Ì¡ÑÉ¥À¥íÑÉ¥À¹±•Ì¹™½É… ¡°ôùí¥˜¡°¹‘…äùÑÉ¥À¹‘…åÌ¥°¹‘…äõÑÉ¥À¹‘…åÌí¥˜¡°¹‘…äğÄ¥°¹‘…äôÄí°¹‘…Ñ”õ}‘…å…Ñ”¡ÑÉ¥À±°¹‘…ä¤íô¤íô)™Õ¹Ñ¥½¸ÕÁ‘…Ñ•QÉ¥À¡¥±¹…µ”±ÍÑ…ÉÑ…Ñ”±‘…åÌ¥ì(€½¹ÍĞÑÉ¥ÁÌõ±½…‘QÉ¥ÁÌ ¤ì½¹ÍĞÑÀõÑÉ¥ÁÌ¹™¥¹¡ĞôùĞ¹¥ôôõ¥¤ì¥˜ …ÑÀ¥É•ÑÕÉ¸ì(€ÑÀ¹¹…µ”ô¡¹…µ•ññÑÀ¹¹…µ”¤¹ÑÉ¥´ ¥ññÑÀ¹¹…µ”ì(€ÑÀ¹ÍÑ…ÉÑ…Ñ”õÍÑ…ÉÑ…Ñ•ññÑÀ¹ÍÑ…ÉÑ…Ñ”ì(€ÑÀ¹‘…åÌõ5…Ñ ¹µ…à Ä±5…Ñ ¹µ¥¸ ÌÀ±‘…åÍññÑÀ¹‘…åÌ¤¤ì(€}Íå¹1•…Ñ•Ì¡ÑÀ¤ì(€Í…Ù•QÉ¥ÁÌ¡ÑÉ¥ÁÌ¤ìÉ•¹‘•É5åQÉ¥ÁÌ ¤ì)ô)™Õ¹Ñ¥½¸…‘‘1•Q½QÉ¥À¡ÑÉ¥Á%±±•œ¥ì(€½¹ÍĞÑÉ¥ÁÌõ±½…‘QÉ¥ÁÌ ¤ì½¹ÍĞÑÀõÑÉ¥ÁÌ¹™¥¹¡ĞôùĞ¹¥ôôõÑÉ¥Á%¤ì¥˜ …ÑÀ¥É•ÑÕÉ¸™…±Í”ì(€ÑÀ¹±•Ì¹ÁÕÍ ¡±•œ¤ìÍ…Ù•QÉ¥ÁÌ¡ÑÉ¥ÁÌ¤ìÉ•ÑÕÉ¸ÑÉÕ”ì)ô)™Õ¹Ñ¥½¸É•µ½Ù•QÉ¥Á1•œ¡ÑÉ¥Á%±±•%¥ì(€½¹ÍĞÑÉ¥ÁÌõ±½…‘QÉ¥ÁÌ ¤ì½¹ÍĞÑÀõÑÉ¥ÁÌ¹™¥¹¡ĞôùĞ¹¥ôôõÑÉ¥Á%¤ì¥˜ …ÑÀ¥É•ÑÕÉ¸ì(€ÑÀ¹±•ÌõÑÀ¹±•Ì¹™¥±Ñ•È¡°ôù°¹¥„ôõ±•%¤ìÍ…Ù•QÉ¥ÁÌ¡ÑÉ¥ÁÌ¤ìÉ•¹‘•É5åQÉ¥ÁÌ ¤ì)ô)™Õ¹Ñ¥½¸}‘…å1•Ì¡ÑÉ¥À±‘…ä¥íÉ•ÑÕÉ¸ÑÉ¥À¹±•Ì¹™¥±Ñ•È¡°ôù°¹‘…äôôõ‘…ä¤¹Í½ÉĞ ¡„±ˆ¤ôø¡Ñ½5¥¸¡„¹‘•ÁQ¥µ”¥ñğÀ¤´¡Ñ½5¥¸¡ˆ¹‘•ÁQ¥µ”¥ñğÀ¤¤íô)™Õ¹Ñ¥½¸}ÑÉ¥Á9¥¡ÑÍ1…‰•°¡ÑÉ¥À¥í½¹ÍĞõÑÉ¥À¹‘…åÍñğÄíÉ•ÑÕÉ¸ğôÄüŸ®.ç²vğœé€‘í´Å÷®ÂT€‘í‘÷²vñ€íô)™Õ¹Ñ¥½¸}ÑÉ¥Á±Í1…‰•°¡Œ¥íÉ•ÑÕÉ¸Œôôôµ¥á•œüŸ²z²w¾ò/²Š3²tœè¡MQ}1MMMmtü¹±…‰•±ññŒ¤íô)™Õ¹Ñ¥½¸}±•…É”¡±•œ¥ì(€½¹ÍĞĞõ•ÑQÉ…¥¹	å9¼¡±•œ¹ÑÉ…¥¹9¼¤ì¥˜ …Ğ¥É•ÑÕÉ¸€Àì(€€¼¼ƒªÊÃ¶V§ªÚ0£²z²t¯²Š3²t§²ró®†pƒ²b#®“®Bpƒ²vó²‚W²v ƒ².“²‚pƒ²*ç²Â£ªÚ0ƒ²jÓ²z²vƒ²
+³²j¤(€¥˜¡±•œ¹Í•…Ñ±…ÍÌôôôµ¥á•œ¥ì(€€€¥˜¡±•œ¹Ñ¥­•Ñ%¥í½¹ÍĞÑ¬õ±½…‘Q¥­•ÑÌ ¤¹™¥¹¡àôùà¹¥ôôõ±•œ¹Ñ¥­•Ñ%˜™à¹ÍÑ…ÑÕÌôôô…Ñ¥Ù”œ¤í¥˜¡Ñ¬¥É•ÑÕÉ¸Ñ¬¹Ñ½Ñ…±…É”íô(€€€É•ÑÕÉ¸…±…É”¡Ğ±±•œ¹™É½µMÑ¸±±•œ¹Ñ½MÑ¸°•¹•É…°œ¤¨¡±•œ¹Á…ÍÍ•¹•É½Õ¹ÑñğÄ¤ì(€ô(€½¹ÍĞ‰…Í”õ…±…É”¡Ğ±±•œ¹™É½µMÑ¸±±•œ¹Ñ½MÑ¸±±•œ¹Í•…Ñ±…ÍÌ¤ì(€É•ÑÕÉ¸…ÁÁ±å¥Í½Õ¹Ğ¡‰…Í”±±•œ¹‘¥Í½Õ¹Ññğ¹½¹”œ¤¨¡±•œ¹Á…ÍÍ•¹•É½Õ¹ÑñğÄ¤ì)ô)™Õ¹Ñ¥½¸}ÑÉ¥ÁÍÑ…É”¡ÑÉ¥À¥íÉ•ÑÕÉ¸ÑÉ¥À¹±•Ì¹É•‘Õ” ¡„±°¤ôù„­}±•…É”¡°¤°À¤íô)™Õ¹Ñ¥½¸}±•	½½­•¡±•œ¥ì(€¥˜ …±•œ¹Ñ¥­•Ñ%¥É•ÑÕÉ¸™…±Í”ì(€½¹ÍĞÑ¬õ±½…‘Q¥­•ÑÌ ¤¹™¥¹¡ĞôùĞ¹¥ôôõ±•œ¹Ñ¥­•Ñ%¤ì(€É•ÑÕÉ¸€„„¡Ñ¬˜™Ñ¬¹ÍÑ…ÑÕÌôôô…Ñ¥Ù”œ¤ì)ô((¼¼ƒŠRŠR ƒ²vóªÒƒ²b#®€£¶.Ã²òLƒ®†s®Np¿²‚²z”€Ç¶j0ƒ®ÂÃ²æ`°ƒ®Ú²"c¶j£ªÎó®*Pƒ®‚3®6Pƒ¶n®†pƒ²vÓ²^À¤ƒŠRŠR )™Õ¹Ñ¥½¸}‰½½­=¹•1•%¹Ñ¼¡±•œ°ÑÉ¥Á9…µ”°Ñ¥­•ÑÌ¥ì(€½¹ÍĞĞõ•ÑQÉ…¥¹	å9¼¡±•œ¹ÑÉ…¥¹9¼¤ì(€¥˜ …Ğ¥É•ÑÕÉ¸í½¬é™…±Í”±•ÉÈèŸ²^Ó²Â ƒ²‚W®ÎĞƒ²^²v0ôì(€½¹ÍĞ‘…Ñ”õ±•œ¹‘…Ñ”°½Õ¹Ğõ±•œ¹Á…ÍÍ•¹•É½Õ¹ÑñğÄì(€½¹ÍĞ‘¥ÍŒõ±•œ¹‘¥Í½Õ¹Ññğ¹½¹”œì(€±•Ğ±Ìõ±•œ¹Í•…Ñ±…ÍÌ°Í•…Ñ¡…¹•õ¹Õ±°°µ¥áM•µ•¹ÑÌõ¹Õ±°ì(€¥˜¡ÑåÁ•½˜…¹	½½­=ôôô™Õ¹Ñ¥½¸œ˜˜……¹	½½­=¡Ğ±±•œ¹™É½µMÑ¸±±•œ¹Ñ½MÑ¸±½Õ¹Ğ±‘…Ñ”±±Ì¤¥ì(€€€€¼¼ƒ²“²‚Tèƒ®“²ƒ².pƒ²b#®ƒªÂ®*—¶Vpƒ®.“®–àƒ²Š3²tƒ®NÇªâ'²ró®†pƒ²zC®>dƒ®2²ÊĞ(€€€€¼¼ƒ²jÃ²ƒ²"s²rèƒ²‚ƒªÖ³ªÂƒ®.“®–àƒ²Š3²tƒ®NÇªâ$€øƒ²z²t¯²Š3²tƒªÊÃ¶V§ªÚ0£®Ú®Úƒ²Š3²t¤€øƒ²‚ƒªÖ³ªÂƒ²z²t(€€€½¹ÍĞ…ÕÑ½=¸õÑåÁ•½˜ÑÉ¥ÁÕÑ½M•…Ñ¹…‰±•ôôô™Õ¹Ñ¥½¸œ˜™ÑÉ¥ÁÕÑ½M•…Ñ¹…‰±• ¤ì(€€€½¹ÍĞÍ½±‘=ÕĞô ¤ôùí½¹ÍĞ±•™ĞõÑåÁ•½˜•ÑÙ…¥±…‰±•M•…ÑÌôôô™Õ¹Ñ¥½¸œı•ÑÙ…¥±…‰±•M•…ÑÌ¡Ğ±±•œ¹™É½µMÑ¸±±•œ¹Ñ½MÑ¸±‘…Ñ”±±Ì¤èÀíÉ•ÑÕÉ¸í½¬é™…±Í”±•ÉÈé±•™ĞøÀı€‘í±•™Ñ÷²w®0ƒ®
+£²v1€èŸ®“²ôíôì(€€€¥˜ ……ÕÑ½=¸¥É•ÑÕÉ¸Í½±‘=ÕĞ ¤ì(€€€€¼¼€Ä¤ƒ²‚ƒªÖ³ªÂƒ²Â§²tƒªÂ®*—¶Vpƒ®.“®–àƒ²Š3²tƒ®NÇªâ$€£²z²tƒ²‚s²fà¤(€€€±•Ğ…±Ğõ¹Õ±°ì(€€€™½È¡½¹ÍĞŒ½˜…Ù…¥±…‰±•M•…Ñ±…ÍÍ•Ì¡Ğ¹É…‘”¤¥ì¥˜¡Œôôõ±ÍññŒôôôÍÑ…¹‘¥¹œœ¥½¹Ñ¥¹Õ”ì¥˜¡…¹	½½­=¡Ğ±±•œ¹™É½µMÑ¸±±•œ¹Ñ½MÑ¸±½Õ¹Ğ±‘…Ñ”±Œ¤¥ì…±ĞõŒì‰É•…¬ìôô(€€€¥˜¡…±Ğ¥ìÍ•…Ñ¡…¹•õí™É½´é±Ì±Ñ¼é…±Ñôì±Ìõ…±Ğìô(€€€•±Í”¥˜¡±Ì„ôôÍÑ…¹‘¥¹œœ˜™ÑåÁ•½˜½µÁÕÑ•5¥á•‘M•µ•¹ÑÌôôô™Õ¹Ñ¥½¸œ˜™½µÁÕÑ•5¥á•‘M•µ•¹ÑÌ¡Ğ±±•œ¹™É½µMÑ¸±±•œ¹Ñ½MÑ¸±‘…Ñ”±½Õ¹Ğ±±Ì¤¥ì(€€€€€€¼¼€È¤ƒ²z²t¯²Š3²tƒªÊÃ¶V§ªÚ0€£²Š3²tƒªÖ³ªÂ²v ƒ²V'ªÎ€°ƒ®“²ƒªÖ³ªÂ®0ƒ²z²t¤(€€€€€µ¥áM•µ•¹ÑÌõ½µÁÕÑ•5¥á•‘M•µ•¹ÑÌ¡Ğ±±•œ¹™É½µMÑ¸±±•œ¹Ñ½MÑ¸±‘…Ñ”±½Õ¹Ğ±±Ì¤ì(€€€€€Í•…Ñ¡…¹•õí™É½´é±Ì±Ñ¼èµ¥á•œ±µ¥á•éÑÉÕ•ôì(€€€ô(€€€•±Í”¥˜¡±Ì„ôôÍÑ…¹‘¥¹œœ˜™…¹	½½­=¡Ğ±±•œ¹™É½µMÑ¸±±•œ¹Ñ½MÑ¸±½Õ¹Ğ±‘…Ñ”°ÍÑ…¹‘¥¹œœ¤¥ì(€€€€€€¼¼€Ì¤ƒ²‚ƒªÖ³ªÂƒ²z²t(€€€€€Í•…Ñ¡…¹•õí™É½´é±Ì±Ñ¼èÍÑ…¹‘¥¹œôì±ÌôÍÑ…¹‘¥¹œœì(€€€ô(€€€•±Í”É•ÑÕÉ¸Í½±‘=ÕĞ ¤ì(€ô(€¥˜¡‘…Ñ”ôôõÑ½‘…å1½…±MÑÈ ¤¥ì(€€€½¹ÍĞ¹½Üõ¹•Ü…Ñ” ¤°¹½İ4õ¹½Ü¹•Ñ!½ÕÉÌ ¤¨ØÀ­¹½Ü¹•Ñ5¥¹ÕÑ•Ì ¤°‘•Á4õÑ½5¥¸¡±•œ¹‘•ÁQ¥µ”¤ì(€€€¥˜¡‘•Á4„ôõ¹Õ±°˜™‘•Á4ñ¹½İ4¥É•ÑÕÉ¸í½¬é™…±Í”±•ÉÈèŸ²vÓ®¾àƒ²Ús®Âpôì(€ô(€½¹ÍĞ¹õÑ½5¥¸¡±•œ¹‘•ÁQ¥µ”¤°¹„õÑ½5¥¸¡±•œ¹…ÉÉQ¥µ”¤ì(€¥˜¡¹„ôõ¹Õ±°˜™¹„„ôõ¹Õ±°¥ì(€€€½¹ÍĞ…Lõ¹±…õ¹„øõ¹ı¹„é¹„¬ÄĞĞÀì(€€€½¹ÍĞ½¹™±¥ĞõÑ¥­•ÑÌ¹™¥¹¡Ñ¬ôùì¥˜¡Ñ¬¹ÍÑ…ÑÕÌ„ôô…Ñ¥Ù”ññÑ¬¹ÑÉ…Ù•±…Ñ”„ôõ‘…Ñ”¥É•ÑÕÉ¸™…±Í”ì½¹ÍĞ•õÑ½5¥¸¡Ñ¬¹‘•ÁQ¥µ”¤±•„õÑ½5¥¸¡Ñ¬¹…ÉÉQ¥µ”¤í¥˜¡•ôôõ¹Õ±±ññ•„ôôõ¹Õ±°¥É•ÑÕÉ¸™…±Í”ì½¹ÍĞ‰Lõ•±‰õ•„øõ•ı•„é•¬ÄĞĞÀìÉ•ÑÕÉ¸…Lñ‰˜™‰Lñ…ìô¤ì(€€€¥˜¡½¹™±¥Ğ¥É•ÑÕÉ¸í½¬é™…±Í”±•ÉÈéƒ².sªÂƒªÊç²æ  ‘í½¹™±¥Ğ¹ÑÉ…¥¹9½ô¥ôì(€ô(€€¼¼ƒªÊÃ¶V§ªÚ0£²z²t¯²Š3²t¤ƒ²*ç²Â£ªÚ0(€¥˜¡µ¥áM•µ•¹ÑÌ¥ì(€€€½¹ÍĞÍ•µ•¹ÑÌõµ¥áM•µ•¹ÑÌ¹µ…À¡Èôùì(€€€€€½¹ÍĞÍ•…ÑÌõÉÉ…ä¹™É½´¡í±•¹Ñ é½Õ¹Ñô° ¤ôùÈ¹­¥¹ôôôÍÑ…¹‘¥¹œœüŸ²z²tœéÉ…¹‘½µM•…Ğ¡È¹Í•…Ñ±…ÍÌ±±•œ¹ÑÉ…¥¹9¼¤¤ì(€€€€€½¹ÍĞˆõÈ¹‰…Í•…É•A•ÉA•ÉÍ½¸±˜õ…ÁÁ±å¥Í½Õ¹Ğ¡ˆ±‘¥ÍŒ¤ì(€€€€€É•ÑÕÉ¸ì¸¸¹È±Í•…ÑÌ±‰…Í•…É•A•ÉA•ÉÍ½¸éˆ±™…É•A•ÉA•ÉÍ½¸é™ôì(€€€ô¤ì(€€€½¹ÍĞ™…É•A•ÉA•ÉÍ½¸õÍ•µ•¹ÑÌ¹É•‘Õ” ¡„±Ì¤ôù„­Ì¹™…É•A•ÉA•ÉÍ½¸°À¤ì(€€€½¹ÍĞ‰…Í•…É•A•ÉA•ÉÍ½¸õÍ•µ•¹ÑÌ¹É•‘Õ” ¡„±Ì¤ôù„­Ì¹‰…Í•…É•A•ÉA•ÉÍ½¸°À¤ì(€€€½¹ÍĞÑ½ÁM•…ÑÌõÉÉ…ä¹™É½´¡í±•¹Ñ é½Õ¹Ñô°¡|±¤¤ôùÍ•µ•¹ÑÌ¹µ…À¡ÌôùÌ¹Í•…ÑÍm¥t¤¹©½¥¸ œ€¼€œ¤¤ì(€€€½¹ÍĞÑ¬õì(€€€€€¥é•¹Q¥­•Ñ% ¤±ÑÉ…¥¹9¼é±•œ¹ÑÉ…¥¹9¼±É…‘”éĞ¹É…‘”±±¥¹”éĞ¹±¥¹”°(€€€€€™É½µMÑ¸é±•œ¹™É½µMÑ¸±Ñ½MÑ¸é±•œ¹Ñ½MÑ¸±‘•ÁQ¥µ”é±•œ¹‘•ÁQ¥µ”±…ÉÉQ¥µ”é±•œ¹…ÉÉQ¥µ”°(€€€€€Í•…Ñ±…ÍÌèµ¥á•œ±Í•…Ñ±…ÍÍ1…‰•°èŸ²z²w¾ò/²Š3²tœ±µ¥á•éÍ•µ•¹ÑÌ°(€€€€€Í•…ÑÌéÑ½ÁM•…ÑÌ±Á…ÍÍ•¹•É½Õ¹Ğé½Õ¹Ğ°(€€€€€™…É•A•ÉA•ÉÍ½¸±Ñ½Ñ…±…É”é™…É•A•ÉA•ÉÍ½¸©½Õ¹Ğ±‘¥Í½Õ¹Ğé‘¥ÍŒ°(€€€€€‘¥Í½Õ¹Ñ1…‰•°é%M=U9QMm‘¥Ít¹±…‰•°±‰…Í•…É•A•ÉA•ÉÍ½¸°(€€€€€‘¥ÍÑ…¹•-´é5…Ñ ¹É½Õ¹¡É½ÕÑ•¥ÍÑ…¹•-´¡Ğ±±•œ¹™É½µMÑ¸±±•œ¹Ñ½MÑ¸¤¤°(€€€€€‰½½­•‘Ğé…Ñ”¹¹½Ü ¤±ÑÉ…Ù•±…Ñ”é‘…Ñ”±ÍÑ…ÑÕÌè…Ñ¥Ù”œ±ÑÉ¥Á9…µ”éÑÉ¥Á9…µ•ñğœœ(€€€ôì(€€€Ñ¥­•ÑÌ¹ÁÕÍ ¡Ñ¬¤ì(€€€É•ÑÕÉ¸í½¬éÑÉÕ”±Ñ¥­•Ñ%éÑ¬¹¥±ÑÉ…¥¹9¼é±•œ¹ÑÉ…¥¹9¼±‘…Ñ”±Ğ±±•œ±‰½½­•‘±…ÍÌèµ¥á•œ±Í•…Ñ¡…¹•‘ôì(€ô(€½¹ÍĞ‰…Í”õ…±…É”¡Ğ±±•œ¹™É½µMÑ¸±±•œ¹Ñ½MÑ¸±±Ì¤ì(€½¹ÍĞ™…É”õ…ÁÁ±å¥Í½Õ¹Ğ¡‰…Í”±‘¥ÍŒ¤ì(€½¹ÍĞÍ•…ÑÌõÉÉ…ä¹™É½´¡í±•¹Ñ é½Õ¹Ñô° ¤ôùÉ…¹‘½µM•…Ğ¡±Ì±±•œ¹ÑÉ…¥¹9¼¤¤ì(€½¹ÍĞÑ¬õì(€€€¥é•¹Q¥­•Ñ% ¤±ÑÉ…¥¹9¼é±•œ¹ÑÉ…¥¹9¼±É…‘”éĞ¹É…‘”±±¥¹”éĞ¹±¥¹”°(€€€™É½µMÑ¸é±•œ¹™É½µMÑ¸±Ñ½MÑ¸é±•œ¹Ñ½MÑ¸±‘•ÁQ¥µ”é±•œ¹‘•ÁQ¥µ”±…ÉÉQ¥µ”é±•œ¹…ÉÉQ¥µ”°(€€€Í•…Ñ±…ÍÌé±Ì±Í•…Ñ±…ÍÍ1…‰•°éMQ}1MMMm±Ít¹±…‰•°±Í•…ÑÌ±Á…ÍÍ•¹•É½Õ¹Ğé½Õ¹Ğ°(€€€™…É•A•ÉA•ÉÍ½¸é™…É”±Ñ½Ñ…±…É”é™…É”©½Õ¹Ğ±‘¥Í½Õ¹Ğé‘¥ÍŒ°(€€€‘¥Í½Õ¹Ñ1…‰•°é%M=U9QMm‘¥Ít¹±…‰•°±‰…Í•…É•A•ÉA•ÉÍ½¸é‰…Í”°(€€€‘¥ÍÑ…¹•-´é5…Ñ ¹É½Õ¹¡É½ÕÑ•¥ÍÑ…¹•-´¡Ğ±±•œ¹™É½µMÑ¸±±•œ¹Ñ½MÑ¸¤¤°(€€€‰½½­•‘Ğé…Ñ”¹¹½Ü ¤±ÑÉ…Ù•±…Ñ”é‘…Ñ”±ÍÑ…ÑÕÌè…Ñ¥Ù”œ±ÑÉ¥Á9…µ”éÑÉ¥Á9…µ•ñğœœ(€ôì(€Ñ¥­•ÑÌ¹ÁÕÍ ¡Ñ¬¤ì(€É•ÑÕÉ¸í½¬éÑÉÕ”±Ñ¥­•Ñ%éÑ¬¹¥±ÑÉ…¥¹9¼é±•œ¹ÑÉ…¥¹9¼±‘…Ñ”±Ğ±±•œ±‰½½­•‘±…ÍÌé±Ì±Í•…Ñ¡…¹•‘ôì)ô)™Õ¹Ñ¥½¸‰Õ±­	½½­QÉ¥À¡ÑÉ¥Á%¥ì(€½¹ÍĞÑÉ¥ÁÌõ±½…‘QÉ¥ÁÌ ¤ì½¹ÍĞÑÉ¥ÀõÑÉ¥ÁÌ¹™¥¹¡ĞôùĞ¹¥ôôõÑÉ¥Á%¤ì¥˜ …ÑÉ¥À¥É•ÑÕÉ¸ì(€½¹ÍĞÑ¥­•ÑÌõ±½…‘Q¥­•ÑÌ ¤ì(€½¹ÍĞ…Ñ¥Ù•%‘Ìõ¹•ÜM•Ğ¡Ñ¥­•ÑÌ¹™¥±Ñ•È¡ĞôùĞ¹ÍÑ…ÑÕÌôôô…Ñ¥Ù”œ¤¹µ…À¡ĞôùĞ¹¥¤¤ì(€½¹ÍĞÑ½‘¼õÑÉ¥À¹±•Ì¹™¥±Ñ•È¡°ôø„¡°¹Ñ¥­•Ñ%˜™…Ñ¥Ù•%‘Ì¹¡…Ì¡°¹Ñ¥­•Ñ%¤¤¤ì(€¥˜ …Ñ½‘¼¹±•¹Ñ ¥í…±•ÉĞ Ÿ²vÓ®¾àƒ®ª£®N€ƒ²vó²‚W²vĞƒ²b#®“®Bc²ZĞƒ²z#²*×®.#®.¸œ¤íÉ•ÑÕÉ¸íô(€½¹ÍĞÑ½Ñ…°õÑ½‘¼¹É•‘Õ” ¡„±°¤ôù„­}±•…É”¡°¤°À¤ì(€¥˜ …½¹™¥É´¡€œ‘íÑÉ¥À¹¹…µ•ôœƒ²^³¶Z'²v`ƒ®¾ã²b#®ƒ²vó²‚T€‘íÑ½‘¼¹±•¹Ñ¡÷ªÆÓ²vƒ²vóªÒƒ²b#®“¶V§®.#®.¹q»²b#²ƒªÊÃ²‚pƒªâ#²V„è€‘íÑ½Ñ…°¹Ñ½1½…±•MÑÉ¥¹œ ¥÷²nAq¹q»ªÎ²7¶Vc².sªÊƒ²*×®.#ªæ0ı€¤¥É•ÑÕÉ¸ì(€€¼¼ƒ²¶Z'®–€ƒ²b“®Ê®‚#²vÓ®–ğƒ®¢ó²‚ ƒªŞã®š³ªÎ€°ƒ²Š3²tƒªÎ²
+Ã²vĞƒ®²ÓªÆÃ²jÃ®¾®†p€ÇªÆÓ²R¤ƒ²Ê·¶°ƒ²Êc®š³¶VĞU$ƒ¶R®š³²W²vƒ®Â§² (€½¹ÍĞ½Øõ‘½Õµ•¹Ğ¹É•…Ñ•±•µ•¹Ğ ‘¥Øœ¤ì½Ø¹¥ôÑÉ¥Àµ‰½½­¥¹œµ½Ù•É±…äœì(€½Ø¹ÍÑå±”¹ÍÍQ•áĞôÁ½Í¥Ñ¥½¸é™¥á•í¥¹Í•ĞèÀíèµ¥¹‘•àèÄÀÀĞÀí‘¥ÍÁ±…äé™±•àí…±¥¸µ¥Ñ•µÌé•¹Ñ•Èí©ÕÍÑ¥™äµ½¹Ñ•¹Ğé•¹Ñ•Èí‰…­É½Õ¹éÉ‰„ À°À°À°¸Ô¤œì(€½Ø¹¥¹¹•É!Q50õ€ñ‘¥ØÍÑå±”ô‰‰…­É½Õ¹éÙ…È ´µ‰œÄ¤í‰½É‘•ÈèÅÁàÍ½±¥Ù…È ´µ‰½É‘•È¤í‰½É‘•ÈµÉ…‘¥ÕÌèÄÑÁàíÁ…‘‘¥¹œèÈÉÁà€ÈáÁàíÑ•áĞµ…±¥¸é•¹Ñ•Èíµ¥¸µİ¥‘Ñ èÈÄÁÁàˆø(€€€€ñ‘¥ØÍÑå±”ô‰™½¹ĞµÍ¥é”èÄÕÁàí™½¹Ğµİ•¥¡ĞèÜÀÀí½±½ÈéÙ…È ´µÑ•áĞÄ¤íµ…É¥¸µ‰½ÑÑ½´èÄÁÁàˆûÂ~:¬ƒ²b#®ƒ²Êc®š°ƒ²’GŠ˜ğ½‘¥Øø(€€€€ñ‘¥Ø±…ÍÌô‰ÑÉ¥Àµ‰½½¬µÑÉ…¬ˆøñ‘¥Ø±…ÍÌô‰ÑÉ¥Àµ‰½½¬µ™¥±°ˆ¥ô‰Ñ‰¼µ™¥±°ˆÍÑå±”ô‰İ¥‘Ñ èÀ”ˆøğ½‘¥Øøğ½‘¥Øø(€€€€ñ‘¥Ø¥ô‰Ñ‰¼µÁÉ½œˆÍÑå±”ô‰™½¹Ğµ™…µ¥±äéÙ…È ´µµ½¹¼¤í™½¹ĞµÍ¥é”èÄÈ¸ÕÁàí½±½ÈéÙ…È ´µÑ•áĞÈ¤íµ…É¥¸µÑ½ÀèáÁàˆøÀ€¼€‘íÑ½‘¼¹±•¹Ñ¡ôğ½‘¥Øøğ½‘¥Øù€ì(€‘½Õµ•¹Ğ¹‰½‘ä¹…ÁÁ•¹‘¡¥±¡½Ø¤ì(€±•Ğ¤ôÀ°½¬ôÀì½¹ÍĞ™…¥±Ìõmt°‘½¹”õmtì(€½¹ÍĞÍÑ•Àô ¤ôùì(€€€½¹ÍĞ±•œõÑ½‘½m¥tì(€€€½¹ÍĞÈõ}‰½½­=¹•1•%¹Ñ¼¡±•œ°ÑÉ¥À¹¹…µ”°Ñ¥­•ÑÌ¤ì(€€€¥˜¡È¹½¬¥ì±•œ¹Ñ¥­•Ñ%õÈ¹Ñ¥­•Ñ%ì(€€€€€¥˜¡È¹Í•…Ñ¡…¹•¥ì±•œ¹Í•…Ñ±…ÍÌõÈ¹‰½½­•‘±…ÍÌì±•œ¹Í•…Ñ±…ÍÍ1…‰•°õ}ÑÉ¥Á±Í1…‰•°¡È¹‰½½­•‘±…ÍÌ¤ìô(€€€€€½¬¬¬ì‘½¹”¹ÁÕÍ ¡È¤ìô(€€€•±Í”™…¥±Ì¹ÁÕÍ ¡ƒ
+Ü€‘í±•œ¹ÑÉ…¥¹9½ô€‘í±•œ¹™É½µMÑ¹÷ŠH‘í±•œ¹Ñ½MÑ¹ô€ ‘í±•œ¹‘…å÷²vó²Â ¤è€‘íÈ¹•ÉÉõ€¤ì(€€€¤¬¬ì(€€€½¹ÍĞÁ”õ‘½Õµ•¹Ğ¹•Ñ±•µ•¹Ñ	å% Ñ‰¼µÁÉ½œœ¤°™”õ‘½Õµ•¹Ğ¹•Ñ±•µ•¹Ñ	å% Ñ‰¼µ™¥±°œ¤ì(€€€¥˜¡Á”¥Á”¹Ñ•áÑ½¹Ñ•¹Ğõ€‘í¥ô€¼€‘íÑ½‘¼¹±•¹Ñ¡õ€ì¥˜¡™”¥™”¹ÍÑå±”¹İ¥‘Ñ õ5…Ñ ¹É½Õ¹¡¤½Ñ½‘¼¹±•¹Ñ ¨ÄÀÀ¤¬œ”œì(€€€¥˜¡¤ñÑ½‘¼¹±•¹Ñ ¥ìÍ•ÑQ¥µ•½ÕĞ¡ÍÑ•À°À¤ìÉ•ÑÕÉ¸ìô(€€€Í…Ù•Q¥­•ÑÌ¡Ñ¥­•ÑÌ¤ìÍ…Ù•QÉ¥ÁÌ¡ÑÉ¥ÁÌ¤ì}±•…É5¥á5•µ¼ ¤ì€€€¼¼ƒ²‚²ÊĞ€Ç¶j0ƒ²‚²z”(€€€½Ø¹É•µ½Ù” ¤ìÉ•¹‘•É5åQÉ¥ÁÌ ¤ì(€€€Í•ÑQ¥µ•½ÕĞ  ¤ôùì(€€€€€‘½¹”¹™½É… ¡Èôùì¥˜¡ÑåÁ•½˜¥¹Ù…±¥‘…Ñ•½¹•ÍÑ¥½¸ôôô™Õ¹Ñ¥½¸œ¥¥¹Ù…±¥‘…Ñ•½¹•ÍÑ¥½¸¡È¹ÑÉ…¥¹9¼±È¹‘…Ñ”¤ìô¤ì(€€€€€‘½¹”¹™½É… ¡Èôùì¥˜¡ÑåÁ•½˜}…ÕÑ½	½½­±…ÉµÌôôô™Õ¹Ñ¥½¸œ¥}…ÕÑ½	½½­±…ÉµÌ¡È¹Ğ±È¹±•œ¹™É½µMÑ¸±È¹±•œ¹Ñ½MÑ¸±È¹±•œ¹‘•ÁQ¥µ”±È¹±•œ¹…ÉÉQ¥µ”¤ìô¤ì(€€€€€½¹ÍĞ¡…¹•õ‘½¹”¹™¥±Ñ•È¡ÈôùÈ¹Í•…Ñ¡…¹•¤ì(€€€€€±•ĞµÍœõƒÂ~Ìƒ²vóªÒƒ²b#®ƒªÊÃªÎñq¹q»Šrƒ²ÇªÎÔ€‘í½­÷ªÆÑ€ì(€€€€€¥˜¡¡…¹•¹±•¹Ñ ¥µÍœ¬õq»Â~:¾â<ƒ®“²²ró®†pƒ²Š3²tƒ®NÇªâ$ƒ®ÎªÊô€‘í¡…¹•¹±•¹Ñ¡÷ªÆÑq¹€­¡…¹•¹µ…À¡Èôù€ƒ
+Ü€‘íÈ¹ÑÉ…¥¹9½ô€‘í}ÑÉ¥Á±Í1…‰•°¡È¹Í•…Ñ¡…¹•¹™É½´¥÷ŠH‘í}ÑÉ¥Á±Í1…‰•°¡È¹Í•…Ñ¡…¹•¹Ñ¼¥õ€¤¹©½¥¸ q¸œ¤ì(€€€€€¥˜¡™…¥±Ì¹±•¹Ñ ¥µÍœ¬õq»Šv0ƒ².“¶2 €‘í™…¥±Ì¹±•¹Ñ¡÷ªÆÑq¹q¹€­™…¥±Ì¹©½¥¸ q¸œ¤ì(€€€€€¥˜ …™…¥±Ì¹±•¹Ñ ˜˜…¡…¹•¹±•¹Ñ ¥µÍœ¬ôq»®ª£®N€ƒ²vó²‚W²vĞƒ²b#®“®Bc²^#²*×®.#®.„œì(€€€€€…±•ÉĞ¡µÍœ¤ì(€€€ô°À¤ì(€ôì(€Í•ÑQ¥µ•½ÕĞ¡ÍÑ•À°ÌÀ¤ì€¼¼ƒ²b“®Ê®‚#²vÓªÂ ƒ®¢ó²‚ ƒ¶:c²vã¶*ã®Bc®>®†tƒ²²^À)ô((¼¼ƒŠRŠR ƒ®‚3®6PƒŠRŠR )™Õ¹Ñ¥½¸½Á•¹QÉ¥À¡¥¥íİ¥¹‘½Ü¹}…Ñ¥Ù•QÉ¥Á%õ¥íÉ•¹‘•É5åQÉ¥ÁÌ ¤íô)™Õ¹Ñ¥½¸‰…­Q½QÉ¥Á1¥ÍĞ ¥íİ¥¹‘½Ü¹}…Ñ¥Ù•QÉ¥Á%õ¹Õ±°íÉ•¹‘•É5åQÉ¥ÁÌ ¤íô)™Õ¹Ñ¥½¸É•¹‘•É5åQÉ¥ÁÌ ¥ì(€½¹ÍĞ•°õ‘½Õµ•¹Ğ¹•Ñ±•µ•¹Ñ	å% É•ÍÕ±ĞµµåÑÉ¥Àœ¤ì¥˜ …•°¥É•ÑÕÉ¸ì(€½¹ÍĞÑÉ¥ÁÌõ±½…‘QÉ¥ÁÌ ¤ì(€½¹ÍĞ…Ñ¥Ù”õİ¥¹‘½Ü¹}…Ñ¥Ù•QÉ¥Á%˜™ÑÉ¥ÁÌ¹™¥¹¡ĞôùĞ¹¥ôôõİ¥¹‘½Ü¹}…Ñ¥Ù•QÉ¥Á%¤ì(€•°¹¥¹¹•É!Q50€ô…Ñ¥Ù”€ü}ÑÉ¥Á•Ñ…¥±!Q50¡…Ñ¥Ù”¤€è}ÑÉ¥Á1¥ÍÑ!Q50¡ÑÉ¥ÁÌ¤ì(€¥˜¡…Ñ¥Ù”€˜˜ÑåÁ•½˜}…ÑÑ…¡QÉ¥ÁMİ¥Á”ôôô™Õ¹Ñ¥½¸œ¤}…ÑÑ…¡QÉ¥ÁMİ¥Á” ¤ì)ô)™Õ¹Ñ¥½¸}ÑÉ¥Á1¥ÍÑ!Q50¡ÑÉ¥ÁÌ¥ì(€½¹ÍĞ…É‘Ì€ôÑÉ¥ÁÌ¹±•¹Ñ €üÑÉ¥ÁÌ¹Í±¥” ¤¹Í½ÉĞ ¡„±ˆ¤ôùˆ¹É•…Ñ•‘Ğµ„¹É•…Ñ•‘Ğ¤¹µ…À¡ÑÀôùì(€€€½¹ÍĞ‰½½­•õÑÀ¹±•Ì¹™¥±Ñ•È¡}±•	½½­•¤¹±•¹Ñ ì(€€€½¹ÍĞÉ…¹”õÑÀ¹‘…åÌøÄı€‘íÑÀ¹ÍÑ…ÉÑ…Ñ•ôø€‘í}‘…å…Ñ”¡ÑÀ±ÑÀ¹‘…åÌ¥õ€éÑÀ¹ÍÑ…ÉÑ…Ñ”ì(€€€É•ÑÕÉ¸€ñ‘¥Ø±…ÍÌô‰ÑÉ¥Àµ…Éˆ½¹±¥¬ô‰½Á•¹QÉ¥À œ‘íÑÀ¹¥‘ôœ¤ˆø(€€€€€€ñ‘¥Ø±…ÍÌô‰ÑÉ¥Àµ…ÉµÑ½Àˆø(€€€€€€€€ñÍÁ…¸±…ÍÌô‰ÑÉ¥Àµ…Éµ¹…µ”ˆûÂ~Ì€‘í}Ñ•ÍŒ¡ÑÀ¹¹…µ”¥ôğ½ÍÁ…¸ø(€€€€€€€€ñÍÁ…¸±…ÍÌô‰ÑÉ¥Àµ…Éµ¹¥¡ÑÌˆø‘í}ÑÉ¥Á9¥¡ÑÍ1…‰•°¡ÑÀ¥ôğ½ÍÁ…¸ø(€€€€€€ğ½‘¥Øø(€€€€€€ñ‘¥Ø±…ÍÌô‰ÑÉ¥Àµ…Éµµ•Ñ„ˆø‘íÉ…¹•ôğ½‘¥Øø(€€€€€€ñ‘¥Ø±…ÍÌô‰ÑÉ¥Àµ…Éµ™½½Ğˆø(€€€€€€€€ñÍÁ…¸±…ÍÌô‰ÑÉ¥Àµ‰…‘”ˆû²vó²‚T€‘íÑÀ¹±•Ì¹±•¹Ñ¡ôğ½ÍÁ…¸ø(€€€€€€€€ñÍÁ…¸±…ÍÌô‰ÑÉ¥Àµ‰…‘”€‘í‰½½­•ôôõÑÀ¹±•Ì¹±•¹Ñ ˜™ÑÀ¹±•Ì¹±•¹Ñ üÑÉ¥Àµ‰…‘”µ‘½¹”œèœôˆû²b#®€‘í‰½½­•‘ô¼‘íÑÀ¹±•Ì¹±•¹Ñ¡ôğ½ÍÁ…¸ø(€€€€€€€€ñÍÁ…¸±…ÍÌô‰ÑÉ¥Àµ…Éµ™…É”ˆø‘í}ÑÉ¥ÁÍÑ…É”¡ÑÀ¤¹Ñ½1½…±•MÑÉ¥¹œ ¥÷²n@ğ½ÍÁ…¸ø(€€€€€€ğ½‘¥Øø(€€€€ğ½‘¥Øù€ì(€ô¤¹©½¥¸ œœ¤€è€ñ‘¥Ø±…ÍÌô‰ÑÉ¥Àµ•µÁÑäˆøñ‘¥Ø±…ÍÌô‰ÑÉ¥Àµ•µÁÑäµ¥ŒˆûÂ~Ìğ½‘¥ØøñÀû²V²ƒ®3®N€ƒ²^³¶Z'²vĞƒ²^²*×®.#®.¸ñ‰Èû²^³¶Z'²vƒ®3®N“ªÎ€ƒ®
+ƒ²s®Î®†pƒ²^Ó²Â ƒ²vó²‚W²vƒ®.Ó²Vñ‰Èû¶Vpƒ®Ê#²^@ƒ²b#®“¶VĞƒ®ÎÓ²ã²jP¸ğ½Àøğ½‘¥Øù€ì(€É•ÑÕÉ¸€ñ‘¥Ø±…ÍÌô‰ÑÉ¥ÀµİÉ…Àˆø(€€€€ñ‘¥Ø±…ÍÌô‰ÑÉ¥Àµ¥¹ÑÉ¼ˆøÇ®ÂT€Ë²vğ°€Ï®ÂT€Ó²vğƒ®NÄ€ñˆû®¦Ã²æ€ƒ²vó²‚Tğ½ˆû²vã² ƒ²‚W¶VcªÎ€°ƒ®
+ƒ²p£²vó²Â §®Î®†pƒ²^Ó²Â£®–ğƒ®.Ó²V€ñˆû²vóªÒƒ²b#®ğ½ˆû¶V€ƒ²"`ƒ²z#²*×®.#®.¸ğ½‘¥Øø(€€€€ñ‰ÕÑÑ½¸±…ÍÌô‰‰Ñ¸‰Ñ¸µÁÉ¥µ…ÉäÑÉ¥Àµ¹•Üˆ½¹±¥¬ô‰½Á•¹QÉ¥ÁÉ•…Ñ•5½‘…° ¤ˆû¾ò,ƒ² ƒ²^³¶Z$ƒ®3®N“ªâÀğ½‰ÕÑÑ½¸ø(€€€€ñ‘¥Ø±…ÍÌô‰ÑÉ¥Àµ±¥ÍĞˆø‘í…É‘Íôğ½‘¥Øø(€€ğ½‘¥Øù€ì)ô((¼¼ƒŠRŠR ƒ²w²Ä¿²“²‚Tƒ®ª£®.°€£²vÓ®š
+ß².s²zG²vó
+ß²vó²"`¤ƒŠRŠR )™Õ¹Ñ¥½¸}½Á•¹QÉ¥Á½Éµ5½‘…°¡½ÁĞ¥ì(€‘½Õµ•¹Ğ¹•Ñ±•µ•¹Ñ	å% ÑÉ¥Àµ™½É´µİÉ…Àœ¤ü¹É•µ½Ù” ¤ì(€½¹ÍĞÑ½‘…äõÑ½‘…å1½…±MÑÈ ¤°µ…áõ}…‘‘…åÌ¡Ñ½‘…ä°ÌØÔ¤ì(€½¹ÍĞİÉ…Àõ‘½Õµ•¹Ğ¹É•…Ñ•±•µ•¹Ğ ‘¥Øœ¤ìİÉ…À¹¥ôÑÉ¥Àµ™½É´µİÉ…Àœì(€İÉ…À¹ÍÑå±”¹ÍÍQ•áĞôÁ½Í¥Ñ¥½¸é™¥á•í¥¹Í•ĞèÀíèµ¥¹‘•àèäØÀÀí‘¥ÍÁ±…äé™±•àí…±¥¸µ¥Ñ•µÌé•¹Ñ•Èí©ÕÍÑ¥™äµ½¹Ñ•¹Ğé•¹Ñ•ÈíÁ…‘‘¥¹œèÄÙÁàí‰½àµÍ¥é¥¹œé‰½É‘•Èµ‰½àœì(€İÉ…À¹¥¹¹•É!Q50õ€ñ‘¥ØÍÑå±”ô‰Á½Í¥Ñ¥½¸é…‰Í½±ÕÑ”í¥¹Í•ĞèÀí‰…­É½Õ¹éÉ‰„ À°À°À°¸Ø¤ˆøğ½‘¥Øø(€€€€ñ‘¥Ø±…ÍÌô‰…±…É´µÁ½ÁÕÀˆÍÑå±”ô‰Á½Í¥Ñ¥½¸éÉ•±…Ñ¥Ù”íÑÉ…¹Í™½É´é¹½¹”íÑ½Àé…ÕÑ¼í±•™Ğé…ÕÑ¼íİ¥‘Ñ èÄÀÀ”íµ…àµİ¥‘Ñ èĞÈÁÁàˆø(€€€€€€ñ‘¥Ø±…ÍÌô‰…±…É´µÁ½ÁÕÀµÑ¥Ñ±”ˆø‘í½ÁĞ¹Ñ¥Ñ±•ôğ½‘¥Øø(€€€€€€ñ‘¥Ø±…ÍÌô‰ÑÉ¥Àµ™½É´µ™¥•±ˆøñ±…‰•°û²^³¶Z$ƒ²vÓ®šğ½±…‰•°øñ¥¹ÁÕĞÑåÁ”ô‰Ñ•áĞˆ¥ô‰Ñ˜µ¹…µ”ˆ±…ÍÌô‰ÑÉ¥Àµ™½É´µ¥¹ÁÕĞˆÙ…±Õ”ôˆ‘í}Ñ•ÍŒ¡½ÁĞ¹¹…µ•ñğœœ¥ôˆÁ±…•¡½±‘•Èô‹²b èƒ²^³®šƒ®Ú²
+Àƒ²^³¶Z$ˆµ…á±•¹Ñ ôˆÌÀˆøğ½‘¥Øø(€€€€€€ñ‘¥Ø±…ÍÌô‰ÑÉ¥Àµ™½É´µ™¥•±ˆøñ±…‰•°û².s²zG²vğ€ Ç²vó²Â ¤ğ½±…‰•°øñ¥¹ÁÕĞÑåÁ”ô‰‘…Ñ”ˆ¥ô‰Ñ˜µÍÑ…ÉĞˆ±…ÍÌô‰ÑÉ¥Àµ™½É´µ¥¹ÁÕĞˆÙ…±Õ”ôˆ‘í½ÁĞ¹ÍÑ…ÉÑ…Ñ•ññÑ½‘…åôˆµ¥¸ôˆ‘íÑ½‘…åôˆµ…àôˆ‘íµ…áôˆøğ½‘¥Øø(€€€€€€ñ‘¥Ø±…ÍÌô‰ÑÉ¥Àµ™½É´µ™¥•±ˆøñ±…‰•°û²^³¶Z$ƒ²vó²"`ğ½±…‰•°ø(€€€€€€€€ñ‘¥Ø±…ÍÌô‰‰½½­¥¹œµÁ…ÍÍ•¹•Èµ½¹ÑÉ½°ˆÍÑå±”ô‰©ÕÍÑ¥™äµ½¹Ñ•¹Ğé•¹Ñ•Èí…ÀèÈÁÁàˆø(€€€€€€€€€€ñ‰ÕÑÑ½¸±…ÍÌô‰‰½½­¥¹œµÍÑ•ÁÁ•Èµ‰Ñ¸ˆ¥ô‰Ñ˜µµ¥¹ÕÌˆÑåÁ”ô‰‰ÕÑÑ½¸ˆûŠ"Hğ½‰ÕÑÑ½¸ø(€€€€€€€€€€ñÍÁ…¸¥ô‰Ñ˜µ‘…åÌˆÍÑå±”ô‰µ¥¸µİ¥‘Ñ èäÙÁàíÑ•áĞµ…±¥¸é•¹Ñ•Èˆøğ½ÍÁ…¸ø(€€€€€€€€€€ñ‰ÕÑÑ½¸±…ÍÌô‰‰½½­¥¹œµÍÑ•ÁÁ•Èµ‰Ñ¸ˆ¥ô‰Ñ˜µÁ±ÕÌˆÑåÁ”ô‰‰ÕÑÑ½¸ˆø¬ğ½‰ÕÑÑ½¸ø(€€€€€€€€ğ½‘¥Øø(€€€€€€ğ½‘¥Øø(€€€€€€ñ‰ÕÑÑ½¸±…ÍÌô‰‰Ñ¸‰Ñ¸µÁÉ¥µ…Éäˆ¥ô‰Ñ˜µÍ…Ù”ˆÍÑå±”ô‰İ¥‘Ñ èÄÀÀ”í©ÕÍÑ¥™äµ½¹Ñ•¹Ğé•¹Ñ•Èíµ…É¥¸µÑ½ÀèÄÙÁàˆø‘í½ÁĞ¹Í…Ù•1…‰•±ñğŸ²‚²z”ôğ½‰ÕÑÑ½¸ø(€€€€€€ñ‰ÕÑÑ½¸±…ÍÌô‰…±…É´µÁ½ÁÕÀµ±½Í”ˆ¥ô‰Ñ˜µ…¹•°ˆû²Ş£²0ğ½‰ÕÑÑ½¸ø(€€€€ğ½‘¥Øù€ì(€‘½Õµ•¹Ğ¹‰½‘ä¹…ÁÁ•¹‘¡¥±¡İÉ…À¤ì(€±•Ğ‘…åÌõ5…Ñ ¹µ…à Ä±5…Ñ ¹µ¥¸ ÌÀ±½ÁĞ¹‘…åÍñğÄ¤¤ì(€½¹ÍĞÕÁô ¤ôùí½¹ÍĞ•°õ‘½Õµ•¹Ğ¹•Ñ±•µ•¹Ñ	å% Ñ˜µ‘…åÌœ¤í¥˜¡•°¥•°¹¥¹¹•É!Q50õ€ñˆÍÑå±”ô‰™½¹ĞµÍ¥é”èÄİÁàˆø‘í‘…åÍôğ½ˆû²vğ€ñÍÁ…¸ÍÑå±”ô‰½±½ÈéÙ…È ´µÑ•áĞÌ¤í™½¹ĞµÍ¥é”èÄÉÁàˆø‘í‘…åÌğôÄüŸ
+Üƒ®.ç²vğœèŸ
+Ü€œ¬¡‘…åÌ´Ä¤¬Ÿ®ÂTôğ½ÍÁ…¸ù€íôì(€ÕÁ ¤ì(€İÉ…À¹…‘‘Ù•¹Ñ1¥ÍÑ•¹•È ±¥¬œ±”ôùí¥˜¡”¹Ñ…É•ĞôôõİÉ…Áññ”¹Ñ…É•ĞôôõİÉ…À¹™¥ÉÍÑ±•µ•¹Ñ¡¥±¥İÉ…À¹É•µ½Ù” ¤íô¤ì(€‘½Õµ•¹Ğ¹•Ñ±•µ•¹Ñ	å% Ñ˜µµ¥¹ÕÌœ¤¹…‘‘Ù•¹Ñ1¥ÍÑ•¹•È ±¥¬œ° ¤ôùí‘…åÌõ5…Ñ ¹µ…à Ä±‘…åÌ´Ä¤íÕÁ ¤íô¤ì(€‘½Õµ•¹Ğ¹•Ñ±•µ•¹Ñ	å% Ñ˜µÁ±ÕÌœ¤¹…‘‘Ù•¹Ñ1¥ÍÑ•¹•È ±¥¬œ° ¤ôùí‘…åÌõ5…Ñ ¹µ¥¸ ÌÀ±‘…åÌ¬Ä¤íÕÁ ¤íô¤ì(€‘½Õµ•¹Ğ¹•Ñ±•µ•¹Ñ	å% Ñ˜µ…¹•°œ¤¹…‘‘Ù•¹Ñ1¥ÍÑ•¹•È ±¥¬œ° ¤ôùİÉ…À¹É•µ½Ù” ¤¤ì(€‘½Õµ•¹Ğ¹•Ñ±•µ•¹Ñ	å% Ñ˜µÍ…Ù”œ¤¹…‘‘Ù•¹Ñ1¥ÍÑ•¹•È ±¥¬œ° ¤ôùì(€€€½¹ÍĞ¹…µ”õ‘½Õµ•¹Ğ¹•Ñ±•µ•¹Ñ	å% Ñ˜µ¹…µ”œ¤¹Ù…±Õ”¹ÑÉ¥´ ¥ñğŸ®
+Ğƒ²^³¶Z$œì(€€€½¹ÍĞÍÑ…ÉĞõ‘½Õµ•¹Ğ¹•Ñ±•µ•¹Ñ	å% Ñ˜µÍÑ…ÉĞœ¤¹Ù…±Õ•ññÑ½‘…äì(€€€½¹ÍĞ½¬õ½ÁĞ¹½¹M…Ù”¡¹…µ”±ÍÑ…ÉĞ±‘…åÌ¤ì(€€€¥˜¡½¬„ôõ™…±Í”¥İÉ…À¹É•µ½Ù” ¤ì(€ô¤ì)ô)™Õ¹Ñ¥½¸½Á•¹QÉ¥ÁÉ•…Ñ•5½‘…° ¥ì}½Á•¹QÉ¥Á½Éµ5½‘…°¡íÑ¥Ñ±”èŸÂ~Ìƒ² ƒ²^³¶Z$ƒ®3®N“ªâÀœ±Í…Ù•1…‰•°èŸ®3®N“ªâÀœ±‘…åÌèÈ±½¹M…Ù”è¡¸±Ì±¤ôùí½¹ÍĞ¥õÉ•…Ñ•QÉ¥À¡¸±Ì±¤í½Á•¹QÉ¥À¡¥¤íõô¤ìô)™Õ¹Ñ¥½¸½Á•¹QÉ¥Á‘¥Ñ5½‘…°¡¥¥ì(€½¹ÍĞÑÀõ±½…‘QÉ¥ÁÌ ¤¹™¥¹¡ĞôùĞ¹¥ôôõ¥¤ì¥˜ …ÑÀ¥É•ÑÕÉ¸ì(€}½Á•¹QÉ¥Á½Éµ5½‘…°¡íÑ¥Ñ±”èŸÂ~Ìƒ²^³¶Z$ƒ²“²‚Tœ±Í…Ù•1…‰•°èŸ²‚²z”œ±¹…µ”éÑÀ¹¹…µ”±ÍÑ…ÉÑ…Ñ”éÑÀ¹ÍÑ…ÉÑ…Ñ”±‘…åÌéÑÀ¹‘…åÌ±½¹M…Ù”è¡¸±Ì±¤ôùì(€€€½¹ÍĞÍÑÉ…¹‘•õÑÀ¹±•Ì¹™¥±Ñ•È¡°ôù°¹‘…äù¤¹±•¹Ñ ì(€€€¥˜¡ÍÑÉ…¹‘•€˜˜€…½¹™¥É´¡€‘í‘÷²vó²Â ƒ²vÓ¶n²v`ƒ²vó²‚T€‘íÍÑÉ…¹‘•‘÷ªÆÓ²vĞƒ®#²®$ƒ®
+€ ‘í‘÷²vó²Â §®†pƒ²vÓ®>g®B§®.#®.¹q»ªÎ²7¶Vc².sªÊƒ²*×®.#ªæ0ı€¤¥É•ÑÕÉ¸™…±Í”ì(€€€ÕÁ‘…Ñ•QÉ¥À¡¥±¸±Ì±¤ì(€õô¤ì)ô()™Õ¹Ñ¥½¸}ÑÉ¥Á•Ñ…¥±!Q50¡ÑÉ¥À¥ì(€½¹ÍĞ‰½½­•õÑÉ¥À¹±•Ì¹™¥±Ñ•È¡}±•	½½­•¤¹±•¹Ñ ì(€½¹ÍĞÕ¹‰½½­•õÑÉ¥À¹±•Ì¹±•¹Ñ µ‰½½­•ì(€½¹ÍĞÉ…¹”õÑÉ¥À¹‘…åÌøÄı€‘íÑÉ¥À¹ÍÑ…ÉÑ…Ñ•ôø€‘í}‘…å…Ñ”¡ÑÉ¥À±ÑÉ¥À¹‘…åÌ¥õ€éÑÉ¥À¹ÍÑ…ÉÑ…Ñ”ì(€±•Ğ‰½‘äôœœì(€™½È¡±•Ğ‘…äôÄì‘…äğõÑÉ¥À¹‘…åÌì‘…ä¬¬¥ì(€€€½¹ÍĞ±•Ìõ}‘…å1•Ì¡ÑÉ¥À±‘…ä¤ì(€€€‰½‘ä¬õ€ñ‘¥Ø±…ÍÌô‰ÑÉ¥Àµ‘…äµ¡•…ˆø(€€€€€€ñÍÁ…¸±…ÍÌô‰ÑÉ¥Àµ‘…äµ¹¼ˆø‘í‘…å÷²vó²Â ğ½ÍÁ…¸ø(€€€€€€ñÍÁ…¸±…ÍÌô‰ÑÉ¥Àµ‘…äµ‘…Ñ”ˆø‘í}‘…å…Ñ”¡ÑÉ¥À±‘…ä¥ôğ½ÍÁ…¸ø(€€€€€€ñ‰ÕÑÑ½¸±…ÍÌô‰ÑÉ¥Àµ‘…äµ…‘ˆ½¹±¥¬ô‰½Á•¹QÉ¥Á‘‘M•…É  œ‘íÑÉ¥À¹¥‘ôœ°‘í‘…åô¤ˆû¾ò,ƒ²vó²‚Tğ½‰ÕÑÑ½¸ø(€€€€ğ½‘¥Øù€ì(€€€¥˜¡±•Ì¹±•¹Ñ ¤‰½‘ä¬õ€ñ‘¥Ø±…ÍÌô‰ÑÉ¥Àµ‘…äµ±•Ìˆø‘í±•Ì¹µ…À¡°ôù}ÑÉ¥Á1•!Q50¡ÑÉ¥À¹¥±°¤¤¹©½¥¸ œœ¥ôğ½‘¥Øù€ì(€€€•±Í”‰½‘ä¬õ€ñ‘¥Ø±…ÍÌô‰ÑÉ¥Àµ‘…äµ•µÁÑäˆ½¹±¥¬ô‰½Á•¹QÉ¥Á‘‘M•…É  œ‘íÑÉ¥À¹¥‘ôœ°‘í‘…åô¤ˆøñÍÁ…¸û¾ò,ƒ²Ê¬ƒ²vó²‚W²vƒ²ÚSªÂ¶VÓ®ÎÓ²ã²jPğ½ÍÁ…¸øğ½‘¥Øù€ì(€ô(€É•ÑÕÉ¸€ñ‘¥Ø±…ÍÌô‰ÑÉ¥ÀµİÉ…ÀÑÉ¥Àµ‘•Ñ…¥°ˆø(€€€€ñ‘¥Ø±…ÍÌô‰ÑÉ¥Àµ‘•Ñ…¥°µ¡•…ˆø(€€€€€€ñ‘¥Ø±…ÍÌô‰ÑÉ¥Àµ‘•Ñ…¥°µ¹…µ”ˆûÂ~Ì€‘í}Ñ•ÍŒ¡ÑÉ¥À¹¹…µ”¥ôğ½‘¥Øø(€€€€€€ñ‘¥Ø±…ÍÌô‰ÑÉ¥Àµ‘•Ñ…¥°µ…Ñ¥½¹Ìˆø(€€€€€€€€ñ‰ÕÑÑ½¸±…ÍÌô‰ÑÉ¥Àµµ¥¹¤µ‰Ñ¸ˆ½¹±¥¬ô‰½Á•¹QÉ¥Á‘¥Ñ5½‘…° œ‘íÑÉ¥À¹¥‘ôœ¤ˆûŠjdƒ²“²‚Tğ½‰ÕÑÑ½¸ø(€€€€€€€€ñ‰ÕÑÑ½¸±…ÍÌô‰ÑÉ¥Àµµ¥¹¤µ‰Ñ¸ÑÉ¥Àµµ¥¹¤µ‘…¹•Èˆ½¹±¥¬ô‰‘•±•Ñ•QÉ¥À œ‘íÑÉ¥À¹¥‘ôœ¤ˆû²
+·²‚pğ½‰ÕÑÑ½¸ø(€€€€€€ğ½‘¥Øø(€€€€ğ½‘¥Øø(€€€€ñ‘¥Ø±…ÍÌô‰ÑÉ¥Àµ‘•Ñ…¥°µµ•Ñ„ˆø‘í}ÑÉ¥Á9¥¡ÑÍ1…‰•°¡ÑÉ¥À¥ôƒ
+Ü€‘íÉ…¹•ôƒ
+Üƒ²vó²‚T€‘íÑÉ¥À¹±•Ì¹±•¹Ñ¡÷ªÂpƒ
+Üƒ²b#®€‘í‰½½­•‘ô¼‘íÑÉ¥À¹±•Ì¹±•¹Ñ¡ôğ½‘¥Øø(€€€€ñ‘¥Ø±…ÍÌô‰ÑÉ¥Àµ…Ñ¥½¹ÌµÉ½Üˆø(€€€€€€ñ‰ÕÑÑ½¸±…ÍÌô‰ÑÉ¥Àµ…Ñ¥½¸µ‰Ñ¸ˆ½¹±¥¬ô‰½Á•¹QÉ¥ÁI½ÕÑ” œ‘íÑÉ¥À¹¥‘ôœ¤ˆûÂ~^ë¾â<ƒ²^³¶Z$ƒªÊ÷®†pğ½‰ÕÑÑ½¸ø(€€€€€€ñ‰ÕÑÑ½¸±…ÍÌô‰ÑÉ¥Àµ…Ñ¥½¸µ‰Ñ¸ˆ½¹±¥¬ô‰Í¡…É•QÉ¥À œ‘íÑÉ¥À¹¥‘ôœ¤ˆûÂ~R\ƒ®¶°ƒªÎ×²r€ğ½‰ÕÑÑ½¸ø(€€€€ğ½‘¥Øø(€€€€‘í‰½‘åô(€€€€ñ‘¥Ø±…ÍÌô‰ÑÉ¥ÀµÑ½Ñ…°µ‰…Èˆø(€€€€€€ñ‘¥ØøñÍÁ…¸±…ÍÌô‰ÑÉ¥ÀµÑ½Ñ…°µ±…‰•°ˆû²b#²ƒ¶V§ªÎğ½ÍÁ…¸øñÍÁ…¸±…ÍÌô‰ÑÉ¥ÀµÑ½Ñ…°µ™…É”ˆø‘í}ÑÉ¥ÁÍÑ…É”¡ÑÉ¥À¤¹Ñ½1½…±•MÑÉ¥¹œ ¥÷²n@ğ½ÍÁ…¸øğ½‘¥Øø(€€€€€€ñ‘¥Ø±…ÍÌô‰ÑÉ¥ÀµÑ½Ñ…°µ‰Ñ¹Ìˆø(€€€€€€€€ñ‰ÕÑÑ½¸±…ÍÌô‰‰Ñ¸‰Ñ¸µÁÉ¥µ…ÉäÑÉ¥Àµ‰½½¬µ‰Ñ¸ˆ½¹±¥¬ô‰‰Õ±­	½½­QÉ¥À œ‘íÑÉ¥À¹¥‘ôœ¤ˆ‘íÕ¹‰½½­•üœœèœ‘¥Í…‰±•ôûÂ~:¬ƒ²vóªÒƒ²b#®‘íÕ¹‰½½­•ı€€ ‘íÕ¹‰½½­•‘ô¥€èœƒ²f®0ôğ½‰ÕÑÑ½¸ø(€€€€€€ğ½‘¥Øø(€€€€ğ½‘¥Øø(€€ğ½‘¥Øù€ì)ô)™Õ¹Ñ¥½¸}ÑÉ¥Á1•!Q50¡ÑÉ¥Á%±±•œ¥ì(€½¹ÍĞ‰½½­•õ}±•	½½­•¡±•œ¤ì(€½¹ÍĞØô¡ÑåÁ•½˜ÍÍY…Èôôô™Õ¹Ñ¥½¸œ¤ıÍÍY…È¡±•œ¹É…‘”¤èµ œì(€½¹ÍĞÉ…‘•¡¥Àô¡ÑåÁ•½˜É…‘•!Ñµ°ôôô™Õ¹Ñ¥½¸œ¤ıÉ…‘•!Ñµ°¡±•œ¹É…‘”¤é€ñˆø‘í}Ñ•ÍŒ¡±•œ¹É…‘•ñğœœ¥ôğ½ˆù€ì(€É•ÑÕÉ¸€ñ‘¥Ø±…ÍÌô‰ÑÉ¥Àµ±•œµÍİ¥Á”ˆ‘…Ñ„µ±•œôˆ‘í±•œ¹¥‘ôˆø(€€€€ñ‘¥Ø±…ÍÌô‰ÑÉ¥Àµ±•œµ…Ñ¥½¹Ìˆø(€€€€€€‘í‰½½­•(€€€€€€€€ü€ñ‰ÕÑÑ½¸±…ÍÌô‰ÑÉ¥ÀµÍİ¥Á”µ…Ğ…ĞµÑĞˆ½¹±¥¬ô‰½Á•¹1•Q¥µ•Ñ…‰±” œ‘íÑÉ¥Á%‘ôœ°œ‘í±•œ¹¥‘ôœ¤ˆû².sªÂ¶Fpğ½‰ÕÑÑ½¸øñ‰ÕÑÑ½¸±…ÍÌô‰ÑÉ¥ÀµÍİ¥Á”µ…Ğ…Ğµ…¹•°ˆ½¹±¥¬ô‰…¹•±1•	½½­¥¹œ œ‘íÑÉ¥Á%‘ôœ°œ‘í±•œ¹¥‘ôœ¤ˆû²b#®ñ‰Èû²Ş£²0ğ½‰ÕÑÑ½¸ù€(€€€€€€€€è€ñ‰ÕÑÑ½¸±…ÍÌô‰ÑÉ¥ÀµÍİ¥Á”µ…Ğ…ĞµÍ•œˆ½¹±¥¬ô‰½Á•¹1•M•µ•¹Ñ‘¥Ğ œ‘íÑÉ¥Á%‘ôœ°œ‘í±•œ¹¥‘ôœ¤ˆûªÖ³ªÂñ‰Èû®ÎªÊôğ½‰ÕÑÑ½¸øñ‰ÕÑÑ½¸±…ÍÌô‰ÑÉ¥ÀµÍİ¥Á”µ…Ğ…Ğµ½ÁĞˆ½¹±¥¬ô‰½Á•¹1•QÉ…¥¹Mİ…À œ‘íÑÉ¥Á%‘ôœ°œ‘í±•œ¹¥‘ôœ¤ˆû²b#®ñ‰Èû®ÎªÊôğ½‰ÕÑÑ½¸øñ‰ÕÑÑ½¸±…ÍÌô‰ÑÉ¥ÀµÍİ¥Á”µ…Ğ…Ğµ‘•°ˆ½¹±¥¬ô‰É•µ½Ù•QÉ¥Á1•œ œ‘íÑÉ¥Á%‘ôœ°œ‘í±•œ¹¥‘ôœ¤ˆû²
+·²‚pğ½‰ÕÑÑ½¸ùô(€€€€ğ½‘¥Øø(€€€€ñ‘¥Ø±…ÍÌô‰ÑÉ¥Àµ±•œ‘í‰½½­•üœÑÉ¥Àµ±•œµ‰½½­•œèœôˆÍÑå±”ô‰‰½É‘•Èµ±•™Ğµ½±½ÈéÙ…È ´µŒ´‘íÙô¤ˆø(€€€€€€ñ‘¥Ø±…ÍÌô‰ÑÉ¥Àµ±•œµµ…¥¸ˆø(€€€€€€€€ñ‘¥Ø±…ÍÌô‰ÑÉ¥Àµ±•œµÉ½ÕÑ”ˆøñˆø‘í}Ñ•ÍŒ¡±•œ¹™É½µMÑ¸¥ôğ½ˆø€ñÍÁ…¸±…ÍÌô‰ÑÉ¥Àµ±•œµÑ¥µ”ˆø‘í±•œ¹‘•ÁQ¥µ•ñğœôğ½ÍÁ…¸øƒŠH€ñˆø‘í}Ñ•ÍŒ¡±•œ¹Ñ½MÑ¸¥ôğ½ˆø€ñÍÁ…¸±…ÍÌô‰ÑÉ¥Àµ±•œµÑ¥µ”ˆø‘í±•œ¹…ÉÉQ¥µ•ñğœôğ½ÍÁ…¸øğ½‘¥Øø(€€€€€€€€ñ‘¥Ø±…ÍÌô‰ÑÉ¥Àµ±•œµÍÕˆˆø‘íÉ…‘•¡¥Áô€ñÍÁ…¸ÍÑå±”ô‰™½¹Ğµ™…µ¥±äéÙ…È ´µµ½¹¼¤í½±½ÈéÙ…È ´µÑ•áĞÈ¤ˆø‘í}Ñ•ÍŒ¡±•œ¹ÑÉ…¥¹9¼¥ôğ½ÍÁ…¸øƒ
+Ü€‘í}Ñ•ÍŒ¡±•œ¹Í•…Ñ±…ÍÍ1…‰•±ñğœœ¥ôƒ
+Ü€‘í±•œ¹Á…ÍÍ•¹•É½Õ¹ÑñğÅ÷®ª‘í±•œ¹‘¥Í½Õ¹Ğ˜™±•œ¹‘¥Í½Õ¹Ğ„ôô¹½¹”œüœƒ
+Ü€œ­}Ñ•ÍŒ¡%M=U9QMm±•œ¹‘¥Í½Õ¹Ñtü¹±…‰•±ñğœœ¤èœôğ½‘¥Øø(€€€€€€ğ½‘¥Øø(€€€€€€ñ‘¥Ø±…ÍÌô‰ÑÉ¥Àµ±•œµÍ¥‘”ˆø(€€€€€€€€ñ‘¥Ø±…ÍÌô‰ÑÉ¥Àµ±•œµ™…É”ˆø‘í}±•…É”¡±•œ¤¹Ñ½1½…±•MÑÉ¥¹œ ¥÷²n@ğ½‘¥Øø(€€€€€€€€‘í‰½½­•üœñÍÁ…¸±…ÍÌô‰ÑÉ¥Àµ±•œµÑ…œˆû²b#®“²f®0ğ½ÍÁ…¸øœèœô(€€€€€€€€ñÍÁ…¸±…ÍÌô‰ÑÉ¥Àµ±•œµÍİ¥Á”µ¡¥¹ĞˆûŠäƒ®ÂªâÀğ½ÍÁ…¸ø(€€€€€€ğ½‘¥Øø(€€€€ğ½‘¥Øø(€€ğ½‘¥Øù€ì)ô(¼¼ƒ²Š3²â„ƒ²*“²f²vÓ¶R®†pƒ²V‡²`ƒ®ã²Úp)™Õ¹Ñ¥½¸}…ÑÑ…¡QÉ¥ÁMİ¥Á” ¥ì(€‘½Õµ•¹Ğ¹ÅÕ•ÉåM•±•Ñ½É±° œÉ•ÍÕ±ĞµµåÑÉ¥À€¹ÑÉ¥Àµ±•œµÍİ¥Á”œ¤¹™½É… ¡ÍÜôùì(€€€¥˜¡ÍÜ¹}Íİ¥Á•%¹¥Ğ¥É•ÑÕÉ¸ìÍÜ¹}Íİ¥Á•%¹¥ĞõÑÉÕ”ì(€€€½¹ÍĞ…ÉõÍÜ¹ÅÕ•ÉåM•±•Ñ½È œ¹ÑÉ¥Àµ±•œœ¤°…Ñ¥½¹ÌõÍÜ¹ÅÕ•ÉåM•±•Ñ½È œ¹ÑÉ¥Àµ±•œµ…Ñ¥½¹Ìœ¤ì(€€€¥˜ ……É‘ñğ……Ñ¥½¹Ì¥É•ÑÕÉ¸ì(€€€±•ĞÍÑ…ÉÑ`ôÀ±ÍÑ…ÉÑdôÀ±ÕÈôÀ±½Á•¸õ™…±Í”±‘É…¥¹œõ™…±Í”±‘•¥‘•õ™…±Í”±¡½É¥èõ™…±Í”ì(€€€½¹ÍĞ\ô ¤ôù…Ñ¥½¹Ì¹½™™Í•Ñ]¥‘Ñ¡ñğÄÈÀì(€€€½¹ÍĞÍ•Ñ`õàôùí…É¹ÍÑå±”¹ÑÉ…¹Í™½É´õÑÉ…¹Í±…Ñ•` ‘íáõÁà¥€íôì(€€€½¹ÍĞÍ¹…Àõ¼ôùí½Á•¸õ¼íÕÈõ¼üµ\ ¤èÀí…É¹ÍÑå±”¹ÑÉ…¹Í¥Ñ¥½¸ôÑÉ…¹Í™½É´€¸ÉÌœíÍ•Ñ`¡ÕÈ¤íôì(€€€½¹ÍĞ‘½İ¸õ”ôùí½¹ÍĞÀõ”¹Ñ½Õ¡•Ìı”¹Ñ½Õ¡•ÍlÁté”íÍÑ…ÉÑ`õÀ¹±¥•¹Ñ`íÍÑ…ÉÑdõÀ¹±¥•¹Ñdí‘É…¥¹œõÑÉÕ”í‘•¥‘•õ™…±Í”í¡½É¥èõ™…±Í”í…É¹ÍÑå±”¹ÑÉ…¹Í¥Ñ¥½¸ô¹½¹”œíôì(€€€½¹ÍĞµ½Ù”õ”ôùí¥˜ …‘É…¥¹œ¥É•ÑÕÉ¸í½¹ÍĞÀõ”¹Ñ½Õ¡•Ìı”¹Ñ½Õ¡•ÍlÁté”í½¹ÍĞ‘àõÀ¹±¥•¹Ñ`µÍÑ…ÉÑ`±‘äõÀ¹±¥•¹ÑdµÍÑ…ÉÑdì(€€€€€¥˜ …‘•¥‘•¥í¥˜¡5…Ñ ¹…‰Ì¡‘à¤øİññ5…Ñ ¹…‰Ì¡‘ä¤øÜ¥í‘•¥‘•õÑÉÕ”í¡½É¥èõ5…Ñ ¹…‰Ì¡‘à¤ù5…Ñ ¹…‰Ì¡‘ä¤íõ•±Í”É•ÑÕÉ¸íô(€€€€€¥˜ …¡½É¥è¥É•ÑÕÉ¸ì¥˜¡”¹…¹•±…‰±”¥”¹ÁÉ•Ù•¹Ñ•™…Õ±Ğ ¤ì(€€€€€±•Ğàô¡½Á•¸üµ\ ¤èÀ¤­‘àìàõ5…Ñ ¹µ…à µ\ ¤±5…Ñ ¹µ¥¸ À±à¤¤ìÕÈõàìÍ•Ñ`¡à¤íôì(€€€½¹ÍĞÕÀô ¤ôùí¥˜ …‘É…¥¹œ¥É•ÑÕÉ¸í‘É…¥¹œõ™…±Í”í…É¹ÍÑå±”¹ÑÉ…¹Í¥Ñ¥½¸ôÑÉ…¹Í™½É´€¸ÉÌœíÍ¹…À¡ÕÈğµ\ ¤¼È¤íôì(€€€…É¹…‘‘Ù•¹Ñ1¥ÍÑ•¹•È Ñ½Õ¡ÍÑ…ÉĞœ±‘½İ¸±íÁ…ÍÍ¥Ù”éÑÉÕ•ô¤ì(€€€…É¹…‘‘Ù•¹Ñ1¥ÍÑ•¹•È Ñ½Õ¡µ½Ù”œ±µ½Ù”±íÁ…ÍÍ¥Ù”é™…±Í•ô¤ì(€€€…É¹…‘‘Ù•¹Ñ1¥ÍÑ•¹•È Ñ½Õ¡•¹œ±ÕÀ¤ì…É¹…‘‘Ù•¹Ñ1¥ÍÑ•¹•È Ñ½Õ¡…¹•°œ±ÕÀ¤ì(€€€…É¹…‘‘Ù•¹Ñ1¥ÍÑ•¹•È µ½ÕÍ•‘½İ¸œ±”ôùí‘½İ¸¡”¤í½¹ÍĞµ´õ•Øôùµ½Ù”¡•Ø¤±µÔô ¤ôùíÕÀ ¤í‘½Õµ•¹Ğ¹É•µ½Ù•Ù•¹Ñ1¥ÍÑ•¹•È µ½ÕÍ•µ½Ù”œ±µ´¤í‘½Õµ•¹Ğ¹É•µ½Ù•Ù•¹Ñ1¥ÍÑ•¹•È µ½ÕÍ•ÕÀœ±µÔ¤íôí‘½Õµ•¹Ğ¹…‘‘Ù•¹Ñ1¥ÍÑ•¹•È µ½ÕÍ•µ½Ù”œ±µ´¤í‘½Õµ•¹Ğ¹…‘‘Ù•¹Ñ1¥ÍÑ•¹•È µ½ÕÍ•ÕÀœ±µÔ¤íô¤ì(€€€…É¹…‘‘Ù•¹Ñ1¥ÍÑ•¹•È ±¥¬œ±”ôùí¥˜¡½Á•¸¥í”¹ÁÉ•Ù•¹Ñ•™…Õ±Ğ ¤í”¹ÍÑ½ÁAÉ½Á……Ñ¥½¸ ¤íÍ¹…À¡™…±Í”¤íõô¤ì(€ô¤ì)ô(¼¼ƒªÖ³ªÂƒ®ÎªÊôèƒªÂg²v ƒ²^Ó²Â£²v`ƒ².sªÂ¶Fs²^C²pƒ²*ç
+ß¶Vc²Â£²^·²vƒ®.“².pƒ²ƒ¶t)™Õ¹Ñ¥½¸½Á•¹1•M•µ•¹Ñ‘¥Ğ¡ÑÉ¥Á%°±•%¥ì(€½¹ÍĞÑÉ¥ÁÌõ±½…‘QÉ¥ÁÌ ¤ì½¹ÍĞÑÀõÑÉ¥ÁÌ¹™¥¹¡ĞôùĞ¹¥ôôõÑÉ¥Á%¤ì¥˜ …ÑÀ¥É•ÑÕÉ¸ì(€½¹ÍĞ±•œõÑÀ¹±•Ì¹™¥¹¡°ôù°¹¥ôôõ±•%¤ì¥˜ …±•œ¥É•ÑÕÉ¸ì(€¥˜¡}±•	½½­•¡±•œ¤¥í…±•ÉĞ Ÿ²vÓ®¾àƒ²b#®ƒ²f®3®Bpƒ²vó²‚W²z®.#®.¹q»®ÎªÊ÷¶Vc®‚“®¦Ğƒ®¢ó²‚ ƒ¶VÓ®.äƒ²*ç²Â£ªÚ3²vƒ²Ş£²3¶VÓ²ó²ã²jP¸œ¤íÉ•ÑÕÉ¸íô(€½¹ÍĞĞõ•ÑQÉ…¥¹	å9¼¡±•œ¹ÑÉ…¥¹9¼¤ì¥˜ …Ğ¥í…±•ÉĞ Ÿ²^Ó²Â ƒ²‚W®ÎÓ®–ğƒ²Âû²vƒ²"`ƒ²^²*×®.#®.¸œ¤íÉ•ÑÕÉ¸íô(€½¹ÍĞÍÑ½ÁÌõĞ¹ÍÑ½ÁÌ¹µ…À ¡Ì±¤¤ôø¡í¤±ÌéÌ¹Ì±…ÉÈéÌ¹…ÉÈ±‘•ÀéÌ¹‘•Áô¤¤¹™¥±Ñ•È¡àôø…¥ÍA…ÍÍMÑ½À¡Ğ±à¹Ì¤˜˜¡¡…ÍQ¥µ”¡à¹…ÉÈ¥ññ¡…ÍQ¥µ”¡à¹‘•À¤¤¤ì(€½¹ÍĞ‘•Á=˜õàôù¡…ÍQ¥µ”¡à¹‘•À¤ıà¹‘•Àéà¹…ÉÈ°…ÉÉ=˜õàôù¡…ÍQ¥µ”¡à¹…ÉÈ¤ıà¹…ÉÈéà¹‘•Àì(€±•Ğ™É½µM•°õ5…Ñ ¹µ…à À±ÍÑ½ÁÌ¹™¥¹‘%¹‘•à¡àôùà¹Ìôôõ±•œ¹™É½µMÑ¸¤¤ì(€±•ĞÑ½M•°õÍÑ½ÁÌ¹™¥¹‘%¹‘•à¡àôùà¹Ìôôõ±•œ¹Ñ½MÑ¸¤ì¥˜¡Ñ½M•°ğÀ¥Ñ½M•°õÍÑ½ÁÌ¹±•¹Ñ ´Äì(€‘½Õµ•¹Ğ¹•Ñ±•µ•¹Ñ	å% ÑÉ¥ÀµÍ•œµİÉ…Àœ¤ü¹É•µ½Ù” ¤ì(€½¹ÍĞİÉ…Àõ‘½Õµ•¹Ğ¹É•…Ñ•±•µ•¹Ğ ‘¥Øœ¤ìİÉ…À¹¥ôÑÉ¥ÀµÍ•œµİÉ…Àœì(€İÉ…À¹ÍÑå±”¹ÍÍQ•áĞôÁ½Í¥Ñ¥½¸é™¥á•í¥¹Í•ĞèÀíèµ¥¹‘•àèäØÀÀí‘¥ÍÁ±…äé™±•àí…±¥¸µ¥Ñ•µÌé•¹Ñ•Èí©ÕÍÑ¥™äµ½¹Ñ•¹Ğé•¹Ñ•ÈíÁ…‘‘¥¹œèÄÙÁàí‰½àµÍ¥é¥¹œé‰½É‘•Èµ‰½àœì(€½¹ÍĞÉ½İÌô ¤ôùÍÑ½ÁÌ¹µ…À ¡à±¥‘à¤ôù€ñ‘¥Ø±…ÍÌô‰±Í”µÉ½Ü‘í¥‘àôôõ™É½µM•°üœ¥Ìµ™É½´œèœô‘í¥‘àôôõÑ½M•°üœ¥ÌµÑ¼œèœôˆø(€€€€€€ñÍÁ…¸±…ÍÌô‰±Í”µÍÑ¸ˆø‘í}Ñ•ÍŒ¡à¹Ì¥ôğ½ÍÁ…¸ø(€€€€€€ñÍÁ…¸±…ÍÌô‰±Í”µÑ¥µ”ˆø‘í‘•Á=˜¡à¥ñğœôğ½ÍÁ…¸ø(€€€€€€ñ‘¥Ø±…ÍÌô‰±Í”µ‰Ñ¹Ìˆø(€€€€€€€€ñ‰ÕÑÑ½¸±…ÍÌô‰±Í”µˆ±Í”µ‰½…É‘í¥‘àôôõ™É½µM•°üœ½¸œèœôˆ‘…Ñ„µÉ½±”ô‰™É½´ˆ‘…Ñ„µ¥‘àôˆ‘í¥‘áôˆû²*ç²Â ğ½‰ÕÑÑ½¸ø(€€€€€€€€ñ‰ÕÑÑ½¸±…ÍÌô‰±Í”µˆ±Í”µ…±¥¡Ğ‘í¥‘àôôõÑ½M•°üœ½¸œèœôˆ‘…Ñ„µÉ½±”ô‰Ñ¼ˆ‘…Ñ„µ¥‘àôˆ‘í¥‘áôˆû¶Vc²Â ğ½‰ÕÑÑ½¸ø(€€€€€€ğ½‘¥Øø(€€€€ğ½‘¥Øù€¤¹©½¥¸ œœ¤ì(€İÉ…À¹¥¹¹•É!Q50õ€ñ‘¥ØÍÑå±”ô‰Á½Í¥Ñ¥½¸é…‰Í½±ÕÑ”í¥¹Í•ĞèÀí‰…­É½Õ¹éÉ‰„ À°À°À°¸Ø¤ˆøğ½‘¥Øø(€€€€ñ‘¥Ø±…ÍÌô‰…±…É´µÁ½ÁÕÀˆÍÑå±”ô‰Á½Í¥Ñ¥½¸éÉ•±…Ñ¥Ù”íÑÉ…¹Í™½É´é¹½¹”íÑ½Àé…ÕÑ¼í±•™Ğé…ÕÑ¼íµ…àµ¡•¥¡ĞèàÙÙ í½Ù•É™±½Üµäé…ÕÑ¼íİ¥‘Ñ èÄÀÀ”íµ…àµİ¥‘Ñ èĞĞÁÁàˆø(€€€€€€ñ‘¥Ø±…ÍÌô‰…±…É´µÁ½ÁÕÀµÑ¥Ñ±”ˆûÂ~j$ƒªÖ³ªÂƒ®ÎªÊôƒ
+Ü€‘í}Ñ•ÍŒ¡Ğ¹É…‘”¥ô€‘í}Ñ•ÍŒ¡±•œ¹ÑÉ…¥¹9¼¥ôğ½‘¥Øø(€€€€€€ñ‘¥Ø±…ÍÌô‰…±…É´µÁ½ÁÕÀµÍÕˆˆû²^´ƒ²b€ñˆû²*ç²Â ğ½ˆû
+Üñˆû¶Vc²Â ğ½ˆû®–ğƒ®"3®~°ƒªÂg²v ƒ²^Ó²Â£²^C²pƒªÖ³ªÂ®0ƒ®ÎªÊ÷¶V§®.#®.¸ğ½‘¥Øø(€€€€€€ñ‘¥Ø¥ô‰±Í”µ±¥ÍĞˆ±…ÍÌô‰±Í”µ±¥ÍĞˆø‘íÉ½İÌ ¥ôğ½‘¥Øø(€€€€€€ñ‰ÕÑÑ½¸±…ÍÌô‰‰Ñ¸‰Ñ¸µÁÉ¥µ…Éäˆ¥ô‰±Í”µ…ÁÁ±äˆÍÑå±”ô‰İ¥‘Ñ èÄÀÀ”í©ÕÍÑ¥™äµ½¹Ñ•¹Ğé•¹Ñ•Èíµ…É¥¸µÑ½ÀèÄÉÁàˆû®ÎªÊôƒ²‚²j¤ğ½‰ÕÑÑ½¸ø(€€€€€€ñ‰ÕÑÑ½¸±…ÍÌô‰…±…É´µÁ½ÁÕÀµ±½Í”ˆ¥ô‰±Í”µ…¹•°ˆû²Ş£²0ğ½‰ÕÑÑ½¸ø(€€€€ğ½‘¥Øù€ì(€‘½Õµ•¹Ğ¹‰½‘ä¹…ÁÁ•¹‘¡¥±¡İÉ…À¤ì(€½¹ÍĞÉ•É•¹‘•Èô ¤ôùí‘½Õµ•¹Ğ¹•Ñ±•µ•¹Ñ	å% ±Í”µ±¥ÍĞœ¤¹¥¹¹•É!Q50õÉ½İÌ ¤ì‰¥¹ ¤íôì(€½¹ÍĞ‰¥¹ô ¤ôùì(€€€İÉ…À¹ÅÕ•ÉåM•±•Ñ½É±° œ¹±Í”µˆœ¤¹™½É… ¡ˆôùˆ¹…‘‘Ù•¹Ñ1¥ÍÑ•¹•È ±¥¬œ° ¤ôùì(€€€€€½¹ÍĞ¥‘àô­ˆ¹‘…Ñ…Í•Ğ¹¥‘àì(€€€€€¥˜¡ˆ¹‘…Ñ…Í•Ğ¹É½±”ôôô™É½´œ¥ì™É½µM•°õ¥‘àì¥˜¡Ñ½M•°ğõ™É½µM•°¥Ñ½M•°õ5…Ñ ¹µ¥¸¡ÍÑ½ÁÌ¹±•¹Ñ ´Ä±™É½µM•°¬Ä¤ìô(€€€€€•±Í”ìÑ½M•°õ¥‘àì¥˜¡™É½µM•°øõÑ½M•°¥™É½µM•°õ5…Ñ ¹µ…à À±Ñ½M•°´Ä¤ìô(€€€€€É•É•¹‘•È ¤ì(€€€ô¤¤ì(€ôì(€‰¥¹ ¤ì(€İÉ…À¹…‘‘Ù•¹Ñ1¥ÍÑ•¹•È ±¥¬œ±”ôùí¥˜¡”¹Ñ…É•ĞôôõİÉ…Áññ”¹Ñ…É•ĞôôõİÉ…À¹™¥ÉÍÑ±•µ•¹Ñ¡¥±¥İÉ…À¹É•µ½Ù” ¤íô¤ì(€‘½Õµ•¹Ğ¹•Ñ±•µ•¹Ñ	å% ±Í”µ…¹•°œ¤¹…‘‘Ù•¹Ñ1¥ÍÑ•¹•È ±¥¬œ° ¤ôùİÉ…À¹É•µ½Ù” ¤¤ì(€‘½Õµ•¹Ğ¹•Ñ±•µ•¹Ñ	å% ±Í”µ…ÁÁ±äœ¤¹…‘‘Ù•¹Ñ1¥ÍÑ•¹•È ±¥¬œ° ¤ôùì(€€€¥˜¡™É½µM•°øõÑ½M•°¥í…±•ÉĞ Ÿ¶Vc²Â£²^·²v ƒ²*ç²Â£²^·®ÎÓ®.ƒ®J“²^³²Vğƒ¶V§®.#®.¸œ¤íÉ•ÑÕÉ¸íô(€€€½¹ÍĞÑÉ¥ÁÌÈõ±½…‘QÉ¥ÁÌ ¤ì½¹ÍĞÑÀÈõÑÉ¥ÁÌÈ¹™¥¹¡àôùà¹¥ôôõÑÉ¥Á%¤ì½¹ÍĞ±œõÑÀÈ˜™ÑÀÈ¹±•Ì¹™¥¹¡°ôù°¹¥ôôõ±•%¤ì¥˜ …±œ¥íİÉ…À¹É•µ½Ù” ¤íÉ•ÑÕÉ¸íô(€€€½¹ÍĞ¹˜õÍÑ½ÁÍm™É½µM•±t°¹ĞõÍÑ½ÁÍmÑ½M•±tì(€€€±œ¹™É½µMÑ¸õ¹˜¹Ìì±œ¹Ñ½MÑ¸õ¹Ğ¹Ìì±œ¹‘•ÁQ¥µ”õ‘•Á=˜¡¹˜¤ì±œ¹…ÉÉQ¥µ”õ…ÉÉ=˜¡¹Ğ¤ì(€€€Í…Ù•QÉ¥ÁÌ¡ÑÉ¥ÁÌÈ¤ìİÉ…À¹É•µ½Ù” ¤ìÉ•¹‘•É5åQÉ¥ÁÌ ¤ì}ÑÉ¥ÁQ½…ÍĞ ŸªÖ³ªÂ²vƒ®ÎªÊ÷¶Z#²*×®.#®.œ¤ì(€ô¤ì)ô(¼¼ƒªÂg²v ƒªÖ³ªÂƒ®.“®–àƒ²^Ó²Â ƒ®ª§®†t)™Õ¹Ñ¥½¸}ÑÉ¥ÁQÉ…¥¹Í½É=¡™É½´±Ñ¼±‘…Ñ”±•á±Õ‘•9¼±¥¹±Õ‘•‘¨¥ì(€½¹ÍĞ¥ÍQ½‘…äõ‘…Ñ”ôôõÑ½‘…å1½…±MÑÈ ¤ì½¹ÍĞ¹½Üõ¹•Ü…Ñ” ¤ì½¹ÍĞ¹½İ4õ¹½Ü¹•Ñ!½ÕÉÌ ¤¨ØÀ­¹½Ü¹•Ñ5¥¹ÕÑ•Ì ¤ì(€½¹ÍĞÍ…¸ô¡±¤ôùì½¹ÍĞÈõmtì11}QI%9L¹™½É… ¡Ğôùì¥˜¡•á±Õ‘•9¼˜™Ğ¹¹¼ôôõ•á±Õ‘•9¼¥É•ÑÕÉ¸ì(€€€½¹ÍĞ™¤õĞ¹ÍÑ½ÁÌ¹™¥¹‘%¹‘•à¡ÌôùÌ¹Ìôôõ¤±Ñ¤õĞ¹ÍÑ½ÁÌ¹™¥¹‘%¹‘•à¡ÌôùÌ¹Ìôôõ¤ì¥˜¡™¤ğÁññÑ¤ğÁññ™¤øõÑ¤¥É•ÑÕÉ¸ì(€€€¥˜¡¥ÍA…ÍÍMÑ½À¡Ğ±¥ññ¥ÍA…ÍÍMÑ½À¡Ğ±¤¥É•ÑÕÉ¸ì½¹ÍĞ‘ÌõĞ¹ÍÑ½ÁÍm™¥t±…ÌõĞ¹ÍÑ½ÁÍmÑ¥tì(€€€½¹ÍĞ‘•Àõ¡…ÍQ¥µ”¡‘Ì¹‘•À¤ı‘Ì¹‘•Àé¡…ÍQ¥µ”¡‘Ì¹…ÉÈ¤ı‘Ì¹…ÉÈé¹Õ±°ì½¹ÍĞ…ÉÉPõ¡…ÍQ¥µ”¡…Ì¹…ÉÈ¤ı…Ì¹…ÉÈé¡…ÍQ¥µ”¡…Ì¹‘•À¤ı…Ì¹‘•Àé¹Õ±°ì(€€€¥˜ …‘•À¥É•ÑÕÉ¸ì¥˜¡¥ÍQ½‘…ä˜™Ñ½5¥¸¡‘•À¤„ôõ¹Õ±°˜™Ñ½5¥¸¡‘•À¤ñ¹½İ4¥É•ÑÕÉ¸ìÈ¹ÁÕÍ ¡íĞ±‘•À±…ÉÈé…ÉÉQô¤ìô¤ìÉ•ÑÕÉ¸Èìôì(€½¹ÍĞ½ÕĞõÍ…¸¡™É½´±Ñ¼¤¹µ…À¡”ôø¡ì¸¸¹”±…É½´é™É½´±…Q¼éÑ¼±…‘¨é™…±Í•ô¤¤ì(€¥˜¡¥¹±Õ‘•‘¨€˜˜ÑåÁ•½˜}¹•…É‰åQÉ…¥¹MÑ…Ñ¥½¹Ìôôô™Õ¹Ñ¥½¸œ¥ì(€€€½¹ÍĞÍ••¸õ¹•ÜM•Ğ¡½ÕĞ¹µ…À¡”ôù”¹Ğ¹¹¼¤¤ì(€€€½¹ÍĞÍÑ½ÁÍĞô¡Ğ±ÍÑ¸¤ôùí½¹ÍĞ¤õĞ¹ÍÑ½ÁÌ¹™¥¹‘%¹‘•à¡ÌôùÌ¹ÌôôõÍÑ¸¤íÉ•ÑÕÉ¸¤øôÀ˜˜…¥ÍA…ÍÍMÑ½À¡Ğ±ÍÑ¸¤íôì(€€€™½È¡½¹ÍĞ¹ˆ½˜}¹•…É‰åQÉ…¥¹MÑ…Ñ¥½¹Ì¡™É½´¤¤Í…¸¡¹ˆ¹¸±Ñ¼¤¹™½É… ¡”ôùì¥˜¡Í••¸¹¡…Ì¡”¹Ğ¹¹¼¥ññÍÑ½ÁÍĞ¡”¹Ğ±™É½´¤¥É•ÑÕÉ¸ìÍ••¸¹…‘¡”¹Ğ¹¹¼¤ì½ÕĞ¹ÁÕÍ ¡ì¸¸¹”±…É½´é¹ˆ¹¸±…Q¼éÑ¼±…‘¨éÑÉÕ”±µ¥ÍÌé™É½µô¤ìô¤ì(€€€™½È¡½¹ÍĞ¹ˆ½˜}¹•…É‰åQÉ…¥¹MÑ…Ñ¥½¹Ì¡Ñ¼¤¤Í…¸¡™É½´±¹ˆ¹¸¤¹™½É… ¡”ôùì¥˜¡Í••¸¹¡…Ì¡”¹Ğ¹¹¼¥ññÍÑ½ÁÍĞ¡”¹Ğ±Ñ¼¤¥É•ÑÕÉ¸ìÍ••¸¹…‘¡”¹Ğ¹¹¼¤ì½ÕĞ¹ÁÕÍ ¡ì¸¸¹”±…É½´é™É½´±…Q¼é¹ˆ¹¸±…‘¨éÑÉÕ”±µ¥ÍÌéÑ½ô¤ìô¤ì(€ô(€½ÕĞ¹Í½ÉĞ ¡„±ˆ¤ôø¡Ñ½5¥¸¡„¹‘•À¥ñğÀ¤´¡Ñ½5¥¸¡ˆ¹‘•À¥ñğÀ¤¤ì(€É•ÑÕÉ¸½ÕĞì)ô(¼¼ƒ²b#®ƒ®ÎªÊôèƒªÂg²v ƒªÖ³ªÂ²v`ƒ®.“®–àƒ²^Ó²Â£®†pƒªÖC²ÊĞ€¬ƒ²Š3²tƒ®NÇªâ$ƒ®ÎªÊô€£¶Vc®. ƒ².s¶*à¤)™Õ¹Ñ¥½¸½Á•¹1•QÉ…¥¹Mİ…À¡ÑÉ¥Á%°±•%¥ì(€½¹ÍĞ¡¬õ±½…‘QÉ¥ÁÌ ¤¹™¥¹¡ĞôùĞ¹¥ôôõÑÉ¥Á%¤ì½¹ÍĞ±•œÀõ¡¬˜™¡¬¹±•Ì¹™¥¹¡°ôù°¹¥ôôõ±•%¤ì(€¥˜ …±•œÀ¥É•ÑÕÉ¸ì(€¥˜¡}±•	½½­•¡±•œÀ¤¥í…±•ÉĞ Ÿ²vÓ®¾àƒ²b#®ƒ²f®3®Bpƒ²vó²‚W²z®.#®.¹q»®ÎªÊ÷¶Vc®‚“®¦Ğƒ®¢ó²‚ ƒ¶VÓ®.äƒ²*ç²Â£ªÚ3²vƒ²Ş£²3¶VÓ²ó²ã²jP¸œ¤íÉ•ÑÕÉ¸íô(€‘½Õµ•¹Ğ¹•Ñ±•µ•¹Ñ	å% ÑÉ¥ÀµÍİ…ÀµİÉ…Àœ¤ü¹É•µ½Ù” ¤ì(€½¹ÍĞİÉ…Àõ‘½Õµ•¹Ğ¹É•…Ñ•±•µ•¹Ğ ‘¥Øœ¤ìİÉ…À¹¥ôÑÉ¥ÀµÍİ…ÀµİÉ…Àœì(€İÉ…À¹ÍÑå±”¹ÍÍQ•áĞôÁ½Í¥Ñ¥½¸é™¥á•í¥¹Í•ĞèÀíèµ¥¹‘•àèäØÀÀœì(€İÉ…À¹¥¹¹•É!Q50õ€ñ‘¥ØÍÑå±”ô‰Á½Í¥Ñ¥½¸é…‰Í½±ÕÑ”í¥¹Í•ĞèÀí‰…­É½Õ¹éÉ‰„ À°À°À°¸ÔÔ¤ˆøğ½‘¥Øøñ‘¥Ø±…ÍÌô‰ÑÉ¥ÀµÍ¡••Ğˆ¥ô‰ÑÉ¥ÀµÍİ…ÀµÍ¡••Ğˆøñ‘¥Ø¥ô‰ÑÉ¥ÀµÍİ…Àµ‰½‘äˆøğ½‘¥Øøğ½‘¥Øù€ì(€‘½Õµ•¹Ğ¹‰½‘ä¹…ÁÁ•¹‘¡¥±¡İÉ…À¤ì(€É•ÅÕ•ÍÑ¹¥µ…Ñ¥½¹É…µ”  ¤ôùí½¹ÍĞÍ õ‘½Õµ•¹Ğ¹•Ñ±•µ•¹Ñ	å% ÑÉ¥ÀµÍİ…ÀµÍ¡••Ğœ¤ì¥˜¡Í ¥Í ¹±…ÍÍ1¥ÍĞ¹…‘ ½Á•¸œ¤íô¤ì(€½¹ÍĞ±½Í”ô ¤ôùí½¹ÍĞÍ õ‘½Õµ•¹Ğ¹•Ñ±•µ•¹Ñ	å% ÑÉ¥ÀµÍİ…ÀµÍ¡••Ğœ¤ì¥˜¡Í ¥Í ¹±…ÍÍ1¥ÍĞ¹É•µ½Ù” ½Á•¸œ¤ìÍ•ÑQ¥µ•½ÕĞ  ¤ôùİÉ…À¹É•µ½Ù” ¤°ÈÈÀ¤íôì(€İÉ…À¹…‘‘Ù•¹Ñ1¥ÍÑ•¹•È ±¥¬œ±”ôùí¥˜¡”¹Ñ…É•ĞôôõİÉ…Áññ”¹Ñ…É•ĞôôõİÉ…À¹™¥ÉÍÑ±•µ•¹Ñ¡¥±¥±½Í” ¤íô¤ì(€½¹ÍĞØõœôø¡ÑåÁ•½˜ÍÍY…Èôôô™Õ¹Ñ¥½¸œ¤ıÍÍY…È¡œ¤èµ œì(€™Õ¹Ñ¥½¸É•¹‘•È ¥ì(€€€½¹ÍĞÑÉ¥ÁÌõ±½…‘QÉ¥ÁÌ ¤ì½¹ÍĞÑÀõÑÉ¥ÁÌ¹™¥¹¡ĞôùĞ¹¥ôôõÑÉ¥Á%¤ì½¹ÍĞ±•œõÑÀ˜™ÑÀ¹±•Ì¹™¥¹¡°ôù°¹¥ôôõ±•%¤ì¥˜ …±•œ¥í±½Í” ¤íÉ•ÑÕÉ¸íô(€€€½¹ÍĞÕÉPõ•ÑQÉ…¥¹	å9¼¡±•œ¹ÑÉ…¥¹9¼¤ì(€€€½¹ÍĞ…‘©=¸ô¡ÑåÁ•½˜ÑÉ¥ÁMİ…Á‘©¹…‰±•ôôô™Õ¹Ñ¥½¸œ¤˜™ÑÉ¥ÁMİ…Á‘©¹…‰±• ¤ì(€€€½¹ÍĞ±¥ÍĞõ}ÑÉ¥ÁQÉ…¥¹Í½É=¡±•œ¹™É½µMÑ¸°±•œ¹Ñ½MÑ¸°±•œ¹‘…Ñ”°±•œ¹ÑÉ…¥¹9¼°…‘©=¸¤ì(€€€½¹ÍĞ±…ÍÍ•ÌõÕÉPı…Ù…¥±…‰±•M•…Ñ±…ÍÍ•Ì¡ÕÉP¹É…‘”¤émtì(€€€½¹ÍĞÍ•…Ñ	Ñ¹Ìõ±…ÍÍ•Ì¹µ…À¡Œôù€ñ‰ÕÑÑ½¸±…ÍÌô‰Íİ…ÀµÍ•…Ğµ‰Ñ¸‘íŒôôõ±•œ¹Í•…Ñ±…ÍÌüœ½¸œèœôˆ‘…Ñ„µ±Ìôˆ‘íôˆø‘íMQ}1MMMmt¹±…‰•±ôñÍÁ…¸±…ÍÌô‰Íİ…ÀµÍ•…Ğµ™…É”ˆø‘íÕÉPı…ÁÁ±å¥Í½Õ¹Ğ¡…±…É”¡ÕÉP±±•œ¹™É½µMÑ¸±±•œ¹Ñ½MÑ¸±Œ¤±±•œ¹‘¥Í½Õ¹Ññğ¹½¹”œ¤¹Ñ½1½…±•MÑÉ¥¹œ ¤èœ´÷²n@ğ½ÍÁ…¸øğ½‰ÕÑÑ½¸ù€¤¹©½¥¸ œœ¤ì(€€€½¹ÍĞ…É‘Ìõ±¥ÍĞ¹±•¹Ñ ı±¥ÍĞ¹µ…À ¡íĞ±‘•À±…ÉÈ±…‘¨±…É½´±…Q¼±µ¥ÍÍô¤ôùì(€€€€€½¹ÍĞ±Ìõ…Ù…¥±…‰±•M•…Ñ±…ÍÍ•Ì¡Ğ¹É…‘”¤ì½¹ÍĞÕÍ•±Ìõ±Ì¹¥¹±Õ‘•Ì¡±•œ¹Í•…Ñ±…ÍÌ¤ı±•œ¹Í•…Ñ±…ÍÌé±ÍlÁtì(€€€€€½¹ÍĞ™…É”õ…ÁÁ±å¥Í½Õ¹Ğ¡…±…É”¡Ğ±…É½´±…Q¼±ÕÍ•±Ì¤±±•œ¹‘¥Í½Õ¹Ññğ¹½¹”œ¤¨¡±•œ¹Á…ÍÍ•¹•É½Õ¹ÑñğÄ¤ì(€€€€€½¹ÍĞ‘ÕÈô¡ÑåÁ•½˜‘ÕÉMÑÈôôô™Õ¹Ñ¥½¸œ¤ı‘ÕÉMÑÈ¡‘•À±…ÉÈ¤èœœì(€€€€€½¹ÍĞ½¹˜ô¡ÑåÁ•½˜}ÑÉ¥Á…å=Ù•É±…Àôôô™Õ¹Ñ¥½¸œ¤ı}ÑÉ¥Á…å=Ù•É±…À¡ÑÉ¥Á%°±•œ¹‘…ä°‘•À°…ÉÈ°±•%¤é¹Õ±°ì(€€€€€É•ÑÕÉ¸€ñ‘¥Ø±…ÍÌô‰ÑÉ¥ÀµÍİ…Àµ…É‘í½¹˜üœÑÉ¥ÀµÉ½Üµ½Ù•É±…Àœèœôˆ‘…Ñ„µ¹¼ôˆ‘íĞ¹¹½ôˆ‘…Ñ„µ‘•Àôˆ‘í‘•Áôˆ‘…Ñ„µ…ÉÈôˆ‘í…ÉÉñğœôˆ‘…Ñ„µ™É½´ôˆ‘í…É½µôˆ‘…Ñ„µÑ¼ôˆ‘í…Q½ôˆ€‘í…‘¨ı‘…Ñ„µ…‘¨ôˆÄˆ‘…Ñ„µµ¥ÍÌôˆ‘íµ¥ÍÍô‰€èœôÍÑå±”ô‰‰½É‘•Èµ±•™Ğµ½±½ÈéÙ…È ´µŒ´‘íØ¡Ğ¹É…‘”¥ô¤ˆø(€€€€€€€€ñ‘¥ØÍÑå±”ô‰™±•àèÄíµ¥¸µİ¥‘Ñ èÀˆø(€€€€€€€€€€ñ‘¥Ø±…ÍÌô‰ÑÉ¥ÀµÍİ…ÀµÑ½Àˆø‘ì¡ÑåÁ•½˜É…‘•!Ñµ°ôôô™Õ¹Ñ¥½¸œ¤ıÉ…‘•!Ñµ°¡Ğ¹É…‘”¤é}Ñ•ÍŒ¡Ğ¹É…‘”¥ô€ñÍÁ…¸ÍÑå±”ô‰™½¹Ğµ™…µ¥±äéÙ…È ´µµ½¹¼¤í½±½ÈéÙ…È ´µÑ•áĞÈ¤í™½¹ĞµÍ¥é”èÄÉÁàˆø‘íĞ¹¹½ôğ½ÍÁ…¸ø€ñÍÁ…¸ÍÑå±”ô‰™½¹ĞµÍ¥é”èÄÉÁàí½±½ÈéÙ…È ´µÑ•áĞÄ¤í™½¹Ğµİ•¥¡ĞèØÀÀˆø‘í}Ñ•ÍŒ¡Ğ¹‘•ÍĞ¥÷¶Z$ğ½ÍÁ…¸ø‘í…‘¨üœ€ñÍÁ…¸±…ÍÌô‰Íİ…Àµ…‘¨µÑ…œˆû²vã²‚G²^´ğ½ÍÁ…¸øœèœôğ½‘¥Øø(€€€€€€€€€€ñ‘¥Ø±…ÍÌô‰ÑÉ¥ÀµÍİ…ÀµÑ¥µ”ˆøñˆø‘í‘•Áôğ½ˆø‘í…‘¨˜™…É½´„ôõ±•œ¹™É½µMÑ¸ı€€ñÍÁ…¸ÍÑå±”ô‰½±½ÈéÙ…È ´µ½É…¹”¤í™½¹ĞµÍ¥é”èÄÁÁàˆø‘í}Ñ•ÍŒ¡…É½´¥ôğ½ÍÁ…¸ù€èœôƒŠH€ñˆÍÑå±”ô‰½±½ÈéÙ…È ´µÉ••¸¤ˆø‘í…ÉÉñğœ´ôğ½ˆø‘í…‘¨˜™…Q¼„ôõ±•œ¹Ñ½MÑ¸ı€€ñÍÁ…¸ÍÑå±”ô‰½±½ÈéÙ…È ´µ½É…¹”¤í™½¹ĞµÍ¥é”èÄÁÁàˆø‘í}Ñ•ÍŒ¡…Q¼¥ôğ½ÍÁ…¸ù€èœô€ñÍÁ…¸ÍÑå±”ô‰™½¹ĞµÍ¥é”èÄÅÁàí½±½ÈéÙ…È ´µÑ•áĞÌ¤ˆø‘í‘ÕÉôğ½ÍÁ…¸øğ½‘¥Øø(€€€€€€€€ğ½‘¥Øø(€€€€€€€€ñ‘¥Ø±…ÍÌô‰ÑÉ¥ÀµÍİ…Àµ™…É”ˆø‘í™…É”¹Ñ½1½…±•MÑÉ¥¹œ ¥÷²n@ñÍÁ…¸±…ÍÌô‰µäµµ•¹Ôµ…ÉÉ½ÜˆÍÑå±”ô‰µ…É¥¸µ±•™ĞèÙÁàˆûŠèğ½ÍÁ…¸øğ½‘¥Øø(€€€€€€ğ½‘¥Øù€ì(€€€ô¤¹©½¥¸ œœ¤é€ñ‘¥Ø±…ÍÌô‰ÑÉ¥Àµ•µÁÑäˆÍÑå±”ô‰Á…‘‘¥¹œèÈÉÁà€ÄÉÁàˆøñÀûªÂg²v ƒªÖ³ªÂ²v`ƒ®.“®–àƒ²^Ó²Â£ªÂ ƒ²^²*×®.#®.¸ğ½Àøğ½‘¥Øù€ì(€€€‘½Õµ•¹Ğ¹•Ñ±•µ•¹Ñ	å% ÑÉ¥ÀµÍİ…Àµ‰½‘äœ¤¹¥¹¹•É!Q50õ€(€€€€€€ñ‘¥Ø±…ÍÌô‰ÑÉ¥ÀµÍ¡••ĞµÉ¥Àˆøğ½‘¥Øø(€€€€€€ñ‘¥Ø±…ÍÌô‰ÑÉ¥ÀµÍ¡••ĞµÑ¥Ñ±”ˆûÂ~:¬ƒ²b#®ƒ®ÎªÊôğ½‘¥Øø(€€€€€€ñ‘¥Ø±…ÍÌô‰ÑÉ¥ÀµÍ¡••ĞµÍÕˆˆø‘í}Ñ•ÍŒ¡±•œ¹™É½µMÑ¸¥ôƒŠH€‘í}Ñ•ÍŒ¡±•œ¹Ñ½MÑ¸¥ôƒ
+Ü€‘í±•œ¹‘…Ñ•ôƒ
+Ü€‘í±•œ¹Á…ÍÍ•¹•É½Õ¹ÑñğÅ÷®ªğ½‘¥Øø(€€€€€€ñ‘¥Ø±…ÍÌô‰Íİ…ÀµÍ•…Ğµ±…‰•°ˆû²Š3²tƒ®NÇªâ$ƒ®ÎªÊôğ½‘¥Øø(€€€€€€ñ‘¥Ø±…ÍÌô‰Íİ…ÀµÍ•…ĞµÉ½Üˆø‘íÍ•…Ñ	Ñ¹Íôğ½‘¥Øø(€€€€€€ñ‘¥Ø±…ÍÌô‰Íİ…Àµ±¥ÍĞµ±…‰•°ˆû®.“®–àƒ²^Ó²Â£®†pƒ®ÎªÊô‘í…‘©=¸üœ€ñÍÁ…¸±…ÍÌô‰Íİ…Àµ…‘¨µ¹½Ñ”ˆû
+Üƒ²vã²‚G²^´ƒ¶>³¶V ğ½ÍÁ…¸øœèœôğ½‘¥Øø(€€€€€€ñ‘¥Ø±…ÍÌô‰ÑÉ¥ÀµÍ¡••Ğµ±¥ÍĞˆø‘í…É‘Íôğ½‘¥Øø(€€€€€€ñ‰ÕÑÑ½¸±…ÍÌô‰…±…É´µÁ½ÁÕÀµ±½Í”ˆ¥ô‰ÑÉ¥ÀµÍİ…Àµ±½Í”ˆÍÑå±”ô‰µ…É¥¸èÄÁÁà€ÄÑÁà€ÑÁàˆû®.¯ªâÀğ½‰ÕÑÑ½¸ù€ì(€€€‘½Õµ•¹Ğ¹•Ñ±•µ•¹Ñ	å% ÑÉ¥ÀµÍİ…Àµ±½Í”œ¤¹…‘‘Ù•¹Ñ1¥ÍÑ•¹•È ±¥¬œ±±½Í”¤ì(€€€‘½Õµ•¹Ğ¹ÅÕ•ÉåM•±•Ñ½É±° œÑÉ¥ÀµÍİ…Àµ‰½‘ä€¹Íİ…ÀµÍ•…Ğµ‰Ñ¸œ¤¹™½É… ¡ˆôùˆ¹…‘‘Ù•¹Ñ1¥ÍÑ•¹•È ±¥¬œ° ¤ôùì(€€€€€½¹ÍĞŒõˆ¹‘…Ñ…Í•Ğ¹±Ìì½¹ÍĞÑÉ¥ÁÌÈõ±½…‘QÉ¥ÁÌ ¤ì½¹ÍĞÑÀÈõÑÉ¥ÁÌÈ¹™¥¹¡àôùà¹¥ôôõÑÉ¥Á%¤ì½¹ÍĞ±œõÑÀÈ˜™ÑÀÈ¹±•Ì¹™¥¹¡°ôù°¹¥ôôõ±•%¤ì¥˜ …±œ¥É•ÑÕÉ¸ì(€€€€€±œ¹Í•…Ñ±…ÍÌõŒì±œ¹Í•…Ñ±…ÍÍ1…‰•°õMQ}1MMMmt¹±…‰•°ìÍ…Ù•QÉ¥ÁÌ¡ÑÉ¥ÁÌÈ¤ìÉ•¹‘•É5åQÉ¥ÁÌ ¤ìÉ•¹‘•È ¤ì}ÑÉ¥ÁQ½…ÍĞ¡€‘íMQ}1MMMmt¹±…‰•±ô£²rğ§®†pƒ®ÎªÊõ€¤ì(€€€ô¤¤ì(€€€‘½Õµ•¹Ğ¹ÅÕ•ÉåM•±•Ñ½É±° œÑÉ¥ÀµÍİ…Àµ‰½‘ä€¹ÑÉ¥ÀµÍİ…Àµ…É‘m‘…Ñ„µ¹½tœ¤¹™½É… ¡ŒôùŒ¹…‘‘Ù•¹Ñ1¥ÍÑ•¹•È ±¥¬œ° ¤ôùì(€€€€€½¹ÍĞ¹¼õŒ¹‘…Ñ…Í•Ğ¹¹¼°¹Ğõ•ÑQÉ…¥¹	å9¼¡¹¼¤ì¥˜ …¹Ğ¥É•ÑÕÉ¸ì(€€€€€½¹ÍĞ‘½Mİ…Àô ¤ôùì½¹ÍĞÑÉ¥ÁÌÈõ±½…‘QÉ¥ÁÌ ¤ì½¹ÍĞÑÀÈõÑÉ¥ÁÌÈ¹™¥¹¡àôùà¹¥ôôõÑÉ¥Á%¤ì½¹ÍĞ±œõÑÀÈ˜™ÑÀÈ¹±•Ì¹™¥¹¡°ôù°¹¥ôôõ±•%¤ì¥˜ …±œ¥É•ÑÕÉ¸ì(€€€€€€€½¹ÍĞ±Ìõ…Ù…¥±…‰±•M•…Ñ±…ÍÍ•Ì¡¹Ğ¹É…‘”¤ì(€€€€€€€±œ¹ÑÉ…¥¹9¼õ¹¼ì±œ¹É…‘”õ¹Ğ¹É…‘”ì±œ¹±¥¹”õ¹Ğ¹±¥¹”ì±œ¹™É½µMÑ¸õŒ¹‘…Ñ…Í•Ğ¹™É½´ì±œ¹Ñ½MÑ¸õŒ¹‘…Ñ…Í•Ğ¹Ñ¼ì±œ¹‘•ÁQ¥µ”õŒ¹‘…Ñ…Í•Ğ¹‘•Àì±œ¹…ÉÉQ¥µ”õŒ¹‘…Ñ…Í•Ğ¹…ÉÈì(€€€€€€€¥˜ …±Ì¹¥¹±Õ‘•Ì¡±œ¹Í•…Ñ±…ÍÌ¤¥ì±œ¹Í•…Ñ±…ÍÌõ±ÍlÁtì±œ¹Í•…Ñ±…ÍÍ1…‰•°õMQ}1MMMm±ÍlÁut¹±…‰•°ìô(€€€€€€€Í…Ù•QÉ¥ÁÌ¡ÑÉ¥ÁÌÈ¤ìÉ•¹‘•É5åQÉ¥ÁÌ ¤ì}ÑÉ¥ÁQ½…ÍĞ¡€‘í¹Ğ¹É…‘•ô€‘í¹½ô£²rğ§®†pƒ®ÎªÊ÷¶Z#²*×®.#®.‘€¤ì±½Í” ¤ìôì(€€€€€½¹ÍĞ½¹˜ô¡ÑåÁ•½˜}ÑÉ¥Á…å=Ù•É±…Àôôô™Õ¹Ñ¥½¸œ¤ı}ÑÉ¥Á…å=Ù•É±…À¡ÑÉ¥Á%°±•œ¹‘…ä°Œ¹‘…Ñ…Í•Ğ¹‘•À°Œ¹‘…Ñ…Í•Ğ¹…ÉÈ°±•%¤é¹Õ±°ì(€€€€€½¹ÍĞ…‘©]…É¸õŒ¹‘…Ñ…Í•Ğ¹…‘¨ıq»Šìƒ²vã²‚G²^´ ‘íŒ¹‘…Ñ…Í•Ğ¹µ¥ÍÍôƒ®¾ã²‚W²Â ¤èƒ²*ç²Â €‘íŒ¹‘…Ñ…Í•Ğ¹™É½µôƒ
+Üƒ¶Vc²Â €‘íŒ¹‘…Ñ…Í•Ğ¹Ñ½õ€èœœì(€€€€€¥˜¡½¹˜¥ì¥˜¡½¹™¥É´¡ƒŠjƒ¾â<ƒ²vÓ®¾àƒ®.ÓªâĞƒ²vó²‚WªÎğƒ².sªÂ²vĞƒªÊç²æ§®.#®.¹q¸‘í½¹˜¹ÑÉ…¥¹9½÷®Ê €‘í½¹˜¹™É½µMÑ¹÷ŠH‘í½¹˜¹Ñ½MÑ¹ô€ ‘í½¹˜¹‘•ÁQ¥µ•õø‘í½¹˜¹…ÉÉQ¥µ•ô¤‘í…‘©]…É¹õq¹q»ªŞã®zc®>ƒ²vĞƒ²^Ó²Â£®†pƒ®ÎªÊ÷¶Vc².sªÊƒ²*×®.#ªæ0ı€¤¤‘½Mİ…À ¤ìô(€€€€€•±Í”¥˜¡Œ¹‘…Ñ…Í•Ğ¹…‘¨¥ì¥˜¡½¹™¥É´¡ƒ²vã²‚G²^´ƒ²^Ó²Â£²z®.#®.¸‘í…‘©]…É¹õq¹q»²vĞƒ²^Ó²Â£®†pƒ®ÎªÊ÷¶Vc².sªÊƒ²*×®.#ªæ0ı€¤¤‘½Mİ…À ¤ìô(€€€€€•±Í”‘½Mİ…À ¤ì(€€€ô¤¤ì(€ô(€É•¹‘•È ¤ì)ô(¼¼ƒ².sªÂ¶FpƒŠHƒ²VÇ²v`ƒ².“²‚p€Ÿ¶G²*äƒ²^³²‚Tœ£².“².sªÂƒ²jÓ¶Z$¤ƒ¶fS®¦Ó²vƒªŞã®2®†pƒ²
+³²j¤)™Õ¹Ñ¥½¸½Á•¹1•Q¥µ•Ñ…‰±”¡ÑÉ¥Á%°±•%¥ì(€½¹ÍĞÑÉ¥ÁÌõ±½…‘QÉ¥ÁÌ ¤ì½¹ÍĞÑÀõÑÉ¥ÁÌ¹™¥¹¡ĞôùĞ¹¥ôôõÑÉ¥Á%¤ì½¹ÍĞ±•œõÑÀ˜™ÑÀ¹±•Ì¹™¥¹¡°ôù°¹¥ôôõ±•%¤ì¥˜ …±•œ¥É•ÑÕÉ¸ì(€¥˜¡ÑåÁ•½˜½Á•¹)½ÕÉ¹•äôôô™Õ¹Ñ¥½¸œ¤½Á•¹)½ÕÉ¹•ä¡±•œ¹ÑÉ…¥¹9¼¤ì(€•±Í”…±•ÉĞ Ÿ¶G²*äƒ²^³²‚Tƒ¶fS®¦Ó²vƒ²^Ğƒ²"`ƒ²^²*×®.#®.¸œ¤ì)ô(¼¼ƒ²b#®ƒ²Ş£²0ƒŠPƒ²*ç²Â£ªÚ3²v ƒ²Ş£²0ƒ²¶s®†pƒªâÃ®†tƒ®ÎÓªÒ °ƒ²vó²‚W²v ƒ®¾ã²b#®“®†pƒ®Î×ªŞ )™Õ¹Ñ¥½¸…¹•±1•	½½­¥¹œ¡ÑÉ¥Á%°±•%¥ì(€½¹ÍĞÑÉ¥ÁÌõ±½…‘QÉ¥ÁÌ ¤ì½¹ÍĞÑÀõÑÉ¥ÁÌ¹™¥¹¡ĞôùĞ¹¥ôôõÑÉ¥Á%¤ì½¹ÍĞ±•œõÑÀ˜™ÑÀ¹±•Ì¹™¥¹¡°ôù°¹¥ôôõ±•%¤ì¥˜ …±•œ¥É•ÑÕÉ¸ì(€¥˜ …±•œ¹Ñ¥­•Ñ%¥ì}ÑÉ¥ÁQ½…ÍĞ Ÿ²b#®“®Bpƒ²vó²‚W²vĞƒ²V®.g®.#®.œ¤ìÉ•ÑÕÉ¸ìô(€½¹ÍĞÑ¥­•ÑÌõ±½…‘Q¥­•ÑÌ ¤ì½¹ÍĞÑ¬õÑ¥­•ÑÌ¹™¥¹¡àôùà¹¥ôôõ±•œ¹Ñ¥­•Ñ%¤ì(€¥˜¡Ñ¬¥ì½¹ÍĞ¹½Üõ¹•Ü…Ñ” ¤°¹½İ4õ¹½Ü¹•Ñ!½ÕÉÌ ¤¨ØÀ­¹½Ü¹•Ñ5¥¹ÕÑ•Ì ¤°‘•Á4õÑ½5¥¸¡Ñ¬¹‘•ÁQ¥µ”¤ì(€€€¥˜¡Ñ¬¹ÑÉ…Ù•±…Ñ”ôôõÑ½‘…å1½…±MÑÈ ¤˜™‘•Á4„ôõ¹Õ±°˜™‘•Á4ğõ¹½İ4¥ì…±•ÉĞ Ÿ²vÓ®¾àƒ²Ús®Âs¶Vpƒ²^Ó²Â£®*Pƒ²b#®“®–ğƒ²Ş£²3¶V€ƒ²"`ƒ²^²*×®.#®.¸œ¤ìÉ•ÑÕÉ¸ìôô(€¥˜ …½¹™¥É´ Ÿ²vĞƒ²vó²‚W²v`ƒ²b#®“®–ğƒ²Ş£²3¶Vc².sªÊƒ²*×®.#ªæ0ıq¹q»²*ç²Â£ªÚ3²v ƒ²Ş£²0ƒ²¶s®†pƒªâÃ®†w²^@ƒ®ÎÓªÒ®BcªÎ€±q»²vó²‚W²v ƒ®¾ã²b#®ƒ²¶s®†pƒ®>3²VªÂG®.#®.¸œ¤¥É•ÑÕÉ¸ì(€¥˜¡Ñ¬¥ìÑ¬¹ÍÑ…ÑÕÌô…¹•±±•œìÑ¬¹…¹•±±•‘Ğõ…Ñ”¹¹½Ü ¤ìÍ…Ù•Q¥­•ÑÌ¡Ñ¥­•ÑÌ¤ì(€€€¥˜¡ÑåÁ•½˜¥¹Ù…±¥‘…Ñ•½¹•ÍÑ¥½¸ôôô™Õ¹Ñ¥½¸œ¥¥¹Ù…±¥‘…Ñ•½¹•ÍÑ¥½¸¡Ñ¬¹ÑÉ…¥¹9¼±Ñ¬¹ÑÉ…Ù•±…Ñ”¤ì(€€€ÑÉåì½¹ÍĞ…°õ±½…‘±…ÉµÌ ¤ìÍ…Ù•±…ÉµÌ¡…°¹™¥±Ñ•È¡„ôø„¡„¹ÑÉ…¥¹9¼ôôõÑ¬¹ÑÉ…¥¹9¼˜˜¡„¹ÍÑ¸ôôõÑ¬¹™É½µMÑ¹ññ„¹ÍÑ¸ôôõÑ¬¹Ñ½MÑ¸¤¤¤¤ìõ…Ñ ¡”¥íô(€ô(€±•œ¹Ñ¥­•Ñ%õ¹Õ±°ìÍ…Ù•QÉ¥ÁÌ¡ÑÉ¥ÁÌ¤ìÉ•¹‘•É5åQÉ¥ÁÌ ¤ì(€¥˜¡ÑåÁ•½˜É•¹‘•ÉQ¥­•ÑÌôôô™Õ¹Ñ¥½¸œ€˜˜‘½Õµ•¹Ğ¹•Ñ±•µ•¹Ñ	å% É•ÍÕ±ĞµÑ¥­•Ğœ¤¤É•¹‘•ÉQ¥­•ÑÌ ¤ì(€}ÑÉ¥ÁQ½…ÍĞ Ÿ²b#®“®–ğƒ²Ş£²3¶Z#²*×®.#®.€£ªâÃ®†tƒ®ÎÓªÒ ¤œ¤ì)ô(¼¼ƒ²“²‚Tèƒ®“²ƒ².pƒ®.“®–àƒ²Š3²tƒ²zC®>dƒ²b#®€¼ƒ²b#®ƒ®ÎªÊôƒ²vã²‚G²^´ƒ¶>³¶V )™Õ¹Ñ¥½¸ÑÉ¥ÁÕÑ½M•…Ñ¹…‰±• ¥íÑÉåíÉ•ÑÕÉ¸±½…±MÑ½É…”¹•Ñ%Ñ•´ ¹¥µ‰¥}ÑÉ¥Á}…ÕÑ½Í•…Ğœ¤ôôôœÄœíõ…Ñ ¡”¥íÉ•ÑÕÉ¸™…±Í”íõô)™Õ¹Ñ¥½¸Ñ½±•QÉ¥ÁÕÑ½M•…Ğ ¥íÑÉåí±½…±MÑ½É…”¹Í•Ñ%Ñ•´ ¹¥µ‰¥}ÑÉ¥Á}…ÕÑ½Í•…Ğœ±ÑÉ¥ÁÕÑ½M•…Ñ¹…‰±• ¤üœÀœèœÄœ¤íõ…Ñ ¡”¥íõ}É•I•¹‘•ÉQÉ¥ÁM•ÑÑ¥¹Ì ¤íô)™Õ¹Ñ¥½¸ÑÉ¥ÁMİ…Á‘©¹…‰±• ¥íÑÉåíÉ•ÑÕÉ¸±½…±MÑ½É…”¹•Ñ%Ñ•´ ¹¥µ‰¥}ÑÉ¥Á}Íİ…Á…‘¨œ¤ôôôœÄœíõ…Ñ ¡”¥íÉ•ÑÕÉ¸™…±Í”íõô)™Õ¹Ñ¥½¸Ñ½±•QÉ¥ÁMİ…Á‘¨ ¥íÑÉåí±½…±MÑ½É…”¹Í•Ñ%Ñ•´ ¹¥µ‰¥}ÑÉ¥Á}Íİ…Á…‘¨œ±ÑÉ¥ÁMİ…Á‘©¹…‰±• ¤üœÀœèœÄœ¤íõ…Ñ ¡”¥íõ}É•I•¹‘•ÉQÉ¥ÁM•ÑÑ¥¹Ì ¤íô)™Õ¹Ñ¥½¸}É•I•¹‘•ÉQÉ¥ÁM•ÑÑ¥¹Ì ¥í½¹ÍĞ•°õ‘½Õµ•¹Ğ¹•Ñ±•µ•¹Ñ	å% µäµÍÕˆµ½¹Ñ•¹Ğœ¤í¥˜¡•°˜™•°¹‘…Ñ…Í•Ğ¹Í•Ñ¥½¸ôôôÍ•ÑÑ¥¹Ìœ˜™ÑåÁ•½˜É•¹‘•ÉM•ÑÑ¥¹ÍM•Ñ¥½¸ôôô™Õ¹Ñ¥½¸œ¥É•¹‘•ÉM•ÑÑ¥¹ÍM•Ñ¥½¸¡•°¤íô((¼¼ƒŠRŠR ƒ²vó²‚Tƒ²ÚSªÂ €£¶*ç²‚Tƒ²vó²Â£²^@ƒªÖ³ªÂƒ²†Ã¶j0ƒŠHƒ²^Ó²Â ƒ®.ÓªâÀ¤ƒŠRŠR )™Õ¹Ñ¥½¸½Á•¹QÉ¥Á‘‘M•…É ¡ÑÉ¥Á%±‘…ä¥ì(€½¹ÍĞÑÉ¥Àõ±½…‘QÉ¥ÁÌ ¤¹™¥¹¡ĞôùĞ¹¥ôôõÑÉ¥Á%¤ì¥˜ …ÑÉ¥À¥É•ÑÕÉ¸ì(€‘…äõ5…Ñ ¹µ…à Ä±5…Ñ ¹µ¥¸¡ÑÉ¥À¹‘…åÌ±‘…åñğÄ¤¤ì(€İ¥¹‘½Ü¹}ÑÉ¥Á‘‘5½‘”õíÑÉ¥Á%±‘…åôì(€İ¥¹‘½Ü¹}…Ñ¥Ù•QÉ¥Á%õÑÉ¥Á%ì(€½¹ÍĞ•°õ‘½Õµ•¹Ğ¹•Ñ±•µ•¹Ñ	å% É•ÍÕ±ĞµµåÑÉ¥Àœ¤ì¥˜ …•°¥É•ÑÕÉ¸ì(€•°¹¥¹¹•É!Q50õ€ñ‘¥Ø±…ÍÌô‰ÑÉ¥ÀµİÉ…Àˆø(€€€€ñ‘¥Ø±…ÍÌô‰ÑÉ¥Àµ…‘µ¡ˆûÂ~Ì€ñˆø‘í‘…å÷²vó²Â ğ½ˆø€ ‘í}‘…å…Ñ”¡ÑÉ¥À±‘…ä¥ô¤ƒ²vó²‚Tƒ²ÚSªÂ ƒŠPƒ²^Ó²Â£®–ğƒ®"3®~°ƒ®.Ó²ró²ã²jP€ñÍÁ…¸ÍÑå±”ô‰½±½ÈéÙ…È ´µÑ•áĞÌ¤ˆø£²b#®ƒ²V®.`¤ğ½ÍÁ…¸øğ½‘¥Øø(€€€€ñ‘¥Ø¥ô‰ÑÉ¥Àµ…‘µ‰½½¬ˆøğ½‘¥Øø(€€ğ½‘¥Øù€ì(€½¹ÍĞ‰½àõ‘½Õµ•¹Ğ¹•Ñ±•µ•¹Ñ	å% ÑÉ¥Àµ…‘µ‰½½¬œ¤ì(€¥˜¡‰½à€˜˜ÑåÁ•½˜}É•¹‘•É	½½­Q…‰%¹Ñ¼ôôô™Õ¹Ñ¥½¸œ¤}É•¹‘•É	½½­Q…‰%¹Ñ¼¡‰½à°€µäµ‰½½¬µÉ•ÍÕ±ÑÌœ¤ì(€½¹ÍĞ‘œõ‘½Õµ•¹Ğ¹•Ñ±•µ•¹Ñ	å% ‰½½¬µ‘…Ñ”µ¼œ¤ì¥˜¡‘œ¥í‘œ¹Ù…±Õ”õ}‘…å…Ñ”¡ÑÉ¥À±‘…ä¤íô)ô)™Õ¹Ñ¥½¸‰…­É½µQÉ¥Á‘¡ÑÉ¥Á%¥ìİ¥¹‘½Ü¹}ÑÉ¥Á‘‘5½‘”õ¹Õ±°ì½Á•¹QÉ¥À¡ÑÉ¥Á%¤ìô)™Õ¹Ñ¥½¸½Á•¹QÉ¥Á1•A¥­•È¡ÑÉ…¥¹9¼°™É½´°Ñ¼°‘•À°…ÉÈ°‘…Ñ”¥ì(€½¹ÍĞĞõ•ÑQÉ…¥¹	å9¼¡ÑÉ…¥¹9¼¤ì¥˜ …Ğ¥í…±•ÉĞ Ÿ²^Ó²Â ƒ²‚W®ÎÓ®–ğƒ²Âû²vƒ²"`ƒ²^²*×®.#®.¸œ¤íÉ•ÑÕÉ¸íô(€½¹ÍĞµ½‘”õİ¥¹‘½Ü¹}ÑÉ¥Á‘‘5½‘”ì¥˜ …µ½‘•ñğ…µ½‘”¹ÑÉ¥Á%¥í…±•ÉĞ Ÿ²^³¶Z'²vƒ®¢ó²‚ ƒ²ƒ¶w¶VÓ²ó²ã²jP¸œ¤íÉ•ÑÕÉ¸íô(€½¹ÍĞÑÉ¥Àõ±½…‘QÉ¥ÁÌ ¤¹™¥¹¡àôùà¹¥ôôõµ½‘”¹ÑÉ¥Á%¤ì¥˜ …ÑÉ¥À¥É•ÑÕÉ¸ì(€½¹ÍĞ‘…å…Ñ”õ}‘…å…Ñ”¡ÑÉ¥À±µ½‘”¹‘…ä¤ì(€‘½Õµ•¹Ğ¹•Ñ±•µ•¹Ñ	å% ÑÉ¥Àµ±•œµÁ¥­•ÈµİÉ…Àœ¤ü¹É•µ½Ù” ¤ì(€½¹ÍĞ±…ÍÍ•Ìõ…Ù…¥±…‰±•M•…Ñ±…ÍÍ•Ì¡Ğ¹É…‘”¤ì(€½¹ÍĞÁ…àÀõ5…Ñ ¹µ…à Ä±5…Ñ ¹µ¥¸ Ø°¡ÑåÁ•½˜}‰½½­A…ÍÍ•¹•É½Õ¹Ğ„ôôÕ¹‘•™¥¹•œ˜™}‰½½­A…ÍÍ•¹•É½Õ¹Ğ¥ñğÄ¤¤ì(€İ¥¹‘½Ü¹}Ñ±ÀõíÑÉ…¥¹9¼±™É½´±Ñ¼±‘•À±…ÉÈ±±Ìé¹Õ±°±Á…àéÁ…àÁôì(€½¹ÍĞ½ÁÑÌõ±…ÍÍ•Ì¹µ…À¡Œôù€ñ‰ÕÑÑ½¸±…ÍÌô‰‰½½­¥¹œµÍ•…Ğµ½ÁÑ¥½¸ˆ‘…Ñ„µ±…ÍÌôˆ‘íôˆøñÍÁ…¸±…ÍÌô‰‰½½­¥¹œµÍ•…Ğµ±…‰•°ˆø‘íMQ}1MMMmt¹±…‰•±ôğ½ÍÁ…¸øñÍÁ…¸±…ÍÌô‰‰½½­¥¹œµÍ•…Ğµ™…É”ˆø‘í…±…É”¡Ğ±™É½´±Ñ¼±Œ¤¹Ñ½1½…±•MÑÉ¥¹œ ¥÷²n@ğ½ÍÁ…¸øğ½‰ÕÑÑ½¸ù€¤¹©½¥¸ œœ¤ì(€½¹ÍĞİÉ…Àõ‘½Õµ•¹Ğ¹É•…Ñ•±•µ•¹Ğ ‘¥Øœ¤ìİÉ…À¹¥ôÑÉ¥Àµ±•œµÁ¥­•ÈµİÉ…Àœì(€İÉ…À¹ÍÑå±”¹ÍÍQ•áĞôÁ½Í¥Ñ¥½¸é™¥á•í¥¹Í•ĞèÀíèµ¥¹‘•àèäØÀÀí‘¥ÍÁ±…äé™±•àí…±¥¸µ¥Ñ•µÌé•¹Ñ•Èí©ÕÍÑ¥™äµ½¹Ñ•¹Ğé•¹Ñ•ÈíÁ…‘‘¥¹œèÄÙÁàí‰½àµÍ¥é¥¹œé‰½É‘•Èµ‰½àœì(€İÉ…À¹¥¹¹•É!Q50õ€ñ‘¥ØÍÑå±”ô‰Á½Í¥Ñ¥½¸é…‰Í½±ÕÑ”í¥¹Í•ĞèÀí‰…­É½Õ¹éÉ‰„ À°À°À°¸Ø¤ˆøğ½‘¥Øø(€€€€ñ‘¥Ø±…ÍÌô‰…±…É´µÁ½ÁÕÀˆÍÑå±”ô‰Á½Í¥Ñ¥½¸éÉ•±…Ñ¥Ù”íÑÉ…¹Í™½É´é¹½¹”íÑ½Àé…ÕÑ¼í±•™Ğé…ÕÑ¼íµ…àµ¡•¥¡ĞèàáÙ í½Ù•É™±½Üµäé…ÕÑ¼íİ¥‘Ñ èÄÀÀ”íµ…àµİ¥‘Ñ èĞÈÁÁàˆø(€€€€€€ñ‘¥Ø±…ÍÌô‰…±…É´µÁ½ÁÕÀµÑ¥Ñ±”ˆûÂ~Ì€‘íµ½‘”¹‘…å÷²vó²Â£²^@ƒ®.ÓªâÀğ½‘¥Øø(€€€€€€ñ‘¥Ø±…ÍÌô‰…±…É´µÁ½ÁÕÀµÍÕˆˆø‘í}Ñ•ÍŒ¡Ğ¹É…‘”¥ô€‘í}Ñ•ÍŒ¡ÑÉ…¥¹9¼¥ôƒ
+Ü€‘í}Ñ•ÍŒ¡™É½´¥ô€‘í‘•ÁôƒŠH€‘í}Ñ•ÍŒ¡Ñ¼¥ô€‘í…ÉÉñğœôğ½‘¥Øø(€€€€€€ñ‘¥Ø±…ÍÌô‰…±…É´µÁ½ÁÕÀµÍÕˆˆÍÑå±”ô‰½±½ÈéÙ…È ´µÑ•áĞÌ¤ˆø‘í‘…å…Ñ•ôğ½‘¥Øø(€€€€€€ñ‘¥Ø±…ÍÌô‰‰½½­¥¹œµÍ•Ñ¥½¸µ±…‰•°ˆÍÑå±”ô‰µ…É¥¸µÑ½ÀèÄÉÁàˆû²Š3²tƒ®NÇªâ$ğ½‘¥Øø(€€€€€€ñ‘¥Ø±…ÍÌô‰‰½½­¥¹œµÍ•…Ğµ½ÁÑ¥½¹Ìˆø‘í½ÁÑÍôğ½‘¥Øø(€€€€€€ñ‘¥Ø±…ÍÌô‰‰½½­¥¹œµÍ•Ñ¥½¸µ±…‰•°ˆû²vã²n@ğ½‘¥Øø(€€€€€€ñ‘¥Ø±…ÍÌô‰‰½½­¥¹œµÁ…ÍÍ•¹•Èµ½¹ÑÉ½°ˆø(€€€€€€€€ñ‰ÕÑÑ½¸±…ÍÌô‰‰½½­¥¹œµÍÑ•ÁÁ•Èµ‰Ñ¸ˆ¥ô‰Ñ±Àµµ¥¹ÕÌˆÑåÁ”ô‰‰ÕÑÑ½¸ˆûŠ"Hğ½‰ÕÑÑ½¸ø(€€€€€€€€ñÍÁ…¸¥ô‰Ñ±ÀµÁ…àˆø‘íİ¥¹‘½Ü¹}Ñ±À¹Á…áôğ½ÍÁ…¸ø(€€€€€€€€ñ‰ÕÑÑ½¸±…ÍÌô‰‰½½­¥¹œµÍÑ•ÁÁ•Èµ‰Ñ¸ˆ¥ô‰Ñ±ÀµÁ±ÕÌˆÑåÁ”ô‰‰ÕÑÑ½¸ˆø¬ğ½‰ÕÑÑ½¸ø(€€€€€€ğ½‘¥Øø(€€€€€€ñ‰ÕÑÑ½¸±…ÍÌô‰‰Ñ¸‰Ñ¸µÁÉ¥µ…Éäˆ¥ô‰Ñ±Àµ…‘ˆ‘¥Í…‰±•ÍÑå±”ô‰İ¥‘Ñ èÄÀÀ”í©ÕÍÑ¥™äµ½¹Ñ•¹Ğé•¹Ñ•Èíµ…É¥¸µÑ½ÀèÄÑÁàí½Á…¥Ñäè¸ĞíÕÉÍ½Èé¹½Ğµ…±±½İ•ˆûÂ~Ìƒ²vĞƒ²^³¶Z'²^@ƒ®.ÓªâÀğ½‰ÕÑÑ½¸ø(€€€€€€ñ‰ÕÑÑ½¸±…ÍÌô‰…±…É´µÁ½ÁÕÀµ±½Í”ˆ¥ô‰Ñ±Àµ…¹•°ˆû²Ş£²0ğ½‰ÕÑÑ½¸ø(€€€€ğ½‘¥Øù€ì(€‘½Õµ•¹Ğ¹‰½‘ä¹…ÁÁ•¹‘¡¥±¡İÉ…À¤ì(€İÉ…À¹…‘‘Ù•¹Ñ1¥ÍÑ•¹•È ±¥¬œ±”ôùí¥˜¡”¹Ñ…É•ĞôôõİÉ…Áññ”¹Ñ…É•ĞôôõİÉ…À¹™¥ÉÍÑ±•µ•¹Ñ¡¥±¥İÉ…À¹É•µ½Ù” ¤íô¤ì(€İÉ…À¹ÅÕ•ÉåM•±•Ñ½É±° œ¹‰½½­¥¹œµÍ•…Ğµ½ÁÑ¥½¸œ¤¹™½É… ¡ˆôùˆ¹…‘‘Ù•¹Ñ1¥ÍÑ•¹•È ±¥¬œ° ¤ôùì(€€€İÉ…À¹ÅÕ•ÉåM•±•Ñ½É±° œ¹‰½½­¥¹œµÍ•…Ğµ½ÁÑ¥½¸œ¤¹™½É… ¡àôùà¹±…ÍÍ1¥ÍĞ¹É•µ½Ù” …Ñ¥Ù”œ¤¤ì(€€€ˆ¹±…ÍÍ1¥ÍĞ¹…‘ …Ñ¥Ù”œ¤ìİ¥¹‘½Ü¹}Ñ±À¹±Ìõˆ¹‘…Ñ…Í•Ğ¹±…ÍÌì(€€€½¹ÍĞ…‘õ‘½Õµ•¹Ğ¹•Ñ±•µ•¹Ñ	å% Ñ±Àµ…‘œ¤ì¥˜¡…‘¥í…‘¹‘¥Í…‰±•õ™…±Í”í…‘¹ÍÑå±”¹½Á…¥ÑäôœÄœí…‘¹ÍÑå±”¹ÕÉÍ½ÈôÁ½¥¹Ñ•Èœíô(€ô¤¤ì(€‘½Õµ•¹Ğ¹•Ñ±•µ•¹Ñ	å% Ñ±Àµµ¥¹ÕÌœ¤¹…‘‘Ù•¹Ñ1¥ÍÑ•¹•È ±¥¬œ° ¤ôùíİ¥¹‘½Ü¹}Ñ±À¹Á…àõ5…Ñ ¹µ…à Ä±İ¥¹‘½Ü¹}Ñ±À¹Á…à´Ä¤í‘½Õµ•¹Ğ¹•Ñ±•µ•¹Ñ	å% Ñ±ÀµÁ…àœ¤¹Ñ•áÑ½¹Ñ•¹Ğõİ¥¹‘½Ü¹}Ñ±À¹Á…àíô¤ì(€‘½Õµ•¹Ğ¹•Ñ±•µ•¹Ñ	å% Ñ±ÀµÁ±ÕÌœ¤¹…‘‘Ù•¹Ñ1¥ÍÑ•¹•È ±¥¬œ° ¤ôùíİ¥¹‘½Ü¹}Ñ±À¹Á…àõ5…Ñ ¹µ¥¸ Ø±İ¥¹‘½Ü¹}Ñ±À¹Á…à¬Ä¤í‘½Õµ•¹Ğ¹•Ñ±•µ•¹Ñ	å% Ñ±ÀµÁ…àœ¤¹Ñ•áÑ½¹Ñ•¹Ğõİ¥¹‘½Ü¹}Ñ±À¹Á…àíô¤ì(€‘½Õµ•¹Ğ¹•Ñ±•µ•¹Ñ	å% Ñ±Àµ…¹•°œ¤¹…‘‘Ù•¹Ñ1¥ÍÑ•¹•È ±¥¬œ° ¤ôùİÉ…À¹É•µ½Ù” ¤¤ì(€‘½Õµ•¹Ğ¹•Ñ±•µ•¹Ñ	å% Ñ±Àµ…‘œ¤¹…‘‘Ù•¹Ñ1¥ÍÑ•¹•È ±¥¬œ° ¤ôùì(€€€½¹ÍĞàõİ¥¹‘½Ü¹}Ñ±À°´õİ¥¹‘½Ü¹}ÑÉ¥Á‘‘5½‘”ì¥˜ …áñğ…à¹±Íñğ…´¥É•ÑÕÉ¸ì(€€€½¹ÍĞÑÀõ±½…‘QÉ¥ÁÌ ¤¹™¥¹¡èôùè¹¥ôôõ´¹ÑÉ¥Á%¤ì¥˜ …ÑÀ¥í…±•ÉĞ Ÿ²^³¶Z'²vƒ²Âû²vƒ²"`ƒ²^²*×®.#®.¸œ¤íÉ•ÑÕÉ¸íô(€€€½¹ÍĞ±•œõí¥é•¹QÉ¥Á% ¤±ÑÉ…¥¹9¼éà¹ÑÉ…¥¹9¼±É…‘”éĞ¹É…‘”±±¥¹”éĞ¹±¥¹”±™É½µMÑ¸éà¹™É½´±Ñ½MÑ¸éà¹Ñ¼°(€€€€€‘•ÁQ¥µ”éà¹‘•À±…ÉÉQ¥µ”éà¹…ÉÈ±‘…äé´¹‘…ä±‘…Ñ”é}‘…å…Ñ”¡ÑÀ±´¹‘…ä¤±Í•…Ñ±…ÍÌéà¹±Ì±Í•…Ñ±…ÍÍ1…‰•°éMQ}1MMMmà¹±Ít¹±…‰•°°(€€€€€Á…ÍÍ•¹•É½Õ¹Ğéà¹Á…à±‘¥Í½Õ¹Ğè¹½¹”œ±Ñ¥­•Ñ%é¹Õ±±ôì(€€€…‘‘1•Q½QÉ¥À¡´¹ÑÉ¥Á%±±•œ¤ì(€€€İÉ…À¹É•µ½Ù” ¤ì(€€€½¹ÍĞÑÀÈõ±½…‘QÉ¥ÁÌ ¤¹™¥¹¡èôùè¹¥ôôõ´¹ÑÉ¥Á%¤ì(€€€}ÑÉ¥ÁQ½…ÍĞ¡ƒÂ~Ì€‘í´¹‘…å÷²vó²Â£²^@ƒ®.Ó²Vc²*×®.#®.ƒ
+Üƒ²vó²‚T€‘íÑÀÈıÑÀÈ¹±•Ì¹±•¹Ñ èœ÷ªÂq€¤ì(€ô¤ì)ô((¼¼ƒŠRŠR ƒ².sªÂƒªÊç²æ ƒªÊ²
+°€£ªÂg²v ƒ²vó²Â ƒ®
+Ğ¤ƒŠRŠR )™Õ¹Ñ¥½¸}ÑÉ¥Á…å=Ù•É±…À¡ÑÉ¥Á%°‘…ä°‘•ÁP°…ÉÉP°•á•ÁÑ1•%¥ì(€½¹ÍĞ¹õÑ½5¥¸¡‘•ÁP¤°¹„õÑ½5¥¸¡…ÉÉP¤ì¥˜¡¹ôôõ¹Õ±±ññ¹„ôôõ¹Õ±°¥É•ÑÕÉ¸¹Õ±°ì(€½¹ÍĞÑÉ¥Àõ±½…‘QÉ¥ÁÌ ¤¹™¥¹¡ĞôùĞ¹¥ôôõÑÉ¥Á%¤ì¥˜ …ÑÉ¥À¥É•ÑÕÉ¸¹Õ±°ì(€½¹ÍĞ…Lõ¹°…õ¹„øõ¹ı¹„é¹„¬ÄĞĞÀì(€É•ÑÕÉ¸}‘…å1•Ì¡ÑÉ¥À±‘…ä¤¹™¥¹¡°ôùì(€€€¥˜¡•á•ÁÑ1•%˜™°¹¥ôôõ•á•ÁÑ1•%¥É•ÑÕÉ¸™…±Í”ì(€€€½¹ÍĞ•õÑ½5¥¸¡°¹‘•ÁQ¥µ”¤±•„õÑ½5¥¸¡°¹…ÉÉQ¥µ”¤ì¥˜¡•ôôõ¹Õ±±ññ•„ôôõ¹Õ±°¥É•ÑÕÉ¸™…±Í”ì(€€€½¹ÍĞ‰Lõ•±‰õ•„øõ•ı•„é•¬ÄĞĞÀìÉ•ÑÕÉ¸…Lñ‰˜™‰Lñ…ì(€ô¥ññ¹Õ±°ì)ô((¼¼ƒŠRŠR ƒ²^³¶Z$ƒªÊ÷®†pƒ®ÎÓªâÀ€£²vó²Â£®Îƒ²vÓ®>dƒªÊ÷®†pƒ²jS²Vô¤ƒŠRŠR )™Õ¹Ñ¥½¸½Á•¹QÉ¥ÁI½ÕÑ”¡ÑÉ¥Á%¥ì(€½¹ÍĞÑÉ¥Àõ±½…‘QÉ¥ÁÌ ¤¹™¥¹¡ĞôùĞ¹¥ôôõÑÉ¥Á%¤ì¥˜ …ÑÉ¥À¥É•ÑÕÉ¸ì(€‘½Õµ•¹Ğ¹•Ñ±•µ•¹Ñ	å% ÑÉ¥ÀµÉ½ÕÑ”µİÉ…Àœ¤ü¹É•µ½Ù” ¤ì(€±•Ğ‰½‘äôœœì(€™½È¡±•Ğ‘…äôÄì‘…äğõÑÉ¥À¹‘…åÌì‘…ä¬¬¥ì(€€€½¹ÍĞ±•Ìõ}‘…å1•Ì¡ÑÉ¥À±‘…ä¤ì(€€€‰½‘ä¬õ€ñ‘¥Ø±…ÍÌô‰ÑÉ¥ÀµÉ½ÕÑ”µ‘…äˆøñÍÁ…¸±…ÍÌô‰ÑÉ¥Àµ‘…äµ¹¼ˆø‘í‘…å÷²vó²Â ğ½ÍÁ…¸øñÍÁ…¸±…ÍÌô‰ÑÉ¥Àµ‘…äµ‘…Ñ”ˆø‘í}‘…å…Ñ”¡ÑÉ¥À±‘…ä¥ôğ½ÍÁ…¸øğ½‘¥Øù€ì(€€€¥˜ …±•Ì¹±•¹Ñ ¥ì‰½‘ä¬õ€ñ‘¥Ø±…ÍÌô‰ÑÉ¥ÀµÉ½ÕÑ”µ•µÁÑäˆû²vÓ®>dƒ²vó²‚Tƒ²^²v0ğ½‘¥Øù€ì½¹Ñ¥¹Õ”ìô(€€€‰½‘ä¬ôœñ‘¥Ø±…ÍÌô‰ÑÉ¥ÀµÉ½ÕÑ”µ±•Ìˆøœì(€€€±•Ì¹™½É… ¡°ôùì(€€€€€‰½‘ä¬õ€ñ‘¥Ø±…ÍÌô‰ÑÉ¥ÀµÉ½ÕÑ”µ±•œˆø(€€€€€€€€ñ‘¥Ø±…ÍÌô‰ÑÉ¥ÀµÉ½ÕÑ”µ±¥¹”ˆøñÍÁ…¸±…ÍÌô‰ÑÉ¥ÀµÉ½ÕÑ”µ‘½Ğˆøğ½ÍÁ…¸øñÍÁ…¸±…ÍÌô‰ÑÉ¥ÀµÉ½ÕÑ”µÍÑ¸ˆø‘í}Ñ•ÍŒ¡°¹™É½µMÑ¸¥ôğ½ÍÁ…¸øñÍÁ…¸±…ÍÌô‰ÑÉ¥ÀµÉ½ÕÑ”µĞˆø‘í°¹‘•ÁQ¥µ•ñğœôğ½ÍÁ…¸øğ½‘¥Øø(€€€€€€€€ñ‘¥Ø±…ÍÌô‰ÑÉ¥ÀµÉ½ÕÑ”µµ¥ˆøñÍÁ…¸±…ÍÌô‰ÑÉ¥ÀµÉ½ÕÑ”µÑÉ…¥¸ˆø‘í}Ñ•ÍŒ¡°¹É…‘•ñğœœ¥ô€‘í}Ñ•ÍŒ¡°¹ÑÉ…¥¹9¼¥ôğ½ÍÁ…¸ø€ñÍÁ…¸±…ÍÌô‰ÑÉ¥ÀµÉ½ÕÑ”µ±¥¹•¡¥Àˆø‘í}Ñ•ÍŒ ¡°¹±¥¹•ñğœœ¤¹ÍÁ±¥Ğ Ÿ
+Üœ¥lÁuñğœœ¥ôğ½ÍÁ…¸øğ½‘¥Øø(€€€€€€€€ñ‘¥Ø±…ÍÌô‰ÑÉ¥ÀµÉ½ÕÑ”µ±¥¹”ˆøñÍÁ…¸±…ÍÌô‰ÑÉ¥ÀµÉ½ÕÑ”µ‘½Ğ•¹ˆøğ½ÍÁ…¸øñÍÁ…¸±…ÍÌô‰ÑÉ¥ÀµÉ½ÕÑ”µÍÑ¸ˆø‘í}Ñ•ÍŒ¡°¹Ñ½MÑ¸¥ôğ½ÍÁ…¸øñÍÁ…¸±…ÍÌô‰ÑÉ¥ÀµÉ½ÕÑ”µĞˆø‘í°¹…ÉÉQ¥µ•ñğœôğ½ÍÁ…¸øğ½‘¥Øø(€€€€€€ğ½‘¥Øù€ì(€€€ô¤ì(€€€‰½‘ä¬ôœğ½‘¥Øøœì(€ô(€½¹ÍĞİÉ…Àõ‘½Õµ•¹Ğ¹É•…Ñ•±•µ•¹Ğ ‘¥Øœ¤ìİÉ…À¹¥ôÑÉ¥ÀµÉ½ÕÑ”µİÉ…Àœì(€İÉ…À¹ÍÑå±”¹ÍÍQ•áĞôÁ½Í¥Ñ¥½¸é™¥á•í¥¹Í•ĞèÀíèµ¥¹‘•àèäØÀÀí‘¥ÍÁ±…äé™±•àí…±¥¸µ¥Ñ•µÌé•¹Ñ•Èí©ÕÍÑ¥™äµ½¹Ñ•¹Ğé•¹Ñ•ÈíÁ…‘‘¥¹œèÄÙÁàí‰½àµÍ¥é¥¹œé‰½É‘•Èµ‰½àœì(€İÉ…À¹¥¹¹•É!Q50õ€ñ‘¥ØÍÑå±”ô‰Á½Í¥Ñ¥½¸é…‰Í½±ÕÑ”í¥¹Í•ĞèÀí‰…­É½Õ¹éÉ‰„ À°À°À°¸Ø¤ˆøğ½‘¥Øø(€€€€ñ‘¥Ø±…ÍÌô‰…±…É´µÁ½ÁÕÀˆÍÑå±”ô‰Á½Í¥Ñ¥½¸éÉ•±…Ñ¥Ù”íÑÉ…¹Í™½É´é¹½¹”íÑ½Àé…ÕÑ¼í±•™Ğé…ÕÑ¼íµ…àµ¡•¥¡ĞèàÙÙ í½Ù•É™±½Üµäé…ÕÑ¼íİ¥‘Ñ èÄÀÀ”íµ…àµİ¥‘Ñ èĞĞÁÁàˆø(€€€€€€ñ‘¥Ø±…ÍÌô‰…±…É´µÁ½ÁÕÀµÑ¥Ñ±”ˆûÂ~^ë¾â<€‘í}Ñ•ÍŒ¡ÑÉ¥À¹¹…µ”¥ôƒ
+Üƒ²^³¶Z$ƒªÊ÷®†pğ½‘¥Øø(€€€€€€ñ‘¥Ø±…ÍÌô‰…±…É´µÁ½ÁÕÀµÍÕˆˆø‘í}ÑÉ¥Á9¥¡ÑÍ1…‰•°¡ÑÉ¥À¥ôƒ
+Üƒ²vó²‚T€‘íÑÉ¥À¹±•Ì¹±•¹Ñ¡÷ªÂpğ½‘¥Øø(€€€€€€ñ‘¥Ø±…ÍÌô‰ÑÉ¥ÀµÉ½ÕÑ”µ‰½‘äˆø‘í‰½‘åôğ½‘¥Øø(€€€€€€ñ‰ÕÑÑ½¸±…ÍÌô‰…±…É´µÁ½ÁÕÀµ±½Í”ˆ¥ô‰ÑÉ¥ÀµÉ½ÕÑ”µ±½Í”ˆû®.¯ªâÀğ½‰ÕÑÑ½¸ø(€€€€ğ½‘¥Øù€ì(€‘½Õµ•¹Ğ¹‰½‘ä¹…ÁÁ•¹‘¡¥±¡İÉ…À¤ì(€İÉ…À¹…‘‘Ù•¹Ñ1¥ÍÑ•¹•È ±¥¬œ±”ôùí¥˜¡”¹Ñ…É•ĞôôõİÉ…Áññ”¹Ñ…É•ĞôôõİÉ…À¹™¥ÉÍÑ±•µ•¹Ñ¡¥±¥İÉ…À¹É•µ½Ù” ¤íô¤ì(€‘½Õµ•¹Ğ¹•Ñ±•µ•¹Ñ	å% ÑÉ¥ÀµÉ½ÕÑ”µ±½Í”œ¤¹…‘‘Ù•¹Ñ1¥ÍÑ•¹•È ±¥¬œ° ¤ôùİÉ…À¹É•µ½Ù” ¤¤ì)ô((¼¼ƒŠRŠR ƒ®¶°ƒªÎ×²r€ƒŠRŠR )™Õ¹Ñ¥½¸}ÑÉ¥Á¹½‘”¡ÑÉ¥À¥ì(€½¹ÍĞ¼õí¸éÑÉ¥À¹¹…µ”±ÌéÑÉ¥À¹ÍÑ…ÉÑ…Ñ”±éÑÉ¥À¹‘…åÌ±°éÑÉ¥À¹±•Ì¹µ…À¡°ôø¡í¹¼é°¹ÑÉ…¥¹9¼±˜é°¹™É½µMÑ¸±Ğé°¹Ñ½MÑ¸±‘Àé°¹‘•ÁQ¥µ”±…Èé°¹…ÉÉQ¥µ”±‘äé°¹‘…ä±ÍŒé°¹Í•…Ñ±…ÍÌ±Áàé°¹Á…ÍÍ•¹•É½Õ¹Ğ±‘Œé°¹‘¥Í½Õ¹Ññğ¹½¹”ô¤¥ôì(€ÑÉåíÉ•ÑÕÉ¸‰Ñ½„¡Õ¹•Í…Á”¡•¹½‘•UI%½µÁ½¹•¹Ğ¡)M=8¹ÍÑÉ¥¹¥™ä¡¼¤¤¤¤íõ…Ñ ¡”¥íÉ•ÑÕÉ¸€œœíô)ô)™Õ¹Ñ¥½¸}ÑÉ¥Á•½‘”¡ÍÑÈ¥ì(€ÑÉåí½¹ÍĞ¼õ)M=8¹Á…ÉÍ”¡‘•½‘•UI%½µÁ½¹•¹Ğ¡•Í…Á”¡…Ñ½ˆ¡ÍÑÈ¤¤¤¤íÉ•ÑÕÉ¸€¡¼˜™ÉÉ…ä¹¥ÍÉÉ…ä¡¼¹°¤¤ı¼é¹Õ±°íõ…Ñ ¡”¥íÉ•ÑÕÉ¸¹Õ±°íô)ô)™Õ¹Ñ¥½¸Í¡…É•QÉ¥À¡ÑÉ¥Á%¥ì(€½¹ÍĞÑÉ¥Àõ±½…‘QÉ¥ÁÌ ¤¹™¥¹¡ĞôùĞ¹¥ôôõÑÉ¥Á%¤ì¥˜ …ÑÉ¥À¥É•ÑÕÉ¸ì(€¥˜ …ÑÉ¥À¹±•Ì¹±•¹Ñ ¥í…±•ÉĞ ŸªÎ×²rƒ¶V€ƒ²vó²‚W²vĞƒ²^²*×®.#®.¸ƒ®¢ó²‚ ƒ²^Ó²Â£®–ğƒ®.Ó²V²ó²ã²jP¸œ¤íÉ•ÑÕÉ¸íô(€½¹ÍĞÕÉ°õ±½…Ñ¥½¸¹½É¥¥¸­±½…Ñ¥½¸¹Á…Ñ¡¹…µ”¬œÑÉ¥Àôœ­}ÑÉ¥Á¹½‘”¡ÑÉ¥À¤ì(€‘½Õµ•¹Ğ¹•Ñ±•µ•¹Ñ	å% ÑÉ¥ÀµÍ¡…É”µİÉ…Àœ¤ü¹É•µ½Ù” ¤ì(€½¹ÍĞİÉ…Àõ‘½Õµ•¹Ğ¹É•…Ñ•±•µ•¹Ğ ‘¥Øœ¤ìİÉ…À¹¥ôÑÉ¥ÀµÍ¡…É”µİÉ…Àœì(€İÉ…À¹ÍÑå±”¹ÍÍQ•áĞôÁ½Í¥Ñ¥½¸é™¥á•í¥¹Í•ĞèÀíèµ¥¹‘•àèäØÀÀí‘¥ÍÁ±…äé™±•àí…±¥¸µ¥Ñ•µÌé•¹Ñ•Èí©ÕÍÑ¥™äµ½¹Ñ•¹Ğé•¹Ñ•ÈíÁ…‘‘¥¹œèÄÙÁàí‰½àµÍ¥é¥¹œé‰½É‘•Èµ‰½àœì(€İÉ…À¹¥¹¹•É!Q50õ€ñ‘¥ØÍÑå±”ô‰Á½Í¥Ñ¥½¸é…‰Í½±ÕÑ”í¥¹Í•ĞèÀí‰…­É½Õ¹éÉ‰„ À°À°À°¸Ø¤ˆøğ½‘¥Øø(€€€€ñ‘¥Ø±…ÍÌô‰…±…É´µÁ½ÁÕÀˆÍÑå±”ô‰Á½Í¥Ñ¥½¸éÉ•±…Ñ¥Ù”íÑÉ…¹Í™½É´é¹½¹”íÑ½Àé…ÕÑ¼í±•™Ğé…ÕÑ¼íİ¥‘Ñ èÄÀÀ”íµ…àµİ¥‘Ñ èĞĞÁÁàˆø(€€€€€€ñ‘¥Ø±…ÍÌô‰…±…É´µÁ½ÁÕÀµÑ¥Ñ±”ˆûÂ~R\ƒ²^³¶Z$ƒ®¶°ƒªÎ×²r€ğ½‘¥Øø(€€€€€€ñ‘¥Ø±…ÍÌô‰…±…É´µÁ½ÁÕÀµÍÕˆˆø‘í}Ñ•ÍŒ¡ÑÉ¥À¹¹…µ”¥ôƒ
+Üƒ²vó²‚T€‘íÑÉ¥À¹±•Ì¹±•¹Ñ¡÷ªÂpğ½‘¥Øø(€€€€€€ñÀÍÑå±”ô‰™½¹ĞµÍ¥é”èÄÉÁàí½±½ÈéÙ…È ´µÑ•áĞÌ¤íµ…É¥¸èÄÁÁà€À€ÙÁàˆû²vĞƒ®¶³®–ğƒ²^Ó®¦Ğƒ²®2®Â§²v`€Ÿ®
+Ğƒ²^³¶Z$Ÿ²^@ƒ²vĞƒ²vó²‚W²vĞƒªŞã®2®†pƒ²ÚSªÂ®B§®.#®.¸ğ½Àø(€€€€€€ñÑ•áÑ…É•„¥ô‰ÑÉ¥ÀµÍ¡…É”µÕÉ°ˆÉ•…‘½¹±ä±…ÍÌô‰ÑÉ¥Àµ™½É´µ¥¹ÁÕĞˆÍÑå±”ô‰¡•¥¡ĞèÜÙÁàíÉ•Í¥é”é¹½¹”í™½¹Ğµ™…µ¥±äéÙ…È ´µµ½¹¼¤í™½¹ĞµÍ¥é”èÄÄ¸ÕÁàˆ½¹±¥¬ô‰Ñ¡¥Ì¹Í•±•Ğ ¤ˆø‘í}Ñ•ÍŒ¡ÕÉ°¥ôğ½Ñ•áÑ…É•„ø(€€€€€€ñ‰ÕÑÑ½¸±…ÍÌô‰‰Ñ¸‰Ñ¸µÁÉ¥µ…Éäˆ¥ô‰ÑÉ¥ÀµÍ¡…É”µ½ÁäˆÍÑå±”ô‰İ¥‘Ñ èÄÀÀ”í©ÕÍÑ¥™äµ½¹Ñ•¹Ğé•¹Ñ•Èíµ…É¥¸µÑ½ÀèÄÉÁàˆûÂ~N,ƒ®¶°ƒ®Î×²
+°ğ½‰ÕÑÑ½¸ø(€€€€€€‘í¹…Ù¥…Ñ½È¹Í¡…É”üœñ‰ÕÑÑ½¸±…ÍÌô‰‰Ñ¸ˆ¥ô‰ÑÉ¥ÀµÍ¡…É”µ¹…Ñ¥Ù”ˆÍÑå±”ô‰İ¥‘Ñ èÄÀÀ”í©ÕÍÑ¥™äµ½¹Ñ•¹Ğé•¹Ñ•Èíµ…É¥¸µÑ½ÀèáÁàˆûÂ~NƒªÎ×²rƒ¶VcªâÀğ½‰ÕÑÑ½¸øœèœô(€€€€€€ñ‰ÕÑÑ½¸±…ÍÌô‰…±…É´µÁ½ÁÕÀµ±½Í”ˆ¥ô‰ÑÉ¥ÀµÍ¡…É”µ±½Í”ˆû®.¯ªâÀğ½‰ÕÑÑ½¸ø(€€€€ğ½‘¥Øù€ì(€‘½Õµ•¹Ğ¹‰½‘ä¹…ÁÁ•¹‘¡¥±¡İÉ…À¤ì(€İÉ…À¹…‘‘Ù•¹Ñ1¥ÍÑ•¹•È ±¥¬œ±”ôùí¥˜¡”¹Ñ…É•ĞôôõİÉ…Áññ”¹Ñ…É•ĞôôõİÉ…À¹™¥ÉÍÑ±•µ•¹Ñ¡¥±¥İÉ…À¹É•µ½Ù” ¤íô¤ì(€‘½Õµ•¹Ğ¹•Ñ±•µ•¹Ñ	å% ÑÉ¥ÀµÍ¡…É”µ±½Í”œ¤¹…‘‘Ù•¹Ñ1¥ÍÑ•¹•È ±¥¬œ° ¤ôùİÉ…À¹É•µ½Ù” ¤¤ì(€‘½Õµ•¹Ğ¹•Ñ±•µ•¹Ñ	å% ÑÉ¥ÀµÍ¡…É”µ½Áäœ¤¹…‘‘Ù•¹Ñ1¥ÍÑ•¹•È ±¥¬œ° ¤ôùì(€€€½¹ÍĞÑ„õ‘½Õµ•¹Ğ¹•Ñ±•µ•¹Ñ	å% ÑÉ¥ÀµÍ¡…É”µÕÉ°œ¤ìÑ„¹Í•±•Ğ ¤ì(€€€½¹ÍĞ‘½¹”ô ¤ôù}ÑÉ¥ÁQ½…ÍĞ ŸÂ~R\ƒ®¶³®–ğƒ®Î×²
+³¶Z#²*×®.#®.œ¤ì(€€€¥˜¡¹…Ù¥…Ñ½È¹±¥Á‰½…É˜™¹…Ù¥…Ñ½È¹±¥Á‰½…É¹İÉ¥Ñ•Q•áĞ¤¹…Ù¥…Ñ½È¹±¥Á‰½…É¹İÉ¥Ñ•Q•áĞ¡ÕÉ°¤¹Ñ¡•¸¡‘½¹”¤¹…Ñ   ¤ôùíÑÉåí‘½Õµ•¹Ğ¹•á•½µµ…¹ ½Áäœ¤í‘½¹” ¤íõ…Ñ ¡”¥íõô¤ì(€€€•±Í”ìÑÉåí‘½Õµ•¹Ğ¹•á•½µµ…¹ ½Áäœ¤í‘½¹” ¤íõ…Ñ ¡”¥íôô(€ô¤ì(€½¹ÍĞ¹ˆõ‘½Õµ•¹Ğ¹•Ñ±•µ•¹Ñ	å% ÑÉ¥ÀµÍ¡…É”µ¹…Ñ¥Ù”œ¤ì(€¥˜¡¹ˆ¤¹ˆ¹…‘‘Ù•¹Ñ1¥ÍÑ•¹•È ±¥¬œ° ¤ôùì¹…Ù¥…Ñ½È¹Í¡…É”¡íÑ¥Ñ±”éo®
+Ğƒ²^³¶Z%t€‘íÑÉ¥À¹¹…µ•õ€±Ñ•áĞé€‘íÑÉ¥À¹¹…µ•ôƒ²^³¶Z$ƒ²vó²‚W²vƒªÎ×²rƒ¶V§®.#®.‘€±ÕÉ±ô¤¹…Ñ   ¤ôùíô¤ìô¤ì)ô)™Õ¹Ñ¥½¸}µ…å‰•%µÁ½ÉÑM¡…É•‘QÉ¥À ¥ì(€½¹ÍĞ õ±½…Ñ¥½¸¹¡…Í¡ñğœœì½¹ÍĞ´õ ¹µ…Ñ  ½lŒ™uÑÉ¥Àô¡mx™t¬¤¼¤ì¥˜ …´¥É•ÑÕÉ¸ì(€½¹ÍĞ¼õ}ÑÉ¥Á•½‘”¡µlÅt¤ì(€ÑÉåí¡¥ÍÑ½Éä¹É•Á±…•MÑ…Ñ”¡¹Õ±°°œœ±±½…Ñ¥½¸¹Á…Ñ¡¹…µ”­±½…Ñ¥½¸¹Í•…É ¤íõ…Ñ ¡”¥íô(€¥˜ …¼¥ì…±•ÉĞ ŸªÎ×²r€ƒ®¶³®–ğƒ²v÷²vƒ²"`ƒ²^²*×®.#®.¸œ¤ìÉ•ÑÕÉ¸ìô(€¥˜ …½¹™¥É´¡ƒªÎ×²rƒ®Bpƒ²^³¶Z$€œ‘í¼¹¹ñğŸ²^³¶Z$ôŸ²v£®–ğ¤ƒ®
+Ğƒ²^³¶Z'²^@ƒ²ÚSªÂ¶Vc².sªÊƒ²*×®.#ªæ0ıq¹q»²vó²‚T€‘í¼¹°¹±•¹Ñ¡÷ªÂpƒ
+Ü€‘í¼¹‘ñğÅ÷²vñ€¤¥É•ÑÕÉ¸ì(€½¹ÍĞÑÉ¥Àõí¥é•¹QÉ¥Á% ¤±¹…µ”é¼¹¹ñğŸªÎ×²rƒ®Bpƒ²^³¶Z$œ±É•…Ñ•‘Ğé…Ñ”¹¹½Ü ¤±ÍÑ…ÉÑ…Ñ”é¼¹ÍññÑ½‘…å1½…±MÑÈ ¤±‘…åÌé5…Ñ ¹µ…à Ä±5…Ñ ¹µ¥¸ ÌÀ±¼¹‘ñğÄ¤¤°(€€€±•Ìé¼¹°¹µ…À¡°ôùí½¹ÍĞĞõ•ÑQÉ…¥¹	å9¼¡°¹¹¼¥ññíôíÉ•ÑÕÉ¸í¥é•¹QÉ¥Á% ¤±ÑÉ…¥¹9¼é°¹¹¼±É…‘”éĞ¹É…‘•ñğœœ±±¥¹”éĞ¹±¥¹•ñğœœ±™É½µMÑ¸é°¹˜±Ñ½MÑ¸é°¹Ğ±‘•ÁQ¥µ”é°¹‘À±…ÉÉQ¥µ”é°¹…È±‘…äé°¹‘åñğÄ±‘…Ñ”èœœ±Í•…Ñ±…ÍÌé°¹Íñğ•¹•É…°œ±Í•…Ñ±…ÍÍ1…‰•°è¡MQ}1MMMm°¹Íuññíô¤¹±…‰•±ñğœœ±Á…ÍÍ•¹•É½Õ¹Ğé°¹ÁáñğÄ±‘¥Í½Õ¹Ğé°¹‘ñğ¹½¹”œ±Ñ¥­•Ñ%é¹Õ±±ôíô¥ôì(€}Íå¹1•…Ñ•Ì¡ÑÉ¥À¤ì(€½¹ÍĞÑÉ¥ÁÌõ±½…‘QÉ¥ÁÌ ¤ìÑÉ¥ÁÌ¹ÁÕÍ ¡ÑÉ¥À¤ìÍ…Ù•QÉ¥ÁÌ¡ÑÉ¥ÁÌ¤ì(€ÑÉåì½Á•¹5åA…” ¤ì½Á•¹5åM•Ñ¥½¸ µåÑÉ¥Àœ¤ì½Á•¹QÉ¥À¡ÑÉ¥À¹¥¤ìõ…Ñ ¡”¥íô(€}ÑÉ¥ÁQ½…ÍĞ¡ƒÂ~Ì€œ‘íÑÉ¥À¹¹…µ•ôœƒ²^³¶Z'²vƒ²ÚSªÂ¶Z#²*×®.#®.‘€¤ì)ô)¥˜¡‘½Õµ•¹Ğ¹É•…‘åMÑ…Ñ”ôôô±½…‘¥¹œœ¤‘½Õµ•¹Ğ¹…‘‘Ù•¹Ñ1¥ÍÑ•¹•È =5½¹Ñ•¹Ñ1½…‘•œ° ¤ôùíÑÉåí}µ…å‰•%µÁ½ÉÑM¡…É•‘QÉ¥À ¤íõ…Ñ ¡”¥íõô¤ì)•±Í”ìÑÉåí}µ…å‰•%µÁ½ÉÑM¡…É•‘QÉ¥À ¤íõ…Ñ ¡”¥íôô(
