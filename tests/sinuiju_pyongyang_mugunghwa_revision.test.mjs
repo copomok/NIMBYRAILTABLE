@@ -11,6 +11,7 @@ for(const file of [
   'nimbi_20261027_revision.js','nimbi_realplat.js','nimbi_regional_platforms.js',
   'nimbi_global_schedule_revision.js','nimbi_20261030_revision.js'
 ])vm.runInContext(fs.readFileSync(new URL(`../data/${file}`,import.meta.url),'utf8'),context,{filename:file});
+vm.runInContext(fs.readFileSync(new URL('../js/core/nimbi_rail_index.js',import.meta.url),'utf8'),context,{filename:'nimbi_rail_index.js'});
 vm.runInContext('globalThis.__trains=ALL_TRAINS;globalThis.__platforms=REAL_PLAT',context);
 const trains=context.__trains.filter(train=>+train.no>=5401&&+train.no<=5428);
 const platforms=context.__platforms;
@@ -56,5 +57,19 @@ test('첫막차·배차·운전시분은 공통 조건을 만족한다',()=>{
     assert.ok(lastArrival>=1320&&lastArrival<=1439,`${dir} 막차`);
     for(let i=1;i<list.length;i++)assert.ok(minute(list[i].stops[0].dep)-minute(list[i-1].stops[0].dep)>=45,`${dir} #${list[i].no}`);
     for(const train of list)assert.equal(elapsed(train.stops[0].dep,train.stops.at(-1).arr),dir==='down'?136:137,`#${train.no}`);
+  }
+});
+
+test('신설 28편은 열차번호 검색과 양 끝역 상세 인덱스에 모두 포함된다',()=>{
+  vm.runInContext(`
+    globalThis.__indexed5401=getTrainsByNo('5401').map(train=>train.no);
+    globalThis.__indexedSinuiju=getTrainsByStation('신의주').map(train=>train.no);
+    globalThis.__indexedPyongyang=getTrainsByStation('평양').map(train=>train.no);
+  `,context);
+  assert.deepEqual(JSON.parse(JSON.stringify(context.__indexed5401)),['5401']);
+  const expected=JSON.parse(JSON.stringify(trains.map(train=>train.no))).sort((a,b)=>Number(a)-Number(b));
+  for(const actual of [context.__indexedSinuiju,context.__indexedPyongyang]){
+    const indexed=JSON.parse(JSON.stringify(actual)).filter(no=>Number(no)>=5401&&Number(no)<=5428).sort((a,b)=>Number(a)-Number(b));
+    assert.deepEqual(indexed,expected);
   }
 });
