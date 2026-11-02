@@ -6,12 +6,12 @@ import {fileURLToPath} from 'node:url';
 
 const root=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'..');
 const context={console};context.window=context;context.globalThis=context;vm.createContext(context);
-for(const file of ['data/nimbi_station_data.js','data/nimbi_latest_map.js','data/nimbi_homonyms.js','data/nimbi_nyongwon_20261027_stations.js'])vm.runInContext(fs.readFileSync(path.join(root,file),'utf8'),context,{filename:file});
+for(const file of ['data/nimbi_station_data.js','data/nimbi_latest_map.js','data/nimbi_mainline_display_baseline.js','data/nimbi_homonyms.js','data/nimbi_nyongwon_20261027_stations.js'])vm.runInContext(fs.readFileSync(path.join(root,file),'utf8'),context,{filename:file});
 vm.runInContext('globalThis.__stationDB=STATION_DB',context);
 
 const source=fs.readFileSync(path.join(root,'js/nimbi_rail.js'),'utf8'),start=source.indexOf('const MAP_LINES ='),end=source.indexOf('\nconst NORTH_MAP_LINE_KEYS',start);
 if(start<0||end<0)throw new Error('js/nimbi_rail.js에서 MAP_LINES 원본을 찾지 못했습니다.');
-const lines=vm.runInContext(`(${source.slice(start+'const MAP_LINES ='.length,end).trim().replace(/;$/,'')})`,context,{filename:'MAP_LINES'}),stationDB=context.__stationDB,latest=context.NIMBI_LATEST_MAP;
+const lines=vm.runInContext(`(${source.slice(start+'const MAP_LINES ='.length,end).trim().replace(/;$/,'')})`,context,{filename:'MAP_LINES'}),stationDB=context.__stationDB,latest=context.NIMBI_LATEST_MAP,displayBaseline=context.NIMBI_MAINLINE_DISPLAY_BASELINE,displayById=new Map(displayBaseline.routes.map(route=>[route.id,route.segments]));
 const primaryAliases={'신동(태백)':'신동','고성(강원)':'고성'};
 const coordinate=name=>{const alias=primaryAliases[name]||name,row=stationDB[`${alias}역`]||stationDB[alias]||stationDB[`${name}역`]||stationDB[name];if(row&&Number.isFinite(+row.lon)&&Number.isFinite(+row.lat))return {lon:+row.lon,lat:+row.lat};const raw=(latest?.stations||[]).find(item=>item.name===name||item.name===alias);return raw?{lon:+raw.lon,lat:+raw.lat}:null;};
 const distance=(a,b)=>{const scale=Math.cos((a.lat+b.lat)*Math.PI/360),dx=(b.lon-a.lon)*scale,dy=b.lat-a.lat;return Math.hypot(dx,dy)*111.195;};
@@ -47,10 +47,11 @@ for(const [key,line] of Object.entries(lines))for(const [routeIndex,route] of (l
  const stations=(route.stations||[]).map(station=>{const coord=coordinate(station.n);if(!coord)throw new Error(`${line.name}: ${station.n}의 실제 좌표를 찾지 못했습니다.`);return {name:station.n,...coord};});
  if(stations.length<2)continue;const segments=[],segmentSources=[];
  for(let i=1;i<stations.length;i++){const match=verifiedTrackRoute(stations[i-1],stations[i]);if(!match){segments.push(null);segmentSources.push([]);unverifiedSegments++;continue;}segments.push(match.geometry.map(point=>[+point.lon.toFixed(6),+point.lat.toFixed(6)]));segmentSources.push(match.sourcePaths);verifiedSegments++;}
- routes.push({id:`${key}:${routeIndex}`,line:line.name,name:route.name||line.name,color:route.color||line.color||'#64748b',north:key==='north',stations,segments,segmentSources,unverifiedSegments:segments.map((segment,index)=>segment?null:index).filter(index=>index!==null)});
+ const id=`${key}:${routeIndex}`,displaySegments=displayById.get(id);if(!displaySegments||displaySegments.length!==stations.length-1)throw new Error(`${id}: 정상 표시 기준 선형이 없습니다.`);
+ routes.push({id,line:line.name,name:route.name||line.name,color:route.color||line.color||'#64748b',north:key==='north',stations,displaySegments,segments,segmentSources,unverifiedSegments:segments.map((segment,index)=>segment?null:index).filter(index=>index!==null)});
 }
 const stationCount=new Set(routes.flatMap(route=>route.stations.map(station=>station.name))).size,edgeCount=new Set(routes.flatMap(route=>route.stations.slice(1).map((station,index)=>[route.stations[index].name,station.name].sort().join('\0')))).size,sourceVersion=latest?.source?.sha256||'unknown';
 const usedPaths=[...new Set(routes.flatMap(route=>route.segmentSources.flat()))].sort((a,b)=>a-b),pathIds=usedPaths.map(lineIndex=>({sourceVersion,featureIndex:0,lineIndex,coordinateHash:crypto.createHash('sha256').update(JSON.stringify(latest.tracks[lineIndex])).digest('hex').slice(0,16)}));
-const payload={source:{kind:'nimby-map-lines-exact-topology',mainlineOnly:true,detail:'verified-source-edges-simplified-after-routing',sourceVersion,lineCount:Object.keys(lines).length,routeCount:routes.length,stationCount,edgeCount,verifiedSegments,unverifiedSegments,simplifyToleranceMeters:25,syntheticEdgeCount:0},sourceGeometry:{featureIndex:0,pathIds},routes};
+const payload={source:{kind:'nimby-map-lines-exact-topology',mainlineOnly:true,detail:'restored-display-geometry-with-independent-verified-routing',sourceVersion,lineCount:Object.keys(lines).length,routeCount:routes.length,stationCount,edgeCount,displaySegments:routes.reduce((sum,route)=>sum+route.displaySegments.length,0),verifiedSegments,unverifiedSegments,simplifyToleranceMeters:25,syntheticEdgeCount:0},sourceGeometry:{featureIndex:0,pathIds},routes};
 fs.writeFileSync(path.join(root,'data/nimbi_mainline_map.js'),`/* Generated from MAP_LINES and save-file track refs. No proximity or synthetic edges. METRO_LINES is excluded. */\nwindow.NIMBI_MAINLINE_MAP=Object.freeze(${JSON.stringify(payload)});\n`);
 console.log(`일반철도 노선도 생성: ${verifiedSegments}개 검증 구간, ${unverifiedSegments}개 미확인 구간, 합성 연결 0개`);console.log(diagnostics);
