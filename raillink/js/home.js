@@ -1,5 +1,5 @@
-import {timeLabel,remainingLabel} from './boarding.js?v=a6e07fd94ff2';
-import {tourismView} from './tourism.js?v=a6e07fd94ff2';
+import {timeLabel,remainingLabel} from './boarding.js?v=e7d9e4474203';
+import {tourismView} from './tourism.js?v=e7d9e4474203';
 // Home presentation receives the canonical model and the shared UI formatters.
 export function homeView({greeting,q,model,tab,queryForm,searchOptions,esc,icon,grade,dateLabel,notice,recent,journeys,boardingNext,tourFilter='all'}) {
   const tabs = [['booking','열차예매'],['pass','정기권'],['tour','관광상품']];

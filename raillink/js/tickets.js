@@ -1,6 +1,6 @@
-import {journeyState} from './journey.js?v=a6e07fd94ff2';
-import {dateAt} from './railway-time.js?v=a6e07fd94ff2';
-import {combinedTicket,isSameTrainSeatJourney,seatSegments} from './ticket-journey.js?v=a6e07fd94ff2';
+import {journeyState} from './journey.js?v=e7d9e4474203';
+import {dateAt} from './railway-time.js?v=e7d9e4474203';
+import {combinedTicket,isSameTrainSeatJourney,seatSegments} from './ticket-journey.js?v=e7d9e4474203';
 export function ticketGroups(tickets,now=new Date()){
  const map=new Map();for(const ticket of tickets){const id=ticket.groupId||ticket.id;if(!map.has(id))map.set(id,[]);map.get(id).push(ticket);}
  return [...map.values()].map(items=>{
