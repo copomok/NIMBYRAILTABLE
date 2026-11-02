@@ -1,5 +1,5 @@
-import {createBoardingService,activeLegIndex,ticketQuery,safeJourneyText,calendarFile} from './boarding.js?v=fb8c4bb014fa';
-import {boardingView} from './boarding-view.js?v=fb8c4bb014fa';
+import {createBoardingService,activeLegIndex,ticketQuery,safeJourneyText,calendarFile} from './boarding.js?v=60abcbb3b725';
+import {boardingView} from './boarding-view.js?v=60abcbb3b725';
 
 export function createBoardingController({model,main,esc,icon,go,notify,settings,clock,ticket,operation,receipt,rebook,alerts,history}){
  const service=createBoardingService(model),key='raillink.boarding.selected';
