@@ -1,6 +1,6 @@
-import {dateAt,clockAt,minuteOf} from './railway-time.js?v=e7d9e4474203';
-import {HOME_GREETINGS} from './greeting-data.js?v=e7d9e4474203';
-import {greetingHolidayAt} from './greeting-holidays.js?v=e7d9e4474203';
+import {dateAt,clockAt,minuteOf} from './railway-time.js?v=036a7a7206d4';
+import {HOME_GREETINGS} from './greeting-data.js?v=036a7a7206d4';
+import {greetingHolidayAt} from './greeting-holidays.js?v=036a7a7206d4';
 export const GREETING_STORAGE_KEY='raillink.greeting.last';
 export function greetingContext(now=new Date()){
  const date=dateAt(now),[year,month,day]=date.split('-').map(Number),minutes=minuteOf(clockAt(now));

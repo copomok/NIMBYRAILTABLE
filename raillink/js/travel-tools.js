@@ -1,5 +1,5 @@
-import {addDays,kstDate} from './model.js?v=e7d9e4474203';
-import {seatSegments} from './ticket-journey.js?v=e7d9e4474203';
+import {addDays,kstDate} from './model.js?v=036a7a7206d4';
+import {seatSegments} from './ticket-journey.js?v=036a7a7206d4';
 export async function previewPass(model,config){
  if(typeof navigator!=='undefined'&&!navigator.onLine)throw Error('오프라인에서는 새 반복 일정을 조회할 수 없습니다.');
  model.validateQuery({...config,date:config.start});

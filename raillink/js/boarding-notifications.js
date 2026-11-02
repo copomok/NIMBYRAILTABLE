@@ -1,4 +1,4 @@
-import {transferGuidance} from './boarding.js?v=e7d9e4474203';
+import {transferGuidance} from './boarding.js?v=036a7a7206d4';
 
 // Events contain a local ID for navigation only; never a QR or passenger payload.
 export function boardingEvents(legs,now=Date.now(),previous=new Map()){

@@ -1,6 +1,6 @@
-import {operationSnapshot,operationPosition} from './operations.js?v=e7d9e4474203';
-import {clockAt,dateAt,minuteOf} from './railway-time.js?v=e7d9e4474203';
-import {seatSegments} from './ticket-journey.js?v=e7d9e4474203';
+import {operationSnapshot,operationPosition} from './operations.js?v=036a7a7206d4';
+import {clockAt,dateAt,minuteOf} from './railway-time.js?v=036a7a7206d4';
+import {seatSegments} from './ticket-journey.js?v=036a7a7206d4';
 
 export const STAGES=['BEFORE_BOARDING','ON_BOARD','AFTER_ARRIVAL'];
 export const stageNames=['탑승 전','탑승 중','도착 후'];
