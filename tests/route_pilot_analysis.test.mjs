@@ -11,9 +11,16 @@ test('save line analysis keeps source identity and parsed entity counts',()=>{
  assert.deepEqual(analysis.line.route.slice(0,3).map(stop=>stop.name),['서울','남안양','수원']);
 });
 
-test('unresolved line pairs are never promoted to verified routes',()=>{
- assert.equal(analysis.candidates.length,14);assert.equal(analysis.candidates.filter(item=>item.status==='verified').length,0);
- assert.equal(analysis.pilotCandidate.status,'pending');assert.equal(analysis.pilotCandidate.branchNodeCount,1);
- assert.equal(analysis.pilotCandidate.geometry.length,analysis.pilotCandidate.trackPointIds.length);
- assert.ok(analysis.pilotCandidate.lengthRatio<1.01);assert.ok(analysis.candidates.some(item=>item.from==='평택'&&item.to==='천안'&&item.status==='unavailable'));
+test('mainline representative and depot connector remain distinct',()=>{
+ assert.equal(analysis.candidates.length,14);assert.equal(analysis.candidates.filter(item=>item.status==='verified').length,1);
+ assert.equal(analysis.pilot.status,'verified');assert.equal(analysis.pilot.detailLevel,'mainline-representative');assert.deepEqual([analysis.pilot.from,analysis.pilot.to],['남안양','수원']);
+ assert.equal(analysis.pilot.geometry.length,analysis.pilot.trackPointIds.length);assert.ok(analysis.pilot.lengthRatio<1.1);
+ assert.equal(analysis.depotConnectorCandidate.status,'depot-connector');assert.deepEqual([analysis.depotConnectorCandidate.from,analysis.depotConnectorCandidate.to],['신탄진','회덕역 / 대전차량기지']);
+ assert.ok(analysis.candidates.some(item=>item.from==='평택'&&item.to==='천안'&&item.status==='unavailable'));
+});
+
+test('isolated components stay visible until parser gaps can be ruled out',()=>{
+ const topology=analysis.topologyClassification;assert.ok(topology.componentCount>10000);assert.ok(topology.unreferencedTrackPointCount>20000);
+ assert.equal(topology.policy.connectedDeadEnd,'include');assert.equal(topology.policy.explicitMerge,'include');assert.equal(topology.policy.connectedWithoutService,'include');
+ assert.equal(topology.policy.fullyIsolatedWithoutLineReference,'exclude-after-parser-validation');assert.equal(topology.policy.stationTrackDetail,'collapse-to-mainline-representative');
 });
