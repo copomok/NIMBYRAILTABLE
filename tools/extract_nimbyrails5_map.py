@@ -139,11 +139,11 @@ def track_paths(points,tolerance):
  result=[]
  for path in paths:
   if len(path)<2:continue
-  reduced=simplify(path,valid,tolerance);result.append([[round(lon_lat(valid[item]['x'],valid[item]['y'])[0],6),round(lon_lat(valid[item]['x'],valid[item]['y'])[1],6)] for item in reduced])
+  reduced=path if tolerance<=0 else simplify(path,valid,tolerance);result.append([[round(lon_lat(valid[item]['x'],valid[item]['y'])[0],6),round(lon_lat(valid[item]['x'],valid[item]['y'])[1],6)] for item in reduced])
  return result,len(valid),len(visited)
 
 def main():
- parser=argparse.ArgumentParser();parser.add_argument('save',type=Path);parser.add_argument('output',type=Path);parser.add_argument('--tolerance',type=float,default=5.0);args=parser.parse_args()
+ parser=argparse.ArgumentParser();parser.add_argument('save',type=Path);parser.add_argument('output',type=Path);parser.add_argument('--tolerance',type=float,default=0.0);args=parser.parse_args()
  source=args.save.read_bytes()
  if source[:4]!=b'NMBY':raise SystemExit('not a NIMBY Rails save')
  track_count,aux_count,station_count,train_count,line_count=struct.unpack_from('<IIIII',source,0x24)
