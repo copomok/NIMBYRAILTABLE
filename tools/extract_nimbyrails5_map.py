@@ -38,24 +38,29 @@ def parse_track_points(data:bytes,expected:int):
  if len(ids)!=expected:raise ValueError(f'track count mismatch: {len(ids)} != {expected}')
  record_count,cursor=varuint(data,offset)
  if record_count!=expected:raise ValueError('track record count mismatch')
- points={}
+ points={};id_set=set(ids)
  for entity_id in ids:
-  encoded=encode_varuint(entity_id);position=cursor;limit=min(len(data),cursor+10_000);found=None
+  encoded=encode_varuint(entity_id);position=cursor;limit=min(len(data),cursor+300_000);found=None
   while True:
    position=data.find(encoded,position,limit)
    if position<0:break
-   index=position+len(encoded)
-   try:
-    if data[index]!=0:raise ValueError
-    ref_count,index=varuint(data,index+1)
-    if ref_count>12:raise ValueError
-    index+=2;refs=[]
-    for _ in range(ref_count):ref,index=varuint(data,index);refs.append(ref)
-    if data[index:index+5]!=b'\0'*5:raise ValueError
-    x,y=struct.unpack_from('<dd',data,index+5)
-    if not(math.isfinite(x) and math.isfinite(y) and abs(x)<=20_050_000 and abs(y)<=20_050_000):raise ValueError
-    found=(position,refs,x,y);break
-   except (ValueError,IndexError,struct.error):position+=1
+   after=position+len(encoded)
+   for marker in range(after,min(after+160,len(data)-16)):
+    if data[marker:marker+5]!=b'\0'*5:continue
+    try:x,y=struct.unpack_from('<dd',data,marker+5);lon,lat=lon_lat(x,y)
+    except (ValueError,IndexError,struct.error,OverflowError):continue
+    if not(KOREA_BOUNDS[0]<=lon<=KOREA_BOUNDS[2] and KOREA_BOUNDS[1]<=lat<=KOREA_BOUNDS[3]):continue
+    refs=[]
+    # Save v5 has several track-point record headers. Track references remain
+    # varuint entity IDs before the common zero marker, so decode only IDs from
+    # the declared track entity set instead of assuming one fixed header.
+    for index in range(after,marker):
+     try:ref,end=varuint(data,index)
+     except (ValueError,IndexError):continue
+     if end<=marker and ref in id_set and ref!=entity_id:refs.append(ref)
+    found=(position,list(dict.fromkeys(refs)),x,y);break
+   if found:break
+   position+=1
   if found:
    position,refs,x,y=found;points[entity_id]={'refs':refs,'x':x,'y':y};cursor=position+len(encoded)
  return points,cursor
