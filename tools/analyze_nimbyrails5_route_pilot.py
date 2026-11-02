@@ -76,13 +76,18 @@ def main():
  for entity_id,point in points.items():
   for other in point['refs']:
    if other in points and other!=entity_id:adjacency[entity_id].add(other);adjacency[other].add(entity_id)
- candidates=[]
- for before,after in zip(selected['route'],selected['route'][1:]):
+ def evaluate(before,after):
   starts_ids=[int(item) for item in before['approachTrackIds'] if int(item) in points];ends_ids=[int(item) for item in after['approachTrackIds'] if int(item) in points];match=shortest(points,adjacency,starts_ids,ends_ids) if starts_ids and ends_ids else None
   row={'fromStationId':before['stationId'],'from':before['name'],'toStationId':after['stationId'],'to':after['name'],'startTrackIds':before['approachTrackIds'],'endTrackIds':after['approachTrackIds'],'status':'unavailable'}
   if match:
    length,path=match;direct=distance(points,path[0],path[-1]);branches=sum(len(adjacency[item])!=2 for item in path[1:-1]);depot='차량기지' in before['name'] or '차량기지' in after['name'];row.update({'status':'depot-connector' if depot else 'verified','detailLevel':'mainline-representative','lengthKm':round(length,6),'directDistanceKm':round(direct,6),'lengthRatio':round(length/direct,6),'branchNodeCount':branches,'trackPointIds':[str(item) for item in path],'geometry':[[round(lon_lat(points[item]['x'],points[item]['y'])[0],6),round(lon_lat(points[item]['x'],points[item]['y'])[1],6)] for item in path]})
-  candidates.append(row)
+  return row
+ candidates=[evaluate(before,after) for before,after in zip(selected['route'],selected['route'][1:])]
+ focus_pairs={frozenset(pair) for pair in [('남안양','수원'),('수원','오산'),('오산','평택'),('남금호','서울')]};route_variants=[]
+ for line in lines:
+  for before,after in zip(line['route'],line['route'][1:]):
+   if frozenset((before['name'],after['name'])) not in focus_pairs:continue
+   route_variants.append({'lineEntityId':line['entityId'],'lineName':line['name'],'lineCode':line['code'],'pair':evaluate(before,after)})
  component_by_point={};components=[]
  for entity_id in points:
   if entity_id in component_by_point:continue
@@ -94,7 +99,7 @@ def main():
   components.append(members)
  referenced_components={component_by_point[item] for item in all_line_track_ids if item in component_by_point};unreferenced=[members for index,members in enumerate(components) if index not in referenced_components]
  topology={'componentCount':len(components),'lineReferencedTrackPointCount':len(all_line_track_ids),'lineReferencedComponentCount':len(referenced_components),'includedTrackPointCount':sum(len(components[index]) for index in referenced_components),'unreferencedComponentCount':len(unreferenced),'unreferencedTrackPointCount':sum(map(len,unreferenced)),'largestUnreferencedComponentPointCounts':sorted((len(item) for item in unreferenced),reverse=True)[:20],'policy':{'connectedDeadEnd':'include','explicitMerge':'include','connectedWithoutService':'include','fullyIsolatedWithoutLineReference':'exclude-after-parser-validation','stationTrackDetail':'collapse-to-mainline-representative'}}
- result={'source':{'saveName':args.save.name,'sha256':hashlib.sha256(source).hexdigest(),'format':'nimbyrails5','declaredTrackCount':track_count,'parsedTrackPointCount':len(points),'declaredStationCount':station_count,'parsedStationCount':len(stations),'declaredTrainCount':train_count,'declaredLineCount':line_count,'parsedLineCount':len(lines),'lineSectionOffset':line_section},'topologyClassification':topology,'line':selected,'candidates':candidates,'pilot':next(item for item in candidates if item['from']=='남안양' and item['to']=='수원'),'depotConnectorCandidate':next(item for item in candidates if item['from']=='신탄진' and item['to']=='회덕역 / 대전차량기지')}
- args.output.parent.mkdir(parents=True,exist_ok=True);args.output.write_text(json.dumps(result,ensure_ascii=False,indent=2)+'\n');print(json.dumps({'line':selected['name'],'stops':len(selected['route']),'verified':sum(item['status']=='verified' for item in candidates),'depotConnector':sum(item['status']=='depot-connector' for item in candidates),'unavailable':sum(item['status']=='unavailable' for item in candidates),'topologyClassification':topology,'pilot':result['pilot']|{'geometry':'omitted','trackPointIds':'omitted'}},ensure_ascii=False,indent=2))
+ result={'source':{'saveName':args.save.name,'sha256':hashlib.sha256(source).hexdigest(),'format':'nimbyrails5','declaredTrackCount':track_count,'parsedTrackPointCount':len(points),'declaredStationCount':station_count,'parsedStationCount':len(stations),'declaredTrainCount':train_count,'declaredLineCount':line_count,'parsedLineCount':len(lines),'lineSectionOffset':line_section},'topologyClassification':topology,'line':selected,'candidates':candidates,'routeVariants':route_variants,'depotConnectorCandidate':next(item for item in candidates if item['from']=='신탄진' and item['to']=='회덕역 / 대전차량기지')}
+ args.output.parent.mkdir(parents=True,exist_ok=True);args.output.write_text(json.dumps(result,ensure_ascii=False,indent=2)+'\n');print(json.dumps({'line':selected['name'],'stops':len(selected['route']),'verified':sum(item['status']=='verified' for item in candidates),'depotConnector':sum(item['status']=='depot-connector' for item in candidates),'unavailable':sum(item['status']=='unavailable' for item in candidates),'topologyClassification':topology,'routeVariants':[{**item,'pair':item['pair']|{'geometry':'omitted','trackPointIds':'omitted'}} for item in route_variants]},ensure_ascii=False,indent=2))
 
 if __name__=='__main__':main()

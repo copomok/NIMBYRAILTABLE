@@ -11,12 +11,14 @@ test('save line analysis keeps source identity and parsed entity counts',()=>{
  assert.deepEqual(analysis.line.route.slice(0,3).map(stop=>stop.name),['서울','남안양','수원']);
 });
 
-test('mainline representative and depot connector remain distinct',()=>{
+test('grade-specific mainlines and depot connector remain distinct',()=>{
  assert.equal(analysis.candidates.length,14);assert.equal(analysis.candidates.filter(item=>item.status==='verified').length,1);
- assert.equal(analysis.pilot.status,'verified');assert.equal(analysis.pilot.detailLevel,'mainline-representative');assert.deepEqual([analysis.pilot.from,analysis.pilot.to],['남안양','수원']);
- assert.equal(analysis.pilot.geometry.length,analysis.pilot.trackPointIds.length);assert.ok(analysis.pilot.lengthRatio<1.1);
+ const variants=analysis.routeVariants.filter(item=>item.pair.from==='남안양'&&item.pair.to==='수원'),mugunghwa=variants.find(item=>item.lineName==='서울-대전 무궁화호'),itx=variants.find(item=>/ITX/.test(item.lineName));
+ assert.equal(mugunghwa.pair.status,'verified');assert.equal(mugunghwa.pair.geometry.length,mugunghwa.pair.trackPointIds.length);assert.ok(mugunghwa.pair.lengthRatio<1.1);
+ assert.equal(itx.pair.status,'unavailable');assert.notDeepEqual(mugunghwa.pair.endTrackIds,itx.pair.endTrackIds);
  assert.equal(analysis.depotConnectorCandidate.status,'depot-connector');assert.deepEqual([analysis.depotConnectorCandidate.from,analysis.depotConnectorCandidate.to],['신탄진','회덕역 / 대전차량기지']);
  assert.ok(analysis.candidates.some(item=>item.from==='평택'&&item.to==='천안'&&item.status==='unavailable'));
+ const namgeumho=analysis.routeVariants.find(item=>new Set([item.pair.from,item.pair.to]).has('남금호'));assert.equal(namgeumho.pair.status,'unavailable');
 });
 
 test('isolated components stay visible until parser gaps can be ruled out',()=>{
