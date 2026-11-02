@@ -1,4 +1,4 @@
-import {addDays} from './model.js?v=036a7a7206d4';
+import {addDays} from './model.js?v=fb8c4bb014fa';
 
 const step=(time,title,description,kind='place')=>({time,title,description,kind});
 

@@ -1,4 +1,4 @@
-import {trainFamilies} from './train-families.js?v=036a7a7206d4';
+import {trainFamilies} from './train-families.js?v=fb8c4bb014fa';
 
 const toggle=(name,checked,label,sub='')=>`<label class="setting-row setting-toggle"><span><b>${label}</b>${sub?`<small>${sub}</small>`:''}</span><input type="checkbox" name="${name}" ${checked?'checked':''}><i aria-hidden="true"></i></label>`;
 const checkbox=(name,value,checked,label,sub='')=>`<label class="setting-row setting-checkbox"><span><b>${label}</b>${sub?`<small>${sub}</small>`:''}</span><input type="checkbox" name="${name}" value="${value}" ${checked?'checked':''}><i aria-hidden="true"></i></label>`;

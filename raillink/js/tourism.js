@@ -1,6 +1,6 @@
-import {kstDate,addDays} from './model.js?v=036a7a7206d4';
-import {minuteOf} from './railway-time.js?v=036a7a7206d4';
-import {tourProducts,resolveProductRoute,tourDuration} from './tour-products.js?v=036a7a7206d4';
+import {kstDate,addDays} from './model.js?v=fb8c4bb014fa';
+import {minuteOf} from './railway-time.js?v=fb8c4bb014fa';
+import {tourProducts,resolveProductRoute,tourDuration} from './tour-products.js?v=fb8c4bb014fa';
 export function tourismGroups(model){
  const groups=new Map();
  for(const train of model.trains){

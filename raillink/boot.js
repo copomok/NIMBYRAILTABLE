@@ -26,5 +26,5 @@ try {
   }
   window.RailData=Object.freeze({trains:ALL_TRAINS,grades:GL,colors:GRADE_COLORS,classes:SEAT_CLASSES,discounts:DISCOUNTS,stops:NIMBI_Demand.getStops,fare:calcFare,discount:applyDiscount,formation:getFormationType,cars:getCarComposition,classCars:getCarsForClass,seatId,inventory:getSeatInventoryState,forecast:_delayForecast,platform:_realPlatform,virtualSeats:generateVirtualBookings,bookedSeats:getBookedSeats,invalidate:invalidateCongestion,duration:durMin,coordinate:_stnCoord,isPass:isPassStop,distance:routeDistanceKm,stationDB:STATION_DB,latestMap:globalThis.NIMBI_LATEST_MAP||null,setSimulation:enabled=>{_simDelayOn=!!enabled;},delayState:_simState,delayAt:_simDelayAtStop,delayPair:_simDelayPairAtStop});
   if(!window.RailData?.trains?.length)throw new Error('공통 열차 데이터를 준비하지 못했습니다.');
-  await import('./js/app.js?v=036a7a7206d4');
+  await import('./js/app.js?v=fb8c4bb014fa');
 } catch(error){document.getElementById('main').textContent=error.message+' 새로고침하여 다시 시도하세요.';}
