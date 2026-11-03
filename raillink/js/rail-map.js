@@ -1,99 +1,101 @@
-import {addDays,kstDate} from './model.js?v=60abcbb3b725';
-import {operationPosition,operationSnapshot} from './operations.js?v=60abcbb3b725';
-import {railServiceDate} from './railway-time.js?v=60abcbb3b725';
+import {addDays,kstDate} from './model.js?v=045d02ec2459';
+import {operationPosition,operationSnapshot} from './operations.js?v=045d02ec2459';
+import {railServiceDate} from './railway-time.js?v=045d02ec2459';
 
-const networkCache=new WeakMap();
-const trackGraphCache=new WeakMap();
+const networkCache=new WeakMap(),routingGraphCache=new WeakMap();
 const validCoord=value=>value&&Number.isFinite(+value.lat)&&Number.isFinite(+value.lon)&&Math.abs(+value.lat)<=85&&Math.abs(+value.lon)<=180;
 const cleanName=value=>String(value||'').replace(/역$/,'').trim();
 const edgeKey=(a,b)=>a<b?`${a}\u0000${b}`:`${b}\u0000${a}`;
+const distanceKm=(a,b)=>{const lat=(a.lat+b.lat)*Math.PI/360,x=(b.lon-a.lon)*Math.cos(lat),y=b.lat-a.lat;return Math.hypot(x,y)*111.195;};
+// Representative paths came from an older display-only extractor. Some station
+// throats contain a short excursion that returns to the same place. Erase only
+// those closed excursions, retaining a subsequence of the supplied rail shape.
+// Exact save topology is never changed here.
+function representativeGeometry(raw){
+ let points=(raw||[]).map(([lon,lat])=>({lat:+lat,lon:+lon})).filter(validCoord);if(points.length<4)return points;
+ let changed=true;while(changed){changed=false;let best=null;const along=[0];for(let i=1;i<points.length;i++)along[i]=along[i-1]+distanceKm(points[i-1],points[i]);
+  for(let i=0;i<points.length-2;i++)for(let j=i+2;j<points.length;j++){const gap=distanceKm(points[i],points[j]),travel=along[j]-along[i],saving=travel-gap;if(gap<=.75&&travel>=2&&travel>=Math.max(gap*4,2)&&(!best||saving>best.saving))best={i,j,saving};}
+  if(best){points=[...points.slice(0,best.i+1),...points.slice(best.j)];changed=true;}
+ }
+ return points;
+}
+const stationAliases=new Map([
+ ['고성','고성(강원)'],['신동','신동(태백)'],['춘양','춘양(영동선)'],['장흥','장흥(경전선)']
+]),routingAliases=new Map([['은산읍','은산']]),routingName=value=>routingAliases.get(cleanName(value))||cleanName(value);
 
-/** Build the timetable topology and, when supplied, the exact save-file map. */
+function stationFor(network,name,coord){
+ name=cleanName(name);let station=network.stationByName?.get(stationAliases.get(name))||network.stationByName?.get(name);
+ if(station||!validCoord(coord))return station||null;
+ let nearest=null,best=Infinity;for(const candidate of network.stations){const current=distanceKm(coord,candidate.coord);if(current<best){best=current;nearest=candidate;}}
+ return best<=3?nearest:null;
+}
+
+/** Build the NIMBY Rail original mainline map as a station-to-station network. */
 export function buildRailNetwork(model){
  if(networkCache.has(model))return networkCache.get(model);
- const stations=new Map(),edges=new Map(),lineCounts=new Map(),latest=model.data.latestMap,latestStations=latest?.stations||[];
+ const stations=new Map(),edges=new Map(),lineCounts=new Map(),mainline=model.data.mainlineMap;
  const ensure=(name,coord,record={})=>{
-  name=cleanName(name);if(!name||!validCoord(coord))return null;
-  let station=stations.get(name);
-  if(!station){station={name,id:record.id||'',sourceId:record.sourceId||'',coord:{lat:+coord.lat,lon:+coord.lon},lines:new Set(),grades:new Set(),services:0,stopping:false,mapOnly:Boolean(record.mapOnly),latest:Boolean(record.latest)};stations.set(name,station);}
-  if(record.preferCoordinate)station.coord={lat:+coord.lat,lon:+coord.lon};
-  if(!station.sourceId&&record.sourceId)station.sourceId=record.sourceId;
-  if(record.id&&!station.id)station.id=record.id;
-  if(record.mapOnly===false)station.mapOnly=false;
-  return station;
+  name=cleanName(name);if(!name||!validCoord(coord))return null;let station=stations.get(name);
+  if(!station){station={name,id:record.id||'',sourceId:record.sourceId||'',coord:{lat:+coord.lat,lon:+coord.lon},lines:new Set(),grades:new Set(),services:0,stopping:false,mapOnly:record.mapOnly!==false,mainline:Boolean(record.mainline)};stations.set(name,station);}
+  if(record.mapOnly===false)station.mapOnly=false;if(record.mainline)station.mainline=true;return station;
  };
- for(const record of latestStations)ensure(record.name,{lat:record.lat,lon:record.lon},{sourceId:record.id,mapOnly:true,latest:true,preferCoordinate:true});
- for(const record of model.stationRecords||[])ensure(record.name,record.coordinate,{...record,mapOnly:false});
+ if(mainline?.routes?.length){
+  for(const route of mainline.routes){let previous=null;for(const [index,raw] of (route.stations||[]).entries()){const station=ensure(raw.name,{lat:raw.lat,lon:raw.lon},{mainline:true});if(!station)continue;station.lines.add(route.line);if(previous&&previous!==station){const segment=(route.segments?.[index-1]||[]).map(([lon,lat])=>({lat:+lat,lon:+lon})).filter(validCoord);if(segment.length>1){const key=edgeKey(previous.name,station.name);let edge=edges.get(key);if(!edge){edge={a:previous,b:station,lines:new Set(),grades:new Set(),services:0,geometry:segment,verified:true};edges.set(key,edge);}edge.lines.add(route.line);}}previous=station;}}
+ }else{
+  for(const record of model.stationRecords||[])ensure(record.name,record.coordinate,{...record,mapOnly:false});
+ }
+ let provisional={stations:[...stations.values()],stationByName:stations};
  for(const train of model.trains||[]){
-  const line=String(train.line||'노선 미분류'),grade=String(train.grade||'열차');
-  lineCounts.set(line,(lineCounts.get(line)||0)+1);
-  let previous=null;
-  for(const raw of train.stops||[]){
-   const name=cleanName(raw.s),coord=model.data.coordinate?.(raw.geoKey||raw.s),station=ensure(name,coord);
-   if(!station)continue;
-   station.lines.add(line);station.grades.add(grade);
-   if((raw.arr||raw.dep)&&!model.data.isPass?.(train,raw.s)){station.services++;station.stopping=true;}
-   if(previous&&previous.name!==station.name){
-    const key=edgeKey(previous.name,station.name);let edge=edges.get(key);
-    if(!edge){edge={a:previous,b:station,lines:new Set(),grades:new Set(),services:0};edges.set(key,edge);}
-    edge.lines.add(line);edge.grades.add(grade);edge.services++;
-   }
-   previous=station;
+  const line=String(train.line||'노선 미분류'),grade=String(train.grade||'열차');lineCounts.set(line,(lineCounts.get(line)||0)+1);let previous=null;
+  for(const raw of train.stops||[]){const coord=model.data.coordinate?.(raw.geoKey||raw.s),station=stationFor(provisional,raw.geoKey||raw.s,coord)||stationFor(provisional,raw.s,coord)||(mainline?null:ensure(raw.s,coord,{mapOnly:false}));if(!station)continue;
+   station.lines.add(line);station.grades.add(grade);station.mapOnly=false;if((raw.arr||raw.dep)&&!model.data.isPass?.(train,raw.s)){station.services++;station.stopping=true;}
+   if(!mainline&&previous&&previous!==station){const key=edgeKey(previous.name,station.name);let edge=edges.get(key);if(!edge){edge={a:previous,b:station,lines:new Set(),grades:new Set(),services:0,geometry:[previous.coord,station.coord]};edges.set(key,edge);}edge.lines.add(line);edge.grades.add(grade);edge.services++;}previous=station;
   }
  }
- const result={
-  stations:[...stations.values()],edges:[...edges.values()],geometry:latest?.tracks||[],
+ const rawGeometry=(model.data.latestMap?.tracks||[]).filter(path=>Array.isArray(path)&&path.length>1),geometry=[];
+ if(rawGeometry.length)geometry.push(...rawGeometry);else for(const route of mainline?.routes||[]){let current=[];for(const raw of route.displaySegments||route.segments||[]){const segment=(raw||[]).filter(([lon,lat])=>Number.isFinite(+lon)&&Number.isFinite(+lat));if(segment.length<2){if(current.length>1)geometry.push(current);current=[];continue;}const joined=current.length&&current.at(-1)[0]===segment[0][0]&&current.at(-1)[1]===segment[0][1];if(current.length&&!joined){geometry.push(current);current=[];}current.push(...(current.length?segment.slice(1):segment));}if(current.length>1)geometry.push(current);}
+ const result={stations:[...stations.values()],edges:[...edges.values()],geometry,stationByName:stations,
   lines:[...lineCounts].sort((a,b)=>b[1]-a[1]||a[0].localeCompare(b[0],'ko')).map(([name,services])=>({name,services})),
-  source:latest?.source?.exactTrackGeometry?{...latest.source,kind:'nimbyrails5-track-geometry',exactTrackGeometry:true,trainCount:model.trains.length,stationCount:latest.source.parsedStationCount,renderedStationCount:stations.size,linkedStationCount:[...stations.values()].filter(station=>!station.mapOnly&&station.latest).length}:{kind:'timetable-coordinate-topology',exactTrackGeometry:false,trainCount:model.trains.length,stationCount:stations.size,linkedStationCount:[...stations.values()].filter(s=>s.sourceId).length}
+  source:mainline?.source?{...mainline.source,mainlineOnly:false,routeSelectionMainlineOnly:true,exactTrackGeometry:Boolean(rawGeometry.length),rawTrackCount:rawGeometry.length,trainCount:model.trains.length,renderedStationCount:stations.size,linkedStationCount:[...stations.values()].filter(station=>!station.mapOnly).length}:{kind:'timetable-coordinate-topology',mainlineOnly:false,exactTrackGeometry:false,trainCount:model.trains.length,stationCount:stations.size,linkedStationCount:[...stations.values()].filter(station=>!station.mapOnly).length}
  };
  networkCache.set(model,result);return result;
 }
 
 export function trainGeoPath(model,train){
- const path=[],stationCoords=new Map(buildRailNetwork(model).stations.map(station=>[station.name,station.coord]));
- for(const raw of train?.stops||[]){
-  const coord=stationCoords.get(cleanName(raw.s))||model.data.coordinate?.(raw.geoKey||raw.s);if(!validCoord(coord))continue;
-  const point={name:cleanName(raw.s),coord:{lat:+coord.lat,lon:+coord.lon},stop:Boolean(raw.arr||raw.dep)&&!model.data.isPass?.(train,raw.s),raw};
-  if(!path.length||path.at(-1).name!==point.name)path.push(point);
+ const network=buildRailNetwork(model),path=[];
+ for(const raw of train?.stops||[]){const original=model.data.coordinate?.(raw.geoKey||raw.s),routeName=cleanName(raw.geoKey||raw.s)==='은산'&&String(train?.line||'').split('·').includes('만포선')?'은산읍':raw.geoKey||raw.s,station=stationFor(network,routeName,original)||stationFor(network,raw.s,original),coord=station?.coord||original;if(!validCoord(coord))continue;
+  const point={name:cleanName(raw.s),stationName:station?.name||'',coord:{lat:+coord.lat,lon:+coord.lon},stop:Boolean(raw.arr||raw.dep)&&!model.data.isPass?.(train,raw.s),raw};if(!path.length||path.at(-1).name!==point.name)path.push(point);
  }
  return path;
 }
 
-const distanceKm=(a,b)=>{const lat=(a.lat+b.lat)*Math.PI/360,x=(b.lon-a.lon)*Math.cos(lat),y=b.lat-a.lat;return Math.hypot(x,y)*111.195;};
-const segmentDistanceKm=(point,a,b)=>{const latitude=(a.lat+b.lat+point.lat)/3*Math.PI/180,scale=Math.cos(latitude),ax=a.lon*scale,ay=a.lat,bx=b.lon*scale,by=b.lat,px=point.lon*scale,py=point.lat,dx=bx-ax,dy=by-ay,denominator=dx*dx+dy*dy,ratio=denominator?Math.max(0,Math.min(1,((px-ax)*dx+(py-ay)*dy)/denominator)):0;return Math.hypot(px-(ax+ratio*dx),py-(ay+ratio*dy))*111.195;};
-function trackGraph(model){
- let graph=trackGraphCache.get(model);if(graph)return graph;
- const network=buildRailNetwork(model),nodes=[],ids=new Map(),grid=new Map(),pairCache=new Map(),endpoints=new Set(),cell=.025;
- const add=([lon,lat])=>{const key=`${lon.toFixed(6)},${lat.toFixed(6)}`;if(ids.has(key))return ids.get(key);const id=nodes.length;nodes.push({coord:{lat,lon},links:[]});ids.set(key,id);const bucket=`${Math.floor(lon/cell)},${Math.floor(lat/cell)}`;if(!grid.has(bucket))grid.set(bucket,[]);grid.get(bucket).push(id);return id;};
- for(const path of network.geometry||[]){if(path.length>1){endpoints.add(add(path[0]));endpoints.add(add(path.at(-1)));}for(let index=1;index<path.length;index++){const a=add(path[index-1]),b=add(path[index]);if(a===b)continue;const length=distanceKm(nodes[a].coord,nodes[b].coord);nodes[a].links.push([b,length,false]);nodes[b].links.push([a,length,false]);}}
- const parent=Int32Array.from(nodes,(_,index)=>index),size=new Uint32Array(nodes.length);size.fill(1);const find=value=>{while(parent[value]!==value){parent[value]=parent[parent[value]];value=parent[value];}return value;},join=(a,b)=>{a=find(a);b=find(b);if(a===b)return;if(size[a]<size[b])[a,b]=[b,a];parent[b]=a;size[a]+=size[b];};for(let id=0;id<nodes.length;id++)for(const [next] of nodes[id].links)join(id,next);
- for(const id of endpoints){const point=nodes[id].coord,cx=Math.floor(point.lon/cell),cy=Math.floor(point.lat/cell),byComponent=new Map();for(let x=cx-1;x<=cx+1;x++)for(let y=cy-1;y<=cy+1;y++)for(const other of grid.get(`${x},${y}`)||[]){const component=find(other);if(id===other||find(id)===component)continue;const current=distanceKm(point,nodes[other].coord),known=byComponent.get(component);if(current<=.2&&(!known||current<known.distance))byComponent.set(component,{id:other,distance:current});}for(const candidate of [...byComponent.values()].sort((a,b)=>a.distance-b.distance).slice(0,2)){nodes[id].links.push([candidate.id,candidate.distance,true]);nodes[candidate.id].links.push([id,candidate.distance,true]);}}
- const nearest=coord=>{let best=-1,bestDistance=Infinity,cx=Math.floor(coord.lon/cell),cy=Math.floor(coord.lat/cell);for(let radius=0;radius<=4&&best<0;radius++)for(let x=cx-radius;x<=cx+radius;x++)for(let y=cy-radius;y<=cy+radius;y++){if(radius&&x>cx-radius&&x<cx+radius&&y>cy-radius&&y<cy+radius)continue;for(const id of grid.get(`${x},${y}`)||[]){const current=distanceKm(coord,nodes[id].coord);if(current<bestDistance){best=id;bestDistance=current;}}}return best>=0&&bestDistance<=5?{id:best,distance:bestDistance}:null;};
- graph={nodes,nearest,pairCache};trackGraphCache.set(model,graph);return graph;
+function stationRoute(model,from,to,line='',grade=''){
+ const network=buildRailNetwork(model),start=stationFor(network,from.stationName||from.name,from.coord),end=stationFor(network,to.stationName||to.name,to.coord);if(!start||!end||start===end)return null;
+ const variants=(model.data.mainlineMap?.routeVariants||[]).filter(item=>item.grade===grade&&((cleanName(item.from)===start.name&&cleanName(item.to)===end.name)||(cleanName(item.from)===end.name&&cleanName(item.to)===start.name)));
+ if(variants.length){const unique=[...new Map(variants.map(item=>[JSON.stringify(item.geometry),item])).values()];if(unique.length!==1)return null;const item=unique[0],forward=cleanName(item.from)===start.name,geometry=(forward?item.geometry:[...item.geometry].reverse()).map(([lon,lat])=>({lat:+lat,lon:+lon}));return {geometry,line:item.grade,signature:`variant:${item.sourceVersion}:${item.lineEntityIds.join(',')}`};}
+ const wanted=new Set(String(line).split('·').map(value=>value.trim()).filter(Boolean)),candidates=[];
+ for(const route of model.data.mainlineMap?.routes||[]){const names=route.stations.map(station=>cleanName(station.name)),starts=names.flatMap((name,index)=>name===start.name?[index]:[]),ends=names.flatMap((name,index)=>name===end.name?[index]:[]);for(const a of starts)for(const b of ends){if(a===b)continue;const low=Math.min(a,b),high=Math.max(a,b),kinds=route.representativeKinds||[],raw=route.segments.slice(low,high).map((segment,index)=>segment||(kinds[low+index]==='representative'?route.displaySegments?.[low+index]:null));if(raw.length!==high-low||raw.some(segment=>!segment||segment.length<2))continue;const representative=kinds.slice(low,high).some(kind=>kind==='representative')||route.segments.slice(low,high).some(segment=>!segment);let segments=raw.map((segment,index)=>kinds[low+index]==='representative'?representativeGeometry(segment):segment.map(([lon,lat])=>({lat:+lat,lon:+lon})));if(a>b)segments=segments.reverse().map(segment=>[...segment].reverse());let geometry=[];for(const segment of segments){if(geometry.length&&(geometry.at(-1).lon!==segment[0].lon||geometry.at(-1).lat!==segment[0].lat)){if(!representative){geometry=[];break;}segment[0]=geometry.at(-1);}geometry.push(...(geometry.length?segment.slice(1):segment));}if(geometry.length>1)candidates.push({geometry,line:route.line,span:high-low,representative,signature:representative?`representative:${JSON.stringify(geometry)}`:JSON.stringify((a>b?[...route.segmentSources.slice(low,high)].reverse():route.segmentSources.slice(low,high)))});}}
+ const preferred=candidates.filter(candidate=>wanted.has(candidate.line)),matching=preferred.length?preferred:candidates,minSpan=Math.min(...matching.map(candidate=>candidate.span)),pool=matching.filter(candidate=>candidate.span===minSpan),unique=[...new Map(pool.map(candidate=>[candidate.signature,candidate])).values()];if(unique.length===1)return unique[0];if(candidates.length)return null;return graphStationRoute(model,start,end,wanted);
 }
-function graphRoute(model,from,to){
- const graph=trackGraph(model),start=graph.nearest(from),end=graph.nearest(to);if(!start||!end)return null;
- if(start.id===end.id)return [graph.nodes[start.id].coord];
- const reverse=start.id>end.id,key=reverse?`${end.id}:${start.id}`:`${start.id}:${end.id}`;
- if(graph.pairCache.has(key)){const cached=graph.pairCache.get(key);if(!cached)return null;const result=reverse?[...cached].reverse():[...cached];result.snapped=cached.snapped;return result;}
- const direct=Math.max(.1,distanceKm(from,to)),corridor=Math.max(1.5,Math.min(12,direct*.35)),count=graph.nodes.length,dist=new Float64Array(count),previous=new Int32Array(count),previousSnap=new Uint8Array(count),heap=[];dist.fill(Infinity);previous.fill(-1);
- const push=item=>{heap.push(item);let index=heap.length-1;while(index){const parent=(index-1)>>1;if(heap[parent][0]<=item[0])break;heap[index]=heap[parent];index=parent;}heap[index]=item;};
- const pop=()=>{const first=heap[0],last=heap.pop();if(heap.length){let index=0;while(true){let child=index*2+1;if(child>=heap.length)break;if(child+1<heap.length&&heap[child+1][0]<heap[child][0])child++;if(heap[child][0]>=last[0])break;heap[index]=heap[child];index=child;}heap[index]=last;}return first;};
- dist[start.id]=0;push([distanceKm(graph.nodes[start.id].coord,graph.nodes[end.id].coord),0,start.id]);let visited=0;
- while(heap.length&&visited++<count){const [,cost,id]=pop();if(cost!==dist[id])continue;if(id===end.id)break;for(const [next,length,snapped] of graph.nodes[id].links){if(next!==end.id&&segmentDistanceKm(graph.nodes[next].coord,from,to)>corridor)continue;const value=cost+length*(snapped?1.35:1);if(value>=dist[next])continue;dist[next]=value;previous[next]=id;previousSnap[next]=snapped?1:0;push([value+distanceKm(graph.nodes[next].coord,graph.nodes[end.id].coord),value,next]);}}
- let result=null;if(Number.isFinite(dist[end.id])&&dist[end.id]<=Math.max(direct*2.8,direct+18)){const path=[];let snapped=false;for(let id=end.id;id>=0;id=previous[id]){path.push(graph.nodes[id].coord);snapped||=Boolean(previousSnap[id]);if(id===start.id)break;}if(path.at(-1)===graph.nodes[start.id].coord){result=path.reverse();result.snapped=snapped;}}
- if(result){const cached=reverse?[...result].reverse():[...result];cached.snapped=result.snapped;graph.pairCache.set(key,cached);}else graph.pairCache.set(key,null);return result;
+
+function routingGraph(model){
+ if(routingGraphCache.has(model))return routingGraphCache.get(model);const adjacency=new Map(),cache=new Map(),add=(name,edge)=>{if(!adjacency.has(name))adjacency.set(name,[]);adjacency.get(name).push(edge);};
+ for(const route of model.data.mainlineMap?.routes||[])for(let index=0;index<route.stations.length-1;index++){const kind=route.representativeKinds?.[index]||(route.segments?.[index]?'exact':'unavailable'),raw=route.segments?.[index]||(kind==='representative'?route.displaySegments?.[index]:null);if(!raw?.length||raw.length<2)continue;const from=routingName(route.stations[index].name),to=routingName(route.stations[index+1].name),geometry=kind==='representative'?representativeGeometry(raw):raw.map(([lon,lat])=>({lat:+lat,lon:+lon})),length=geometry.slice(1).reduce((sum,point,i)=>sum+distanceKm(geometry[i],point),0),base={line:route.line,representative:kind==='representative',length};add(from,{...base,to,geometry});add(to,{...base,to:from,geometry:[...geometry].reverse()});}
+ const graph={adjacency,cache};routingGraphCache.set(model,graph);return graph;
 }
+
+function graphStationRoute(model,start,end,wanted){
+ const graph=routingGraph(model),lines=[...wanted].sort(),startName=routingName(start.name),endName=routingName(end.name),key=`${startName}\0${endName}\0${lines.join('·')}`;if(graph.cache.has(key))return graph.cache.get(key);const reverseKey=`${endName}\0${startName}\0${lines.join('·')}`;if(graph.cache.has(reverseKey)){const known=graph.cache.get(reverseKey),value=known?{...known,geometry:[...known.geometry].reverse()}:null;graph.cache.set(key,value);return value;}
+ const costs=new Map([[startName,0]]),previous=new Map(),queue=[[0,startName]];while(queue.length){queue.sort((a,b)=>a[0]-b[0]);const [cost,current]=queue.shift();if(cost!==costs.get(current))continue;if(current===endName)break;for(const edge of graph.adjacency.get(current)||[]){const penalty=wanted.size&&!wanted.has(edge.line)?4:1,next=cost+edge.length*penalty;if(next>= (costs.get(edge.to)??Infinity))continue;costs.set(edge.to,next);previous.set(edge.to,{from:current,edge});queue.push([next,edge.to]);}}
+ if(!Number.isFinite(costs.get(endName))){graph.cache.set(key,null);return null;}const edges=[];for(let current=endName;current!==startName;){const step=previous.get(current);if(!step){graph.cache.set(key,null);return null;}edges.push(step.edge);current=step.from;}edges.reverse();const total=edges.reduce((sum,edge)=>sum+edge.length,0),direct=distanceKm(start.coord,end.coord);if(total>Math.max(direct*3,direct+30)){graph.cache.set(key,null);return null;}const geometry=[];let representative=false;for(const edge of edges){const part=edge.geometry.map(point=>({...point}));representative||=edge.representative;if(geometry.length)part[0]=geometry.at(-1);geometry.push(...(geometry.length?part.slice(1):part));}const value=geometry.length>1?{geometry,line:lines.join('·'),representative,signature:`graph:${key}`}:null;graph.cache.set(key,value);return value;
+}
+
 export function trainTrackRoute(model,train){
- const waypoints=trainGeoPath(model,train),paths=[];let current=[],missingSegments=0,snappedSegments=0;
- for(let index=1;index<waypoints.length;index++){
-  const from=waypoints[index-1],to=waypoints[index],geometry=graphRoute(model,from.coord,to.coord);
-  if(!geometry||geometry.length<2){missingSegments++;if(current.length>1)paths.push(current);current=[];continue;}
-  if(geometry.snapped)snappedSegments++;const points=geometry.map(coord=>({coord,stop:false,name:''}));points[0]={...points[0],stop:from.stop,name:from.name};points.at(-1).stop=to.stop;points.at(-1).name=to.name;
-  if(current.length&&distanceKm(current.at(-1).coord,points[0].coord)<.02)current.push(...points.slice(1));else{if(current.length>1)paths.push(current);current=points;}
- }
- if(current.length>1)paths.push(current);
- return {paths,missingSegments,snappedSegments,matched:paths.length>0&&missingSegments===0,verified:paths.length>0&&missingSegments===0&&snappedSegments===0,waypoints};
+ const waypoints=trainGeoPath(model,train),network=buildRailNetwork(model),mapped=[];
+ for(const waypoint of waypoints){const station=stationFor(network,waypoint.stationName||waypoint.name,waypoint.coord);if(station&&mapped.at(-1)?.station!==station)mapped.push({...waypoint,station,stationName:station.name,coord:station.coord});}
+ if(mapped.length<2)return {paths:[],missingSegments:Math.max(0,waypoints.length-1),fallbackSegments:0,matched:false,verified:false,waypoints};
+ const paths=[];let current=[],missingSegments=0,fallbackSegments=0;for(let index=1;index<mapped.length;index++){const from=mapped[index-1],to=mapped[index],route=stationRoute(model,from,to,train?.line,train?.grade);if(!route){missingSegments++;if(current.length>1)paths.push(current);current=[];continue;}if(route.representative)fallbackSegments++;const points=route.geometry.map(coord=>({coord,stop:false,name:''}));points[0]={...points[0],stop:from.stop,name:from.name};points.at(-1).stop=to.stop;points.at(-1).name=to.name;const sameStation=current.length&&current.at(-1).name===points[0].name;if(sameStation)points[0].coord=current.at(-1).coord;const joined=sameStation||(current.length&&current.at(-1).coord.lon===points[0].coord.lon&&current.at(-1).coord.lat===points[0].coord.lat);if(current.length&&!joined){paths.push(current);current=[];}current.push(...(current.length?points.slice(1):points));}if(current.length>1)paths.push(current);
+ return {paths,missingSegments,fallbackSegments,matched:paths.length>0&&missingSegments===0,verified:paths.length>0&&missingSegments===0&&fallbackSegments===0,waypoints};
 }
 
 export function stationServices(model,name){
@@ -139,8 +141,8 @@ export function snapshotCoordinate(snapshot){
 
 export function snapshotTrackCoordinate(model,train,snapshot){
  const nodes=snapshot.nodes.filter(node=>validCoord(node.coord)),position=operationPosition(snapshot,nodes);if(!position)return null;
- const a=nodes[position.index],b=nodes[position.nextIndex];if(!a||!b)return null;if(a===b||position.index===position.nextIndex)return buildRailNetwork(model).stations.find(station=>station.name===cleanName(a.s))?.coord||a.coord;
- const route=graphRoute(model,buildRailNetwork(model).stations.find(station=>station.name===cleanName(a.s))?.coord||a.coord,buildRailNetwork(model).stations.find(station=>station.name===cleanName(b.s))?.coord||b.coord);if(!route?.length)return null;
+ const a=nodes[position.index],b=nodes[position.nextIndex];if(!a||!b)return null;if(a===b||position.index===position.nextIndex){const network=buildRailNetwork(model),station=stationFor(network,a.s,a.coord);if(!station)return null;const matches=[];for(const route of model.data.mainlineMap?.routes||[]){for(const [index,raw] of route.stations.entries()){if(cleanName(raw.name)!==station.name)continue;const before=route.segments?.[index-1],after=route.segments?.[index];if(before?.length>1)matches.push(before.at(-1));if(after?.length>1)matches.push(after[0]);}}const unique=[...new Map(matches.map(([lon,lat])=>[`${lon},${lat}`,{lat:+lat,lon:+lon}])).values()];return unique.length===1?unique[0]:null;}
+ const route=stationRoute(model,{name:a.s,coord:a.coord},{name:b.s,coord:b.coord},train?.line,train?.grade)?.geometry;if(!route?.length)return null;
  const lengths=[];let total=0;for(let index=1;index<route.length;index++){total+=distanceKm(route[index-1],route[index]);lengths.push(total);}const target=total*position.fraction,index=lengths.findIndex(value=>value>=target);if(index<0)return route.at(-1);const before=index?lengths[index-1]:0,span=lengths[index]-before||1,fraction=(target-before)/span,from=route[index],to=route[index+1];return {lat:from.lat+(to.lat-from.lat)*fraction,lon:from.lon+(to.lon-from.lon)*fraction};
 }
 
@@ -149,7 +151,7 @@ export function activeTrainMarkers(model,now=new Date(),grades=[]){
  for(const train of model.trains){
   if(allowed.size&&!allowed.has(train.grade))continue;
   const active=estimatedTrainSnapshot(model,train,now);if(!active)continue;
-  const coord=snapshotTrackCoordinate(model,train,active.snapshot);if(coord)markers.push({coord,train,query:active.query,snapshot:active.snapshot,color:model.data.colors?.[train.grade]||'#176cf4',label:`${train.grade} ${train.no}`});
+  const coord=snapshotTrackCoordinate(model,train,active.snapshot);markers.push({coord,train,query:active.query,snapshot:active.snapshot,color:model.data.colors?.[train.grade]||'#176cf4',label:`${train.grade} ${train.no}`,pathAvailable:Boolean(coord)});
  }
  return markers;
 }
@@ -185,7 +187,7 @@ export function mountRailMap(host,options){
    tiles.innerHTML=html.join('');tiles.hidden=false;host.querySelector('.rail-map-attribution').hidden=false;
   }else{tiles.innerHTML='';tiles.hidden=true;host.querySelector('.rail-map-attribution').hidden=true;}
   const visible=point=>point.x>-30&&point.y>-30&&point.x<width+30&&point.y<height+30,parts=[],labelCells=new Set(),labelCell=point=>`${Math.floor(point.x/88)},${Math.floor(point.y/34)}`;
-  if(state.settings.tracks&&state.network.geometry?.length){const commands=[];for(const path of geometry()){if(path.length<2)continue;let minX=Infinity,minY=Infinity,maxX=-Infinity,maxY=-Infinity;for(const point of path){const x=point.x-center.x+width/2,y=point.y-center.y+height/2;minX=Math.min(minX,x);maxX=Math.max(maxX,x);minY=Math.min(minY,y);maxY=Math.max(maxY,y);}if(maxX<-30||minX>width+30||maxY<-30||minY>height+30)continue;commands.push(path.map((point,index)=>`${index?'L':'M'}${(point.x-center.x+width/2).toFixed(1)} ${(point.y-center.y+height/2).toFixed(1)}`).join(''));}if(commands.length)parts.push(`<path class="rail-source-track" d="${commands.join('')}"><title>NIMBY Rails 원본 저장 파일 선로</title></path>`);}
+  if(state.settings.tracks&&state.network.geometry?.length){const commands=[];for(const path of geometry()){if(path.length<2)continue;let minX=Infinity,minY=Infinity,maxX=-Infinity,maxY=-Infinity;for(const point of path){const x=point.x-center.x+width/2,y=point.y-center.y+height/2;minX=Math.min(minX,x);maxX=Math.max(maxX,x);minY=Math.min(minY,y);maxY=Math.max(maxY,y);}if(maxX<-30||minX>width+30||maxY<-30||minY>height+30)continue;commands.push(path.map((point,index)=>`${index?'L':'M'}${(point.x-center.x+width/2).toFixed(1)} ${(point.y-center.y+height/2).toFixed(1)}`).join(''));}if(commands.length)parts.push(`<path class="rail-source-track" d="${commands.join('')}"><title>NIMBY Rails 원본 일반철도 노선도</title></path>`);}
   else if(state.settings.tracks)for(const edge of state.network.edges){const a=screen(edge.a.coord,center,width,height),b=screen(edge.b.coord,center,width,height);if(!visible(a)&&!visible(b)&&((a.x<0&&b.x<0)||(a.x>width&&b.x>width)||(a.y<0&&b.y<0)||(a.y>height&&b.y>height)))continue;const primary=[...edge.lines][0];parts.push(`<line class="rail-network-edge" x1="${a.x.toFixed(1)}" y1="${a.y.toFixed(1)}" x2="${b.x.toFixed(1)}" y2="${b.y.toFixed(1)}" style="--line-color:${lineColor(primary)}"><title>${escapeHtml([...edge.lines].join(' · '))}</title></line>`);}
   for(const path of state.paths){const points=path.points.map(point=>screen(point.coord,center,width,height));if(points.length<2)continue;const color=escapeHtml(path.color||'#176cf4');parts.push(`<polyline class="rail-selected-path" points="${points.map(p=>`${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(' ')}" style="--train-color:${color}"></polyline>`);const stops=path.points.map((point,index)=>({point,screen:points[index]})).filter(item=>item.point.stop),labelEvery=Math.max(1,Math.ceil(stops.length/8));stops.forEach((item,index)=>{const show=index===0||index===stops.length-1||index%labelEvery===0;if(!visible(item.screen))return;if(show)labelCells.add(labelCell(item.screen));parts.push(`<g class="rail-route-stop" style="--train-color:${color}"><circle cx="${item.screen.x.toFixed(1)}" cy="${item.screen.y.toFixed(1)}" r="${show?5:3}"></circle>${show?`<text x="${(item.screen.x+8).toFixed(1)}" y="${(item.screen.y-7).toFixed(1)}">${escapeHtml(item.point.name)}</text>`:''}</g>`);});}
   const stationThreshold=state.zoom<=6?100:state.zoom===7?120:state.zoom===8?60:state.zoom===9?20:state.zoom===10?5:0;
