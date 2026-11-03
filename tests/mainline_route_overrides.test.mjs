@@ -60,7 +60,8 @@ test('Jungbu Naeryuk Osan-Juksan follows the Janghowon corridor',()=>{
 
 test('new junction corrections follow the requested source track pieces',()=>{
  const mapo=segment('gyeongbuhs:4','마포','서울').geometry;
- assert.ok(hasPoint(mapo,[126.921294,37.54791]),'마포-서울 하부 선로 누락');assert.ok(!hasPoint(mapo,[126.928153,37.577274]),'마포-서울 경의선 상부 선로가 남음');
+ assert.ok(hasPoint(mapo,[126.939059,37.564233]),'마포-서울 도심 동서 선로 누락');assert.ok(hasPoint(mapo,[126.962407,37.566379]),'마포-서울 서울역 진입 선로 누락');
+ assert.ok(!hasPoint(mapo,[126.921294,37.54791]),'마포-서울 용산 우회 선로가 남음');assert.ok(!hasPoint(mapo,[126.928153,37.577274]),'마포-서울 경의선 상부 선로가 남음');
  const mapoEum=map.routeVariants.find(item=>item.grade==='KTX-이음'&&item.from==='마포'&&item.to==='서울');assert.ok(mapoEum);assert.deepEqual(Array.from(mapoEum.geometry,point=>Array.from(point)),Array.from(mapo,point=>Array.from(point)));
  const hangang=segment('gyeongbuhs:0','한강로','병목안').geometry;
  assert.ok(hasPoint(hangang,[126.87936,37.498845]),'구로 경부선 경유점 누락');
@@ -69,6 +70,7 @@ test('new junction corrections follow the requested source track pieces',()=>{
  const wonpyeong=segment('gyeongbuhs:2','원평','천안').geometry;
  assert.ok(!hasPoint(wonpyeong,[126.955532,37.231321]),'원평 분기에 수영 방향 되돌이 점이 남음');
  const sacheon=segment('nambunaelyuk:0','단성','사천').geometry;
- for(const point of [[127.958439,35.11595],[127.977967,35.116961]])assert.ok(hasPoint(sacheon,point),`${point} 단성-사천 단절 양단 누락`);
+ for(const point of [[128.004382,35.104103],[128.026648,35.076733]])assert.ok(hasPoint(sacheon,point),`${point} 단성-사천 직결 단절 양단 누락`);
+ assert.ok(!sacheon.some(([lon,lat])=>lon<127.94&&lat<35.2),'단성-사천이 서쪽 삼각선으로 우회함');
  assert.ok(!sacheon.some(([lon,lat])=>lon>128.07&&lat>35.16),'단성-사천이 진주 방향으로 우회함');
 });
