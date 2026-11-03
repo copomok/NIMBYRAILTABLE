@@ -16,8 +16,8 @@ test('route overrides use the same unmodified game snapshot',()=>{
  assert.equal(overrides.source.sha256,latest.source.sha256);
  assert.equal(map.routeOverrideSource.sha256,latest.source.sha256);
  assert.equal(latest.tracks.length,12980);
- assert.equal(overrides.segments.length,22);
- assert.equal(map.source.routeConfirmedSegments,22);
+ assert.equal(overrides.segments.length,25);
+ assert.equal(map.source.routeConfirmedSegments,25);
  assert.equal(map.source.syntheticEdgeCount,0);
 });
 
@@ -56,4 +56,19 @@ test('Jungbu Naeryuk Osan-Juksan follows the Janghowon corridor',()=>{
  const {item,index,geometry}=segment('jungnaelyuk:0','오산','죽산');assert.equal(item.representativeKinds[index],'route-confirmed');
  for(const point of [[127.08992,37.097729],[127.129916,37.100966],[127.261888,37.081492],[127.369799,37.060829]])assert.ok(hasPoint(geometry,point),`${point} 장호원선 통과점 누락`);
  assert.ok(Math.max(...geometry.slice(1).map((point,i)=>distanceKm(geometry[i],point)))<3.1,'오산-죽산 원본 선로 구간 단절');
+});
+
+test('new junction corrections follow the requested source track pieces',()=>{
+ const mapo=segment('gyeongbuhs:4','마포','서울').geometry;
+ assert.ok(hasPoint(mapo,[126.921294,37.54791]),'마포-서울 하부 선로 누락');assert.ok(!hasPoint(mapo,[126.928153,37.577274]),'마포-서울 경의선 상부 선로가 남음');
+ const mapoEum=map.routeVariants.find(item=>item.grade==='KTX-이음'&&item.from==='마포'&&item.to==='서울');assert.ok(mapoEum);assert.deepEqual(Array.from(mapoEum.geometry,point=>Array.from(point)),Array.from(mapo,point=>Array.from(point)));
+ const hangang=segment('gyeongbuhs:0','한강로','병목안').geometry;
+ assert.ok(hasPoint(hangang,[126.87936,37.498845]),'구로 경부선 경유점 누락');
+ const jeongan=segment('gyeongbuhs:0','정안','세종').geometry;
+ assert.ok(hasPoint(jeongan,[127.192709,36.513648]));assert.ok(jeongan.slice(1,-1).every(([lon,lat])=>rawPoints.has(`${(+lon).toFixed(6)},${(+lat).toFixed(6)}`)));
+ const wonpyeong=segment('gyeongbuhs:2','원평','천안').geometry;
+ assert.ok(!hasPoint(wonpyeong,[126.955532,37.231321]),'원평 분기에 수영 방향 되돌이 점이 남음');
+ const sacheon=segment('nambunaelyuk:0','단성','사천').geometry;
+ for(const point of [[127.958439,35.11595],[127.977967,35.116961]])assert.ok(hasPoint(sacheon,point),`${point} 단성-사천 단절 양단 누락`);
+ assert.ok(!sacheon.some(([lon,lat])=>lon>128.07&&lat>35.16),'단성-사천이 진주 방향으로 우회함');
 });
