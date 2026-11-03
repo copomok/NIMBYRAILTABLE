@@ -58,6 +58,16 @@ test('Jungbu Naeryuk Osan-Juksan follows the Janghowon corridor',()=>{
  assert.ok(Math.max(...geometry.slice(1).map((point,i)=>distanceKm(geometry[i],point)))<3.1,'오산-죽산 원본 선로 구간 단절');
 });
 
+test('KTX-Sancheon bypasses the abandoned Daeyang spur on the through mainline',()=>{
+ const north=map.routeVariants.find(item=>item.grade==='KTX-산천'&&item.from==='합천'&&item.to==='대양');
+ const south=map.routeVariants.find(item=>item.grade==='KTX-산천'&&item.from==='대양'&&item.to==='쌍백');
+ assert.ok(north);assert.ok(south);assert.equal(north.sourceVersion,latest.source.sha256);assert.equal(south.sourceVersion,latest.source.sha256);
+ assert.ok(hasPoint(north.geometry,[128.168063,35.529724]),'합천-대양 통과 본선 누락');
+ assert.ok(hasPoint(south.geometry,[128.173139,35.505792]),'대양-쌍백 통과 본선 누락');
+ assert.deepEqual(Array.from(north.geometry.at(-1)),Array.from(south.geometry[0]));
+ assert.ok(![...north.geometry,...south.geometry].some(point=>hasPoint([point],[128.171444,35.511189])),'대양 폐선 가지가 남음');
+});
+
 test('new junction corrections follow the requested source track pieces',()=>{
  const mapo=segment('gyeongbuhs:4','마포','서울').geometry;
  assert.ok(hasPoint(mapo,[126.939059,37.564233]),'마포-서울 도심 동서 선로 누락');assert.ok(hasPoint(mapo,[126.962407,37.566379]),'마포-서울 서울역 진입 선로 누락');
