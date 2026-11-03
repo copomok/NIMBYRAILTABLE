@@ -7,7 +7,7 @@ const context={};context.window=context;context.globalThis=context;vm.createCont
 for(const file of ['data/nimbi_latest_map.js','data/nimbi_mainline_route_overrides.js','data/nimbi_mainline_map.js'])vm.runInContext(fs.readFileSync(new URL(`../${file}`,import.meta.url),'utf8'),context,{filename:file});
 const latest=context.NIMBI_LATEST_MAP,overrides=context.NIMBI_MAINLINE_ROUTE_OVERRIDES,map=context.NIMBI_MAINLINE_MAP;
 const route=id=>map.routes.find(item=>item.id===id);
-const segment=(id,from,to)=>{const item=route(id),index=item.stations.findIndex((station,i)=>station.name===from&&item.stations[i+1]?.name===to);assert.ok(index>=0,`${id} ${from}-${to} 구간 누락`);return {item,index,geometry:item.routeSegments[index]};};
+const segment=(id,from,to)=>{const item=route(id),index=item.stations.findIndex((station,i)=>station.name===from&&item.stations[i+1]?.name===to);assert.ok(index>=0,`${id} ${from}-${to} 구간 누락`);return {item,index,geometry:item.routeSegments[index]||item.segments[index]};};
 const hasPoint=(geometry,[lon,lat],tolerance=.000002)=>geometry.some(point=>Math.abs(point[0]-lon)<=tolerance&&Math.abs(point[1]-lat)<=tolerance);
 const distanceKm=(a,b)=>Math.hypot((a[0]-b[0])*Math.cos((a[1]+b[1])*Math.PI/360),a[1]-b[1])*111.195;
 const rawPoints=new Set(latest.tracks.flat().map(([lon,lat])=>`${(+lon).toFixed(6)},${(+lat).toFixed(6)}`));
@@ -16,8 +16,12 @@ test('route overrides use the same unmodified game snapshot',()=>{
  assert.equal(overrides.source.sha256,latest.source.sha256);
  assert.equal(map.routeOverrideSource.sha256,latest.source.sha256);
  assert.equal(latest.tracks.length,12980);
- assert.equal(overrides.segments.length,27);
- assert.equal(map.source.routeConfirmedSegments,27);
+ assert.equal(overrides.segments.length,26);
+ assert.equal(map.source.routeConfirmedSegments,26);
+ assert.equal(map.source.verifiedSegments,175);
+ assert.equal(map.source.verifiedTopologyLinkCount,7);
+ assert.equal(map.source.verifiedBypassCount,2);
+ assert.equal(map.source.passThroughVariantCount,1);
  assert.equal(map.source.syntheticEdgeCount,0);
 });
 
@@ -79,8 +83,23 @@ test('new junction corrections follow the requested source track pieces',()=>{
  assert.ok(hasPoint(jeongan,[127.192709,36.513648]));assert.ok(jeongan.slice(1,-1).every(([lon,lat])=>rawPoints.has(`${(+lon).toFixed(6)},${(+lat).toFixed(6)}`)));
  const wonpyeong=segment('gyeongbuhs:2','원평','천안').geometry;
  assert.ok(!hasPoint(wonpyeong,[126.955532,37.231321]),'원평 분기에 수영 방향 되돌이 점이 남음');
- const sacheon=segment('nambunaelyuk:0','단성','사천').geometry;
+ const sacheonSegment=segment('nambunaelyuk:0','단성','사천'),sacheon=sacheonSegment.geometry;
+ assert.equal(sacheonSegment.item.representativeKinds[sacheonSegment.index],'exact');
+ assert.equal(sacheonSegment.item.routeSegments[sacheonSegment.index],null,'단성-사천이 경로 좌표 덮어쓰기에 의존함');
+ assert.deepEqual(Array.from(sacheonSegment.item.segmentTopologyLinks[sacheonSegment.index]),['nambunaelyuk-danseong-sacheon-same-save-recovery']);
  for(const point of [[128.004382,35.104103],[128.026648,35.076733]])assert.ok(hasPoint(sacheon,point),`${point} 단성-사천 직결 단절 양단 누락`);
  assert.ok(!sacheon.some(([lon,lat])=>lon<127.94&&lat<35.2),'단성-사천이 서쪽 삼각선으로 우회함');
  assert.ok(!sacheon.some(([lon,lat])=>lon>128.07&&lat>35.16),'단성-사천이 진주 방향으로 우회함');
+});
+
+test('same-save recovery links restore the actual Gangneung, Daegu and Gyooe tracks',()=>{
+ const gangneung=segment('donghae:0','강릉','동강릉');assert.equal(gangneung.item.representativeKinds[gangneung.index],'exact');assert.ok(hasPoint(gangneung.geometry,[128.885778,37.739533]));assert.ok(!hasPoint(gangneung.geometry,[128.894021,37.758135]));
+ const daegu=segment('daegu:0','경산','건천');assert.equal(daegu.item.representativeKinds[daegu.index],'exact');assert.ok(hasPoint(daegu.geometry,[128.963829,35.806281]));assert.ok(daegu.item.segmentTopologyLinks[daegu.index].includes('daegu-gyeongsan-geoncheon-mainline-junction'));
+ const gyooe=route('gyooe:0');for(const [from,to] of [['의정부','가능'],['가능','송추'],['송추','장흥(양주)'],['장흥(양주)','고양']]){const restored=segment('gyooe:0',from,to);assert.equal(restored.item.representativeKinds[restored.index],'exact',`${from}-${to}`);assert.ok(restored.item.segmentTopologyLinks[restored.index].includes('gyooe-uijeongbu-goyang-same-save-recovery'),`${from}-${to}`);}assert.equal(gyooe.representativeKinds[4],'exact');
+});
+
+test('non-stopping trains use verified station bypasses and Seoul city HSR',()=>{
+ const yeongdong=map.bypassSegments.find(item=>item.id==='sobaek-yeongdong-through-mainline');assert.ok(yeongdong);assert.equal(yeongdong.from,'무주');assert.equal(yeongdong.to,'황간');assert.ok(hasPoint(yeongdong.geometry,[127.793238,36.171838]));assert.ok(!hasPoint(yeongdong.geometry,[127.780379,36.174695]));
+ const pyeongchang=map.bypassSegments.find(item=>item.id==='jeongseon-pyeongchang-south-through-mainline');assert.ok(pyeongchang);assert.deepEqual(Array.from(pyeongchang.via),['남횡성','방림','평창','북평(정선)']);assert.ok(hasPoint(pyeongchang.geometry,[128.462296,37.464555]));assert.ok(!hasPoint(pyeongchang.geometry,[128.460107,37.495142]));
+ const city=map.passThroughVariants[0];assert.deepEqual([city.from,city.via,city.to],['서울','한강로','병목안']);assert.ok(hasPoint(city.geometry,[126.917462,37.501305]));assert.ok(!hasPoint(city.geometry,[126.87936,37.498845]));
 });
