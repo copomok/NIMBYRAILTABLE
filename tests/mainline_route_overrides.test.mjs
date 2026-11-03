@@ -16,8 +16,8 @@ test('route overrides use the same unmodified game snapshot',()=>{
  assert.equal(overrides.source.sha256,latest.source.sha256);
  assert.equal(map.routeOverrideSource.sha256,latest.source.sha256);
  assert.equal(latest.tracks.length,12980);
- assert.equal(overrides.segments.length,26);
- assert.equal(map.source.routeConfirmedSegments,26);
+ assert.equal(overrides.segments.length,28);
+ assert.equal(map.source.routeConfirmedSegments,28);
  assert.equal(map.source.verifiedSegments,175);
  assert.equal(map.source.verifiedTopologyLinkCount,7);
  assert.equal(map.source.verifiedBypassCount,2);
@@ -106,4 +106,11 @@ test('non-stopping trains use verified station bypasses and Seoul city HSR',()=>
  const yeongdong=map.bypassSegments.find(item=>item.id==='sobaek-yeongdong-through-mainline');assert.ok(yeongdong);assert.equal(yeongdong.from,'무주');assert.equal(yeongdong.to,'황간');assert.ok(hasPoint(yeongdong.geometry,[127.793238,36.171838]));assert.ok(!hasPoint(yeongdong.geometry,[127.780379,36.174695]));
  const pyeongchang=map.bypassSegments.find(item=>item.id==='jeongseon-pyeongchang-south-through-mainline');assert.ok(pyeongchang);assert.deepEqual(Array.from(pyeongchang.via),['남횡성','방림','평창','북평(정선)']);assert.ok(hasPoint(pyeongchang.geometry,[128.462296,37.464555]));assert.ok(!hasPoint(pyeongchang.geometry,[128.460107,37.495142]));
  const city=map.passThroughVariants[0];assert.deepEqual([city.from,city.via,city.to],['서울','한강로','병목안']);assert.ok(hasPoint(city.geometry,[126.917462,37.501305]));assert.ok(!hasPoint(city.geometry,[126.87936,37.498845]));
+});
+
+test('Jungang trains use the verified Geumseong-Hwabon mainline',()=>{
+ const geumseong=segment('jungang:0','금성','이화'),hwabon=segment('jungang:0','이화','화본');assert.equal(geumseong.item.representativeKinds[geumseong.index],'route-confirmed');assert.equal(hwabon.item.representativeKinds[hwabon.index],'route-confirmed');
+ for(const point of [[128.675327,36.228993],[128.705686,36.178511],[128.711627,36.133646]])assert.ok(hasPoint([...geumseong.geometry,...hwabon.geometry],point),`${point} 중앙선 본선 좌표 누락`);
+ for(const point of [[128.721492,36.170502],[128.696073,36.115641]])assert.ok(!hasPoint(hwabon.geometry,point),`${point} 화본 남쪽 분기 우회가 남음`);
+ const city=map.passThroughVariants.find(item=>item.id==='seoul-byeongmokan-city-hsr-via-hangangro-pass');assert.ok(hasPoint(city.geometry,[126.896959,37.376851]));assert.ok(!hasPoint(city.geometry,[126.891416,37.376859]));assert.ok(!hasPoint(city.geometry,[126.90716,37.371245]));
 });
