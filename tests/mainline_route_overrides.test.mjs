@@ -16,8 +16,8 @@ test('route overrides use the same unmodified game snapshot',()=>{
  assert.equal(overrides.source.sha256,latest.source.sha256);
  assert.equal(map.routeOverrideSource.sha256,latest.source.sha256);
  assert.equal(latest.tracks.length,12980);
- assert.equal(overrides.segments.length,13);
- assert.equal(map.source.routeConfirmedSegments,13);
+ assert.equal(overrides.segments.length,22);
+ assert.equal(map.source.routeConfirmedSegments,22);
  assert.equal(map.source.syntheticEdgeCount,0);
 });
 
@@ -43,4 +43,17 @@ test('high-speed route corrections retain curves and reject Miryang detour',()=>
  const {item,index,geometry}=segment('gyeongbuhs:0','청도','부산');assert.equal(item.representativeKinds[index],'route-confirmed');
  assert.ok(hasPoint(geometry,[128.748302,35.632936]));assert.ok(hasPoint(geometry,[129.006082,35.395952]));
  assert.ok(!geometry.some(([lon,lat])=>lon<128.85&&lat>35.47&&lat<35.53),'청도-부산 경로가 밀양 정차축으로 내려갑니다.');
+});
+
+test('shared metro corridors remain explicit route geometry',()=>{
+ for(const name of ['GTX-A','경부선','경의중앙선','장호원선'])assert.ok(map.sharedRailMetroLines.includes(name),`${name} 공유 선로 누락`);
+ const srt=map.routeVariants.find(item=>item.grade==='SRT'&&item.from==='잠실'&&item.to==='동탄');
+ assert.ok(srt);assert.ok(hasPoint(srt.geometry,[127.1297247,37.3322951]),'SRT 북용인 통과 선로 누락');
+ assert.ok(srt.geometry.length>20);assert.equal(srt.sourceVersion,latest.source.sha256);
+});
+
+test('Jungbu Naeryuk Osan-Juksan follows the Janghowon corridor',()=>{
+ const {item,index,geometry}=segment('jungnaelyuk:0','오산','죽산');assert.equal(item.representativeKinds[index],'route-confirmed');
+ for(const point of [[127.08992,37.097729],[127.129916,37.100966],[127.261888,37.081492],[127.369799,37.060829]])assert.ok(hasPoint(geometry,point),`${point} 장호원선 통과점 누락`);
+ assert.ok(Math.max(...geometry.slice(1).map((point,i)=>distanceKm(geometry[i],point)))<3.1,'오산-죽산 원본 선로 구간 단절');
 });

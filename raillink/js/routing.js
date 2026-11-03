@@ -1,5 +1,5 @@
-import {matchesFamily} from './train-families.js?v=ee4c19519ca7';
-import {dateAt,minuteOf} from './railway-time.js?v=ee4c19519ca7';
+import {matchesFamily} from './train-families.js?v=2630ba1bac60';
+import {dateAt,minuteOf} from './railway-time.js?v=2630ba1bac60';
 // Uses the canonical service stops and fare engine. No copied route database.
 export function findTransfers(model,q,now) {
  const min=Number(q.minWait??3),max=Number(q.maxWait??60),limit=Number(q.transferLimit??20);

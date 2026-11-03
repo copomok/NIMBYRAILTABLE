@@ -1,6 +1,6 @@
-import {STAGES,stageNames,timeLabel,remainingLabel,arrivalNotice,transferGuidance,currentSeatSegment} from './boarding.js?v=ee4c19519ca7';
-import {dateAt} from './railway-time.js?v=ee4c19519ca7';
-import {seatSegments} from './ticket-journey.js?v=ee4c19519ca7';
+import {STAGES,stageNames,timeLabel,remainingLabel,arrivalNotice,transferGuidance,currentSeatSegment} from './boarding.js?v=2630ba1bac60';
+import {dateAt} from './railway-time.js?v=2630ba1bac60';
+import {seatSegments} from './ticket-journey.js?v=2630ba1bac60';
 
 export function boardingView({legs,index,model,esc,icon,preferences={},clock=timeLabel,seatDescription,shareSupported}){
  const s=legs[index],t=s.ticket,train=model.byKey.get(t.key),color=model.data.colors[t.grade]||'#1168ad';
