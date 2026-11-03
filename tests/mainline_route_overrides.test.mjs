@@ -37,9 +37,9 @@ test('Gyooe route connects Jugyo directly to Haengsin without Neunggok',()=>{
  const {index,geometry}=segment('gyooe:0','주교','행신');assert.equal(item.representativeKinds[index],'route-confirmed');assert.ok(geometry.length>10);
 });
 
-test('Seoul to Namgeumho follows the Gyeongui-Jungang corridor',()=>{
+test('Seoul to Namgeumho uses the north-south intercity platforms',()=>{
  const {item,index,geometry}=segment('gyeongwon:0','서울','남금호');assert.equal(item.representativeKinds[index],'route-confirmed');
- assert.ok(hasPoint(geometry,[126.987302,37.535221]));assert.ok(hasPoint(geometry,[127.000721,37.536615]));
+ assert.ok(hasPoint(geometry,[126.971424,37.540727]));assert.ok(hasPoint(geometry,[127.000721,37.536615]));assert.ok(!hasPoint(geometry,[126.973871,37.556136]));
 });
 
 test('high-speed route corrections retain curves and reject Miryang detour',()=>{
@@ -74,9 +74,13 @@ test('all trains bypass the abandoned Daeyang spur on the shared mainline',()=>{
 
 test('new junction corrections follow the requested source track pieces',()=>{
  const mapo=segment('gyeongbuhs:4','마포','서울').geometry;
- assert.ok(hasPoint(mapo,[126.939059,37.564233]),'마포-서울 도심 동서 선로 누락');assert.ok(hasPoint(mapo,[126.962407,37.566379]),'마포-서울 서울역 진입 선로 누락');
+ assert.ok(hasPoint(mapo,[126.939059,37.564233]),'마포-서울 도심 진입 선로 누락');assert.ok(hasPoint(mapo,[126.9714,37.557301]),'마포-서울 남북축 승강장 진입 선로 누락');
+ assert.ok(!hasPoint(mapo,[126.969279,37.556158]),'마포-서울 동서축 전철 승강장이 남음');
  assert.ok(!hasPoint(mapo,[126.921294,37.54791]),'마포-서울 용산 우회 선로가 남음');assert.ok(!hasPoint(mapo,[126.928153,37.577274]),'마포-서울 경의선 상부 선로가 남음');
  const mapoEum=map.routeVariants.find(item=>item.grade==='KTX-이음'&&item.from==='마포'&&item.to==='서울');assert.ok(mapoEum);assert.deepEqual(Array.from(mapoEum.geometry,point=>Array.from(point)),Array.from(mapo,point=>Array.from(point)));
+ const seoulNamgeumho=segment('gyeongwon:0','서울','남금호').geometry;
+ for(const point of [[126.970716,37.550966],[126.971424,37.540727],[126.979654,37.535017]])assert.ok(hasPoint(seoulNamgeumho,point),`${point} 서울역 남북축 일반열차 선로 누락`);
+ for(const point of [[126.973871,37.556136],[126.980917,37.554249],[126.986487,37.538873]])assert.ok(!hasPoint(seoulNamgeumho,point),`${point} 서울역 동서축 전철 선로가 남음`);
  const hangang=segment('gyeongbuhs:0','한강로','병목안').geometry;
  assert.ok(hasPoint(hangang,[126.87936,37.498845]),'구로 경부선 경유점 누락');
  const jeongan=segment('gyeongbuhs:0','정안','세종').geometry;
