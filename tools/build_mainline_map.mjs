@@ -13,7 +13,7 @@ const source=fs.readFileSync(path.join(root,'js/nimbi_rail.js'),'utf8'),start=so
 if(start<0||end<0)throw new Error('js/nimbi_rail.js에서 MAP_LINES 원본을 찾지 못했습니다.');
 const lines=vm.runInContext(`(${source.slice(start+'const MAP_LINES ='.length,end).trim().replace(/;$/,'')})`,context,{filename:'MAP_LINES'}),stationDB=context.__stationDB,latest=context.NIMBI_LATEST_MAP,displayBaseline=context.NIMBI_MAINLINE_DISPLAY_BASELINE,displayById=new Map(displayBaseline.routes.map(route=>[route.id,route.segments]));
 const routeAnalysis=JSON.parse(fs.readFileSync(path.join(root,'data/nimbi_route_pilot_analysis.json'),'utf8'));
-const variantKey=(from,to)=>[from,to].sort((a,b)=>a.localeCompare(b,'ko')).join('\0'),blockedRepresentativePairs=new Set([variantKey('남금호','서울')]);
+const variantKey=(from,to)=>[from,to].sort((a,b)=>a.localeCompare(b,'ko')).join('\0'),blockedRepresentativePairs=new Set();
 const primaryAliases={'신동(태백)':'신동','고성(강원)':'고성'};
 const coordinate=name=>{const alias=primaryAliases[name]||name,row=stationDB[`${alias}역`]||stationDB[alias]||stationDB[`${name}역`]||stationDB[name];if(row&&Number.isFinite(+row.lon)&&Number.isFinite(+row.lat))return {lon:+row.lon,lat:+row.lat};const raw=(latest?.stations||[]).find(item=>item.name===name||item.name===alias);return raw?{lon:+raw.lon,lat:+raw.lat}:null;};
 const distance=(a,b)=>{const scale=Math.cos((a.lat+b.lat)*Math.PI/360),dx=(b.lon-a.lon)*scale,dy=b.lat-a.lat;return Math.hypot(dx,dy)*111.195;};

@@ -83,7 +83,7 @@ def main():
    length,path=match;direct=distance(points,path[0],path[-1]);branches=sum(len(adjacency[item])!=2 for item in path[1:-1]);depot='차량기지' in before['name'] or '차량기지' in after['name'];row.update({'status':'depot-connector' if depot else 'verified','detailLevel':'mainline-representative','lengthKm':round(length,6),'directDistanceKm':round(direct,6),'lengthRatio':round(length/direct,6),'branchNodeCount':branches,'trackPointIds':[str(item) for item in path],'geometry':[[round(lon_lat(points[item]['x'],points[item]['y'])[0],6),round(lon_lat(points[item]['x'],points[item]['y'])[1],6)] for item in path]})
   return row
  candidates=[evaluate(before,after) for before,after in zip(selected['route'],selected['route'][1:])]
- focus_pairs={frozenset(pair) for pair in [('남안양','수원'),('수원','오산'),('오산','평택'),('남금호','서울')]};route_variants=[]
+ focus_pairs={frozenset(pair) for pair in [('남안양','수원'),('수원','오산'),('오산','평택'),('남금호','서울'),('서울','청량리'),('남금호','청량리')]};route_variants=[]
  for line in lines:
   for before,after in zip(line['route'],line['route'][1:]):
    if frozenset((before['name'],after['name'])) not in focus_pairs:continue

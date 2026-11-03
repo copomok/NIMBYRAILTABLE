@@ -1692,6 +1692,26 @@
       }
     },
     {
+      "lineEntityId": "2251799814864898",
+      "lineName": "마포-안동-부산 KTX",
+      "lineCode": "L-2289700",
+      "pair": {
+        "fromStationId": "1125899989417986",
+        "from": "서울",
+        "toStationId": "1125899989942274",
+        "to": "청량리",
+        "startTrackIds": [
+          "562953310568450",
+          "562953310699522"
+        ],
+        "endTrackIds": [
+          "562953931063298",
+          "562953931194370"
+        ],
+        "status": "unavailable"
+      }
+    },
+    {
       "lineEntityId": "2251799815127042",
       "lineName": "한강로-고남-보령 무궁화호",
       "lineCode": "L-2620900",
@@ -2056,6 +2076,26 @@
         "endTrackIds": [
           "562951070023682",
           "562951070154754"
+        ],
+        "status": "unavailable"
+      }
+    },
+    {
+      "lineEntityId": "2251799817879554",
+      "lineName": "마포-강릉 KTX",
+      "lineCode": "L-4529100",
+      "pair": {
+        "fromStationId": "1125899989417986",
+        "from": "서울",
+        "toStationId": "1125899989942274",
+        "to": "청량리",
+        "startTrackIds": [
+          "562953310568450",
+          "562953310699522"
+        ],
+        "endTrackIds": [
+          "562953927917570",
+          "562953928048642"
         ],
         "status": "unavailable"
       }
@@ -4831,6 +4871,25 @@
       }
     },
     {
+      "lineEntityId": "2251799842127874",
+      "lineName": "서울-블라디보스토크 KTX",
+      "lineCode": "L-18634600",
+      "pair": {
+        "fromStationId": "1125899989417986",
+        "from": "서울",
+        "toStationId": "1125899989942274",
+        "to": "청량리",
+        "startTrackIds": [
+          "562953350414338"
+        ],
+        "endTrackIds": [
+          "562953927917570",
+          "562953928048642"
+        ],
+        "status": "unavailable"
+      }
+    },
+    {
       "lineEntityId": "2251799844487170",
       "lineName": "한강로-고남-서대전 무궁화호",
       "lineCode": "L-2620900",
@@ -5588,6 +5647,66 @@
       }
     },
     {
+      "lineEntityId": "2251799852089346",
+      "lineName": "GTX-B",
+      "lineCode": "L-22190700",
+      "pair": {
+        "fromStationId": "1125899989417986",
+        "from": "서울",
+        "toStationId": "1125899989942274",
+        "to": "청량리",
+        "startTrackIds": [
+          "562956642287618",
+          "562956643205122"
+        ],
+        "endTrackIds": [
+          "562957334740994",
+          "562957334872066"
+        ],
+        "status": "unavailable"
+      }
+    },
+    {
+      "lineEntityId": "2251799852875778",
+      "lineName": "GTX-C",
+      "lineCode": "L-22414700",
+      "pair": {
+        "fromStationId": "1125899989417986",
+        "from": "서울",
+        "toStationId": "1125899989942274",
+        "to": "청량리",
+        "startTrackIds": [
+          "562956642287618",
+          "562956642418690"
+        ],
+        "endTrackIds": [
+          "562957334740994",
+          "562957334872066"
+        ],
+        "status": "unavailable"
+      }
+    },
+    {
+      "lineEntityId": "2251799856545794",
+      "lineName": "교외선 무궁화호 (서울 > 장흥)",
+      "lineCode": "L-25035000",
+      "pair": {
+        "fromStationId": "1125899989942274",
+        "from": "청량리",
+        "toStationId": "1125899926110210",
+        "to": "남금호",
+        "startTrackIds": [
+          "562953945743362",
+          "562953945874434"
+        ],
+        "endTrackIds": [
+          "562950894911490",
+          "562950897926146"
+        ],
+        "status": "unavailable"
+      }
+    },
+    {
       "lineEntityId": "2251799856676866",
       "lineName": "교외선 무궁화호 (서울 > 의정부)",
       "lineCode": "L-25036600",
@@ -5602,6 +5721,26 @@
         "endTrackIds": [
           "562950895173634",
           "562950897664002"
+        ],
+        "status": "unavailable"
+      }
+    },
+    {
+      "lineEntityId": "2251799856676866",
+      "lineName": "교외선 무궁화호 (서울 > 의정부)",
+      "lineCode": "L-25036600",
+      "pair": {
+        "fromStationId": "1125899926110210",
+        "from": "남금호",
+        "toStationId": "1125899989942274",
+        "to": "청량리",
+        "startTrackIds": [
+          "562950895173634",
+          "562950897664002"
+        ],
+        "endTrackIds": [
+          "562953946005506",
+          "562953946136578"
         ],
         "status": "unavailable"
       }
@@ -5990,6 +6129,46 @@
         "endTrackIds": [
           "562950917193730",
           "562950917324802"
+        ],
+        "status": "unavailable"
+      }
+    },
+    {
+      "lineEntityId": "2251799859560450",
+      "lineName": "마포-부산 KTX (중련실험)",
+      "lineCode": "L-2289700",
+      "pair": {
+        "fromStationId": "1125899989417986",
+        "from": "서울",
+        "toStationId": "1125899989942274",
+        "to": "청량리",
+        "startTrackIds": [
+          "562953310568450",
+          "562953310699522"
+        ],
+        "endTrackIds": [
+          "562953931063298",
+          "562953931194370"
+        ],
+        "status": "unavailable"
+      }
+    },
+    {
+      "lineEntityId": "2251799859691522",
+      "lineName": "마포-강릉 KTX (중련실험)",
+      "lineCode": "L-4529100",
+      "pair": {
+        "fromStationId": "1125899989417986",
+        "from": "서울",
+        "toStationId": "1125899989942274",
+        "to": "청량리",
+        "startTrackIds": [
+          "562953310568450",
+          "562953310699522"
+        ],
+        "endTrackIds": [
+          "562953927917570",
+          "562953928048642"
         ],
         "status": "unavailable"
       }
