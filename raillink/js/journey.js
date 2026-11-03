@@ -1,4 +1,4 @@
-import {combinedTicket,isSameTrainSeatJourney} from './ticket-journey.js?v=045d02ec2459';
+import {combinedTicket,isSameTrainSeatJourney} from './ticket-journey.js?v=b1a23ea83846';
 
 // Timetable-derived journey state, never a live railway position feed.
 export function minutes(clock) {
