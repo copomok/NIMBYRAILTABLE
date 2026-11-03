@@ -9,6 +9,8 @@ const latest=context.NIMBI_LATEST_MAP,overrides=context.NIMBI_MAINLINE_ROUTE_OVE
 const route=id=>map.routes.find(item=>item.id===id);
 const segment=(id,from,to)=>{const item=route(id),index=item.stations.findIndex((station,i)=>station.name===from&&item.stations[i+1]?.name===to);assert.ok(index>=0,`${id} ${from}-${to} 구간 누락`);return {item,index,geometry:item.routeSegments[index]};};
 const hasPoint=(geometry,[lon,lat],tolerance=.000002)=>geometry.some(point=>Math.abs(point[0]-lon)<=tolerance&&Math.abs(point[1]-lat)<=tolerance);
+const distanceKm=(a,b)=>Math.hypot((a[0]-b[0])*Math.cos((a[1]+b[1])*Math.PI/360),a[1]-b[1])*111.195;
+const rawPoints=new Set(latest.tracks.flat().map(([lon,lat])=>`${(+lon).toFixed(6)},${(+lat).toFixed(6)}`));
 
 test('route overrides use the same unmodified game snapshot',()=>{
  assert.equal(overrides.source.sha256,latest.source.sha256);
@@ -19,10 +21,11 @@ test('route overrides use the same unmodified game snapshot',()=>{
  assert.equal(map.source.syntheticEdgeCount,0);
 });
 
-test('Gyeongbu shared corridor follows Noryangjin, Guro and Gasan',()=>{
- const {item,index,geometry}=segment('gyeongbu:0','한강로','남안양');
- assert.equal(item.representativeKinds[index],'route-confirmed');
- for(const point of [[126.922419,37.514295],[126.882025,37.503095],[126.887606,37.468911]])assert.ok(hasPoint(geometry,point),`${point} 공용 경부선 좌표 누락`);
+test('Gyeongbu shared corridor preserves the full raw track through Noryangjin, Guro and Gasan',()=>{
+ const pairs=[['한강로','남안양'],['남안양','수원'],['수원','오산'],['오산','평택'],['평택','천안']];
+ for(const [from,to] of pairs){const {item,index,geometry}=segment('gyeongbu:0',from,to);assert.equal(item.representativeKinds[index],'route-confirmed');assert.ok(geometry.length>=55,`${from}-${to} 원본 좌표가 단순화됨`);assert.ok(geometry.slice(1,-1).every(([lon,lat])=>rawPoints.has(`${(+lon).toFixed(6)},${(+lat).toFixed(6)}`)),`${from}-${to}에 원본 외 선형이 포함됨`);assert.ok(Math.max(...geometry.slice(1).map((point,i)=>distanceKm(geometry[i],point)))<1.6,`${from}-${to} 화면 선형 단절`);}
+ const {geometry}=segment('gyeongbu:0','한강로','남안양');
+ for(const point of [[126.921536,37.51463],[126.879417,37.498842],[126.886461,37.47135]])assert.ok(hasPoint(geometry,point),`${point} 공용 경부선 좌표 누락`);
 });
 
 test('Gyooe route connects Jugyo directly to Haengsin without Neunggok',()=>{
