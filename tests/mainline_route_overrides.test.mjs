@@ -18,11 +18,20 @@ test('route overrides use the same unmodified game snapshot',()=>{
  assert.equal(latest.tracks.length,12980);
  assert.equal(overrides.segments.length,28);
  assert.equal(map.source.routeConfirmedSegments,28);
- assert.equal(map.source.verifiedSegments,175);
- assert.equal(map.source.verifiedTopologyLinkCount,7);
+ assert.equal(map.source.verifiedSegments,176);
+ assert.equal(map.source.verifiedTopologyLinkCount,8);
  assert.equal(map.source.verifiedBypassCount,2);
  assert.equal(map.source.passThroughVariantCount,1);
  assert.equal(map.source.syntheticEdgeCount,0);
+});
+
+test('Boeun to Jangan restores the missing same-save mainline geometry',()=>{
+ const restored=segment('boeun:0','보은','장안(보은)');
+ assert.equal(restored.item.representativeKinds[restored.index],'exact');
+ assert.equal(restored.item.routeSegments[restored.index],null,'보은-장안이 대표선 덮어쓰기에 의존함');
+ assert.deepEqual(Array.from(restored.item.segmentTopologyLinks[restored.index]),['boeun-boeun-jangan-same-save-recovery']);
+ for(const point of [[127.734514,36.480797],[127.748419,36.479987],[127.760575,36.480469],[127.781009,36.471328]])assert.ok(hasPoint(restored.geometry,point),`${point} 보은선 복구 좌표 누락`);
+ assert.ok(Math.max(...restored.geometry.slice(1).map((point,i)=>distanceKm(restored.geometry[i],point)))<1.55,'보은-장안 복구 선형에 단절이 남음');
 });
 
 test('Gyeongbu shared corridor preserves the full raw track through Noryangjin, Guro and Gasan',()=>{
